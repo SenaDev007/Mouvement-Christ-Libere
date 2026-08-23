@@ -6,16 +6,38 @@ import { Send, CheckCircle2 } from "lucide-react";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     name: "",
     contact: "",
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.contact || !form.message) return;
-    setSubmitted(true);
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Échec de l'envoi");
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleChange = (
@@ -118,11 +140,16 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                className="w-full px-6 py-4 rounded bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors inline-flex items-center justify-center gap-2"
+                disabled={submitting}
+                className="w-full px-6 py-4 rounded bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                <Send className="w-4 h-4" />
-                Envoyer ma demande
+                {submitting ? "Envoi en cours..." : "Envoyer ma demande"}
+                {!submitting && <Send className="w-4 h-4" />}
               </button>
+
+              {error && (
+                <p className="text-sm text-state-danger text-center">{error}</p>
+              )}
 
               <p className="text-xs text-stone text-center">
                 Délai de réponse garanti : sous 24h.

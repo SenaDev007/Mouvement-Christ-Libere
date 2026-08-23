@@ -1,27 +1,38 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Proxy file (Next.js 16 convention, replaces middleware.ts).
+ * Proxy (Next.js 16 convention) — multi-tenant routing + admin guard.
  *
- * Multi-tenant routing via subdomains:
- *   - amela.dali.<domain>     → PAM identity active
- *   - pasteurkongo.<domain>   → Pasteur Kongo identity active
- *   - <domain> (root)         → Commun (both servants)
- *
- * In dev (localhost / IP), no routing is applied.
- *
- * The proxy sets an `x-servant` header readable by downstream server components.
- * Client-side reading of the active servant is handled by <ServantProvider>.
+ * 1. /admin/* — vérifie le cookie admin_session, redirige vers /admin/login si absent
+ * 2. Sous-domaines — amela.dali.* → PAM, pasteurkongo.* → Kongo
  */
 
 const PAM_HOSTS = new Set(["amela.dali", "ameladali", "pam"]);
 const KONGO_HOSTS = new Set(["pasteurkongo", "kongo"]);
 
+const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/api/login"];
+
 export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
   const host = request.headers.get("host") || "";
   const hostname = host.split(":")[0].toLowerCase();
 
-  // Skip dev / IP / localhost
+  // ============================================================
+  // 1. Protection routes /admin (sauf /admin/login)
+  // ============================================================
+  if (pathname.startsWith("/admin") && !PUBLIC_ADMIN_PATHS.some((p) => pathname.startsWith(p))) {
+    const session = request.cookies.get("admin_session");
+    if (!session) {
+      const loginUrl = new URL("/admin/login", request.url);
+      loginUrl.searchParams.set("from", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    // Note: la validation du token se fait côté serveur dans le layout admin
+  }
+
+  // ============================================================
+  // 2. Routing multi-sous-domaines
+  // ============================================================
   if (
     hostname === "localhost" ||
     hostname.startsWith("127.") ||
@@ -37,7 +48,6 @@ export function proxy(request: NextRequest) {
   if (PAM_HOSTS.has(subdomain)) servant = "pam";
   else if (KONGO_HOSTS.has(subdomain)) servant = "kongo";
 
-  // Only add header if not already correct (avoid loops)
   const currentHeader = request.headers.get("x-servant");
   if (currentHeader === servant) {
     return NextResponse.next();

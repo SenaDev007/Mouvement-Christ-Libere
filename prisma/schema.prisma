@@ -1,32 +1,400 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema — Mouvement Christ Libère
+// PostgreSQL pour compatibilité Vercel (serverless incompatible SQLite)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
+
+// ============================================================
+// MODÈLES — V1 MVP + préparation V2
+// ============================================================
+
+// --- Utilisateurs & rôles ---
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?
+  role          UserRole  @default(MEMBER)
+  avatarUrl     String?
+  bio           String?
+  country       String?
+  city          String?
+  isVerified    Boolean   @default(false)
+  isMinor       Boolean   @default(false)
+  acceptedTerms DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  messages      Message[]
+  callsInitiated Call[]    @relation("CallInitiator")
+  callsReceived  Call[]    @relation("CallRecipient")
+  channelMembers ChannelMember[]
+  communityMembers CommunityMember[]
+  testimonies   Testimony[] @relation("TestimonyAuthor")
+  contactRequests ContactRequest[]
+
+  @@index([role])
+  @@index([country])
 }
 
-model Post {
+enum UserRole {
+  SUPER_ADMIN     // PAM, Pasteur Kongo
+  ADMIN           // Délégués
+  MODERATOR       // Bénévoles modération
+  ANIMATOR        // Animateurs de canaux
+  MEMBER_VERIFIED // Croyant authentifié
+  MEMBER          // Inscrit de base
+  GUEST           // Visiteur (généralement pas en DB)
+}
+
+// --- Serviteurs ---
+
+model Servant {
+  id          String   @id @default(cuid())
+  code        String   @unique // "pam" | "kongo"
+  fullName    String
+  shortName   String
+  role        String
+  bio         String
+  portraitUrl String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  biographies Biography[]
+  testimonies Testimony[]
+  teachings   Teaching[]
+  videos      Video[]
+  liveStreams LiveStream[]
+}
+
+// --- Biographies (frise chronologique) ---
+
+model Biography {
+  id          String   @id @default(cuid())
+  servantId   String
+  date        String   // "Enfance", "2024-03", etc.
+  title       String
+  description String
+  verseRef    String?
+  verseText   String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  servant     Servant  @relation(fields: [servantId], references: [id], onDelete: Cascade)
+
+  @@index([servantId])
+}
+
+// --- Témoignages ---
+
+model Testimony {
+  id          String   @id @default(cuid())
+  servantId   String
+  authorId    String?
+  title       String
+  short       String
+  content     String   @db.Text
+  status      TestimonyStatus @default(TO_DISCERN)
+  themes      String[] // tags
+  bookRef     String?
+  readingTime String?
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  servant     Servant  @relation(fields: [servantId], references: [id])
+  author      User?    @relation("TestimonyAuthor", fields: [authorId], references: [id])
+
+  @@index([servantId])
+  @@index([status])
+  @@index([publishedAt])
+}
+
+enum TestimonyStatus {
+  TO_DISCERN
+  CONFIRMED
+  ARCHIVED
+}
+
+// --- Enseignements ---
+
+model Teaching {
+  id          String   @id @default(cuid())
+  servantId   String
+  title       String
+  excerpt     String
+  content     String   @db.Text
+  theme       String
+  book        String
+  level       TeachingLevel
+  readingTime String?
+  pdfUrl      String?
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  servant     Servant  @relation(fields: [servantId], references: [id])
+
+  @@index([servantId])
+  @@index([theme])
+  @@index([level])
+  @@index([publishedAt])
+}
+
+enum TeachingLevel {
+  DECOUVERTE
+  INTERMEDIAIRE
+  AVANCE
+}
+
+// --- Vidéos & Lives ---
+
+model Video {
+  id          String   @id @default(cuid())
+  servantId   String
+  title       String
+  description String   @db.Text
+  duration    String
+  thumbnailUrl String?
+  videoUrl    String?
+  hlsUrl      String?
+  views       Int      @default(0)
+  isLive      Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  servant     Servant  @relation(fields: [servantId], references: [id])
+
+  @@index([servantId])
+  @@index([isLive])
+  @@index([publishedAt])
+}
+
+model LiveStream {
+  id           String    @id @default(cuid())
+  servantId    String
+  title        String
+  description  String    @db.Text
+  scheduledAt  DateTime
+  startedAt    DateTime?
+  endedAt      DateTime?
+  rtmpUrl      String?
+  hlsUrl       String?
+  status       LiveStatus @default(SCHEDULED)
+  youtubeUrl   String?
+  facebookUrl  String?
+  tiktokUrl    String?
+  odyseeUrl    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  servant      Servant   @relation(fields: [servantId], references: [id])
+
+  @@index([servantId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+enum LiveStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+// --- Média social intégré ---
+
+model Community {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  icon        String?
+  isPublic    Boolean  @default(true)
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  channels    Channel[]
+  members     CommunityMember[]
+
+  @@index([isPublic])
+}
+
+model CommunityMember {
+  id           String      @id @default(cuid())
+  communityId  String
+  userId       String
+  role         ChannelRole @default(MEMBER)
+  joinedAt     DateTime    @default(now())
+
+  community    Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([userId])
+}
+
+model Channel {
+  id           String       @id @default(cuid())
+  communityId  String
+  name         String
+  description  String?
+  type         ChannelType
+  isEncrypted  Boolean      @default(false)
+  isRestricted Boolean      @default(false)
+  order        Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  community    Community    @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  messages     Message[]
+  members      ChannelMember[]
+
+  @@index([communityId])
+  @@index([type])
+}
+
+enum ChannelType {
+  TEXT
+  VOICE
+  VIDEO
+  ANNOUNCEMENT
+  RESTRICTED
+}
+
+model ChannelMember {
+  id         String      @id @default(cuid())
+  channelId  String
+  userId     String
+  role       ChannelRole @default(MEMBER)
+  joinedAt   DateTime    @default(now())
+  lastReadAt DateTime?
+
+  channel    Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+enum ChannelRole {
+  SUPER_ADMIN
+  ADMIN
+  MODERATOR
+  ANIMATOR
+  MEMBER
+}
+
+model Message {
+  id         String    @id @default(cuid())
+  channelId  String
+  userId     String
+  content    String    @db.Text
+  type       MessageType @default(TEXT)
+  attachmentUrl String?
+  isEncrypted Boolean   @default(false)
+  replyToId  String?
+  isEdited   Boolean   @default(false)
+  isDeleted  Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  channel    Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, createdAt])
+  @@index([userId])
+}
+
+enum MessageType {
+  TEXT
+  AUDIO
+  IMAGE
+  VIDEO
+  FILE
+  POLL
+}
+
+// --- Appels audio/vidéo ---
+
+model Call {
+  id           String    @id @default(cuid())
+  initiatorId  String
+  recipientId  String
+  type         CallType
+  status       CallStatus @default(MISSED)
+  startedAt    DateTime?
+  endedAt      DateTime?
+  duration     Int? // en secondes
+  isUrgent     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  initiator    User      @relation("CallInitiator", fields: [initiatorId], references: [id])
+  recipient    User      @relation("CallRecipient", fields: [recipientId], references: [id])
+
+  @@index([recipientId, status])
+  @@index([initiatorId])
+}
+
+enum CallType {
+  AUDIO
+  VIDEO
+}
+
+enum CallStatus {
+  MISSED
+  ANSWERED
+  REJECTED
+  IN_PROGRESS
+}
+
+// --- Demandes de contact ---
+
+model ContactRequest {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  name      String
+  contact   String   // email ou WhatsApp
+  message   String   @db.Text
+  userId    String?
+  status    ContactStatus @default(PENDING)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([status])
+}
+
+enum ContactStatus {
+  PENDING
+  ANSWERED
+  ARCHIVED
+}
+
+// --- Dons ---
+
+model Donation {
+  id        String   @id @default(cuid())
+  amount    Float
+  currency  String   @default("EUR")
+  method    String   // card, transfer, mobile_money, crypto
+  donorName String?
+  donorEmail String?
+  donorUserId String?
+  message   String?
+  isAnonymous Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
