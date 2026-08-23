@@ -1,0 +1,246 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   Design System Royaume — Concept D
+   Violet impérial · Or sacré · Ivoire chaud
+   ============================================================ */
+
+@theme inline {
+  /* === Polices === */
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-cormorant);
+
+  /* === Palette de couleurs custom (Concept D) === */
+  --color-imperial: #2A0E3D;
+  --color-imperial-light: #3D1A54;
+  --color-imperial-dark: #1A0826;
+  --color-gold: #C9A227;
+  --color-gold-light: #DDBE55;
+  --color-gold-dark: #A3821C;
+  --color-lavender: #8C5FA8;
+  --color-ivory: #FAF6EF;
+  --color-ink: #1E0F2B;
+  --color-stone: #8A8378;
+  --color-state-success: #5B7052;
+  --color-state-danger: #B5502F;
+
+  /* === Rayons === */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* === shadcn compat === */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Light mode = ivoire */
+  --background: 41 38% 96%;
+  --foreground: 270 47% 11%;
+  --card: 41 38% 98%;
+  --card-foreground: 270 47% 11%;
+  --popover: 41 38% 98%;
+  --popover-foreground: 270 47% 11%;
+
+  --primary: 46 74% 47%;
+  --primary-foreground: 270 47% 11%;
+
+  --secondary: 281 30% 51%;
+  --secondary-foreground: 41 38% 98%;
+
+  --muted: 38 12% 50%;
+  --muted-foreground: 270 10% 35%;
+  --accent: 279 60% 14%;
+  --accent-foreground: 41 38% 96%;
+
+  --destructive: 18 71% 45%;
+  --border: 38 14% 70%;
+  --input: 38 14% 70%;
+  --ring: 46 74% 47%;
+
+  --chart-1: 46 74% 47%;
+  --chart-2: 281 30% 51%;
+  --chart-3: 279 60% 14%;
+  --chart-4: 18 71% 45%;
+  --chart-5: 88 12% 38%;
+
+  --sidebar: 279 60% 14%;
+  --sidebar-foreground: 41 38% 96%;
+  --sidebar-primary: 46 74% 47%;
+  --sidebar-primary-foreground: 270 47% 11%;
+  --sidebar-accent: 279 50% 22%;
+  --sidebar-accent-foreground: 41 38% 96%;
+  --sidebar-border: 279 30% 25%;
+  --sidebar-ring: 46 74% 47%;
+}
+
+.dark {
+  /* Dark mode = violet impérial */
+  --background: 277 67% 14%;
+  --foreground: 41 38% 96%;
+  --card: 279 60% 17%;
+  --card-foreground: 41 38% 96%;
+  --popover: 279 60% 17%;
+  --popover-foreground: 41 38% 96%;
+
+  --primary: 46 74% 47%;
+  --primary-foreground: 270 47% 11%;
+
+  --secondary: 281 30% 51%;
+  --secondary-foreground: 41 38% 98%;
+
+  --muted: 279 30% 25%;
+  --muted-foreground: 41 20% 75%;
+  --accent: 46 74% 47%;
+  --accent-foreground: 270 47% 11%;
+
+  --destructive: 18 71% 50%;
+  --border: 279 30% 25%;
+  --input: 279 30% 25%;
+  --ring: 46 74% 47%;
+
+  --chart-1: 46 74% 47%;
+  --chart-2: 281 30% 51%;
+  --chart-3: 41 38% 96%;
+  --chart-4: 18 71% 50%;
+  --chart-5: 88 12% 50%;
+
+  --sidebar: 277 67% 11%;
+  --sidebar-foreground: 41 38% 96%;
+  --sidebar-primary: 46 74% 47%;
+  --sidebar-primary-foreground: 270 47% 11%;
+  --sidebar-accent: 279 50% 22%;
+  --sidebar-accent-foreground: 41 38% 96%;
+  --sidebar-border: 279 30% 25%;
+  --sidebar-ring: 46 74% 47%;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif), Georgia, serif;
+    @apply tracking-tight;
+  }
+
+  .verse-ref {
+    font-weight: 600;
+    text-decoration: underline dotted;
+    text-decoration-color: #C9A227;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 4px;
+  }
+}
+
+/* ============================================================
+   Utilitaires custom (classes CSS directes — pas @apply)
+   ============================================================ */
+
+.gold-rule {
+  height: 3px;
+  width: 48px;
+  background-color: #C9A227;
+}
+
+.gold-rule-thin {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(to right, transparent, #C9A227, transparent);
+  opacity: 0.5;
+}
+
+.hero-imperial {
+  background:
+    radial-gradient(ellipse at top, rgba(140, 95, 168, 0.15), transparent 60%),
+    radial-gradient(ellipse at bottom right, rgba(201, 162, 39, 0.08), transparent 50%),
+    #2A0E3D;
+}
+
+.hero-imperial-deep {
+  background:
+    radial-gradient(ellipse at center, rgba(140, 95, 168, 0.1), transparent 70%),
+    #1A0826;
+}
+
+.card-gold-top {
+  position: relative;
+  background-color: #FAF6EF;
+  border: 1px solid rgba(138, 131, 120, 0.3);
+  border-radius: 8px;
+}
+.card-gold-top::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: #C9A227;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.scrollbar-discrete::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-discrete::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-discrete::-webkit-scrollbar-thumb {
+  background: rgba(138, 131, 120, 0.4);
+  border-radius: 3px;
+}
+.scrollbar-discrete::-webkit-scrollbar-thumb:hover {
+  background: rgba(138, 131, 120, 0.6);
+}
+
+.fade-cross {
+  animation: fadeCross 300ms ease-out;
+}
+@keyframes fadeCross {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.focus-mode {
+  background: #1A0826;
+  transition: background 400ms ease;
+}
