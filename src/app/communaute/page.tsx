@@ -1,183 +1,102 @@
-"use client";
+import { db } from "@/lib/db";
+import { HeroSection } from "@/components/premium/hero-section";
+import { ChannelCard, SecureBanner } from "@/components/premium/channel-card";
+import { PremiumSectionHeading } from "@/components/premium/section-heading";
+import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 
-import { useServant } from "@/components/site/servant-context";
-import { CHANNELS } from "@/lib/data/content";
-import { CTAButton } from "@/components/section-primitives/section-heading";
-import Link from "next/link";
-import {
-  ChevronRight,
-  Lock,
-  Hash,
-  Volume2,
-  Megaphone,
-  Users,
-  ShieldCheck,
-  FileText,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+export const dynamic = "force-dynamic";
 
-const CHANNEL_ICONS = {
-  texte: Hash,
-  voix: Volume2,
-  annonce: Megaphone,
-  "groupe restreint": Lock,
-};
+export default async function CommunautePage() {
+  const channels = await db.channel.findMany({
+    orderBy: [{ communityId: "asc" }, { order: "asc" }],
+    include: {
+      community: true,
+      _count: { select: { members: true } },
+    },
+  });
 
-const ROLE_DOTS = {
-  "super-admin": "bg-gold",
-  "modérateur": "bg-lavender",
-  "membre": "bg-stone",
-};
-
-export default function CommunautePage() {
-  const { servants } = useServant();
+  const roles = [
+    { role: "Super-admin", holder: "PAM / Pasteur Kongo", color: "bg-gold" },
+    { role: "Modérateur", holder: "Bénévoles validés", color: "bg-lavender" },
+    { role: "Membre", holder: "Croyant inscrit", color: "bg-stone" },
+  ];
 
   return (
-    <div className="fade-cross">
-      {/* Hero */}
-      <section className="hero-imperial py-16 md:py-24 relative">
-        <div className="container mx-auto max-w-4xl px-4">
-          <p className="text-xs uppercase tracking-[0.25em] text-gold font-semibold mb-4">
-            Espaces d'échange
-          </p>
-          <h1 className="font-serif text-4xl md:text-5xl font-semibold text-ivory leading-tight mb-4">
-            Communauté
-          </h1>
-          <p className="text-lg text-ivory/80 leading-relaxed max-w-2xl">
-            Des espaces d'échange organisés par thème, modérés avec attention,
-            pour grandir ensemble dans la foi.
-          </p>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gold opacity-60" />
-      </section>
+    <div>
+      <HeroSection
+        kicker="Espaces d'échange"
+        title="Communauté"
+        subtitle="Des espaces d'échange organisés par thème, modérés avec attention, pour grandir ensemble dans la foi. Canaux ouverts, canaux restreints chiffrés, intercession — à chacun son rythme."
+        primaryCta={{ label: "Rejoindre un canal", href: "#canaux" }}
+        secondaryCta={{ label: "Lire la charte", href: "#" }}
+      />
 
       {/* Rôles */}
-      <section className="bg-ivory border-b border-stone/15 py-8">
+      <section className="bg-ivory border-b border-stone/15 py-12">
         <div className="container mx-auto max-w-7xl px-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-4 text-center">
+          <p className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-6 text-center">
             Rôles dans la communauté
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-            <span className="inline-flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-gold" />
-              <span className="text-ink font-medium">PAM / Pasteur Kongo</span>
-              <span className="text-stone text-xs">— super-admin</span>
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-lavender" />
-              <span className="text-ink font-medium">Modérateur</span>
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-stone" />
-              <span className="text-ink font-medium">Membre</span>
-            </span>
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {roles.map((r) => (
+              <div key={r.role} className="flex items-center gap-3 p-4 rounded-card border border-stone/20 bg-ivory">
+                <span className={`w-3 h-3 rounded-full ${r.color}`} />
+                <div>
+                  <p className="text-sm font-semibold text-ink">{r.role}</p>
+                  <p className="text-xs text-stone">{r.holder}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Liste des canaux */}
-      <section className="bg-ivory py-16 md:py-20">
+      {/* Canaux */}
+      <section id="canaux" className="bg-ivory py-20 md:py-24">
         <div className="container mx-auto max-w-7xl px-4">
-          <div className="grid md:grid-cols-2 gap-6">
-            {CHANNELS.map((c) => {
-              const Icon = CHANNEL_ICONS[c.type];
-              return (
-                <article
-                  key={c.id}
-                  className={cn(
-                    "p-6 rounded-card border transition-all",
-                    c.encrypted
-                      ? "bg-imperial/5 border-gold/30 hover:border-gold/50"
-                      : "bg-ivory border-stone/30 hover:border-gold/40"
-                  )}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          "flex items-center justify-center w-10 h-10 rounded",
-                          c.encrypted
-                            ? "bg-gold/10 text-gold"
-                            : "bg-imperial/10 text-imperial"
-                        )}
-                      >
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h3 className="font-serif text-base font-semibold text-ink leading-tight">
-                          {c.name}
-                        </h3>
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-stone font-semibold mt-0.5">
-                          Canal {c.type}
-                        </p>
-                      </div>
-                    </div>
-                    {c.encrypted && (
-                      <span
-                        title="Canal chiffré de bout en bout"
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-gold/15 text-gold-dark border border-gold/30"
-                      >
-                        <Lock className="w-2.5 h-2.5" />
-                        E2E
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-ink/70 leading-relaxed mb-4">
-                    {c.description}
-                  </p>
-                  <div className="flex items-center justify-between pt-3 border-t border-stone/15">
-                    {c.members > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-stone">
-                        <Users className="w-3 h-3" />
-                        {c.members} membres
-                      </span>
-                    ) : (
-                      <span className="text-xs text-stone italic">
-                        Canal d'écoute
-                      </span>
-                    )}
-                    <Link
-                      href={`/communaute/${c.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-imperial hover:text-gold transition-colors group"
-                    >
-                      {c.type === "groupe restreint" ? "Demander l'accès" : "Rejoindre"}
-                      <ChevronRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
+          <PremiumSectionHeading
+            kicker="Les canaux"
+            title="Rejoignez l'espace qui vous correspond"
+            subtitle="Que vous soyez nouveau dans la foi, pasteur affilié, ou membre régulier de la communauté — il y a un canal pour vous. Certains canaux sont chiffrés de bout en bout pour protéger les échanges sensibles."
+            center
+          />
+
+          <div className="grid md:grid-cols-2 gap-6 mt-12">
+            {channels.map((c, i) => (
+              <ChannelCard
+                key={c.id}
+                name={c.name}
+                description={c.description || ""}
+                type={c.type}
+                members={c._count.members}
+                isEncrypted={c.isEncrypted}
+                href="#"
+                delay={i * 0.05}
+              />
+            ))}
           </div>
 
           {/* Bandeau confidentialité */}
-          <div className="mt-12 p-6 bg-imperial text-ivory rounded-card border border-gold/30">
-            <div className="flex items-start gap-4">
-              <ShieldCheck className="w-6 h-6 text-gold flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-serif text-lg font-semibold text-ivory mb-2">
-                  Confidentialité des échanges
-                </h3>
-                <p className="text-sm text-ivory/80 leading-relaxed">
-                  Les échanges des canaux restreints sont chiffrés de bout en
-                  bout : ni l'équipe technique ni les hébergeurs n'y ont
-                  accès. Seuls les participants du canal disposent des clés de
-                  déchiffrement.
-                </p>
-              </div>
-            </div>
+          <div className="mt-16">
+            <SecureBanner
+              title="Confidentialité des échanges"
+              description="Les échanges des canaux restreints sont chiffrés de bout en bout : ni l'équipe technique ni les hébergeurs n'y ont accès. Seuls les participants du canal disposent des clés de déchiffrement. Cette exigence n'est pas optionnelle — elle est de l'ordre de la protection des ministres et des croyants situés dans des contextes sensibles."
+            />
           </div>
+        </div>
+      </section>
 
-          {/* Charte */}
-          <div className="mt-8 text-center">
-            <Link
-              href="/communaute/charte"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-imperial hover:text-gold transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              Lire la charte de la communauté
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+      <SectionDivider variant="ornament" />
+
+      {/* Citation */}
+      <section className="bg-imperial py-24 md:py-32 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gold/5 blur-[100px] rounded-full pointer-events-none" />
+        <div className="relative">
+          <QuoteBlock
+            text="Voici, oh ! qu'il est agréable, qu'il est doux pour des frères de demeurer ensemble."
+            reference="Psaume 133:1"
+            variant="dark"
+          />
         </div>
       </section>
     </div>

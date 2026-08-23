@@ -1,6 +1,6 @@
 /**
- * Seed — Mouvement Christ Libère
- * Peuple la base avec les données initiales (V1 MVP).
+ * Seed V2 — Mouvement Christ Libère
+ * Contenus authentiques enrichis pour PAM et Pasteur Kongo.
  * Exécuter avec : bun run db:seed
  */
 
@@ -17,34 +17,51 @@ type TestimonyStatus = "TO_DISCERN" | "CONFIRMED" | "ARCHIVED";
 type TeachingLevel = "DECOUVERTE" | "INTERMEDIAIRE" | "AVANCE";
 type ChannelType = "TEXT" | "VOICE" | "VIDEO" | "ANNOUNCEMENT" | "RESTRICTED";
 
+// Import des contenus authentiques
+import { PAM_BIOGRAPHY, KONGO_BIOGRAPHY, AUTHENTIC_TESTIMONIES } from "../src/lib/data/authentic-content";
+
 async function main() {
-  console.log("🌱 Début du seed...");
+  console.log("🌱 Début du seed V2 (contenus authentiques)...");
+
+  // Nettoyer les anciennes données
+  console.log("  ⚠ Nettoyage des anciennes données...");
+  await db.message.deleteMany();
+  await db.channelMember.deleteMany();
+  await db.communityMember.deleteMany();
+  await db.channel.deleteMany();
+  await db.community.deleteMany();
+  await db.donation.deleteMany();
+  await db.contactRequest.deleteMany();
+  await db.call.deleteMany();
+  await db.liveStream.deleteMany();
+  await db.video.deleteMany();
+  await db.teaching.deleteMany();
+  await db.testimony.deleteMany();
+  await db.biography.deleteMany();
+  await db.servant.deleteMany();
+  console.log("  ✓ Base nettoyée");
 
   // ============================================================
   // 1. SERVITEURS
   // ============================================================
-  const pam = await db.servant.upsert({
-    where: { code: "pam" },
-    update: {},
-    create: {
+  const pam = await db.servant.create({
+    data: {
       code: "pam",
       fullName: "Afrika Alkebulane Pamela Dali",
       shortName: "PAM",
       role: "Servante de l'Éternel",
-      bio: "Témoignages d'enlèvements au ciel, instructions reçues du Seigneur Yeshoua, conformité à la Parole. Figure contemporaine du patriarche Hénoch.",
+      bio: "Témoignages d'enlèvements au ciel, instructions reçues du Seigneur Yeshoua, conformité à la Parole. Figure contemporaine du patriarche Hénoch — celle qui marche avec Dieu et qui est conduite au ciel pour recevoir et transmettre.",
       isActive: true,
     },
   });
 
-  const kongo = await db.servant.upsert({
-    where: { code: "kongo" },
-    update: {},
-    create: {
+  const kongo = await db.servant.create({
+    data: {
       code: "kongo",
       fullName: "Pasteur Kongo",
       shortName: "Pasteur Kongo",
       role: "Époux, ministre pastoral",
-      bio: "Ministère pastoral complémentaire, enseignements et partages spirituels.",
+      bio: "Ministère pastoral complémentaire au ministère prophétique de PAM. Enseignements bibliques structurés, accompagnement spirituel, transmission rigoureuse de la Parole.",
       isActive: true,
     },
   });
@@ -52,121 +69,22 @@ async function main() {
   console.log(`  ✓ Serviteurs: ${pam.shortName}, ${kongo.shortName}`);
 
   // ============================================================
-  // 2. BIOGRAPHIES
+  // 2. BIOGRAPHIES AUTHENTIQUES
   // ============================================================
-  const pamBio = [
-    {
-      date: "Enfance",
-      title: "Les premières intuitions",
-      description:
-        "Une enfance marquée par une perception spirituelle aiguë, où les questions sur l'invisible et la présence de Dieu s'imposent avec une intensité particulière. Pas encore de mots pour nommer ce qui se vivait — mais déjà une conscience que le ciel n'est pas un concept abstrait.",
-      verseRef: "Psaume 22:10",
-      verseText:
-        "C'est toi qui m'as tiré du sein de ma mère, qui m'as mis en confiance sur les mamelles de ma mère.",
-      order: 1,
-    },
-    {
-      date: "L'ouverture",
-      title: "Le premier appel",
-      description:
-        "Le moment où la voix du Seigneur s'est fait entendre d'une manière qui ne laissait plus place au doute. Une bascule. Ce qui était pressenti devient révélé. Ce qui était senti devient reçu.",
-      verseRef: "1 Samuel 3:10",
-      verseText:
-        "L'Éternel vint et se présenta, et il appela comme les autres fois : Samuel, Samuel ! Et Samuel répondit : Parle, car ton serviteur écoute.",
-      order: 2,
-    },
-    {
-      date: "La rencontre",
-      title: "La rencontre avec le Pasteur Kongo",
-      description:
-        "La rencontre de deux appels qui se rejoignent. Pas une fusion — une alliance. Deux ministères distincts qui s'articulent, deux voix qui ne se confondent pas mais s'accordent. Le mariage comme alliance spirituelle avant d'être une histoire d'amour terrestre.",
-      verseRef: "Ecclésiaste 4:12",
-      verseText:
-        "Si quelqu'un tombe, son compagnon le relève ; mais malheur à celui qui est seul et qui tombe, sans avoir un second pour le relever.",
-      order: 3,
-    },
-    {
-      date: "Les enlèvements",
-      title: "Marcher avec Dieu, comme Hénoch",
-      description:
-        "Les premières expériences d'enlèvement au ciel. Le Seigneur fait visiter des lieux, fait rencontrer des êtres, transmet des instructions. Chaque expérience est confrontée à la Parole écrite pour vérifier sa conformité. Rien n'est reçu sans être testé.",
-      verseRef: "Genèse 5:24",
-      verseText:
-        "Et Hénoch marcha avec Dieu ; et il ne fut plus, car Dieu le prit.",
-      order: 4,
-    },
-    {
-      date: "Aujourd'hui",
-      title: "La fidélité quotidienne",
-      description:
-        "Le ministère continue. Les enlèvements continuent. Les instructions continuent. Mais le quotidien reste — la prière, la lecture, le service, l'écoute des frères et sœurs. La plateforme est née de la nécessité de préserver et de transmettre ce qui est reçu.",
-      verseRef: "Hébreux 11:5",
-      verseText:
-        "C'est par la foi qu'Hénoch fut enlevé afin d'échapper à la mort, et il ne fut plus retrouvé, parce que Dieu l'avait enlevé.",
-      order: 5,
-    },
-  ];
-
-  for (const b of pamBio) {
-    await db.biography.create({
-      data: { ...b, servantId: pam.id },
-    });
+  for (const b of PAM_BIOGRAPHY) {
+    await db.biography.create({ data: { ...b, servantId: pam.id } });
   }
-  console.log(`  ✓ ${pamBio.length} jalons biographiques PAM`);
+  console.log(`  ✓ ${PAM_BIOGRAPHY.length} jalons biographiques PAM (authentiques)`);
 
-  const kongoBio = [
-    {
-      date: "Enfance",
-      title: "Un cœur tourné vers Dieu",
-      description:
-        "Une enfance où la question de Dieu s'est posée tôt, non comme une contrainte religieuse mais comme une attraction. L'Écriture lue, méditée, priée — bien avant tout ministère formel.",
-      verseRef: "Psaume 119:9",
-      verseText:
-        "Comment le jeune homme rendra-t-il pur son sentier ? En se dirigeant d'après ta parole.",
-      order: 1,
-    },
-    {
-      date: "Le ministère",
-      title: "Le pastorat",
-      description:
-        "L'appel à servir, à enseigner, à conduire. Le pastorat comme service, jamais comme pouvoir. Une charge qui s'exerce dans la crainte de Dieu et dans l'amour des brebis.",
-      verseRef: "1 Pierre 5:2-3",
-      verseText:
-        "Paissez le troupeau de Dieu qui est sous votre garde, non par contrainte, mais volontairement.",
-      order: 2,
-    },
-    {
-      date: "La rencontre",
-      title: "La rencontre avec PAM",
-      description:
-        "La reconnaissance de deux appels complémentaires. Le ministère pastoral et le ministère prophétique qui se rencontrent sans se confondre. Une alliance dans le Seigneur.",
-      verseRef: "Amos 3:3",
-      verseText: "Deux hommes marchent-ils ensemble, sans en être convenus ?",
-      order: 3,
-    },
-    {
-      date: "Aujourd'hui",
-      title: "Servir dans la continuité",
-      description:
-        "Poursuite du ministère pastoral, en harmonie avec le ministère prophétique de PAM. Enseignements, partages, accompagnement des frères et sœurs dans la foi.",
-      verseRef: "2 Timothée 4:2",
-      verseText:
-        "Prêche la parole, insiste en temps et hors de temps, reprends, censure, exhorte.",
-      order: 4,
-    },
-  ];
-
-  for (const b of kongoBio) {
-    await db.biography.create({
-      data: { ...b, servantId: kongo.id },
-    });
+  for (const b of KONGO_BIOGRAPHY) {
+    await db.biography.create({ data: { ...b, servantId: kongo.id } });
   }
-  console.log(`  ✓ ${kongoBio.length} jalons biographiques Pasteur Kongo`);
+  console.log(`  ✓ ${KONGO_BIOGRAPHY.length} jalons biographiques Pasteur Kongo (authentiques)`);
 
   // ============================================================
-  // 3. TÉMOIGNAGES
+  // 3. TÉMOIGNAGES AUTHENTIQUES
   // ============================================================
-  const testimonies: Array<{
+  const testimonyData: Array<{
     servantId: string;
     title: string;
     short: string;
@@ -179,88 +97,46 @@ async function main() {
   }> = [
     {
       servantId: pam.id,
-      title: "Le ciel ouvert au milieu de la nuit",
-      short:
-        "Une vision nocturne où le ciel s'est déchiré et où une lumière s'est fait entendre.",
-      content:
-        "Récit détaillé d'une vision nocturne où le ciel s'est ouvert. Description de ce qui a été vu, entendu, et reçu comme instruction. Confrontation systématique avec la Parole écrite.",
+      ...AUTHENTIC_TESTIMONIES[0],
       status: "CONFIRMED",
-      themes: ["Vision", "Ciel", "Lumière"],
-      bookRef: "Ézéchiel 1:1",
-      readingTime: "8 min",
       publishedAt: new Date("2025-03-14"),
     },
     {
       servantId: pam.id,
-      title: "Visite au Paradis — troisième ciel",
-      short:
-        "Un enlèvement où le Seigneur m'a fait visiter un lieu qui correspond à ce que Paul décrit.",
-      content:
-        "Récit d'un enlèvement au troisième ciel. Description du lieu, des êtres rencontrés, des paroles reçues. Conformité avec 2 Corinthiens 12:2.",
+      ...AUTHENTIC_TESTIMONIES[1],
       status: "CONFIRMED",
-      themes: ["Enlèvement", "Paradis", "Révélation"],
-      bookRef: "2 Corinthiens 12:2",
-      readingTime: "12 min",
       publishedAt: new Date("2025-02-08"),
     },
     {
       servantId: pam.id,
-      title: "Le chofar qui retentit",
-      short:
-        "Le son du chofar entendu de manière surnaturelle, accompagné d'une instruction claire.",
-      content:
-        "Récit de l'audition surnaturelle du chofar, accompagnée d'une instruction précise sur le rassemblement et la préparation au retour.",
+      ...AUTHENTIC_TESTIMONIES[2],
       status: "CONFIRMED",
-      themes: ["Chofar", "Instruction", "Retour"],
-      bookRef: "1 Thessaloniciens 4:16",
-      readingTime: "6 min",
       publishedAt: new Date("2025-04-22"),
     },
     {
-      servantId: kongo.id,
-      title: "Parole reçue sur le rassemblement",
-      short:
-        "Une parole reçue concernant le rassemblement des fils d'Israël dispersés.",
-      content:
-        "Enseignement pastoral reçu par révélation sur le rassemblement des dispersés d'Israël, en lien avec Ésaïe 11:12.",
+      servantId: pam.id,
+      ...AUTHENTIC_TESTIMONIES[3],
       status: "CONFIRMED",
-      themes: ["Rassemblement", "Israël", "Prophétie"],
-      bookRef: "Ésaïe 11:12",
-      readingTime: "9 min",
       publishedAt: new Date("2025-05-10"),
     },
     {
       servantId: pam.id,
-      title: "Récit récent d'une visite angélique",
-      short:
-        "Un récit transmis il y a quelques jours, encore en cours de discernement pastoral.",
-      content:
-        "Récit récent d'une visite angélique, en cours de discernement par l'équipe pastorale.",
+      ...AUTHENTIC_TESTIMONIES[4],
       status: "TO_DISCERN",
-      themes: ["Ange", "Visite", "À discerner"],
-      bookRef: "Hébreux 13:2",
-      readingTime: "5 min",
       publishedAt: new Date("2025-08-15"),
     },
     {
       servantId: kongo.id,
-      title: "La paix au milieu de la tempête",
-      short:
-        "Un enseignement pastoral sur la paix que le monde ne peut pas donner.",
-      content:
-        "Enseignement pastoral sur la paix de Christ, au-delà de ce que le monde peut offrir.",
+      ...AUTHENTIC_TESTIMONIES[5],
       status: "CONFIRMED",
-      themes: ["Paix", "Foi", "Espérance"],
-      bookRef: "Jean 14:27",
-      readingTime: "7 min",
       publishedAt: new Date("2025-06-30"),
     },
   ];
 
-  for (const t of testimonies) {
+  for (const t of testimonyData) {
     await db.testimony.create({ data: t });
   }
-  console.log(`  ✓ ${testimonies.length} témoignages`);
+  console.log(`  ✓ ${testimonyData.length} témoignages authentiques`);
 
   // ============================================================
   // 4. ENSEIGNEMENTS
@@ -280,9 +156,9 @@ async function main() {
       servantId: pam.id,
       title: "Marcher avec Dieu à la manière d'Hénoch",
       excerpt:
-        "Étude sur Genèse 5:24 et le témoignage d'Hénoch. Que signifie marcher avec Dieu au quotidien, et comment cela se vit-il concrètement aujourd'hui ?",
+        "Étude sur Genèse 5:24 et le témoignage d'Hénoch. Que signifie marcher avec Dieu au quotidien, et comment cela se vit-il concrètement aujourd'hui, à partir du témoignage contemporain de PAM ?",
       content:
-        "Étude approfondie sur la marche avec Dieu à partir du témoignage d'Hénoch...",
+        "Étude approfondie sur la marche avec Dieu à partir du témoignage d'Hénoch, patriarche mentionné dans Genèse 5. Hénoch n'a pas connu la mort — il a été enlevé. Ce témoignage, qui pourrait paraître étrange, est confirmé par Hébreux 11:5 et rappelé dans le livre d'Hénoch cité par Jude. L'enseignement explore ce que signifie 'marcher avec Dieu' : intimité, obéissance, réception, transmission. Et comment, à notre époque, certains serviteurs sont à nouveau conduits dans cette dimension prophétique.",
       theme: "Marche spirituelle",
       book: "Genèse",
       level: "INTERMEDIAIRE",
@@ -293,8 +169,9 @@ async function main() {
       servantId: kongo.id,
       title: "Les fêtes bibliques et leur accomplissement",
       excerpt:
-        "Présentation des sept fêtes de l'Éternel (Lévitique 23) et de leur accomplissement progressif en Yeshoua le Messie.",
-      content: "Étude des sept fêtes bibliques et de leur accomplissement messianique.",
+        "Présentation des sept fêtes de l'Éternel (Lévitique 23) et de leur accomplissement progressif en Yeshoua le Messie — passé, présent et à venir.",
+      content:
+        "Étude des sept fêtes bibliques instituées par l'Éternel en Lévitique 23. Quatre fêtes de printemps (Pâque, Pain sans levain, Prémices, Pentecôte) ont déjà été accomplies lors du premier avènement de Yeshoua. Trois fêtes d'automne (Trompettes, Expiation, Tabernacles) attendent leur accomplissement lors de son retour. Cette étude est fondamentale pour comprendre le calendrier prophétique de Dieu et se préparer aux temps qui viennent.",
       theme: "Calendrier liturgique",
       book: "Lévitique",
       level: "AVANCE",
@@ -305,8 +182,9 @@ async function main() {
       servantId: pam.id,
       title: "Le rassemblement des dispersés d'Israël",
       excerpt:
-        "Étude des promesses prophétiques sur le rassemblement des fils d'Israël et leur signification pour notre temps.",
-      content: "Étude prophétique sur le rassemblement des dispersés d'Israël.",
+        "Étude des promesses prophétiques sur le rassemblement des fils d'Israël et leur signification pour notre temps — à partir des paroles reçues par PAM.",
+      content:
+        "Étude prophétique sur le rassemblement des dispersés d'Israël, en lien avec les paroles reçues par PAM. Ésaïe 11:12, Ézéchiel 37:21-22, Jérémie 31:10 annoncent un rassemblement des fils d'Israël avant le retour du Messie. Cette étude explore comment ce rassemblement commence spirituellement avant de se manifester visiblement, et quel rôle joue la plateforme Mouvement Christ Libère dans cette œuvre.",
       theme: "Prophétie",
       book: "Ésaïe",
       level: "AVANCE",
@@ -317,8 +195,9 @@ async function main() {
       servantId: kongo.id,
       title: "Discerner les voix spirituelles",
       excerpt:
-        "Comment discerner ce qui vient de Dieu, ce qui vient de l'ennemi, et ce qui vient de notre propre âme. Critères bibliques de discernement.",
-      content: "Enseignement sur le discernement spirituel selon 1 Jean 4.",
+        "Comment discerner ce qui vient de Dieu, ce qui vient de l'ennemi, et ce qui vient de notre propre âme. Critères bibliques de discernement, à partir de 1 Jean 4.",
+      content:
+        "Enseignement pastoral sur le discernement spirituel. Comment distinguer la voix du Bon Berger de celle du mercenaire, de celle du loup, et de celle de notre propre âme ? Critères bibliques : conformité à l'Écriture, fruit de l'Esprit, témoignage intérieur, confirmation communautaire. Cet enseignement est crucial en un temps où beaucoup reçoivent des 'paroles' — toutes ne viennent pas du Seigneur.",
       theme: "Discernement",
       book: "1 Jean",
       level: "INTERMEDIAIRE",
@@ -329,8 +208,9 @@ async function main() {
       servantId: pam.id,
       title: "Le chofar dans la Bible et aujourd'hui",
       excerpt:
-        "Étude sur la signification du chofar dans l'Écriture, depuis le mont Sinaï jusqu'au retour du Messie.",
-      content: "Étude sur le chofar, du Sinaï au retour de Yeshoua.",
+        "Étude sur la signification du chofar dans l'Écriture, depuis le mont Sinaï jusqu'au retour du Messie — et ce que son retentissement signifie pour nous.",
+      content:
+        "Le chofar — cor de bélier — occupe une place centrale dans la Bible. Il retentit au Sinaï (Exode 19), il annonce l'année jubilaire (Lévitique 25), il ouvre Yom Terouah (la fête des Trompettes). Il retentira aussi lors du retour du Messie (1 Thessaloniciens 4:16). Cet enseignement explore la signification spirituelle du chofar et prépare la communauté à écouter attentivement ce qui va retentir.",
       theme: "Symbolique biblique",
       book: "Exode",
       level: "DECOUVERTE",
@@ -341,8 +221,9 @@ async function main() {
       servantId: kongo.id,
       title: "La prière qui prévaut",
       excerpt:
-        "Enseignement pastoral sur la prière fervente, à partir de la vie d'Élie et de Jacques 5:16-18.",
-      content: "Enseignement sur la prière fervente et efficace.",
+        "Enseignement pastoral sur la prière fervente, à partir de la vie d'Élie et de Jacques 5:16-18. La prière qui obtient, la prière qui résiste, la prière qui prévaut.",
+      content:
+        "Enseignement sur la prière fervente et efficace, à partir du témoignage d'Élie (1 Rois 17-18, Jacques 5:16-18). Élie était un homme de même nature que nous, mais sa prière a fermé les cieux, ouvert les cieux, fait descendre le feu. Qu'est-ce qui distinguait sa prière ? Foi, persévérance, alignement avec la volonté divine, posture. Cet enseignement pastoral encourage la communauté à persévérer dans une prière qui prévaut.",
       theme: "Prière",
       book: "Jacques",
       level: "DECOUVERTE",
@@ -364,7 +245,7 @@ async function main() {
       servantId: pam.id,
       title: "Enseignement sur le retour de Yeshoua",
       description:
-        "Étude approfondie des signes des temps et de l'espérance du retour du Maître.",
+        "Étude approfondie des signes des temps et de l'espérance du retour du Maître. Enseignement prophétique à partir des paroles reçues.",
       duration: "1:24:30",
       views: 1240,
       isLive: false,
@@ -373,7 +254,7 @@ async function main() {
     {
       servantId: kongo.id,
       title: "Live — Marcher dans la sainteté",
-      description: "Direct sur la marche quotidienne avec Dieu.",
+      description: "Direct sur la marche quotidienne avec Dieu, la sanctification pratique au quotidien.",
       duration: "EN DIRECT",
       views: 0,
       isLive: true,
@@ -383,7 +264,7 @@ async function main() {
       servantId: pam.id,
       title: "Témoignage d'enlèvement au ciel",
       description:
-        "Récit détaillé d'une visite au ciel et des instructions reçues.",
+        "Récit détaillé d'une visite au ciel et des instructions reçues du Seigneur Yeshoua.",
       duration: "42:15",
       views: 2150,
       isLive: false,
@@ -392,7 +273,7 @@ async function main() {
     {
       servantId: kongo.id,
       title: "Pastorale — Tenir ferme dans la foi",
-      description: "Encouragement pastoral pour les temps difficiles.",
+      description: "Encouragement pastoral pour les temps difficiles. Comment tenir quand tout semble chanceler.",
       duration: "28:50",
       views: 890,
       isLive: false,
@@ -427,7 +308,7 @@ async function main() {
     {
       name: "Annonces officielles",
       description:
-        "Communications officielles de PAM et du Pasteur Kongo.",
+        "Communications officielles de PAM et du Pasteur Kongo. Lecture seule pour les membres.",
       type: "ANNOUNCEMENT",
       isEncrypted: false,
       isRestricted: false,
@@ -445,7 +326,7 @@ async function main() {
     {
       name: "Cercle des pasteurs affiliés",
       description:
-        "Canal réservé aux pasteurs en relation avec le ministère. Accès sur invitation.",
+        "Canal réservé aux pasteurs en relation avec le ministère. Accès sur invitation. Échanges chiffrés de bout en bout.",
       type: "RESTRICTED",
       isEncrypted: true,
       isRestricted: true,
@@ -454,7 +335,7 @@ async function main() {
     {
       name: "Intercession communautaire",
       description:
-        "Demandes de prière, chaîne d'intercession, suivi des exaucements.",
+        "Demandes de prière, chaîne d'intercession, suivi des exaucements. Le moteur spirituel de la communauté.",
       type: "TEXT",
       isEncrypted: false,
       isRestricted: false,
@@ -462,7 +343,7 @@ async function main() {
     },
     {
       name: "Études bibliques en direct",
-      description: "Canal vocal actif pendant les lives d'enseignement.",
+      description: "Canal vocal actif pendant les lives d'enseignement. Échanges en temps réel.",
       type: "VOICE",
       isEncrypted: false,
       isRestricted: false,
@@ -471,9 +352,7 @@ async function main() {
   ];
 
   for (const c of channels) {
-    await db.channel.create({
-      data: { ...c, communityId: community.id },
-    });
+    await db.channel.create({ data: { ...c, communityId: community.id } });
   }
   console.log(`  ✓ ${channels.length} canaux communauté`);
 
@@ -488,20 +367,20 @@ async function main() {
     data: {
       servantId: kongo.id,
       title: "Enseignement hebdomadaire — Tenir ferme",
-      description: "Direct hebdomadaire du Pasteur Kongo sur la persévérance.",
+      description: "Direct hebdomadaire du Pasteur Kongo sur la persévérance dans les temps difficiles.",
       scheduledAt: nextLive,
       status: "SCHEDULED",
     } as const,
   });
   console.log(`  ✓ 1 live programmé`);
 
-  console.log("\n✅ Seed terminé avec succès !");
+  console.log("\n✅ Seed V2 terminé avec succès !");
   console.log(`   - 2 serviteurs`);
-  console.log(`   - 9 jalons biographiques`);
-  console.log(`   - 6 témoignages`);
-  console.log(`   - 6 enseignements`);
-  console.log(`   - 4 vidéos`);
-  console.log(`   - 5 canaux communauté`);
+  console.log(`   - ${PAM_BIOGRAPHY.length + KONGO_BIOGRAPHY.length} jalons biographiques authentiques`);
+  console.log(`   - ${testimonyData.length} témoignages authentiques`);
+  console.log(`   - ${teachings.length} enseignements`);
+  console.log(`   - ${videos.length} vidéos`);
+  console.log(`   - ${channels.length} canaux communauté`);
   console.log(`   - 1 live programmé`);
 }
 

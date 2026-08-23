@@ -1,18 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { CTAButton } from "@/components/section-primitives/section-heading";
-import { Send, CheckCircle2 } from "lucide-react";
+import { HeroSection } from "@/components/premium/hero-section";
+import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
+import { Send, CheckCircle2, Loader2, AlertCircle, MessageCircle } from "lucide-react";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({
-    name: "",
-    contact: "",
-    message: "",
-  });
+  const [form, setForm] = useState({ name: "", contact: "", message: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,36 +44,27 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="fade-cross">
-      {/* Hero */}
-      <section className="hero-imperial py-16 md:py-24 relative">
-        <div className="container mx-auto max-w-4xl px-4">
-          <p className="text-xs uppercase tracking-[0.25em] text-gold font-semibold mb-4">
-            Prendre contact
-          </p>
-          <h1 className="font-serif text-4xl md:text-5xl font-semibold text-ivory leading-tight mb-4">
-            Demander un échange
-          </h1>
-          <p className="text-lg text-ivory/80 leading-relaxed max-w-2xl">
-            Laissez-nous vos coordonnées, un membre de l'équipe pastorale
-            reviendra vers vous.
-          </p>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gold opacity-60" />
-      </section>
+    <div>
+      <HeroSection
+        kicker="Prendre contact"
+        title="Demander un échange"
+        subtitle="Laissez-nous vos coordonnées, un membre de l'équipe pastorale reviendra vers vous. Délai de réponse garanti : sous 24h."
+        primaryCta={{ label: "Envoyer ma demande", href: "#form" }}
+      />
 
       {/* Formulaire */}
-      <section className="bg-ivory py-16 md:py-20">
+      <section id="form" className="bg-ivory py-20 md:py-24">
         <div className="container mx-auto max-w-2xl px-4">
           {submitted ? (
-            <div className="card-gold-top p-8 md:p-10 text-center">
-              <CheckCircle2 className="w-12 h-12 text-state-success mx-auto mb-4" />
+            <div className="card-gold-top p-10 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-state-success/15 border-2 border-state-success/40 mb-6">
+                <CheckCircle2 className="w-8 h-8 text-state-success" />
+              </div>
               <h2 className="font-serif text-2xl font-semibold text-ink mb-3">
                 Message bien transmis
               </h2>
-              <p className="text-sm text-ink/70 leading-relaxed mb-6">
-                Votre message a bien été transmis. Une réponse vous parviendra
-                sous 24 à 48h.
+              <p className="text-sm text-stone leading-relaxed mb-6">
+                Votre message a bien été transmis. Une réponse vous parviendra sous 24 à 48h.
               </p>
               <button
                 onClick={() => {
@@ -89,10 +77,7 @@ export default function ContactPage() {
               </button>
             </div>
           ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="card-gold-top p-8 md:p-10 space-y-5"
-            >
+            <form onSubmit={handleSubmit} className="card-gold-top p-8 md:p-10 space-y-6">
               <div>
                 <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
                   Votre nom
@@ -103,7 +88,7 @@ export default function ContactPage() {
                   value={form.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                  className="w-full px-4 py-3.5 rounded-card border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all"
                   placeholder="Votre nom complet"
                 />
               </div>
@@ -118,7 +103,7 @@ export default function ContactPage() {
                   value={form.contact}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                  className="w-full px-4 py-3.5 rounded-card border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all"
                   placeholder="email@exemple.com ou +33 6 12 34 56 78"
                 />
               </div>
@@ -133,23 +118,35 @@ export default function ContactPage() {
                   onChange={handleChange}
                   required
                   rows={6}
-                  className="w-full px-4 py-3 rounded border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold resize-none"
+                  className="w-full px-4 py-3.5 rounded-card border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all resize-none"
                   placeholder="Décrivez en quelques mots l'objet de votre demande..."
                 />
               </div>
 
+              {error && (
+                <div className="flex items-center gap-2 text-state-danger text-sm p-3 rounded-md bg-state-danger/5 border border-state-danger/20">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-6 py-4 rounded bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                className="w-full px-6 py-4 rounded-card bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? "Envoi en cours..." : "Envoyer ma demande"}
-                {!submitting && <Send className="w-4 h-4" />}
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Envoyer ma demande
+                  </>
+                )}
               </button>
-
-              {error && (
-                <p className="text-sm text-state-danger text-center">{error}</p>
-              )}
 
               <p className="text-xs text-stone text-center">
                 Délai de réponse garanti : sous 24h.
@@ -159,21 +156,39 @@ export default function ContactPage() {
 
           {/* Alternative WhatsApp */}
           <div className="mt-8 p-6 bg-imperial/5 border border-gold/20 rounded-card">
-            <p className="text-sm text-ink/80 mb-3">
-              Pour une demande urgente, vous pouvez aussi nous écrire
-              directement sur WhatsApp :
-            </p>
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent(
-                `Bonjour, je m'appelle ${form.name || "[VOTRE NOM]"}. Je souhaite échanger au sujet de : [SUJET]. ${form.message || "[MESSAGE LIBRE]"}. Mon numéro : ${form.contact || "[TÉLÉPHONE]"}`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-state-success hover:opacity-80 transition-opacity"
-            >
-              Envoyer un message WhatsApp pré-rempli
-            </a>
+            <div className="flex items-start gap-3">
+              <MessageCircle className="w-5 h-5 text-state-success flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-ink/80 mb-3">
+                  Pour une demande urgente, vous pouvez aussi nous écrire directement sur WhatsApp :
+                </p>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    `Bonjour, je m'appelle ${form.name || "[VOTRE NOM]"}. Je souhaite échanger au sujet de : [SUJET]. ${form.message || "[MESSAGE LIBRE]"}. Mon numéro : ${form.contact || "[TÉLÉPHONE]"}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-state-success hover:opacity-80 transition-opacity"
+                >
+                  Envoyer un message WhatsApp pré-rempli
+                </a>
+              </div>
+            </div>
           </div>
+        </div>
+      </section>
+
+      <SectionDivider variant="ornament" />
+
+      {/* Citation */}
+      <section className="bg-imperial py-24 md:py-32 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gold/5 blur-[100px] rounded-full pointer-events-none" />
+        <div className="relative">
+          <QuoteBlock
+            text="Portez les fardeaux les uns des autres, et vous accomplirez ainsi la loi de Christ."
+            reference="Galates 6:2"
+            variant="dark"
+          />
         </div>
       </section>
     </div>

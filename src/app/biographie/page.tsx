@@ -1,114 +1,155 @@
-"use client";
+import { db } from "@/lib/db";
+import { HeroSection } from "@/components/premium/hero-section";
+import { VerticalTimeline } from "@/components/premium/vertical-timeline";
+import { PremiumSectionHeading } from "@/components/premium/section-heading";
+import { SectionDivider } from "@/components/premium/section-divider";
+import { QuoteBlock } from "@/components/premium/section-divider";
+import { CTAButton } from "@/components/section-primitives/section-heading";
+import { notFound } from "next/navigation";
 
-import { useServant } from "@/components/site/servant-context";
-import { BIOGRAPHIES } from "@/lib/data/content";
-import { SectionHeading, CTAButton, GoldRule } from "@/components/section-primitives/section-heading";
-import Link from "next/link";
-import { ChevronRight, BookOpen } from "lucide-react";
-import { cn } from "@/lib/utils";
+export const dynamic = "force-dynamic";
 
-export default function BiographiePage() {
-  const { servant, setServant, servants } = useServant();
-  const servantId = servant.id === "commun" ? "pam" : servant.id;
-  const milestones = BIOGRAPHIES[servantId as "pam" | "kongo"];
+interface PageProps {
+  searchParams: Promise<{ servant?: string }>;
+}
+
+export default async function BiographiePage({ searchParams }: PageProps) {
+  const { servant: servantParam } = await searchParams;
+  const servantCode = servantParam === "kongo" ? "kongo" : "pam";
+
+  const servant = await db.servant.findUnique({
+    where: { code: servantCode },
+  });
+
+  if (!servant) notFound();
+
+  const biographies = await db.biography.findMany({
+    where: { servantId: servant.id },
+    orderBy: { order: "asc" },
+  });
+
+  const timelineItems = biographies.map((b) => ({
+    date: b.date,
+    title: b.title,
+    description: b.description,
+    verseRef: b.verseRef || undefined,
+    verseText: b.verseText || undefined,
+  }));
+
+  const isPam = servant.code === "pam";
 
   return (
-    <div className="fade-cross">
-      {/* Hero */}
-      <section className="hero-imperial py-16 md:py-24 relative">
-        <div className="container mx-auto max-w-4xl px-4">
-          <p className="text-xs uppercase tracking-[0.25em] text-gold font-semibold mb-4">
-            Les étapes d'un appel
-          </p>
-          <h1 className="font-serif text-4xl md:text-5xl font-semibold text-ivory leading-tight mb-4">
-            Biographie de {servants[servantId as "pam" | "kongo"].shortName}
-          </h1>
-          <p className="text-lg text-ivory/80 leading-relaxed max-w-2xl">
-            Un parcours retracé étape par étape, tel qu'il a été vécu et
-            transmis.
-          </p>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gold opacity-60" />
-      </section>
+    <div>
+      <HeroSection
+        kicker="Les étapes d'un appel"
+        title={`Biographie de ${servant.shortName}`}
+        subtitle="Un parcours retracé étape par étape, tel qu'il a été vécu et transmis — sans survente, sans embellissement. Les faits rapportés portent leur propre poids."
+        primaryCta={{ label: "Lire les témoignages", href: "/temoignages" }}
+        secondaryCta={{
+          label: isPam ? "Voir le Pasteur Kongo" : "Voir PAM",
+          href: isPam ? "/biographie?servant=kongo" : "/biographie?servant=pam",
+        }}
+      />
 
       {/* Switcher serviteur */}
-      <section className="bg-ivory border-b border-stone/15 py-6">
+      <section className="bg-ivory border-b border-stone/15 py-6 sticky top-[120px] z-30 backdrop-blur-md bg-ivory/95">
         <div className="container mx-auto max-w-7xl px-4 flex items-center justify-center gap-4">
           <span className="text-xs uppercase tracking-[0.18em] text-stone font-semibold">
             Choisir le serviteur :
           </span>
-          {(["pam", "kongo"] as const).map((id) => (
-            <button
-              key={id}
-              onClick={() => setServant(id)}
-              className={cn(
-                "px-4 py-2 rounded text-sm font-semibold transition-all",
-                servantId === id
-                  ? "bg-imperial text-ivory"
-                  : "border border-imperial/30 text-imperial hover:bg-imperial/5"
-              )}
-            >
-              {servants[id].shortName}
-            </button>
-          ))}
+          <div className="flex items-center gap-2">
+            <ServantSwitcherLink
+              code="pam"
+              label="PAM"
+              active={isPam}
+            />
+            <ServantSwitcherLink
+              code="kongo"
+              label="Pasteur Kongo"
+              active={!isPam}
+            />
+          </div>
         </div>
       </section>
 
-      {/* Frise chronologique */}
-      <section className="bg-ivory py-16 md:py-24">
-        <div className="container mx-auto max-w-4xl px-4">
-          <div className="relative">
-            {/* Ligne verticale or */}
-            <div className="absolute left-4 md:left-8 top-2 bottom-2 w-px bg-gold/40" />
+      {/* Timeline premium */}
+      <section className="bg-ivory py-20 md:py-28">
+        <div className="container mx-auto max-w-5xl px-4">
+          <PremiumSectionHeading
+            kicker="La frise chronologique"
+            title={isPam ? "Marcher avec Dieu, comme Hénoch" : "Un cœur tourné vers Dieu"}
+            subtitle={isPam
+              ? "Le parcours de PAM — de l'enfance en Alkebulan aux enlèvements au ciel, des premières intuitions aux instructions reçues pour le rassemblement des dispersés d'Israël."
+              : "Le parcours du Pasteur Kongo — de l'appel précoce au ministère pastoral, en alliance avec le ministère prophétique de PAM."
+            }
+            center
+          />
 
-            <div className="space-y-12">
-              {milestones.map((m, i) => (
-                <div
-                  key={i}
-                  className="relative pl-12 md:pl-20 fade-cross"
-                  style={{ animationDelay: `${i * 80}ms` }}
-                >
-                  {/* Point sur la frise */}
-                  <div className="absolute left-0 md:left-4 top-1 flex items-center justify-center w-8 h-8 rounded-full bg-ivory border-2 border-gold">
-                    <div className="w-2.5 h-2.5 rounded-full bg-gold" />
-                  </div>
-
-                  {/* Contenu */}
-                  <div className="mb-2">
-                    <p className="text-xs uppercase tracking-[0.18em] text-gold font-semibold">
-                      {m.date}
-                    </p>
-                  </div>
-                  <h2 className="font-serif text-2xl md:text-3xl font-semibold text-ink leading-snug mb-3">
-                    {m.title}
-                  </h2>
-                  <p className="text-base text-ink/80 leading-relaxed mb-4">
-                    {m.description}
-                  </p>
-                  {m.verseRef && m.verseText && (
-                    <div className="mt-4 pl-4 border-l-2 border-gold/50">
-                      <p className="font-serif italic text-base text-imperial/90 leading-relaxed mb-1">
-                        « {m.verseText} »
-                      </p>
-                      <p className="text-xs uppercase tracking-[0.18em] text-stone font-semibold">
-                        <BookOpen className="w-3 h-3 inline mr-1.5" />
-                        {m.verseRef}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+          <div className="mt-20">
+            <VerticalTimeline items={timelineItems} variant="light" />
           </div>
+        </div>
+      </section>
 
-          {/* CTA fin de page */}
-          <div className="mt-16 pt-8 border-t border-stone/15 text-center">
+      <SectionDivider variant="ornament" />
+
+      {/* Citation biblique */}
+      <section className="bg-imperial py-24 md:py-32 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gold/5 blur-[100px] rounded-full pointer-events-none" />
+        <div className="relative">
+          <QuoteBlock
+            text={isPam
+              ? "C'est par la foi qu'Hénoch fut enlevé afin d'échapper à la mort, et il ne fut plus retrouvé, parce que Dieu l'avait enlevé."
+              : "Paissez le troupeau de Dieu qui est sous votre garde, non par contrainte, mais volontairement, selon Dieu."
+            }
+            reference={isPam ? "Hébreux 11:5" : "1 Pierre 5:2"}
+            variant="dark"
+          />
+        </div>
+      </section>
+
+      {/* CTA fin */}
+      <section className="bg-ivory py-20 text-center">
+        <div className="container mx-auto max-w-2xl px-4">
+          <h2 className="font-serif text-2xl md:text-3xl font-semibold text-ink mb-4">
+            Aller plus loin
+          </h2>
+          <p className="text-sm text-stone mb-8 leading-relaxed">
+            La biographie n'est que le commencement. Les témoignages détaillent ce qui a été vécu.
+            Les enseignements transmettent ce qui a été reçu.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <CTAButton href="/temoignages">
-              Lire les témoignages de {servants[servantId as "pam" | "kongo"].shortName}
+              Lire les témoignages
+            </CTAButton>
+            <CTAButton href="/enseignements" variant="secondary">
+              Voir les enseignements
             </CTAButton>
           </div>
         </div>
       </section>
     </div>
+  );
+}
+
+function ServantSwitcherLink({
+  code,
+  label,
+  active,
+}: {
+  code: string;
+  label: string;
+  active: boolean;
+}) {
+  const cls = active
+    ? "bg-imperial text-ivory border-imperial"
+    : "border-imperial/30 text-imperial hover:bg-imperial/5";
+  return (
+    <a
+      href={`/biographie?servant=${code}`}
+      className={`px-4 py-2 rounded-md text-sm font-semibold transition-all border ${cls}`}
+    >
+      {label}
+    </a>
   );
 }
