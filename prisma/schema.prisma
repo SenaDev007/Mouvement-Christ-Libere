@@ -144,6 +144,7 @@ model Teaching {
   updatedAt   DateTime @updatedAt
 
   servant     Servant  @relation(fields: [servantId], references: [id])
+  liturgicalEvents LiturgicalEvent[]
 
   @@index([servantId])
   @@index([theme])
@@ -397,4 +398,48 @@ model Donation {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// --- Calendrier liturgique (V2) ---
+
+model LiturgicalEvent {
+  id          String   @id @default(cuid())
+  name        String   // "Pessah", "Shavouot", etc.
+  nameFr      String   // "Pâque"
+  nameHe      String?  // "פֶּסַח"
+  type        LiturgicalEventType
+  description String   @db.Text
+  startDate   DateTime
+  endDate     DateTime?
+  teachingId  String?  // enseignement lié
+  color       String   @default("#C9A227") // or par défaut
+  isShabbat   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teaching    Teaching? @relation(fields: [teachingId], references: [id])
+
+  @@index([startDate])
+  @@index([type])
+}
+
+enum LiturgicalEventType {
+  SPRING_FEAST     // Pâque, Pain sans levain, Prémices, Pentecôte
+  FALL_FEAST       // Trompettes, Expiation, Tabernacles
+  SHABBAT          // Sabbat hebdomadaire
+  NEW_MOON         // Roch 'Hodech
+  OTHER            // Pourim, Hanoucca, etc.
+}
+
+// Préférences utilisateur pour notifications calendrier
+model UserCalendarPreference {
+  id              String   @id @default(cuid())
+  userId          String
+  shabbatRest     Boolean  @default(false) // suspendre notifications pendant shabbat
+  feastReminders  Boolean  @default(true)
+  reminderDays    Int      @default(1) // jours avant l'événement
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId])
 }

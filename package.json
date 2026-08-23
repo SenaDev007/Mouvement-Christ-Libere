@@ -13,6 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "db:seed": "bun run prisma/seed.ts",
+    "db:seed:calendar": "bun run prisma/seed-calendar.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
@@ -60,7 +61,10 @@
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.2",
     "input-otp": "^1.4.2",
+    "livekit-client": "^2.22.0",
+    "livekit-server-sdk": "^2.18.0",
     "lucide-react": "^0.525.0",
+    "matrix-js-sdk": "^42.2.0",
     "next": "^16.1.1",
     "next-auth": "^4.24.11",
     "next-intl": "^4.3.4",

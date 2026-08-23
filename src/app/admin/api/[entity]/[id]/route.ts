@@ -20,6 +20,7 @@ const ENTITY_MAP = {
   contactrequests: "contactRequest",
   donations: "donation",
   communities: "community",
+  calendar: "liturgicalEvent",
 } as const;
 
 type EntityName = keyof typeof ENTITY_MAP;

@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   ExternalLink,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -42,6 +43,7 @@ const NAV_SECTIONS = [
     items: [
       { label: "Vidéos", href: "/admin/videos", icon: Video },
       { label: "Lives", href: "/admin/lives", icon: Radio },
+      { label: "Calendrier", href: "/admin/calendar", icon: Calendar },
     ],
   },
   {

@@ -8,12 +8,14 @@ const FOOTER_LINKS = {
       { label: "Témoignages", href: "/temoignages" },
       { label: "Enseignements", href: "/enseignements" },
       { label: "Vidéos & Lives", href: "/videos" },
+      { label: "Calendrier", href: "/calendrier" },
     ],
   },
   community: {
     title: "Communauté",
     links: [
       { label: "Rejoindre un canal", href: "/communaute" },
+      { label: "Appels audio & vidéo", href: "/appels" },
       { label: "Charte de la communauté", href: "/communaute/charte" },
       { label: "Contribuer", href: "/contribuer" },
     ],
