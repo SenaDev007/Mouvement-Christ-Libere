@@ -38,7 +38,7 @@ export function MagneticButton({
   };
 
   const baseClass = cn(
-    "group relative inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-md font-semibold text-sm transition-colors overflow-hidden",
+    "group relative inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-md font-semibold text-sm transition-colors overflow-hidden whitespace-nowrap",
     variant === "primary" && "bg-gold text-ink hover:bg-gold-light",
     variant === "secondary" && "border border-gold/40 text-gold hover:bg-gold/10",
     variant === "ghost" && "text-ivory/80 hover:text-gold",

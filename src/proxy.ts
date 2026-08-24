@@ -1,15 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-/**
- * Proxy (Next.js 16 convention) — multi-tenant routing + admin guard.
- *
- * 1. /admin/* — vérifie le cookie admin_session, redirige vers /admin/login si absent
- * 2. Sous-domaines — amela.dali.* → PAM, pasteurkongo.* → Kongo
- */
-
 const PAM_HOSTS = new Set(["amela.dali", "ameladali", "pam"]);
 const KONGO_HOSTS = new Set(["pasteurkongo", "kongo"]);
-
 const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/api/login"];
 
 export function proxy(request: NextRequest) {
@@ -17,9 +9,6 @@ export function proxy(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const hostname = host.split(":")[0].toLowerCase();
 
-  // ============================================================
-  // 1. Protection routes /admin (sauf /admin/login)
-  // ============================================================
   if (pathname.startsWith("/admin") && !PUBLIC_ADMIN_PATHS.some((p) => pathname.startsWith(p))) {
     const session = request.cookies.get("admin_session");
     if (!session) {
@@ -27,12 +16,8 @@ export function proxy(request: NextRequest) {
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    // Note: la validation du token se fait côté serveur dans le layout admin
   }
 
-  // ============================================================
-  // 2. Routing multi-sous-domaines
-  // ============================================================
   if (
     hostname === "localhost" ||
     hostname.startsWith("127.") ||

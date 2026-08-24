@@ -103,13 +103,13 @@ export function SiteHeader() {
           </Link>
 
           {/* Nav desktop */}
-          <nav className="hidden lg:flex items-center gap-7">
+          <nav className="hidden lg:flex items-center gap-6">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "text-sm font-medium transition-colors relative py-2",
+                  "text-sm font-medium transition-colors relative py-2 whitespace-nowrap",
                   scrolled
                     ? "text-ivory/80 hover:text-gold"
                     : "text-ink/80 hover:text-imperial"
@@ -125,12 +125,12 @@ export function SiteHeader() {
             <Link
               href="/communaute"
               className={cn(
-                "hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded text-sm font-semibold transition-all",
+                "hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded text-sm font-semibold transition-all whitespace-nowrap",
                 "bg-gold text-ink hover:bg-gold-light"
               )}
             >
               Rejoindre la communauté
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
             </Link>
             <button
               className={cn(
@@ -154,7 +154,7 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-ivory/90 hover:text-gold py-2.5 text-sm font-medium border-b border-imperial-light/30"
+                className="text-ivory/90 hover:text-gold py-2.5 text-sm font-medium border-b border-imperial-light/30 whitespace-nowrap"
                 onClick={() => setMobileOpen(false)}
               >
                 {item.label}
@@ -162,11 +162,11 @@ export function SiteHeader() {
             ))}
             <Link
               href="/communaute"
-              className="mt-3 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded bg-gold text-ink text-sm font-semibold"
+              className="mt-3 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded bg-gold text-ink text-sm font-semibold whitespace-nowrap"
               onClick={() => setMobileOpen(false)}
             >
               Rejoindre la communauté
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
             </Link>
           </nav>
         </div>
