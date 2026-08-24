@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { ServantProvider } from "@/components/site/servant-context";
 import { CustomCursor } from "@/components/magic/custom-cursor";
 import { ScrollProgress } from "@/components/magic/scroll-progress";
+import { TubelightNav } from "@/components/site/tubelight-nav";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -67,6 +68,7 @@ export default function RootLayout({
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />
+          <TubelightNav />
         </ServantProvider>
         <Toaster />
       </body>
