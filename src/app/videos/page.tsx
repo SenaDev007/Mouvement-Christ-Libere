@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { HeroSection } from "@/components/premium/hero-section";
+import { PageHero } from "@/components/magic/page-hero";
 import { VideoCard } from "@/components/premium/video-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { LiveBanner, NextLiveCard } from "@/components/premium/live-banner";
@@ -39,12 +39,11 @@ export default async function VideosPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <HeroSection
+      <PageHero
         kicker="Vidéos & Lives"
         title="Vidéos & Lives"
         subtitle="Retrouvez ici l'intégralité des enseignements vidéo et des directs, dans leur version originale et complète — même lorsque les plateformes externes suppriment."
         primaryCta={{ label: "Voir les enseignements", href: "/enseignements" }}
-        isLive={!!liveVideo}
       />
 
       {/* Bandeau live si actif */}

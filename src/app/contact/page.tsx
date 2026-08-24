@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { HeroSection } from "@/components/premium/hero-section";
+import { PageHero } from "@/components/magic/page-hero";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { Send, CheckCircle2, Loader2, AlertCircle, MessageCircle } from "lucide-react";
 
@@ -45,7 +45,7 @@ export default function ContactPage() {
 
   return (
     <div>
-      <HeroSection
+      <PageHero
         kicker="Prendre contact"
         title="Demander un échange"
         subtitle="Laissez-nous vos coordonnées, un membre de l'équipe pastorale reviendra vers vous. Délai de réponse garanti : sous 24h."

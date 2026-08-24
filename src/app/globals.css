@@ -160,6 +160,11 @@
     font-feature-settings: "ss01", "cv11";
   }
 
+  /* Smooth scroll natif */
+  html {
+    scroll-behavior: smooth;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-serif), Georgia, serif;
     @apply tracking-tight;
@@ -171,6 +176,12 @@
     text-decoration-color: #C9A227;
     text-decoration-thickness: 1.5px;
     text-underline-offset: 4px;
+  }
+
+  /* Sélection de texte personnalisée */
+  ::selection {
+    background-color: rgba(201, 162, 39, 0.3);
+    color: #1E0F2B;
   }
 }
 

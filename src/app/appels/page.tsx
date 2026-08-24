@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { HeroSection } from "@/components/premium/hero-section";
+import { PageHero } from "@/components/magic/page-hero";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { CallScreen } from "@/components/premium/call-screen";
@@ -29,7 +29,7 @@ export default async function AppelsPage() {
 
   return (
     <div>
-      <HeroSection
+      <PageHero
         kicker="Appels audio & vidéo"
         title="Appeler PAM ou le Pasteur Kongo"
         subtitle="Appels audio et vidéo chiffrés de bout en bout, style Telegram et WhatsApp. En cas d'indisponibilité, le contact recevra une notification d'appel manqué."

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { HeroSection } from "@/components/premium/hero-section";
+import { PageHero } from "@/components/magic/page-hero";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { Heart, FileText, CreditCard, Send, Bitcoin, ShieldCheck, CheckCircle2, Loader2 } from "lucide-react";
@@ -37,7 +37,7 @@ export default function ContribuerPage() {
 
   return (
     <div>
-      <HeroSection
+      <PageHero
         kicker="Soutenir le ministère"
         title="Contribuer"
         subtitle="Vos dons soutiennent le fonctionnement de cette plateforme et la diffusion des enseignements. Leur usage est publié chaque année, avec transparence totale."

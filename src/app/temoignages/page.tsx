@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { HeroSection } from "@/components/premium/hero-section";
+import { PageHero } from "@/components/magic/page-hero";
 import { TestimonyCard } from "@/components/premium/testimony-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
@@ -38,7 +38,7 @@ export default async function TemoignagesPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <HeroSection
+      <PageHero
         kicker="Récits rapportés"
         title="Témoignages"
         subtitle="Des récits d'expériences spirituelles authentiques, rapportés tels qu'ils ont été vécus et confiés à la communauté. Chaque témoignage est confronté à la Parole écrite."

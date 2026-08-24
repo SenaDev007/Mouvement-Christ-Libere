@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { HeroSection } from "@/components/premium/hero-section";
+import { PageHero } from "@/components/magic/page-hero";
 import { ChannelView } from "@/components/premium/channel-view";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { isMatrixConfigured } from "@/lib/matrix";
@@ -45,7 +45,7 @@ export default async function ChannelPage({ params }: PageProps) {
 
   return (
     <div>
-      <HeroSection
+      <PageHero
         kicker={channel.isEncrypted ? "Canal chiffré E2E" : "Canal de communauté"}
         title={channel.name}
         subtitle={channel.description || "Canal de discussion de la communauté Mouvement Christ Libère."}

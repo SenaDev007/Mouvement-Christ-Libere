@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { HeroSection } from "@/components/premium/hero-section";
+import { PageHero } from "@/components/magic/page-hero";
 import { TeachingCard } from "@/components/premium/teaching-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
@@ -41,7 +41,7 @@ export default async function EnseignementsPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <HeroSection
+      <PageHero
         kicker="Études bibliques"
         title="Enseignements"
         subtitle="Des études bibliques classées par thème, par livre et par niveau, pour approfondir à votre rythme. Transmis avec rigueur, confrontés à la Parole."

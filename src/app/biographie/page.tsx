@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { HeroSection } from "@/components/premium/hero-section";
+import { PageHero } from "@/components/magic/page-hero";
 import { VerticalTimeline } from "@/components/premium/vertical-timeline";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider } from "@/components/premium/section-divider";
@@ -40,7 +40,7 @@ export default async function BiographiePage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <HeroSection
+      <PageHero
         kicker="Les étapes d'un appel"
         title={`Biographie de ${servant.shortName}`}
         subtitle="Un parcours retracé étape par étape, tel qu'il a été vécu et transmis — sans survente, sans embellissement. Les faits rapportés portent leur propre poids."

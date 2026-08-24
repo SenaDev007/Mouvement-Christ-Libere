@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { HeroSection } from "@/components/premium/hero-section";
+import { PageHero } from "@/components/magic/page-hero";
 import { ChannelCard, SecureBanner } from "@/components/premium/channel-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
@@ -23,7 +23,7 @@ export default async function CommunautePage() {
 
   return (
     <div>
-      <HeroSection
+      <PageHero
         kicker="Espaces d'échange"
         title="Communauté"
         subtitle="Des espaces d'échange organisés par thème, modérés avec attention, pour grandir ensemble dans la foi. Canaux ouverts, canaux restreints chiffrés, intercession — à chacun son rythme."

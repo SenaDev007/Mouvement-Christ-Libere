@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { HeroSection } from "@/components/premium/hero-section";
+import { PageHero } from "@/components/magic/page-hero";
 import { CalendarView } from "@/components/premium/calendar-view";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
@@ -26,7 +26,7 @@ export default async function CalendrierPage() {
 
   return (
     <div>
-      <HeroSection
+      <PageHero
         kicker="Calendrier liturgique"
         title="Les rendez-vous de l'Éternel"
         subtitle="Les fêtes bibliques et les shabbats, avec les enseignements qui s'y rattachent. Le temps n'est pas neutre — Dieu a institué des rendez-vous (les mo'adim) pour son peuple."
