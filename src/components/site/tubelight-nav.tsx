@@ -14,7 +14,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "Accueil", url: "/", icon: Home },
@@ -38,21 +37,21 @@ export function TubelightNav() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Sur mobile, limiter à 6 items principaux + le reste accessible via le footer
+  // Sur mobile, limiter à 6 items principaux
   const mobileItems = navItems.slice(0, 6);
 
   return (
     <>
-      {/* Tubelight navbar — floating */}
+      {/* Tubelight navbar — floating, centrée */}
       <NavBar items={isMobile ? mobileItems : navItems} />
 
-      {/* CTA "Rejoindre" — desktop only, positionné en haut à droite */}
-      <div className="hidden lg:block fixed top-5 right-6 z-50">
+      {/* CTA "Rejoindre" — desktop only, positionné en bas à droite pour éviter le chevauchement */}
+      <div className="hidden lg:block fixed bottom-6 right-6 z-50">
         <Link
           href="/communaute"
           className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors whitespace-nowrap shadow-lg shadow-[#C9A227]/20"
         >
-          Rejoindre la communauté
+          Rejoindre
           <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
         </Link>
       </div>
