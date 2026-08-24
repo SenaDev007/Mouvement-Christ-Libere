@@ -42,6 +42,7 @@
     "examples",
     "skills",
     "tests",
-    "scripts"
+    "scripts",
+    "src/data"
   ]
 }
