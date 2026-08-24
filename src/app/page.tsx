@@ -20,30 +20,47 @@ import { motion } from "framer-motion";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [servants, testimonies, teachings, videos, liveStreams] = await Promise.all([
-    db.servant.findMany({ where: { isActive: true } }),
-    db.testimony.findMany({
-      where: { status: "CONFIRMED" },
-      take: 3,
-      orderBy: { publishedAt: "desc" },
-      include: { servant: true },
-    }),
-    db.teaching.findMany({
-      take: 1,
-      orderBy: { publishedAt: "desc" },
-      include: { servant: true },
-    }),
-    db.video.findMany({
-      take: 4,
-      orderBy: { publishedAt: "desc" },
-      include: { servant: true },
-    }),
-    db.liveStream.findFirst({
-      where: { status: "SCHEDULED", scheduledAt: { gte: new Date() } },
-      orderBy: { scheduledAt: "asc" },
-      include: { servant: true },
-    }),
-  ]);
+  // Fetch avec gestion d'erreurs — si la DB est inaccessible,
+  // on affiche des données mock pour ne pas crasher le site
+  let servants: Array<{ id: string; code: string; fullName: string; shortName: string; role: string; bio: string; isActive: boolean }> = [];
+  let testimonies: Array<{ id: string; title: string; short: string; themes: string[]; bookRef: string | null; readingTime: string | null; status: any; servant: { shortName: string } }> = [];
+  let teachings: Array<{ id: string; title: string; excerpt: string; theme: string; book: string; level: any; readingTime: string | null; servant: { shortName: string } }> = [];
+  let videos: Array<{ id: string; title: string; description: string; duration: string; views: number; isLive: boolean; publishedAt: Date | null; createdAt: Date; servant: { code: string; shortName: string } }> = [];
+  let liveStreams: { id: string; title: string; scheduledAt: Date; servant: { shortName: string } } | null = null;
+
+  try {
+    [servants, testimonies, teachings, videos, liveStreams] = await Promise.all([
+      db.servant.findMany({ where: { isActive: true } }),
+      db.testimony.findMany({
+        where: { status: "CONFIRMED" },
+        take: 3,
+        orderBy: { publishedAt: "desc" },
+        include: { servant: true },
+      }),
+      db.teaching.findMany({
+        take: 1,
+        orderBy: { publishedAt: "desc" },
+        include: { servant: true },
+      }),
+      db.video.findMany({
+        take: 4,
+        orderBy: { publishedAt: "desc" },
+        include: { servant: true },
+      }),
+      db.liveStream.findFirst({
+        where: { status: "SCHEDULED", scheduledAt: { gte: new Date() } },
+        orderBy: { scheduledAt: "asc" },
+        include: { servant: true },
+      }),
+    ]);
+  } catch (error) {
+    console.error("[page d'accueil] Erreur DB, utilisation des données mock:", error);
+    // Données mock de fallback
+    servants = [
+      { id: "pam", code: "pam", fullName: "Afrika Alkebulane Pamela Dali", shortName: "PAM", role: "Servante de l'Éternel", bio: "Témoignages d'enlèvements au ciel, instructions reçues du Seigneur Yeshoua.", isActive: true },
+      { id: "kongo", code: "kongo", fullName: "Pasteur Kongo", shortName: "Pasteur Kongo", role: "Époux, ministre pastoral", bio: "Ministère pastoral complémentaire, enseignements et partages spirituels.", isActive: true },
+    ];
+  }
 
   const pam = servants.find((s) => s.code === "pam");
   const kongo = servants.find((s) => s.code === "kongo");
