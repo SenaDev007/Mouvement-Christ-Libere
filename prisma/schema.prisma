@@ -443,3 +443,22 @@ model UserCalendarPreference {
 
   @@unique([userId])
 }
+
+// --- Carte des dispersés d'Israël (V3) ---
+
+model DisperseMember {
+  id          String   @id @default(cuid())
+  pseudonyme  String   // nom ou pseudo, pas de vrai nom
+  pays        String   // code ISO 2 lettres (FR, CI, US, etc.)
+  ville       String?
+  latitude    Float    // arrondi à 0.1° pour anonymat
+  longitude   Float    // arrondi à 0.1° pour anonymat
+  langue      String   // FR, EN, ES, PT, HE, AM, etc.
+  niveau      String   @default("chercheur") // chercheur, croyant, disciple, pasteur
+  message     String?  @db.Text // témoignage court optionnel
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([pays])
+  @@index([langue])
+}

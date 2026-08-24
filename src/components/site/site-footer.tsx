@@ -8,6 +8,7 @@ const FOOTER_LINKS = {
       { label: "Témoignages", href: "/temoignages" },
       { label: "Enseignements", href: "/enseignements" },
       { label: "Vidéos & Lives", href: "/videos" },
+      { label: "Bible interconnectée", href: "/bible" },
       { label: "Calendrier biblique 364", href: "/calendrier-biblique" },
     ],
   },
@@ -15,8 +16,9 @@ const FOOTER_LINKS = {
     title: "Communauté",
     links: [
       { label: "Rejoindre un canal", href: "/communaute" },
+      { label: "Carte des dispersés", href: "/disperses" },
       { label: "Appels audio & vidéo", href: "/appels" },
-      { label: "Charte de la communauté", href: "/communaute/charte" },
+      { label: "Coffre-fort Arweave", href: "/coffre-fort" },
       { label: "Contribuer", href: "/contribuer" },
     ],
   },

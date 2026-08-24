@@ -11,9 +11,10 @@ const NAV_ITEMS = [
   { label: "Témoignages", href: "/temoignages" },
   { label: "Enseignements", href: "/enseignements" },
   { label: "Vidéos & Lives", href: "/videos" },
+  { label: "Bible", href: "/bible" },
   { label: "Calendrier 364", href: "/calendrier-biblique" },
+  { label: "Dispersés", href: "/disperses" },
   { label: "Communauté", href: "/communaute" },
-  { label: "Appels", href: "/appels" },
 ];
 
 export function SiteHeader() {
