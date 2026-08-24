@@ -17,7 +17,11 @@ const FOOTER_LINKS = {
     links: [
       { label: "Rejoindre un canal", href: "/communaute" },
       { label: "Carte des dispersés", href: "/disperses" },
+      { label: "Chaîne d'intercession", href: "/intercession" },
       { label: "Appels audio & vidéo", href: "/appels" },
+      { label: "Réseau Samuel", href: "/reseau-samuel" },
+      { label: "Streaming RTMP", href: "/streaming" },
+      { label: "Sous-titrage IA", href: "/soustitrage" },
       { label: "Coffre-fort Arweave", href: "/coffre-fort" },
       { label: "Contribuer", href: "/contribuer" },
     ],

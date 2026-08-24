@@ -13,6 +13,7 @@ import {
   Scroll,
   Shield,
   ExternalLink,
+  Columns,
 } from "lucide-react";
 import { PageHero } from "@/components/magic/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
@@ -20,7 +21,7 @@ import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
 import { cn } from "@/lib/utils";
 
-type Onglet = "lecture" | "recherche" | "strong" | "hebreu" | "peshitta" | "concordance";
+type Onglet = "lecture" | "recherche" | "strong" | "hebreu" | "peshitta" | "concordance" | "comparatif";
 
 const ONGLETS: Array<{ id: Onglet; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { id: "lecture", label: "Lecture", icon: BookOpen },
@@ -29,6 +30,7 @@ const ONGLETS: Array<{ id: Onglet; label: string; icon: React.ComponentType<{ cl
   { id: "hebreu", label: "Texte hébraïque", icon: Scroll },
   { id: "peshitta", label: "Peshitta araméenne", icon: Languages },
   { id: "concordance", label: "Concordance", icon: Shield },
+  { id: "comparatif", label: "Comparatif", icon: Columns },
 ];
 
 const VERSIONS = [
@@ -90,6 +92,7 @@ export default function BiblePage() {
               {onglet === "hebreu" && <OngletHebreu />}
               {onglet === "peshitta" && <OngletPeshitta />}
               {onglet === "concordance" && <OngletConcordance />}
+              {onglet === "comparatif" && <OngletComparatif />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -661,6 +664,127 @@ function OngletConcordance() {
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+// ============================================================
+// COMPARATIF MULTILINGUE
+// ============================================================
+
+function OngletComparatif() {
+  const [livre, setLivre] = useState("gn");
+  const [chapitre, setChapitre] = useState(1);
+  const [verset, setVerset] = useState(1);
+  const [versionsSelectionnees, setVersionsSelectionnees] = useState<string[]>(["fr-apee", "en-kjv", "es-rvr"]);
+  const [traductions, setTraductions] = useState<Record<string, { texte: string; livre: string } | null>>({});
+  const [loading, setLoading] = useState(false);
+
+  const fetchComparatif = useCallback(async () => {
+    setLoading(true);
+    const resultats: Record<string, { texte: string; livre: string } | null> = {};
+    await Promise.all(
+      versionsSelectionnees.map(async (version) => {
+        try {
+          const res = await fetch(`/api/bible-v2/${version}/${livre}/${chapitre}`);
+          if (res.ok) {
+            const data = await res.json();
+            const versetData = data.versets[verset - 1];
+            resultats[version] = versetData
+              ? { texte: versetData.texte, livre: data.livre }
+              : null;
+          } else {
+            resultats[version] = null;
+          }
+        } catch {
+          resultats[version] = null;
+        }
+      })
+    );
+    setTraductions(resultats);
+    setLoading(false);
+  }, [versionsSelectionnees, livre, chapitre, verset]);
+
+  useEffect(() => {
+    Promise.resolve().then(() => fetchComparatif());
+  }, [fetchComparatif]);
+
+  const toggleVersion = (code: string) => {
+    setVersionsSelectionnees((prev) =>
+      prev.includes(code) ? prev.filter((v) => v !== code) : [...prev, code]
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Sélecteurs */}
+      <div className="flex flex-wrap items-center gap-3">
+        <select value={livre} onChange={(e) => setLivre(e.target.value)} className="px-3 py-2 rounded-md border border-stone/30 bg-ivory text-ink text-sm focus:outline-none focus:border-gold">
+          {LIVRES_OPTIONS.map((l) => <option key={l.id} value={l.id}>{l.nom}</option>)}
+        </select>
+        <input type="number" min={1} value={chapitre} onChange={(e) => setChapitre(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 rounded-md border border-stone/30 bg-ivory text-ink text-sm focus:outline-none focus:border-gold" />
+        <span className="text-stone text-sm">:</span>
+        <input type="number" min={1} value={verset} onChange={(e) => setVerset(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 rounded-md border border-stone/30 bg-ivory text-ink text-sm focus:outline-none focus:border-gold" />
+      </div>
+
+      {/* Sélecteur de versions */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mr-2">Versions :</span>
+        {VERSIONS.map((v) => (
+          <button
+            key={v.code}
+            onClick={() => toggleVersion(v.code)}
+            className={cn(
+              "px-3 py-1.5 rounded text-xs font-semibold transition-all",
+              versionsSelectionnees.includes(v.code)
+                ? "bg-imperial text-ivory"
+                : "border border-imperial/30 text-imperial hover:bg-imperial/5"
+            )}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-gold" />
+        </div>
+      ) : (
+        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(versionsSelectionnees.length, 3)}, minmax(0, 1fr))` }}>
+          {versionsSelectionnees.map((version) => {
+            const v = VERSIONS.find((ver) => ver.code === version);
+            const data = traductions[version];
+            return (
+              <div key={version} className="card-gold-top p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs uppercase tracking-[0.18em] text-gold-dark font-semibold">
+                    {v?.label.split(" ")[0]}
+                  </span>
+                </div>
+                {data ? (
+                  <>
+                    <p className="text-xs text-stone mb-2">{data.livre} {chapitre}:{verset}</p>
+                    <p className="text-sm text-ink/85 font-serif leading-relaxed italic">
+                      « {data.texte} »
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-stone italic">Verset non disponible</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="p-4 bg-imperial/5 border border-gold/20 rounded-md">
+        <p className="text-xs text-stone leading-relaxed">
+          <strong className="text-ink">Étude comparative</strong> — Lisez le même verset dans plusieurs langues côte à côte.
+          Sélectionnez jusqu&apos;à 6 versions. Idéal pour les dispersés d&apos;Israël qui parlent différentes langues
+          et pour l&apos;étude comparative des traductions.
+        </p>
+      </div>
     </div>
   );
 }

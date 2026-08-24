@@ -462,3 +462,43 @@ model DisperseMember {
   @@index([pays])
   @@index([langue])
 }
+
+// --- Chaîne d'intercession (V4) ---
+
+model IntercessionRequest {
+  id          String   @id @default(cuid())
+  auteur      String   // pseudonyme
+  sujet       String   // court résumé
+  description String   @db.Text
+  categorie   String   @default("general") // sante, famille, spiritual, urgence, action_graces
+  isUrgent    Boolean  @default(false)
+  isPublic    Boolean  @default(true)
+  statut      String   @default("ouvert") // ouvert, en_priere, exauce, archive
+  temoignageExaucement String? @db.Text
+  prayCount   Int      @default(0) // nombre de personnes qui ont prié
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([statut])
+  @@index([categorie])
+  @@index([isUrgent])
+}
+
+// --- Dead man's switch (V4) ---
+
+model DeadMansSwitch {
+  id              String   @id @default(cuid())
+  contenuId       String   // ID du contenu à publier
+  contenuType     String   // temoignage, enseignement, video
+  contenuTitre    String
+  contenuData     String   @db.Text // contenu sérialisé
+  hash            String   // SHA-256 du contenu
+  delaiJours      Int      @default(30) // jours sans activité avant publication
+  derniereActivite DateTime @default(now())
+  estDeclenche    Boolean  @default(false)
+  dateDeclenchement DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([estDeclenche])
+}

@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/cleanup-sessions",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/dead-mans-switch/cron",
+      "schedule": "0 4 * * *"
     }
   ],
 
