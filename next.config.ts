@@ -40,13 +40,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Inclure les fichiers de données bibliques dans le bundle serverless
-  // Ces fichiers sont lus via fs.readFileSync côté serveur
-  outputFileTracingIncludes: {
-    "/api/bible-v2/**": ["./src/data/bible/**/*"],
-    "/bible": ["./src/data/bible/**/*"],
-  },
-
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion", "date-fns"],
   },

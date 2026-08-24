@@ -3,28 +3,33 @@ import { PrismaClient } from '@prisma/client'
 /**
  * Prisma singleton — adapté pour Vercel serverless.
  *
- * En serverless, chaque fonction peut instancier un nouveau PrismaClient,
- * ce qui épuise les connexions PostgreSQL. On réutilise l'instance
- * globale en dev et en production (warm instances).
+ * Lazy initialization : le PrismaClient n'est créé qu'au premier accès,
+ * pas au moment de l'import. Cela évite que le module crash si Prisma
+ * n'est pas correctement généré.
  */
-
-// Debug : vérifier que DATABASE_URL est bien disponible
-if (!process.env.DATABASE_URL) {
-  console.warn('[db] ⚠ DATABASE_URL is not set in environment')
-} else {
-  console.log('[db] ✓ DATABASE_URL is set (length:', process.env.DATABASE_URL.length, ')')
-}
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-  })
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = db
+function createPrismaClient(): PrismaClient {
+  try {
+    return new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    })
+  } catch (error) {
+    console.error('[db] Erreur création PrismaClient:', error)
+    throw error
+  }
 }
+
+// Proxy lazy — ne crée le client qu'au premier accès
+export const db = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    if (!globalForPrisma.prisma) {
+      globalForPrisma.prisma = createPrismaClient()
+    }
+    const value = (globalForPrisma.prisma as unknown as Record<string | symbol, unknown>)[prop]
+    return typeof value === 'function' ? value.bind(globalForPrisma.prisma) : value
+  },
+})
