@@ -5,9 +5,6 @@ import type { NextConfig } from "next";
  * Optimisé pour déploiement Vercel.
  */
 const nextConfig: NextConfig = {
-  // Vercel gère le build ; standalone utile en self-host uniquement
-  // output: "standalone",
-
   compress: true,
   reactStrictMode: true,
   poweredByHeader: false,
@@ -41,6 +38,13 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
+  },
+
+  // Inclure les fichiers de données bibliques dans le bundle serverless
+  // Ces fichiers sont lus via fs.readFileSync côté serveur
+  outputFileTracingIncludes: {
+    "/api/bible-v2/**": ["./src/data/bible/**/*"],
+    "/bible": ["./src/data/bible/**/*"],
   },
 
   experimental: {

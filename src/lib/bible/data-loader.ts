@@ -72,26 +72,34 @@ export function chargerVersion(code: string): VersionBible | null {
   const config = VERSIONS_DISPONIBLES.find((v) => v.code === code);
   if (!config) return null;
 
-  const filePath = path.join(DATA_DIR, "versions", config.fichier);
-  if (!fs.existsSync(filePath)) return null;
+  try {
+    const filePath = path.join(DATA_DIR, "versions", config.fichier);
+    if (!fs.existsSync(filePath)) {
+      console.warn(`[bible] Fichier non trouvé: ${filePath}`);
+      return null;
+    }
 
-  const raw = fs.readFileSync(filePath, "utf-8");
-  const livres: LivreBible[] = JSON.parse(raw);
+    const raw = fs.readFileSync(filePath, "utf-8");
+    const livres: LivreBible[] = JSON.parse(raw);
 
-  // Enrichir avec les noms français
-  for (const livre of livres) {
-    livre.nom = ID_VERS_NOM[livre.id] || livre.id;
+    // Enrichir avec les noms français
+    for (const livre of livres) {
+      livre.nom = ID_VERS_NOM[livre.id] || livre.id;
+    }
+
+    const version: VersionBible = {
+      code: config.code,
+      langue: config.langue,
+      nom: config.nom,
+      livres,
+    };
+
+    cacheVersions[code] = version;
+    return version;
+  } catch (error) {
+    console.error(`[bible] Erreur chargement version ${code}:`, error);
+    return null;
   }
-
-  const version: VersionBible = {
-    code: config.code,
-    langue: config.langue,
-    nom: config.nom,
-    livres,
-  };
-
-  cacheVersions[code] = version;
-  return version;
 }
 
 /**
@@ -204,19 +212,26 @@ let strongGreekCache: Record<string, EntreeStrong> | null = null;
 export function chargerStrongHebreu(): Record<string, EntreeStrong> {
   if (strongHebrewCache) return strongHebrewCache;
 
-  const filePath = path.join(DATA_DIR, "strongs", "hebrew.dat");
-  const raw = fs.readFileSync(filePath, "utf-8");
+  try {
+    const filePath = path.join(DATA_DIR, "strongs", "hebrew.dat");
+    if (!fs.existsSync(filePath)) {
+      console.warn("[bible] Fichier Strong hébreu non trouvé");
+      return {};
+    }
+    const raw = fs.readFileSync(filePath, "utf-8");
+    const jsonStr = raw.substring(raw.indexOf("{"));
+    const data = JSON.parse(jsonStr);
 
-  // Le fichier est : var strongsHebrewDictionary = {...};
-  const jsonStr = raw.substring(raw.indexOf("{"));
-  const data = JSON.parse(jsonStr);
+    strongHebrewCache = {};
+    for (const [key, value] of Object.entries(data)) {
+      strongHebrewCache[key] = { ...(value as object), numero: key, langue: "hebrew" } as EntreeStrong;
+    }
 
-  strongHebrewCache = {};
-  for (const [key, value] of Object.entries(data)) {
-    strongHebrewCache[key] = { ...(value as object), numero: key, langue: "hebrew" } as EntreeStrong;
+    return strongHebrewCache;
+  } catch (error) {
+    console.error("[bible] Erreur chargement Strong hébreu:", error);
+    return {};
   }
-
-  return strongHebrewCache;
 }
 
 /**
@@ -225,18 +240,26 @@ export function chargerStrongHebreu(): Record<string, EntreeStrong> {
 export function chargerStrongGrec(): Record<string, EntreeStrong> {
   if (strongGreekCache) return strongGreekCache;
 
-  const filePath = path.join(DATA_DIR, "strongs", "greek.dat");
-  const raw = fs.readFileSync(filePath, "utf-8");
+  try {
+    const filePath = path.join(DATA_DIR, "strongs", "greek.dat");
+    if (!fs.existsSync(filePath)) {
+      console.warn("[bible] Fichier Strong grec non trouvé");
+      return {};
+    }
+    const raw = fs.readFileSync(filePath, "utf-8");
+    const jsonStr = raw.substring(raw.indexOf("{"));
+    const data = JSON.parse(jsonStr);
 
-  const jsonStr = raw.substring(raw.indexOf("{"));
-  const data = JSON.parse(jsonStr);
+    strongGreekCache = {};
+    for (const [key, value] of Object.entries(data)) {
+      strongGreekCache[key] = { ...(value as object), numero: key, langue: "greek" } as EntreeStrong;
+    }
 
-  strongGreekCache = {};
-  for (const [key, value] of Object.entries(data)) {
-    strongGreekCache[key] = { ...(value as object), numero: key, langue: "greek" } as EntreeStrong;
+    return strongGreekCache;
+  } catch (error) {
+    console.error("[bible] Erreur chargement Strong grec:", error);
+    return {};
   }
-
-  return strongGreekCache;
 }
 
 /**
@@ -295,15 +318,22 @@ const OSHB_VERS_ID: Record<string, string> = {
 function chargerMorphhb(): Record<string, string[][][][]> {
   if (morphhbCache) return morphhbCache;
 
-  const filePath = path.join(DATA_DIR, "morphhb", "index.dat");
-  const raw = fs.readFileSync(filePath, "utf-8");
+  try {
+    const filePath = path.join(DATA_DIR, "morphhb", "index.dat");
+    if (!fs.existsSync(filePath)) {
+      console.warn("[bible] Fichier morphhb non trouvé");
+      return {};
+    }
+    const raw = fs.readFileSync(filePath, "utf-8");
+    const jsonStr = raw.substring(raw.indexOf("{"), raw.lastIndexOf("}") + 1);
+    const parsed: Record<string, string[][][][]> = JSON.parse(jsonStr);
+    morphhbCache = parsed;
 
-  // Le fichier est : var morphhb = {...};
-  const jsonStr = raw.substring(raw.indexOf("{"), raw.lastIndexOf("}") + 1);
-  const parsed: Record<string, string[][][][]> = JSON.parse(jsonStr);
-  morphhbCache = parsed;
-
-  return parsed;
+    return parsed;
+  } catch (error) {
+    console.error("[bible] Erreur chargement morphhb:", error);
+    return {};
+  }
 }
 
 /**
@@ -360,48 +390,54 @@ let peshittaCache: Array<{ livre: string; chapitre: number; versets: Array<{ num
 function chargerPeshitta() {
   if (peshittaCache) return peshittaCache;
 
-  const filePath = path.join(DATA_DIR, "peshitta", "syriac.md");
-  const raw = fs.readFileSync(filePath, "utf-8");
+  try {
+    const filePath = path.join(DATA_DIR, "peshitta", "syriac.md");
+    if (!fs.existsSync(filePath)) {
+      console.warn("[bible] Fichier Peshitta non trouvé");
+      return [];
+    }
+    const raw = fs.readFileSync(filePath, "utf-8");
 
-  const livres: Array<{ livre: string; chapitre: number; versets: Array<{ numero: number; texte: string }> }> = [];
-  let livreCourant = "";
-  let chapitreCourant = 0;
-  let versetsCourants: Array<{ numero: number; texte: string }> = [];
+    const livres: Array<{ livre: string; chapitre: number; versets: Array<{ numero: number; texte: string }> }> = [];
+    let livreCourant = "";
+    let chapitreCourant = 0;
+    let versetsCourants: Array<{ numero: number; texte: string }> = [];
 
-  const lignes = raw.split("\n");
-  for (const ligne of lignes) {
-    // Titre de livre : "# Genesis"
-    if (ligne.startsWith("# ") && !ligne.startsWith("## ")) {
-      if (versetsCourants.length > 0) {
-        livres.push({ livre: livreCourant, chapitre: chapitreCourant, versets: versetsCourants });
+    const lignes = raw.split("\n");
+    for (const ligne of lignes) {
+      if (ligne.startsWith("# ") && !ligne.startsWith("## ")) {
+        if (versetsCourants.length > 0) {
+          livres.push({ livre: livreCourant, chapitre: chapitreCourant, versets: versetsCourants });
+        }
+        livreCourant = ligne.substring(2).trim();
+        chapitreCourant = 0;
+        versetsCourants = [];
       }
-      livreCourant = ligne.substring(2).trim();
-      chapitreCourant = 0;
-      versetsCourants = [];
-    }
-    // Titre de chapitre : "## Chapter 1"
-    else if (ligne.startsWith("## ")) {
-      if (versetsCourants.length > 0) {
-        livres.push({ livre: livreCourant, chapitre: chapitreCourant, versets: versetsCourants });
+      else if (ligne.startsWith("## ")) {
+        if (versetsCourants.length > 0) {
+          livres.push({ livre: livreCourant, chapitre: chapitreCourant, versets: versetsCourants });
+        }
+        chapitreCourant = parseInt(ligne.match(/\d+/)?.[0] || "0");
+        versetsCourants = [];
       }
-      chapitreCourant = parseInt(ligne.match(/\d+/)?.[0] || "0");
-      versetsCourants = [];
-    }
-    // Verset : "*1* texte..."
-    else if (ligne.match(/^\*\d+\*/)) {
-      const match = ligne.match(/^\*(\d+)\*\s*(.*)/);
-      if (match) {
-        versetsCourants.push({ numero: parseInt(match[1]), texte: match[2].trim() });
+      else if (ligne.match(/^\*\d+\*/)) {
+        const match = ligne.match(/^\*(\d+)\*\s*(.*)/);
+        if (match) {
+          versetsCourants.push({ numero: parseInt(match[1]), texte: match[2].trim() });
+        }
       }
     }
+
+    if (versetsCourants.length > 0) {
+      livres.push({ livre: livreCourant, chapitre: chapitreCourant, versets: versetsCourants });
+    }
+
+    peshittaCache = livres;
+    return peshittaCache;
+  } catch (error) {
+    console.error("[bible] Erreur chargement Peshitta:", error);
+    return [];
   }
-
-  if (versetsCourants.length > 0) {
-    livres.push({ livre: livreCourant, chapitre: chapitreCourant, versets: versetsCourants });
-  }
-
-  peshittaCache = livres;
-  return peshittaCache;
 }
 
 /**
