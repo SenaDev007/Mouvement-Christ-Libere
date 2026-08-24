@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { SiteHeader } from "@/components/site/site-header";
-import { SiteFooter } from "@/components/site/site-footer";
 import { ServantProvider } from "@/components/site/servant-context";
 import { CustomCursor } from "@/components/magic/custom-cursor";
 import { ScrollProgress } from "@/components/magic/scroll-progress";
@@ -66,8 +64,7 @@ export default function RootLayout({
         <ScrollProgress />
         <CustomCursor />
         <ServantProvider>
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pt-16 sm:pt-0">{children}</main>
           <CinematicFooter />
           <TubelightNav />
         </ServantProvider>

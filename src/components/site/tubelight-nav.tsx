@@ -1,17 +1,64 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { NavBar } from "@/components/ui/tubelight-navbar";
-import { Home, User, FileText, BookOpen, Calendar, Users } from "lucide-react";
+import {
+  Home,
+  User,
+  FileText,
+  BookOpen,
+  Video,
+  Calendar,
+  Globe,
+  Users,
+  ChevronRight,
+} from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "Accueil", url: "/", icon: Home },
   { name: "Biographie", url: "/biographie", icon: User },
   { name: "Témoignages", url: "/temoignages", icon: FileText },
+  { name: "Enseignements", url: "/enseignements", icon: BookOpen },
+  { name: "Vidéos", url: "/videos", icon: Video },
   { name: "Bible", url: "/bible", icon: BookOpen },
   { name: "Calendrier", url: "/calendrier-biblique", icon: Calendar },
+  { name: "Dispersés", url: "/disperses", icon: Globe },
   { name: "Communauté", url: "/communaute", icon: Users },
 ];
 
 export function TubelightNav() {
-  return <NavBar items={navItems} />;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Sur mobile, limiter à 6 items principaux + le reste accessible via le footer
+  const mobileItems = navItems.slice(0, 6);
+
+  return (
+    <>
+      {/* Tubelight navbar — floating */}
+      <NavBar items={isMobile ? mobileItems : navItems} />
+
+      {/* CTA "Rejoindre" — desktop only, positionné en haut à droite */}
+      <div className="hidden lg:block fixed top-5 right-6 z-50">
+        <Link
+          href="/communaute"
+          className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors whitespace-nowrap shadow-lg shadow-[#C9A227]/20"
+        >
+          Rejoindre la communauté
+          <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+        </Link>
+      </div>
+
+      {/* Padding bottom sur mobile pour la navbar flottante */}
+      <div className="h-20 md:hidden" />
+    </>
+  );
 }
