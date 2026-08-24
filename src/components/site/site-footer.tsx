@@ -8,7 +8,7 @@ const FOOTER_LINKS = {
       { label: "Témoignages", href: "/temoignages" },
       { label: "Enseignements", href: "/enseignements" },
       { label: "Vidéos & Lives", href: "/videos" },
-      { label: "Calendrier", href: "/calendrier" },
+      { label: "Calendrier biblique 364", href: "/calendrier-biblique" },
     ],
   },
   community: {

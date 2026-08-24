@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { label: "Témoignages", href: "/temoignages" },
   { label: "Enseignements", href: "/enseignements" },
   { label: "Vidéos & Lives", href: "/videos" },
-  { label: "Calendrier", href: "/calendrier" },
+  { label: "Calendrier 364", href: "/calendrier-biblique" },
   { label: "Communauté", href: "/communaute" },
   { label: "Appels", href: "/appels" },
 ];
