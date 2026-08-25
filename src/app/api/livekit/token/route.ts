@@ -1,81 +1,93 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { AccessToken } from "livekit-server-sdk";
+import { db } from "@/lib/db";
+
 /**
- * API route — Génération de token LiveKit
  * POST /api/livekit/token
  *
- * Corps : { roomName, participantName, isModerator? }
- * Réponse : { token } ou { error }
+ * Issues a LiveKit access token for the authenticated user to join a room.
+ * Body: { roomName, isUrgent? }
  *
- * Nécessite les variables d'environnement :
- * - LIVEKIT_API_KEY
- * - LIVEKIT_API_SECRET
+ * The token grants the user publish + subscribe permissions.
+ * For urgent calls, the DND preference is bypassed.
  *
- * Si LiveKit n'est pas configuré, renvoie un token de démo (mode hors ligne).
+ * Env vars required:
+ *   LIVEKIT_API_KEY
+ *   LIVEKIT_API_SECRET
+ *   LIVEKIT_URL  (e.g. wss://christ-libere.livekit.cloud)
  */
 
-import { NextRequest, NextResponse } from "next/server";
+const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
+const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
-    const { roomName, participantName, isModerator = false } = body;
-
-    if (!roomName || !participantName) {
-      return NextResponse.json(
-        { error: "roomName et participantName sont requis" },
-        { status: 400 }
-      );
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    const apiKey = process.env.LIVEKIT_API_KEY;
-    const apiSecret = process.env.LIVEKIT_API_SECRET;
-
-    // Mode démo : LiveKit n'est pas configuré
-    if (!apiKey || !apiSecret) {
-      return NextResponse.json({
-        token: null,
-        demo: true,
-        message: "LiveKit n'est pas configuré. Mode démo activé.",
-      });
+    const { roomName, isUrgent = false } = await req.json();
+    if (!roomName) {
+      return NextResponse.json({ error: "roomName requis" }, { status: 400 });
     }
 
-    // En production : utiliser livekit-server-sdk pour générer le token
-    // Pour l'instant, on importe dynamiquement pour éviter les erreurs en mode démo
-    try {
-      const { AccessToken } = await import("livekit-server-sdk");
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, name: true, dndEnabled: true, dndUntil: true },
+    });
 
-      const at = new AccessToken(apiKey, apiSecret, {
-        identity: participantName,
-        name: participantName,
-      });
-
-      at.addGrant({
-        room: roomName,
-        roomJoin: true,
-        canPublish: true,
-        canSubscribe: true,
-        canPublishData: true,
-        canUpdateOwnMetadata: true,
-        roomAdmin: isModerator,
-      });
-
-      const token = await at.toJwt();
-      return NextResponse.json({ token, demo: false });
-    } catch {
-      // livekit-server-sdk n'est pas installé — mode démo
-      return NextResponse.json({
-        token: null,
-        demo: true,
-        message: "livekit-server-sdk non installé. Mode démo activé.",
-      });
+    if (!user) {
+      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
     }
+
+    // Check DND — bypass if urgent
+    if (!isUrgent && user.dndEnabled) {
+      const now = new Date();
+      if (!user.dndUntil || new Date(user.dndUntil) > now) {
+        return NextResponse.json({
+          error: "Le destinataire est en mode Ne pas déranger",
+          dndActive: true,
+        }, { status: 403 });
+      }
+    }
+
+    // Generate LiveKit token
+    const participantName = user.name || session.user.email || "Membre";
+    const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
+      identity: user.id,
+      name: participantName,
+    });
+
+    at.addGrant({
+      room: roomName,
+      roomJoin: true,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishData: true,
+    });
+
+    const token = await at.toJwt();
+    const livekitUrl = process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
+
+    // Log the call in the database
+    await db.call.create({
+      data: {
+        initiatorId: user.id,
+        recipientId: user.id, // TODO: get recipient from roomName
+        type: "AUDIO", // TODO: pass as param
+        status: "MISSED",
+      },
+    });
+
+    return NextResponse.json({
+      token,
+      url: livekitUrl,
+      roomName,
+    });
   } catch (error) {
-    console.error("[api/livekit/token] error:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la génération du token" },
-      { status: 500 }
-    );
+    console.error("[livekit/token] Error:", error);
+    return NextResponse.json({ error: "Erreur LiveKit" }, { status: 500 });
   }
 }
