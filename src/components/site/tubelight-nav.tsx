@@ -12,18 +12,18 @@ import {
   Globe,
   Users,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
 const navItems = [
   { name: "Accueil", url: "/", icon: Home },
-  { name: "Biographie", url: "/biographie", icon: User },
+  { name: "PAM", url: "/pam", icon: Sparkles },
+  { name: "Pasteur Kongo", url: "/pasteur-kongo", icon: User },
   { name: "Témoignages", url: "/temoignages", icon: FileText },
   { name: "Enseignements", url: "/enseignements", icon: BookOpen },
   { name: "Vidéos", url: "/videos", icon: Video },
   { name: "Bible", url: "/bible", icon: BookOpen },
-  { name: "Calendrier", url: "/calendrier-biblique", icon: Calendar },
-  { name: "Dispersés", url: "/disperses", icon: Globe },
   { name: "Communauté", url: "/communaute", icon: Users },
 ];
 
@@ -37,15 +37,13 @@ export function TubelightNav() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Sur mobile, limiter à 6 items principaux
   const mobileItems = navItems.slice(0, 6);
 
   return (
     <>
-      {/* Tubelight navbar — floating, centrée */}
       <NavBar items={isMobile ? mobileItems : navItems} />
 
-      {/* CTA "Rejoindre" — desktop only, positionné en bas à droite pour éviter le chevauchement */}
+      {/* CTA — desktop, bas-droite */}
       <div className="hidden lg:block fixed bottom-6 right-6 z-50">
         <Link
           href="/communaute"
@@ -56,7 +54,7 @@ export function TubelightNav() {
         </Link>
       </div>
 
-      {/* Padding bottom sur mobile pour la navbar flottante */}
+      {/* Padding bottom sur mobile */}
       <div className="h-20 md:hidden" />
     </>
   );
