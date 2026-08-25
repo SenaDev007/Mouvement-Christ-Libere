@@ -1,10 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 /**
  * GET /api/yeshua-connect/announcements
- *
- * Récupère les annonces (messages dans les canaux de type ANNOUNCEMENT).
+ * Fetch announcements from ANNOUNCEMENT-type channels.
  */
 export async function GET() {
   try {
@@ -34,14 +33,57 @@ export async function GET() {
       confirmedByCurrentUser: false,
       confirmCount: 0,
       totalRecipients: 0,
+      channelId: m.channel.id,
+      channelName: m.channel.name,
     }));
 
     return NextResponse.json(formatted);
   } catch (error) {
     console.error("[yeshua-connect/announcements] Error:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la récupération des annonces" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Erreur" }, { status: 500 });
+  }
+}
+
+/**
+ * POST /api/yeshua-connect/announcements
+ * Publish a new announcement.
+ * Body: { title, body, channelId, userId, priority?, target? }
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const { title, body, channelId, userId, priority = "NORMAL", target = "ALL" } = await req.json();
+    if (!title || !body || !channelId || !userId) {
+      return NextResponse.json({ error: "title, body, channelId, userId requis" }, { status: 400 });
+    }
+
+    const message = await db.message.create({
+      data: {
+        channelId,
+        userId,
+        content: `${title}\n\n${body}`,
+        type: "TEXT",
+      },
+      include: {
+        user: { select: { id: true, name: true, role: true } },
+      },
+    });
+
+    return NextResponse.json({
+      id: message.id,
+      authorName: message.user.name ?? "Membre",
+      authorRole: message.user.role,
+      title,
+      body,
+      priority,
+      target,
+      requiresConfirmation: false,
+      publishedAt: message.createdAt.toISOString(),
+      confirmedByCurrentUser: false,
+      confirmCount: 0,
+      totalRecipients: 0,
+    });
+  } catch (error) {
+    console.error("[yeshua-connect/announcements POST] Error:", error);
+    return NextResponse.json({ error: "Erreur de publication" }, { status: 500 });
   }
 }

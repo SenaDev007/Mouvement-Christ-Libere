@@ -62,7 +62,8 @@ export default function RootLayout({
       >
         <ScrollProgress />
         <ServantProvider>
-          <main className="flex-1 pt-16 sm:pt-0">{children}</main>
+          {/* ⭐ Padding: 0 sur mobile (navbar en bas), pt-20 sur desktop (navbar en haut fixe) */}
+          <main className="flex-1 pt-0 sm:pt-20">{children}</main>
           <ConditionalFooter />
           <TubelightNav />
         </ServantProvider>

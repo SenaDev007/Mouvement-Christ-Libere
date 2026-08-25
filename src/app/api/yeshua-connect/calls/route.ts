@@ -3,8 +3,7 @@ import { db } from "@/lib/db";
 
 /**
  * GET /api/yeshua-connect/calls
- *
- * Récupère l'historique des appels.
+ * Fetch call history.
  */
 export async function GET() {
   try {
@@ -20,9 +19,8 @@ export async function GET() {
     const formatted = calls.map((c) => ({
       id: c.id,
       type: c.type,
-      direction: "outgoing" as const, // TODO: déterminer selon l'utilisateur courant
-      contact:
-        c.initiator.name ?? c.recipient.name ?? "Membre",
+      direction: "outgoing" as const,
+      contact: c.initiator.name ?? c.recipient.name ?? "Membre",
       duration: c.duration ?? 0,
       status: c.status,
       date: c.createdAt.toISOString(),
@@ -31,9 +29,6 @@ export async function GET() {
     return NextResponse.json(formatted);
   } catch (error) {
     console.error("[yeshua-connect/calls] Error:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la récupération des appels" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Erreur" }, { status: 500 });
   }
 }
