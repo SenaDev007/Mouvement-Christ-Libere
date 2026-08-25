@@ -16,7 +16,9 @@ const navItems = [
   { name: "Pasteur Kongo", url: "/pasteur-kongo", icon: User },
   { name: "Témoignages", url: "/temoignages", icon: FileText },
   { name: "Enseignements", url: "/enseignements", icon: BookOpen },
+  { name: "Vidéos & Lives", url: "/videos", icon: Video },
   { name: "Bible", url: "/bible", icon: BookOpen },
+  { name: "Calendrier", url: "/calendrier", icon: Calendar },
   { name: "Yeshua Connect", url: "/yeshua-connect", icon: Sparkles },
   { name: "Communauté", url: "/communaute", icon: Users },
 ];

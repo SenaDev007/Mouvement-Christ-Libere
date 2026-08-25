@@ -71,7 +71,21 @@ export default async function VideosPage({ searchParams }: PageProps) {
             subtitle="Chaque vidéo est conservée dans son intégralité, indépendamment des plateformes externes. La source de vérité reste ici."
           />
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-12">
+          {/* Mode étude toggle */}
+          <div className="flex justify-end mt-6">
+            <button
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors"
+              onClick={() => {
+                // Toggle study mode (client-side — hides suggestions)
+                const grid = document.querySelector('.videos-grid');
+                if (grid) grid.classList.toggle('hidden');
+              }}
+            >
+              Mode étude (masquer les suggestions)
+            </button>
+          </div>
+
+          <div className="videos-grid grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-12">
             {regularVideos.map((v, i) => (
               <VideoCard
                 key={v.id}

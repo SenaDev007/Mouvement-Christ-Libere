@@ -334,7 +334,36 @@ export function CinematicFooter() {
 
             {/* Copyright */}
             <div className="text-muted-foreground text-[10px] md:text-xs font-semibold tracking-widest uppercase order-2 md:order-1">
-              © 2026 Mouvement Christ Libère — Tous droits réservés
+              © 2026 Mouvement Christ Libère — Tous les contenus appartiennent à leurs auteurs. Usage personnel et non commercial.
+            </div>
+
+            {/* 3-column footer links */}
+            <div className="grid grid-cols-3 gap-8 md:gap-16 text-center order-3 w-full max-w-3xl mx-auto mt-8">
+              <div>
+                <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-[#C9A227] mb-3">Découvrir</p>
+                <ul className="space-y-1.5">
+                  <li><a href="/biographie" className="text-[10px] md:text-xs text-muted-foreground hover:text-foreground transition-colors">Biographie</a></li>
+                  <li><a href="/temoignages" className="text-[10px] md:text-xs text-muted-foreground hover:text-foreground transition-colors">Témoignages</a></li>
+                  <li><a href="/enseignements" className="text-[10px] md:text-xs text-muted-foreground hover:text-foreground transition-colors">Enseignements</a></li>
+                  <li><a href="/videos" className="text-[10px] md:text-xs text-muted-foreground hover:text-foreground transition-colors">Vidéos & Lives</a></li>
+                </ul>
+              </div>
+              <div>
+                <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-[#C9A227] mb-3">Communauté</p>
+                <ul className="space-y-1.5">
+                  <li><a href="/communaute" className="text-[10px] md:text-xs text-muted-foreground hover:text-foreground transition-colors">Rejoindre un canal</a></li>
+                  <li><a href="/communaute" className="text-[10px] md:text-xs text-muted-foreground hover:text-foreground transition-colors">Charte de la communauté</a></li>
+                  <li><a href="/contribuer" className="text-[10px] md:text-xs text-muted-foreground hover:text-foreground transition-colors">Contribuer</a></li>
+                </ul>
+              </div>
+              <div>
+                <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-[#C9A227] mb-3">Informations</p>
+                <ul className="space-y-1.5">
+                  <li><a href="/contact" className="text-[10px] md:text-xs text-muted-foreground hover:text-foreground transition-colors">Politique de confidentialité</a></li>
+                  <li><a href="/contact" className="text-[10px] md:text-xs text-muted-foreground hover:text-foreground transition-colors">Conditions d'utilisation</a></li>
+                  <li><a href="/contact" className="text-[10px] md:text-xs text-muted-foreground hover:text-foreground transition-colors">Contact</a></li>
+                </ul>
+              </div>
             </div>
 
             {/* Badge */}

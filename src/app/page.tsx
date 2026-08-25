@@ -242,6 +242,36 @@ export default function Home() {
         </div>
       </section>
 
+      {/* DERNIER ENSEIGNEMENT */}
+      <section className="bg-ivory py-20 md:py-24">
+        <div className="container mx-auto max-w-5xl px-4">
+          <div className="text-center mb-10">
+            <p className="text-xs uppercase tracking-[0.25em] text-[#C9A227] font-semibold mb-2">
+              Le dernier enseignement
+            </p>
+            <h2 className="font-serif text-3xl md:text-4xl font-semibold text-[#1E0F2B]">
+              Pour approfondir la Parole
+            </h2>
+          </div>
+          <div className="bg-white rounded-lg border border-stone-200 border-t-[3px] border-t-[#C9A227] p-8 max-w-2xl mx-auto">
+            <p className="text-xs font-semibold text-[#8C5FA8] uppercase tracking-wider mb-2">Pam — Doctrine</p>
+            <h3 className="font-serif text-xl font-semibold text-[#1E0F2B] mb-3">
+              La Véritable Nature du Saint-Esprit et la Trinité
+            </h3>
+            <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-4">
+              Au ciel, il n'y a pas trois trônes pour le Père, le Fils et le Saint-Esprit. Il n'y a qu'un seul Trône, et c'est la même personne qui s'y manifeste sous différentes formes...
+            </p>
+            <Link
+              href="/enseignements"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
+            >
+              Voir tous les enseignements
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CITATION */}
       <AuroraBackground variant="imperial" intensity="strong" className="py-32 md:py-40">
         <ParticleField count={40} color="#C9A227" size={1.5} speed="slow" />
