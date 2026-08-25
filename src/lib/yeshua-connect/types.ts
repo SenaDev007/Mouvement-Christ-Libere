@@ -8,7 +8,7 @@
  * Pas de "read receipts" — remplacé par "Bénédiction" (✋) et "Amen" (🙏).
  */
 
-export type MessageType = "TEXT" | "AUDIO" | "IMAGE" | "FILE" | "VERSE" | "ANNOUNCEMENT";
+export type MessageType = "TEXT" | "AUDIO" | "IMAGE" | "VIDEO" | "FILE" | "VERSE" | "ANNOUNCEMENT";
 export type ConversationType = "DIRECT" | "GROUP" | "CHANNEL" | "PASTORS";
 export type AnnouncementPriority = "INFO" | "NORMAL" | "IMPORTANT" | "URGENT";
 export type AnnouncementTarget = "ALL" | "PASTORS" | "DISCIPLES" | "NEW_BELIEVERS" | "INTERCESSION";

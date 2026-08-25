@@ -18,7 +18,7 @@ type TeachingLevel = "DECOUVERTE" | "INTERMEDIAIRE" | "AVANCE";
 type ChannelType = "TEXT" | "VOICE" | "VIDEO" | "ANNOUNCEMENT" | "RESTRICTED";
 
 // Import des contenus authentiques
-import { PAM_BIOGRAPHY, KONGO_BIOGRAPHY, AUTHENTIC_TESTIMONIES } from "../src/lib/data/authentic-content";
+import { PAM_BIOGRAPHY, KONGO_BIOGRAPHY, AUTHENTIC_TESTIMONIES, AUTHENTIC_TEACHINGS } from "../src/lib/data/authentic-content";
 
 async function main() {
   console.log("🌱 Début du seed V2 (contenus authentiques)...");
@@ -139,7 +139,7 @@ async function main() {
   console.log(`  ✓ ${testimonyData.length} témoignages authentiques`);
 
   // ============================================================
-  // 4. ENSEIGNEMENTS
+  // 4. ENSEIGNEMENTS AUTHENTIQUES (Pam) + enseignements Kongo
   // ============================================================
   const teachings: Array<{
     servantId: string;
@@ -152,26 +152,24 @@ async function main() {
     readingTime: string;
     publishedAt: Date;
   }> = [
-    {
+    // ⭐ Enseignements authentiques de Pam (transcriptions réelles)
+    ...AUTHENTIC_TEACHINGS.map((t) => ({
       servantId: pam.id,
-      title: "Marcher avec Dieu à la manière d'Hénoch",
-      excerpt:
-        "Étude sur Genèse 5:24 et le témoignage d'Hénoch. Que signifie marcher avec Dieu au quotidien, et comment cela se vit-il concrètement aujourd'hui, à partir du témoignage contemporain de PAM ?",
-      content:
-        "Étude approfondie sur la marche avec Dieu à partir du témoignage d'Hénoch, patriarche mentionné dans Genèse 5. Hénoch n'a pas connu la mort — il a été enlevé. Ce témoignage, qui pourrait paraître étrange, est confirmé par Hébreux 11:5 et rappelé dans le livre d'Hénoch cité par Jude. L'enseignement explore ce que signifie 'marcher avec Dieu' : intimité, obéissance, réception, transmission. Et comment, à notre époque, certains serviteurs sont à nouveau conduits dans cette dimension prophétique.",
-      theme: "Marche spirituelle",
-      book: "Genèse",
-      level: "INTERMEDIAIRE",
-      readingTime: "15 min",
+      title: t.title,
+      excerpt: t.excerpt,
+      content: t.content,
+      theme: t.theme,
+      book: t.book,
+      level: t.level as TeachingLevel,
+      readingTime: t.readingTime,
       publishedAt: new Date("2025-07-20"),
-    },
+    })),
+    // Enseignements du Pasteur Kongo
     {
       servantId: kongo.id,
       title: "Les fêtes bibliques et leur accomplissement",
-      excerpt:
-        "Présentation des sept fêtes de l'Éternel (Lévitique 23) et de leur accomplissement progressif en Yeshoua le Messie — passé, présent et à venir.",
-      content:
-        "Étude des sept fêtes bibliques instituées par l'Éternel en Lévitique 23. Quatre fêtes de printemps (Pâque, Pain sans levain, Prémices, Pentecôte) ont déjà été accomplies lors du premier avènement de Yeshoua. Trois fêtes d'automne (Trompettes, Expiation, Tabernacles) attendent leur accomplissement lors de son retour. Cette étude est fondamentale pour comprendre le calendrier prophétique de Dieu et se préparer aux temps qui viennent.",
+      excerpt: "Présentation des sept fêtes de l'Éternel (Lévitique 23) et de leur accomplissement en Yeshoua le Messie.",
+      content: "Étude des sept fêtes bibliques instituées par l'Éternel en Lévitique 23. Quatre fêtes de printemps ont déjà été accomplies lors du premier avènement de Yeshoua. Trois fêtes d'automne attendent leur accomplissement lors de son retour.",
       theme: "Calendrier liturgique",
       book: "Lévitique",
       level: "AVANCE",
@@ -179,25 +177,10 @@ async function main() {
       publishedAt: new Date("2025-07-10"),
     },
     {
-      servantId: pam.id,
-      title: "Le rassemblement des dispersés d'Israël",
-      excerpt:
-        "Étude des promesses prophétiques sur le rassemblement des fils d'Israël et leur signification pour notre temps — à partir des paroles reçues par PAM.",
-      content:
-        "Étude prophétique sur le rassemblement des dispersés d'Israël, en lien avec les paroles reçues par PAM. Ésaïe 11:12, Ézéchiel 37:21-22, Jérémie 31:10 annoncent un rassemblement des fils d'Israël avant le retour du Messie. Cette étude explore comment ce rassemblement commence spirituellement avant de se manifester visiblement, et quel rôle joue la plateforme Mouvement Christ Libère dans cette œuvre.",
-      theme: "Prophétie",
-      book: "Ésaïe",
-      level: "AVANCE",
-      readingTime: "18 min",
-      publishedAt: new Date("2025-06-15"),
-    },
-    {
       servantId: kongo.id,
       title: "Discerner les voix spirituelles",
-      excerpt:
-        "Comment discerner ce qui vient de Dieu, ce qui vient de l'ennemi, et ce qui vient de notre propre âme. Critères bibliques de discernement, à partir de 1 Jean 4.",
-      content:
-        "Enseignement pastoral sur le discernement spirituel. Comment distinguer la voix du Bon Berger de celle du mercenaire, de celle du loup, et de celle de notre propre âme ? Critères bibliques : conformité à l'Écriture, fruit de l'Esprit, témoignage intérieur, confirmation communautaire. Cet enseignement est crucial en un temps où beaucoup reçoivent des 'paroles' — toutes ne viennent pas du Seigneur.",
+      excerpt: "Comment discerner ce qui vient de Dieu, ce qui vient de l'ennemi, et ce qui vient de notre propre âme.",
+      content: "Enseignement pastoral sur le discernement spirituel. Critères bibliques : conformité à l'Écriture, fruit de l'Esprit, témoignage intérieur, confirmation communautaire.",
       theme: "Discernement",
       book: "1 Jean",
       level: "INTERMEDIAIRE",
@@ -205,25 +188,10 @@ async function main() {
       publishedAt: new Date("2025-05-25"),
     },
     {
-      servantId: pam.id,
-      title: "Le chofar dans la Bible et aujourd'hui",
-      excerpt:
-        "Étude sur la signification du chofar dans l'Écriture, depuis le mont Sinaï jusqu'au retour du Messie — et ce que son retentissement signifie pour nous.",
-      content:
-        "Le chofar — cor de bélier — occupe une place centrale dans la Bible. Il retentit au Sinaï (Exode 19), il annonce l'année jubilaire (Lévitique 25), il ouvre Yom Terouah (la fête des Trompettes). Il retentira aussi lors du retour du Messie (1 Thessaloniciens 4:16). Cet enseignement explore la signification spirituelle du chofar et prépare la communauté à écouter attentivement ce qui va retentir.",
-      theme: "Symbolique biblique",
-      book: "Exode",
-      level: "DECOUVERTE",
-      readingTime: "10 min",
-      publishedAt: new Date("2025-04-08"),
-    },
-    {
       servantId: kongo.id,
       title: "La prière qui prévaut",
-      excerpt:
-        "Enseignement pastoral sur la prière fervente, à partir de la vie d'Élie et de Jacques 5:16-18. La prière qui obtient, la prière qui résiste, la prière qui prévaut.",
-      content:
-        "Enseignement sur la prière fervente et efficace, à partir du témoignage d'Élie (1 Rois 17-18, Jacques 5:16-18). Élie était un homme de même nature que nous, mais sa prière a fermé les cieux, ouvert les cieux, fait descendre le feu. Qu'est-ce qui distinguait sa prière ? Foi, persévérance, alignement avec la volonté divine, posture. Cet enseignement pastoral encourage la communauté à persévérer dans une prière qui prévaut.",
+      excerpt: "Enseignement pastoral sur la prière fervente, à partir de la vie d'Élie et de Jacques 5:16-18.",
+      content: "Enseignement sur la prière fervente et efficace, à partir du témoignage d'Élie. Élie était un homme de même nature que nous, mais sa prière a fermé les cieux, ouvert les cieux, fait descendre le feu.",
       theme: "Prière",
       book: "Jacques",
       level: "DECOUVERTE",

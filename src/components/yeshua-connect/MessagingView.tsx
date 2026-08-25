@@ -51,6 +51,7 @@ import {
   QUICK_REACTIONS,
   type ChatConversation, type ChatMessage,
 } from "@/lib/yeshua-connect/types";
+import { getYeshuaWatermarkStyle } from "./YeshuaWatermark";
 
 // ─── Helper: format time ──────────────────────────────────────────────
 function formatTime(iso: string): string {
@@ -65,6 +66,27 @@ function formatDateSeparator(iso: string): string {
   if (d.toDateString() === today.toDateString()) return "Aujourd'hui";
   if (d.toDateString() === yesterday.toDateString()) return "Hier";
   return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+}
+
+// ─── Helper: format file size ─────────────────────────────────────────
+function formatFileSize(bytes?: number): string {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// ─── Helper: file type icon + color ───────────────────────────────────
+function getFileIcon(fileName?: string): { icon: React.ReactNode; color: string; label: string } {
+  if (!fileName) return { icon: <FileText className="w-5 h-5" />, color: "bg-stone-500", label: "FILE" };
+  const ext = fileName.split(".").pop()?.toLowerCase();
+  if (ext === "pdf") return { icon: <span className="text-[8px] font-bold">PDF</span>, color: "bg-red-600", label: "PDF" };
+  if (ext === "doc" || ext === "docx") return { icon: <span className="text-[8px] font-bold">DOC</span>, color: "bg-blue-700", label: "DOC" };
+  if (ext === "xls" || ext === "xlsx") return { icon: <span className="text-[8px] font-bold">XLS</span>, color: "bg-green-700", label: "XLS" };
+  if (ext === "ppt" || ext === "pptx") return { icon: <span className="text-[8px] font-bold">PPT</span>, color: "bg-orange-600", label: "PPT" };
+  if (ext === "zip" || ext === "rar" || ext === "7z") return { icon: <span className="text-[8px] font-bold">ZIP</span>, color: "bg-amber-600", label: "ZIP" };
+  if (ext === "mp4" || ext === "avi" || ext === "mov") return { icon: <span className="text-[8px] font-bold">MP4</span>, color: "bg-indigo-600", label: "MP4" };
+  return { icon: <FileText className="w-5 h-5" />, color: "bg-stone-500", label: "FILE" };
 }
 
 // ─── Helper: avatar color ─────────────────────────────────────────────
@@ -541,7 +563,7 @@ export function MessagingView() {
       </div>
 
       {/* ═════ CHAT ZONE ═════ */}
-      <div className="flex-1 flex flex-col bg-stone-50/30">
+      <div className="flex-1 flex flex-col bg-stone-50/30" style={getYeshuaWatermarkStyle({ opacity: 0.05 })}>
         {/* Chat header */}
         {activeConv ? (
           <div className="p-3 border-b border-stone-100 bg-white flex items-center justify-between">
@@ -668,13 +690,29 @@ export function MessagingView() {
                             <p className="text-sm italic mt-0.5">{msg.verseText}</p>
                           </div>
                         ) : msg.type === "IMAGE" && msg.attachmentUrl ? (
-                          <img src={msg.attachmentUrl} alt={msg.attachmentName || "image"} className="rounded-xl max-w-full max-h-64" />
+                          <div className="relative group/img">
+                            <img src={msg.attachmentUrl} alt={msg.attachmentName || "image"} className="rounded-xl max-w-full max-h-64" />
+                            <a href={msg.attachmentUrl} download={msg.attachmentName}
+                              className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover/img:opacity-100 transition-opacity"
+                              title="Télécharger">
+                              <FileText className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+                        ) : msg.type === "VIDEO" && msg.attachmentUrl ? (
+                          <video src={msg.attachmentUrl} controls className="rounded-xl max-w-full max-h-64" />
                         ) : msg.type === "AUDIO" && msg.attachmentUrl ? (
-                          <AudioPlayer src={msg.attachmentUrl} duration={msg.duration} />
+                          <AudioPlayer src={msg.attachmentUrl} duration={msg.duration} attachmentName={msg.attachmentName} />
                         ) : msg.type === "FILE" && msg.attachmentUrl ? (
-                          <a href={msg.attachmentUrl} download={msg.attachmentName} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-stone-100 hover:bg-stone-200">
-                            <FileText className="w-5 h-5 text-stone-500" />
-                            <span className="text-xs">{msg.attachmentName || "Fichier"}</span>
+                          <a href={msg.attachmentUrl} download={msg.attachmentName}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-stone-100 hover:bg-stone-200 transition-colors min-w-[200px]">
+                            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0", getFileIcon(msg.attachmentName).color)}>
+                              {getFileIcon(msg.attachmentName).icon}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-[#1E0F2B] truncate">{msg.attachmentName || "Fichier"}</p>
+                              <p className="text-[10px] text-stone-400">{formatFileSize(msg.attachmentSize)}</p>
+                            </div>
+                            <FileText className="w-4 h-4 text-stone-400 flex-shrink-0" />
                           </a>
                         ) : (
                           <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -1060,19 +1098,65 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
   );
 }
 
-function AudioPlayer({ src, duration }: { src: string; duration?: number }) {
+function AudioPlayer({ src, duration, attachmentName }: { src: string; duration?: number; attachmentName?: string }) {
   const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(duration || 0);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (playing) { audioRef.current.pause(); } else { audioRef.current.play(); }
+    setPlaying(!playing);
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+      if (audioRef.current.duration && !isNaN(audioRef.current.duration)) {
+        setAudioDuration(audioRef.current.duration);
+      }
+    }
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || !audioDuration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    audioRef.current.currentTime = pct * audioDuration;
+  };
+
+  const formatSec = (s: number) => {
+    if (!s || isNaN(s)) return "0:00";
+    return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
+  };
+
+  const progress = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
+
   return (
-    <div className="flex items-center gap-2 px-2 py-1">
-      <audio ref={audioRef} src={src} onEnded={() => setPlaying(false)} />
-      <button onClick={() => { if (audioRef.current) { if (playing) { audioRef.current.pause(); } else { audioRef.current.play(); } setPlaying(!playing); } }} className="p-1.5 rounded-full bg-[#1E0F2B]/10 hover:bg-[#1E0F2B]/20">
+    <div className="flex items-center gap-2 px-2 py-1.5 min-w-[220px]">
+      <audio
+        ref={audioRef}
+        src={src}
+        onEnded={() => { setPlaying(false); setCurrentTime(0); }}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleTimeUpdate}
+      />
+      <button onClick={togglePlay} className="p-2 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] flex-shrink-0">
         {playing ? <Pause className="w-4 h-4 text-[#1E0F2B]" /> : <Play className="w-4 h-4 text-[#1E0F2B]" />}
       </button>
-      <div className="flex-1 h-1.5 bg-[#1E0F2B]/10 rounded-full">
-        <div className="h-full bg-[#C9A227] rounded-full" style={{ width: "0%" }} />
+      <div className="flex-1 flex flex-col gap-0.5">
+        <div className="h-1.5 bg-[#1E0F2B]/10 rounded-full cursor-pointer" onClick={handleSeek}>
+          <div className="h-full bg-[#C9A227] rounded-full transition-all" style={{ width: `${progress}%` }} />
+        </div>
+        <div className="flex items-center justify-between text-[10px] text-stone-500">
+          <span>{formatSec(currentTime)}</span>
+          <span>{formatSec(audioDuration)}</span>
+        </div>
       </div>
-      <span className="text-xs text-stone-500">{duration ? `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, "0")}` : "0:00"}</span>
+      <a href={src} download={attachmentName || "audio.webm"} className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400" title="Télécharger">
+        <FileText className="w-3.5 h-3.5" />
+      </a>
     </div>
   );
 }
