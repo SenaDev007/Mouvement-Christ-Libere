@@ -15,7 +15,7 @@ import {
   ExternalLink,
   Columns,
 } from "lucide-react";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
@@ -48,6 +48,7 @@ export default function BiblePage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1581275288578-bb9308d4e1e1?q=80&w=1920&auto=format&fit=crop"
         kicker="La Parole de Dieu — Bible interconnectée"
         title="Bible complète"
         subtitle="Bible complète en 6 langues, lexique Strong (hébreu + grec), texte hébraïque morphologique, Peshitta araméenne, et concordance. Toutes les données sont intégrées localement — aucune dépendance externe."

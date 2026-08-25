@@ -96,7 +96,7 @@ export default function Home() {
                   href="/pam"
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors whitespace-nowrap"
                 >
-                  Découvrir PAM
+                  Découvrir Pam
                   <ChevronRight className="w-4 h-4" />
                 </Link>
                 <Link
@@ -183,13 +183,13 @@ export default function Home() {
               Deux voix, une même <TextShimmer>vision</TextShimmer>
             </h2>
             <p className="mt-5 text-base md:text-lg text-[#8A8378] leading-relaxed max-w-2xl mx-auto">
-              PAM et le Pasteur Kongo exercent chacun un ministère distinct.
+              Pam et le Pasteur Kongo exercent chacun un ministère distinct.
               Découvrez leurs parcours séparés.
             </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 mt-12">
-            {/* PAM */}
+            {/* Pam */}
             <Link href="/pam" className="group block bg-[#FAF6EF] border border-[#8A8378]/20 rounded-card p-8 relative overflow-hidden hover:border-[#C9A227]/40 transition-all">
               <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#C9A227] via-[#DDBE55] to-[#C9A227] opacity-60 group-hover:opacity-100" />
               <div className="flex items-center gap-4 mb-6">
@@ -201,7 +201,7 @@ export default function Home() {
                 </div>
                 <div>
                   <div className="text-[10px] uppercase tracking-[0.2em] text-[#8A8378] font-semibold">Servante de l&apos;Éternel</div>
-                  <div className="font-serif text-xl font-semibold text-[#1E0F2B] mt-0.5">PAM</div>
+                  <div className="font-serif text-xl font-semibold text-[#1E0F2B] mt-0.5">Pam</div>
                   <div className="text-xs text-[#8A8378] mt-0.5">Afrika Alkebulane Pamela Dali</div>
                 </div>
               </div>
@@ -210,7 +210,7 @@ export default function Home() {
                 Figure contemporaine du patriarche Hénoch.
               </p>
               <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors whitespace-nowrap">
-                Voir le ministère de PAM
+                Voir le ministère de Pam
                 <ChevronRight className="w-3.5 h-3.5" />
               </span>
             </Link>

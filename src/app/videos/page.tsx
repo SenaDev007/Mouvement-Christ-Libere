@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { VideoCard } from "@/components/premium/video-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { LiveBanner, NextLiveCard } from "@/components/premium/live-banner";
@@ -40,6 +40,7 @@ export default async function VideosPage({ searchParams }: PageProps) {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=1920&auto=format&fit=crop"
         kicker="Vidéos & Lives"
         title="Vidéos & Lives"
         subtitle="Retrouvez ici l'intégralité des enseignements vidéo et des directs, dans leur version originale et complète — même lorsque les plateformes externes suppriment."
@@ -119,7 +120,7 @@ export default async function VideosPage({ searchParams }: PageProps) {
         <div className="relative">
           <QuoteBlock
             text="Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe."
-            reference="PAM — Mouvement Christ Libère"
+            reference="Pam — Mouvement Christ Libère"
             variant="dark"
           />
         </div>

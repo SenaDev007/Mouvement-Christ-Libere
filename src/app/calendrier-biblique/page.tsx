@@ -2,7 +2,7 @@ import { genererAnnee } from "@/lib/calendrier/generation";
 import { calculerFetesPourAnnee } from "@/lib/calendrier/fetes";
 import { determinerAnneeBibliqueEnCours } from "@/lib/calendrier/ancrage";
 import { libelleAnneeBiblique } from "@/lib/calendrier/conversion";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { CalendrierBibliqueApp } from "@/components/calendrier-biblique/calendrier-app";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { AuroraBackground } from "@/components/magic/aurora-background";
@@ -48,6 +48,7 @@ export default async function CalendrierBibliquePage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1519677100203-a9b5e1e1e1e1?q=80&w=1920&auto=format&fit=crop"
         kicker="Calendrier de l'Éternel · 364 jours"
         title="Calendrier Biblique"
         subtitle="Le calendrier solaire de 364 jours attesté dans le Livre d'Hénoch (72-82) et les manuscrits de Qumrân. Chaque fête tombe le même jour de semaine, chaque année, sans exception. L'année commence toujours un mercredi — jour de la création des luminaires."

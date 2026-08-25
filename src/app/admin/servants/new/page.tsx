@@ -23,7 +23,7 @@ const FIELDS: FieldDef[] = [
     name: "shortName",
     label: "Nom court",
     type: "text",
-    placeholder: "PAM",
+    placeholder: "Pam",
     required: true,
   },
   {

@@ -6,10 +6,10 @@ import Image from "next/image";
 import { ChevronRight, BookOpen, FileText, Video, User } from "lucide-react";
 
 const PAM_SECTIONS = [
-  { label: "Biographie", href: "/biographie?servant=pam", icon: User, desc: "Le parcours de PAM, étape par étape — de l'enfance en Alkebulan aux enlèvements au ciel." },
+  { label: "Biographie", href: "/biographie?servant=pam", icon: User, desc: "Le parcours de Pam, étape par étape — de l'enfance en Alkebulan aux enlèvements au ciel." },
   { label: "Témoignages", href: "/temoignages?servant=pam", icon: FileText, desc: "Récits d'enlèvements au ciel, visites du Paradis, paroles reçues du Seigneur Yeshoua." },
   { label: "Enseignements", href: "/enseignements?servant=pam", icon: BookOpen, desc: "Études bibliques : Hénoch, le rassemblement des dispersés, le chofar, le gouvernement de Yeshoua." },
-  { label: "Vidéos & Lives", href: "/videos?servant=pam", icon: Video, desc: "Enseignements vidéo et lives de PAM, archivés dans leur intégralité." },
+  { label: "Vidéos & Lives", href: "/videos?servant=pam", icon: Video, desc: "Enseignements vidéo et lives de Pam, archivés dans leur intégralité." },
 ];
 
 export default function PamPage() {

@@ -2,7 +2,7 @@
  * Versets de fallback — utilisés quand les fichiers de données bibliques
  * ne sont pas accessibles (ex: sur Vercel serverless où les 46MB ne sont pas bundlés).
  *
- * Contient les versets les plus cités dans le ministère de PAM et du Pasteur Kongo.
+ * Contient les versets les plus cités dans le ministère de Pam et du Pasteur Kongo.
  */
 
 export interface FallbackVerset {

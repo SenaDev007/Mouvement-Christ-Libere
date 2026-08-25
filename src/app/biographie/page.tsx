@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { VerticalTimeline } from "@/components/premium/vertical-timeline";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider } from "@/components/premium/section-divider";
@@ -41,12 +41,13 @@ export default async function BiographiePage({ searchParams }: PageProps) {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1504052434549-ac899cf98a43?q=80<PageHerow=19200026auto=format0026fit=crop"
         kicker="Les étapes d'un appel"
         title={`Biographie de ${servant.shortName}`}
         subtitle="Un parcours retracé étape par étape, tel qu'il a été vécu et transmis — sans survente, sans embellissement. Les faits rapportés portent leur propre poids."
         primaryCta={{ label: "Lire les témoignages", href: "/temoignages" }}
         secondaryCta={{
-          label: isPam ? "Voir le Pasteur Kongo" : "Voir PAM",
+          label: isPam ? "Voir le Pasteur Kongo" : "Voir Pam",
           href: isPam ? "/biographie?servant=kongo" : "/biographie?servant=pam",
         }}
       />
@@ -60,7 +61,7 @@ export default async function BiographiePage({ searchParams }: PageProps) {
           <div className="flex items-center gap-2">
             <ServantSwitcherLink
               code="pam"
-              label="PAM"
+              label="Pam"
               active={isPam}
             />
             <ServantSwitcherLink
@@ -79,8 +80,8 @@ export default async function BiographiePage({ searchParams }: PageProps) {
             kicker="La frise chronologique"
             title={isPam ? "Marcher avec Dieu, comme Hénoch" : "Un cœur tourné vers Dieu"}
             subtitle={isPam
-              ? "Le parcours de PAM — de l'enfance en Alkebulan aux enlèvements au ciel, des premières intuitions aux instructions reçues pour le rassemblement des dispersés d'Israël."
-              : "Le parcours du Pasteur Kongo — de l'appel précoce au ministère pastoral, en alliance avec le ministère prophétique de PAM."
+              ? "Le parcours de Pam — de l'enfance en Alkebulan aux enlèvements au ciel, des premières intuitions aux instructions reçues pour le rassemblement des dispersés d'Israël."
+              : "Le parcours du Pasteur Kongo — de l'appel précoce au ministère pastoral, en alliance avec le ministère prophétique de Pam."
             }
             center
           />

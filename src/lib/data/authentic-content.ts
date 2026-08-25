@@ -2,7 +2,7 @@
 // À utiliser pour le seed et l'affichage public
 
 // ============================================================
-// BIOGRAPHIE PAM (Afrika Alkebulane Pamela Dali)
+// BIOGRAPHIE Pam (Afrika Alkebulane Pamela Dali)
 // ============================================================
 
 export const PAM_BIOGRAPHY = [
@@ -30,7 +30,7 @@ export const PAM_BIOGRAPHY = [
     date: "L'ouverture",
     title: "Le premier appel",
     description:
-      "Le moment bascule arrive sans préavis. La voix du Seigneur se fait entendre d'une manière qui ne laisse plus place au doute. Ce qui était pressenti devient révélé ; ce qui était senti devient reçu. PAM comprend qu'elle est appelée, choisie, mise à part. Les Écritures prennent une vie nouvelle, comme si chaque ligne avait été écrite pour elle. Les dons spirituels se manifestent : discernement, paroles de connaissance, visions. Elle reçoit l'injonction de marcher dans la sainteté, de se tenir à part du monde, de se préparer à ce que le Seigneur va lui confier.",
+      "Le moment bascule arrive sans préavis. La voix du Seigneur se fait entendre d'une manière qui ne laisse plus place au doute. Ce qui était pressenti devient révélé ; ce qui était senti devient reçu. Pam comprend qu'elle est appelée, choisie, mise à part. Les Écritures prennent une vie nouvelle, comme si chaque ligne avait été écrite pour elle. Les dons spirituels se manifestent : discernement, paroles de connaissance, visions. Elle reçoit l'injonction de marcher dans la sainteté, de se tenir à part du monde, de se préparer à ce que le Seigneur va lui confier.",
     verseRef: "1 Samuel 3:10",
     verseText:
       "L'Éternel vint et se présenta, et il appela comme les autres fois : Samuel, Samuel ! Et Samuel répondit : Parle, car ton serviteur écoute.",
@@ -50,7 +50,7 @@ export const PAM_BIOGRAPHY = [
     date: "Les enlèvements",
     title: "Marcher avec Dieu, comme Hénoch",
     description:
-      "Ce qui distingue le ministère de PAM, c'est la nature récurrente des enlèvements au ciel. Comme le patriarche Hénoch (Genèse 5:24), comme l'apôtre Paul (2 Corinthiens 12:2), elle est saisie, transportée, faite témoin de réalités célestes que la langue humaine peine à décrire. Le Seigneur lui fait visiter des lieux, lui fait rencontrer des êtres — parfois des anges, parfois des saints déjà glorifiés, parfois le Seigneur Yeshoua lui-même. Chaque visite est accompagnée d'instructions précises : des paroles pour l'Église, des avertissements pour les nations, des révélations sur les temps à venir. Et chaque expérience est confrontée à la Parole écrite, car PAM sait que l'Esprit ne contredit jamais l'Écriture.",
+      "Ce qui distingue le ministère de Pam, c'est la nature récurrente des enlèvements au ciel. Comme le patriarche Hénoch (Genèse 5:24), comme l'apôtre Paul (2 Corinthiens 12:2), elle est saisie, transportée, faite témoin de réalités célestes que la langue humaine peine à décrire. Le Seigneur lui fait visiter des lieux, lui fait rencontrer des êtres — parfois des anges, parfois des saints déjà glorifiés, parfois le Seigneur Yeshoua lui-même. Chaque visite est accompagnée d'instructions précises : des paroles pour l'Église, des avertissements pour les nations, des révélations sur les temps à venir. Et chaque expérience est confrontée à la Parole écrite, car Pam sait que l'Esprit ne contredit jamais l'Écriture.",
     verseRef: "Genèse 5:24",
     verseText:
       "Et Hénoch marcha avec Dieu ; et il ne fut plus, car Dieu le prit.",
@@ -60,7 +60,7 @@ export const PAM_BIOGRAPHY = [
     date: "Le ciel ouvert",
     title: "Visites du Paradis et du troisième ciel",
     description:
-      "Au fil des enlèvements, le Seigneur fait visiter à PAM des lieux que l'Écriture mentionne sans les décrire : le troisième ciel, le Paradis, les demeures préparées pour les saints. Elle y voit la gloire des saints glorifiés, l'ordre hiérarchique des anges, la beauté ineffable des demeures célestes. Elle y entend des chants que la terre ne connaît pas. Elle y reçoit la confirmation que ce que la Parole promet n'est pas une métaphore — c'est une réalité tangible, attendue, préparée pour ceux qui auront persévéré. Ces visites nourrissent son enseignement : ce qu'elle transmet n'est plus une théorie, c'est un témoignage direct.",
+      "Au fil des enlèvements, le Seigneur fait visiter à Pam des lieux que l'Écriture mentionne sans les décrire : le troisième ciel, le Paradis, les demeures préparées pour les saints. Elle y voit la gloire des saints glorifiés, l'ordre hiérarchique des anges, la beauté ineffable des demeures célestes. Elle y entend des chants que la terre ne connaît pas. Elle y reçoit la confirmation que ce que la Parole promet n'est pas une métaphore — c'est une réalité tangible, attendue, préparée pour ceux qui auront persévéré. Ces visites nourrissent son enseignement : ce qu'elle transmet n'est plus une théorie, c'est un témoignage direct.",
     verseRef: "2 Corinthiens 12:2-4",
     verseText:
       "Je connais un homme en Christ, qui fut, il y a quatorze ans, ravi jusqu'au troisième ciel... il fut ravi dans le paradis, et il entendit des paroles ineffables qu'il n'est pas permis à un homme d'exprimer.",
@@ -70,7 +70,7 @@ export const PAM_BIOGRAPHY = [
     date: "Les instructions",
     title: "Les paroles reçues pour les fils d'Israël",
     description:
-      "Parmi toutes les paroles reçues, certaines reviennent avec une insistance particulière : celles qui concernent le rassemblement des fils d'Israël dispersés. Le Seigneur montre à PAM la carte du monde, les communautés éparpillées, les âmes qui portent sans le savoir le sang d'Israël. Il lui parle du son du chofar qui va retentir, de l'urgence de la préparation, de l'unité à restaurer entre les frères séparés. Ces instructions ne sont pas optionnelles : elles sont une mission. Le ministère de PAM prend progressivement une dimension eschatologique — non par fascination pour les temps de la fin, mais par obéissance à ce qui a été confié.",
+      "Parmi toutes les paroles reçues, certaines reviennent avec une insistance particulière : celles qui concernent le rassemblement des fils d'Israël dispersés. Le Seigneur montre à Pam la carte du monde, les communautés éparpillées, les âmes qui portent sans le savoir le sang d'Israël. Il lui parle du son du chofar qui va retentir, de l'urgence de la préparation, de l'unité à restaurer entre les frères séparés. Ces instructions ne sont pas optionnelles : elles sont une mission. Le ministère de Pam prend progressivement une dimension eschatologique — non par fascination pour les temps de la fin, mais par obéissance à ce qui a été confié.",
     verseRef: "Ésaïe 11:12",
     verseText:
       "Il élèvera une bannière pour les nations, il rassemblera les exilés d'Israël, et il recueillera les dispersés de Juda des quatre extrémités de la terre.",
@@ -80,7 +80,7 @@ export const PAM_BIOGRAPHY = [
     date: "Les combats",
     title: "Guerre spirituelle et persécutions",
     description:
-      "Un ministère de cette envergure ne vient pas sans combats. PAM fait l'expérience directe de l'hostilité de l'ennemi : attaques nocturnes, tentatives d'intimidation, manifestations démoniaques. Mais aussi des persécutions humaines — incompréhensions, calomnies, rejets, parfois de la part de ceux-là mêmes qui auraient dû accueillir. Elle traverse ces épreuves en s'appuyant sur la Parole et sur la voix du Seigneur qui la rassure. Chaque combat est une formation : elle apprend à discerner les esprits, à manier l'épée de l'Esprit, à tenir ferme dans les ténèbres. Ce qu'elle vit devient un enseignement pour ceux qui, après elle, devront eux aussi combattre.",
+      "Un ministère de cette envergure ne vient pas sans combats. Pam fait l'expérience directe de l'hostilité de l'ennemi : attaques nocturnes, tentatives d'intimidation, manifestations démoniaques. Mais aussi des persécutions humaines — incompréhensions, calomnies, rejets, parfois de la part de ceux-là mêmes qui auraient dû accueillir. Elle traverse ces épreuves en s'appuyant sur la Parole et sur la voix du Seigneur qui la rassure. Chaque combat est une formation : elle apprend à discerner les esprits, à manier l'épée de l'Esprit, à tenir ferme dans les ténèbres. Ce qu'elle vit devient un enseignement pour ceux qui, après elle, devront eux aussi combattre.",
     verseRef: "Éphésiens 6:12",
     verseText:
       "Car nous n'avons pas à lutter contre la chair et le sang, mais contre les dominations, contre les autorités, contre les princes de ce monde de ténèbres, contre les esprits méchants dans les lieux célestes.",
@@ -90,7 +90,7 @@ export const PAM_BIOGRAPHY = [
     date: "Aujourd'hui",
     title: "La fidélité quotidienne et l'envoi",
     description:
-      "Aujourd'hui, le ministère continue. Les enlèvements continuent. Les instructions continuent. Mais le quotidien reste — la prière, la lecture, le service, l'écoute des frères et sœurs qui se tournent vers elle. La plateforme Mouvement Christ Libère est née de la nécessité de préserver et de transmettre ce qui est reçu. PAM et le Pasteur Kongo ont conscience que les temps sont courts, que la censure spirituelle et numérique s'intensifie, que la fenêtre d'action se réduit. Le projet n'est pas ambitieux par ambition : il est urgent par obéissance. Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe.",
+      "Aujourd'hui, le ministère continue. Les enlèvements continuent. Les instructions continuent. Mais le quotidien reste — la prière, la lecture, le service, l'écoute des frères et sœurs qui se tournent vers elle. La plateforme Mouvement Christ Libère est née de la nécessité de préserver et de transmettre ce qui est reçu. Pam et le Pasteur Kongo ont conscience que les temps sont courts, que la censure spirituelle et numérique s'intensifie, que la fenêtre d'action se réduit. Le projet n'est pas ambitieux par ambition : il est urgent par obéissance. Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe.",
     verseRef: "Hébreux 11:5",
     verseText:
       "C'est par la foi qu'Hénoch fut enlevé afin d'échapper à la mort, et il ne fut plus retrouvé, parce que Dieu l'avait enlevé ; car avant son enlèvement il avait reçu le témoignage qu'il était agréable à Dieu.",
@@ -127,7 +127,7 @@ export const KONGO_BIOGRAPHY = [
     date: "La formation",
     title: "L'école du désert et de la Parole",
     description:
-      "Avant de conduire les autres, le Pasteur Kongo est conduit lui-même par le Seigneur à travers une longue saison de formation. Études bibliques approfondies, jeûnes, prières prolongées, épreuves qui testent la fidélité. Le désert — physique parfois, spirituel souvent — est son école. Il y apprend la dépendance, la patience, l'écoute. Il y forge aussi une conviction qui guidera tout son ministère : la Parole de Dieu est l'autorité suprême, et tout enseignement, toute révélation, toute expérience spirituelle doit y être confronté. Cette rigueur doctrinale protégera plus tard le ministère conjoint qu'il partagera avec PAM.",
+      "Avant de conduire les autres, le Pasteur Kongo est conduit lui-même par le Seigneur à travers une longue saison de formation. Études bibliques approfondies, jeûnes, prières prolongées, épreuves qui testent la fidélité. Le désert — physique parfois, spirituel souvent — est son école. Il y apprend la dépendance, la patience, l'écoute. Il y forge aussi une conviction qui guidera tout son ministère : la Parole de Dieu est l'autorité suprême, et tout enseignement, toute révélation, toute expérience spirituelle doit y être confronté. Cette rigueur doctrinale protégera plus tard le ministère conjoint qu'il partagera avec Pam.",
     verseRef: "2 Timothée 3:16-17",
     verseText:
       "Toute Écriture est inspirée de Dieu, et utile pour enseigner, pour convaincre, pour corriger, pour instruire dans la justice, afin que l'homme de Dieu soit accompli et propre à toute bonne œuvre.",
@@ -135,9 +135,9 @@ export const KONGO_BIOGRAPHY = [
   },
   {
     date: "La rencontre",
-    title: "La reconnaissance avec PAM",
+    title: "La reconnaissance avec Pam",
     description:
-      "La rencontre avec PAM n'est pas un hasard. C'est une reconnaissance. Le Pasteur Kongo discerne en elle ce que d'autres n'ont pas vu — un appel prophétique, une onction spécifique, des expériences spirituelles authentiques. Plutôt que de se sentir menacé par cette singularité, il l'accueille comme un complément divin à son propre ministère. L'un pastoral, l'autre prophétique. L'un qui garde et enseigne, l'autre qui reçoit et transmet. Leur mariage scelle cette alliance : deux voix distinctes qui s'accordent sans se confondre, deux ministères qui s'enrichissent mutuellement.",
+      "La rencontre avec Pam n'est pas un hasard. C'est une reconnaissance. Le Pasteur Kongo discerne en elle ce que d'autres n'ont pas vu — un appel prophétique, une onction spécifique, des expériences spirituelles authentiques. Plutôt que de se sentir menacé par cette singularité, il l'accueille comme un complément divin à son propre ministère. L'un pastoral, l'autre prophétique. L'un qui garde et enseigne, l'autre qui reçoit et transmet. Leur mariage scelle cette alliance : deux voix distinctes qui s'accordent sans se confondre, deux ministères qui s'enrichissent mutuellement.",
     verseRef: "Amos 3:3",
     verseText:
       "Deux hommes marchent-ils ensemble, sans en être convenus ?",
@@ -147,7 +147,7 @@ export const KONGO_BIOGRAPHY = [
     date: "Le ministère conjoint",
     title: "Pastorat et prophétie en harmonie",
     description:
-      "Le ministère conjoint du Pasteur Kongo et de PAM s'organise progressivement. Le Pasteur accompagne les brebis au quotidien — visites, conseils, prières, enseignements réguliers. PAM reçoit et transmet les paroles du ciel, les avertissements, les instructions pour la communauté. Les deux flux se complètent : le pastorat apporte la stabilité et le soin, la prophétie apporte la direction et la correction. Ensemble, ils forment une équipe spirituelle complète, capable de nourrir les croyants dans toutes les dimensions de leur walk — doctrinale, pratique, prophétique, eschatologique.",
+      "Le ministère conjoint du Pasteur Kongo et de Pam s'organise progressivement. Le Pasteur accompagne les brebis au quotidien — visites, conseils, prières, enseignements réguliers. Pam reçoit et transmet les paroles du ciel, les avertissements, les instructions pour la communauté. Les deux flux se complètent : le pastorat apporte la stabilité et le soin, la prophétie apporte la direction et la correction. Ensemble, ils forment une équipe spirituelle complète, capable de nourrir les croyants dans toutes les dimensions de leur walk — doctrinale, pratique, prophétique, eschatologique.",
     verseRef: "Éphésiens 4:11-12",
     verseText:
       "Et il a donné les uns comme apôtres, les autres comme prophètes, les autres comme évangélistes, les autres comme pasteurs et docteurs, pour le perfectionnement des saints en vue de l'œuvre du ministère et de l'édification du corps de Christ.",
@@ -167,7 +167,7 @@ export const KONGO_BIOGRAPHY = [
     date: "Aujourd'hui",
     title: "Servir dans la continuité et l'urgence",
     description:
-      "Aujourd'hui, le Pasteur Kongo poursuit son ministère pastoral en harmonie avec le ministère prophétique de PAM. Il accompagne les frères et sœurs dispersés géographiquement mais unis spirituellement. Il prépare la communauté aux temps qui viennent, sans panique mais sans complaisance. La plateforme est pour lui un outil pastoral à l'échelle numérique : un moyen de toucher des âmes que le ministère charnel ne pourrait atteindre, un moyen de préserver les enseignements contre la censure, un moyen de rassembler ceux que les circonstances ont éloignés. Sa devise pourrait être celle de Paul : « malheur à moi si je n'annonce pas l'Évangile ».",
+      "Aujourd'hui, le Pasteur Kongo poursuit son ministère pastoral en harmonie avec le ministère prophétique de Pam. Il accompagne les frères et sœurs dispersés géographiquement mais unis spirituellement. Il prépare la communauté aux temps qui viennent, sans panique mais sans complaisance. La plateforme est pour lui un outil pastoral à l'échelle numérique : un moyen de toucher des âmes que le ministère charnel ne pourrait atteindre, un moyen de préserver les enseignements contre la censure, un moyen de rassembler ceux que les circonstances ont éloignés. Sa devise pourrait être celle de Paul : « malheur à moi si je n'annonce pas l'Évangile ».",
     verseRef: "1 Corinthiens 9:16",
     verseText:
       "Car si j'annonce l'Évangile, ce n'est pas pour moi un sujet de gloire, puisque la nécessité m'en est imposée, et malheur à moi si je n'annonce pas l'Évangile !",

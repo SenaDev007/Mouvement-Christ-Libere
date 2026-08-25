@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { ChannelCard, SecureBanner } from "@/components/premium/channel-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
@@ -16,7 +16,7 @@ export default async function CommunautePage() {
   });
 
   const roles = [
-    { role: "Super-admin", holder: "PAM / Pasteur Kongo", color: "bg-gold" },
+    { role: "Super-admin", holder: "Pam / Pasteur Kongo", color: "bg-gold" },
     { role: "Modérateur", holder: "Bénévoles validés", color: "bg-lavender" },
     { role: "Membre", holder: "Croyant inscrit", color: "bg-stone" },
   ];
@@ -24,6 +24,7 @@ export default async function CommunautePage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1511632765486-a0a80de485a5?q=80&w=1920&auto=format&fit=crop"
         kicker="Espaces d'échange"
         title="Communauté"
         subtitle="Des espaces d'échange organisés par thème, modérés avec attention, pour grandir ensemble dans la foi. Canaux ouverts, canaux restreints chiffrés, intercession — à chacun son rythme."

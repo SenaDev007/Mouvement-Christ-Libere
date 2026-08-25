@@ -18,7 +18,7 @@ import Link from "next/link";
 
 const navItems = [
   { name: "Accueil", url: "/", icon: Home },
-  { name: "PAM", url: "/pam", icon: Sparkles },
+  { name: "Pam", url: "/pam", icon: Sparkles },
   { name: "Pasteur Kongo", url: "/pasteur-kongo", icon: User },
   { name: "Témoignages", url: "/temoignages", icon: FileText },
   { name: "Enseignements", url: "/enseignements", icon: BookOpen },
@@ -28,20 +28,9 @@ const navItems = [
 ];
 
 export function TubelightNav() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  const mobileItems = navItems.slice(0, 6);
-
   return (
     <>
-      <NavBar items={isMobile ? mobileItems : navItems} />
+      <NavBar items={navItems} />
 
       {/* CTA — desktop, bas-droite */}
       <div className="hidden lg:block fixed bottom-6 right-6 z-50">

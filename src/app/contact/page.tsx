@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { Send, CheckCircle2, Loader2, AlertCircle, MessageCircle } from "lucide-react";
 
@@ -46,6 +46,7 @@ export default function ContactPage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1452408143346-2f5e2f0e1e1e?q=80&w=1920&auto=format&fit=crop"
         kicker="Prendre contact"
         title="Demander un échange"
         subtitle="Laissez-nous vos coordonnées, un membre de l'équipe pastorale reviendra vers vous. Délai de réponse garanti : sous 24h."

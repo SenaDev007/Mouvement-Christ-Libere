@@ -28,7 +28,7 @@ export default async function AdminServantsPage() {
             Serviteurs
           </h1>
           <p className="text-sm text-stone">
-            Gérez les deux serviteurs principaux (PAM et Pasteur Kongo).
+            Gérez les deux serviteurs principaux (Pam et Pasteur Kongo).
           </p>
         </div>
         <Link

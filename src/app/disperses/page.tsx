@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
@@ -85,6 +85,7 @@ export default function DispersesPage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920&auto=format&fit=crop"
         kicker="Rassemblement des fils d'Israël"
         title="Carte des dispersés"
         subtitle="Les fils d'Israël dispersés parmi les nations, dont la réunification est un signe des temps prophétique (Ésaïe 11:12, Ézéchiel 37). Ajoutez votre position pour rendre visible l'accomplissement de la promesse."
