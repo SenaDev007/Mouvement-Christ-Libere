@@ -23,7 +23,7 @@ const navItems = [
   { name: "Témoignages", url: "/temoignages", icon: FileText },
   { name: "Enseignements", url: "/enseignements", icon: BookOpen },
   { name: "Bible", url: "/bible", icon: BookOpen },
-  { name: "Helm Connect", url: "/helm-connect", icon: Sparkles },
+  { name: "Yeshua Connect", url: "/yeshua-connect", icon: Sparkles },
   { name: "Communauté", url: "/communaute", icon: Users },
 ];
 

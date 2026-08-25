@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ServantProvider } from "@/components/site/servant-context";
 import { ScrollProgress } from "@/components/magic/scroll-progress";
 import { TubelightNav } from "@/components/site/tubelight-nav";
-import { CinematicFooter } from "@/components/ui/motion-footer";
+import { ConditionalFooter } from "@/components/site/conditional-footer";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -63,7 +63,7 @@ export default function RootLayout({
         <ScrollProgress />
         <ServantProvider>
           <main className="flex-1 pt-16 sm:pt-0">{children}</main>
-          <CinematicFooter />
+          <ConditionalFooter />
           <TubelightNav />
         </ServantProvider>
         <Toaster />
