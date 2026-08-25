@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Sparkles, ChevronRight, Loader2, Mail, Lock, User, AlertCircle, CheckCircle2 } from "lucide-react";
+import { api } from "@/lib/api-client";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch(api.url("/api/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

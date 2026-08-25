@@ -9,6 +9,7 @@ import { CarteDisperses, type MembreDisperse } from "@/components/disperses/cart
 import { MagneticButton } from "@/components/magic/magnetic-button";
 import { MapPin, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { api } from "@/lib/api-client";
 
 export default function DispersesPage() {
   const [membres, setMembres] = useState<MembreDisperse[]>([]);
@@ -28,7 +29,7 @@ export default function DispersesPage() {
   });
 
   useEffect(() => {
-    fetch("/api/disperses")
+    fetch(api.url("/api/disperses")))
       .then((res) => res.json())
       .then((data) => {
         setMembres(data.membres || []);
@@ -64,7 +65,7 @@ export default function DispersesPage() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/disperses", {
+      const res = await fetch(api.url("/api/disperses"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -72,7 +73,7 @@ export default function DispersesPage() {
       if (res.ok) {
         setSubmitted(true);
         // Recharger les membres
-        const data = await fetch("/api/disperses").then((r) => r.json());
+        const data = await fetch(api.url("/api/disperses"))).then((r) => r.json());
         setMembres(data.membres || []);
       }
     } catch (err) {

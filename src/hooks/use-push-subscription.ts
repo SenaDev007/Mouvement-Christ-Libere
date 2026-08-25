@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { api } from "@/lib/api-client";
 
 /**
  * usePushSubscription — Hook pour gérer l'abonnement aux notifications push.
@@ -47,7 +48,7 @@ export function usePushSubscription() {
 
     try {
       // 1. Fetch VAPID public key
-      const vapidRes = await fetch("/api/push/vapid");
+      const vapidRes = await fetch(api.url("/api/push/vapid"));
       const { publicKey } = await vapidRes.json();
       if (!publicKey) throw new Error("Clé VAPID non disponible");
 
@@ -63,7 +64,7 @@ export function usePushSubscription() {
       });
 
       // 4. Send subscription to backend
-      const res = await fetch("/api/push/subscribe", {
+      const res = await fetch(api.url("/api/push/subscribe"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subscription: sub }),
@@ -86,7 +87,7 @@ export function usePushSubscription() {
         const sub = await reg.pushManager.getSubscription();
         if (sub) await sub.unsubscribe();
       }
-      await fetch("/api/push/subscribe", { method: "DELETE" });
+      await fetch(api.url("/api/push/subscribe"), { method: "DELETE" });
       setIsSubscribed(false);
     } catch (e: any) {
       setError(e.message);

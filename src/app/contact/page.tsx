@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PageHero } from "@/components/site/page-hero";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { Send, CheckCircle2, Loader2, AlertCircle, MessageCircle } from "lucide-react";
+import { api } from "@/lib/api-client";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -18,7 +19,7 @@ export default function ContactPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch(api.url("/api/contact"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

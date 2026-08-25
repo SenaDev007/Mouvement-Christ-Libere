@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant } from "livekit-client";
 import { Phone, Video, Mic, MicOff, VideoOff, PhoneOff, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 
 /**
  * CallScreen — Full-screen call interface (audio + video) using LiveKit.
@@ -45,7 +46,7 @@ export function CallScreen({ roomName, callType, onEnd }: CallScreenProps) {
     async function joinCall() {
       try {
         // 1. Get token from backend
-        const res = await fetch("/api/livekit/token", {
+        const res = await fetch(api.url("/api/livekit/token"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ roomName }),

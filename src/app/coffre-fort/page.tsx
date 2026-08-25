@@ -21,6 +21,7 @@ import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 
 interface AncreArweave {
   contenuId: string;
@@ -75,7 +76,7 @@ export default function CoffreFortPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/arweave/ancrer", {
+      const res = await fetch(api.url("/api/arweave/ancrer"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

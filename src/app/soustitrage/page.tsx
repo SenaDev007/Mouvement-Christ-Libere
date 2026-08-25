@@ -17,6 +17,7 @@ import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 
 const LANGUES = [
   { code: "fr", nom: "Français", drapeau: "🇫🇷" },
@@ -56,7 +57,7 @@ export default function SousTitragePage() {
   const [whisperConfigure, setWhisperConfigure] = useState(false);
 
   useEffect(() => {
-    fetch("/api/soustitres")
+    fetch(api.url("/api/soustitres")))
       .then((r) => r.json())
       .then((data) => setWhisperConfigure(data.mode === "production"))
       .catch(() => {});
@@ -74,7 +75,7 @@ export default function SousTitragePage() {
     setError("");
 
     try {
-      const res = await fetch("/api/soustitres", {
+      const res = await fetch(api.url("/api/soustitres"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

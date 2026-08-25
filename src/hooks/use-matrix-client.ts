@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { MatrixClient, createClient } from "matrix-js-sdk";
+import { api } from "@/lib/api-client";
 
 /**
  * useMatrixClient — Hook pour initialiser et gérer le client Matrix.
@@ -39,7 +40,7 @@ export function useMatrixClient() {
     async function init() {
       try {
         // 1. Get Matrix token
-        const res = await fetch("/api/matrix/token", { method: "POST" });
+        const res = await fetch(api.url("/api/matrix/token"), { method: "POST" });
         if (!res.ok) {
           setError("Matrix non configuré");
           return;

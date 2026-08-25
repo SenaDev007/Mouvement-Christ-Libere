@@ -17,6 +17,7 @@ import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 
 interface Demande {
   id: string;
@@ -60,7 +61,7 @@ export default function IntercessionPage() {
   const fetchDemandes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/intercession${filtre !== "tous" ? `?categorie=${filtre}` : ""}`);
+      const res = await fetch(api.url(`/api/intercession${filtre !== "tous" ? `)?categorie=${filtre}` : ""}`);
       if (res.ok) {
         const data = await res.json();
         setDemandes(data.demandes || []);
@@ -77,7 +78,7 @@ export default function IntercessionPage() {
 
   const handlePrier = async (id: string) => {
     try {
-      await fetch(`/api/intercession/${id}/prier`, { method: "POST" });
+      await fetch(api.url(`/api/intercession/${id}/prier`), { method: "POST" });
       setDemandes((prev) =>
         prev.map((d) =>
           d.id === id ? { ...d, prayCount: d.prayCount + 1, statut: "en_priere" } : d
@@ -93,7 +94,7 @@ export default function IntercessionPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch("/api/intercession", {
+      const res = await fetch(api.url("/api/intercession"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

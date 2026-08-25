@@ -10,6 +10,7 @@ import {
   Bell, BellOff, Save, LogOut, Settings,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { api } from "@/lib/api-client";
 
 export default function ProfilPage() {
   const { data: session, status } = useSession();
@@ -38,7 +39,7 @@ export default function ProfilPage() {
   useEffect(() => {
     if (session?.user?.id) {
       // Fetch user profile
-      fetch("/api/user/profile").then(r => r.json()).then(data => {
+      fetch(api.url("/api/user/profile"))).then(r => r.json()).then(data => {
         if (data.name) setName(data.name);
         if (data.bio) setBio(data.bio);
         if (data.country) setCountry(data.country);
@@ -55,7 +56,7 @@ export default function ProfilPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await fetch("/api/user/profile", {
+      await fetch(api.url("/api/user/profile"), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

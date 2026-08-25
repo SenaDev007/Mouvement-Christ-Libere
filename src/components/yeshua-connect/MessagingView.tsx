@@ -53,6 +53,7 @@ import {
   type ChatConversation, type ChatMessage,
 } from "@/lib/yeshua-connect/types";
 import { getYeshuaWatermarkStyle } from "./YeshuaWatermark";
+import { api } from "@/lib/api-client";
 
 // ─── Helper: format time ──────────────────────────────────────────────
 function formatTime(iso: string): string {
@@ -166,7 +167,7 @@ export function MessagingView() {
 
   const loadConversations = useCallback(async () => {
     try {
-      const res = await fetch("/api/yeshua-connect/conversations", { cache: "no-store" });
+      const res = await fetch(api.url("/api/yeshua-connect/conversations"), { cache: "no-store" });
       if (!res.ok) throw new Error("Failed");
       const data: ChatConversation[] = await res.json();
       setConversations(data);
@@ -185,7 +186,7 @@ export function MessagingView() {
   const loadMessages = useCallback(async (convId: string) => {
     setLoadingMsgs(true);
     try {
-      const res = await fetch(`/api/yeshua-connect/conversations/${convId}/messages?limit=100`, { cache: "no-store" });
+      const res = await fetch(api.url(`/api/yeshua-connect/conversations/${convId}/messages?limit=100`), { cache: "no-store" });
       if (!res.ok) throw new Error("Failed");
       const data: ChatMessage[] = await res.json();
       setMessages(prev => ({ ...prev, [convId]: data }));
@@ -216,7 +217,7 @@ export function MessagingView() {
     if (editingMsg) {
       setSending(true);
       try {
-        const res = await fetch(`/api/yeshua-connect/messages/${editingMsg.id}/edit`, {
+        const res = await fetch(api.url(`/api/yeshua-connect/messages/${editingMsg.id}/edit`), {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content }),
@@ -241,7 +242,7 @@ export function MessagingView() {
     setReplyTo(null);
 
     try {
-      const res = await fetch(`/api/yeshua-connect/conversations/${activeConvId}/messages`, {
+      const res = await fetch(api.url(`/api/yeshua-connect/conversations/${activeConvId}/messages`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -279,7 +280,7 @@ export function MessagingView() {
     setShowReactions(null);
     // API call (fire-and-forget)
     try {
-      await fetch(`/api/yeshua-connect/messages/${msgId}/react`, {
+      await fetch(api.url(`/api/yeshua-connect/messages/${msgId}/react`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ emoji, userId: currentUserId, userName: currentUserName }),
@@ -297,7 +298,7 @@ export function MessagingView() {
   const handleDelete = async (msgId: string, forEveryone: boolean = false) => {
     if (!activeConvId) return;
     try {
-      await fetch(`/api/yeshua-connect/messages/${msgId}/delete?forEveryone=${forEveryone}`, { method: "DELETE" });
+      await fetch(api.url(`/api/yeshua-connect/messages/${msgId}/delete?forEveryone=${forEveryone}`), { method: "DELETE" });
       setMessages(prev => ({
         ...prev,
         [activeConvId]: (prev[activeConvId] || []).map(m =>
@@ -310,7 +311,7 @@ export function MessagingView() {
   const handleForward = async (targetChannelId: string) => {
     if (!showForwardModal) return;
     try {
-      const res = await fetch(`/api/yeshua-connect/messages/${showForwardModal}/forward`, {
+      const res = await fetch(api.url(`/api/yeshua-connect/messages/${showForwardModal}/forward`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ targetChannelId, userId: currentUserId }),
@@ -360,7 +361,7 @@ export function MessagingView() {
           formData.append("userId", "current");
           formData.append("type", "AUDIO");
           try {
-            const res = await fetch(`/api/yeshua-connect/conversations/${activeConvId}/messages/attachment`, {
+            const res = await fetch(api.url(`/api/yeshua-connect/conversations/${activeConvId}/messages/attachment`), {
               method: "POST",
               body: formData,
             });
@@ -402,7 +403,7 @@ export function MessagingView() {
     formData.append("userId", "current");
     formData.append("type", file.type.startsWith("image/") ? "IMAGE" : "FILE");
     try {
-      const res = await fetch(`/api/yeshua-connect/conversations/${activeConvId}/messages/attachment`, {
+      const res = await fetch(api.url(`/api/yeshua-connect/conversations/${activeConvId}/messages/attachment`), {
         method: "POST",
         body: formData,
       });
@@ -419,7 +420,7 @@ export function MessagingView() {
     setGlobalSearchQuery(q);
     if (!q.trim()) { setGlobalSearchResults(null); return; }
     try {
-      const res = await fetch(`/api/yeshua-connect/search?q=${encodeURIComponent(q)}`);
+      const res = await fetch(api.url(`/api/yeshua-connect/search?q=${encodeURIComponent(q)}`));
       if (res.ok) setGlobalSearchResults(await res.json());
     } catch (e) { console.error("search:", e); }
   };
@@ -1171,7 +1172,7 @@ function AnnouncementsModal({ onClose }: { onClose: () => void }) {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    fetch("/api/yeshua-connect/announcements").then(r => r.json()).then(d => { setAnnouncements(d); setLoading(false); }).catch(() => setLoading(false));
+    fetch(api.url("/api/yeshua-connect/announcements"))).then(r => r.json()).then(d => { setAnnouncements(d); setLoading(false); }).catch(() => setLoading(false));
   }, []);
   return (
     <Modal onClose={onClose} title="Annonces officielles">
@@ -1202,7 +1203,7 @@ function NewChannelModal({ onClose, onCreated }: { onClose: () => void; onCreate
     if (!name.trim()) return;
     setCreating(true);
     try {
-      const res = await fetch("/api/yeshua-connect/channels", {
+      const res = await fetch(api.url("/api/yeshua-connect/channels"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
