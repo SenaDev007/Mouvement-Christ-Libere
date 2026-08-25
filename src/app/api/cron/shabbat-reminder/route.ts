@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { webpush } from "@/app/api/push/vapid/route";
+import { sendPushNotification } from "@/app/api/push/vapid/route";
 import { determinerAnneeBibliqueEnCours } from "@/lib/calendrier/ancrage";
 import { genererAnnee } from "@/lib/calendrier/generation";
 import { calculerFetesPourAnnee } from "@/lib/calendrier/fetes";
@@ -12,6 +12,9 @@ import { calculerFetesPourAnnee } from "@/lib/calendrier/fetes";
  *
  * Configure in vercel.json:
  *   "crons": [{ "path": "/api/cron/shabbat-reminder", "schedule": "0 16 * * 5" }]
+ *
+ * ⭐ Uses sendPushNotification() which lazily configures VAPID.
+ *    If VAPID keys are not set, push notifications are skipped gracefully.
  */
 export async function GET() {
   try {
@@ -42,15 +45,17 @@ export async function GET() {
     });
 
     let sent = 0;
+    let skipped = 0;
 
     for (const user of users) {
       if (!user.pushSubscription) continue;
+      const subscription = JSON.parse(user.pushSubscription);
 
       // Send Shabbat reminder (every Friday)
       if (now.getDay() === 5) {
         try {
-          await webpush.sendNotification(
-            JSON.parse(user.pushSubscription),
+          const ok = await sendPushNotification(
+            subscription,
             JSON.stringify({
               title: "🕯️ Shabbat Shalom",
               body: "Le Shabbat commence ce soir à 18h00. Préparez votre cœur et votre maison.",
@@ -59,7 +64,7 @@ export async function GET() {
               tag: "shabbat",
             })
           );
-          sent++;
+          if (ok) sent++; else skipped++;
         } catch (e: any) {
           if (e?.statusCode === 410 || e?.statusCode === 404) {
             await db.user.update({
@@ -67,6 +72,7 @@ export async function GET() {
               data: { pushSubscription: null },
             });
           }
+          skipped++;
         }
       }
 
@@ -75,10 +81,10 @@ export async function GET() {
         try {
           const feteDate = new Date(fete.dateGregorienne);
           const daysUntil = Math.ceil((feteDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
-          const f = fete.fete; // nested DefinitionFete object
+          const f = fete.fete;
 
-          await webpush.sendNotification(
-            JSON.parse(user.pushSubscription),
+          const ok = await sendPushNotification(
+            subscription,
             JSON.stringify({
               title: `📅 ${f.nomFr} ${f.nomHebrew || ""}`,
               body: daysUntil === 0
@@ -89,7 +95,7 @@ export async function GET() {
               tag: `fete-${fete.jourAnnee}`,
             })
           );
-          sent++;
+          if (ok) sent++; else skipped++;
         } catch (e: any) {
           if (e?.statusCode === 410 || e?.statusCode === 404) {
             await db.user.update({
@@ -105,6 +111,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       sent,
+      skipped,
       usersChecked: users.length,
       upcomingFetes: upcomingFetes.length,
     });

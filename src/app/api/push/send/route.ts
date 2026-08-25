@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { webpush } from "@/app/api/push/vapid/route";
+import { sendPushNotification } from "@/app/api/push/vapid/route";
 
 /**
  * POST /api/push/send
@@ -73,8 +73,8 @@ export async function POST(req: NextRequest) {
       if (!user.pushSubscription) continue;
       try {
         const subscription = JSON.parse(user.pushSubscription);
-        await webpush.sendNotification(subscription, payload);
-        sent++;
+        const ok = await sendPushNotification(subscription, payload);
+        if (ok) sent++; else failed++;
       } catch (error: any) {
         // 410 = subscription expired, 404 = not found → remove it
         if (error?.statusCode === 410 || error?.statusCode === 404) {
