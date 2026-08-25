@@ -57,7 +57,7 @@ export default function SousTitragePage() {
   const [whisperConfigure, setWhisperConfigure] = useState(false);
 
   useEffect(() => {
-    fetch(api.url("/api/soustitres")))
+    fetch(api.url("/api/soustitres"))
       .then((r) => r.json())
       .then((data) => setWhisperConfigure(data.mode === "production"))
       .catch(() => {});

@@ -1172,7 +1172,7 @@ function AnnouncementsModal({ onClose }: { onClose: () => void }) {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    fetch(api.url("/api/yeshua-connect/announcements"))).then(r => r.json()).then(d => { setAnnouncements(d); setLoading(false); }).catch(() => setLoading(false));
+    fetch(api.url("/api/yeshua-connect/announcements")).then(r => r.json()).then(d => { setAnnouncements(d); setLoading(false); }).catch(() => setLoading(false));
   }, []);
   return (
     <Modal onClose={onClose} title="Annonces officielles">

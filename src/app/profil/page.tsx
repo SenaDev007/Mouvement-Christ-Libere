@@ -39,7 +39,7 @@ export default function ProfilPage() {
   useEffect(() => {
     if (session?.user?.id) {
       // Fetch user profile
-      fetch(api.url("/api/user/profile"))).then(r => r.json()).then(data => {
+      fetch(api.url("/api/user/profile")).then(r => r.json()).then(data => {
         if (data.name) setName(data.name);
         if (data.bio) setBio(data.bio);
         if (data.country) setCountry(data.country);

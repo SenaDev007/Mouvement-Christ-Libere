@@ -29,7 +29,7 @@ export default function DispersesPage() {
   });
 
   useEffect(() => {
-    fetch(api.url("/api/disperses")))
+    fetch(api.url("/api/disperses"))
       .then((res) => res.json())
       .then((data) => {
         setMembres(data.membres || []);
@@ -73,7 +73,7 @@ export default function DispersesPage() {
       if (res.ok) {
         setSubmitted(true);
         // Recharger les membres
-        const data = await fetch(api.url("/api/disperses"))).then((r) => r.json());
+        const data = await fetch(api.url("/api/disperses")).then((r) => r.json());
         setMembres(data.membres || []);
       }
     } catch (err) {

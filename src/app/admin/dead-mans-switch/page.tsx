@@ -36,7 +36,7 @@ export default function DeadMansSwitchAdminPage() {
   const fetchSwitches = async () => {
     setLoading(true);
     try {
-      const res = await fetch(api.url("/api/dead-mans-switch")));
+      const res = await fetch(api.url("/api/dead-mans-switch"));
       if (res.ok) {
         const data = await res.json();
         setSwitches(data.switches || []);
