@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { webpush } from "@/app/api/push/vapid/route";
-import { calculerFetesPourAnnee, determinerAnneeBibliqueEnCours, genererAnnee } from "@/lib/calendrier/fetes";
+import { determinerAnneeBibliqueEnCours } from "@/lib/calendrier/ancrage";
+import { genererAnnee } from "@/lib/calendrier/generation";
+import { calculerFetesPourAnnee } from "@/lib/calendrier/fetes";
 
 /**
  * GET /api/cron/shabbat-reminder
@@ -21,7 +23,7 @@ export async function GET() {
     // Find upcoming feasts in the next 7 days
     const inSevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const upcomingFetes = fetes.filter((f: any) => {
-      const start = new Date(f.startDate);
+      const start = new Date(f.dateGregorienne);
       return start >= now && start <= inSevenDays;
     });
 
@@ -71,19 +73,20 @@ export async function GET() {
       // Send feast reminders
       for (const fete of upcomingFetes) {
         try {
-          const feteDate = new Date(fete.startDate);
+          const feteDate = new Date(fete.dateGregorienne);
           const daysUntil = Math.ceil((feteDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+          const f = fete.fete; // nested DefinitionFete object
 
           await webpush.sendNotification(
             JSON.parse(user.pushSubscription),
             JSON.stringify({
-              title: `📅 ${fete.nameFr} ${fete.nameHe ? fete.nameHe : ""}`,
+              title: `📅 ${f.nomFr} ${f.nomHebrew || ""}`,
               body: daysUntil === 0
-                ? `Aujourd'hui : ${fete.nameFr}. ${fete.description.substring(0, 100)}...`
-                : `Dans ${daysUntil} jour${daysUntil > 1 ? "s" : ""} : ${fete.nameFr}. Préparez-vous.`,
+                ? `Aujourd'hui : ${f.nomFr}. ${f.description.substring(0, 100)}...`
+                : `Dans ${daysUntil} jour${daysUntil > 1 ? "s" : ""} : ${f.nomFr}. Préparez-vous.`,
               url: "/calendrier",
               icon: "/icons/icon-192.png",
-              tag: `fete-${fete.id}`,
+              tag: `fete-${fete.jourAnnee}`,
             })
           );
           sent++;

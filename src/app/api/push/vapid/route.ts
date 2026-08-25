@@ -13,9 +13,7 @@ const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "3KzvKfBmQWnQZQZ7pXJj
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:contact@christ-libere.com";
 
 // Configure web-push once
-if (!web-push.getVAPIDKeys()) {
-  web-push.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-}
+webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 export async function GET() {
   return NextResponse.json({ publicKey: VAPID_PUBLIC_KEY });
