@@ -22,8 +22,8 @@ const navItems = [
   { name: "Pasteur Kongo", url: "/pasteur-kongo", icon: User },
   { name: "Témoignages", url: "/temoignages", icon: FileText },
   { name: "Enseignements", url: "/enseignements", icon: BookOpen },
-  { name: "Vidéos", url: "/videos", icon: Video },
   { name: "Bible", url: "/bible", icon: BookOpen },
+  { name: "Helm Connect", url: "/helm-connect", icon: Sparkles },
   { name: "Communauté", url: "/communaute", icon: Users },
 ];
 
