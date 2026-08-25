@@ -6,6 +6,7 @@ import { ServantProvider } from "@/components/site/servant-context";
 import { ScrollProgress } from "@/components/magic/scroll-progress";
 import { TubelightNav } from "@/components/site/tubelight-nav";
 import { ConditionalFooter } from "@/components/site/conditional-footer";
+import { NextAuthProvider } from "@/components/auth/next-auth-provider";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -61,12 +62,14 @@ export default function RootLayout({
         className={`${cormorant.variable} ${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
         <ScrollProgress />
-        <ServantProvider>
-          {/* ⭐ Padding: 0 sur mobile (navbar en bas), pt-20 sur desktop (navbar en haut fixe) */}
-          <main className="flex-1 pt-0 sm:pt-20">{children}</main>
-          <ConditionalFooter />
-          <TubelightNav />
-        </ServantProvider>
+        <NextAuthProvider>
+          <ServantProvider>
+            {/* ⭐ Padding: 0 sur mobile (navbar en bas), pt-20 sur desktop (navbar en haut fixe) */}
+            <main className="flex-1 pt-0 sm:pt-20">{children}</main>
+            <ConditionalFooter />
+            <TubelightNav />
+          </ServantProvider>
+        </NextAuthProvider>
         <Toaster />
       </body>
     </html>

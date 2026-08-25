@@ -36,6 +36,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Send, Paperclip, Mic, Lock, Hash, Volume2, Users,
@@ -101,6 +102,11 @@ function getInitials(name: string): string {
 }
 
 export function MessagingView() {
+  // ⭐ V2.0 — Get the real user ID from NextAuth session
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id || "current";
+  const currentUserName = session?.user?.name || "Vous";
+
   // ─── State: conversations + messages ─────────────────────────────────
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
@@ -239,7 +245,7 @@ export function MessagingView() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: "current",
+          userId: currentUserId,
           content,
           type: "TEXT",
           replyToId: replyId,
@@ -266,7 +272,7 @@ export function MessagingView() {
       ...prev,
       [activeConvId]: (prev[activeConvId] || []).map(m =>
         m.id === msgId
-          ? { ...m, reactions: [...m.reactions.filter(r => r.emoji !== emoji), { emoji, userId: "me", userName: "Vous" }] }
+          ? { ...m, reactions: [...m.reactions.filter(r => r.emoji !== emoji), { emoji, userId: currentUserId, userName: currentUserName }] }
           : m
       ),
     }));
@@ -276,7 +282,7 @@ export function MessagingView() {
       await fetch(`/api/yeshua-connect/messages/${msgId}/react`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emoji, userId: "me", userName: "Vous" }),
+        body: JSON.stringify({ emoji, userId: currentUserId, userName: currentUserName }),
       });
     } catch (e) { console.error("react:", e); }
   };
@@ -307,7 +313,7 @@ export function MessagingView() {
       const res = await fetch(`/api/yeshua-connect/messages/${showForwardModal}/forward`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetChannelId, userId: "current" }),
+        body: JSON.stringify({ targetChannelId, userId: currentUserId }),
       });
       if (res.ok) {
         setShowForwardModal(null);
@@ -650,7 +656,7 @@ export function MessagingView() {
           ) : (
             <div className="space-y-2 max-w-3xl mx-auto">
               {activeMessages.map((msg, i) => {
-                const isMine = msg.senderId === "me" || msg.senderId === "current";
+                const isMine = msg.senderId === currentUserId;
                 const showDateSep = i === 0 || formatDateSeparator(activeMessages[i - 1].createdAt) !== formatDateSeparator(msg.createdAt);
                 return (
                   <div key={msg.id}>
@@ -1185,6 +1191,8 @@ function AnnouncementsModal({ onClose }: { onClose: () => void }) {
 }
 
 function NewChannelModal({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id || "current";
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<"CHANNEL" | "GROUP">("GROUP");
@@ -1202,7 +1210,7 @@ function NewChannelModal({ onClose, onCreated }: { onClose: () => void; onCreate
           type: type === "CHANNEL" ? "ANNOUNCEMENT" : "TEXT",
           communityId: "default", // TODO: get from context
           isEncrypted,
-          createdBy: "current",
+          createdBy: currentUserId,
         }),
       });
       if (res.ok) {

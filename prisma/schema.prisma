@@ -30,6 +30,20 @@ model User {
   isVerified    Boolean   @default(false)
   isMinor       Boolean   @default(false)
   acceptedTerms DateTime
+  // ⭐ V2.0 — NextAuth fields
+  emailVerified DateTime?
+  image         String?
+  // ⭐ V2.0 — Push notifications (Web Push API)
+  pushSubscription String?  @db.Text  // JSON: { endpoint, keys: { p256dh, auth } }
+  pushEnabled   Boolean   @default(true)
+  // ⭐ V2.0 — Notification preferences
+  notifMessages Boolean   @default(true)
+  notifAnnouncements Boolean @default(true)
+  notifLive     Boolean   @default(true)
+  notifCommunity Boolean  @default(true)
+  // ⭐ V2.0 — DND (Do Not Disturb)
+  dndEnabled    Boolean   @default(false)
+  dndUntil      DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
