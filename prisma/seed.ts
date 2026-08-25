@@ -82,7 +82,7 @@ async function main() {
   console.log(`  ✓ ${KONGO_BIOGRAPHY.length} jalons biographiques Pasteur Kongo (authentiques)`);
 
   // ============================================================
-  // 3. TÉMOIGNAGES AUTHENTIQUES
+  // 3. TÉMOIGNAGES AUTHENTIQUES (tous — 31 témoignages de Pam)
   // ============================================================
   const testimonyData: Array<{
     servantId: string;
@@ -94,44 +94,12 @@ async function main() {
     bookRef: string;
     readingTime: string;
     publishedAt: Date;
-  }> = [
-    {
-      servantId: pam.id,
-      ...AUTHENTIC_TESTIMONIES[0],
-      status: "CONFIRMED",
-      publishedAt: new Date("2025-03-14"),
-    },
-    {
-      servantId: pam.id,
-      ...AUTHENTIC_TESTIMONIES[1],
-      status: "CONFIRMED",
-      publishedAt: new Date("2025-02-08"),
-    },
-    {
-      servantId: pam.id,
-      ...AUTHENTIC_TESTIMONIES[2],
-      status: "CONFIRMED",
-      publishedAt: new Date("2025-04-22"),
-    },
-    {
-      servantId: pam.id,
-      ...AUTHENTIC_TESTIMONIES[3],
-      status: "CONFIRMED",
-      publishedAt: new Date("2025-05-10"),
-    },
-    {
-      servantId: pam.id,
-      ...AUTHENTIC_TESTIMONIES[4],
-      status: "TO_DISCERN",
-      publishedAt: new Date("2025-08-15"),
-    },
-    {
-      servantId: kongo.id,
-      ...AUTHENTIC_TESTIMONIES[5],
-      status: "CONFIRMED",
-      publishedAt: new Date("2025-06-30"),
-    },
-  ];
+  }> = AUTHENTIC_TESTIMONIES.map((t, i) => ({
+    servantId: pam.id,
+    ...t,
+    status: "CONFIRMED" as TestimonyStatus,
+    publishedAt: new Date(2025, 0, 1 + i * 10), // stagger dates
+  }));
 
   for (const t of testimonyData) {
     await db.testimony.create({ data: t });
