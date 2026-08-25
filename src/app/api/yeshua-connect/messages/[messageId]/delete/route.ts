@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-/**
- * DELETE /api/yeshua-connect/messages/[messageId]/delete
- * Soft-delete a message (isDeleted = true).
- * Query: ?forEveryone=true to delete for everyone (admin only — TODO).
- */
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ messageId: string }> },
@@ -14,18 +9,13 @@ export async function DELETE(
     const { messageId } = await params;
     const url = new URL(_req.url);
     const forEveryone = url.searchParams.get("forEveryone") === "true";
-
     const updated = await db.message.update({
       where: { id: messageId },
-      data: {
-        isDeleted: true,
-        content: forEveryone ? "🗑️ Message supprimé" : "",
-      },
+      data: { isDeleted: true, content: forEveryone ? "🗑️ Message supprimé" : "" },
     });
-
     return NextResponse.json({ success: true, id: updated.id, isDeleted: true });
   } catch (error) {
     console.error("[yeshua-connect/delete] Error:", error);
-    return NextResponse.json({ error: "Erreur lors de la suppression" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur" }, { status: 500 });
   }
 }
