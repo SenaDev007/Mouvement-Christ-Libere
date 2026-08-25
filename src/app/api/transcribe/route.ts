@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 
 /**
  * POST /api/transcribe
@@ -10,31 +9,43 @@ import OpenAI from "openai";
  *   - Transcribing voice messages in Yeshua Connect
  *
  * Body: FormData { audio: File, language?: string }
- * Response: { text, language, duration }
+ * Response: { text, language, duration, segments }
  *
  * Env vars:
  *   OPENAI_API_KEY
+ *
+ * ⭐ OpenAI client is initialized LAZILY to avoid crashing the build
+ *    when OPENAI_API_KEY is not set.
  */
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
-});
+let openaiClient: any = null;
+
+function getOpenAI() {
+  if (openaiClient) return openaiClient;
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+  // Dynamic import to avoid loading the SDK at module evaluation time
+  const { default: OpenAI } = require("openai");
+  openaiClient = new OpenAI({ apiKey });
+  return openaiClient;
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const client = getOpenAI();
+    if (!client) {
+      return NextResponse.json({
+        error: "OPENAI_API_KEY non configuré",
+        devMode: true,
+      }, { status: 503 });
+    }
+
     const formData = await req.formData();
     const audioFile = formData.get("audio") as File;
     const language = (formData.get("language") as string) || "fr";
 
     if (!audioFile) {
       return NextResponse.json({ error: "Fichier audio requis" }, { status: 400 });
-    }
-
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({
-        error: "OPENAI_API_KEY non configuré",
-        devMode: true,
-      }, { status: 503 });
     }
 
     // Convert File to buffer
@@ -44,7 +55,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Call Whisper API
-    const transcription = await openai.audio.transcriptions.create({
+    const transcription = await client.audio.transcriptions.create({
       file,
       model: "whisper-1",
       language,
@@ -56,7 +67,7 @@ export async function POST(req: NextRequest) {
       text: transcription.text,
       language: transcription.language,
       duration: transcription.duration,
-      segments: transcription.segments?.map(s => ({
+      segments: transcription.segments?.map((s: any) => ({
         id: s.id,
         start: s.start,
         end: s.end,

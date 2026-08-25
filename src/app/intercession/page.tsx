@@ -61,7 +61,7 @@ export default function IntercessionPage() {
   const fetchDemandes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(api.url(`/api/intercession${filtre !== "tous" ? `)?categorie=${filtre}` : ""}`);
+      const res = await fetch(api.url(`/api/intercession${filtre !== "tous" ? `?categorie=${filtre}` : ""}`));
       if (res.ok) {
         const data = await res.json();
         setDemandes(data.demandes || []);
