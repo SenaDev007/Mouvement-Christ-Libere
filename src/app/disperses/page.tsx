@@ -89,7 +89,7 @@ export default function DispersesPage() {
     if (!country) { toast.error("Pays invalide."); setSubmitting(false); return; }
 
     try {
-      const res = await fetch(api.url("/api/disperses/add"), {
+      const res = await fetch(api.url("/api/disperses"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
