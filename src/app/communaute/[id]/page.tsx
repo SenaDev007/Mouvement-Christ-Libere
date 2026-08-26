@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { ChannelView } from "@/components/premium/channel-view";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { isMatrixConfigured } from "@/lib/matrix";
@@ -46,6 +46,7 @@ export default async function ChannelPage({ params }: PageProps) {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1511632765486-a0a80de485a5?q=80=w=1920&auto=format&fit=crop"
         kicker={channel.isEncrypted ? "Canal chiffré E2E" : "Canal de communauté"}
         title={channel.name}
         subtitle={channel.description || "Canal de discussion de la communauté Mouvement Christ Libère."}

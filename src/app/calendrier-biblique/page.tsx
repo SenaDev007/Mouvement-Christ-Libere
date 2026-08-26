@@ -2,60 +2,75 @@ import { genererAnnee } from "@/lib/calendrier/generation";
 import { calculerFetesPourAnnee } from "@/lib/calendrier/fetes";
 import { determinerAnneeBibliqueEnCours } from "@/lib/calendrier/ancrage";
 import { libelleAnneeBiblique } from "@/lib/calendrier/conversion";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { CalendrierBibliqueApp } from "@/components/calendrier-biblique/calendrier-app";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function CalendrierBibliquePage() {
   const now = new Date();
-  const anneeBiblique = determinerAnneeBibliqueEnCours(now);
-  const annee = genererAnnee(anneeBiblique);
-  const fetes = calculerFetesPourAnnee(anneeBiblique, annee.jours, now);
+  const anneeBibliqueCourante = determinerAnneeBibliqueEnCours(now);
 
-  // Sérialiser pour le client
-  const serializedAnnee = {
-    annee: annee.annee,
-    libelle: libelleAnneeBiblique(annee.annee),
-    debut: annee.debut.toISOString(),
-    fin: annee.fin.toISOString(),
-    nombreJours: annee.jours.length,
-    jours: annee.jours.map((j) => ({
-      ...j,
-      dateGregorienne: j.dateGregorienne.toISOString(),
-    })),
-    fetes: fetes.map((f) => ({
-      id: f.fete.id,
-      nomFr: f.fete.nomFr,
-      nomHebrew: f.fete.nomHebrew,
-      referenceEcritures: f.fete.referenceEcritures,
-      description: f.fete.description,
-      categorie: f.fete.categorie,
-      couleur: f.fete.couleur,
-      travailInterdit: f.fete.travailInterdit,
-      dureeJours: f.fete.dureeJours,
-      jourDeSemaineFixe: f.fete.jourDeSemaineFixe,
-      dateBiblique: `${f.fete.jourDuMois} ${annee.jours.find((j) => j.mois === f.fete.mois)?.nomMois}`,
-      dateGregorienne: f.dateGregorienne.toISOString(),
-      jourDeSemaine: f.jourDeSemaine,
-      joursRestants: f.joursRestants,
-    })),
-  };
+  // ⭐ Générer 3 années : précédente, courante, suivante — pour permettre
+  //    la navigation dynamique entre mois sans être bloqué à une seule année.
+  const anneesBibliques = [
+    anneeBibliqueCourante - 1,
+    anneeBibliqueCourante,
+    anneeBibliqueCourante + 1,
+  ];
+
+  const serializedAnnees = anneesBibliques.map((ab) => {
+    const annee = genererAnnee(ab);
+    const fetes = calculerFetesPourAnnee(ab, annee.jours, now);
+    return {
+      annee: annee.annee,
+      libelle: libelleAnneeBiblique(annee.annee),
+      debut: annee.debut.toISOString(),
+      fin: annee.fin.toISOString(),
+      nombreJours: annee.jours.length,
+      jours: annee.jours.map((j) => ({
+        ...j,
+        dateGregorienne: j.dateGregorienne.toISOString(),
+      })),
+      fetes: fetes.map((f) => ({
+        id: f.fete.id,
+        nomFr: f.fete.nomFr,
+        nomHebrew: f.fete.nomHebrew,
+        referenceEcritures: f.fete.referenceEcritures,
+        description: f.fete.description,
+        categorie: f.fete.categorie,
+        couleur: f.fete.couleur,
+        travailInterdit: f.fete.travailInterdit,
+        dureeJours: f.fete.dureeJours,
+        jourDeSemaineFixe: f.fete.jourDeSemaineFixe,
+        dateBiblique: `${f.fete.jourDuMois} ${annee.jours.find((j) => j.mois === f.fete.mois)?.nomMois}`,
+        dateGregorienne: f.dateGregorienne.toISOString(),
+        jourDeSemaine: f.jourDeSemaine,
+        joursRestants: f.joursRestants,
+      })),
+    };
+  });
 
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1519677100203-a9b5e1e1e1e1?q=80&w=1920&auto=format&fit=crop"
         kicker="Calendrier de l'Éternel · 364 jours"
         title="Calendrier Biblique"
         subtitle="Le calendrier solaire de 364 jours attesté dans le Livre d'Hénoch (72-82) et les manuscrits de Qumrân. Chaque fête tombe le même jour de semaine, chaque année, sans exception. L'année commence toujours un mercredi — jour de la création des luminaires."
         primaryCta={{ label: "Aujourd'hui", href: "#aujourdhui" }}
-        secondaryCta={{ label: "Télécharger iCal", href: `/api/calendrier-biblique/ical?annee=${anneeBiblique}` }}
+        secondaryCta={{ label: "Télécharger iCal", href: `/api/calendrier-biblique/ical?annee=${anneeBibliqueCourante}` }}
       />
 
-      <CalendrierBibliqueApp annee={serializedAnnee} maintenant={now.toISOString()} />
+      <CalendrierBibliqueApp
+        annees={serializedAnnees}
+        anneeCouranteIndex={1}
+        maintenant={now.toISOString()}
+      />
 
       <SectionDivider variant="ornament" />
 

@@ -23,9 +23,9 @@ export interface Servant {
 const SERVANTS: Record<ServantId, Servant> = {
   pam: {
     id: "pam",
-    name: "PAM",
+    name: "Pam",
     fullName: "Afrika Alkebulane Pamela Dali",
-    shortName: "PAM",
+    shortName: "Pam",
     role: "Servante de l'Éternel",
     bio: "Témoignages d'enlèvements au ciel, instructions reçues du Seigneur Yeshoua, conformité à la Parole.",
     portrait: "AP",
@@ -42,8 +42,8 @@ const SERVANTS: Record<ServantId, Servant> = {
   commun: {
     id: "commun",
     name: "Commun",
-    fullName: "PAM & Pasteur Kongo",
-    shortName: "PAM & Pasteur Kongo",
+    fullName: "Pam & Pasteur Kongo",
+    shortName: "Pam & Pasteur Kongo",
     role: "Ministère conjoint",
     bio: "Déclarations officielles, enseignements communs, vision partagée du couple.",
     portrait: "MC",

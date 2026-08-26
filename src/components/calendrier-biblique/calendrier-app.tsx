@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Grid3x3, List, Clock, BookOpen, Download } from "lucide-react";
+import { Calendar, Grid3x3, List, Clock, BookOpen, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VueAujourdhui } from "./vue-aujourdhui";
 import { VueAnnuelle } from "./vue-annuelle";
@@ -50,7 +50,8 @@ export interface AnneeBibliqueData {
 }
 
 interface CalendrierBibliqueAppProps {
-  annee: AnneeBibliqueData;
+  annees: AnneeBibliqueData[];
+  anneeCouranteIndex: number;
   maintenant: string;
 }
 
@@ -68,9 +69,12 @@ const VUES: Array<{
   { id: "equivalence", label: "Équivalence", icon: BookOpen },
 ];
 
-export function CalendrierBibliqueApp({ annee, maintenant }: CalendrierBibliqueAppProps) {
+export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }: CalendrierBibliqueAppProps) {
   const [vueActive, setVueActive] = useState<Vue>("aujourdhui");
   const [maintenantLive, setMaintenantLive] = useState(new Date(maintenant));
+  const [anneeIndex, setAnneeIndex] = useState(anneeCouranteIndex);
+
+  const annee = annees[anneeIndex];
 
   // Mettre à jour l'heure chaque minute
   useEffect(() => {
@@ -83,28 +87,49 @@ export function CalendrierBibliqueApp({ annee, maintenant }: CalendrierBibliqueA
   return (
     <section id="aujourdhui" className="bg-ivory py-12 md:py-16">
       <div className="container mx-auto max-w-7xl px-4">
-        {/* En-tête : titre + libellé année + export iCal */}
+        {/* En-tête : navigation années + titre + export iCal */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h2 className="font-serif text-2xl md:text-3xl font-semibold text-ink">
-              Année biblique {annee.libelle}
-            </h2>
-            <p className="text-sm text-stone mt-1">
-              {new Date(annee.debut).toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-                timeZone: "UTC",
-              })}{" "}
-              —{" "}
-              {new Date(annee.fin).toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-                timeZone: "UTC",
-              })}{" "}
-              · {annee.nombreJours} jours · {annee.fetes.length} fêtes
-            </p>
+          <div className="flex items-center gap-4">
+            {/* Navigation entre années */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setAnneeIndex(i => Math.max(0, i - 1))}
+                disabled={anneeIndex === 0}
+                className="p-2 rounded-md border border-stone-200 text-stone hover:bg-stone-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Année précédente"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setAnneeIndex(i => Math.min(annees.length - 1, i + 1))}
+                disabled={anneeIndex === annees.length - 1}
+                className="p-2 rounded-md border border-stone-200 text-stone hover:bg-stone-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Année suivante"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            <div>
+              <h2 className="font-serif text-2xl md:text-3xl font-semibold text-ink">
+                Année biblique {annee.libelle}
+              </h2>
+              <p className="text-sm text-stone mt-1">
+                {new Date(annee.debut).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  timeZone: "UTC",
+                })}{" "}
+                —{" "}
+                {new Date(annee.fin).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  timeZone: "UTC",
+                })}{" "}
+                · {annee.nombreJours} jours · {annee.fetes.length} fêtes
+              </p>
+            </div>
           </div>
 
           <a

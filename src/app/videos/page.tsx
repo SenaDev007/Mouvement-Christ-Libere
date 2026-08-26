@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { VideoCard } from "@/components/premium/video-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { LiveBanner, NextLiveCard } from "@/components/premium/live-banner";
@@ -40,6 +40,7 @@ export default async function VideosPage({ searchParams }: PageProps) {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=1920&auto=format&fit=crop"
         kicker="Vidéos & Lives"
         title="Vidéos & Lives"
         subtitle="Retrouvez ici l'intégralité des enseignements vidéo et des directs, dans leur version originale et complète — même lorsque les plateformes externes suppriment."
@@ -70,7 +71,21 @@ export default async function VideosPage({ searchParams }: PageProps) {
             subtitle="Chaque vidéo est conservée dans son intégralité, indépendamment des plateformes externes. La source de vérité reste ici."
           />
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-12">
+          {/* Mode étude toggle */}
+          <div className="flex justify-end mt-6">
+            <button
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors"
+              onClick={() => {
+                // Toggle study mode (client-side — hides suggestions)
+                const grid = document.querySelector('.videos-grid');
+                if (grid) grid.classList.toggle('hidden');
+              }}
+            >
+              Mode étude (masquer les suggestions)
+            </button>
+          </div>
+
+          <div className="videos-grid grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-12">
             {regularVideos.map((v, i) => (
               <VideoCard
                 key={v.id}
@@ -119,7 +134,7 @@ export default async function VideosPage({ searchParams }: PageProps) {
         <div className="relative">
           <QuoteBlock
             text="Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe."
-            reference="PAM — Mouvement Christ Libère"
+            reference="Pam — Mouvement Christ Libère"
             variant="dark"
           />
         </div>

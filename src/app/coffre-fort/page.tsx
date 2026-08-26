@@ -16,11 +16,12 @@ import {
   Hash,
   Calendar,
 } from "lucide-react";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 
 interface AncreArweave {
   contenuId: string;
@@ -75,7 +76,7 @@ export default function CoffreFortPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/arweave/ancrer", {
+      const res = await fetch(api.url("/api/arweave/ancrer"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -98,6 +99,7 @@ export default function CoffreFortPage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1565538810643-8f0f3a098f24?q=80&w=1920&auto=format&fit=crop"
         kicker="Coffre-fort numérique immuable"
         title="Ancrage Arweave"
         subtitle="Les contenus (témoignages, enseignements, vidéos) sont hachés et ancrés sur la blockchain Arweave. Même en cas de censure ou de compromission du site, les contenus restent vérifiables et accessibles éternellement."
@@ -165,7 +167,7 @@ export default function CoffreFortPage() {
                   suppression Facebook, saisie de domaine, compromission du serveur — les
                   contenus doivent rester accessibles et vérifiables. Arweave répond à cette
                   exigence : une fois ancré, un contenu est immuable et indestructible.
-                  Même si le site Mouvement Christ Libère disparaît, les témoignages de PAM
+                  Même si le site Mouvement Christ Libère disparaît, les témoignages de Pam
                   et les enseignements du Pasteur Kongo subsistent sur la blockchain.
                 </p>
               </div>
@@ -344,8 +346,13 @@ export default function CoffreFortPage() {
                   value={form.auteur}
                   onChange={(e) => setForm({ ...form, auteur: e.target.value })}
                   required
+<<<<<<< HEAD
                   placeholder="PAM, Pasteur Kongo, ou autre"
                   className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+=======
+                  placeholder="Pam, Pasteur Kongo, ou autre"
+                  className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+>>>>>>> 0e4ca3c85bddb61fe50afe4bc108570dc67bf63b
                 />
               </div>
 

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { CallScreen } from "@/components/premium/call-screen";
@@ -12,10 +12,10 @@ export default async function AppelsPage() {
   // Pour la démo, on simule un historique d'appels
   // En production, ces données viendraient de la table Call
   const mockHistory = [
-    { id: "1", type: "AUDIO", direction: "outgoing", contact: "PAM", duration: 1245, status: "ANSWERED", date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+    { id: "1", type: "AUDIO", direction: "outgoing", contact: "Pam", duration: 1245, status: "ANSWERED", date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
     { id: "2", type: "VIDEO", direction: "incoming", contact: "Pasteur Kongo", duration: 0, status: "MISSED", date: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
     { id: "3", type: "AUDIO", direction: "incoming", contact: "Équipe pastorale", duration: 678, status: "ANSWERED", date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
-    { id: "4", type: "VIDEO", direction: "outgoing", contact: "PAM", duration: 2134, status: "ANSWERED", date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: "4", type: "VIDEO", direction: "outgoing", contact: "Pam", duration: 2134, status: "ANSWERED", date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
   ];
 
   const formatDuration = (seconds: number) => {
@@ -30,8 +30,9 @@ export default async function AppelsPage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=1920&auto=format&fit=crop"
         kicker="Appels audio & vidéo"
-        title="Appeler PAM ou le Pasteur Kongo"
+        title="Appeler Pam ou le Pasteur Kongo"
         subtitle="Appels audio et vidéo chiffrés de bout en bout, style Telegram et WhatsApp. En cas d'indisponibilité, le contact recevra une notification d'appel manqué."
         primaryCta={{ label: "Démarrer un appel", href: "#start" }}
       />
@@ -148,7 +149,7 @@ export default async function AppelsPage() {
             <p className="text-xs text-[#8A8378] leading-relaxed">
               <PhoneCall className="w-3.5 h-3.5 inline mr-1.5 text-[#C9A227]" />
               Les appels d'urgence (marqués comme urgents) peuvent contourner le mode
-              « ne pas déranger » de PAM ou du Pasteur Kongo, à condition d'être validés
+              « ne pas déranger » de Pam ou du Pasteur Kongo, à condition d'être validés
               par un modérateur de confiance. Cette fonctionnalité sert l'équivalent
               numérique du devoir pastoral de veille.
             </p>

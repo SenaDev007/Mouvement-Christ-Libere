@@ -11,6 +11,7 @@
  */
 
 import { Room, RoomEvent, Track, Participant, RemoteParticipant } from "livekit-client";
+import { api } from "@/lib/api-client";
 
 export interface LiveKitConfig {
   wsUrl: string;
@@ -76,7 +77,7 @@ export async function fetchLiveKitToken(
   isModerator = false
 ): Promise<string | null> {
   try {
-    const res = await fetch("/api/livekit/token", {
+    const res = await fetch(api.url("/api/livekit/token"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ roomName, participantName, isModerator }),

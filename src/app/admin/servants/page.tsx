@@ -27,8 +27,13 @@ export default async function AdminServantsPage() {
           <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1">
             Serviteurs
           </h1>
+<<<<<<< HEAD
           <p className="text-sm text-[#8A8378]">
             Gérez les deux serviteurs principaux (PAM et Pasteur Kongo).
+=======
+          <p className="text-sm text-stone">
+            Gérez les deux serviteurs principaux (Pam et Pasteur Kongo).
+>>>>>>> 0e4ca3c85bddb61fe50afe4bc108570dc67bf63b
           </p>
         </div>
         <Link
