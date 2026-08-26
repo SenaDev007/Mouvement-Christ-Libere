@@ -74,9 +74,9 @@ export const PAM_BIOGRAPHY = [
 
 export const KONGO_BIOGRAPHY = [
   {
-    date: "Origines",
+    date: "À venir",
     title: "Le Pasteur Kongo — Serviteur de l'Éternel",
-    description: "Le Pasteur Kongo est un serviteur de Dieu appelé au ministère pastoral. Son parcours et son appel seront documentés ici avec ses propres témoignages et expériences spirituelles authentiques. En attendant, il est reconnu comme le berger de la communauté, marchant aux côtés de Pam dans l'œuvre du Royaume.",
+    description: "Les informations biographiques du Pasteur Kongo seront bientôt disponibles. Nous collectons actuellement son témoignage authentique et son parcours. En attendant, il est reconnu comme le berger de la communauté, marchant aux côtés de Pam dans l'œuvre du Royaume. Revenez bientôt pour découvrir son parcours.",
     verseRef: "1 Pierre 5:2",
     verseText: "Paissez le troupeau de Dieu qui est sous votre garde, non par contrainte, mais volontairement, selon Dieu.",
     order: 1,

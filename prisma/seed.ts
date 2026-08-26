@@ -132,40 +132,6 @@ async function main() {
       readingTime: t.readingTime,
       publishedAt: new Date("2025-07-20"),
     })),
-    // Enseignements du Pasteur Kongo
-    {
-      servantId: kongo.id,
-      title: "Les fêtes bibliques et leur accomplissement",
-      excerpt: "Présentation des sept fêtes de l'Éternel (Lévitique 23) et de leur accomplissement en Yeshoua le Messie.",
-      content: "Étude des sept fêtes bibliques instituées par l'Éternel en Lévitique 23. Quatre fêtes de printemps ont déjà été accomplies lors du premier avènement de Yeshoua. Trois fêtes d'automne attendent leur accomplissement lors de son retour.",
-      theme: "Calendrier liturgique",
-      book: "Lévitique",
-      level: "AVANCE",
-      readingTime: "22 min",
-      publishedAt: new Date("2025-07-10"),
-    },
-    {
-      servantId: kongo.id,
-      title: "Discerner les voix spirituelles",
-      excerpt: "Comment discerner ce qui vient de Dieu, ce qui vient de l'ennemi, et ce qui vient de notre propre âme.",
-      content: "Enseignement pastoral sur le discernement spirituel. Critères bibliques : conformité à l'Écriture, fruit de l'Esprit, témoignage intérieur, confirmation communautaire.",
-      theme: "Discernement",
-      book: "1 Jean",
-      level: "INTERMEDIAIRE",
-      readingTime: "14 min",
-      publishedAt: new Date("2025-05-25"),
-    },
-    {
-      servantId: kongo.id,
-      title: "La prière qui prévaut",
-      excerpt: "Enseignement pastoral sur la prière fervente, à partir de la vie d'Élie et de Jacques 5:16-18.",
-      content: "Enseignement sur la prière fervente et efficace, à partir du témoignage d'Élie. Élie était un homme de même nature que nous, mais sa prière a fermé les cieux, ouvert les cieux, fait descendre le feu.",
-      theme: "Prière",
-      book: "Jacques",
-      level: "DECOUVERTE",
-      readingTime: "12 min",
-      publishedAt: new Date("2025-03-30"),
-    },
   ];
 
   for (const t of teachings) {
@@ -188,15 +154,6 @@ async function main() {
       publishedAt: new Date("2025-08-18"),
     },
     {
-      servantId: kongo.id,
-      title: "Live — Marcher dans la sainteté",
-      description: "Direct sur la marche quotidienne avec Dieu, la sanctification pratique au quotidien.",
-      duration: "EN DIRECT",
-      views: 0,
-      isLive: true,
-      publishedAt: new Date("2025-08-23"),
-    },
-    {
       servantId: pam.id,
       title: "Témoignage d'enlèvement au ciel",
       description:
@@ -205,15 +162,6 @@ async function main() {
       views: 2150,
       isLive: false,
       publishedAt: new Date("2025-08-10"),
-    },
-    {
-      servantId: kongo.id,
-      title: "Pastorale — Tenir ferme dans la foi",
-      description: "Encouragement pastoral pour les temps difficiles. Comment tenir quand tout semble chanceler.",
-      duration: "28:50",
-      views: 890,
-      isLive: false,
-      publishedAt: new Date("2025-07-28"),
     },
   ];
 
@@ -301,9 +249,9 @@ async function main() {
 
   await db.liveStream.create({
     data: {
-      servantId: kongo.id,
+      servantId: pam.id,
       title: "Enseignement hebdomadaire — Tenir ferme",
-      description: "Direct hebdomadaire du Pasteur Kongo sur la persévérance dans les temps difficiles.",
+      description: "Direct hebdomadaire de Pam sur la persévérance dans les temps difficiles.",
       scheduledAt: nextLive,
       status: "SCHEDULED",
     } as const,
