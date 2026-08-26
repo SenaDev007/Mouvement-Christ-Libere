@@ -32,7 +32,7 @@ const navLinks = [
   { label: "Témoignages", href: "/temoignages" },
   { label: "Enseignements", href: "/enseignements" },
   { label: "Vidéos & Lives", href: "/videos" },
-  { label: "Communauté", href: "/communaute" },
+  { label: "Yeshua Connect", href: "/yeshua-connect" },
   { label: "Contribuer", href: "/contribuer" },
   { label: "Contact", href: "/contact" },
 ];
