@@ -104,15 +104,9 @@ export default function DeadMansSwitchAdminPage() {
         <div className="flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-state-danger flex-shrink-0 mt-0.5" />
           <div>
-<<<<<<< HEAD
             <p className="text-sm font-semibold text-[#1E0F2B] mb-1">Comment ça fonctionne</p>
             <p className="text-xs text-[#8A8378] leading-relaxed">
               Si PAM et le Pasteur Kongo cessent de manifester leur présence pendant {form.delaiJours} jours
-=======
-            <p className="text-sm font-semibold text-ink mb-1">Comment ça fonctionne</p>
-            <p className="text-xs text-stone leading-relaxed">
-              Si Pam et le Pasteur Kongo cessent de manifester leur présence pendant {form.delaiJours} jours
->>>>>>> 0e4ca3c85bddb61fe50afe4bc108570dc67bf63b
               (paramétrable), le contenu réservé est automatiquement publié.
               Un cron job (Vercel) vérifie chaque jour à 3h00 UTC.
               Cliquer sur « Signaler activité » réinitialise le compteur.

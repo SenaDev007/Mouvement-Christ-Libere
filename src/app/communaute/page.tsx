@@ -16,15 +16,9 @@ export default async function CommunautePage() {
   });
 
   const roles = [
-<<<<<<< HEAD
     { role: "Super-admin", holder: "PAM / Pasteur Kongo", color: "bg-[#C9A227]" },
     { role: "Modérateur", holder: "Bénévoles validés", color: "bg-[#8C5FA8]" },
     { role: "Membre", holder: "Croyant inscrit", color: "bg-[#8A8378]" },
-=======
-    { role: "Super-admin", holder: "Pam / Pasteur Kongo", color: "bg-gold" },
-    { role: "Modérateur", holder: "Bénévoles validés", color: "bg-lavender" },
-    { role: "Membre", holder: "Croyant inscrit", color: "bg-stone" },
->>>>>>> 0e4ca3c85bddb61fe50afe4bc108570dc67bf63b
   ];
 
   return (

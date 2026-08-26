@@ -65,15 +65,9 @@ export function TestimonyCard({
         </h3>
 
         {/* Résumé */}
-<<<<<<< HEAD
         <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-4 flex-1 line-clamp-3">
           {short}
         </p>
-=======
-        <div className="text-sm text-ink/70 leading-relaxed mb-4 flex-1 line-clamp-3">
-          <MarkdownText>{short}</MarkdownText>
-        </div>
->>>>>>> 0e4ca3c85bddb61fe50afe4bc108570dc67bf63b
 
         {/* Référence biblique */}
         {bookRef && (

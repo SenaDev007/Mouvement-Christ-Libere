@@ -93,15 +93,9 @@ export function TeachingCard({
         </h3>
 
         {/* Extrait */}
-<<<<<<< HEAD
         <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-5 flex-1 line-clamp-3">
           {excerpt}
         </p>
-=======
-        <div className="text-sm text-ink/70 leading-relaxed mb-5 flex-1 line-clamp-3">
-          <MarkdownText>{excerpt}</MarkdownText>
-        </div>
->>>>>>> 0e4ca3c85bddb61fe50afe4bc108570dc67bf63b
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-4 border-t border-[#8A8378]/15">
