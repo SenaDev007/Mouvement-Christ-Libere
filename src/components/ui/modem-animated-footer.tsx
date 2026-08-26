@@ -51,13 +51,14 @@ export const Footer = ({
           <div className="flex flex-col mb-12 sm:mb-20 md:mb-0 w-full">
             <div className="w-full flex flex-col items-center">
               <div className="space-y-2 flex flex-col items-center flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Image
                     src="/logo-christ-libere.png"
                     alt="Christ Libère"
-                    width={36}
-                    height={36}
-                    className="w-8 h-8 md:w-9 md:h-9 object-contain"
+                    width={56}
+                    height={56}
+                    className="w-12 h-12 md:w-14 md:h-14 object-contain"
+                    priority
                   />
                   <span className="text-[#FAF6EF] text-2xl md:text-3xl font-bold font-serif">
                     {brandName}
@@ -121,33 +122,33 @@ export const Footer = ({
           </div>
         </div>
 
-        {/* Large background text — sur une seule ligne */}
+        {/* Large background text — responsive (visible sur mobile) */}
         <div
-          className="bg-gradient-to-b from-[#C9A227]/15 via-[#C9A227]/5 to-transparent bg-clip-text text-transparent leading-none absolute left-1/2 -translate-x-1/2 bottom-44 md:bottom-36 font-extrabold tracking-tighter pointer-events-none select-none text-center font-serif whitespace-nowrap"
+          className="bg-gradient-to-b from-[#C9A227]/20 via-[#C9A227]/8 to-transparent bg-clip-text text-transparent leading-none absolute left-1/2 -translate-x-1/2 bottom-48 md:bottom-40 font-extrabold tracking-tighter pointer-events-none select-none text-center font-serif whitespace-nowrap z-0"
           style={{
-            fontSize: "clamp(2rem, 8vw, 6rem)",
+            fontSize: "clamp(1.5rem, 9vw, 6rem)",
           }}
         >
           CHRIST LIBÈRE
         </div>
 
         {/* Bottom logo — logo Christ Libère (remplace shofar) */}
-        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_20px_rgba(201,162,39,0.3)] bottom-28 md:bottom-24 backdrop-blur-[2px] rounded-3xl bg-[#1A0826]/20 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-3 -translate-x-1/2 z-10">
+        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_25px_rgba(201,162,39,0.4)] bottom-24 md:bottom-20 backdrop-blur-[2px] rounded-3xl bg-[#1A0826]/20 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-3 md:p-4 -translate-x-1/2 z-10">
           <Image
             src="/logo-christ-libere.png"
             alt="Christ Libère"
-            width={80}
-            height={80}
-            className="w-14 sm:w-20 md:w-28 h-14 sm:h-20 md:h-28 object-contain"
+            width={120}
+            height={120}
+            className="w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 object-contain"
             priority
           />
         </div>
 
         {/* Bottom line */}
-        <div className="absolute bottom-36 md:bottom-32 backdrop-blur-sm h-1 bg-gradient-to-r from-transparent via-[#C9A227]/30 to-transparent w-full left-1/2 -translate-x-1/2"></div>
+        <div className="absolute bottom-32 md:bottom-28 backdrop-blur-sm h-1 bg-gradient-to-r from-transparent via-[#C9A227]/30 to-transparent w-full left-1/2 -translate-x-1/2"></div>
 
         {/* Bottom shadow */}
-        <div className="bg-gradient-to-t from-[#2A0E3D] via-[#2A0E3D]/80 blur-[1em] to-[#2A0E3D]/40 absolute bottom-32 w-full h-24"></div>
+        <div className="bg-gradient-to-t from-[#2A0E3D] via-[#2A0E3D]/80 blur-[1em] to-[#2A0E3D]/40 absolute bottom-28 w-full h-24"></div>
       </footer>
     </section>
   );

@@ -176,17 +176,16 @@ export function ContextualNav() {
           </Popover>
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            {/* Logo Christ Libère */}
+          <Link href="/" className="flex items-center gap-2.5">
             <Image
               src="/logo-christ-libere.png"
               alt="Christ Libère"
-              width={32}
-              height={32}
-              className="w-8 h-8 object-contain"
+              width={48}
+              height={48}
+              className="w-10 h-10 md:w-12 md:h-12 object-contain"
               priority
             />
-            <span className="font-serif text-base font-bold text-[#FAF6EF]">
+            <span className="font-serif text-lg md:text-xl font-bold text-[#FAF6EF]">
               Christ Libère
             </span>
           </Link>
