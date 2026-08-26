@@ -6,7 +6,6 @@ import Image from "next/image";
 import { Globe, MapPin, Loader2, CheckCircle2, ChevronRight, Search, Users, X } from "lucide-react";
 import { WorldMap } from "@/components/ui/world-map";
 import { COUNTRIES } from "@/lib/data/countries";
-import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
 interface Disperse {
@@ -54,7 +53,7 @@ export default function DispersesPage() {
   ];
 
   const loadMembers = () => {
-    fetch(api.url("/api/disperses"))
+    fetch("/api/disperses")
       .then(r => r.json())
       .then(data => { setMembers(data.members || data || []); setLoading(false); })
       .catch(() => setLoading(false));
@@ -90,7 +89,7 @@ export default function DispersesPage() {
     if (!country) { toast.error("Pays invalide."); setSubmitting(false); return; }
 
     try {
-      const res = await fetch(api.url("/api/disperses"), {
+      const res = await fetch("/api/disperses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

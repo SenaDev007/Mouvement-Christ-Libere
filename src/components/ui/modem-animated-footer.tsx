@@ -47,7 +47,7 @@ export const Footer = ({
   return (
     <section className={cn("relative w-full mt-0 overflow-hidden", className)}>
       <footer className="border-t border-[#C9A227]/20 bg-[#2A0E3D] mt-20 relative">
-        <div className="max-w-7xl flex flex-col justify-between mx-auto min-h-[30rem] sm:min-h-[35rem] md:min-h-[40rem] relative p-4 py-10">
+        <div className="max-w-7xl flex flex-col justify-between mx-auto min-h-[30rem] sm:min-h-[35rem] md:min-h-[40rem] relative p-4 py-10 pb-48 md:pb-56">
           <div className="flex flex-col mb-12 sm:mb-20 md:mb-0 w-full">
             <div className="w-full flex flex-col items-center">
               <div className="space-y-2 flex flex-col items-center flex-1">
@@ -81,7 +81,7 @@ export const Footer = ({
               </div>
 
               {socialLinks.length > 0 && (
-                <div className="flex mb-8 mt-3 gap-4">
+                <div className="flex mb-6 mt-3 gap-4">
                   {socialLinks.map((link, index) => (
                     <Link
                       key={index}
@@ -100,7 +100,7 @@ export const Footer = ({
               )}
 
               {navLinks.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-4 text-xs font-medium text-[#FAF6EF]/50 max-w-full px-4">
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-medium text-[#FAF6EF]/50 max-w-full px-4 z-20 relative">
                   {navLinks.map((link, index) => (
                     <Link
                       key={index}
@@ -115,7 +115,7 @@ export const Footer = ({
             </div>
           </div>
 
-          <div className="mt-20 md:mt-24 flex flex-col gap-2 md:gap-1 items-center justify-center md:flex-row md:items-center md:justify-between px-4 md:px-0">
+          <div className="mt-8 md:mt-12 flex flex-col gap-2 md:gap-1 items-center justify-center md:flex-row md:items-center md:justify-between px-4 md:px-0 z-20 relative">
             <p className="text-xs text-[#FAF6EF]/40 text-center md:text-left">
               © {new Date().getFullYear()} {brandName}. Tous les contenus appartiennent à leurs auteurs. Usage personnel et non commercial.
             </p>
@@ -124,7 +124,7 @@ export const Footer = ({
 
         {/* Large background text — responsive (visible sur mobile) */}
         <div
-          className="bg-gradient-to-b from-[#C9A227]/20 via-[#C9A227]/8 to-transparent bg-clip-text text-transparent leading-none absolute left-1/2 -translate-x-1/2 bottom-48 md:bottom-40 font-extrabold tracking-tighter pointer-events-none select-none text-center font-serif whitespace-nowrap z-0"
+          className="bg-gradient-to-b from-[#C9A227]/20 via-[#C9A227]/8 to-transparent bg-clip-text text-transparent leading-none absolute left-1/2 -translate-x-1/2 bottom-28 md:bottom-24 font-extrabold tracking-tighter pointer-events-none select-none text-center font-serif whitespace-nowrap z-0"
           style={{
             fontSize: "clamp(1.5rem, 9vw, 6rem)",
           }}
@@ -133,22 +133,16 @@ export const Footer = ({
         </div>
 
         {/* Bottom logo — logo Christ Libère (remplace shofar) */}
-        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_25px_rgba(201,162,39,0.4)] bottom-24 md:bottom-20 backdrop-blur-[2px] rounded-3xl bg-[#1A0826]/20 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-3 md:p-4 -translate-x-1/2 z-10">
+        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_25px_rgba(201,162,39,0.4)] bottom-4 md:bottom-6 backdrop-blur-[2px] rounded-3xl bg-[#1A0826]/20 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-3 md:p-4 -translate-x-1/2 z-10">
           <Image
             src="/logo-christ-libere.png"
             alt="Christ Libère"
             width={120}
             height={120}
-            className="w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 object-contain"
+            className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain"
             priority
           />
         </div>
-
-        {/* Bottom line */}
-        <div className="absolute bottom-32 md:bottom-28 backdrop-blur-sm h-1 bg-gradient-to-r from-transparent via-[#C9A227]/30 to-transparent w-full left-1/2 -translate-x-1/2"></div>
-
-        {/* Bottom shadow */}
-        <div className="bg-gradient-to-t from-[#2A0E3D] via-[#2A0E3D]/80 blur-[1em] to-[#2A0E3D]/40 absolute bottom-28 w-full h-24"></div>
       </footer>
     </section>
   );

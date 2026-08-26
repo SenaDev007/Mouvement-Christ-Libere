@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ServantProvider } from "@/components/site/servant-context";
 import { ScrollProgress } from "@/components/magic/scroll-progress";
 import { ContextualNav } from "@/components/ui/navigation-menu-4";
@@ -83,6 +84,7 @@ export default function RootLayout({
           </ServantProvider>
         </NextAuthProvider>
         <Toaster />
+        <SonnerToaster position="top-center" richColors />
       </body>
     </html>
   );
