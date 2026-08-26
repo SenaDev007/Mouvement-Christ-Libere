@@ -11,47 +11,44 @@ interface VueMensuelleProps {
 }
 
 const NOMS_MOIS = [
-  "Aviv",
-  "Ziv",
-  "Sivan",
-  "Tammouz",
-  "Av",
-  "Éloul",
-  "Éthanim",
-  "Boul",
-  "Kislev",
-  "Tévet",
-  "Shevat",
-  "Adar",
+  "Aviv", "Ziv", "Sivan", "Tammouz", "Av", "Éloul",
+  "Éthanim", "Boul", "Kislev", "Tévet", "Shevat", "Adar",
 ];
 
-const NOMS_JOURS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+const NOMS_MOIS_FR = [
+  "Printemps (Mar-Avr)", "Printemps (Avr-Mai)", "Printemps (Mai-Juin)", "Été (Juin-Juil)",
+  "Été (Juil-Août)", "Été (Août-Sep)", "Automne (Sep-Oct)", "Automne (Oct-Nov)",
+  "Automne (Nov-Déc)", "Hiver (Déc-Jan)", "Hiver (Jan-Fév)", "Hiver (Fév-Mar)",
+];
 
-// Images saisonnières selon le trimestre du mois
-// Trimestre 1 (mois 1-3) : Printemps
-// Trimestre 2 (mois 4-6) : Été
-// Trimestre 3 (mois 7-9) : Automne
-// Trimestre 4 (mois 10-12) : Hiver
+// Noms hébreux + français des jours
+const NOMS_JOURS = [
+  { fr: "Dim", he: "Yom Rishon", full: "Dimanche" },
+  { fr: "Lun", he: "Yom Sheni", full: "Lundi" },
+  { fr: "Mar", he: "Yom Shlishi", full: "Mardi" },
+  { fr: "Mer", he: "Yom Revi'i", full: "Mercredi" },
+  { fr: "Jeu", he: "Yom Chamishi", full: "Jeudi" },
+  { fr: "Ven", he: "Yom Shishi", full: "Vendredi" },
+  { fr: "Sam", he: "Shabbat", full: "Samedi" },
+];
+
+// Images saisonnières par trimestre
 const SAISON_MOIS: Array<{ image: string; overlay: string; saison: string }> = [
-  // Printemps (mois 1-3)
   {
     image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop",
     overlay: "linear-gradient(135deg, rgba(42,14,61,0.88) 0%, rgba(42,14,61,0.7) 50%, rgba(201,162,39,0.35) 100%)",
     saison: "Printemps",
   },
-  // Été (mois 4-6)
   {
     image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1920&auto=format&fit=crop",
     overlay: "linear-gradient(135deg, rgba(42,14,61,0.85) 0%, rgba(201,162,39,0.45) 50%, rgba(42,14,61,0.7) 100%)",
     saison: "Été",
   },
-  // Automne (mois 7-9)
   {
     image: "https://images.unsplash.com/photo-1507371341162-763b5e419408?q=80&w=1920&auto=format&fit=crop",
     overlay: "linear-gradient(135deg, rgba(42,14,61,0.85) 0%, rgba(124,92,184,0.4) 50%, rgba(156,126,30,0.5) 100%)",
     saison: "Automne",
   },
-  // Hiver (mois 10-12)
   {
     image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?q=80&w=1920&auto=format&fit=crop",
     overlay: "linear-gradient(135deg, rgba(42,14,61,0.88) 0%, rgba(250,246,239,0.25) 50%, rgba(42,14,61,0.75) 100%)",
@@ -91,13 +88,8 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
     });
   }, [annee.fetes, annee.jours, moisCourant]);
 
-  const moisPrecedent = () => {
-    setMoisCourant((m) => (m === 1 ? 12 : m - 1));
-  };
-
-  const moisSuivant = () => {
-    setMoisCourant((m) => (m === 12 ? 1 : m + 1));
-  };
+  const moisPrecedent = () => setMoisCourant((m) => (m === 1 ? 12 : m - 1));
+  const moisSuivant = () => setMoisCourant((m) => (m === 12 ? 1 : m + 1));
 
   const semaines = organiserJoursParSemaine(joursDuMois);
 
@@ -119,10 +111,10 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
   return (
     <div className="space-y-6">
       {/* Navigation mois */}
-      <div className="flex items-center justify-between bg-white rounded-xl shadow-sm border border-[#8A8378]/15 p-3">
+      <div className="flex items-center justify-between bg-white rounded-2xl shadow-sm border border-[#8A8378]/15 p-4">
         <button
           onClick={moisPrecedent}
-          className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#2A0E3D] hover:text-[#9C7E1E] transition-colors"
+          className="p-2 rounded-full hover:bg-[#FAF6EF] text-[#2A0E3D] transition-colors"
           aria-label="Mois précédent"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -132,12 +124,12 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
             {NOMS_MOIS[moisCourant - 1]}
           </h3>
           <p className="text-xs text-[#8A8378] uppercase tracking-[0.18em] font-bold">
-            Mois {moisCourant} · {joursDuMois.length} jours · {saison.saison}
+            {NOMS_MOIS_FR[moisCourant - 1]} · {saison.saison}
           </p>
         </div>
         <button
           onClick={moisSuivant}
-          className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#2A0E3D] hover:text-[#9C7E1E] transition-colors"
+          className="p-2 rounded-full hover:bg-[#FAF6EF] text-[#2A0E3D] transition-colors"
           aria-label="Mois suivant"
         >
           <ChevronRight className="w-5 h-5" />
@@ -146,7 +138,8 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Grille du mois — avec image saisonnière en fond */}
-        <div className="lg:col-span-2 relative rounded-2xl overflow-hidden shadow-xl border border-[#8A8378]/20"
+        <div
+          className="lg:col-span-2 relative rounded-2xl overflow-hidden shadow-xl border border-[#8A8378]/20"
           style={{
             backgroundImage: `url(${saison.image})`,
             backgroundSize: "cover",
@@ -158,25 +151,42 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
 
           {/* Contenu */}
           <div className="relative z-10 p-6">
-            {/* En-tête jours de la semaine */}
-            <div className="grid grid-cols-7 gap-2 mb-3">
+            {/* En-tête jours — noms français + hébreux */}
+            <div className="grid grid-cols-7 gap-1 md:gap-2 mb-3">
               {NOMS_JOURS.map((jour, i) => (
                 <div
-                  key={jour}
+                  key={i}
                   className={cn(
-                    "text-center text-[10px] uppercase tracking-wider font-bold py-2 rounded-md",
-                    i === 6
-                      ? "text-[#C9A227] bg-[#FAF6EF]/10"
-                      : "text-[#FAF6EF]/70"
+                    "text-center py-2 rounded-lg",
+                    jour.he === "Shabbat"
+                      ? "bg-[#2A0E3D]/40 backdrop-blur-sm"
+                      : "bg-[#FAF6EF]/10 backdrop-blur-sm"
                   )}
                 >
-                  {jour}
+                  <div
+                    className={cn(
+                      "text-xs font-bold",
+                      jour.he === "Shabbat" ? "text-[#C9A227]" : "text-[#FAF6EF]"
+                    )}
+                  >
+                    {jour.fr}
+                  </div>
+                  <div
+                    className={cn(
+                      "text-[10px] hidden md:block mt-0.5",
+                      jour.he === "Shabbat"
+                        ? "text-[#C9A227]/80 font-semibold"
+                        : "text-[#FAF6EF]/60"
+                    )}
+                  >
+                    {jour.he}
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Grille des jours */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-1 md:gap-2">
               {semaines.flatMap((semaine, semIdx) =>
                 semaine.map((jour, jourIdx) => (
                   <JourMensuelCell
@@ -218,7 +228,7 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
                           {fete.nomFr}
                         </p>
                         {fete.nomHebrew && (
-                          <p className="text-xs text-[#8A8378] font-serif" dir="rtl">
+                          <p className="text-xs text-[#8C5FA8] font-serif" dir="rtl">
                             {fete.nomHebrew}
                           </p>
                         )}
@@ -229,6 +239,11 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
                             timeZone: "UTC",
                           })}
                         </p>
+                        {fete.referenceEcritures && (
+                          <p className="text-[10px] text-[#C9A227] font-semibold mt-1 font-mono">
+                            {fete.referenceEcritures}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -242,7 +257,8 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
             <p className="text-xs text-[#8A8378] leading-relaxed">
               <strong className="text-[#1E0F2B]">{NOMS_MOIS[moisCourant - 1]}</strong> est le mois
               numéro {moisCourant} du calendrier biblique. Il appartient au trimestre{" "}
-              {Math.ceil(moisCourant / 3)} — saison de <strong className="text-[#9C7E1E]">{saison.saison}</strong>.
+              {Math.ceil(moisCourant / 3)} — saison de{" "}
+              <strong className="text-[#9C7E1E]">{saison.saison}</strong>.
             </p>
           </div>
         </div>
@@ -253,23 +269,24 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
 
 function JourMensuelCell({ jour, fete }: { jour: JourBiblique | null; fete?: Fete }) {
   if (!jour) {
-    return <div className="aspect-square rounded-lg bg-[#FAF6EF]/5" />;
+    return <div className="aspect-square rounded-md bg-[#FAF6EF]/5" />;
   }
 
   const maintenant = new Date();
   const dateGreg = new Date(jour.dateGregorienne);
   const estAujourdhui = dateGreg.toDateString() === maintenant.toDateString();
+  const isShabbat = jour.estShabbat;
 
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
       title={`${jour.jourDuMois} ${jour.nomMois} — ${jour.nomJourSemaine}${fete ? ` — ${fete.nomFr}` : ""}`}
       className={cn(
-        "aspect-square rounded-lg p-2 cursor-pointer transition-colors relative flex flex-col backdrop-blur-sm",
+        "aspect-square rounded-md p-2 cursor-pointer transition-colors relative flex flex-col backdrop-blur-sm",
         fete
           ? "text-[#FAF6EF] shadow-md"
-          : jour.estShabbat
-            ? "bg-[#2A0E3D]/40 border border-[#FAF6EF]/20 text-[#FAF6EF]"
+          : isShabbat
+            ? "bg-[#2A0E3D]/50 border border-[#C9A227]/30 text-[#FAF6EF]"
             : "bg-[#FAF6EF]/85 border border-[#FAF6EF]/30 text-[#1E0F2B] hover:border-[#C9A227]/60",
         estAujourdhui && "ring-2 ring-[#C9A227] ring-offset-1 ring-offset-[#2A0E3D]/40"
       )}

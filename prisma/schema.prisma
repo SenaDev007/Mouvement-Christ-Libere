@@ -54,6 +54,7 @@ model User {
   communityMembers CommunityMember[]
   testimonies   Testimony[] @relation("TestimonyAuthor")
   contactRequests ContactRequest[]
+  bibleBookmarks BibleBookmark[]
 
   @@index([role])
   @@index([country])
@@ -515,4 +516,26 @@ model DeadMansSwitch {
   updatedAt       DateTime @updatedAt
 
   @@index([estDeclenche])
+}
+
+// --- Bible bookmarks (V3) ---
+
+model BibleBookmark {
+  id          String   @id @default(cuid())
+  userId      String
+  version     String   // ex: "fr-apee", "en-kjv"
+  livreId     String   // ex: "gn", "mt"
+  livreNom    String   // ex: "Genèse", "Matthieu"
+  chapitre    Int
+  verset      Int
+  texte       String   @db.Text // texte du verset
+  note        String?  @db.Text // note personnelle (optionnel)
+  couleur     String?  // couleur de marque-page (optionnel)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, version, livreId, chapitre, verset])
+  @@index([userId])
 }

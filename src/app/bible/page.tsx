@@ -26,6 +26,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getCrossReferences, getLivreNom } from "@/lib/bible/cross-references";
 
 // ============================================================
 // CONSTANTES — Couleurs du royaume
@@ -252,8 +253,13 @@ function OngletLecture() {
   const [parallelVersion, setParallelVersion] = useState<string | null>(null);
   const [parallelData, setParallelData] = useState<ChapitreData | null>(null);
   const [fontSize, setFontSize] = useState(16);
+  const [interlinearMode, setInterlinearMode] = useState(false);
+  const [hebrewChapter, setHebrewChapter] = useState<Record<number, Array<{ mot: string; lemme: string; morphologie: string }> | null>>({});
 
   const livreOption = useMemo(() => LIVRES_OPTIONS.find((l) => l.id === livre)!, [livre]);
+
+  // Livre AT ? (pour afficher l'option interlinéaire)
+  const isAncienTestament = livreOption.categorie === "AT";
 
   const fetchChapitre = useCallback(async () => {
     setLoading(true);
@@ -282,6 +288,44 @@ function OngletLecture() {
       .then(setParallelData)
       .catch(() => setParallelData(null));
   }, [parallelVersion, version, livre, chapitre]);
+
+  // Charger le texte hébreu (interlinéaire) si AT + mode interlinéaire activé
+  useEffect(() => {
+    if (!interlinearMode || !isAncienTestament || !data) return;
+    // Si déjà chargé pour ce chapitre, ne pas recharger
+    if (hebrewChapter && Object.keys(hebrewChapter).length > 0) return;
+
+    const LIVRE_TO_OSHB: Record<string, string> = {
+      gn: "Gen", ex: "Exod", lv: "Lev", nb: "Num", dt: "Deut",
+      js: "Josh", jg: "Judg", rt: "Ruth", "1sm": "1Sam", "2sm": "2Sam",
+      "1kg": "1Kgs", "2kg": "2Kgs", "1ch": "1Chr", "2ch": "2Chr",
+      er: "Ezra", ne: "Neh", est: "Esth", jb: "Job", ps: "Ps",
+      pv: "Prov", ec: "Eccl", ct: "Song", es: "Isa", je: "Jer",
+      lm: "Lam", ez: "Ezek", dn: "Dan", os: "Hos", jl: "Joel",
+      am: "Amos", ob: "Obad", jn: "Jonah", mi: "Mic", na: "Nah",
+      hb: "Hab", so: "Zeph", ag: "Hag", za: "Zech", ml: "Mal",
+    };
+    const oshbCode = LIVRE_TO_OSHB[livre];
+    if (!oshbCode) return;
+
+    const newHebrew: Record<number, Array<{ mot: string; lemme: string; morphologie: string }>> = {};
+    Promise.all(
+      data.versets.map(async (v) => {
+        try {
+          const res = await fetch(`/api/bible-v2/hebrew/${oshbCode}/${chapitre}/${v.numero}`);
+          if (res.ok) {
+            const d = await res.json();
+            if (d?.mots) newHebrew[v.numero] = d.mots;
+          }
+        } catch {}
+      })
+    ).then(() => setHebrewChapter(newHebrew));
+  }, [interlinearMode, isAncienTestament, data, livre, chapitre]);
+
+  // Réinitialiser le cache hébreu quand on change de chapitre/livre
+  useEffect(() => {
+    setHebrewChapter({});
+  }, [livre, chapitre]);
 
   const changeLivre = (newLivre: string) => {
     setLivre(newLivre);
@@ -427,6 +471,23 @@ function OngletLecture() {
               <option key={v.code} value={v.code}>{v.shortLabel}</option>
             ))}
           </select>
+
+          {/* Bouton interlinéaire Hébreu/Français (uniquement pour AT) */}
+          {isAncienTestament && (
+            <button
+              onClick={() => setInterlinearMode(!interlinearMode)}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-bold transition-colors",
+                interlinearMode
+                  ? "bg-[#2A0E3D] text-[#C9A227]"
+                  : "border border-[#8A8378]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+              )}
+              title="Afficher l'interlinéaire Hébreu/Français avec numéros Strong"
+            >
+              <Scroll className="w-3.5 h-3.5" />
+              Interlinéaire
+            </button>
+          )}
         </div>
 
         {/* Contenu du chapitre */}
@@ -518,6 +579,34 @@ function OngletLecture() {
                               {VERSIONS.find((v) => v.code === parallelVersion)?.shortLabel}
                             </span>
                             {parallelVerset.texte}
+                          </div>
+                        )}
+
+                        {/* Interlinéaire Hébreu (si activé) */}
+                        {interlinearMode && hebrewChapter?.[v.numero] && (
+                          <div className="mt-2 ml-7 p-2 rounded-md bg-[#FAF6EF]/60 border border-[#C9A227]/20" dir="rtl">
+                            <div className="flex flex-wrap gap-2 justify-end">
+                              {hebrewChapter[v.numero]!.map((mot, i) => (
+                                <span
+                                  key={i}
+                                  className="group relative inline-flex flex-col items-center cursor-help"
+                                  title={`${mot.lemme} — ${mot.morphologie}`}
+                                >
+                                  <span
+                                    className="font-serif leading-relaxed group-hover:text-[#C9A227] transition-colors"
+                                    style={{
+                                      fontSize: `${fontSize}px`,
+                                      color: mot.lemme.startsWith("H") ? "#2A0E3D" : "#1E0F2B",
+                                    }}
+                                  >
+                                    {mot.mot}
+                                  </span>
+                                  <span className="text-[9px] text-[#C9A227] font-mono font-bold mt-0.5">
+                                    {mot.lemme.replace(/^H[a-z]*/, "H")}
+                                  </span>
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -732,6 +821,58 @@ interface VersetEtudeProps {
 
 function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: VersetEtudeProps) {
   const [paralleles, setParalleles] = useState<Array<{ code: string; label: string; texte: string | null; loading: boolean }>>([]);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [hebrewWords, setHebrewWords] = useState<Array<{ mot: string; lemme: string; morphologie: string }> | null>(null);
+
+  // Références croisées TSK
+  const crossRefs = useMemo(
+    () => getCrossReferences(livreId, chapitre, verset),
+    [livreId, chapitre, verset]
+  );
+
+  // Vérifier si le verset est déjà en marque-page
+  useEffect(() => {
+    fetch("/api/bible/bookmarks")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.bookmarks) {
+          const found = data.bookmarks.some(
+            (b: any) =>
+              b.version === version &&
+              b.livreId === livreId &&
+              b.chapitre === chapitre &&
+              b.verset === verset
+          );
+          setIsBookmarked(found);
+        }
+      })
+      .catch(() => {});
+  }, [version, livreId, chapitre, verset]);
+
+  // Charger le texte hébreu (interlinéaire) si livre AT
+  useEffect(() => {
+    // Mapping livreId → abréviation OSHB
+    const LIVRE_TO_OSHB: Record<string, string> = {
+      gn: "Gen", ex: "Exod", lv: "Lev", nb: "Num", dt: "Deut",
+      js: "Josh", jg: "Judg", rt: "Ruth", "1sm": "1Sam", "2sm": "2Sam",
+      "1kg": "1Kgs", "2kg": "2Kgs", "1ch": "1Chr", "2ch": "2Chr",
+      er: "Ezra", ne: "Neh", est: "Esth", jb: "Job", ps: "Ps",
+      pv: "Prov", ec: "Eccl", ct: "Song", es: "Isa", je: "Jer",
+      lm: "Lam", ez: "Ezek", dn: "Dan", os: "Hos", jl: "Joel",
+      am: "Amos", ob: "Obad", jn: "Jonah", mi: "Mic", na: "Nah",
+      hb: "Hab", so: "Zeph", ag: "Hag", za: "Zech", ml: "Mal",
+    };
+    const oshbCode = LIVRE_TO_OSHB[livreId];
+    if (!oshbCode) {
+      setHebrewWords(null);
+      return;
+    }
+    fetch(`/api/bible-v2/hebrew/${oshbCode}/${chapitre}/${verset}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => setHebrewWords(data?.mots || null))
+      .catch(() => setHebrewWords(null));
+  }, [livreId, chapitre, verset]);
 
   useEffect(() => {
     const autres = VERSIONS.filter((v) => v.code !== version);
@@ -752,17 +893,106 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
     ).then(setParalleles);
   }, [version, livreId, chapitre, verset]);
 
+  const toggleBookmark = async () => {
+    setBookmarkLoading(true);
+    try {
+      if (isBookmarked) {
+        // Récupérer l'ID du bookmark à supprimer
+        const res = await fetch("/api/bible/bookmarks");
+        if (res.ok) {
+          const data = await res.json();
+          const bookmark = data.bookmarks.find(
+            (b: any) =>
+              b.version === version &&
+              b.livreId === livreId &&
+              b.chapitre === chapitre &&
+              b.verset === verset
+          );
+          if (bookmark) {
+            await fetch(`/api/bible/bookmarks/${bookmark.id}`, { method: "DELETE" });
+            setIsBookmarked(false);
+          }
+        }
+      } else {
+        // Ajouter le marque-page
+        const res = await fetch("/api/bible/bookmarks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            version,
+            livreId,
+            livreNom: livre,
+            chapitre,
+            verset,
+            texte,
+          }),
+        });
+        if (res.ok) setIsBookmarked(true);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* Verset sélectionné */}
+      {/* Verset sélectionné + bouton marque-page */}
       <div className="p-3 rounded-md bg-[#2A0E3D]/5 border border-[#C9A227]/20">
-        <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#C9A227] mb-1.5">
-          {livre} {chapitre}:{verset}
-        </p>
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#C9A227]">
+            {livre} {chapitre}:{verset}
+          </p>
+          <button
+            onClick={toggleBookmark}
+            disabled={bookmarkLoading}
+            className={cn(
+              "p-1 rounded transition-colors",
+              isBookmarked
+                ? "text-[#C9A227] bg-[#C9A227]/10"
+                : "text-[#8A8378] hover:text-[#C9A227] hover:bg-[#C9A227]/10"
+            )}
+            title={isBookmarked ? "Retirer des marque-pages" : "Ajouter aux marque-pages"}
+          >
+            <Bookmark className={cn("w-3.5 h-3.5", isBookmarked && "fill-current")} />
+          </button>
+        </div>
         <p className="font-serif text-sm text-[#1E0F2B] leading-relaxed italic">
           « {texte} »
         </p>
       </div>
+
+      {/* Interlinéaire Hébreu/Français */}
+      {hebrewWords && hebrewWords.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#8A8378] mb-2 flex items-center gap-1.5">
+            <Scroll className="w-3 h-3" />
+            Texte hébraïque
+          </p>
+          <div className="p-2 rounded border border-[#8A8378]/15 bg-[#FAF6EF]/40" dir="rtl">
+            <div className="flex flex-wrap gap-1.5 justify-end">
+              {hebrewWords.map((mot, i) => (
+                <div
+                  key={i}
+                  className="group relative inline-flex flex-col items-center cursor-help"
+                  title={`${mot.lemme} — ${mot.morphologie}`}
+                >
+                  <span className="font-serif text-base text-[#1E0F2B] group-hover:text-[#C9A227] transition-colors">
+                    {mot.mot}
+                  </span>
+                  <span className="text-[8px] text-[#8A8378] font-mono mt-0.5">
+                    {mot.lemme.replace(/^H[a-z]*/, "H")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="text-[9px] text-[#8A8378] mt-1 italic">
+            Survolez chaque mot pour voir son numéro Strong et sa morphologie
+          </p>
+        </div>
+      )}
 
       {/* Versions parallèles */}
       <div>
@@ -786,23 +1016,33 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
         </div>
       </div>
 
-      {/* Références croisées (statiques pour démonstration) */}
+      {/* Références croisées TSK (Treasury of Scripture Knowledge) */}
       <div>
         <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#8A8378] mb-2 flex items-center gap-1.5">
           <Share2 className="w-3 h-3" />
-          Références croisées
+          Références croisées (TSK)
         </p>
-        <div className="space-y-1.5 text-xs">
-          <a href="#" className="block px-2 py-1 rounded hover:bg-[#C9A227]/10 text-[#2A0E3D] font-serif">
-            → Voir les passages parallèles
-          </a>
-          <a href="#" className="block px-2 py-1 rounded hover:bg-[#C9A227]/10 text-[#2A0E3D] font-serif">
-            → Treasury of Scripture Knowledge
-          </a>
-          <a href="#" className="block px-2 py-1 rounded hover:bg-[#C9A227]/10 text-[#2A0E3D] font-serif">
-            → Commentaires bibliques
-          </a>
-        </div>
+        {crossRefs.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {crossRefs.map((ref, i) => (
+              <a
+                key={i}
+                href={`/bible?v=${version}&l=${ref.livreId}&c=${ref.chapitre}#${ref.verset}`}
+                className="inline-block px-2 py-1 rounded text-[10px] font-mono font-semibold text-[#2A0E3D] bg-[#C9A227]/10 hover:bg-[#C9A227]/20 transition-colors"
+                title={`${getLivreNom(ref.livreId)} ${ref.chapitre}:${ref.verset}`}
+              >
+                {getLivreNom(ref.livreId).slice(0, 3)} {ref.chapitre}:{ref.verset}
+              </a>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[10px] text-[#8A8378] italic">
+            Aucune référence croisée disponible pour ce verset.
+          </p>
+        )}
+        <p className="text-[9px] text-[#8A8378] mt-1.5 italic">
+          Source : Treasury of Scripture Knowledge — {crossRefs.length} référence{crossRefs.length > 1 ? "s" : ""}
+        </p>
       </div>
     </div>
   );
