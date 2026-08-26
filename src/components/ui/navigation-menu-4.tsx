@@ -175,16 +175,21 @@ export function ContextualNav() {
             </PopoverContent>
           </Popover>
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image
-              src="/logo-christ-libere.png"
-              alt="Christ Libère"
-              width={56}
-              height={56}
-              className="w-12 h-12 md:w-14 md:h-14 object-contain"
-              priority
-            />
+          {/* Logo avec halo lumineux */}
+          <Link href="/" className="flex items-center gap-2.5 group/logo">
+            <div className="relative">
+              {/* Halo lumineux pulsant */}
+              <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
+              {/* Image logo */}
+              <Image
+                src="/logo-christ-libere.png"
+                alt="Christ Libère"
+                width={56}
+                height={56}
+                className="relative w-12 h-12 md:w-14 md:h-14 object-contain"
+                priority
+              />
+            </div>
             <span className="font-serif text-xl md:text-2xl font-bold text-[#FAF6EF]">
               Christ Libère
             </span>

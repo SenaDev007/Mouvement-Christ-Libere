@@ -255,3 +255,71 @@
   background: #1A0826;
   transition: background 400ms ease;
 }
+
+/* ============================================================
+   Halo lumineux du logo Christ Libère
+   Effet étincelant pulsant en forme de carte d'Afrique
+   ============================================================ */
+
+.logo-halo {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(201, 162, 39, 0.4) 0%,
+    rgba(201, 162, 39, 0.2) 30%,
+    rgba(201, 162, 39, 0.08) 50%,
+    transparent 70%
+  );
+  filter: blur(8px);
+  animation: logoHaloPulse 3s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes logoHaloPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+    filter: blur(8px);
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: blur(12px);
+  }
+}
+
+/* Halo étincelant — couche supplémentaire avec rotation */
+.logo-halo::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(201, 162, 39, 0.3) 60deg,
+    transparent 120deg,
+    rgba(221, 190, 85, 0.4) 180deg,
+    transparent 240deg,
+    rgba(201, 162, 39, 0.3) 300deg,
+    transparent 360deg
+  );
+  border-radius: 50%;
+  filter: blur(6px);
+  animation: logoHaloRotate 4s linear infinite;
+  z-index: -1;
+}
+
+@keyframes logoHaloRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Effet de brillance sur le logo lui-même */
+.group\/logo img,
+.group\/logo Image {
+  filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.5));
+  transition: filter 0.3s ease;
+}
+
+.group\/logo:hover img {
+  filter: drop-shadow(0 0 12px rgba(201, 162, 39, 0.8));
+}

@@ -51,15 +51,18 @@ export const Footer = ({
           <div className="flex flex-col mb-12 sm:mb-20 md:mb-0 w-full">
             <div className="w-full flex flex-col items-center">
               <div className="space-y-2 flex flex-col items-center flex-1">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src="/logo-christ-libere.png"
-                    alt="Christ Libère"
-                    width={72}
-                    height={72}
-                    className="w-16 h-16 md:w-20 md:h-20 object-contain"
-                    priority
-                  />
+                <div className="flex items-center gap-3 group/logo">
+                  <div className="relative">
+                    <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
+                    <Image
+                      src="/logo-christ-libere.png"
+                      alt="Christ Libère"
+                      width={72}
+                      height={72}
+                      className="relative w-16 h-16 md:w-20 md:h-20 object-contain"
+                      priority
+                    />
+                  </div>
                   <span className="text-[#FAF6EF] text-2xl md:text-4xl font-bold font-serif">
                     {brandName}
                   </span>
@@ -127,13 +130,14 @@ export const Footer = ({
         </div>
 
         {/* Bottom logo — logo Christ Libère dans conteneur carré */}
-        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_25px_rgba(201,162,39,0.4)] bottom-14 md:bottom-16 backdrop-blur-[2px] rounded-3xl bg-[#1A0826]/20 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-4 md:p-5 -translate-x-1/2 z-10">
+        <div className="absolute hover:border-[#C9A227] duration-400 bottom-14 md:bottom-16 backdrop-blur-[2px] rounded-3xl bg-[#1A0826]/20 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-4 md:p-5 -translate-x-1/2 z-10 group/logo">
+          <div className="absolute inset-0 rounded-3xl pointer-events-none logo-halo" />
           <Image
             src="/logo-christ-libere.png"
             alt="Christ Libère"
             width={140}
             height={140}
-            className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-contain"
+            className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-contain"
             priority
           />
         </div>

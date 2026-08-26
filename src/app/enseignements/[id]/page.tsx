@@ -1,15 +1,40 @@
 import { db } from "@/lib/db";
-import { PageHero } from "@/components/site/page-hero";
-import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Clock, BookOpen, Download, Mail, Rss } from "lucide-react";
+import Image from "next/image";
+import { ChevronRight, Clock, BookOpen, GraduationCap, Calendar, User } from "lucide-react";
 import { MarkdownText } from "@/components/site/markdown-text";
+import { ShareButtons } from "@/components/site/share-buttons";
 
 export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+// Images d'illustration selon le thème de l'enseignement
+const THEME_IMAGES: Record<string, string> = {
+  "Trinité": "https://images.unsplash.com/photo-1504052434529-acb89d45a1ab?q=80&w=1920&auto=format&fit=crop",
+  "Shabbat": "https://images.unsplash.com/photo-1519834785169-98be25ff3f6c?q=80&w=1920&auto=format&fit=crop",
+  "Dîme": "https://images.unsplash.com/photo-1519834785169-98be25ff3f6c?q=80&w=1920&auto=format&fit=crop",
+  "Baptême": "https://images.unsplash.com/photo-1504052434529-acb89d45a1ab?q=80&w=1920&auto=format&fit=crop",
+  "Mariage": "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1920&auto=format&fit=crop",
+  "Sanctification": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1920&auto=format&fit=crop",
+  "Prière": "https://images.unsplash.com/photo-1504052434529-acb89d45a1ab?q=80&w=1920&auto=format&fit=crop",
+  "Fêtes": "https://images.unsplash.com/photo-1519834785169-98be25ff3f6c?q=80&w=1920&auto=format&fit=crop",
+  "Chofar": "https://images.unsplash.com/photo-1519834785169-98be25ff3f6c?q=80&w=1920&auto=format&fit=crop",
+  "Dispersés": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920&auto=format&fit=crop",
+  "Royaume": "https://images.unsplash.com/photo-1507692049790-de58290a4334?q=80&w=1920&auto=format&fit=crop",
+  "Combat spirituel": "https://images.unsplash.com/photo-1504052434529-acb89d45a1ab?q=80&w=1920&auto=format&fit=crop",
+  "Réveil": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop",
+  "Prophétie": "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop",
+  "Gouvernement": "https://images.unsplash.com/photo-1507692049790-de58290a4334?q=80&w=1920&auto=format&fit=crop",
+};
+
+const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1504052434529-acb89d45a1ab?q=80&w=1920&auto=format&fit=crop";
+
+function getImageForTheme(theme: string): string {
+  return THEME_IMAGES[theme] || DEFAULT_IMAGE;
 }
 
 export default async function TeachingDetailPage({ params }: PageProps) {
@@ -22,54 +47,146 @@ export default async function TeachingDetailPage({ params }: PageProps) {
 
   if (!teaching) notFound();
 
-  return (
-    <div>
-      <PageHero
-        imageSrc="https://images.unsplash.com/photo-1504052434529-acb89d45a1ab?q=80&w=1920&auto=format&fit=crop"
-        kicker={`${teaching.theme} · ${teaching.book}`}
-        title={teaching.title}
-        subtitle={teaching.excerpt}
-        primaryCta={{ label: "Tous les enseignements", href: "/enseignements" }}
-      />
+  const heroImage = getImageForTheme(teaching.theme);
+  const shareUrl = `/enseignements/${teaching.id}`;
 
-      {/* Article */}
-      <section className="py-16 md:py-24 bg-[#FAF6EF] relative overflow-hidden">
-        <div className="max-w-3xl mx-auto px-4">
-          {/* Meta */}
-          <div className="flex items-center gap-4 mb-8 text-sm text-[#8A8378]">
-            <span className="font-semibold text-[#1E0F2B]">{teaching.servant.shortName}</span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
-              {teaching.readingTime}
+  return (
+    <div className="min-h-screen bg-[#FAF6EF]">
+      {/* ═══ HERO avec image appropriée au thème ═══ */}
+      <section className="relative min-h-[60vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-[#FAF6EF]">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src={heroImage}
+            alt={teaching.title}
+            fill
+            priority
+            className="object-cover opacity-30"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/70 via-[#2A0E3D]/80 to-[#1A0826]" />
+        </div>
+
+        <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+          {/* Thème + niveau */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#C9A227]/15 text-[#C9A227] border border-[#C9A227]/30 backdrop-blur-sm">
+              {teaching.theme}
             </span>
-            <span className="px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold bg-[#C9A227]/15 text-[#C9A227]">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#2A0E3D]/40 text-[#FAF6EF]/80 border border-[#FAF6EF]/20 backdrop-blur-sm">
               {teaching.level}
             </span>
           </div>
 
-          {/* Contenu — rendu Markdown */}
-          <article className="prose prose-lg max-w-none">
-            <MarkdownText>{teaching.content}</MarkdownText>
-          </article>
+          {/* Titre */}
+          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-[#FAF6EF] leading-tight mb-6 drop-shadow-lg">
+            {teaching.title}
+          </h1>
 
-          {/* Actions */}
-          <div className="mt-12 pt-8 border-t border-[#C9A227]/20 flex flex-wrap items-center gap-4">
-            <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold border border-[#2A0E3D]/20 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors">
-              <Download className="w-3.5 h-3.5" />
-              Télécharger en PDF
-            </button>
-            <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold border border-[#2A0E3D]/20 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors">
-              <Mail className="w-3.5 h-3.5" />
-              Envoyer par email
-            </button>
-            <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold border border-[#2A0E3D]/20 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors">
-              <Rss className="w-3.5 h-3.5" />
-              Flux RSS
-            </button>
+          {/* Résumé */}
+          <p className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-8 drop-shadow">
+            {teaching.excerpt}
+          </p>
+
+          {/* Métadonnées */}
+          <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-[#FAF6EF]/60">
+            <span className="inline-flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-[#C9A227]" />
+              {teaching.servant.shortName}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-[#C9A227]" />
+              {teaching.readingTime}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-[#C9A227]" />
+              {teaching.book}
+            </span>
+            {teaching.publishedAt && (
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#C9A227]" />
+                {new Date(teaching.publishedAt).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ ARTICLE — style ghostwriter ═══ */}
+      <article className="py-16 md:py-24">
+        <div className="max-w-3xl mx-auto px-4">
+          {/* Carte texte principale */}
+          <div className="bg-white rounded-3xl shadow-xl border border-[#8A8378]/15 overflow-hidden">
+            {/* En-tête carte */}
+            <div className="px-8 md:px-12 py-6 bg-gradient-to-r from-[#2A0E3D]/5 to-transparent border-b border-[#8A8378]/10">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#2A0E3D] flex-shrink-0">
+                  <GraduationCap className="w-5 h-5 text-[#C9A227]" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#C9A227]">
+                    Enseignement biblique
+                  </p>
+                  <p className="text-sm font-bold text-[#1E0F2B]">
+                    Enseigné par {teaching.servant.shortName}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Contenu */}
+            <div className="px-8 md:px-12 py-8 md:py-10">
+              {/* Citation d'ouverture */}
+              {teaching.excerpt && (
+                <div className="mb-8 pb-6 border-b border-[#8A8378]/12">
+                  <p className="font-serif text-lg md:text-xl italic text-[#2A0E3D] leading-relaxed">
+                    « {teaching.excerpt} »
+                  </p>
+                </div>
+              )}
+
+              {/* Texte de l'enseignement (rendu markdown) */}
+              <div className="prose-bio">
+                <MarkdownText>{teaching.content}</MarkdownText>
+              </div>
+
+              {/* Référence biblique */}
+              {teaching.book && (
+                <div className="mt-8 p-4 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/20">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider font-bold text-[#9C7E1E] mb-0.5">
+                        Référence biblique
+                      </p>
+                      <p className="text-sm font-serif font-bold text-[#1E0F2B]">
+                        {teaching.book}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Signature */}
+              <div className="mt-8 pt-6 border-t border-[#8A8378]/12 flex items-center gap-3">
+                <div className="w-10 h-px bg-[#C9A227]" />
+                <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#8A8378]">
+                  Rédigé par la rédaction de Christ Libère
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* CTA */}
-          <div className="mt-8">
+          {/* Section partage */}
+          <div className="mt-10 p-6 md:p-8 bg-white rounded-2xl shadow-md border border-[#8A8378]/15">
+            <ShareButtons url={shareUrl} title={teaching.title} variant="light" />
+          </div>
+
+          {/* Navigation */}
+          <div className="mt-8 flex items-center justify-between">
             <Link
               href="/enseignements"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
@@ -77,20 +194,28 @@ export default async function TeachingDetailPage({ params }: PageProps) {
               <ChevronRight className="w-4 h-4 rotate-180" />
               Tous les enseignements
             </Link>
+            <Link
+              href={teaching.servant.code === "pam" ? "/pam" : "/pasteur-kongo"}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
+            >
+              Voir {teaching.servant.shortName}
+              <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
-      </section>
+      </article>
 
-      <SectionDivider variant="ornament" />
-
-      {/* Citation */}
-      <section className="py-20 md:py-28 bg-[#2A0E3D] relative overflow-hidden">
-        <div className="max-w-3xl mx-auto px-4">
-          <QuoteBlock
-            text="La parole de Dieu est vivante et efficace, plus tranchante qu'une épée à deux tranchants."
-            reference="Hébreux 4:12"
-            variant="dark"
-          />
+      {/* ═══ CITATION FINALE ═══ */}
+      <section className="py-16 md:py-20 bg-[#2A0E3D] relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
+        <div className="relative max-w-3xl mx-auto px-4 text-center">
+          <BookOpen className="w-10 h-10 text-[#C9A227] mx-auto mb-6 opacity-50" />
+          <p className="font-serif text-xl md:text-2xl italic text-[#FAF6EF]/90 leading-relaxed mb-4">
+            « La parole de Dieu est vivante et efficace, plus tranchante qu'une épée à deux tranchants. »
+          </p>
+          <p className="text-xs uppercase tracking-[0.2em] text-[#C9A227] font-bold">
+            Hébreux 4:12
+          </p>
         </div>
       </section>
     </div>
