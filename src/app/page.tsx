@@ -46,7 +46,7 @@ const FEATURES = [
     icon: Users,
     title: "Communauté",
     description: "Canaux d'échange organisés par thème, modérés avec attention, pour grandir ensemble dans la foi.",
-    href: "/yeshua-connect",
+    href: "/communaute",
   },
 ];
 
@@ -246,10 +246,10 @@ export default function Home() {
               Des espaces d'échange organisés par thème, modérés avec attention, pour grandir ensemble dans la foi. Canaux ouverts, canaux restreints chiffrés, intercession — à chacun son rythme.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/yeshua-connect" className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300">
+              <Link href="/communaute" className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300">
                 Rejoindre la communauté <ChevronRight className="w-4 h-4 ml-2" />
               </Link>
-              <Link href="/yeshua-connect" className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300">
+              <Link href="/communaute" className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300">
                 <MessageSquare className="w-4 h-4 mr-2" /> Yeshua Connect
               </Link>
             </div>

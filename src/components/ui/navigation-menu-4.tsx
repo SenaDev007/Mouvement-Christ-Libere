@@ -86,6 +86,7 @@ const navigationLinks = [
     type: "simple",
     items: [
       { href: "/yeshua-connect", label: "Yeshua Connect — Chat" },
+      { href: "/communaute", label: "Canaux & Groupes" },
       { href: "/contribuer", label: "Contribuer (Don/Dîme)" },
       { href: "/contact", label: "Contact" },
     ],
@@ -276,7 +277,7 @@ export function ContextualNav() {
         {/* Right side — CTA */}
         <div className="flex items-center gap-2">
           <Button asChild size="sm" className="bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] text-sm">
-            <Link href="/yeshua-connect">
+            <Link href="/communaute">
               Rejoindre
               <ChevronRight className="w-3.5 h-3.5 ml-1" />
             </Link>

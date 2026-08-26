@@ -522,7 +522,7 @@ export function MessagingView() {
 
         {/* Community link */}
         <Link
-          href="/yeshua-connect"
+          href="/communaute"
           className="flex items-center gap-3 px-4 py-3 border-b border-stone-100 hover:bg-[#C9A227]/5 transition-colors group"
         >
           <div className="w-10 h-10 rounded-xl bg-[#C9A227]/15 border border-[#C9A227]/30 flex items-center justify-center">
