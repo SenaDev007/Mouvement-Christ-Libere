@@ -2,14 +2,10 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ChevronRight, Sparkles } from "lucide-react";
-import { Marquee } from "@/components/magic/marquee";
-import { TextShimmer, GradientText } from "@/components/magic/text-shimmer";
-import { AuroraBackground } from "@/components/magic/aurora-background";
-import { ParticleField } from "@/components/magic/particle-field";
-import { QuoteBlock } from "@/components/premium/section-divider";
-import ScrollExpandMedia from "@/components/blocks/scroll-expansion-hero";
-import Image from "next/image";
+import {
+  ChevronRight, Sparkles, BookOpen, FileText, Video, Users,
+  Calendar, MessageSquare, Heart, ArrowRight,
+} from "lucide-react";
 
 const VERSES = [
   "Et Hénoch marcha avec Dieu", "Genèse 5:24",
@@ -21,69 +17,131 @@ const VERSES = [
 ];
 
 const STATS = [
-  { value: "16", label: "jalons biographiques" },
-  { value: "6", label: "témoignages authentiques" },
-  { value: "6", label: "enseignements publiés" },
+  { value: "31", label: "témoignages authentiques" },
+  { value: "8", label: "enseignements publiés" },
+  { value: "7", label: "jalons biographiques" },
   { value: "24h", label: "délai de réponse" },
+];
+
+const FEATURES = [
+  {
+    icon: FileText,
+    title: "Témoignages",
+    description: "Récits d'expériences spirituelles authentiques — visites au ciel, paroles reçues, combats spirituels.",
+    href: "/temoignages",
+  },
+  {
+    icon: BookOpen,
+    title: "Enseignements",
+    description: "Études bibliques classées par thème, par livre et par niveau, pour approfondir à votre rythme.",
+    href: "/enseignements",
+  },
+  {
+    icon: Video,
+    title: "Vidéos & Lives",
+    description: "Enseignements vidéo et directs dans leur version originale et complète, conservés intégralement.",
+    href: "/videos",
+  },
+  {
+    icon: Users,
+    title: "Communauté",
+    description: "Canaux d'échange organisés par thème, modérés avec attention, pour grandir ensemble dans la foi.",
+    href: "/communaute",
+  },
 ];
 
 export default function Home() {
   return (
-    <ScrollExpandMedia
-      mediaType="image"
-      mediaSrc="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1280&auto=format&fit=crop"
-      bgImageSrc="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1920&auto=format&fit=crop"
-      title="Mouvement Christ Libère"
-      date="PAM & Pasteur Kongo"
-      scrollToExpand="Défiler pour découvrir"
-      textBlend
-    >
-      {/* Marquee de versets */}
-      <div className="bg-[#2A0E3D] border-y border-[#C9A227]/20 py-4 overflow-hidden -mx-8 md:-mx-16">
-        <Marquee speed="slow" pauseOnHover>
-          {VERSES.map((verse, i) => (
-            <span key={i} className="mx-8 inline-flex items-center gap-3">
-              <Sparkles className="w-3 h-3 text-[#C9A227]/60" />
-              <span className={i % 2 === 0 ? "font-serif italic text-[#FAF6EF]/80 text-lg" : "text-xs uppercase tracking-[0.2em] text-[#DDBE55]/60 font-semibold"}>
-                {verse}
-              </span>
-            </span>
-          ))}
-        </Marquee>
-      </div>
+    <div className="min-h-screen">
+      {/* ═════ HERO ═════ */}
+      <section className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
+        {/* Background image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop"
+            alt="Ciel étoilé"
+            className="w-full h-full object-cover opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/90 to-[#1A0826]" />
+        </div>
 
-      {/* Stats */}
-      <section className="bg-[#FAF6EF] py-24 md:py-32 relative overflow-hidden -mx-8 md:-mx-16">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-[#C9A227]/5 blur-[120px] rounded-full pointer-events-none" />
-        <div className="relative container mx-auto max-w-7xl px-4">
+        {/* Content */}
+        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="flex items-center justify-center gap-2 mb-6"
           >
-            <p className="text-xs uppercase tracking-[0.3em] text-[#8A8378] font-semibold mb-3">
-              Ce que cette plateforme rassemble
-            </p>
-            <h2 className="font-serif text-3xl md:text-4xl font-semibold text-[#1E0F2B]">
-              Une communauté en <TextShimmer>activité</TextShimmer>
-            </h2>
+            <Sparkles className="w-4 h-4 text-[#C9A227]" />
+            <span className="text-xs uppercase tracking-[0.25em] font-semibold text-[#C9A227]">
+              Un même appel, deux serviteurs
+            </span>
           </motion.div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="font-serif font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.15] mb-6"
+          >
+            Afrika Alkebulane Pamela Dali
+            <br />
+            <span className="text-[#C9A227]">& Pasteur Kongo</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-10"
+          >
+            Témoignages, enseignements et vie de communauté, au service du
+            rassemblement des fils d'Israël dispersés — en préparation au
+            retour du Maître Yeshua, au son du chofar.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
+            <Link
+              href="/pam"
+              className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300"
+            >
+              Découvrir le témoignage de PAM
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Link>
+            <Link
+              href="/pasteur-kongo"
+              className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300"
+            >
+              Découvrir le Pasteur Kongo
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═════ STATS ═════ */}
+      <section className="py-20 bg-[#FAF6EF] relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {STATS.map((stat, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="text-center"
               >
-                <div className="font-serif text-4xl md:text-5xl lg:text-6xl font-semibold text-[#2A0E3D] mb-2 tracking-tight">
+                <div className="font-serif font-extrabold text-4xl md:text-5xl text-[#C9A227] mb-2">
                   {stat.value}
                 </div>
-                <div className="text-xs md:text-sm text-[#8A8378] leading-snug max-w-[120px] mx-auto">
+                <div className="text-sm text-[#8A8378] font-medium">
                   {stat.label}
                 </div>
               </motion.div>
@@ -92,164 +150,265 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Serviteurs */}
-      <section className="bg-[#FAF6EF] py-24 md:py-32 -mx-8 md:-mx-16">
-        <div className="container mx-auto max-w-7xl px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-semibold mb-3">
-              Deux ministères, une même vision
+      {/* ═════ FEATURES (Ce que nous offrons) ═════ */}
+      <section className="py-24 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <p className="text-xs uppercase tracking-[0.25em] text-[#C9A227] font-semibold mb-3">
+              Ce que cette plateforme rassemble
             </p>
-            <h2 className="font-serif text-3xl md:text-5xl font-semibold text-[#1E0F2B] leading-tight">
-              Deux voix, une même <TextShimmer>vision</TextShimmer>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1E0F2B] leading-tight">
+              Deux voix, une même vision
             </h2>
-            <p className="mt-5 text-base md:text-lg text-[#8A8378] leading-relaxed max-w-2xl mx-auto">
+            <p className="text-base text-[#8A8378] mt-4 max-w-2xl mx-auto">
               PAM et le Pasteur Kongo exercent chacun un ministère distinct, uni par le mariage
-              et par une même conviction : préparer les cœurs, transmettre ce qui a été reçu,
-              et rassembler ceux qui se reconnaissent dans cette parole.
+              et par une même conviction : préparer les cœurs, transmettre ce qui a été reçu.
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-8 mt-12">
-            {/* PAM Card */}
-            <div className="bg-[#FAF6EF] border border-[#8A8378]/20 rounded-2xl p-8 relative overflow-hidden group hover:border-[#C9A227]/40 transition-all">
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#C9A227] via-[#C9A227]-light to-[#C9A227] opacity-60 group-hover:opacity-100" />
-              <div className="flex items-center gap-4 mb-6">
-                <div className="relative flex-shrink-0">
-                  <div className="flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#C9A227] bg-[#C9A227]/10">
-                    <span className="font-serif text-lg font-semibold text-[#C9A227]">AP</span>
-                  </div>
-                  <div className="absolute inset-0 rounded-full border border-[#C9A227]/30 animate-ping opacity-50" />
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-[#8A8378] font-semibold">Servante de l&apos;Éternel</div>
-                  <div className="font-serif text-xl font-semibold text-[#1E0F2B] mt-0.5">PAM</div>
-                  <div className="text-xs text-[#8A8378] mt-0.5">Afrika Alkebulane Pamela Dali</div>
-                </div>
-              </div>
-              <p className="text-sm text-[#1E0F2B]/75 leading-relaxed mb-6">
-                Témoignages d&apos;enlèvements au ciel, instructions reçues du Seigneur Yeshoua.
-                Figure contemporaine du patriarche Hénoch.
-              </p>
-              <Link href="/biographie" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors whitespace-nowrap">
-                Lire la biographie de PAM
-                <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-              </Link>
-            </div>
-
-            {/* Kongo Card */}
-            <div className="bg-[#FAF6EF] border border-[#8A8378]/20 rounded-2xl p-8 relative overflow-hidden group hover:border-[#C9A227]/40 transition-all">
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#C9A227] via-[#C9A227]-light to-[#C9A227] opacity-60 group-hover:opacity-100" />
-              <div className="flex items-center gap-4 mb-6">
-                <div className="relative flex-shrink-0">
-                  <div className="flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#C9A227] bg-[#C9A227]/10">
-                    <span className="font-serif text-lg font-semibold text-[#C9A227]">PK</span>
-                  </div>
-                  <div className="absolute inset-0 rounded-full border border-[#C9A227]/30 animate-ping opacity-50" />
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-[#8A8378] font-semibold">Époux, ministre pastoral</div>
-                  <div className="font-serif text-xl font-semibold text-[#1E0F2B] mt-0.5">Pasteur Kongo</div>
-                </div>
-              </div>
-              <p className="text-sm text-[#1E0F2B]/75 leading-relaxed mb-6">
-                Ministère pastoral complémentaire, enseignements et partages spirituels.
-              </p>
-              <Link href="/biographie" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors whitespace-nowrap">
-                Lire la biographie du Pasteur Kongo
-                <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-              </Link>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {FEATURES.map((feature, i) => {
+              const Icon = feature.icon;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: i * 0.1 }}
+                >
+                  <Link
+                    href={feature.href}
+                    className="group block bg-white rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 h-full hover:shadow-xl transition-all duration-500"
+                  >
+                    <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#C9A227]/10 mb-6 group-hover:bg-[#C9A227]/20 transition-colors">
+                      <Icon className="w-7 h-7 text-[#C9A227]" />
+                    </div>
+                    <h3 className="font-serif text-xl font-bold text-[#1E0F2B] mb-3">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-[#8A8378] leading-relaxed mb-4">
+                      {feature.description}
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
+                      Découvrir
+                      <ArrowRight className="w-4 h-4" />
+                    </span>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* DERNIER ENSEIGNEMENT */}
-      <section className="bg-ivory py-20 md:py-24">
-        <div className="container mx-auto max-w-5xl px-4">
-          <div className="text-center mb-10">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#C9A227] font-semibold mb-2">
+      {/* ═════ DERNIER ENSEIGNEMENT ═════ */}
+      <section className="py-24 bg-[#FAF6EF] relative overflow-hidden">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <p className="text-xs uppercase tracking-[0.25em] text-[#C9A227] font-semibold mb-3">
               Le dernier enseignement
             </p>
-            <h2 className="font-serif text-3xl md:text-4xl font-semibold text-[#1E0F2B]">
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1E0F2B] leading-tight">
               Pour approfondir la Parole
             </h2>
           </div>
-          <div className="bg-white rounded-lg border border-stone-200 border-t-[3px] border-t-[#C9A227] p-8 max-w-2xl mx-auto">
-            <p className="text-xs font-semibold text-[#8C5FA8] uppercase tracking-wider mb-2">Pam — Doctrine</p>
-            <h3 className="font-serif text-xl font-semibold text-[#1E0F2B] mb-3">
+
+          <div className="bg-white rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 md:p-12 max-w-3xl mx-auto">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#8C5FA8]/10 text-[#8C5FA8] border border-[#8C5FA8]/20">
+                Doctrine
+              </span>
+              <span className="text-xs text-[#8A8378]">PAM</span>
+            </div>
+            <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-4">
               La Véritable Nature du Saint-Esprit et la Trinité
             </h3>
-            <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-4">
-              Au ciel, il n'y a pas trois trônes pour le Père, le Fils et le Saint-Esprit. Il n'y a qu'un seul Trône, et c'est la même personne qui s'y manifeste sous différentes formes...
+            <p className="text-sm md:text-base text-[#1E0F2B]/70 leading-relaxed mb-6">
+              Au ciel, il n'y a pas trois trônes pour le Père, le Fils et le Saint-Esprit.
+              Il n'y a qu'un seul Trône, et c'est la même personne qui s'y manifeste
+              sous différentes formes. Le Saint-Esprit est une personne réelle, douce et sensible...
             </p>
             <Link
               href="/enseignements"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
+              className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#C9A227] hover:bg-[#A3821C] text-[#1E0F2B] font-sans font-bold text-sm transition-all duration-300"
             >
               Voir tous les enseignements
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-4 h-4 ml-2" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* CITATION */}
-      <AuroraBackground variant="imperial" intensity="strong" className="py-32 md:py-40">
-        <ParticleField count={40} color="#C9A227" size={1.5} speed="slow" />
-        <div className="relative">
-          <QuoteBlock
-            text="Et Hénoch marcha avec Dieu ; et il ne fut plus, car Dieu le prit."
-            reference="Genèse 5:24"
-            variant="dark"
-          />
-        </div>
-      </AuroraBackground>
+      {/* ═════ VERS DEUX SERVITEURS ═════ */}
+      <section className="py-24 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+            {/* Pam */}
+            <Link
+              href="/pam"
+              className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
+            >
+              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-[#2A0E3D] mb-6">
+                <span className="font-serif text-2xl font-bold text-[#C9A227]">PAM</span>
+              </div>
+              <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-3">
+                Afrika Alkebulane Pamela Dali
+              </h3>
+              <p className="text-xs uppercase tracking-wide text-[#C9A227] font-semibold mb-3">
+                Servante de l'Éternel
+              </p>
+              <p className="text-sm text-[#8A8378] leading-relaxed mb-6">
+                Témoignages de visites au ciel, révélations prophétiques, enseignements
+                sur la sanctification et le retour de Yeshua HaMashiach.
+              </p>
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
+                Lire la biographie
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            </Link>
 
-      {/* APPEL COMMUNAUTÉ */}
-      <AuroraBackground variant="dawn" intensity="strong" className="py-32 md:py-40">
-        <ParticleField count={40} color="#C9A227" size={1.5} speed="medium" />
-        <div className="relative container mx-auto max-w-4xl px-4 text-center">
+            {/* Center: Marriage */}
+            <div className="flex flex-col items-center justify-center p-8">
+              <div className="w-px h-16 bg-[#C9A227]/30 mb-6 hidden lg:block" />
+              <div className="text-center">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#C9A227]/10 mb-4">
+                  <Heart className="w-8 h-8 text-[#C9A227]" />
+                </div>
+                <p className="font-serif text-lg italic text-[#8A8378] text-center max-w-xs">
+                  « Deux appels qui se rejoignent, deux ministères distincts qui s'articulent
+                  sans se confondre. »
+                </p>
+              </div>
+              <div className="w-px h-16 bg-[#C9A227]/30 mt-6 hidden lg:block" />
+            </div>
+
+            {/* Pasteur Kongo */}
+            <Link
+              href="/pasteur-kongo"
+              className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
+            >
+              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-[#2A0E3D] mb-6">
+                <span className="font-serif text-2xl font-bold text-[#C9A227]">PK</span>
+              </div>
+              <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-3">
+                Pasteur Kongo
+              </h3>
+              <p className="text-xs uppercase tracking-wide text-[#C9A227] font-semibold mb-3">
+                Ministère pastoral
+              </p>
+              <p className="text-sm text-[#8A8378] leading-relaxed mb-6">
+                Enseignements pastoraux, soins des brebis, discernement spirituel
+                et accompagnement de la communauté dans la foi.
+              </p>
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
+                Lire la biographie
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ═════ MARQUEE DE VERSETS ═════ */}
+      <section className="bg-[#2A0E3D] border-y border-[#C9A227]/20 py-6 overflow-hidden">
+        <div className="flex items-center gap-8 animate-marquee whitespace-nowrap">
+          {VERSES.map((verse, i) => (
+            <span key={i} className="inline-flex items-center gap-3">
+              <Sparkles className="w-3 h-3 text-[#C9A227]/60 flex-shrink-0" />
+              <span className={i % 2 === 0
+                ? "font-serif italic text-[#FAF6EF]/80 text-lg"
+                : "text-xs uppercase tracking-[0.2em] text-[#C9A227]/60 font-semibold"
+              }>
+                {verse}
+              </span>
+            </span>
+          ))}
+          {/* Duplicate for seamless loop */}
+          {VERSES.map((verse, i) => (
+            <span key={`dup-${i}`} className="inline-flex items-center gap-3">
+              <Sparkles className="w-3 h-3 text-[#C9A227]/60 flex-shrink-0" />
+              <span className={i % 2 === 0
+                ? "font-serif italic text-[#FAF6EF]/80 text-lg"
+                : "text-xs uppercase tracking-[0.2em] text-[#C9A227]/60 font-semibold"
+              }>
+                {verse}
+              </span>
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* ═════ CTA COMMUNAUTÉ ═════ */}
+      <section className="py-24 bg-[#2A0E3D] relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
+        <div className="relative max-w-4xl mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-semibold mb-3">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-semibold mb-4">
               Communauté
             </p>
-            <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl font-semibold text-[#FAF6EF] leading-tight mb-6">
-              Rejoignez les fils d&apos;Israël <TextShimmer>dispersés</TextShimmer>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#FAF6EF] leading-tight mb-6">
+              Rejoignez les canaux d'échange
             </h2>
-            <p className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-10">
-              Des espaces d&apos;échange organisés par thème, modérés avec attention,
-              pour grandir ensemble dans la foi.
+            <p className="text-base md:text-lg text-[#FAF6EF]/60 leading-relaxed max-w-2xl mx-auto mb-10">
+              Des espaces d'échange organisés par thème, modérés avec attention,
+              pour grandir ensemble dans la foi. Canaux ouverts, canaux restreints chiffrés,
+              intercession — à chacun son rythme.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/communaute"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors whitespace-nowrap"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300"
               >
-                Rejoindre un canal
-                <ChevronRight className="w-4 h-4" />
+                Rejoindre la communauté
+                <ChevronRight className="w-4 h-4 ml-2" />
               </Link>
               <Link
-                href="/contribuer"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-[#C9A227]/40 text-[#C9A227] font-semibold text-sm hover:bg-[#C9A227]/10 transition-colors whitespace-nowrap"
+                href="/yeshua-connect"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300"
               >
-                Contribuer
-                <ChevronRight className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Yeshua Connect
               </Link>
             </div>
           </motion.div>
         </div>
-      </AuroraBackground>
-    </ScrollExpandMedia>
+      </section>
+
+      {/* ═════ NAVIGATION RAPIDE ═════ */}
+      <section className="py-20 bg-[#FAF6EF] relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[
+              { label: "Biographie", href: "/biographie", icon: Users },
+              { label: "Témoignages", href: "/temoignages", icon: FileText },
+              { label: "Enseignements", href: "/enseignements", icon: BookOpen },
+              { label: "Vidéos", href: "/videos", icon: Video },
+              { label: "Bible", href: "/bible", icon: BookOpen },
+              { label: "Calendrier", href: "/calendrier-biblique", icon: Calendar },
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={i}
+                  href={item.href}
+                  className="group flex flex-col items-center gap-3 p-6 bg-white rounded-2xl shadow-sm border border-[#8A8378]/10 hover:border-[#C9A227]/40 hover:shadow-md transition-all duration-300"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#C9A227]/10 group-hover:bg-[#C9A227]/20 transition-colors">
+                    <Icon className="w-6 h-6 text-[#C9A227]" />
+                  </div>
+                  <span className="text-sm font-semibold text-[#1E0F2B]">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
