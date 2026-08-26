@@ -109,7 +109,7 @@ export function ContextualNav() {
         isFullScreenPage && "hidden"
       )}
     >
-      <div className="flex h-14 items-center justify-between gap-4 px-4 md:px-6 max-w-7xl mx-auto">
+      <div className="flex h-16 md:h-20 items-center justify-between gap-4 px-4 md:px-6 max-w-7xl mx-auto">
         {/* Left side */}
         <div className="flex items-center gap-2">
           {/* Mobile menu trigger */}
@@ -180,12 +180,12 @@ export function ContextualNav() {
             <Image
               src="/logo-christ-libere.png"
               alt="Christ Libère"
-              width={48}
-              height={48}
-              className="w-10 h-10 md:w-12 md:h-12 object-contain"
+              width={56}
+              height={56}
+              className="w-12 h-12 md:w-14 md:h-14 object-contain"
               priority
             />
-            <span className="font-serif text-lg md:text-xl font-bold text-[#FAF6EF]">
+            <span className="font-serif text-xl md:text-2xl font-bold text-[#FAF6EF]">
               Christ Libère
             </span>
           </Link>

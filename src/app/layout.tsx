@@ -79,7 +79,7 @@ export default function RootLayout({
             {/* ⭐ Nouvelle navbar fixe en haut (h-14 = 56px) */}
             <ContextualNav />
             {/* Padding-top pour la navbar fixe (56px + 8px marge) */}
-            <main className="flex-1 pt-16">{children}</main>
+            <main className="flex-1 pt-16 md:pt-20">{children}</main>
             <ConditionalFooter />
           </ServantProvider>
         </NextAuthProvider>
