@@ -4,7 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ServantProvider } from "@/components/site/servant-context";
 import { ScrollProgress } from "@/components/magic/scroll-progress";
-import { TubelightNav } from "@/components/site/tubelight-nav";
+import { ContextualNav } from "@/components/ui/navigation-menu-4";
 import { ConditionalFooter } from "@/components/site/conditional-footer";
 import { NextAuthProvider } from "@/components/auth/next-auth-provider";
 
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Pam & Pasteur Kongo — Au son du chofar",
     description:
-      "Enseignements, témoignages et vie de communauté. Un espace de foi centralisé.",
+      "Enseignements, témoignements et vie de communauté. Un espace de foi centralisé.",
   },
 };
 
@@ -64,10 +64,11 @@ export default function RootLayout({
         <ScrollProgress />
         <NextAuthProvider>
           <ServantProvider>
-            {/* ⭐ Padding: 0 sur mobile (navbar en bas), pt-20 sur desktop (navbar en haut fixe) */}
-            <main className="flex-1 pt-0 sm:pt-20">{children}</main>
+            {/* ⭐ Nouvelle navbar fixe en haut (h-14 = 56px) */}
+            <ContextualNav />
+            {/* Padding-top pour la navbar fixe (56px + 8px marge) */}
+            <main className="flex-1 pt-16">{children}</main>
             <ConditionalFooter />
-            <TubelightNav />
           </ServantProvider>
         </NextAuthProvider>
         <Toaster />
