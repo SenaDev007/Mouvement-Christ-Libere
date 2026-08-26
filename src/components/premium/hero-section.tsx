@@ -133,7 +133,7 @@ export function HeroSection({
               {primaryCta && (
                 <Link
                   href={primaryCta.href}
-                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-all hover:shadow-[0_0_30px_rgba(201,162,39,0.4)]"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-all hover:shadow-[0_0_30px_rgba(201,162,39,0.4)]"
                 >
                   {primaryCta.label}
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -142,7 +142,7 @@ export function HeroSection({
               {secondaryCta && (
                 <Link
                   href={secondaryCta.href}
-                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-md border border-[#C9A227]/40 text-[#C9A227] font-semibold text-sm hover:bg-[#C9A227]/10 transition-all backdrop-blur-sm"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-[#C9A227]/40 text-[#C9A227] font-semibold text-sm hover:bg-[#C9A227]/10 transition-all backdrop-blur-sm"
                 >
                   {secondaryCta.label}
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

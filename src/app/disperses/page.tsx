@@ -170,7 +170,7 @@ export default function DispersesPage() {
                     onChange={(e) => setForm({ ...form, pseudonyme: e.target.value })}
                     required
                     placeholder="Un nom ou pseudo (pas votre vrai nom)"
-                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+                    className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                   />
                 </div>
                 <div>
@@ -184,7 +184,7 @@ export default function DispersesPage() {
                     required
                     placeholder="FR, CI, US, IL..."
                     maxLength={2}
-                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 uppercase"
+                    className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 uppercase"
                   />
                 </div>
               </div>
@@ -199,7 +199,7 @@ export default function DispersesPage() {
                     value={form.ville}
                     onChange={(e) => setForm({ ...form, ville: e.target.value })}
                     placeholder="Votre ville"
-                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+                    className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                   />
                 </div>
                 <div>
@@ -209,7 +209,7 @@ export default function DispersesPage() {
                   <select
                     value={form.langue}
                     onChange={(e) => setForm({ ...form, langue: e.target.value })}
-                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+                    className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                   >
                     <option value="FR">Français</option>
                     <option value="EN">English</option>
@@ -228,7 +228,7 @@ export default function DispersesPage() {
                 <select
                   value={form.niveau}
                   onChange={(e) => setForm({ ...form, niveau: e.target.value })}
-                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+                  className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                 >
                   <option value="chercheur">Chercheur — en quête spirituelle</option>
                   <option value="croyant">Croyant — engagé dans la foi</option>
@@ -245,7 +245,7 @@ export default function DispersesPage() {
                 <button
                   type="button"
                   onClick={detecterPosition}
-                  className="w-full px-4 py-3 rounded-md border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors inline-flex items-center justify-center gap-2 text-sm font-semibold"
+                  className="w-full px-4 py-3 rounded-full border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors inline-flex items-center justify-center gap-2 text-sm font-semibold"
                 >
                   <MapPin className="w-4 h-4" />
                   {form.latitude ? `Position détectée : ${form.latitude.toFixed(1)}, ${form.longitude.toFixed(1)}` : "Détecter ma position"}
@@ -265,12 +265,12 @@ export default function DispersesPage() {
                   rows={3}
                   placeholder="Un court témoignage, une bénédiction, un encouragement pour la communauté..."
                   maxLength={500}
-                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-none"
+                  className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-none"
                 />
               </div>
 
               {/* Bandeau confidentialité */}
-              <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-md flex items-start gap-3">
+              <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-full flex items-start gap-3">
                 <ShieldCheck className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-semibold text-[#1E0F2B] mb-1">Confidentialité</p>
@@ -284,7 +284,7 @@ export default function DispersesPage() {
               <button
                 type="submit"
                 disabled={submitting || !form.latitude}
-                className="w-full px-6 py-4 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full px-6 py-4 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submitting ? (
                   <>

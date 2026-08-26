@@ -104,7 +104,7 @@ export default async function EnseignementsPage({ searchParams }: PageProps) {
                 <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors">
                   Email à un proche
                 </button>
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors">
+                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors">
                   Télécharger en PDF
                 </button>
               </div>

@@ -115,7 +115,7 @@ export default function ProfilPage() {
             <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Nom</label>
             <input
               type="text" value={name} onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+              className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
             />
           </div>
 
@@ -124,7 +124,7 @@ export default function ProfilPage() {
             <textarea
               value={bio} onChange={(e) => setBio(e.target.value)} rows={3}
               placeholder="Quelques mots sur vous..."
-              className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 resize-none"
+              className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 resize-none"
             />
           </div>
 
@@ -134,7 +134,7 @@ export default function ProfilPage() {
               <input
                 type="text" value={country} onChange={(e) => setCountry(e.target.value)}
                 placeholder="Côte d'Ivoire"
-                className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+                className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
               />
             </div>
             <div>
@@ -142,7 +142,7 @@ export default function ProfilPage() {
               <input
                 type="text" value={city} onChange={(e) => setCity(e.target.value)}
                 placeholder="Abidjan"
-                className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+                className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
               />
             </div>
           </div>
@@ -189,7 +189,7 @@ export default function ProfilPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-md hover:bg-[#DDBE55] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mb-4"
+          className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mb-4"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {savedMsg ? "Enregistré ✓" : "Enregistrer"}
@@ -198,7 +198,7 @@ export default function ProfilPage() {
         {/* Logout */}
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
-          className="w-full py-3 border border-red-200 text-red-600 font-semibold text-sm rounded-md hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3 border border-red-200 text-red-600 font-semibold text-sm rounded-full hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
         >
           <LogOut className="w-4 h-4" />
           Se déconnecter

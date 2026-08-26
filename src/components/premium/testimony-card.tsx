@@ -2,9 +2,8 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ChevronRight, BookOpen, Share2, Clock } from "lucide-react";
+import { ArrowRight, Clock, BookOpen, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MarkdownText } from "@/components/site/markdown-text";
 
 interface TestimonyCardProps {
   title: string;
@@ -18,63 +17,41 @@ interface TestimonyCardProps {
   delay?: number;
 }
 
-export function TestimonyCard({
-  title,
-  short,
-  themes,
-  bookRef,
-  servantName,
-  readingTime,
-  status,
-  href,
-  delay = 0,
-}: TestimonyCardProps) {
+export function TestimonyCard({ title, short, themes, bookRef, servantName, readingTime, status, href, delay = 0 }: TestimonyCardProps) {
   return (
     <motion.article
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.6, delay }}
-      className="group relative bg-[#FAF6EF] border border-[#8A8378]/20 rounded-2xl overflow-hidden hover:border-[#C9A227]/40 hover:shadow-[0_15px_50px_-15px_rgba(42,14,61,0.2)] transition-all duration-500 flex flex-col"
     >
-      {/* Filet or supérieur */}
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#C9A227] via-[#C9A227]-light to-[#C9A227] opacity-60 group-hover:opacity-100 transition-opacity" />
-
-      {/* Halo lumineux au hover */}
-      <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#C9A227]/0 group-hover:bg-[#C9A227]/10 blur-3xl transition-all duration-700 pointer-events-none" />
-
-      <div className="relative z-10 p-6 flex flex-col flex-1">
-        {/* En-tête : thème + statut */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-1.5">
-            {themes.slice(0, 2).map((theme) => (
-              <span
-                key={theme}
-                className="inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase tracking-[0.12em] font-semibold bg-[#8C5FA8]/10 text-[#8C5FA8] border border-[#8C5FA8]/20"
-              >
-                {theme}
-              </span>
-            ))}
-          </div>
-          <StatusBadge status={status} />
+      <Link
+        href={href}
+        className="group block bg-white rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 h-full hover:shadow-xl transition-all duration-500"
+      >
+        {/* Themes */}
+        <div className="flex items-center gap-2 mb-4">
+          {themes.slice(0, 2).map((theme) => (
+            <span key={theme} className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-semibold bg-[#8C5FA8]/10 text-[#8C5FA8] border border-[#8C5FA8]/20">
+              {theme}
+            </span>
+          ))}
         </div>
 
-        {/* Titre */}
-        <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] leading-snug mb-2 group-hover:text-[#A3821C] transition-colors line-clamp-2">
+        {/* Title */}
+        <h3 className="font-serif text-lg font-bold text-[#1E0F2B] leading-snug mb-3 group-hover:text-[#C9A227] transition-colors line-clamp-2">
           {title}
         </h3>
 
-        {/* Résumé */}
-        <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-4 flex-1 line-clamp-3">
-          {short}
-        </p>
+        {/* Short */}
+        <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-5 line-clamp-3">{short}</p>
 
-        {/* Référence biblique */}
+        {/* Book ref */}
         {bookRef && (
           <div className="mb-4 pb-4 border-b border-[#8A8378]/15">
             <p className="inline-flex items-center gap-1.5 text-xs text-[#8A8378]">
               <BookOpen className="w-3 h-3 text-[#C9A227]" />
-              <span className="verse-ref">{bookRef}</span>
+              <span>{bookRef}</span>
             </p>
           </div>
         )}
@@ -82,54 +59,27 @@ export function TestimonyCard({
         {/* Footer */}
         <div className="flex items-center justify-between pt-1 mt-auto">
           <div className="flex items-center gap-3 text-[11px] text-[#8A8378]">
-            <span className="font-medium text-[#2A0E3D]/80">{servantName}</span>
-            <span className="inline-flex items-center gap-1">
+            <span className="font-medium text-[#2A0E3D]">{servantName}</span>
+            <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {readingTime}
             </span>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              className="p-1.5 rounded text-[#8A8378] hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors"
-              aria-label="Partager"
-              onClick={(e) => e.preventDefault()}
-            >
-              <Share2 className="w-3 h-3" />
-            </button>
-            <Link
-              href={href}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors group/cta"
-            >
-              Lire
-              <ChevronRight className="w-3 h-3 transition-transform group-hover/cta:translate-x-1" />
-            </Link>
-          </div>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
+            Lire <ArrowRight className="w-3.5 h-3.5" />
+          </span>
         </div>
-      </div>
+      </Link>
     </motion.article>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "CONFIRMED") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-state-success/15 text-state-success border border-state-success/30">
-        <span className="w-1.5 h-1.5 rounded-full bg-state-success" />
-        Confirmé
-      </span>
-    );
+    return <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#5B7052]/10 text-[#5B7052] border border-[#5B7052]/20">Confirmé</span>;
   }
   if (status === "TO_DISCERN") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#C9A227]/15 text-[#A3821C] border border-[#C9A227]/30">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227] animate-pulse" />
-        À discerner
-      </span>
-    );
+    return <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#B5502F]/10 text-[#B5502F] border border-[#B5502F]/20">À discerner</span>;
   }
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8A8378]/15 text-[#8A8378] border border-[#8A8378]/30">
-      Archivé
-    </span>
-  );
+  return null;
 }

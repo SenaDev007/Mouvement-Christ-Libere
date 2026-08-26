@@ -65,7 +65,7 @@ export function ChannelCard({
           <div className="flex items-center gap-3">
             <div
               className={cn(
-                "flex items-center justify-center w-11 h-11 rounded-md",
+                "flex items-center justify-center w-11 h-11 rounded-full",
                 config.color
               )}
             >
@@ -140,7 +140,7 @@ export function SecureBanner({ title, description }: SecureBannerProps) {
       <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full pointer-events-none" />
 
       <div className="relative z-10 flex items-start gap-5">
-        <div className="flex items-center justify-center w-12 h-12 rounded-md bg-[#C9A227]/15 border border-[#C9A227]/30 flex-shrink-0">
+        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#C9A227]/15 border border-[#C9A227]/30 flex-shrink-0">
           <ShieldCheck className="w-6 h-6 text-[#C9A227]" />
         </div>
         <div>

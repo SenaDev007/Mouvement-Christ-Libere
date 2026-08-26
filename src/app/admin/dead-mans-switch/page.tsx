@@ -118,7 +118,7 @@ export default function DeadMansSwitchAdminPage() {
       {/* Bouton signaler activité */}
       <button
         onClick={() => handleSignal()}
-        className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-state-success text-[#FAF6EF] text-sm font-semibold hover:bg-state-success/90 transition-colors"
+        className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-state-success text-[#FAF6EF] text-sm font-semibold hover:bg-state-success/90 transition-colors"
       >
         <Activity className="w-4 h-4" />
         Signaler activité (réinitialiser tous les compteurs)
@@ -135,7 +135,7 @@ export default function DeadMansSwitchAdminPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Type de contenu</label>
-              <select value={form.contenuType} onChange={(e) => setForm({ ...form, contenuType: e.target.value })} className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]">
+              <select value={form.contenuType} onChange={(e) => setForm({ ...form, contenuType: e.target.value })} className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]">
                 <option value="temoignage">Témoignage</option>
                 <option value="enseignement">Enseignement</option>
                 <option value="video">Vidéo</option>
@@ -144,18 +144,18 @@ export default function DeadMansSwitchAdminPage() {
             </div>
             <div>
               <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Délai (jours)</label>
-              <input type="number" min={1} max={365} value={form.delaiJours} onChange={(e) => setForm({ ...form, delaiJours: parseInt(e.target.value) || 30 })} className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
+              <input type="number" min={1} max={365} value={form.delaiJours} onChange={(e) => setForm({ ...form, delaiJours: parseInt(e.target.value) || 30 })} className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
             </div>
           </div>
           <div>
             <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Titre</label>
-            <input type="text" value={form.contenuTitre} onChange={(e) => setForm({ ...form, contenuTitre: e.target.value })} required className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
+            <input type="text" value={form.contenuTitre} onChange={(e) => setForm({ ...form, contenuTitre: e.target.value })} required className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
           </div>
           <div>
             <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Contenu réservé</label>
-            <textarea value={form.contenuData} onChange={(e) => setForm({ ...form, contenuData: e.target.value })} required rows={6} className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] resize-y font-serif" placeholder="Le contenu qui sera publié automatiquement..." />
+            <textarea value={form.contenuData} onChange={(e) => setForm({ ...form, contenuData: e.target.value })} required rows={6} className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] resize-y font-serif" placeholder="Le contenu qui sera publié automatiquement..." />
           </div>
-          <button type="submit" disabled={submitting} className="px-6 py-3 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] disabled:opacity-50 inline-flex items-center gap-2">
+          <button type="submit" disabled={submitting} className="px-6 py-3 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] disabled:opacity-50 inline-flex items-center gap-2">
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             Créer le commutateur
           </button>

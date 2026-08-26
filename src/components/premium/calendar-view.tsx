@@ -402,7 +402,7 @@ export function CalendarView({ events }: CalendarViewProps) {
                   {selectedEvent.description}
                 </p>
 
-                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors">
+                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors">
                   <Bell className="w-3.5 h-3.5" />
                   Activer les rappels pour cette fête
                 </button>

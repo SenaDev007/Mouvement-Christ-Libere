@@ -145,7 +145,7 @@ export default function ReseauSamuelPage() {
 function Card({ icon: Icon, title, description }: { icon: React.ComponentType<{ className?: string }>; title: string; description: string }) {
   return (
     <div className="card-gold-top p-6">
-      <div className="flex items-center justify-center w-12 h-12 rounded-md bg-[#2A0E3D]/10 mb-4">
+      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#2A0E3D]/10 mb-4">
         <Icon className="w-6 h-6 text-[#2A0E3D]" />
       </div>
       <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">{title}</h3>

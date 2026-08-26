@@ -23,7 +23,7 @@ export function VideosFilters({ servants, currentServant }: VideosFiltersProps) 
           <a
             href={buildHref("all")}
             className={cn(
-              "px-4 py-2 rounded-md text-sm font-semibold transition-all",
+              "px-4 py-2 rounded-full text-sm font-semibold transition-all",
               currentServant === "all"
                 ? "bg-[#C9A227] text-[#1E0F2B]"
                 : "border border-[#C9A227]/30 text-[#FAF6EF] hover:bg-[#C9A227]/10"
@@ -36,7 +36,7 @@ export function VideosFilters({ servants, currentServant }: VideosFiltersProps) 
               key={s.code}
               href={buildHref(s.code)}
               className={cn(
-                "px-4 py-2 rounded-md text-sm font-semibold transition-all",
+                "px-4 py-2 rounded-full text-sm font-semibold transition-all",
                 currentServant === s.code
                   ? "bg-[#C9A227] text-[#1E0F2B]"
                   : "border border-[#C9A227]/30 text-[#FAF6EF] hover:bg-[#C9A227]/10"

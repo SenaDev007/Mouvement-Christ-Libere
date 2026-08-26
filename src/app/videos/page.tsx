@@ -74,7 +74,7 @@ export default async function VideosPage({ searchParams }: PageProps) {
           {/* Mode étude toggle */}
           <div className="flex justify-end mt-6">
             <button
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors"
               onClick={() => {
                 // Toggle study mode (client-side — hides suggestions)
                 const grid = document.querySelector('.videos-grid');

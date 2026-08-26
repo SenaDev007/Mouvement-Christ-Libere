@@ -67,7 +67,7 @@ export default function BiblePage() {
                   key={o.id}
                   onClick={() => setOnglet(o.id)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-all whitespace-nowrap",
+                    "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap",
                     onglet === o.id
                       ? "bg-[#2A0E3D] text-[#FAF6EF] shadow-sm"
                       : "text-[#1E0F2B]/60 hover:text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
@@ -153,7 +153,7 @@ function OngletLecture() {
         <select
           value={version}
           onChange={(e) => setVersion(e.target.value)}
-          className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
+          className="px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
         >
           {VERSIONS.map((v) => (
             <option key={v.code} value={v.code}>{v.label}</option>
@@ -163,7 +163,7 @@ function OngletLecture() {
         <select
           value={livre}
           onChange={(e) => { setLivre(e.target.value); setChapitre(1); }}
-          className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
+          className="px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
         >
           {LIVRES_OPTIONS.map((l) => (
             <option key={l.id} value={l.id}>{l.nom}</option>
@@ -254,7 +254,7 @@ function OngletRecherche() {
         <select
           value={version}
           onChange={(e) => setVersion(e.target.value)}
-          className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
+          className="px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
         >
           {VERSIONS.map((v) => (
             <option key={v.code} value={v.code}>{v.label}</option>
@@ -266,11 +266,11 @@ function OngletRecherche() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder="Rechercher un mot ou une phrase..."
-          className="flex-1 px-4 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+          className="flex-1 px-4 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
         />
         <button
           onClick={handleSearch}
-          className="px-5 py-2 rounded-md bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55]"
+          className="px-5 py-2 rounded-full bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55]"
         >
           Rechercher
         </button>
@@ -299,7 +299,7 @@ function OngletRecherche() {
               </div>
             ))}
             {resultats.length === 0 && (
-              <p className="text-[#8A8378] italic text-center py-8">Aucun résultat.</p>
+              <p className="text-[#8A8378] italic text-center py-20 md:py-24">Aucun résultat.</p>
             )}
           </div>
         </div>
@@ -343,17 +343,17 @@ function OngletStrong() {
           onChange={(e) => setNumero(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder="Numéro Strong (ex: H1, H1961, G2424, G3056)"
-          className="flex-1 px-4 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+          className="flex-1 px-4 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
         />
         <button
           onClick={handleSearch}
-          className="px-5 py-2 rounded-md bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55]"
+          className="px-5 py-2 rounded-full bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55]"
         >
           Chercher
         </button>
       </div>
 
-      <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-md">
+      <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-full">
         <p className="text-xs text-[#8A8378] leading-relaxed">
           <strong className="text-[#1E0F2B]">Dictionnaire Strong</strong> — 8 674 entrées hébraïques (H1-H8674) et 5 523 entrées grecques (G1-G5523).
           Tapez un numéro avec préfixe H (hébreu) ou G (grec).
@@ -464,14 +464,14 @@ function OngletHebreu() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <select value={livre} onChange={(e) => setLivre(e.target.value)} className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]">
+        <select value={livre} onChange={(e) => setLivre(e.target.value)} className="px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]">
           {LIVRES_OSHB.map((l) => <option key={l} value={l}>{l}</option>)}
         </select>
-        <input type="number" min={1} value={chapitre} onChange={(e) => setChapitre(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" />
-        <input type="number" min={1} value={verset} onChange={(e) => setVerset(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" />
+        <input type="number" min={1} value={chapitre} onChange={(e) => setChapitre(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" />
+        <input type="number" min={1} value={verset} onChange={(e) => setVerset(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" />
       </div>
 
-      <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-md">
+      <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-full">
         <p className="text-xs text-[#8A8378] leading-relaxed">
           <strong className="text-[#1E0F2B]">Open Scriptures Hebrew Bible</strong> — Texte massorétique (Westminster Leningrad Codex)
           avec analyse morphologique complète. Chaque mot affiche son lemme (numéro Strong) et sa forme grammaticale.
@@ -500,7 +500,7 @@ function OngletHebreu() {
           </div>
         </div>
       ) : (
-        <p className="text-[#8A8378] italic text-center py-8">Verset non trouvé.</p>
+        <p className="text-[#8A8378] italic text-center py-20 md:py-24">Verset non trouvé.</p>
       )}
     </div>
   );
@@ -539,11 +539,11 @@ function OngletPeshitta() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <input type="text" value={livre} onChange={(e) => setLivre(e.target.value)} className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" placeholder="Nom du livre (ex: Genesis)" />
-        <input type="number" min={1} value={chapitre} onChange={(e) => setChapitre(parseInt(e.target.value) || 1)} className="w-24 px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" />
+        <input type="text" value={livre} onChange={(e) => setLivre(e.target.value)} className="px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" placeholder="Nom du livre (ex: Genesis)" />
+        <input type="number" min={1} value={chapitre} onChange={(e) => setChapitre(parseInt(e.target.value) || 1)} className="w-24 px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" />
       </div>
 
-      <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-md">
+      <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-full">
         <p className="text-xs text-[#8A8378] leading-relaxed">
           <strong className="text-[#1E0F2B]">Peshitta</strong> — Bible araméenne (syriaque). Langue parlée par Yeshoua et ses disciples.
           Texte de la Peshitta avec lexique SEDRA. La Peshitta est la Bible des églises de tradition syriaque
@@ -570,7 +570,7 @@ function OngletPeshitta() {
           </div>
         </div>
       ) : (
-        <p className="text-[#8A8378] italic text-center py-8">Chapitre non trouvé.</p>
+        <p className="text-[#8A8378] italic text-center py-20 md:py-24">Chapitre non trouvé.</p>
       )}
     </div>
   );
@@ -609,14 +609,14 @@ function OngletConcordance() {
           onChange={(e) => setNumero(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder="Numéro Strong (ex: H1961, H7225, H3068)"
-          className="flex-1 px-4 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+          className="flex-1 px-4 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
         />
-        <button onClick={handleSearch} className="px-5 py-2 rounded-md bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55]">
+        <button onClick={handleSearch} className="px-5 py-2 rounded-full bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55]">
           Chercher
         </button>
       </div>
 
-      <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-md">
+      <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-full">
         <p className="text-xs text-[#8A8378] leading-relaxed">
           <strong className="text-[#1E0F2B]">Concordance Strong</strong> — Trouve tous les versets de la Bible hébraïque
           où apparaît un mot identifié par son numéro Strong. Outil d'étude biblique approfondi.
@@ -721,12 +721,12 @@ function OngletComparatif() {
     <div className="space-y-4">
       {/* Sélecteurs */}
       <div className="flex flex-wrap items-center gap-3">
-        <select value={livre} onChange={(e) => setLivre(e.target.value)} className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]">
+        <select value={livre} onChange={(e) => setLivre(e.target.value)} className="px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]">
           {LIVRES_OPTIONS.map((l) => <option key={l.id} value={l.id}>{l.nom}</option>)}
         </select>
-        <input type="number" min={1} value={chapitre} onChange={(e) => setChapitre(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" />
+        <input type="number" min={1} value={chapitre} onChange={(e) => setChapitre(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" />
         <span className="text-[#8A8378] text-sm">:</span>
-        <input type="number" min={1} value={verset} onChange={(e) => setVerset(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" />
+        <input type="number" min={1} value={verset} onChange={(e) => setVerset(parseInt(e.target.value) || 1)} className="w-20 px-3 py-2 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]" />
       </div>
 
       {/* Sélecteur de versions */}
@@ -780,7 +780,7 @@ function OngletComparatif() {
         </div>
       )}
 
-      <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-md">
+      <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-full">
         <p className="text-xs text-[#8A8378] leading-relaxed">
           <strong className="text-[#1E0F2B]">Étude comparative</strong> — Lisez le même verset dans plusieurs langues côte à côte.
           Sélectionnez jusqu&apos;à 6 versions. Idéal pour les dispersés d&apos;Israël qui parlent différentes langues

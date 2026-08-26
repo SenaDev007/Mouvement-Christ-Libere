@@ -111,7 +111,7 @@ export default function CoffreFortPage() {
         <div className="container mx-auto max-w-5xl px-4">
           <div className="grid md:grid-cols-3 gap-6">
             <div className="card-gold-top p-6">
-              <div className="flex items-center justify-center w-12 h-12 rounded-md bg-[#2A0E3D]/10 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#2A0E3D]/10 mb-4">
                 <Hash className="w-6 h-6 text-[#2A0E3D]" />
               </div>
               <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">
@@ -125,7 +125,7 @@ export default function CoffreFortPage() {
             </div>
 
             <div className="card-gold-top p-6">
-              <div className="flex items-center justify-center w-12 h-12 rounded-md bg-[#C9A227]/10 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#C9A227]/10 mb-4">
                 <Lock className="w-6 h-6 text-[#C9A227]" />
               </div>
               <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">
@@ -139,7 +139,7 @@ export default function CoffreFortPage() {
             </div>
 
             <div className="card-gold-top p-6">
-              <div className="flex items-center justify-center w-12 h-12 rounded-md bg-state-success/10 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-state-success/10 mb-4">
                 <ShieldCheck className="w-6 h-6 text-state-success" />
               </div>
               <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">
@@ -253,7 +253,7 @@ export default function CoffreFortPage() {
               </div>
 
               {/* Hash en grand pour copie */}
-              <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-md mb-6">
+              <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-full mb-6">
                 <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2">
                   Preuve d&apos;intégrité (hash)
                 </p>
@@ -268,7 +268,7 @@ export default function CoffreFortPage() {
                     setResult(null);
                     setForm({ type: "temoignage", titre: "", contenu: "", auteur: "" });
                   }}
-                  className="px-5 py-2.5 rounded-md border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors text-sm font-semibold"
+                  className="px-5 py-2.5 rounded-full border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors text-sm font-semibold"
                 >
                   Ancrer un autre contenu
                 </button>
@@ -277,7 +277,7 @@ export default function CoffreFortPage() {
                     href={result.ancre.arweaveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55] transition-colors"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55] transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Voir sur Arweave
@@ -301,7 +301,7 @@ export default function CoffreFortPage() {
                         type="button"
                         onClick={() => setForm({ ...form, type: t.value as ContenuAncrable["type"] })}
                         className={cn(
-                          "p-3 rounded-md border text-center transition-all",
+                          "p-3 rounded-full border text-center transition-all",
                           form.type === t.value
                             ? "border-[#C9A227] bg-[#C9A227]/10"
                             : "border-[#8A8378]/30 hover:border-[#C9A227]/50"
@@ -333,7 +333,7 @@ export default function CoffreFortPage() {
                   onChange={(e) => setForm({ ...form, titre: e.target.value })}
                   required
                   placeholder="Titre du contenu"
-                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+                  className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                 />
               </div>
 
@@ -347,7 +347,7 @@ export default function CoffreFortPage() {
                   onChange={(e) => setForm({ ...form, auteur: e.target.value })}
                   required
                   placeholder="PAM, Pasteur Kongo, ou autre"
-                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+                  className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                 />
               </div>
 
@@ -361,7 +361,7 @@ export default function CoffreFortPage() {
                   required
                   rows={8}
                   placeholder="Le texte intégral du contenu à ancrer..."
-                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-y font-serif"
+                  className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-y font-serif"
                 />
                 <p className="text-xs text-[#8A8378] mt-1">
                   {form.contenu.length} caractères · ~{Math.ceil(form.contenu.length / 1024)} KB
@@ -369,7 +369,7 @@ export default function CoffreFortPage() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 text-state-danger text-sm p-3 rounded-md bg-state-danger/5 border border-state-danger/20">
+                <div className="flex items-center gap-2 text-state-danger text-sm p-3 rounded-full bg-state-danger/5 border border-state-danger/20">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -378,7 +378,7 @@ export default function CoffreFortPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-6 py-4 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full px-6 py-4 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submitting ? (
                   <>

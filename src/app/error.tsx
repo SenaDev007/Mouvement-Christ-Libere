@@ -41,14 +41,14 @@ export default function GlobalError({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={reset}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
             Réessayer
           </button>
           <Link
             href="/"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md border border-[#C9A227]/40 text-[#C9A227] font-semibold text-sm hover:bg-[#C9A227]/10 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-[#C9A227]/40 text-[#C9A227] font-semibold text-sm hover:bg-[#C9A227]/10 transition-colors"
           >
             <Home className="w-4 h-4" />
             Accueil

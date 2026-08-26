@@ -142,7 +142,7 @@ export default function StreamingPage() {
 
 function Platform({ icon: Icon, label, color }: { icon: React.ComponentType<{ className?: string }>; label: string; color: string }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#FAF6EF] border border-[#8A8378]/20">
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/20">
       <Icon className={`w-3.5 h-3.5 ${color}`} />
       <span className="text-xs font-semibold text-[#1E0F2B]">{label}</span>
     </div>
@@ -152,7 +152,7 @@ function Platform({ icon: Icon, label, color }: { icon: React.ComponentType<{ cl
 function Card({ icon: Icon, title, description }: { icon: React.ComponentType<{ className?: string }>; title: string; description: string }) {
   return (
     <div className="card-gold-top p-6">
-      <div className="flex items-center justify-center w-12 h-12 rounded-md bg-[#2A0E3D]/10 mb-4">
+      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#2A0E3D]/10 mb-4">
         <Icon className="w-6 h-6 text-[#2A0E3D]" />
       </div>
       <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">{title}</h3>
@@ -179,7 +179,7 @@ function DeployStep({ title, code }: { title: string; code: string }) {
   return (
     <div>
       <p className="font-semibold text-[#1E0F2B] mb-1">{title}</p>
-      <pre className="p-3 rounded-md bg-[#1A0826]/90 text-[#FAF6EF] text-xs font-mono overflow-x-auto whitespace-pre-wrap">{code}</pre>
+      <pre className="p-3 rounded-full bg-[#1A0826]/90 text-[#FAF6EF] text-xs font-mono overflow-x-auto whitespace-pre-wrap">{code}</pre>
     </div>
   );
 }

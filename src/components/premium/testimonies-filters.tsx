@@ -37,7 +37,7 @@ export function TestimoniesFilters({
             <Link
               href={buildHref(currentTheme, "all")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
+                "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                 currentServant === "all"
                   ? "bg-[#2A0E3D] text-[#FAF6EF]"
                   : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
@@ -50,7 +50,7 @@ export function TestimoniesFilters({
                 key={s.code}
                 href={buildHref(currentTheme, s.code)}
                 className={cn(
-                  "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
+                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                   currentServant === s.code
                     ? "bg-[#2A0E3D] text-[#FAF6EF]"
                     : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
@@ -68,7 +68,7 @@ export function TestimoniesFilters({
             <Link
               href={buildHref("Tous", currentServant)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
+                "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                 currentTheme === "Tous"
                   ? "bg-[#C9A227] text-[#1E0F2B]"
                   : "border border-[#8A8378]/30 text-[#8A8378] hover:border-[#C9A227]/50"
@@ -81,7 +81,7 @@ export function TestimoniesFilters({
                 key={t}
                 href={buildHref(t, currentServant)}
                 className={cn(
-                  "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
+                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                   currentTheme === t
                     ? "bg-[#C9A227] text-[#1E0F2B]"
                     : "border border-[#8A8378]/30 text-[#8A8378] hover:border-[#C9A227]/50"

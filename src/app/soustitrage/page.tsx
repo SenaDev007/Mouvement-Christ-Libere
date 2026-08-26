@@ -121,7 +121,7 @@ export default function SousTitragePage() {
         <div className="container mx-auto max-w-4xl px-4">
           {/* Bandeau mode */}
           {!whisperConfigure && (
-            <div className="mb-6 p-4 rounded-md bg-[#C9A227]/5 border border-[#C9A227]/20 flex items-start gap-3">
+            <div className="mb-6 p-4 rounded-full bg-[#C9A227]/5 border border-[#C9A227]/20 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-[#1E0F2B] mb-1">Mode démonstration</p>
@@ -144,7 +144,7 @@ export default function SousTitragePage() {
                   value={fichierUrl}
                   onChange={(e) => setFichierUrl(e.target.value)}
                   placeholder="https://exemple.com/enseignement.mp4"
-                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+                  className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                 />
                 <p className="text-xs text-[#8A8378] mt-1">
                   Laissez vide pour tester en mode démo (sous-titres simulés).
@@ -162,7 +162,7 @@ export default function SousTitragePage() {
                       type="button"
                       onClick={() => setLangueSource(l.code)}
                       className={cn(
-                        "px-3 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2",
+                        "px-3 py-2 rounded-full text-sm font-semibold transition-all inline-flex items-center gap-2",
                         langueSource === l.code
                           ? "bg-[#2A0E3D] text-[#FAF6EF]"
                           : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
@@ -186,7 +186,7 @@ export default function SousTitragePage() {
                       type="button"
                       onClick={() => toggleLangueCible(l.code)}
                       className={cn(
-                        "px-3 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2",
+                        "px-3 py-2 rounded-full text-sm font-semibold transition-all inline-flex items-center gap-2",
                         languesCibles.includes(l.code)
                           ? "bg-[#C9A227] text-[#1E0F2B]"
                           : "border border-[#8A8378]/30 text-[#8A8378] hover:border-[#C9A227]/50"
@@ -200,7 +200,7 @@ export default function SousTitragePage() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 text-state-danger text-sm p-3 rounded-md bg-state-danger/5 border border-state-danger/20">
+                <div className="flex items-center gap-2 text-state-danger text-sm p-3 rounded-full bg-state-danger/5 border border-state-danger/20">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -209,7 +209,7 @@ export default function SousTitragePage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-6 py-4 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full px-6 py-4 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submitting ? (
                   <>
@@ -255,7 +255,7 @@ export default function SousTitragePage() {
                         a.click();
                         URL.revokeObjectURL(url);
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" />
                       Télécharger SRT
@@ -305,7 +305,7 @@ export default function SousTitragePage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: i * 0.03 }}
-                      className="flex items-start gap-3 p-3 rounded-md hover:bg-[#C9A227]/5 transition-colors"
+                      className="flex items-start gap-3 p-3 rounded-full hover:bg-[#C9A227]/5 transition-colors"
                     >
                       <div className="flex items-center gap-1 text-xs text-[#A3821C] font-mono font-semibold w-20 flex-shrink-0 pt-0.5">
                         <Clock className="w-3 h-3" />

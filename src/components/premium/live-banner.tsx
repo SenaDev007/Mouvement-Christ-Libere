@@ -42,7 +42,7 @@ export function LiveBanner({ title, href, isLive = true }: LiveBannerProps) {
         </div>
         <Link
           href={href}
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-state-danger text-[#FAF6EF] text-xs font-semibold hover:bg-state-danger/90 transition-colors group"
+          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-state-danger text-[#FAF6EF] text-xs font-semibold hover:bg-state-danger/90 transition-colors group"
         >
           <Radio className="w-3 h-3" />
           {isLive ? "Rejoindre le direct" : "Recevoir une notification"}
@@ -94,7 +94,7 @@ export function NextLiveCard({ title, scheduledAt, servantName, href }: NextLive
           })}{" "}
           · {servantName}
         </p>
-        <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors">
+        <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors">
           <Bell className="w-3.5 h-3.5" />
           Recevoir une notification
         </button>
