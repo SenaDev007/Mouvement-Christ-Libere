@@ -152,9 +152,47 @@ const OSHB_VERS_ID: Record<string, string> = {
   Hab: "hb", Zeph: "so", Hag: "ag", Zech: "za", Mal: "ml",
 };
 
+// Mapping : abréviation OSHB → nom complet dans le JSON morphhb
+// Le JSON utilise des noms complets ("Genesis", "Exodus", "I Samuel", etc.)
+// alors que l'UI envoie des abréviations OSHB ("Gen", "Exod", "1Sam", etc.)
+const OSHB_TO_FULL: Record<string, string> = {
+  Gen: "Genesis", Exod: "Exodus", Lev: "Leviticus", Num: "Numbers", Deut: "Deuteronomy",
+  Josh: "Joshua", Judg: "Judges", Ruth: "Ruth",
+  "1Sam": "I Samuel", "2Sam": "II Samuel",
+  "1Kgs": "I Kings", "2Kgs": "II Kings",
+  "1Chr": "I Chronicles", "2Chr": "II Chronicles",
+  Ezra: "Ezra", Neh: "Nehemiah", Esth: "Esther", Job: "Job",
+  Ps: "Psalms", Prov: "Proverbs", Eccl: "Ecclesiastes", Song: "Song of Solomon",
+  Isa: "Isaiah", Jer: "Jeremiah", Lam: "Lamentations", Ezek: "Ezekiel",
+  Dan: "Daniel", Hos: "Hosea", Joel: "Joel", Amos: "Amos",
+  Obad: "Obadiah", Jonah: "Jonah", Mic: "Micah", Nah: "Nahum",
+  Hab: "Habakkuk", Zeph: "Zephaniah", Hag: "Haggai", Zech: "Zechariah", Mal: "Malachi",
+};
+
+// Mapping inverse : nom complet JSON → abréviation OSHB
+const FULL_TO_OSHB: Record<string, string> = Object.fromEntries(
+  Object.entries(OSHB_TO_FULL).map(([abbr, full]) => [full, abbr])
+);
+
+function resolveLivreHebreu(livreNom: string): string | null {
+  // 1) Essai direct (si déjà le bon nom)
+  if (morphhbData[livreNom]) return livreNom;
+  // 2) Essai via mapping abréviation → nom complet
+  const full = OSHB_TO_FULL[livreNom];
+  if (full && morphhbData[full]) return full;
+  // 3) Essai via mapping inverse (nom complet → abréviation → nom complet canonical)
+  const abbr = FULL_TO_OSHB[livreNom];
+  if (abbr) {
+    const fullFromAbbr = OSHB_TO_FULL[abbr];
+    if (fullFromAbbr && morphhbData[fullFromAbbr]) return fullFromAbbr;
+  }
+  return null;
+}
+
 export function getVersetHebreu(livreNom: string, chapitre: number, verset: number): { mots: MotHebreu[] } | null {
-  const livre = morphhbData[livreNom];
-  if (!livre) return null;
+  const canonicalNom = resolveLivreHebreu(livreNom);
+  if (!canonicalNom) return null;
+  const livre = morphhbData[canonicalNom];
   const vers = livre[chapitre - 1]?.[verset - 1];
   if (!vers) return null;
   return { mots: vers.map((mot: string[]) => ({ mot: mot[0], lemme: mot[1], morphologie: mot[2] })) };
@@ -169,7 +207,10 @@ export function concordanceStrong(numero: string, limite = 50) {
   const strongNum = num.substring(1);
   const resultats: Array<{ livre: string; livreId: string; chapitre: number; verset: number; mots: MotHebreu[] }> = [];
   for (const [nomLivre, livre] of Object.entries(morphhbData)) {
-    const livreId = OSHB_VERS_ID[nomLivre] || nomLivre;
+    // nomLivre est le nom complet JSON ("Genesis", "I Samuel", etc.)
+    // On récupère l'abréviation OSHB correspondante pour avoir livreId
+    const abbr = FULL_TO_OSHB[nomLivre] || nomLivre;
+    const livreId = OSHB_VERS_ID[abbr] || abbr;
     for (let c = 0; c < livre.length; c++) {
       for (let v = 0; v < livre[c].length; v++) {
         const vers = livre[c][v];

@@ -1038,7 +1038,28 @@ function OngletHebreu() {
   const [data, setData] = useState<{ mots: Array<{ mot: string; lemme: string; morphologie: string }> } | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const LIVRES_OSHB = ["Gen", "Exod", "Lev", "Num", "Deut", "Josh", "Judg", "Ruth", "1Sam", "2Sam", "1Kgs", "2Kgs", "1Chr", "2Chr", "Ezra", "Neh", "Esth", "Job", "Ps", "Prov", "Eccl", "Song", "Isa", "Jer", "Lam", "Ezek", "Dan", "Hos", "Joel", "Amos", "Obad", "Jonah", "Mic", "Nah", "Hab", "Zeph", "Hag", "Zech", "Mal"];
+  const LIVRES_OSHB = [
+    { code: "Gen", label: "Genèse" }, { code: "Exod", label: "Exode" },
+    { code: "Lev", label: "Lévitique" }, { code: "Num", label: "Nombres" },
+    { code: "Deut", label: "Deutéronome" }, { code: "Josh", label: "Josué" },
+    { code: "Judg", label: "Juges" }, { code: "Ruth", label: "Ruth" },
+    { code: "1Sam", label: "1 Samuel" }, { code: "2Sam", label: "2 Samuel" },
+    { code: "1Kgs", label: "1 Rois" }, { code: "2Kgs", label: "2 Rois" },
+    { code: "1Chr", label: "1 Chroniques" }, { code: "2Chr", label: "2 Chroniques" },
+    { code: "Ezra", label: "Esdras" }, { code: "Neh", label: "Néhémie" },
+    { code: "Esth", label: "Esther" }, { code: "Job", label: "Job" },
+    { code: "Ps", label: "Psaumes" }, { code: "Prov", label: "Proverbes" },
+    { code: "Eccl", label: "Ecclésiaste" }, { code: "Song", label: "Cantique" },
+    { code: "Isa", label: "Ésaïe" }, { code: "Jer", label: "Jérémie" },
+    { code: "Lam", label: "Lamentations" }, { code: "Ezek", label: "Ézéchiel" },
+    { code: "Dan", label: "Daniel" }, { code: "Hos", label: "Osée" },
+    { code: "Joel", label: "Joël" }, { code: "Amos", label: "Amos" },
+    { code: "Obad", label: "Abdias" }, { code: "Jonah", label: "Jonas" },
+    { code: "Mic", label: "Michée" }, { code: "Nah", label: "Nahum" },
+    { code: "Hab", label: "Habacuc" }, { code: "Zeph", label: "Sophonie" },
+    { code: "Hag", label: "Aggée" }, { code: "Zech", label: "Zacharie" },
+    { code: "Mal", label: "Malachie" },
+  ];
 
   const fetchVerset = async () => {
     setLoading(true);
@@ -1073,7 +1094,7 @@ function OngletHebreu() {
             onChange={(e) => setLivre(e.target.value)}
             className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
           >
-            {LIVRES_OSHB.map((l) => <option key={l} value={l}>{l}</option>)}
+            {LIVRES_OSHB.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
           </select>
           <input
             type="number"
@@ -1106,7 +1127,7 @@ function OngletHebreu() {
       ) : data ? (
         <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-6">
           <h3 className="font-serif text-lg font-bold text-[#1E0F2B] mb-4">
-            {livre} {chapitre}:{verset}
+            {LIVRES_OSHB.find((l) => l.code === livre)?.label || livre} {chapitre}:{verset}
           </h3>
           <div className="space-y-1" dir="rtl">
             {data.mots.map((mot, i) => (

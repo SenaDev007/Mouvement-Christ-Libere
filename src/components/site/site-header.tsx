@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { Menu, X, ChevronRight } from "lucide-react";
 
 const NAV_ITEMS = [
-  { label: "Biographie", href: "/biographie" },
+  { label: "Pam", href: "/pam" },
+  { label: "Pasteur Kongo", href: "/pasteur-kongo" },
   { label: "Témoignages", href: "/temoignages" },
   { label: "Enseignements", href: "/enseignements" },
   { label: "Vidéos & Lives", href: "/videos" },

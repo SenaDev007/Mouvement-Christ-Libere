@@ -17,7 +17,8 @@ import Link from "next/link";
 
 const navItems = [
   { name: "Accueil", url: "/", icon: Home },
-  { name: "Biographie", url: "/biographie", icon: User },
+  { name: "Pam", url: "/pam", icon: User },
+  { name: "Pasteur Kongo", url: "/pasteur-kongo", icon: User },
   { name: "Témoignages", url: "/temoignages", icon: FileText },
   { name: "Enseignements", url: "/enseignements", icon: BookOpen },
   { name: "Vidéos", url: "/videos", icon: Video },

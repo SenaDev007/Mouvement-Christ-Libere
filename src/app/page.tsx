@@ -51,7 +51,8 @@ const FEATURES = [
 ];
 
 const QUICK_NAV = [
-  { label: "Biographie", href: "/biographie", icon: Users },
+  { label: "Pam", href: "/pam", icon: Users },
+  { label: "Pasteur Kongo", href: "/pasteur-kongo", icon: Users },
   { label: "Témoignages", href: "/temoignages", icon: FileText },
   { label: "Enseignements", href: "/enseignements", icon: BookOpen },
   { label: "Vidéos", href: "/videos", icon: Video },

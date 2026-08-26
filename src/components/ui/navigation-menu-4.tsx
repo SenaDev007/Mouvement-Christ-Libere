@@ -45,17 +45,12 @@ const navigationLinks = [
       {
         href: "/pam",
         label: "Pam — Afrika Alkebulane Pamela Dali",
-        description: "Servante de l'Éternel, témoignages de visites au ciel, révélations prophétiques.",
+        description: "Servante de l'Éternel, biographie, témoignages et révélations prophétiques.",
       },
       {
         href: "/pasteur-kongo",
         label: "Pasteur Kongo",
         description: "Ministère pastoral complémentaire, enseignements et soins des brebis.",
-      },
-      {
-        href: "/biographie",
-        label: "Biographies complètes",
-        description: "Frises chronologiques détaillées de chaque parcours.",
       },
     ],
   },
