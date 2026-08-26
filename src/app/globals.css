@@ -11,7 +11,7 @@
 @theme inline {
   /* === Polices === */
   --font-sans: var(--font-inter);
-  --font-serif: var(--font-cormorant);
+  --font-serif: var(--font-cormorant), "Playfair Display", Georgia, serif;
 
   /* === Palette de couleurs custom (Concept D) === */
   --color-imperial: #2A0E3D;

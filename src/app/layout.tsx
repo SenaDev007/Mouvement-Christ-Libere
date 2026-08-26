@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
@@ -9,10 +9,10 @@ import { ContextualNav } from "@/components/ui/navigation-menu-4";
 import { ConditionalFooter } from "@/components/site/conditional-footer";
 import { NextAuthProvider } from "@/components/auth/next-auth-provider";
 
-const cormorant = Cormorant_Garamond({
+const playfair = Playfair_Display({
   variable: "--font-cormorant",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
@@ -71,7 +71,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="dark" suppressHydrationWarning>
       <body
-        className={`${cormorant.variable} ${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
+        className={`${playfair.variable} ${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
         <ScrollProgress />
         <NextAuthProvider>
