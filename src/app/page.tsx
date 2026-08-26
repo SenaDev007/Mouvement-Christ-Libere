@@ -249,6 +249,6 @@ export default function Home() {
           </motion.div>
         </div>
       </AuroraBackground>
-    </div>
+    </ScrollExpandMedia>
   );
 }
