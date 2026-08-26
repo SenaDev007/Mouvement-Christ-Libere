@@ -149,10 +149,19 @@ app.use(
 );
 
 // --- Start server ---
+import http from "http";
+import { initSocketServer } from "./socket/yeshua-connect";
+
 const PORT = parseInt(process.env.PORT || "3001", 10);
-app.listen(PORT, () => {
+const httpServer = http.createServer(app);
+
+// Initialize Socket.io for real-time messaging
+initSocketServer(httpServer);
+
+httpServer.listen(PORT, () => {
   console.log(`🚀 Backend listening on port ${PORT}`);
   console.log(`   Health: http://localhost:${PORT}/api/health`);
+  console.log(`   Socket.io: ws://localhost:${PORT}/yeshua-connect`);
   console.log(`   CORS origins: ${corsOrigins.join(", ")}`);
 });
 
