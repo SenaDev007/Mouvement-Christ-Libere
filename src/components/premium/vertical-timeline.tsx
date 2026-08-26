@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MarkdownText } from "@/components/site/markdown-text";
 
 export interface TimelineItem {
   date: string;
@@ -117,14 +118,14 @@ function TimelineNode({
           </h3>
 
           {/* Description */}
-          <p
+          <div
             className={cn(
               "text-sm md:text-base leading-relaxed mb-4",
               isDark ? "text-ivory/75" : "text-ink/75"
             )}
           >
-            {item.description}
-          </p>
+            <MarkdownText variant={isDark ? "dark" : "light"}>{item.description}</MarkdownText>
+          </div>
 
           {/* Verset biblique */}
           {item.verseRef && item.verseText && (

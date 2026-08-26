@@ -11,6 +11,7 @@ import {
   Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MarkdownText } from "@/components/site/markdown-text";
 
 interface TeachingCardProps {
   title: string;
@@ -92,9 +93,9 @@ export function TeachingCard({
         </h3>
 
         {/* Extrait */}
-        <p className="text-sm text-ink/70 leading-relaxed mb-5 flex-1 line-clamp-3">
-          {excerpt}
-        </p>
+        <div className="text-sm text-ink/70 leading-relaxed mb-5 flex-1 line-clamp-3">
+          <MarkdownText>{excerpt}</MarkdownText>
+        </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-4 border-t border-stone/15">

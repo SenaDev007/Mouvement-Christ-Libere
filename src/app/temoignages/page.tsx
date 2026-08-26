@@ -76,7 +76,7 @@ export default async function TemoignagesPage({ searchParams }: PageProps) {
                   servantName={t.servant.shortName}
                   readingTime={t.readingTime || ""}
                   status={t.status}
-                  href={`/temoignages`}
+                  href={`/temoignages/${t.id}`}
                   delay={i * 0.05}
                 />
               ))}

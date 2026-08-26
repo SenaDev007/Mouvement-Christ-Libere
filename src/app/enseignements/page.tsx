@@ -79,7 +79,7 @@ export default async function EnseignementsPage({ searchParams }: PageProps) {
                   level={t.level}
                   readingTime={t.readingTime || ""}
                   servantName={t.servant.shortName}
-                  href="/enseignements"
+                  href={`/enseignements/${t.id}`}
                   delay={i * 0.05}
                 />
               ))}
