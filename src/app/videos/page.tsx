@@ -62,7 +62,7 @@ export default async function VideosPage({ searchParams }: PageProps) {
       />
 
       {/* Grille vidéos */}
-      <section className="bg-ivory py-20 md:py-24">
+      <section className="bg-[#FAF6EF] py-20 md:py-24">
         <div className="container mx-auto max-w-7xl px-4">
           <PremiumSectionHeading
             kicker="Les dernières vidéos"
@@ -89,8 +89,8 @@ export default async function VideosPage({ searchParams }: PageProps) {
           </div>
 
           {/* Bandeau permanent */}
-          <div className="mt-16 p-6 bg-imperial/5 border border-gold/20 rounded-card">
-            <p className="text-xs text-ink/70 leading-relaxed text-center">
+          <div className="mt-16 p-6 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-2xl">
+            <p className="text-xs text-[#1E0F2B]/70 leading-relaxed text-center">
               Ce direct est aussi diffusé sur YouTube, Facebook et TikTok.
               Cette page reste la version de référence, conservée dans son
               intégralité — même en cas de suppression par les plateformes externes.
@@ -114,8 +114,8 @@ export default async function VideosPage({ searchParams }: PageProps) {
       <SectionDivider variant="ornament" />
 
       {/* Citation */}
-      <section className="bg-imperial py-24 md:py-32 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gold/5 blur-[100px] rounded-full pointer-events-none" />
+      <section className="bg-[#2A0E3D] py-24 md:py-32 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative">
           <QuoteBlock
             text="Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe."

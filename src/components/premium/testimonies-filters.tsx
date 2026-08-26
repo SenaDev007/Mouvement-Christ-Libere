@@ -26,11 +26,11 @@ export function TestimoniesFilters({
   };
 
   return (
-    <section className="bg-ivory border-b border-stone/15 py-6 sticky top-[120px] z-30 backdrop-blur-md bg-ivory/95">
+    <section className="bg-[#FAF6EF] border-b border-[#8A8378]/15 py-6 sticky top-[120px] z-30 backdrop-blur-md bg-[#FAF6EF]/95">
       <div className="container mx-auto max-w-7xl px-4">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs uppercase tracking-[0.18em] text-stone font-semibold flex items-center gap-1.5">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold flex items-center gap-1.5">
               <Filter className="w-3 h-3" />
               Serviteur :
             </span>
@@ -39,8 +39,8 @@ export function TestimoniesFilters({
               className={cn(
                 "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
                 currentServant === "all"
-                  ? "bg-imperial text-ivory"
-                  : "border border-imperial/30 text-imperial hover:bg-imperial/5"
+                  ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                  : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
               )}
             >
               Tous
@@ -52,8 +52,8 @@ export function TestimoniesFilters({
                 className={cn(
                   "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
                   currentServant === s.code
-                    ? "bg-imperial text-ivory"
-                    : "border border-imperial/30 text-imperial hover:bg-imperial/5"
+                    ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                    : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
                 )}
               >
                 {s.name}
@@ -62,7 +62,7 @@ export function TestimoniesFilters({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs uppercase tracking-[0.18em] text-stone font-semibold">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold">
               Thème :
             </span>
             <Link
@@ -70,8 +70,8 @@ export function TestimoniesFilters({
               className={cn(
                 "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
                 currentTheme === "Tous"
-                  ? "bg-gold text-ink"
-                  : "border border-stone/30 text-stone hover:border-gold/50"
+                  ? "bg-[#C9A227] text-[#1E0F2B]"
+                  : "border border-[#8A8378]/30 text-[#8A8378] hover:border-[#C9A227]/50"
               )}
             >
               Tous
@@ -83,8 +83,8 @@ export function TestimoniesFilters({
                 className={cn(
                   "px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
                   currentTheme === t
-                    ? "bg-gold text-ink"
-                    : "border border-stone/30 text-stone hover:border-gold/50"
+                    ? "bg-[#C9A227] text-[#1E0F2B]"
+                    : "border border-[#8A8378]/30 text-[#8A8378] hover:border-[#C9A227]/50"
                 )}
               >
                 {t}

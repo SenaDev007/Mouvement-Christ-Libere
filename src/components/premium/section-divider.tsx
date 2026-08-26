@@ -12,18 +12,18 @@ export function SectionDivider({ variant = "gold-line", className }: SectionDivi
   if (variant === "star") {
     return (
       <div className={cn("flex items-center justify-center py-8", className)}>
-        <div className="h-px w-16 bg-gradient-to-r from-transparent to-gold/60" />
+        <div className="h-px w-16 bg-gradient-to-r from-transparent to-[#C9A227]/60" />
         <svg
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           strokeWidth="1"
-          className="w-5 h-5 mx-3 text-gold"
+          className="w-5 h-5 mx-3 text-[#C9A227]"
           aria-hidden="true"
         >
           <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" />
         </svg>
-        <div className="h-px w-16 bg-gradient-to-l from-transparent to-gold/60" />
+        <div className="h-px w-16 bg-gradient-to-l from-transparent to-[#C9A227]/60" />
       </div>
     );
   }
@@ -38,13 +38,13 @@ export function SectionDivider({ variant = "gold-line", className }: SectionDivi
         className={cn("flex items-center justify-center py-12", className)}
       >
         <div className="flex items-center gap-3">
-          <div className="h-px w-24 bg-gradient-to-r from-transparent to-gold/60" />
+          <div className="h-px w-24 bg-gradient-to-r from-transparent to-[#C9A227]/60" />
           <div className="flex flex-col items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-gold" />
-            <div className="w-2 h-2 rotate-45 border border-gold/50" />
-            <div className="w-1.5 h-1.5 rounded-full bg-gold" />
+            <div className="w-1.5 h-1.5 rounded-full bg-[#C9A227]" />
+            <div className="w-2 h-2 rotate-45 border border-[#C9A227]/50" />
+            <div className="w-1.5 h-1.5 rounded-full bg-[#C9A227]" />
           </div>
-          <div className="h-px w-24 bg-gradient-to-l from-transparent to-gold/60" />
+          <div className="h-px w-24 bg-gradient-to-l from-transparent to-[#C9A227]/60" />
         </div>
       </motion.div>
     );
@@ -53,7 +53,7 @@ export function SectionDivider({ variant = "gold-line", className }: SectionDivi
   // gold-line (default)
   return (
     <div className={cn("flex items-center justify-center py-8", className)}>
-      <div className="h-px w-full max-w-md bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+      <div className="h-px w-full max-w-md bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent" />
     </div>
   );
 }
@@ -79,7 +79,7 @@ export function QuoteBlock({ text, reference, variant = "dark" }: QuoteBlockProp
         <svg
           viewBox="0 0 24 24"
           fill="currentColor"
-          className={cn("w-12 h-12", isDark ? "text-gold/60" : "text-gold")}
+          className={cn("w-12 h-12", isDark ? "text-[#C9A227]/60" : "text-[#C9A227]")}
           aria-hidden="true"
         >
           <path d="M9.5 8C7 8 5 10 5 12.5S7 17 9.5 17c.3 0 .6 0 .9-.1-.6 1.2-1.8 2.1-3.4 2.4V21c3.4-.4 6-3.4 6-7V12.5C13 10 11 8 9.5 8zm9 0C16 8 14 10 14 12.5S16 17 18.5 17c.3 0 .6 0 .9-.1-.6 1.2-1.8 2.1-3.4 2.4V21c3.4-.4 6-3.4 6-7V12.5C22 10 20 8 18.5 8z" />
@@ -93,7 +93,7 @@ export function QuoteBlock({ text, reference, variant = "dark" }: QuoteBlockProp
         transition={{ duration: 0.8, delay: 0.2 }}
         className={cn(
           "font-serif text-2xl md:text-3xl lg:text-4xl font-medium leading-relaxed italic mb-6",
-          isDark ? "text-ivory" : "text-ink"
+          isDark ? "text-[#FAF6EF]" : "text-[#1E0F2B]"
         )}
       >
         « {text} »
@@ -106,11 +106,11 @@ export function QuoteBlock({ text, reference, variant = "dark" }: QuoteBlockProp
         transition={{ duration: 0.6, delay: 0.5 }}
         className="flex items-center justify-center gap-3"
       >
-        <div className="h-px w-12 bg-gold" />
-        <span className="text-xs uppercase tracking-[0.25em] text-gold-light/80 font-semibold">
+        <div className="h-px w-12 bg-[#C9A227]" />
+        <span className="text-xs uppercase tracking-[0.25em] text-[#DDBE55]/80 font-semibold">
           {reference}
         </span>
-        <div className="h-px w-12 bg-gold" />
+        <div className="h-px w-12 bg-[#C9A227]" />
       </motion.div>
     </div>
   );

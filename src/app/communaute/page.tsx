@@ -16,9 +16,9 @@ export default async function CommunautePage() {
   });
 
   const roles = [
-    { role: "Super-admin", holder: "PAM / Pasteur Kongo", color: "bg-gold" },
-    { role: "Modérateur", holder: "Bénévoles validés", color: "bg-lavender" },
-    { role: "Membre", holder: "Croyant inscrit", color: "bg-stone" },
+    { role: "Super-admin", holder: "PAM / Pasteur Kongo", color: "bg-[#C9A227]" },
+    { role: "Modérateur", holder: "Bénévoles validés", color: "bg-[#8C5FA8]" },
+    { role: "Membre", holder: "Croyant inscrit", color: "bg-[#8A8378]" },
   ];
 
   return (
@@ -32,18 +32,18 @@ export default async function CommunautePage() {
       />
 
       {/* Rôles */}
-      <section className="bg-ivory border-b border-stone/15 py-12">
+      <section className="bg-[#FAF6EF] border-b border-[#8A8378]/15 py-20 md:py-24">
         <div className="container mx-auto max-w-7xl px-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-6 text-center">
+          <p className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-6 text-center">
             Rôles dans la communauté
           </p>
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {roles.map((r) => (
-              <div key={r.role} className="flex items-center gap-3 p-4 rounded-card border border-stone/20 bg-ivory">
+              <div key={r.role} className="flex items-center gap-3 p-4 rounded-2xl border border-[#8A8378]/20 bg-[#FAF6EF]">
                 <span className={`w-3 h-3 rounded-full ${r.color}`} />
                 <div>
-                  <p className="text-sm font-semibold text-ink">{r.role}</p>
-                  <p className="text-xs text-stone">{r.holder}</p>
+                  <p className="text-sm font-semibold text-[#1E0F2B]">{r.role}</p>
+                  <p className="text-xs text-[#8A8378]">{r.holder}</p>
                 </div>
               </div>
             ))}
@@ -52,7 +52,7 @@ export default async function CommunautePage() {
       </section>
 
       {/* Canaux */}
-      <section id="canaux" className="bg-ivory py-20 md:py-24">
+      <section id="canaux" className="bg-[#FAF6EF] py-20 md:py-24">
         <div className="container mx-auto max-w-7xl px-4">
           <PremiumSectionHeading
             kicker="Les canaux"
@@ -89,8 +89,8 @@ export default async function CommunautePage() {
       <SectionDivider variant="ornament" />
 
       {/* Citation */}
-      <section className="bg-imperial py-24 md:py-32 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gold/5 blur-[100px] rounded-full pointer-events-none" />
+      <section className="bg-[#2A0E3D] py-24 md:py-32 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative">
           <QuoteBlock
             text="Voici, oh ! qu'il est agréable, qu'il est doux pour des frères de demeurer ensemble."

@@ -78,8 +78,8 @@ export function StrongTooltip({ numero, children, className }: StrongTooltipProp
         className={cn(
           "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-mono font-semibold cursor-pointer transition-colors",
           numero.startsWith("H")
-            ? "bg-gold/15 text-gold-dark hover:bg-gold/25"
-            : "bg-lavender/15 text-lavender hover:bg-lavender/25",
+            ? "bg-[#C9A227]/15 text-[#A3821C] hover:bg-[#C9A227]/25"
+            : "bg-[#8C5FA8]/15 text-[#8C5FA8] hover:bg-[#8C5FA8]/25",
           className
         )}
       >
@@ -96,49 +96,49 @@ export function StrongTooltip({ numero, children, className }: StrongTooltipProp
             transition={{ duration: 0.2 }}
             className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 max-w-[90vw]"
           >
-            <div className="bg-ivory border border-gold/40 rounded-card shadow-xl overflow-hidden">
+            <div className="bg-[#FAF6EF] border border-[#C9A227]/40 rounded-2xl shadow-xl overflow-hidden">
               <div className={cn(
                 "px-4 py-2 flex items-center justify-between",
-                numero.startsWith("H") ? "bg-gold/15" : "bg-lavender/15"
+                numero.startsWith("H") ? "bg-[#C9A227]/15" : "bg-[#8C5FA8]/15"
               )}>
                 <div className="flex items-center gap-2">
-                  <Hash className="w-3.5 h-3.5 text-gold" />
-                  <span className="font-mono text-sm font-semibold text-ink">{numero}</span>
-                  <span className="text-xs text-stone">
+                  <Hash className="w-3.5 h-3.5 text-[#C9A227]" />
+                  <span className="font-mono text-sm font-semibold text-[#1E0F2B]">{numero}</span>
+                  <span className="text-xs text-[#8A8378]">
                     {numero.startsWith("H") ? "Hébreu" : "Grec"}
                   </span>
                 </div>
                 {entry?.lemma && (
-                  <span className="font-serif text-base text-ink" dir="rtl">{entry.lemma}</span>
+                  <span className="font-serif text-base text-[#1E0F2B]" dir="rtl">{entry.lemma}</span>
                 )}
               </div>
 
               <div className="p-4">
                 {loading ? (
                   <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-4 h-4 animate-spin text-gold" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#C9A227]" />
                   </div>
                 ) : entry ? (
                   <div className="space-y-2">
                     {entry.translit && (
-                      <p className="text-xs text-stone italic">Translittération : {entry.translit}</p>
+                      <p className="text-xs text-[#8A8378] italic">Translittération : {entry.translit}</p>
                     )}
                     {entry.strongs_def && (
-                      <p className="text-sm text-ink/80 leading-relaxed">{entry.strongs_def}</p>
+                      <p className="text-sm text-[#1E0F2B]/80 leading-relaxed">{entry.strongs_def}</p>
                     )}
                     {entry.kjv_def && (
-                      <p className="text-xs text-stone italic">KJV : {entry.kjv_def}</p>
+                      <p className="text-xs text-[#8A8378] italic">KJV : {entry.kjv_def}</p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-stone italic">Chargement...</p>
+                  <p className="text-xs text-[#8A8378] italic">Chargement...</p>
                 )}
               </div>
 
-              <div className="px-4 py-2 bg-imperial/5 border-t border-stone/15">
+              <div className="px-4 py-2 bg-[#2A0E3D]/5 border-t border-[#8A8378]/15">
                 <Link
                   href={`/bible?tab=strong`}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-imperial hover:text-gold transition-colors"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
                 >
                   Voir dans le lexique
                   <ExternalLink className="w-3 h-3" />
@@ -147,7 +147,7 @@ export function StrongTooltip({ numero, children, className }: StrongTooltipProp
             </div>
 
             <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-              <div className="w-3 h-3 bg-ivory border-r border-b border-gold/40 rotate-45" />
+              <div className="w-3 h-3 bg-[#FAF6EF] border-r border-b border-[#C9A227]/40 rotate-45" />
             </div>
           </motion.div>
         )}

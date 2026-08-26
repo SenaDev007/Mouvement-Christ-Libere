@@ -80,7 +80,7 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
         <div className="card-gold-top p-6">
           {/* Filtres */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <span className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mr-2">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mr-2">
               Filtrer :
             </span>
             <button
@@ -88,8 +88,8 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
               className={cn(
                 "px-3 py-1 rounded text-xs font-semibold transition-all",
                 !filtreNiveau
-                  ? "bg-imperial text-ivory"
-                  : "border border-imperial/30 text-imperial hover:bg-imperial/5"
+                  ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                  : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
               )}
             >
               Tous
@@ -101,8 +101,8 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
                 className={cn(
                   "px-3 py-1 rounded text-xs font-semibold transition-all inline-flex items-center gap-1.5",
                   filtreNiveau === niveau
-                    ? "bg-imperial text-ivory"
-                    : "border border-imperial/30 text-imperial hover:bg-imperial/5"
+                    ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                    : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
                 )}
               >
                 <span
@@ -115,7 +115,7 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
           </div>
 
           {/* Carte SVG */}
-          <div className="relative bg-imperial-dark/40 rounded-card overflow-hidden" style={{ aspectRatio: "2 / 1" }}>
+          <div className="relative bg-[#1A0826]/40 rounded-2xl overflow-hidden" style={{ aspectRatio: "2 / 1" }}>
             <svg
               viewBox="0 0 1000 500"
               className="w-full h-full"
@@ -216,8 +216,8 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
             </svg>
 
             {/* Overlay stats */}
-            <div className="absolute top-4 left-4 bg-imperial/80 backdrop-blur-sm text-ivory px-3 py-2 rounded-md border border-gold/20">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-gold-light/80 font-semibold mb-1">
+            <div className="absolute top-4 left-4 bg-[#2A0E3D]/80 backdrop-blur-sm text-[#FAF6EF] px-3 py-2 rounded-md border border-[#C9A227]/20">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/80 font-semibold mb-1">
                 Dispersés d'Israël
               </p>
               <p className="font-serif text-lg font-semibold">
@@ -227,7 +227,7 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
           </div>
 
           {/* Légende */}
-          <div className="mt-4 flex items-center gap-4 flex-wrap text-xs text-stone">
+          <div className="mt-4 flex items-center gap-4 flex-wrap text-xs text-[#8A8378]">
             {Object.entries(NIVEAU_LABELS).map(([niveau, label]) => (
               <span key={niveau} className="inline-flex items-center gap-1.5">
                 <span
@@ -237,9 +237,9 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
                 {label}
               </span>
             ))}
-            <span className="text-stone/60">·</span>
+            <span className="text-[#8A8378]/60">·</span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-gold border border-ivory" />
+              <span className="w-3 h-3 rounded-full bg-[#C9A227] border border-[#FAF6EF]" />
               Jérusalem (référence)
             </span>
           </div>
@@ -250,8 +250,8 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
       <div className="space-y-4">
         {/* Stats globales */}
         <div className="card-gold-top p-5">
-          <h3 className="font-serif text-base font-semibold text-ink mb-4 flex items-center gap-2">
-            <Globe className="w-4 h-4 text-gold" />
+          <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-4 flex items-center gap-2">
+            <Globe className="w-4 h-4 text-[#C9A227]" />
             Rassemblement en cours
           </h3>
           <div className="space-y-3">
@@ -262,22 +262,22 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
         </div>
 
         {/* Prophétie */}
-        <div className="bg-imperial text-ivory rounded-card p-5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gold/10 blur-2xl rounded-full pointer-events-none" />
+        <div className="bg-[#2A0E3D] text-[#FAF6EF] rounded-2xl p-5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A227]/10 blur-2xl rounded-full pointer-events-none" />
           <div className="relative">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gold-light/70 font-semibold mb-2">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[#DDBE55]/70 font-semibold mb-2">
               Prophétie
             </p>
-            <p className="font-serif italic text-sm text-ivory/90 leading-relaxed mb-2">
+            <p className="font-serif italic text-sm text-[#FAF6EF]/90 leading-relaxed mb-2">
               « Il rassemblera les exilés d'Israël, et il recueillera les dispersés de Juda des quatre extrémités de la terre. »
             </p>
-            <p className="text-xs text-gold-light/70 font-semibold">Ésaïe 11:12</p>
+            <p className="text-xs text-[#DDBE55]/70 font-semibold">Ésaïe 11:12</p>
           </div>
         </div>
 
         {/* Liste des membres récents */}
         <div className="card-gold-top p-5">
-          <h3 className="font-serif text-base font-semibold text-ink mb-3">
+          <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-3">
             Derniers inscrits
           </h3>
           <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-discrete">
@@ -285,15 +285,15 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
               <button
                 key={m.id}
                 onClick={() => setMembreSelectionne(m)}
-                className="w-full text-left p-2 rounded hover:bg-gold/5 transition-colors flex items-center gap-2"
+                className="w-full text-left p-2 rounded hover:bg-[#C9A227]/5 transition-colors flex items-center gap-2"
               >
                 <span
                   className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: NIVEAU_COULEURS[m.niveau] }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-ink truncate">{m.pseudonyme}</p>
-                  <p className="text-[10px] text-stone">
+                  <p className="text-xs font-medium text-[#1E0F2B] truncate">{m.pseudonyme}</p>
+                  <p className="text-[10px] text-[#8A8378]">
                     {LANGUE_DRAPEAUX[m.langue] || "🌐"} {m.ville || m.pays}
                   </p>
                 </div>
@@ -310,29 +310,29 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-imperial-dark/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 backdrop-blur-sm"
             onClick={() => setMembreSelectionne(null)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-ivory rounded-card max-w-md w-full overflow-hidden"
+              className="bg-[#FAF6EF] rounded-2xl max-w-md w-full overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* En-tête */}
               <div
-                className="p-6 text-ivory relative"
+                className="p-6 text-[#FAF6EF] relative"
                 style={{ backgroundColor: NIVEAU_COULEURS[membreSelectionne.niveau] }}
               >
                 <button
                   onClick={() => setMembreSelectionne(null)}
-                  className="absolute top-4 right-4 p-1.5 rounded hover:bg-ivory/20"
+                  className="absolute top-4 right-4 p-1.5 rounded hover:bg-[#FAF6EF]/20"
                 >
                   <X className="w-4 h-4" />
                 </button>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-ivory/20 border border-ivory/30">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#FAF6EF]/20 border border-[#FAF6EF]/30">
                     <span className="font-serif text-lg font-semibold">
                       {membreSelectionne.pseudonyme.charAt(0)}
                     </span>
@@ -368,21 +368,21 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
                 </div>
 
                 {membreSelectionne.message && (
-                  <div className="p-4 bg-imperial/5 rounded-md border border-gold/20 mb-4">
-                    <p className="font-serif italic text-sm text-ink/80 leading-relaxed">
+                  <div className="p-4 bg-[#2A0E3D]/5 rounded-md border border-[#C9A227]/20 mb-4">
+                    <p className="font-serif italic text-sm text-[#1E0F2B]/80 leading-relaxed">
                       « {membreSelectionne.message} »
                     </p>
                   </div>
                 )}
 
-                <div className="text-xs text-stone space-y-1">
+                <div className="text-xs text-[#8A8378] space-y-1">
                   <p>
-                    <strong className="text-ink">Position :</strong>{" "}
+                    <strong className="text-[#1E0F2B]">Position :</strong>{" "}
                     {membreSelectionne.latitude.toFixed(1)}°, {membreSelectionne.longitude.toFixed(1)}°
-                    <span className="text-stone/60 ml-1">(arrondie à 0.1° pour anonymat)</span>
+                    <span className="text-[#8A8378]/60 ml-1">(arrondie à 0.1° pour anonymat)</span>
                   </p>
                   <p>
-                    <strong className="text-ink">Langue :</strong> {membreSelectionne.langue}
+                    <strong className="text-[#1E0F2B]">Langue :</strong> {membreSelectionne.langue}
                   </p>
                 </div>
               </div>
@@ -397,12 +397,12 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
 function StatItem({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: number }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex items-center justify-center w-9 h-9 rounded-md bg-imperial/10">
-        <Icon className="w-4 h-4 text-imperial" />
+      <div className="flex items-center justify-center w-9 h-9 rounded-md bg-[#2A0E3D]/10">
+        <Icon className="w-4 h-4 text-[#2A0E3D]" />
       </div>
       <div>
-        <div className="font-serif text-xl font-semibold text-ink">{value}</div>
-        <div className="text-[10px] uppercase tracking-wider text-stone font-semibold">{label}</div>
+        <div className="font-serif text-xl font-semibold text-[#1E0F2B]">{value}</div>
+        <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold">{label}</div>
       </div>
     </div>
   );

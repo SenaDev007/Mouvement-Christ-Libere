@@ -23,16 +23,16 @@ export default async function AdminBiographiesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-semibold text-ink mb-1">
+          <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1">
             Biographies
           </h1>
-          <p className="text-sm text-stone">
+          <p className="text-sm text-[#8A8378]">
             Frises chronologiques des serviteurs.
           </p>
         </div>
         <Link
           href="/admin/biographies/new"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-gold text-ink text-sm font-semibold hover:bg-gold-light transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55] transition-colors"
         >
           <Plus className="w-4 h-4" />
           Nouveau jalon
@@ -41,33 +41,33 @@ export default async function AdminBiographiesPage() {
 
       {Object.entries(byServant).map(([servantName, items]) => (
         <div key={servantName} className="card-gold-top p-6">
-          <h2 className="font-serif text-lg font-semibold text-ink mb-4 flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-gold" />
+          <h2 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-4 flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-[#C9A227]" />
             {servantName}
-            <span className="text-xs text-stone font-sans">({items.length} jalons)</span>
+            <span className="text-xs text-[#8A8378] font-sans">({items.length} jalons)</span>
           </h2>
           <div className="space-y-3">
             {items.map((b) => (
               <div
                 key={b.id}
-                className="flex items-start justify-between py-3 border-b border-stone/15 last:border-0"
+                className="flex items-start justify-between py-3 border-b border-[#8A8378]/15 last:border-0"
               >
                 <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full border border-gold/40 bg-gold/5 flex-shrink-0">
-                    <span className="text-[10px] font-semibold text-gold">{b.order}</span>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full border border-[#C9A227]/40 bg-[#C9A227]/5 flex-shrink-0">
+                    <span className="text-[10px] font-semibold text-[#C9A227]">{b.order}</span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase tracking-[0.18em] text-gold-dark font-semibold">
+                      <span className="text-[10px] uppercase tracking-[0.18em] text-[#A3821C] font-semibold">
                         {b.date}
                       </span>
                     </div>
-                    <p className="font-serif text-sm font-semibold text-ink mt-0.5">
+                    <p className="font-serif text-sm font-semibold text-[#1E0F2B] mt-0.5">
                       {b.title}
                     </p>
-                    <p className="text-xs text-stone line-clamp-2 mt-1">{b.description}</p>
+                    <p className="text-xs text-[#8A8378] line-clamp-2 mt-1">{b.description}</p>
                     {b.verseRef && (
-                      <p className="text-[10px] text-stone mt-1 italic">
+                      <p className="text-[10px] text-[#8A8378] mt-1 italic">
                         « {b.verseRef} »
                       </p>
                     )}
@@ -76,7 +76,7 @@ export default async function AdminBiographiesPage() {
                 <div className="flex items-center gap-1 ml-2">
                   <Link
                     href={`/admin/biographies/${b.id}/edit`}
-                    className="p-2 rounded hover:bg-gold/10 text-stone hover:text-gold transition-colors"
+                    className="p-2 rounded hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
                     aria-label="Modifier"
                   >
                     <Pencil className="w-3.5 h-3.5" />

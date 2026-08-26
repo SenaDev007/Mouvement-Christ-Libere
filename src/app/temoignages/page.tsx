@@ -54,11 +54,11 @@ export default async function TemoignagesPage({ searchParams }: PageProps) {
       />
 
       {/* Liste témoignages */}
-      <section className="bg-ivory py-20 md:py-24">
+      <section className="bg-[#FAF6EF] py-20 md:py-24">
         <div className="container mx-auto max-w-7xl px-4">
           {testimonies.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-stone italic text-lg">
+              <p className="text-[#8A8378] italic text-lg">
                 Aucun témoignage ne correspond à cette recherche pour l'instant.
                 Essayez un autre filtre, ou parcourez tous les témoignages.
               </p>
@@ -83,11 +83,11 @@ export default async function TemoignagesPage({ searchParams }: PageProps) {
           )}
 
           {/* Bandeau de bas de liste */}
-          <div className="mt-16 p-6 bg-imperial/5 border border-gold/20 rounded-card text-center">
-            <p className="text-sm text-ink mb-3">
+          <div className="mt-16 p-6 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-2xl text-center">
+            <p className="text-sm text-[#1E0F2B] mb-3">
               Un témoignage vous a marqué ? Partagez-le à une personne de confiance.
             </p>
-            <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-gold hover:text-gold-dark transition-colors">
+            <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#C9A227] hover:text-[#A3821C] transition-colors">
               Partager discrètement
             </button>
           </div>
@@ -97,8 +97,8 @@ export default async function TemoignagesPage({ searchParams }: PageProps) {
       <SectionDivider variant="ornament" />
 
       {/* Citation */}
-      <section className="bg-imperial py-24 md:py-32 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gold/5 blur-[100px] rounded-full pointer-events-none" />
+      <section className="bg-[#2A0E3D] py-24 md:py-32 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative">
           <QuoteBlock
             text="Nous n'ignorons pas ses designs."

@@ -28,7 +28,7 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
           times: [0, 0.4, 0.6, 1],
           ease: "easeInOut",
         }}
-        className="fixed inset-0 z-[9998] bg-imperial pointer-events-none"
+        className="fixed inset-0 z-[9998] bg-[#2A0E3D] pointer-events-none"
         style={{ transformOrigin: "top" }}
       >
         <div className="h-full w-full flex items-center justify-center">
@@ -42,7 +42,7 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="w-2 h-16 bg-gradient-to-b from-gold via-gold-light to-gold"
+            className="w-2 h-16 bg-gradient-to-b from-[#C9A227] via-[#C9A227]-light to-[#C9A227]"
           />
         </div>
       </motion.div>

@@ -14,9 +14,9 @@ export function VideosFilters({ servants, currentServant }: VideosFiltersProps) 
   };
 
   return (
-    <section className="bg-imperial border-b border-gold/15 py-6">
+    <section className="bg-[#2A0E3D] border-b border-[#C9A227]/15 py-6">
       <div className="container mx-auto max-w-7xl px-4 flex items-center justify-center gap-4">
-        <span className="text-xs uppercase tracking-[0.18em] text-gold-light/70 font-semibold">
+        <span className="text-xs uppercase tracking-[0.18em] text-[#DDBE55]/70 font-semibold">
           Serviteur :
         </span>
         <div className="flex items-center gap-2">
@@ -25,8 +25,8 @@ export function VideosFilters({ servants, currentServant }: VideosFiltersProps) 
             className={cn(
               "px-4 py-2 rounded-md text-sm font-semibold transition-all",
               currentServant === "all"
-                ? "bg-gold text-ink"
-                : "border border-gold/30 text-ivory hover:bg-gold/10"
+                ? "bg-[#C9A227] text-[#1E0F2B]"
+                : "border border-[#C9A227]/30 text-[#FAF6EF] hover:bg-[#C9A227]/10"
             )}
           >
             Tous
@@ -38,8 +38,8 @@ export function VideosFilters({ servants, currentServant }: VideosFiltersProps) 
               className={cn(
                 "px-4 py-2 rounded-md text-sm font-semibold transition-all",
                 currentServant === s.code
-                  ? "bg-gold text-ink"
-                  : "border border-gold/30 text-ivory hover:bg-gold/10"
+                  ? "bg-[#C9A227] text-[#1E0F2B]"
+                  : "border border-[#C9A227]/30 text-[#FAF6EF] hover:bg-[#C9A227]/10"
               )}
             >
               {s.name}

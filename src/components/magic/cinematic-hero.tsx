@@ -70,8 +70,8 @@ export function CinematicHero({
         </motion.div>
 
         {/* Filets or supérieur et inférieur */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />
-        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A227] to-transparent opacity-80" />
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#C9A227] to-transparent opacity-80" />
 
         {/* Contenu */}
         <motion.div
@@ -115,12 +115,12 @@ export function CinematicHero({
                   animate={{ rotate: 360 }}
                   transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                 >
-                  <Sparkles className="w-4 h-4 text-gold" />
+                  <Sparkles className="w-4 h-4 text-[#C9A227]" />
                 </motion.div>
-                <span className="text-xs uppercase tracking-[0.3em] font-semibold text-gold">
+                <span className="text-xs uppercase tracking-[0.3em] font-semibold text-[#C9A227]">
                   {kicker}
                 </span>
-                <div className="h-px w-12 bg-gradient-to-r from-gold to-transparent" />
+                <div className="h-px w-12 bg-gradient-to-r from-[#C9A227] to-transparent" />
               </motion.div>
 
               {/* Titre principal */}
@@ -130,7 +130,7 @@ export function CinematicHero({
                 transition={{ duration: 0.9, delay: 0.2 }}
                 className="font-serif text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-semibold leading-[0.95] tracking-tight mb-8"
               >
-                <span className="block text-ivory">{title}</span>
+                <span className="block text-[#FAF6EF]">{title}</span>
               </motion.h1>
 
               {/* Sous-titre */}
@@ -138,7 +138,7 @@ export function CinematicHero({
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.9, delay: 0.4 }}
-                className="text-lg md:text-xl lg:text-2xl text-ivory/70 leading-relaxed max-w-3xl mb-12 font-light"
+                className="text-lg md:text-xl lg:text-2xl text-[#FAF6EF]/70 leading-relaxed max-w-3xl mb-12 font-light"
               >
                 {subtitle}
               </motion.p>
@@ -179,10 +179,10 @@ export function CinematicHero({
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="flex flex-col items-center gap-2"
           >
-            <span className="text-[10px] uppercase tracking-[0.4em] text-ivory/40 font-medium">
+            <span className="text-[10px] uppercase tracking-[0.4em] text-[#FAF6EF]/40 font-medium">
               Défiler
             </span>
-            <div className="w-px h-12 bg-gradient-to-b from-gold/60 to-transparent" />
+            <div className="w-px h-12 bg-gradient-to-b from-[#C9A227]/60 to-transparent" />
           </motion.div>
         </motion.div>
       </AuroraBackground>

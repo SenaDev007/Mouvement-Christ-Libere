@@ -93,11 +93,11 @@ export default function DispersesPage() {
       />
 
       {/* Carte */}
-      <section id="carte" className="bg-ivory py-16 md:py-20">
+      <section id="carte" className="bg-[#FAF6EF] py-20 md:py-24 md:py-20">
         <div className="container mx-auto max-w-7xl px-4">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-gold" />
+              <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
             </div>
           ) : (
             <CarteDisperses membres={membres} />
@@ -108,13 +108,13 @@ export default function DispersesPage() {
       <SectionDivider variant="ornament" />
 
       {/* Formulaire d'ajout */}
-      <section id="ajouter" className="bg-ivory py-16 md:py-20">
+      <section id="ajouter" className="bg-[#FAF6EF] py-20 md:py-24 md:py-20">
         <div className="container mx-auto max-w-2xl px-4">
           <div className="text-center mb-8">
-            <h2 className="font-serif text-3xl font-semibold text-ink mb-3">
+            <h2 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-3">
               Ajouter ma position
             </h2>
-            <p className="text-sm text-stone">
+            <p className="text-sm text-[#8A8378]">
               Rendez visible le rassemblement. Votre position est arrondie à 0.1° (environ 11 km)
               pour préserver votre anonymat. Aucune information personnelle n'est stockée.
             </p>
@@ -129,10 +129,10 @@ export default function DispersesPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-state-success/15 border-2 border-state-success/40 mb-6">
                 <CheckCircle2 className="w-8 h-8 text-state-success" />
               </div>
-              <h3 className="font-serif text-2xl font-semibold text-ink mb-3">
+              <h3 className="font-serif text-2xl font-semibold text-[#1E0F2B] mb-3">
                 Position ajoutée
               </h3>
-              <p className="text-sm text-stone mb-6">
+              <p className="text-sm text-[#8A8378] mb-6">
                 Vous apparaissez maintenant sur la carte des dispersés. Que le Seigneur vous bénisse.
               </p>
               <button
@@ -150,7 +150,7 @@ export default function DispersesPage() {
                     message: "",
                   });
                 }}
-                className="text-sm font-semibold text-imperial hover:text-gold transition-colors"
+                className="text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
               >
                 Ajouter une autre position
               </button>
@@ -159,7 +159,7 @@ export default function DispersesPage() {
             <form onSubmit={handleSubmit} className="card-gold-top p-8 space-y-5">
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                     Pseudonyme *
                   </label>
                   <input
@@ -168,11 +168,11 @@ export default function DispersesPage() {
                     onChange={(e) => setForm({ ...form, pseudonyme: e.target.value })}
                     required
                     placeholder="Un nom ou pseudo (pas votre vrai nom)"
-                    className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                   />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                     Pays *
                   </label>
                   <input
@@ -182,14 +182,14 @@ export default function DispersesPage() {
                     required
                     placeholder="FR, CI, US, IL..."
                     maxLength={2}
-                    className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 uppercase"
+                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 uppercase"
                   />
                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                     Ville (optionnel)
                   </label>
                   <input
@@ -197,17 +197,17 @@ export default function DispersesPage() {
                     value={form.ville}
                     onChange={(e) => setForm({ ...form, ville: e.target.value })}
                     placeholder="Votre ville"
-                    className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                   />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                     Langue
                   </label>
                   <select
                     value={form.langue}
                     onChange={(e) => setForm({ ...form, langue: e.target.value })}
-                    className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                   >
                     <option value="FR">Français</option>
                     <option value="EN">English</option>
@@ -220,13 +220,13 @@ export default function DispersesPage() {
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                   Niveau de engagement
                 </label>
                 <select
                   value={form.niveau}
                   onChange={(e) => setForm({ ...form, niveau: e.target.value })}
-                  className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                 >
                   <option value="chercheur">Chercheur — en quête spirituelle</option>
                   <option value="croyant">Croyant — engagé dans la foi</option>
@@ -237,24 +237,24 @@ export default function DispersesPage() {
 
               {/* Géolocalisation */}
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                   Position géographique *
                 </label>
                 <button
                   type="button"
                   onClick={detecterPosition}
-                  className="w-full px-4 py-3 rounded-md border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors inline-flex items-center justify-center gap-2 text-sm font-semibold"
+                  className="w-full px-4 py-3 rounded-md border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors inline-flex items-center justify-center gap-2 text-sm font-semibold"
                 >
                   <MapPin className="w-4 h-4" />
                   {form.latitude ? `Position détectée : ${form.latitude.toFixed(1)}, ${form.longitude.toFixed(1)}` : "Détecter ma position"}
                 </button>
-                <p className="text-xs text-stone mt-2">
+                <p className="text-xs text-[#8A8378] mt-2">
                   Votre navigateur vous demandera l'autorisation. La position est arrondie à 0.1° (environ 11 km) pour préserver votre anonymat.
                 </p>
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                   Message (optionnel)
                 </label>
                 <textarea
@@ -263,16 +263,16 @@ export default function DispersesPage() {
                   rows={3}
                   placeholder="Un court témoignage, une bénédiction, un encouragement pour la communauté..."
                   maxLength={500}
-                  className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 resize-none"
+                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-none"
                 />
               </div>
 
               {/* Bandeau confidentialité */}
-              <div className="p-4 bg-imperial/5 border border-gold/20 rounded-md flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+              <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-md flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-ink mb-1">Confidentialité</p>
-                  <p className="text-xs text-stone leading-relaxed">
+                  <p className="text-xs font-semibold text-[#1E0F2B] mb-1">Confidentialité</p>
+                  <p className="text-xs text-[#8A8378] leading-relaxed">
                     Aucune information personnelle n'est stockée. La position est arrondie, le pseudonyme est libre,
                     et vous pouvez modifier ou supprimer votre entrée à tout moment en contactant l'équipe.
                   </p>
@@ -282,7 +282,7 @@ export default function DispersesPage() {
               <button
                 type="submit"
                 disabled={submitting || !form.latitude}
-                className="w-full px-6 py-4 rounded-md bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full px-6 py-4 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submitting ? (
                   <>

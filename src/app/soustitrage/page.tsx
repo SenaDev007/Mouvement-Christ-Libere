@@ -115,16 +115,16 @@ export default function SousTitragePage() {
         primaryCta={{ label: "Générer des sous-titres", href: "#generateur" }}
       />
 
-      <section id="generateur" className="bg-ivory py-16 md:py-20">
+      <section id="generateur" className="bg-[#FAF6EF] py-16 md:py-20">
         <div className="container mx-auto max-w-4xl px-4">
           {/* Bandeau mode */}
           {!whisperConfigure && (
-            <div className="mb-6 p-4 rounded-md bg-gold/5 border border-gold/20 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+            <div className="mb-6 p-4 rounded-md bg-[#C9A227]/5 border border-[#C9A227]/20 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-ink mb-1">Mode démonstration</p>
-                <p className="text-xs text-stone">
-                  Whisper n&apos;est pas configuré (<code className="bg-stone/10 px-1 rounded">OPENAI_API_KEY</code> manquant).
+                <p className="text-sm font-semibold text-[#1E0F2B] mb-1">Mode démonstration</p>
+                <p className="text-xs text-[#8A8378]">
+                  Whisper n&apos;est pas configuré (<code className="bg-[#8A8378]/10 px-1 rounded">OPENAI_API_KEY</code> manquant).
                   Les sous-titres sont simulés. Pour activer le sous-titrage réel, ajoutez la clé API dans Vercel.
                 </p>
               </div>
@@ -134,7 +134,7 @@ export default function SousTitragePage() {
           {!resultat ? (
             <form onSubmit={handleSubmit} className="card-gold-top p-8 space-y-5">
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                   URL du fichier audio/vidéo
                 </label>
                 <input
@@ -142,15 +142,15 @@ export default function SousTitragePage() {
                   value={fichierUrl}
                   onChange={(e) => setFichierUrl(e.target.value)}
                   placeholder="https://exemple.com/enseignement.mp4"
-                  className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                 />
-                <p className="text-xs text-stone mt-1">
+                <p className="text-xs text-[#8A8378] mt-1">
                   Laissez vide pour tester en mode démo (sous-titres simulés).
                 </p>
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                   Langue source
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -162,8 +162,8 @@ export default function SousTitragePage() {
                       className={cn(
                         "px-3 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2",
                         langueSource === l.code
-                          ? "bg-imperial text-ivory"
-                          : "border border-imperial/30 text-imperial hover:bg-imperial/5"
+                          ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                          : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
                       )}
                     >
                       <span>{l.drapeau}</span>
@@ -174,7 +174,7 @@ export default function SousTitragePage() {
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                   Langues cibles (traduction)
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -186,8 +186,8 @@ export default function SousTitragePage() {
                       className={cn(
                         "px-3 py-2 rounded-md text-sm font-semibold transition-all inline-flex items-center gap-2",
                         languesCibles.includes(l.code)
-                          ? "bg-gold text-ink"
-                          : "border border-stone/30 text-stone hover:border-gold/50"
+                          ? "bg-[#C9A227] text-[#1E0F2B]"
+                          : "border border-[#8A8378]/30 text-[#8A8378] hover:border-[#C9A227]/50"
                       )}
                     >
                       <span>{l.drapeau}</span>
@@ -207,7 +207,7 @@ export default function SousTitragePage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-6 py-4 rounded-md bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full px-6 py-4 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submitting ? (
                   <>
@@ -232,10 +232,10 @@ export default function SousTitragePage() {
                       <CheckCircle2 className="w-6 h-6 text-state-success" />
                     </div>
                     <div>
-                      <h3 className="font-serif text-xl font-semibold text-ink">
+                      <h3 className="font-serif text-xl font-semibold text-[#1E0F2B]">
                         Sous-titres générés
                       </h3>
-                      <p className="text-xs text-stone">
+                      <p className="text-xs text-[#8A8378]">
                         {resultat.mode === "production" ? "Whisper (production)" : "Mode démo"} ·
                         {" "}{resultat.sousTitres.length} segments · {" "}
                         {Math.floor(resultat.dureeTotal / 60)}:{(resultat.dureeTotal % 60).toString().padStart(2, "0")} de contenu
@@ -253,7 +253,7 @@ export default function SousTitragePage() {
                         a.click();
                         URL.revokeObjectURL(url);
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-gold text-ink text-xs font-semibold hover:bg-gold-light transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" />
                       Télécharger SRT
@@ -268,8 +268,8 @@ export default function SousTitragePage() {
                     className={cn(
                       "px-3 py-1.5 rounded text-xs font-semibold transition-all",
                       langueAffichee === "source"
-                        ? "bg-imperial text-ivory"
-                        : "border border-imperial/30 text-imperial hover:bg-imperial/5"
+                        ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                        : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
                     )}
                   >
                     🌐 Source ({LANGUES.find((l) => l.code === resultat.langueSource)?.nom})
@@ -283,8 +283,8 @@ export default function SousTitragePage() {
                         className={cn(
                           "px-3 py-1.5 rounded text-xs font-semibold transition-all inline-flex items-center gap-1",
                           langueAffichee === lang
-                            ? "bg-imperial text-ivory"
-                            : "border border-imperial/30 text-imperial hover:bg-imperial/5"
+                            ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                            : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
                         )}
                       >
                         {l?.drapeau} {l?.nom}
@@ -303,13 +303,13 @@ export default function SousTitragePage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: i * 0.03 }}
-                      className="flex items-start gap-3 p-3 rounded-md hover:bg-gold/5 transition-colors"
+                      className="flex items-start gap-3 p-3 rounded-md hover:bg-[#C9A227]/5 transition-colors"
                     >
-                      <div className="flex items-center gap-1 text-xs text-gold-dark font-mono font-semibold w-20 flex-shrink-0 pt-0.5">
+                      <div className="flex items-center gap-1 text-xs text-[#A3821C] font-mono font-semibold w-20 flex-shrink-0 pt-0.5">
                         <Clock className="w-3 h-3" />
                         {Math.floor(st.debut / 60)}:{(st.debut % 60).toString().padStart(2, "0")}
                       </div>
-                      <p className="text-sm text-ink/85 font-serif leading-relaxed flex-1">
+                      <p className="text-sm text-[#1E0F2B]/85 font-serif leading-relaxed flex-1">
                         {st.texte}
                       </p>
                     </motion.div>
@@ -324,7 +324,7 @@ export default function SousTitragePage() {
                     setResultat(null);
                     setFichierUrl("");
                   }}
-                  className="text-sm font-semibold text-imperial hover:text-gold transition-colors"
+                  className="text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
                 >
                   Générer d&apos;autres sous-titres
                 </button>

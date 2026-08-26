@@ -24,10 +24,10 @@ interface ChannelCardProps {
 }
 
 const TYPE_CONFIG = {
-  TEXT: { icon: Hash, label: "Texte", color: "text-imperial bg-imperial/10" },
-  VOICE: { icon: Volume2, label: "Voix", color: "text-lavender bg-lavender/10" },
-  VIDEO: { icon: Volume2, label: "Vidéo", color: "text-lavender bg-lavender/10" },
-  ANNOUNCEMENT: { icon: Megaphone, label: "Annonce", color: "text-gold-dark bg-gold/10" },
+  TEXT: { icon: Hash, label: "Texte", color: "text-[#2A0E3D] bg-[#2A0E3D]/10" },
+  VOICE: { icon: Volume2, label: "Voix", color: "text-[#8C5FA8] bg-[#8C5FA8]/10" },
+  VIDEO: { icon: Volume2, label: "Vidéo", color: "text-[#8C5FA8] bg-[#8C5FA8]/10" },
+  ANNOUNCEMENT: { icon: Megaphone, label: "Annonce", color: "text-[#A3821C] bg-[#C9A227]/10" },
   RESTRICTED: { icon: Lock, label: "Restreint", color: "text-state-danger bg-state-danger/10" },
 } as const;
 
@@ -50,14 +50,14 @@ export function ChannelCard({
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5, delay }}
       className={cn(
-        "group relative p-6 rounded-card border transition-all duration-500",
+        "group relative p-6 rounded-2xl border transition-all duration-500",
         isEncrypted
-          ? "bg-imperial/5 border-gold/30 hover:border-gold/60 hover:shadow-[0_10px_40px_-10px_rgba(201,162,39,0.2)]"
-          : "bg-ivory border-stone/20 hover:border-gold/40 hover:shadow-[0_10px_40px_-10px_rgba(42,14,61,0.15)]"
+          ? "bg-[#2A0E3D]/5 border-[#C9A227]/30 hover:border-[#C9A227]/60 hover:shadow-[0_10px_40px_-10px_rgba(201,162,39,0.2)]"
+          : "bg-[#FAF6EF] border-[#8A8378]/20 hover:border-[#C9A227]/40 hover:shadow-[0_10px_40px_-10px_rgba(42,14,61,0.15)]"
       )}
     >
       {/* Halo au hover */}
-      <div className="absolute -top-16 -right-16 w-32 h-32 bg-gold/0 group-hover:bg-gold/10 blur-3xl transition-all duration-700 pointer-events-none" />
+      <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#C9A227]/0 group-hover:bg-[#C9A227]/10 blur-3xl transition-all duration-700 pointer-events-none" />
 
       <div className="relative z-10">
         {/* En-tête */}
@@ -72,10 +72,10 @@ export function ChannelCard({
               <Icon className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-serif text-base font-semibold text-ink leading-tight">
+              <h3 className="font-serif text-base font-semibold text-[#1E0F2B] leading-tight">
                 {name}
               </h3>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-stone font-semibold mt-0.5">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-semibold mt-0.5">
                 Canal {config.label}
               </p>
             </div>
@@ -83,7 +83,7 @@ export function ChannelCard({
           {isEncrypted && (
             <span
               title="Canal chiffré de bout en bout"
-              className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold bg-gold/15 text-gold-dark border border-gold/30"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold bg-[#C9A227]/15 text-[#A3821C] border border-[#C9A227]/30"
             >
               <Lock className="w-2.5 h-2.5" />
               E2E
@@ -92,14 +92,14 @@ export function ChannelCard({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-ink/70 leading-relaxed mb-5">
+        <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-5">
           {description}
         </p>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-stone/15">
+        <div className="flex items-center justify-between pt-4 border-t border-[#8A8378]/15">
           {members !== undefined && (
-            <span className="inline-flex items-center gap-1.5 text-xs text-stone">
+            <span className="inline-flex items-center gap-1.5 text-xs text-[#8A8378]">
               <Users className="w-3 h-3" />
               {members > 0 ? `${members} membres` : "Canal d'écoute"}
             </span>
@@ -109,8 +109,8 @@ export function ChannelCard({
             className={cn(
               "inline-flex items-center gap-1 text-xs font-semibold transition-colors group/cta ml-auto",
               type === "RESTRICTED"
-                ? "text-stone hover:text-gold"
-                : "text-imperial hover:text-gold"
+                ? "text-[#8A8378] hover:text-[#C9A227]"
+                : "text-[#2A0E3D] hover:text-[#C9A227]"
             )}
           >
             {type === "RESTRICTED" ? "Demander l'accès" : "Rejoindre"}
@@ -134,20 +134,20 @@ export function SecureBanner({ title, description }: SecureBannerProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="relative bg-imperial text-ivory rounded-card border border-gold/30 overflow-hidden p-8"
+      className="relative bg-[#2A0E3D] text-[#FAF6EF] rounded-2xl border border-[#C9A227]/30 overflow-hidden p-8"
     >
       {/* Décor fond */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-gold/10 blur-3xl rounded-full pointer-events-none" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full pointer-events-none" />
 
       <div className="relative z-10 flex items-start gap-5">
-        <div className="flex items-center justify-center w-12 h-12 rounded-md bg-gold/15 border border-gold/30 flex-shrink-0">
-          <ShieldCheck className="w-6 h-6 text-gold" />
+        <div className="flex items-center justify-center w-12 h-12 rounded-md bg-[#C9A227]/15 border border-[#C9A227]/30 flex-shrink-0">
+          <ShieldCheck className="w-6 h-6 text-[#C9A227]" />
         </div>
         <div>
-          <h3 className="font-serif text-lg font-semibold text-ivory mb-2">
+          <h3 className="font-serif text-lg font-semibold text-[#FAF6EF] mb-2">
             {title}
           </h3>
-          <p className="text-sm text-ivory/80 leading-relaxed">
+          <p className="text-sm text-[#FAF6EF]/80 leading-relaxed">
             {description}
           </p>
         </div>

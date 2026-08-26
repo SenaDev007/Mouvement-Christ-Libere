@@ -22,16 +22,16 @@ export default async function AdminCalendarPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-semibold text-ink mb-1">
+          <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1">
             Calendrier liturgique
           </h1>
-          <p className="text-sm text-stone">
+          <p className="text-sm text-[#8A8378]">
             Gérez les fêtes bibliques et événements liturgiques.
           </p>
         </div>
         <Link
           href="/admin/calendar/new"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-gold text-ink text-sm font-semibold hover:bg-gold-light transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55] transition-colors"
         >
           <Plus className="w-4 h-4" />
           Nouvel événement
@@ -40,7 +40,7 @@ export default async function AdminCalendarPage() {
 
       <div className="card-gold-top overflow-hidden">
         <table className="w-full">
-          <thead className="bg-imperial text-ivory">
+          <thead className="bg-[#2A0E3D] text-[#FAF6EF]">
             <tr>
               <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold">Fête</th>
               <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold">Type</th>
@@ -51,31 +51,31 @@ export default async function AdminCalendarPage() {
           </thead>
           <tbody>
             {events.map((e) => (
-              <tr key={e.id} className="border-b border-stone/15 hover:bg-gold/5">
+              <tr key={e.id} className="border-b border-[#8A8378]/15 hover:bg-[#C9A227]/5">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <CalendarIcon className="w-3.5 h-3.5 text-stone flex-shrink-0" />
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#8A8378] flex-shrink-0" />
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-6 rounded-full" style={{ backgroundColor: e.color }} />
                       <div>
-                        <p className="text-sm font-medium text-ink">{e.nameFr}</p>
-                        <p className="text-xs text-stone">{e.name}{e.nameHe && ` · ${e.nameHe}`}</p>
+                        <p className="text-sm font-medium text-[#1E0F2B]">{e.nameFr}</p>
+                        <p className="text-xs text-[#8A8378]">{e.name}{e.nameHe && ` · ${e.nameHe}`}</p>
                       </div>
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-xs text-stone">{TYPE_LABELS[e.type]}</td>
-                <td className="px-4 py-3 text-xs text-stone">
+                <td className="px-4 py-3 text-xs text-[#8A8378]">{TYPE_LABELS[e.type]}</td>
+                <td className="px-4 py-3 text-xs text-[#8A8378]">
                   {new Date(e.startDate).toLocaleDateString("fr-FR")}
                 </td>
-                <td className="px-4 py-3 text-xs text-stone">
+                <td className="px-4 py-3 text-xs text-[#8A8378]">
                   {e.endDate ? new Date(e.endDate).toLocaleDateString("fr-FR") : "—"}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
                     <Link
                       href={`/admin/calendar/${e.id}/edit`}
-                      className="p-2 rounded hover:bg-gold/10 text-stone hover:text-gold transition-colors"
+                      className="p-2 rounded hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
                       aria-label="Modifier"
                     >
                       <Pencil className="w-3.5 h-3.5" />

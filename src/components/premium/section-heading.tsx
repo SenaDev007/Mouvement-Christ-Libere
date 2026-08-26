@@ -33,11 +33,11 @@ export function PremiumSectionHeading({
             center && "justify-center"
           )}
         >
-          <div className="h-px w-8 bg-gold" />
-          <span className="text-[10px] uppercase tracking-[0.25em] font-semibold text-gold">
+          <div className="h-px w-8 bg-[#C9A227]" />
+          <span className="text-[10px] uppercase tracking-[0.25em] font-semibold text-[#C9A227]">
             {kicker}
           </span>
-          <div className="h-px w-8 bg-gold" />
+          <div className="h-px w-8 bg-[#C9A227]" />
         </motion.div>
       )}
 
@@ -48,7 +48,7 @@ export function PremiumSectionHeading({
         transition={{ duration: 0.6, delay: 0.1 }}
         className={cn(
           "font-serif font-semibold leading-[1.1] tracking-tight text-3xl md:text-4xl lg:text-5xl",
-          light ? "text-ivory" : "text-ink"
+          light ? "text-[#FAF6EF]" : "text-[#1E0F2B]"
         )}
       >
         {title}
@@ -63,7 +63,7 @@ export function PremiumSectionHeading({
           className={cn(
             "mt-5 text-base md:text-lg leading-relaxed max-w-2xl font-light",
             center && "mx-auto",
-            light ? "text-ivory/75" : "text-stone"
+            light ? "text-[#FAF6EF]/75" : "text-[#8A8378]"
           )}
         >
           {subtitle}

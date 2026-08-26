@@ -59,7 +59,7 @@ export function CustomCursor() {
             opacity: isPointer ? 0.6 : 0.3,
           }}
           transition={{ duration: 0.2 }}
-          className="w-8 h-8 rounded-full border border-gold"
+          className="w-8 h-8 rounded-full border border-[#C9A227]"
           style={{
             backgroundColor: "rgba(201, 162, 39, 0.1)",
             backdropFilter: "blur(2px)",
@@ -80,7 +80,7 @@ export function CustomCursor() {
             scale: isPointer ? 0 : 1,
           }}
           transition={{ duration: 0.2 }}
-          className="w-2 h-2 ml-[15px] mt-[15px] rounded-full bg-gold"
+          className="w-2 h-2 ml-[15px] mt-[15px] rounded-full bg-[#C9A227]"
         />
       </motion.div>
     </>

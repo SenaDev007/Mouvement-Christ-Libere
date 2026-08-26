@@ -24,16 +24,16 @@ export default async function AdminServantsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-semibold text-ink mb-1">
+          <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1">
             Serviteurs
           </h1>
-          <p className="text-sm text-stone">
+          <p className="text-sm text-[#8A8378]">
             Gérez les deux serviteurs principaux (PAM et Pasteur Kongo).
           </p>
         </div>
         <Link
           href="/admin/servants/new"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-gold text-ink text-sm font-semibold hover:bg-gold-light transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55] transition-colors"
         >
           <Plus className="w-4 h-4" />
           Nouveau serviteur
@@ -45,14 +45,14 @@ export default async function AdminServantsPage() {
           <div key={s.id} className="card-gold-top p-5">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4 flex-1 min-w-0">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-gold bg-gold/10 flex-shrink-0">
-                  <span className="font-serif text-sm font-semibold text-gold">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-[#C9A227] bg-[#C9A227]/10 flex-shrink-0">
+                  <span className="font-serif text-sm font-semibold text-[#C9A227]">
                     {s.code === "pam" ? "AP" : "PK"}
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="font-serif text-lg font-semibold text-ink">
+                    <h2 className="font-serif text-lg font-semibold text-[#1E0F2B]">
                       {s.fullName}
                     </h2>
                     {!s.isActive && (
@@ -61,12 +61,12 @@ export default async function AdminServantsPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-stone uppercase tracking-[0.18em] font-semibold mt-0.5">
+                  <p className="text-xs text-[#8A8378] uppercase tracking-[0.18em] font-semibold mt-0.5">
                     {s.shortName} · {s.role}
                   </p>
-                  <p className="text-sm text-ink/70 mt-2 line-clamp-2">{s.bio}</p>
+                  <p className="text-sm text-[#1E0F2B]/70 mt-2 line-clamp-2">{s.bio}</p>
 
-                  <div className="flex flex-wrap gap-3 mt-3 text-xs text-stone">
+                  <div className="flex flex-wrap gap-3 mt-3 text-xs text-[#8A8378]">
                     <span>{s._count.biographies} biographies</span>
                     <span>· {s._count.testimonies} témoignages</span>
                     <span>· {s._count.teachings} enseignements</span>
@@ -79,7 +79,7 @@ export default async function AdminServantsPage() {
               <div className="flex items-center gap-1 ml-4">
                 <Link
                   href={`/admin/servants/${s.id}/edit`}
-                  className="p-2 rounded hover:bg-gold/10 text-stone hover:text-gold transition-colors"
+                  className="p-2 rounded hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
                   aria-label="Modifier"
                 >
                   <Pencil className="w-4 h-4" />

@@ -15,14 +15,14 @@ export default function ReseauSamuelPage() {
       />
 
       {/* Explication */}
-      <section className="bg-ivory py-20 md:py-24">
+      <section className="bg-[#FAF6EF] py-20 md:py-24">
         <div className="container mx-auto max-w-5xl px-4">
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.3em] text-gold font-semibold mb-3">Pourquoi un réseau mesh ?</p>
-            <h2 className="font-serif text-3xl md:text-4xl font-semibold text-ink">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-semibold mb-3">Pourquoi un réseau mesh ?</p>
+            <h2 className="font-serif text-3xl md:text-4xl font-semibold text-[#1E0F2B]">
               Quand le réseau tombe, la Parole continue
             </h2>
-            <p className="mt-5 text-base text-stone leading-relaxed max-w-3xl mx-auto">
+            <p className="mt-5 text-base text-[#8A8378] leading-relaxed max-w-3xl mx-auto">
               Dans les scénarios de crise — coupure Internet, saisie de serveurs, persécution, catastrophe naturelle —
               le réseau Samuel assure un canal minimal de communication entre les membres de la communauté.
               Les messages se propagent de téléphone à téléphone, sans aucune infrastructure externe.
@@ -37,8 +37,8 @@ export default function ReseauSamuelPage() {
 
           {/* Architecture */}
           <div id="architecture" className="card-gold-top p-8">
-            <h3 className="font-serif text-xl font-semibold text-ink mb-6 flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-gold" />
+            <h3 className="font-serif text-xl font-semibold text-[#1E0F2B] mb-6 flex items-center gap-2">
+              <Cpu className="w-5 h-5 text-[#C9A227]" />
               Architecture technique
             </h3>
 
@@ -73,22 +73,22 @@ export default function ReseauSamuelPage() {
           {/* Cas d'usage */}
           <div className="mt-8 grid md:grid-cols-2 gap-6">
             <div className="card-gold-top p-6">
-              <h4 className="font-serif text-lg font-semibold text-ink mb-3 flex items-center gap-2">
+              <h4 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-3 flex items-center gap-2">
                 <Bell className="w-4 h-4 text-state-danger" />
                 Scénario 1 — Coupure Internet
               </h4>
-              <p className="text-sm text-ink/70 leading-relaxed">
+              <p className="text-sm text-[#1E0F2B]/70 leading-relaxed">
                 Le gouvernement coupe Internet dans une région. Les membres du réseau Samuel
                 continuent de communiquer via mesh. Les instructions de l'équipe pastorale
                 (rassemblement, lieu sûr, prière) se propagent de téléphone en téléphone.
               </p>
             </div>
             <div className="card-gold-top p-6">
-              <h4 className="font-serif text-lg font-semibold text-ink mb-3 flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-gold" />
+              <h4 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-3 flex items-center gap-2">
+                <Smartphone className="w-4 h-4 text-[#C9A227]" />
                 Scénario 2 — Saisie de serveurs
               </h4>
-              <p className="text-sm text-ink/70 leading-relaxed">
+              <p className="text-sm text-[#1E0F2B]/70 leading-relaxed">
                 Le serveur central est saisi ou censuré. Les membres continuent de recevoir
                 les enseignements et témoignages déjà téléchargés (mode offline), et de
                 communiquer via mesh jusqu'à ce qu'un nœud retrouve Internet et synchronise.
@@ -97,9 +97,9 @@ export default function ReseauSamuelPage() {
           </div>
 
           {/* Stack technique */}
-          <div className="mt-8 p-6 bg-imperial/5 border border-gold/20 rounded-card">
-            <h4 className="font-serif text-base font-semibold text-ink mb-4 flex items-center gap-2">
-              <GitBranch className="w-4 h-4 text-gold" />
+          <div className="mt-8 p-6 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-2xl">
+            <h4 className="font-serif text-base font-semibold text-[#1E0F2B] mb-4 flex items-center gap-2">
+              <GitBranch className="w-4 h-4 text-[#C9A227]" />
               Stack technique recommandée
             </h4>
             <div className="grid md:grid-cols-2 gap-3 text-sm">
@@ -113,10 +113,10 @@ export default function ReseauSamuelPage() {
           </div>
 
           {/* Statut */}
-          <div className="mt-8 p-6 bg-state-danger/5 border border-state-danger/20 rounded-card text-center">
+          <div className="mt-8 p-6 bg-state-danger/5 border border-state-danger/20 rounded-2xl text-center">
             <Radio className="w-8 h-8 text-state-danger mx-auto mb-3" />
-            <h4 className="font-serif text-lg font-semibold text-ink mb-2">Statut : Phase de conception</h4>
-            <p className="text-sm text-stone leading-relaxed">
+            <h4 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">Statut : Phase de conception</h4>
+            <p className="text-sm text-[#8A8378] leading-relaxed">
               Le réseau Samuel est actuellement en phase de conception architecturelle.
               L'implémentation complète nécessite une application mobile native (React Native)
               et sera développée dans la phase V4 du projet.
@@ -144,11 +144,11 @@ export default function ReseauSamuelPage() {
 function Card({ icon: Icon, title, description }: { icon: React.ComponentType<{ className?: string }>; title: string; description: string }) {
   return (
     <div className="card-gold-top p-6">
-      <div className="flex items-center justify-center w-12 h-12 rounded-md bg-imperial/10 mb-4">
-        <Icon className="w-6 h-6 text-imperial" />
+      <div className="flex items-center justify-center w-12 h-12 rounded-md bg-[#2A0E3D]/10 mb-4">
+        <Icon className="w-6 h-6 text-[#2A0E3D]" />
       </div>
-      <h3 className="font-serif text-lg font-semibold text-ink mb-2">{title}</h3>
-      <p className="text-sm text-ink/70 leading-relaxed">{description}</p>
+      <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">{title}</h3>
+      <p className="text-sm text-[#1E0F2B]/70 leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -156,13 +156,13 @@ function Card({ icon: Icon, title, description }: { icon: React.ComponentType<{ 
 function Layer({ num, title, description, tech }: { num: string; title: string; description: string; tech: string }) {
   return (
     <div className="flex gap-4">
-      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gold/15 border-2 border-gold/30 flex-shrink-0">
-        <span className="font-serif text-base font-semibold text-gold">{num}</span>
+      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#C9A227]/15 border-2 border-[#C9A227]/30 flex-shrink-0">
+        <span className="font-serif text-base font-semibold text-[#C9A227]">{num}</span>
       </div>
       <div className="flex-1">
-        <h4 className="font-serif text-base font-semibold text-ink mb-1">{title}</h4>
-        <p className="text-sm text-ink/70 leading-relaxed mb-2">{description}</p>
-        <p className="text-xs text-stone font-mono">{tech}</p>
+        <h4 className="font-serif text-base font-semibold text-[#1E0F2B] mb-1">{title}</h4>
+        <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-2">{description}</p>
+        <p className="text-xs text-[#8A8378] font-mono">{tech}</p>
       </div>
     </div>
   );
@@ -171,8 +171,8 @@ function Layer({ num, title, description, tech }: { num: string; title: string; 
 function TechItem({ name, usage }: { name: string; usage: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="px-2 py-1 rounded bg-imperial/10 text-imperial text-xs font-mono font-semibold">{name}</span>
-      <span className="text-xs text-stone">{usage}</span>
+      <span className="px-2 py-1 rounded bg-[#2A0E3D]/10 text-[#2A0E3D] text-xs font-mono font-semibold">{name}</span>
+      <span className="text-xs text-[#8A8378]">{usage}</span>
     </div>
   );
 }

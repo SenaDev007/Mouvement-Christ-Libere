@@ -43,9 +43,9 @@ export function HeroSection({
         className="absolute inset-0 pointer-events-none"
       >
         {/* Halo or supérieur droit */}
-        <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] rounded-full bg-gold/10 blur-[120px]" />
+        <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] rounded-full bg-[#C9A227]/10 blur-[120px]" />
         {/* Halo lavande inférieur gauche */}
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-lavender/20 blur-[100px]" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-[#8C5FA8]/20 blur-[100px]" />
       </motion.div>
 
       {/* Motif géométrique filigrane — étoile de David discrète */}
@@ -53,11 +53,11 @@ export function HeroSection({
         style={{ opacity }}
         className="absolute top-12 right-12 opacity-[0.08] pointer-events-none hidden md:block"
       >
-        <StarOfDavid className="w-48 h-48 text-gold" />
+        <StarOfDavid className="w-48 h-48 text-[#C9A227]" />
       </motion.div>
 
       {/* Filet or supérieur */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A227] to-transparent opacity-60" />
 
       {/* Contenu */}
       <motion.div
@@ -96,8 +96,8 @@ export function HeroSection({
             transition={{ duration: 0.6, delay: 0.1 }}
             className="flex items-center gap-2 mb-6"
           >
-            <Sparkles className="w-3.5 h-3.5 text-gold" />
-            <span className="text-xs uppercase tracking-[0.25em] font-semibold text-gold">
+            <Sparkles className="w-3.5 h-3.5 text-[#C9A227]" />
+            <span className="text-xs uppercase tracking-[0.25em] font-semibold text-[#C9A227]">
               {kicker}
             </span>
           </motion.div>
@@ -107,7 +107,7 @@ export function HeroSection({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold leading-[1.02] text-ivory mb-6 tracking-tight"
+            className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold leading-[1.02] text-[#FAF6EF] mb-6 tracking-tight"
           >
             {title}
           </motion.h1>
@@ -117,7 +117,7 @@ export function HeroSection({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.35 }}
-            className="text-lg md:text-xl text-ivory/75 leading-relaxed max-w-2xl mb-10 font-light"
+            className="text-lg md:text-xl text-[#FAF6EF]/75 leading-relaxed max-w-2xl mb-10 font-light"
           >
             {subtitle}
           </motion.p>
@@ -133,7 +133,7 @@ export function HeroSection({
               {primaryCta && (
                 <Link
                   href={primaryCta.href}
-                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-md bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-all hover:shadow-[0_0_30px_rgba(201,162,39,0.4)]"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-all hover:shadow-[0_0_30px_rgba(201,162,39,0.4)]"
                 >
                   {primaryCta.label}
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -142,7 +142,7 @@ export function HeroSection({
               {secondaryCta && (
                 <Link
                   href={secondaryCta.href}
-                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-md border border-gold/40 text-gold font-semibold text-sm hover:bg-gold/10 transition-all backdrop-blur-sm"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-md border border-[#C9A227]/40 text-[#C9A227] font-semibold text-sm hover:bg-[#C9A227]/10 transition-all backdrop-blur-sm"
                 >
                   {secondaryCta.label}
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -163,15 +163,15 @@ export function HeroSection({
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
           className="flex flex-col items-center gap-2"
         >
-          <span className="text-[10px] uppercase tracking-[0.3em] text-ivory/40 font-medium">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-[#FAF6EF]/40 font-medium">
             Défiler
           </span>
-          <div className="w-px h-8 bg-gradient-to-b from-gold/60 to-transparent" />
+          <div className="w-px h-8 bg-gradient-to-b from-[#C9A227]/60 to-transparent" />
         </motion.div>
       </motion.div>
 
       {/* Filet or inférieur */}
-      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-gold to-transparent opacity-60" />
+      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#C9A227] to-transparent opacity-60" />
     </section>
   );
 }

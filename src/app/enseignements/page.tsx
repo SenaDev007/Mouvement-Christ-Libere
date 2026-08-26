@@ -57,11 +57,11 @@ export default async function EnseignementsPage({ searchParams }: PageProps) {
       />
 
       {/* Liste */}
-      <section className="bg-ivory py-20 md:py-24">
+      <section className="bg-[#FAF6EF] py-20 md:py-24">
         <div className="container mx-auto max-w-7xl px-4">
           {teachings.length === 0 ? (
             <div className="text-center py-20 max-w-md mx-auto">
-              <p className="text-stone italic leading-relaxed">
+              <p className="text-[#8A8378] italic leading-relaxed">
                 Aucun enseignement ne correspond à cette recherche pour l'instant.
                 Essayez un autre mot-clé, ou parcourez les enseignements par thème.
               </p>
@@ -86,21 +86,21 @@ export default async function EnseignementsPage({ searchParams }: PageProps) {
           )}
 
           {/* Bandeau RSS / Email */}
-          <div className="mt-16 p-6 bg-imperial/5 border border-gold/20 rounded-card">
+          <div className="mt-16 p-6 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-2xl">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-ink mb-1">
+                <p className="text-sm font-semibold text-[#1E0F2B] mb-1">
                   Pour ne rien manquer des nouveaux enseignements
                 </p>
-                <p className="text-xs text-stone">
+                <p className="text-xs text-[#8A8378]">
                   Flux RSS, email à un proche, ou export PDF — plusieurs canaux pour préserver et diffuser.
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors">
+                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors">
                   Flux RSS
                 </button>
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors">
+                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors">
                   Email à un proche
                 </button>
               </div>
@@ -112,8 +112,8 @@ export default async function EnseignementsPage({ searchParams }: PageProps) {
       <SectionDivider variant="ornament" />
 
       {/* Citation */}
-      <section className="bg-imperial py-24 md:py-32 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gold/5 blur-[100px] rounded-full pointer-events-none" />
+      <section className="bg-[#2A0E3D] py-24 md:py-32 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative">
           <QuoteBlock
             text="Toute Écriture est inspirée de Dieu, et utile pour enseigner, pour convaincre, pour corriger, pour instruire dans la justice."

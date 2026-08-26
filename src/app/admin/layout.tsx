@@ -81,29 +81,29 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="min-h-screen bg-ivory flex">
+    <div className="min-h-screen bg-[#FAF6EF] flex">
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-imperial text-ivory flex-shrink-0 transition-transform duration-300",
+          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-[#2A0E3D] text-[#FAF6EF] flex-shrink-0 transition-transform duration-300",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="px-5 py-5 border-b border-gold/15">
+          <div className="px-5 py-5 border-b border-[#C9A227]/15">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-serif text-lg font-semibold text-ivory">
+                <div className="font-serif text-lg font-semibold text-[#FAF6EF]">
                   Backoffice
                 </div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-gold-light/70 font-semibold">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/70 font-semibold">
                   Christ Libère
                 </div>
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden text-ivory/70"
+                className="lg:hidden text-[#FAF6EF]/70"
                 aria-label="Fermer le menu"
               >
                 <X className="w-5 h-5" />
@@ -115,7 +115,7 @@ export default function AdminLayout({
           <nav className="flex-1 overflow-y-auto scrollbar-discrete py-4">
             {NAV_SECTIONS.map((section) => (
               <div key={section.title} className="mb-5">
-                <p className="px-5 mb-2 text-[10px] uppercase tracking-[0.18em] text-gold-light/50 font-semibold">
+                <p className="px-5 mb-2 text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/50 font-semibold">
                   {section.title}
                 </p>
                 <ul className="space-y-0.5">
@@ -132,8 +132,8 @@ export default function AdminLayout({
                           className={cn(
                             "flex items-center gap-3 px-5 py-2.5 text-sm transition-colors",
                             isActive
-                              ? "bg-gold/15 text-gold border-l-2 border-gold"
-                              : "text-ivory/70 hover:bg-imperial-light/40 hover:text-ivory border-l-2 border-transparent"
+                              ? "bg-[#C9A227]/15 text-[#C9A227] border-l-2 border-[#C9A227]"
+                              : "text-[#FAF6EF]/70 hover:bg-[#3D1A54]/40 hover:text-[#FAF6EF] border-l-2 border-transparent"
                           )}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
@@ -148,18 +148,18 @@ export default function AdminLayout({
           </nav>
 
           {/* Footer sidebar */}
-          <div className="px-5 py-4 border-t border-gold/15 space-y-1">
+          <div className="px-5 py-4 border-t border-[#C9A227]/15 space-y-1">
             <Link
               href="/"
               target="_blank"
-              className="flex items-center gap-2 text-xs text-ivory/60 hover:text-gold transition-colors py-1.5"
+              className="flex items-center gap-2 text-xs text-[#FAF6EF]/60 hover:text-[#C9A227] transition-colors py-1.5"
             >
               <ExternalLink className="w-3 h-3" />
               Voir le site
             </Link>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-xs text-ivory/60 hover:text-state-danger transition-colors py-1.5"
+              className="flex items-center gap-2 text-xs text-[#FAF6EF]/60 hover:text-state-danger transition-colors py-1.5"
             >
               <LogOut className="w-3 h-3" />
               Déconnexion
@@ -171,7 +171,7 @@ export default function AdminLayout({
       {/* Overlay mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-imperial-dark/60 z-30 lg:hidden"
+          className="fixed inset-0 bg-[#1A0826]/60 z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -179,10 +179,10 @@ export default function AdminLayout({
       {/* Contenu principal */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar mobile */}
-        <header className="lg:hidden sticky top-0 z-20 bg-imperial text-ivory px-4 py-3 flex items-center justify-between">
+        <header className="lg:hidden sticky top-0 z-20 bg-[#2A0E3D] text-[#FAF6EF] px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-ivory"
+            className="text-[#FAF6EF]"
             aria-label="Ouvrir le menu"
           >
             <Menu className="w-5 h-5" />

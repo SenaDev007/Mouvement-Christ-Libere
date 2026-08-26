@@ -105,17 +105,17 @@ export default function CoffreFortPage() {
       />
 
       {/* Explication */}
-      <section className="bg-ivory py-16 md:py-20">
+      <section className="bg-[#FAF6EF] py-16 md:py-20">
         <div className="container mx-auto max-w-5xl px-4">
           <div className="grid md:grid-cols-3 gap-6">
             <div className="card-gold-top p-6">
-              <div className="flex items-center justify-center w-12 h-12 rounded-md bg-imperial/10 mb-4">
-                <Hash className="w-6 h-6 text-imperial" />
+              <div className="flex items-center justify-center w-12 h-12 rounded-md bg-[#2A0E3D]/10 mb-4">
+                <Hash className="w-6 h-6 text-[#2A0E3D]" />
               </div>
-              <h3 className="font-serif text-lg font-semibold text-ink mb-2">
+              <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">
                 1. Hachage SHA-256
               </h3>
-              <p className="text-sm text-ink/70 leading-relaxed">
+              <p className="text-sm text-[#1E0F2B]/70 leading-relaxed">
                 Chaque contenu est haché avec SHA-256. Le hash est unique : toute modification
                 du contenu, même d&apos;un seul caractère, produit un hash différent. C&apos;est la
                 preuve mathématique d&apos;intégrité.
@@ -123,13 +123,13 @@ export default function CoffreFortPage() {
             </div>
 
             <div className="card-gold-top p-6">
-              <div className="flex items-center justify-center w-12 h-12 rounded-md bg-gold/10 mb-4">
-                <Lock className="w-6 h-6 text-gold" />
+              <div className="flex items-center justify-center w-12 h-12 rounded-md bg-[#C9A227]/10 mb-4">
+                <Lock className="w-6 h-6 text-[#C9A227]" />
               </div>
-              <h3 className="font-serif text-lg font-semibold text-ink mb-2">
+              <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">
                 2. Ancrage Arweave
               </h3>
-              <p className="text-sm text-ink/70 leading-relaxed">
+              <p className="text-sm text-[#1E0F2B]/70 leading-relaxed">
                 Le contenu et son hash sont uploadés sur Arweave, une blockchain de stockage
                 permanent. Une fois ancré, le contenu ne peut plus être modifié ni supprimé —
                 il est gravé pour l&apos;éternité dans le réseau décentralisé.
@@ -140,10 +140,10 @@ export default function CoffreFortPage() {
               <div className="flex items-center justify-center w-12 h-12 rounded-md bg-state-success/10 mb-4">
                 <ShieldCheck className="w-6 h-6 text-state-success" />
               </div>
-              <h3 className="font-serif text-lg font-semibold text-ink mb-2">
+              <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">
                 3. Vérification perpétuelle
               </h3>
-              <p className="text-sm text-ink/70 leading-relaxed">
+              <p className="text-sm text-[#1E0F2B]/70 leading-relaxed">
                 N&apos;importe qui peut vérifier à tout moment qu&apos;un contenu n&apos;a pas été
                 altéré, en comparant le hash actuel avec le hash ancré sur Arweave. La vérification
                 fonctionne même si le site est censuré.
@@ -152,15 +152,15 @@ export default function CoffreFortPage() {
           </div>
 
           {/* Bandeau anti-censure */}
-          <div className="mt-8 p-6 bg-imperial text-ivory rounded-card border border-gold/30 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gold/10 blur-3xl rounded-full pointer-events-none" />
+          <div className="mt-8 p-6 bg-[#2A0E3D] text-[#FAF6EF] rounded-2xl border border-[#C9A227]/30 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full pointer-events-none" />
             <div className="relative flex items-start gap-4">
-              <ShieldCheck className="w-8 h-8 text-gold flex-shrink-0 mt-1" />
+              <ShieldCheck className="w-8 h-8 text-[#C9A227] flex-shrink-0 mt-1" />
               <div>
-                <h3 className="font-serif text-xl font-semibold text-ivory mb-2">
+                <h3 className="font-serif text-xl font-semibold text-[#FAF6EF] mb-2">
                   Pourquoi un coffre-fort ?
                 </h3>
-                <p className="text-sm text-ivory/80 leading-relaxed">
+                <p className="text-sm text-[#FAF6EF]/80 leading-relaxed">
                   Le cahier des charges prévoit qu&apos;en cas de censure — shadowban YouTube,
                   suppression Facebook, saisie de domaine, compromission du serveur — les
                   contenus doivent rester accessibles et vérifiables. Arweave répond à cette
@@ -177,13 +177,13 @@ export default function CoffreFortPage() {
       <SectionDivider variant="ornament" />
 
       {/* Formulaire d'ancrage */}
-      <section id="ancrer" className="bg-ivory py-16 md:py-20">
+      <section id="ancrer" className="bg-[#FAF6EF] py-16 md:py-20">
         <div className="container mx-auto max-w-2xl px-4">
           <div className="text-center mb-8">
-            <h2 className="font-serif text-3xl font-semibold text-ink mb-3">
+            <h2 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-3">
               Ancrer un contenu
             </h2>
-            <p className="text-sm text-stone">
+            <p className="text-sm text-[#8A8378]">
               Le contenu sera haché (SHA-256) et ancré sur Arweave. En mode démo (sans clé
               Arweave configurée), seul le hash est généré — preuve d&apos;existence.
             </p>
@@ -200,10 +200,10 @@ export default function CoffreFortPage() {
                   <CheckCircle2 className="w-6 h-6 text-state-success" />
                 </div>
                 <div>
-                  <h3 className="font-serif text-xl font-semibold text-ink">
+                  <h3 className="font-serif text-xl font-semibold text-[#1E0F2B]">
                     Contenu ancré
                   </h3>
-                  <p className="text-xs text-stone">
+                  <p className="text-xs text-[#8A8378]">
                     {result.ancre.mode === "production"
                       ? "Ancrage Arweave réussi"
                       : "Mode démo — hash SHA-256 généré"}
@@ -251,11 +251,11 @@ export default function CoffreFortPage() {
               </div>
 
               {/* Hash en grand pour copie */}
-              <div className="p-4 bg-imperial/5 border border-gold/20 rounded-md mb-6">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-stone font-semibold mb-2">
+              <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-md mb-6">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2">
                   Preuve d&apos;intégrité (hash)
                 </p>
-                <code className="text-xs font-mono text-imperial break-all">
+                <code className="text-xs font-mono text-[#2A0E3D] break-all">
                   {result.ancre.hash}
                 </code>
               </div>
@@ -266,7 +266,7 @@ export default function CoffreFortPage() {
                     setResult(null);
                     setForm({ type: "temoignage", titre: "", contenu: "", auteur: "" });
                   }}
-                  className="px-5 py-2.5 rounded-md border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors text-sm font-semibold"
+                  className="px-5 py-2.5 rounded-md border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors text-sm font-semibold"
                 >
                   Ancrer un autre contenu
                 </button>
@@ -275,7 +275,7 @@ export default function CoffreFortPage() {
                     href={result.ancre.arweaveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-gold text-ink text-sm font-semibold hover:bg-gold-light transition-colors"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55] transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Voir sur Arweave
@@ -287,7 +287,7 @@ export default function CoffreFortPage() {
             <form onSubmit={handleSubmit} className="card-gold-top p-8 space-y-5">
               {/* Type */}
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                   Type de contenu
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -301,17 +301,17 @@ export default function CoffreFortPage() {
                         className={cn(
                           "p-3 rounded-md border text-center transition-all",
                           form.type === t.value
-                            ? "border-gold bg-gold/10"
-                            : "border-stone/30 hover:border-gold/50"
+                            ? "border-[#C9A227] bg-[#C9A227]/10"
+                            : "border-[#8A8378]/30 hover:border-[#C9A227]/50"
                         )}
                       >
                         <Icon className={cn(
                           "w-5 h-5 mx-auto mb-1",
-                          form.type === t.value ? "text-gold" : "text-stone"
+                          form.type === t.value ? "text-[#C9A227]" : "text-[#8A8378]"
                         )} />
                         <span className={cn(
                           "text-[10px] font-semibold",
-                          form.type === t.value ? "text-ink" : "text-stone"
+                          form.type === t.value ? "text-[#1E0F2B]" : "text-[#8A8378]"
                         )}>
                           {t.label}
                         </span>
@@ -322,7 +322,7 @@ export default function CoffreFortPage() {
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                   Titre *
                 </label>
                 <input
@@ -331,12 +331,12 @@ export default function CoffreFortPage() {
                   onChange={(e) => setForm({ ...form, titre: e.target.value })}
                   required
                   placeholder="Titre du contenu"
-                  className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                 />
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                   Auteur *
                 </label>
                 <input
@@ -345,12 +345,12 @@ export default function CoffreFortPage() {
                   onChange={(e) => setForm({ ...form, auteur: e.target.value })}
                   required
                   placeholder="PAM, Pasteur Kongo, ou autre"
-                  className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                 />
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
                   Contenu *
                 </label>
                 <textarea
@@ -359,9 +359,9 @@ export default function CoffreFortPage() {
                   required
                   rows={8}
                   placeholder="Le texte intégral du contenu à ancrer..."
-                  className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 resize-y font-serif"
+                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-y font-serif"
                 />
-                <p className="text-xs text-stone mt-1">
+                <p className="text-xs text-[#8A8378] mt-1">
                   {form.contenu.length} caractères · ~{Math.ceil(form.contenu.length / 1024)} KB
                 </p>
               </div>
@@ -376,7 +376,7 @@ export default function CoffreFortPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-6 py-4 rounded-md bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full px-6 py-4 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submitting ? (
                   <>
@@ -391,7 +391,7 @@ export default function CoffreFortPage() {
                 )}
               </button>
 
-              <p className="text-xs text-stone text-center">
+              <p className="text-xs text-[#8A8378] text-center">
                 Une fois ancré, le contenu ne peut plus être modifié ni supprimé.
               </p>
             </form>
@@ -428,10 +428,10 @@ function DetailRow({
   link?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 py-2 border-b border-stone/10">
-      <Icon className="w-4 h-4 text-stone flex-shrink-0 mt-0.5" />
+    <div className="flex items-start gap-3 py-2 border-b border-[#8A8378]/10">
+      <Icon className="w-4 h-4 text-[#8A8378] flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] uppercase tracking-[0.18em] text-stone font-semibold mb-0.5">
+        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-0.5">
           {label}
         </p>
         {link ? (
@@ -440,7 +440,7 @@ function DetailRow({
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "text-sm text-imperial hover:text-gold transition-colors break-all inline-flex items-center gap-1",
+              "text-sm text-[#2A0E3D] hover:text-[#C9A227] transition-colors break-all inline-flex items-center gap-1",
               mono && "font-mono"
             )}
           >
@@ -448,7 +448,7 @@ function DetailRow({
             <ExternalLink className="w-3 h-3 flex-shrink-0" />
           </a>
         ) : (
-          <p className={cn("text-sm text-ink break-all", mono && "font-mono")}>
+          <p className={cn("text-sm text-[#1E0F2B] break-all", mono && "font-mono")}>
             {value}
           </p>
         )}

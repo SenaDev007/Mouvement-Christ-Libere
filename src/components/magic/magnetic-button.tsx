@@ -39,9 +39,9 @@ export function MagneticButton({
 
   const baseClass = cn(
     "group relative inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-md font-semibold text-sm transition-colors overflow-hidden whitespace-nowrap",
-    variant === "primary" && "bg-gold text-ink hover:bg-gold-light",
-    variant === "secondary" && "border border-gold/40 text-gold hover:bg-gold/10",
-    variant === "ghost" && "text-ivory/80 hover:text-gold",
+    variant === "primary" && "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]",
+    variant === "secondary" && "border border-[#C9A227]/40 text-[#C9A227] hover:bg-[#C9A227]/10",
+    variant === "ghost" && "text-[#FAF6EF]/80 hover:text-[#C9A227]",
     className
   );
 
@@ -58,7 +58,7 @@ export function MagneticButton({
         <Link href={href} className={cn(baseClass, "block")}>
           {/* Halo lumineux animé */}
           {variant === "primary" && (
-            <span className="absolute inset-0 bg-gradient-to-r from-gold-light via-gold to-gold-light opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <span className="absolute inset-0 bg-gradient-to-r from-[#DDBE55] via-[#C9A227] to-[#DDBE55] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           )}
           {/* Shine effect */}
           <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
@@ -67,7 +67,7 @@ export function MagneticButton({
       ) : (
         <button onClick={onClick} className={cn(baseClass, "block")}>
           {variant === "primary" && (
-            <span className="absolute inset-0 bg-gradient-to-r from-gold-light via-gold to-gold-light opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <span className="absolute inset-0 bg-gradient-to-r from-[#DDBE55] via-[#C9A227] to-[#DDBE55] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           )}
           <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
           <span className="relative z-10 flex items-center gap-2">{children}</span>

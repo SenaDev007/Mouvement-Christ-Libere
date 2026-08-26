@@ -37,7 +37,7 @@ export function SpotlightCard({
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className={cn(
-        "group relative overflow-hidden rounded-card border border-stone/20 bg-ivory transition-all duration-500 hover:border-gold/40",
+        "group relative overflow-hidden rounded-2xl border border-[#8A8378]/20 bg-[#FAF6EF] transition-all duration-500 hover:border-[#C9A227]/40",
         className
       )}
     >
@@ -51,10 +51,10 @@ export function SpotlightCard({
       />
 
       {/* Filet or supérieur */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#C9A227] to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
 
       {/* Halo en coin */}
-      <div className="absolute -top-20 -right-20 w-40 h-40 bg-gold/0 group-hover:bg-gold/10 blur-3xl transition-all duration-700 pointer-events-none" />
+      <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#C9A227]/0 group-hover:bg-[#C9A227]/10 blur-3xl transition-all duration-700 pointer-events-none" />
 
       <div className="relative z-10">{children}</div>
     </motion.div>

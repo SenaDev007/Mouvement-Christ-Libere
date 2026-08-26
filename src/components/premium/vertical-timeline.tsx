@@ -27,7 +27,7 @@ export function VerticalTimeline({ items, variant = "light" }: VerticalTimelineP
       <div
         className={cn(
           "absolute left-4 md:left-1/2 top-0 bottom-0 w-px md:-translate-x-1/2",
-          "bg-gradient-to-b from-transparent via-gold/60 to-transparent"
+          "bg-gradient-to-b from-transparent via-[#C9A227]/60 to-transparent"
         )}
       />
 
@@ -78,13 +78,13 @@ function TimelineNode({
           className={cn(
             "flex items-center justify-center w-8 h-8 rounded-full border-2 backdrop-blur-sm",
             isDark
-              ? "bg-imperial border-gold"
-              : "bg-ivory border-gold shadow-[0_0_20px_rgba(201,162,39,0.3)]"
+              ? "bg-[#2A0E3D] border-[#C9A227]"
+              : "bg-[#FAF6EF] border-[#C9A227] shadow-[0_0_20px_rgba(201,162,39,0.3)]"
           )}
         >
-          <div className="w-2.5 h-2.5 rounded-full bg-gold" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#C9A227]" />
           {/* Halo pulsant */}
-          <div className="absolute inset-0 rounded-full border border-gold/30 animate-ping opacity-50" />
+          <div className="absolute inset-0 rounded-full border border-[#C9A227]/30 animate-ping opacity-50" />
         </motion.div>
       </div>
 
@@ -92,16 +92,16 @@ function TimelineNode({
       <div className={cn("md:[direction:ltr]", !isLeft && "md:col-start-2")}>
         <div
           className={cn(
-            "group relative p-6 md:p-8 rounded-card border transition-all duration-500",
+            "group relative p-6 md:p-8 rounded-2xl border transition-all duration-500",
             isDark
-              ? "bg-imperial-light/30 border-gold/20 hover:border-gold/50"
-              : "bg-ivory border-stone/20 hover:border-gold/40 hover:shadow-[0_15px_50px_-15px_rgba(42,14,61,0.2)]"
+              ? "bg-[#3D1A54]/30 border-[#C9A227]/20 hover:border-[#C9A227]/50"
+              : "bg-[#FAF6EF] border-[#8A8378]/20 hover:border-[#C9A227]/40 hover:shadow-[0_15px_50px_-15px_rgba(42,14,61,0.2)]"
           )}
         >
           {/* Date */}
           <div className="flex items-center gap-2 mb-3">
-            <div className="h-px w-6 bg-gold" />
-            <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-semibold">
+            <div className="h-px w-6 bg-[#C9A227]" />
+            <span className="text-[10px] uppercase tracking-[0.2em] text-[#C9A227] font-semibold">
               {item.date}
             </span>
           </div>
@@ -110,7 +110,7 @@ function TimelineNode({
           <h3
             className={cn(
               "font-serif text-2xl md:text-3xl font-semibold leading-snug mb-3",
-              isDark ? "text-ivory" : "text-ink"
+              isDark ? "text-[#FAF6EF]" : "text-[#1E0F2B]"
             )}
           >
             {item.title}
@@ -120,7 +120,7 @@ function TimelineNode({
           <p
             className={cn(
               "text-sm md:text-base leading-relaxed mb-4",
-              isDark ? "text-ivory/75" : "text-ink/75"
+              isDark ? "text-[#FAF6EF]/75" : "text-[#1E0F2B]/75"
             )}
           >
             {item.description}
@@ -128,19 +128,19 @@ function TimelineNode({
 
           {/* Verset biblique */}
           {item.verseRef && item.verseText && (
-            <div className="mt-4 pt-4 border-t border-gold/20">
+            <div className="mt-4 pt-4 border-t border-[#C9A227]/20">
               <div className="flex items-start gap-2">
-                <BookOpen className="w-3.5 h-3.5 text-gold flex-shrink-0 mt-1" />
+                <BookOpen className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-1" />
                 <div>
                   <p
                     className={cn(
                       "font-serif italic text-sm leading-relaxed mb-1",
-                      isDark ? "text-gold-light/90" : "text-imperial/90"
+                      isDark ? "text-[#DDBE55]/90" : "text-[#2A0E3D]/90"
                     )}
                   >
                     « {item.verseText} »
                   </p>
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-stone font-semibold">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-semibold">
                     {item.verseRef}
                   </p>
                 </div>

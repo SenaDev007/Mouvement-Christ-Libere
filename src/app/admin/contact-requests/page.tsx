@@ -19,18 +19,18 @@ export default async function AdminContactRequestsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-3xl font-semibold text-ink mb-1">
+        <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1">
           Demandes de contact
         </h1>
-        <p className="text-sm text-stone">
+        <p className="text-sm text-[#8A8378]">
           Demandes d&apos;échange transmises via le formulaire de contact.
         </p>
       </div>
 
       {requests.length === 0 ? (
         <div className="card-gold-top p-12 text-center">
-          <Inbox className="w-10 h-10 text-stone/40 mx-auto mb-3" />
-          <p className="text-sm text-stone italic">
+          <Inbox className="w-10 h-10 text-[#8A8378]/40 mx-auto mb-3" />
+          <p className="text-sm text-[#8A8378] italic">
             Aucune demande pour l&apos;instant.
           </p>
         </div>
@@ -41,28 +41,28 @@ export default async function AdminContactRequestsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-serif text-base font-semibold text-ink">{r.name}</h3>
+                    <h3 className="font-serif text-base font-semibold text-[#1E0F2B]">{r.name}</h3>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${
                       r.status === "PENDING"
-                        ? "bg-gold/15 text-gold-dark"
+                        ? "bg-[#C9A227]/15 text-[#A3821C]"
                         : r.status === "ANSWERED"
                           ? "bg-state-success/15 text-state-success"
-                          : "bg-stone/15 text-stone"
+                          : "bg-[#8A8378]/15 text-[#8A8378]"
                     }`}>
                       {r.status === "PENDING" ? "En attente" : r.status === "ANSWERED" ? "Traité" : "Archivé"}
                     </span>
                   </div>
-                  <p className="text-xs text-stone mb-2 flex items-center gap-1">
+                  <p className="text-xs text-[#8A8378] mb-2 flex items-center gap-1">
                     {r.contact.includes("@") ? (
                       <Mail className="w-3 h-3" />
                     ) : (
                       <Phone className="w-3 h-3" />
                     )}
-                    <a href={`mailto:${r.contact}`} className="hover:text-gold">{r.contact}</a>
+                    <a href={`mailto:${r.contact}`} className="hover:text-[#C9A227]">{r.contact}</a>
                     <span className="ml-2">·</span>
                     <span>{new Date(r.createdAt).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                   </p>
-                  <p className="text-sm text-ink/80 leading-relaxed mt-2 p-3 bg-ivory rounded border border-stone/15">
+                  <p className="text-sm text-[#1E0F2B]/80 leading-relaxed mt-2 p-3 bg-[#FAF6EF] rounded border border-[#8A8378]/15">
                     {r.message}
                   </p>
                 </div>
@@ -70,7 +70,7 @@ export default async function AdminContactRequestsPage() {
                   <form action={updateStatus.bind(null, r.id, "ANSWERED")}>
                     <button
                       type="submit"
-                      className="p-2 rounded hover:bg-state-success/10 text-stone hover:text-state-success transition-colors"
+                      className="p-2 rounded hover:bg-state-success/10 text-[#8A8378] hover:text-state-success transition-colors"
                       title="Marquer comme traité"
                     >
                       <CheckCircle className="w-3.5 h-3.5" />
@@ -79,7 +79,7 @@ export default async function AdminContactRequestsPage() {
                   <form action={updateStatus.bind(null, r.id, "ARCHIVED")}>
                     <button
                       type="submit"
-                      className="p-2 rounded hover:bg-stone/10 text-stone transition-colors"
+                      className="p-2 rounded hover:bg-[#8A8378]/10 text-[#8A8378] transition-colors"
                       title="Archiver"
                     >
                       <Archive className="w-3.5 h-3.5" />

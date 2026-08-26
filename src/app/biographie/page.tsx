@@ -52,9 +52,9 @@ export default async function BiographiePage({ searchParams }: PageProps) {
       />
 
       {/* Switcher serviteur */}
-      <section className="bg-ivory border-b border-stone/15 py-6 sticky top-[120px] z-30 backdrop-blur-md bg-ivory/95">
+      <section className="bg-[#FAF6EF] border-b border-[#8A8378]/15 py-6 sticky top-[120px] z-30 backdrop-blur-md bg-[#FAF6EF]/95">
         <div className="container mx-auto max-w-7xl px-4 flex items-center justify-center gap-4">
-          <span className="text-xs uppercase tracking-[0.18em] text-stone font-semibold">
+          <span className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold">
             Choisir le serviteur :
           </span>
           <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export default async function BiographiePage({ searchParams }: PageProps) {
       </section>
 
       {/* Timeline premium */}
-      <section className="bg-ivory py-20 md:py-28">
+      <section className="bg-[#FAF6EF] py-20 md:py-28">
         <div className="container mx-auto max-w-5xl px-4">
           <PremiumSectionHeading
             kicker="La frise chronologique"
@@ -94,8 +94,8 @@ export default async function BiographiePage({ searchParams }: PageProps) {
       <SectionDivider variant="ornament" />
 
       {/* Citation biblique */}
-      <section className="bg-imperial py-24 md:py-32 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gold/5 blur-[100px] rounded-full pointer-events-none" />
+      <section className="bg-[#2A0E3D] py-24 md:py-32 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative">
           <QuoteBlock
             text={isPam
@@ -109,12 +109,12 @@ export default async function BiographiePage({ searchParams }: PageProps) {
       </section>
 
       {/* CTA fin */}
-      <section className="bg-ivory py-20 text-center">
+      <section className="bg-[#FAF6EF] py-20 text-center">
         <div className="container mx-auto max-w-2xl px-4">
-          <h2 className="font-serif text-2xl md:text-3xl font-semibold text-ink mb-4">
+          <h2 className="font-serif text-2xl md:text-3xl font-semibold text-[#1E0F2B] mb-4">
             Aller plus loin
           </h2>
-          <p className="text-sm text-stone mb-8 leading-relaxed">
+          <p className="text-sm text-[#8A8378] mb-8 leading-relaxed">
             La biographie n'est que le commencement. Les témoignages détaillent ce qui a été vécu.
             Les enseignements transmettent ce qui a été reçu.
           </p>
@@ -142,12 +142,12 @@ function ServantSwitcherLink({
   active: boolean;
 }) {
   const cls = active
-    ? "bg-imperial text-ivory border-imperial"
-    : "border-imperial/30 text-imperial hover:bg-imperial/5";
+    ? "bg-[#2A0E3D] text-[#FAF6EF] border-[#2A0E3D]"
+    : "border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5";
   return (
     <a
       href={`/biographie?servant=${code}`}
-      className={`px-4 py-2 rounded-md text-sm font-semibold transition-all border ${cls}`}
+      className={`px-4 py-2 rounded-full text-sm font-semibold transition-all border ${cls}`}
     >
       {label}
     </a>

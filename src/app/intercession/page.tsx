@@ -41,10 +41,10 @@ const CATEGORIES = [
 ];
 
 const STATUT_LABELS: Record<string, { label: string; color: string }> = {
-  ouvert: { label: "Ouvert", color: "bg-stone/15 text-stone" },
-  en_priere: { label: "En prière", color: "bg-gold/15 text-gold-dark" },
+  ouvert: { label: "Ouvert", color: "bg-[#8A8378]/15 text-[#8A8378]" },
+  en_priere: { label: "En prière", color: "bg-[#C9A227]/15 text-[#A3821C]" },
   exauce: { label: "Exaucé", color: "bg-state-success/15 text-state-success" },
-  archive: { label: "Archivé", color: "bg-stone/10 text-stone/60" },
+  archive: { label: "Archivé", color: "bg-[#8A8378]/10 text-[#8A8378]/60" },
 };
 
 export default function IntercessionPage() {
@@ -125,19 +125,19 @@ export default function IntercessionPage() {
       />
 
       {/* Stats */}
-      <section className="bg-ivory py-12">
+      <section className="bg-[#FAF6EF] py-20 md:py-24">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard icon={Heart} value={stats.total} label="Demandes actives" color="text-gold" />
-            <StatCard icon={HandHeart} value={stats.enPriere} label="En prière" color="text-lavender" />
+            <StatCard icon={Heart} value={stats.total} label="Demandes actives" color="text-[#C9A227]" />
+            <StatCard icon={HandHeart} value={stats.enPriere} label="En prière" color="text-[#8C5FA8]" />
             <StatCard icon={CheckCircle2} value={stats.exauces} label="Exaucées" color="text-state-success" />
-            <StatCard icon={Users} value={stats.priersTotal} label="Prières exprimées" color="text-imperial" />
+            <StatCard icon={Users} value={stats.priersTotal} label="Prières exprimées" color="text-[#2A0E3D]" />
           </div>
         </div>
       </section>
 
       {/* Filtres */}
-      <section id="liste" className="bg-ivory py-8 border-t border-stone/15">
+      <section id="liste" className="bg-[#FAF6EF] py-8 border-t border-[#8A8378]/15">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="flex items-center gap-2 flex-wrap mb-6">
             {CATEGORIES.map((cat) => {
@@ -149,8 +149,8 @@ export default function IntercessionPage() {
                   className={cn(
                     "inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold transition-all",
                     filtre === cat.id
-                      ? "bg-imperial text-ivory"
-                      : "border border-imperial/30 text-imperial hover:bg-imperial/5"
+                      ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                      : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
                   )}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -162,8 +162,8 @@ export default function IntercessionPage() {
 
           {/* Liste des demandes */}
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-gold" />
+            <div className="flex items-center justify-center py-20 md:py-24">
+              <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -182,45 +182,45 @@ export default function IntercessionPage() {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       {demande.isUrgent && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-state-danger text-ivory animate-pulse">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-state-danger text-[#FAF6EF] animate-pulse">
                           <Flame className="w-2.5 h-2.5" />
                           URGENT
                         </span>
                       )}
                       <span className={cn(
                         "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold",
-                        STATUT_LABELS[demande.statut]?.color || "bg-stone/15 text-stone"
+                        STATUT_LABELS[demande.statut]?.color || "bg-[#8A8378]/15 text-[#8A8378]"
                       )}>
                         {STATUT_LABELS[demande.statut]?.label || demande.statut}
                       </span>
                     </div>
-                    <span className="text-[10px] text-stone">
+                    <span className="text-[10px] text-[#8A8378]">
                       <Clock className="w-3 h-3 inline mr-0.5" />
                       {new Date(demande.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
                     </span>
                   </div>
 
                   {/* Contenu */}
-                  <h3 className="font-serif text-base font-semibold text-ink mb-2">{demande.sujet}</h3>
-                  <p className="text-xs text-stone mb-1">par {demande.auteur}</p>
-                  <p className="text-sm text-ink/70 leading-relaxed mb-4 flex-1">{demande.description}</p>
+                  <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-2">{demande.sujet}</h3>
+                  <p className="text-xs text-[#8A8378] mb-1">par {demande.auteur}</p>
+                  <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-4 flex-1">{demande.description}</p>
 
                   {/* Témoignage d'exaucement */}
                   {demande.temoignageExaucement && (
                     <div className="p-3 bg-state-success/5 border border-state-success/20 rounded-md mb-4">
                       <p className="text-xs font-semibold text-state-success mb-1">Témoignage d'exaucement</p>
-                      <p className="text-xs text-ink/70 italic">« {demande.temoignageExaucement} »</p>
+                      <p className="text-xs text-[#1E0F2B]/70 italic">« {demande.temoignageExaucement} »</p>
                     </div>
                   )}
 
                   {/* Bouton prier */}
                   <button
                     onClick={() => handlePrier(demande.id)}
-                    className="w-full px-4 py-2.5 rounded-md bg-gold text-ink text-xs font-semibold hover:bg-gold-light transition-colors inline-flex items-center justify-center gap-2 group"
+                    className="w-full px-4 py-2.5 rounded-md bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 group"
                   >
                     <HandHeart className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                     Je prie pour cette demande
-                    <span className="ml-1 px-1.5 py-0.5 rounded bg-imperial/10 text-imperial text-[10px]">
+                    <span className="ml-1 px-1.5 py-0.5 rounded bg-[#2A0E3D]/10 text-[#2A0E3D] text-[10px]">
                       {demande.prayCount}
                     </span>
                   </button>
@@ -234,7 +234,7 @@ export default function IntercessionPage() {
       <SectionDivider variant="ornament" />
 
       {/* Formulaire de demande */}
-      <section id="demander" className="bg-ivory py-16 md:py-20">
+      <section id="demander" className="bg-[#FAF6EF] py-20 md:py-24 md:py-20">
         <div className="container mx-auto max-w-2xl px-4">
           {submitted ? (
             <motion.div
@@ -245,13 +245,13 @@ export default function IntercessionPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-state-success/15 border-2 border-state-success/40 mb-6">
                 <CheckCircle2 className="w-8 h-8 text-state-success" />
               </div>
-              <h3 className="font-serif text-2xl font-semibold text-ink mb-3">Demande déposée</h3>
-              <p className="text-sm text-stone mb-6">
+              <h3 className="font-serif text-2xl font-semibold text-[#1E0F2B] mb-3">Demande déposée</h3>
+              <p className="text-sm text-[#8A8378] mb-6">
                 Votre demande est maintenant visible par la communauté. Que le Seigneur vous bénisse.
               </p>
               <button
                 onClick={() => setSubmitted(false)}
-                className="text-sm font-semibold text-imperial hover:text-gold transition-colors"
+                className="text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
               >
                 Déposer une autre demande
               </button>
@@ -259,8 +259,8 @@ export default function IntercessionPage() {
           ) : (
             <>
               <div className="text-center mb-8">
-                <h2 className="font-serif text-3xl font-semibold text-ink mb-3">Déposer une demande</h2>
-                <p className="text-sm text-stone">
+                <h2 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-3">Déposer une demande</h2>
+                <p className="text-sm text-[#8A8378]">
                   Confiez votre fardeau à la communauté. « Portez les fardeaux les uns des autres, et vous accomplirez ainsi la loi de Christ. » (Galates 6:2)
                 </p>
               </div>
@@ -268,12 +268,12 @@ export default function IntercessionPage() {
               <form onSubmit={handleSubmit} className="card-gold-top p-8 space-y-5">
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">Pseudonyme *</label>
-                    <input type="text" value={form.auteur} onChange={(e) => setForm({ ...form, auteur: e.target.value })} required placeholder="Votre nom ou pseudo" className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20" />
+                    <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Pseudonyme *</label>
+                    <input type="text" value={form.auteur} onChange={(e) => setForm({ ...form, auteur: e.target.value })} required placeholder="Votre nom ou pseudo" className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">Catégorie</label>
-                    <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })} className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20">
+                    <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Catégorie</label>
+                    <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })} className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20">
                       <option value="general">Général</option>
                       <option value="sante">Santé</option>
                       <option value="famille">Famille</option>
@@ -283,24 +283,24 @@ export default function IntercessionPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">Sujet *</label>
-                  <input type="text" value={form.sujet} onChange={(e) => setForm({ ...form, sujet: e.target.value })} required placeholder="Résumé court de votre demande" maxLength={200} className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20" />
+                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Sujet *</label>
+                  <input type="text" value={form.sujet} onChange={(e) => setForm({ ...form, sujet: e.target.value })} required placeholder="Résumé court de votre demande" maxLength={200} className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-2 block">Description *</label>
-                  <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows={5} placeholder="Décrivez votre demande en détail..." maxLength={2000} className="w-full px-4 py-3 rounded-md border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 resize-y font-serif" />
+                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Description *</label>
+                  <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows={5} placeholder="Décrivez votre demande en détail..." maxLength={2000} className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-y font-serif" />
                 </div>
 
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={form.isUrgent} onChange={(e) => setForm({ ...form, isUrgent: e.target.checked })} className="w-4 h-4 rounded border-stone/30 text-state-danger focus:ring-state-danger" />
-                  <span className="text-sm text-ink inline-flex items-center gap-1">
+                  <input type="checkbox" checked={form.isUrgent} onChange={(e) => setForm({ ...form, isUrgent: e.target.checked })} className="w-4 h-4 rounded border-[#8A8378]/30 text-state-danger focus:ring-state-danger" />
+                  <span className="text-sm text-[#1E0F2B] inline-flex items-center gap-1">
                     <Flame className="w-3.5 h-3.5 text-state-danger" />
                     Marquer comme urgent
                   </span>
                 </label>
 
-                <button type="submit" disabled={submitting} className="w-full px-6 py-4 rounded-md bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50">
+                <button type="submit" disabled={submitting} className="w-full px-6 py-4 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50">
                   {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Dépôt en cours...</> : <><Heart className="w-4 h-4" /> Déposer ma demande</>}
                 </button>
               </form>
@@ -323,8 +323,8 @@ function StatCard({ icon: Icon, value, label, color }: { icon: React.ComponentTy
   return (
     <div className="card-gold-top p-5 text-center">
       <Icon className={cn("w-6 h-6 mx-auto mb-2", color)} />
-      <div className="font-serif text-2xl font-semibold text-ink">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-stone font-semibold mt-1">{label}</div>
+      <div className="font-serif text-2xl font-semibold text-[#1E0F2B]">{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-1">{label}</div>
     </div>
   );
 }

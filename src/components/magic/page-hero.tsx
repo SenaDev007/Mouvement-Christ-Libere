@@ -38,8 +38,8 @@ export function PageHero({
       <AuroraBackground variant="imperial" intensity="medium" className="absolute inset-0">
         <ParticleField count={25} color="#C9A227" size={1} speed="slow" />
 
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60" />
-        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-gold to-transparent opacity-60" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A227] to-transparent opacity-60" />
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#C9A227] to-transparent opacity-60" />
 
         <motion.div
           style={{ opacity, y }}
@@ -57,9 +57,9 @@ export function PageHero({
                   animate={{ rotate: 360 }}
                   transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-gold" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#C9A227]" />
                 </motion.div>
-                <span className="text-xs uppercase tracking-[0.3em] font-semibold text-gold">
+                <span className="text-xs uppercase tracking-[0.3em] font-semibold text-[#C9A227]">
                   {kicker}
                 </span>
               </motion.div>
@@ -68,7 +68,7 @@ export function PageHero({
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.1 }}
-                className="font-serif text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight text-ivory mb-6"
+                className="font-serif text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight text-[#FAF6EF] mb-6"
               >
                 {title}
               </motion.h1>
@@ -77,7 +77,7 @@ export function PageHero({
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.25 }}
-                className="text-lg md:text-xl text-ivory/70 leading-relaxed max-w-2xl mb-10 font-light"
+                className="text-lg md:text-xl text-[#FAF6EF]/70 leading-relaxed max-w-2xl mb-10 font-light"
               >
                 {subtitle}
               </motion.p>
