@@ -68,7 +68,7 @@ export default function PasteurKongoPage() {
           <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-semibold mb-4">Découvrez également</p>
           <h2 className="font-serif text-2xl md:text-3xl font-extrabold text-[#FAF6EF] mb-8">Le témoignage de PAM</h2>
           <Link href="/pam" className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300">
-            Voir PAM <ChevronRight className="w-4 h-4 ml-2" />
+            Voir Pam <ChevronRight className="w-4 h-4 ml-2" />
           </Link>
         </div>
       </section>

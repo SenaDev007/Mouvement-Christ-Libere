@@ -34,7 +34,7 @@ export default function StreamingPage() {
                 <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#2A0E3D] text-[#FAF6EF] mb-2">
                   <Radio className="w-7 h-7" />
                 </div>
-                <p className="text-xs font-semibold text-[#1E0F2B]">PAM / Pasteur Kongo</p>
+                <p className="text-xs font-semibold text-[#1E0F2B]">Pam / Pasteur Kongo</p>
                 <p className="text-[10px] text-[#8A8378]">OBS / Streamlabs</p>
               </div>
 

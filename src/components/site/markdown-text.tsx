@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 
 /**
- * MarkdownText — rendu Markdown propre pour les contenus de PAM.
+ * MarkdownText — rendu Markdown propre pour les contenus de Pam.
  *
  * Rend les **gras**, *italiques*, paragraphes, listes, etc.
  * sans afficher les astérisques bruts.
