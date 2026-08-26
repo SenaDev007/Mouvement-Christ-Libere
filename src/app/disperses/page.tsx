@@ -55,7 +55,7 @@ export default function DispersesPage() {
   const loadMembers = () => {
     fetch("/api/disperses")
       .then(r => r.json())
-      .then(data => { setMembers(data.members || data || []); setLoading(false); })
+      .then(data => { setMembers(data.membres || data.members || []); setLoading(false); })
       .catch(() => setLoading(false));
   };
 
