@@ -99,7 +99,7 @@ export function SiteHeader() {
                 scrolled ? "text-[#FAF6EF]" : "text-[#1E0F2B]"
               )}
             >
-              Mouvement Christ Libère
+              Christ Libère
             </span>
           </Link>
 

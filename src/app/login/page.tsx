@@ -54,7 +54,7 @@ export default function LoginPage() {
             Connexion
           </h1>
           <p className="text-sm text-[#8A8378]">
-            Mouvement Christ Libère
+            Christ Libère
           </p>
         </div>
 

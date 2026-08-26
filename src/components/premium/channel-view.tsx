@@ -219,7 +219,7 @@ export function ChannelView({ channels, initialChannelId }: ChannelViewProps) {
         <div className="p-4 border-b border-[#C9A227]/15">
           <h2 className="font-serif text-lg font-semibold">Communauté</h2>
           <p className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/70 font-semibold mt-0.5">
-            Mouvement Christ Libère
+            Christ Libère
           </p>
         </div>
 

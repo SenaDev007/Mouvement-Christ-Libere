@@ -1,5 +1,5 @@
 /**
- * Sous-titrage IA multilingue — Mouvement Christ Libère (V3)
+ * Sous-titrage IA multilingue — Christ Libère (V3)
  *
  * Utilise Whisper (OpenAI) pour générer des sous-titres à partir de fichiers audio/vidéo.
  *

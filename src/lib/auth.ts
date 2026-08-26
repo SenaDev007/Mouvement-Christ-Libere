@@ -1,5 +1,5 @@
 /**
- * Authentification backoffice — Mouvement Christ Libère
+ * Authentification backoffice — Christ Libère
  *
  * Approche simple et sécurisée pour la V1 :
  * - Cookie httpOnly "admin_session" contenant un token signé

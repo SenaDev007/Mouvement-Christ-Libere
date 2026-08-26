@@ -1,27 +1,31 @@
 import { PAM_BIOGRAPHY } from "@/lib/data/authentic-content";
 import { MarkdownText } from "@/components/site/markdown-text";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, FileText, BookOpen, Video, MapPin, Calendar, Sparkles } from "lucide-react";
 
 export const dynamic = "force-static";
 
 export const metadata = {
-  title: "Pam — Afrika Alkebulane Pamela Dali | Mouvement Christ Libère",
+  title: "Pam — Afrika Alkebulane Pamela Dali | Christ Libère",
   description: "Biographie authentique de la Servante de Dieu Pamela Dali : ses origines en Afrique (Alkebulan), son appel en 2003, sa traversée du désert, sa mort le 18 juillet 2011 et sa résurrection.",
 };
 
 export default function PamPage() {
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
-      {/* ═══ HERO ═══ */}
+      {/* ═══ HERO avec vraie photo de Pam ═══ */}
       <section className="relative min-h-[70vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-[#FAF6EF]">
         <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop"
-            alt="Ciel étoilé"
-            className="w-full h-full object-cover opacity-25"
+          <Image
+            src="/pam.jpeg"
+            alt="Afrika Alkebulane Pamela Dali"
+            fill
+            priority
+            className="object-cover object-center opacity-40"
+            sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/90 to-[#1A0826]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/70 via-[#2A0E3D]/80 to-[#1A0826]" />
         </div>
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-6">
@@ -30,16 +34,16 @@ export default function PamPage() {
               Servante de l'Éternel
             </span>
           </div>
-          <h1 className="font-serif font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.15] mb-4">
+          <h1 className="font-serif font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.15] mb-4 drop-shadow-lg">
             Afrika Alkebulane
             <br />
             <span className="text-[#C9A227]">Pamela Dali</span>
           </h1>
-          <p className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-8">
+          <p className="text-base md:text-lg text-[#FAF6EF]/80 leading-relaxed max-w-2xl mx-auto mb-8 drop-shadow">
             Biographie authentique d'une servante marquée dès le sein maternel,
             morte le 18 juillet 2011 et ressuscitée pour témoigner du Royaume des Cieux.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-[#FAF6EF]/60">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-[#FAF6EF]/70">
             <span className="inline-flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-[#C9A227]" />
               Alkebulan (Afrique)

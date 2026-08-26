@@ -23,10 +23,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Afrika Alkebulane Pamela Dali & Pasteur Kongo — Témoignages, enseignements",
+  title: "Christ Libère — Pam & Pasteur Kongo | Témoignages, enseignements, communauté",
   description:
-    "Biographies, témoignages, enseignements et communauté de foi autour du ministère de Pam et du Pasteur Kongo.",
+    "Christ Libère : biographies, témoignages, enseignements et communauté de foi autour du ministère de Pam et du Pasteur Kongo.",
   keywords: [
+    "Christ Libère",
     "Pam",
     "Pasteur Kongo",
     "Afrika Alkebulane Pamela Dali",
@@ -35,9 +36,19 @@ export const metadata: Metadata = {
     "enseignements bibliques",
     "communauté de foi",
   ],
-  authors: [{ name: "Mouvement Christ Libère" }],
+  authors: [{ name: "Christ Libère" }],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-32.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180" },
+    ],
+  },
+  manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "Pam & Pasteur Kongo — Au son du chofar",
+    title: "Christ Libère — Pam & Pasteur Kongo",
     description:
       "Enseignements, témoignages et vie de communauté. Un espace de foi centralisé.",
     type: "website",
@@ -45,9 +56,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pam & Pasteur Kongo — Au son du chofar",
+    title: "Christ Libère — Pam & Pasteur Kongo",
     description:
-      "Enseignements, témoignements et vie de communauté. Un espace de foi centralisé.",
+      "Enseignements, témoignages et vie de communauté. Un espace de foi centralisé.",
   },
 };
 

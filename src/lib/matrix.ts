@@ -1,5 +1,5 @@
 /**
- * Intégration Matrix — Mouvement Christ Libère (V2)
+ * Intégration Matrix — Christ Libère (V2)
  *
  * Cette couche abstrait la connexion au serveur Matrix Synapse.
  *

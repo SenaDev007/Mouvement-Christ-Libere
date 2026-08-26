@@ -50,7 +50,7 @@ export function SiteFooter() {
           {/* Colonne baseline */}
           <div className="md:col-span-1">
             <div className="font-serif text-2xl font-semibold text-[#FAF6EF] mb-2">
-              Mouvement Christ Libère
+              Christ Libère
             </div>
             <p className="text-sm text-[#FAF6EF]/70 leading-relaxed mb-4">
               Témoignages, enseignements et vie de communauté au service du

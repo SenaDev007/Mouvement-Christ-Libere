@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
             Backoffice
           </h1>
           <p className="text-sm text-[#FAF6EF]/70">
-            Mouvement Christ Libère — Espace réservé
+            Christ Libère — Espace réservé
           </p>
         </div>
 

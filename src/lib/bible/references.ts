@@ -1,5 +1,5 @@
 /**
- * Moteur de références bibliques — Mouvement Christ Libère (V3)
+ * Moteur de références bibliques — Christ Libère (V3)
  *
  * Parse, normalise et résout les références bibliques (ex: "Genèse 5:24",
  * "1 Corinthiens 15:20", "Ésaïe 11:12-14").

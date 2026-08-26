@@ -1,5 +1,5 @@
 /**
- * Intégration LiveKit — Mouvement Christ Libère (V2)
+ * Intégration LiveKit — Christ Libère (V2)
  *
  * Cette couche abstrait la connexion au serveur LiveKit.
  * En production : un serveur LiveKit (Cloud ou self-hosted) doit être configuré

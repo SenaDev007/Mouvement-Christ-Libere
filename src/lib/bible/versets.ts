@@ -1,5 +1,5 @@
 /**
- * Base de versets bibliques — Mouvement Christ Libère (V3)
+ * Base de versets bibliques — Christ Libère (V3)
  *
  * Contient les versets les plus cités dans le ministère de Pam et du Pasteur Kongo.
  * Traduction : Louis Segond 1910 (domaine public).

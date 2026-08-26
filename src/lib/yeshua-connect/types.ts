@@ -1,5 +1,5 @@
 /**
- * Yeshua Connect — Types pour Mouvement Christ Libère
+ * Yeshua Connect — Types pour Christ Libère
  *
  * ⭐ V2: Plus de données mock — tout vient de la base de données via les
  *    API routes /api/yeshua-connect/*.

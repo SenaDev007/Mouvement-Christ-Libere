@@ -2,7 +2,7 @@
 
 /**
  * ============================================================================
- * YESHUA CONNECT — Module de communication (Mouvement Christ Libère)
+ * YESHUA CONNECT — Module de communication (Christ Libère)
  * ============================================================================
  *
  * ⭐ V2: Plus de header dupliqué, plus de tab bar purple.

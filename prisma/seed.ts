@@ -1,5 +1,5 @@
 /**
- * Seed V2 — Mouvement Christ Libère
+ * Seed V2 — Christ Libère
  * Contenus authentiques enrichis pour PAM et Pasteur Kongo.
  * Exécuter avec : bun run db:seed
  */
@@ -175,7 +175,7 @@ async function main() {
   // ============================================================
   const community = await db.community.create({
     data: {
-      name: "Mouvement Christ Libère",
+      name: "Christ Libère",
       description: "Communauté principale rassemblant les membres du mouvement.",
       isPublic: true,
     },

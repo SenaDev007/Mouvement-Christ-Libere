@@ -1,5 +1,5 @@
 /**
- * API Client — Mouvement Christ Libère V2
+ * API Client — Christ Libère V2
  *
  * Wrapper around fetch() that prepends the backend URL.
  *

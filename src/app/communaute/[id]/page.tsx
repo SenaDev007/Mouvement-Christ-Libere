@@ -49,7 +49,7 @@ export default async function ChannelPage({ params }: PageProps) {
         imageSrc="https://images.unsplash.com/photo-1511632765486-a0a80de485a5?q=80=w=1920&auto=format&fit=crop"
         kicker={channel.isEncrypted ? "Canal chiffré E2E" : "Canal de communauté"}
         title={channel.name}
-        subtitle={channel.description || "Canal de discussion de la communauté Mouvement Christ Libère."}
+        subtitle={channel.description || "Canal de discussion de la communauté Christ Libère."}
         primaryCta={{ label: "Retour aux canaux", href: "/communaute" }}
       />
 

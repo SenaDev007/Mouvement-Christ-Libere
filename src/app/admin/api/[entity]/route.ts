@@ -1,5 +1,5 @@
 /**
- * API routes pour le backoffice — Mouvement Christ Libère
+ * API routes pour le backoffice — Christ Libère
  *
  * Routes génériques CRUD pour chaque entité :
  *   GET    /admin/api/[entity]          — liste

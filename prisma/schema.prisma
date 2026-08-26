@@ -1,4 +1,4 @@
-// Prisma schema — Mouvement Christ Libère
+// Prisma schema — Christ Libère
 // PostgreSQL pour compatibilité Vercel (serverless incompatible SQLite)
 
 generator client {

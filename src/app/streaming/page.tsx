@@ -131,7 +131,7 @@ export default function StreamingPage() {
         <div className="relative">
           <QuoteBlock
             text="Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe."
-            reference="Pam — Mouvement Christ Libère"
+            reference="Pam — Christ Libère"
             variant="dark"
           />
         </div>

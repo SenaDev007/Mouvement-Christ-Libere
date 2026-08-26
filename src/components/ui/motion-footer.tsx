@@ -337,7 +337,7 @@ export function CinematicFooter() {
 
             {/* Copyright */}
             <div className="text-muted-foreground text-[10px] md:text-xs font-semibold tracking-widest uppercase order-2 md:order-1">
-              © 2026 Mouvement Christ Libère — Tous droits réservés
+              © 2026 Christ Libère — Tous droits réservés
             </div>
 
             {/* Badge */}

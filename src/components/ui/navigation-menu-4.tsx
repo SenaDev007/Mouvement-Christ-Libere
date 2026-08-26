@@ -15,6 +15,7 @@ import {
   Menu,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { useState } from "react";
 
-// Navigation links — contextualisés pour Mouvement Christ Libère
+// Navigation links — contextualisés pour Christ Libère
 const navigationLinks = [
   { href: "/", label: "Accueil" },
   {
@@ -176,11 +177,16 @@ export function ContextualNav() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#C9A227]" />
-            <span className="font-serif text-base font-bold text-[#FAF6EF] hidden sm:inline">
-              Mouvement Christ Libère
-            </span>
-            <span className="font-serif text-base font-bold text-[#FAF6EF] sm:hidden">
+            {/* Logo Christ Libère */}
+            <Image
+              src="/logo-christ-libere.png"
+              alt="Christ Libère"
+              width={32}
+              height={32}
+              className="w-8 h-8 object-contain"
+              priority
+            />
+            <span className="font-serif text-base font-bold text-[#FAF6EF]">
               Christ Libère
             </span>
           </Link>

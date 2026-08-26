@@ -1,4 +1,4 @@
-// NextAuth v5 type extensions — Mouvement Christ Libère V2.0
+// NextAuth v5 type extensions — Christ Libère V2.0
 // Extends the default session/user types to include `id` and `role`.
 
 declare module "next-auth" {

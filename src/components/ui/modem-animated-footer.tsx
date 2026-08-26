@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Sparkles,
   Mail,
@@ -34,7 +35,7 @@ interface FooterProps {
 }
 
 export const Footer = ({
-  brandName = "Mouvement Christ Libère",
+  brandName = "Christ Libère",
   brandDescription = "Témoignages, enseignements et vie de communauté — au service du rassemblement, au son du chofar.",
   socialLinks = [],
   navLinks = [],
@@ -51,7 +52,13 @@ export const Footer = ({
             <div className="w-full flex flex-col items-center">
               <div className="space-y-2 flex flex-col items-center flex-1">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-6 h-6 text-[#C9A227]" />
+                  <Image
+                    src="/logo-christ-libere.png"
+                    alt="Christ Libère"
+                    width={36}
+                    height={36}
+                    className="w-8 h-8 md:w-9 md:h-9 object-contain"
+                  />
                   <span className="text-[#FAF6EF] text-2xl md:text-3xl font-bold font-serif">
                     {brandName}
                   </span>

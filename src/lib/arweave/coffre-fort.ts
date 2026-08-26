@@ -1,5 +1,5 @@
 /**
- * Coffre-fort Arweave — Mouvement Christ Libère (V3)
+ * Coffre-fort Arweave — Christ Libère (V3)
  *
  * Ancre les contenus (témoignages, enseignements, vidéos) sur la blockchain
  * Arweave pour immutabilité. Même si le site est censuré ou compromis,

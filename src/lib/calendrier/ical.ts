@@ -58,7 +58,7 @@ export function genererICal(
   // En-tête iCal
   lignes.push("BEGIN:VCALENDAR");
   lignes.push("VERSION:2.0");
-  lignes.push("PRODID:-//Mouvement Christ Libere//Calendrier Biblique 364//FR");
+  lignes.push("PRODID:-//Christ Libere//Calendrier Biblique 364//FR");
   lignes.push("CALSCALE:GREGORIAN");
   lignes.push("METHOD:PUBLISH");
   lignes.push(`X-WR-CALNAME:Calendrier Biblique ${annee}-${annee + 1}`);

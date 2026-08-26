@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ChevronRight, Sparkles, BookOpen, FileText, Video, Users,
   Calendar, MessageSquare, Heart, ArrowRight,
@@ -13,7 +14,7 @@ const VERSES = [
   "Rassemblez mes dispersés", "Ésaïe 11:12",
   "Voici, je viens bientôt", "Apocalypse 3:11",
   "Préparez le chemin du Seigneur", "Ésaïe 40:3",
-  "Au son du chofar", "Mouvement Christ Libère",
+  "Au son du chofar", "Christ Libère",
 ];
 
 const STATS = [
@@ -118,8 +119,14 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch max-w-5xl mx-auto">
             {/* Pam */}
             <Link href="/pam" className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500">
-              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-[#2A0E3D] mb-6">
-                <span className="font-serif text-2xl font-bold text-[#C9A227]">Pam</span>
+              <div className="flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#2A0E3D] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#C9A227] transition-all">
+                <Image
+                  src="/pam.jpeg"
+                  alt="Pam — Afrika Alkebulane Pamela Dali"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-3">Afrika Alkebulane Pamela Dali</h3>
               <p className="text-xs uppercase tracking-wide text-[#C9A227] font-semibold mb-3">Servante de l'Éternel</p>
@@ -147,8 +154,14 @@ export default function Home() {
 
             {/* Pasteur Kongo */}
             <Link href="/pasteur-kongo" className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500">
-              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-[#2A0E3D] mb-6">
-                <span className="font-serif text-2xl font-bold text-[#C9A227]">PK</span>
+              <div className="flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#2A0E3D] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#C9A227] transition-all">
+                <Image
+                  src="/pasteur-kongo.jpeg"
+                  alt="Pasteur Kongo"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-3">Pasteur Kongo</h3>
               <p className="text-xs uppercase tracking-wide text-[#C9A227] font-semibold mb-3">Ministère pastoral</p>

@@ -6,7 +6,7 @@
  * ============================================================================
  *
  * ⭐ Port complet des fonctionnalités de Helm Connect (Academia Helm), adapté
- *    pour la communauté spirituelle Mouvement Christ Libère.
+ *    pour la communauté spirituelle Christ Libère.
  *
  * Fonctionnalités (feature-parity avec Helm Connect) :
  *   ✅ Liste des conversations (canaux, groupes, direct) avec catégories

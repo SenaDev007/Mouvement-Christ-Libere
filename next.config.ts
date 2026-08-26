@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 /**
- * Configuration Next.js — Mouvement Christ Libère
+ * Configuration Next.js — Christ Libère
  * Optimisé pour déploiement Vercel.
  */
 const nextConfig: NextConfig = {

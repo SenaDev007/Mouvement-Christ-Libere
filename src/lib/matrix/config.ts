@@ -1,5 +1,5 @@
 /**
- * Matrix Synapse client configuration — Mouvement Christ Libère V2.2
+ * Matrix Synapse client configuration — Christ Libère V2.2
  *
  * Architecture:
  *   [Next.js frontend] ←→ [API routes] ←→ [Matrix Synapse server] ←→ [PostgreSQL]

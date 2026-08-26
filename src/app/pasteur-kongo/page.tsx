@@ -1,25 +1,29 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, BookOpen, Video, Users, Sparkles, Clock } from "lucide-react";
 
 export const dynamic = "force-static";
 
 export const metadata = {
-  title: "Pasteur Kongo | Mouvement Christ Libère",
+  title: "Pasteur Kongo | Christ Libère",
   description: "Page du Pasteur Kongo — ministère pastoral. Contenu biographique à implémenter.",
 };
 
 export default function PasteurKongoPage() {
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
-      {/* ═══ HERO ═══ */}
+      {/* ═══ HERO avec vraie photo du Pasteur Kongo ═══ */}
       <section className="relative min-h-[60vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-[#FAF6EF]">
         <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1504052434529-acb89d45a1ab?q=80&w=1920&auto=format&fit=crop"
-            alt="Bible ouverte"
-            className="w-full h-full object-cover opacity-20"
+          <Image
+            src="/pasteur-kongo.jpeg"
+            alt="Pasteur Kongo"
+            fill
+            priority
+            className="object-cover object-center opacity-40"
+            sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/90 to-[#1A0826]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/70 via-[#2A0E3D]/80 to-[#1A0826]" />
         </div>
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-6">
@@ -27,10 +31,10 @@ export default function PasteurKongoPage() {
               Ministère pastoral
             </span>
           </div>
-          <h1 className="font-serif font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.15] mb-4">
+          <h1 className="font-serif font-extrabold text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.15] mb-4 drop-shadow-lg">
             <span className="text-[#C9A227]">Pasteur</span> Kongo
           </h1>
-          <p className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-[#FAF6EF]/80 leading-relaxed max-w-2xl mx-auto drop-shadow">
             Berger de la communauté, marchant aux côtés de Pam dans l'œuvre du Royaume.
           </p>
         </div>

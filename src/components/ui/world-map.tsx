@@ -19,7 +19,7 @@ interface WorldMapProps {
 
 /**
  * WorldMap — Carte du monde en points avec halos lumineux clignotants.
- * Contextualisée pour Mouvement Christ Libère (dispersés d'Israël).
+ * Contextualisée pour Christ Libère (dispersés d'Israël).
  *
  * - Fond violet impérial (#2A0E3D)
  * - Points en or (#C9A227) avec animation de halo pulsant

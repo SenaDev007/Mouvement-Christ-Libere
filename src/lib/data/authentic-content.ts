@@ -1,4 +1,4 @@
-// Contenus authentiques — Mouvement Christ Libère
+// Contenus authentiques — Christ Libère
 // Biographie, témoignages et enseignements de la Chantre Pamela Dali
 // Sources : transcriptions réelles des vidéos de Pam
 // Chaque récit est à la première personne (« Je »), préservant sa voix authentique.

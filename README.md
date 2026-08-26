@@ -1,4 +1,4 @@
-# Mouvement Christ Libère
+# Christ Libère
 
 Plateforme numérique centralisée pour le ministère de **PAM** (Afrika Alkebulane Pamela Dali) et du **Pasteur Kongo** — témoignages, enseignements, vidéos, vie de communauté, et backoffice complet de gestion.
 

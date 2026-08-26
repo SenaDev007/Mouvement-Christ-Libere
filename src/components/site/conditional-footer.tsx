@@ -48,7 +48,7 @@ export function ConditionalFooter() {
 
   return (
     <Footer
-      brandName="Mouvement Christ Libère"
+      brandName="Christ Libère"
       brandDescription="Témoignages, enseignements et vie de communauté — au service du rassemblement, au son du chofar."
       socialLinks={socialLinks}
       navLinks={navLinks}

@@ -1,7 +1,7 @@
 import { getRequestConfig } from "next-intl/server";
 
 /**
- * next-intl configuration — Mouvement Christ Libère V2.4
+ * next-intl configuration — Christ Libère V2.4
  *
  * Supports: fr (default), en
  * Language detection: URL prefix /en/... or browser Accept-Language.
