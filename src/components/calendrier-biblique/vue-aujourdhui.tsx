@@ -11,16 +11,28 @@ interface VueAujourdhuiProps {
   maintenant: Date;
 }
 
-const SAISON_IMAGES: Record<string, string> = {
-  printemps: "https://images.unsplash.com/photo-1463936575829-25148e1db1b8?q=80&w=1920&auto=format&fit=crop",
-  ete: "https://images.unsplash.com/photo-1551269901-5c5e14c25df9?q=80&w=1920&auto=format&fit=crop",
-  automne: "https://images.unsplash.com/photo-1507006640577-59363a78103e?q=80&w=1920&auto=format&fit=crop",
-  hiver: "https://images.unsplash.com/photo-1483631226437-9bf9eb5d3c3c?q=80&w=1920&auto=format&fit=crop",
-};
-
-const MOIS_SAISON = [
-  "printemps", "printemps", "printemps", "ete", "ete", "ete",
-  "automne", "automne", "automne", "hiver", "hiver", "hiver",
+// Images saisonnières (Unsplash — paysages bibliques)
+const SAISON_BG: Array<{ image: string; overlay: string; saison: string }> = [
+  {
+    image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop",
+    overlay: "linear-gradient(135deg, rgba(42,14,61,0.92) 0%, rgba(42,14,61,0.7) 50%, rgba(201,162,39,0.35) 100%)",
+    saison: "Printemps",
+  },
+  {
+    image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1920&auto=format&fit=crop",
+    overlay: "linear-gradient(135deg, rgba(42,14,61,0.88) 0%, rgba(201,162,39,0.45) 50%, rgba(42,14,61,0.72) 100%)",
+    saison: "Été",
+  },
+  {
+    image: "https://images.unsplash.com/photo-1507371341162-763b5e419408?q=80&w=1920&auto=format&fit=crop",
+    overlay: "linear-gradient(135deg, rgba(42,14,61,0.88) 0%, rgba(124,92,184,0.4) 50%, rgba(156,126,30,0.5) 100%)",
+    saison: "Automne",
+  },
+  {
+    image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?q=80&w=1920&auto=format&fit=crop",
+    overlay: "linear-gradient(135deg, rgba(42,14,61,0.92) 0%, rgba(250,246,239,0.25) 50%, rgba(42,14,61,0.78) 100%)",
+    saison: "Hiver",
+  },
 ];
 
 export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
@@ -30,15 +42,15 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
     secondes: 0,
   });
 
-  // Déterminer le jour biblique en cours
   const jourEnCours = determinerJourEnCours(annee.jours, maintenant);
   const prochaineFete = annee.fetes.find((f) => f.joursRestants >= 0);
 
-  // Compte à rebours du coucher de soleil (simulation — calcul réel côté serveur)
+  // Déterminer la saison du trimestre en cours
+  const trimestre = jourEnCours?.trimestre || 1;
+  const saison = SAISON_BG[trimestre - 1];
+
   useEffect(() => {
     const calculerCompteARebours = () => {
-      // Heure du coucher de soleil approximatif (18:00 UTC par défaut)
-      // En production, ce serait calculé côté serveur via astronomy-engine
       const maintenant = new Date();
       const coucher = new Date(maintenant);
       coucher.setUTCHours(18, 0, 0, 0);
@@ -68,40 +80,43 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
   }
 
   const dateGreg = new Date(jourEnCours.dateGregorienne);
-  const saison = MOIS_SAISON[jourEnCours.mois - 1] || "printemps";
-  const bgImage = SAISON_IMAGES[saison];
 
   return (
     <div className="grid lg:grid-cols-3 gap-6">
-      {/* Carte principale : jour en cours */}
+      {/* Carte principale : jour en cours — avec image saisonnière */}
       <div className="lg:col-span-2">
-        <div className="relative bg-[#2A0E3D] text-[#FAF6EF] rounded-3xl overflow-hidden p-8 md:p-10 shadow-lg">
-          {/* Image de saison en fond */}
-          <div className="absolute inset-0 z-0">
-            <img src={bgImage} alt={saison} className="w-full h-full object-cover opacity-15" />
-            <div className="absolute inset-0 bg-[#2A0E3D]/60" />
-          </div>
+        <div
+          className="relative rounded-2xl overflow-hidden shadow-xl border border-[#8A8378]/20"
+          style={{
+            backgroundImage: `url(${saison.image})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          {/* Overlay saisonnier */}
+          <div className="absolute inset-0" style={{ background: saison.overlay }} />
+
           {/* Décor fond */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#8C5FA8]/10 blur-3xl rounded-full pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#7C5CB8]/10 blur-3xl rounded-full pointer-events-none" />
 
-          <div className="relative z-10">
+          <div className="relative z-10 p-8 md:p-10">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-4 h-4 text-[#C9A227]" />
-              <span className="text-xs uppercase tracking-[0.2em] text-[#C9A227]-light/80 font-semibold">
-                Jour biblique en cours
+              <span className="text-xs uppercase tracking-[0.2em] text-[#C9A227] font-bold drop-shadow">
+                Jour biblique en cours · {saison.saison}
               </span>
             </div>
 
-            <h3 className="font-serif text-4xl md:text-5xl font-semibold text-[#FAF6EF] mb-2">
+            <h3 className="font-serif text-4xl md:text-5xl font-bold text-[#FAF6EF] mb-2 drop-shadow-lg">
               {jourEnCours.jourDuMois} {jourEnCours.nomMois}
             </h3>
-            <p className="text-lg text-[#FAF6EF]/70 mb-6">
+            <p className="text-lg text-[#FAF6EF]/80 mb-6 drop-shadow">
               {jourEnCours.nomJourSemaine} · Jour {jourEnCours.jourDeAnnee} de l&apos;année
             </p>
 
             {/* Équivalence grégorienne */}
-            <div className="flex items-center gap-2 text-sm text-[#FAF6EF]/60 mb-6">
+            <div className="flex items-center gap-2 text-sm text-[#FAF6EF]/80 mb-6">
               <Calendar className="w-4 h-4 text-[#C9A227]" />
               <span>
                 {dateGreg.toLocaleDateString("fr-FR", {
@@ -116,7 +131,7 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
 
             {/* Shabbat ? */}
             {jourEnCours.estShabbat && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C9A227]/20 border border-[#C9A227]/40 text-[#C9A227] text-xs font-semibold">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C9A227]/20 border border-[#C9A227]/40 text-[#C9A227] text-xs font-bold backdrop-blur-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227] animate-pulse" />
                 Shabbat — du coucher de soleil vendredi au coucher de soleil samedi
               </div>
@@ -124,8 +139,8 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
 
             {/* Trimestre */}
             <div className="mt-6 pt-6 border-t border-[#C9A227]/15">
-              <p className="text-xs text-[#FAF6EF]/50 uppercase tracking-[0.18em] font-semibold">
-                Trimestre {jourEnCours.trimestre} · Mois {jourEnCours.mois}/12
+              <p className="text-xs text-[#FAF6EF]/60 uppercase tracking-[0.18em] font-bold">
+                Trimestre {jourEnCours.trimestre} · Mois {jourEnCours.mois}/12 · Saison de {saison.saison}
               </p>
             </div>
           </div>
@@ -134,10 +149,10 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
 
       {/* Carte compte à rebours coucher de soleil */}
       <div className="space-y-6">
-        <div className="card-gold-top p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-[#8A8378]/15 p-6">
           <div className="flex items-center gap-2 mb-4">
             <Sunset className="w-5 h-5 text-[#C9A227]" />
-            <h4 className="font-serif text-base font-semibold text-[#1E0F2B]">
+            <h4 className="font-serif text-base font-bold text-[#1E0F2B]">
               Coucher de soleil
             </h4>
           </div>
@@ -161,15 +176,15 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
         {/* Prochaine fête */}
         {prochaineFete && (
           <div
-            className="rounded-2xl p-6 text-[#FAF6EF] relative overflow-hidden"
+            className="rounded-2xl p-6 text-[#FAF6EF] relative overflow-hidden shadow-lg"
             style={{ backgroundColor: prochaineFete.couleur }}
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#FAF6EF]/10 blur-2xl rounded-full pointer-events-none" />
             <div className="relative">
-              <p className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-2 opacity-80">
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold mb-2 opacity-90">
                 Prochaine fête
               </p>
-              <h4 className="font-serif text-xl font-semibold mb-1">
+              <h4 className="font-serif text-xl font-bold mb-1">
                 {prochaineFete.nomFr}
               </h4>
               {prochaineFete.nomHebrew && (
@@ -177,13 +192,13 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
                   {prochaineFete.nomHebrew}
                 </p>
               )}
-              <div className="mt-4 pt-4 border-t border-ivory/20">
-                <p className="text-2xl font-serif font-semibold">
+              <div className="mt-4 pt-4 border-t border-[#FAF6EF]/20">
+                <p className="text-2xl font-serif font-bold">
                   {prochaineFete.joursRestants === 0
                     ? "Aujourd'hui !"
                     : `Dans ${prochaineFete.joursRestants} ${prochaineFete.joursRestants === 1 ? "jour" : "jours"}`}
                 </p>
-                <p className="text-xs opacity-75 mt-1">
+                <p className="text-xs opacity-80 mt-1">
                   {new Date(prochaineFete.dateGregorienne).toLocaleDateString("fr-FR", {
                     weekday: "long",
                     day: "numeric",
@@ -197,14 +212,14 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
         )}
 
         {/* Référence biblique */}
-        <div className="card-gold-top p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-[#8A8378]/15 p-6">
           <div className="flex items-start gap-2">
             <BookOpen className="w-4 h-4 text-[#C9A227] flex-shrink-0 mt-1" />
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2">
+              <p className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-2">
                 Le jour biblique
               </p>
-              <p className="font-serif italic text-sm text-imperial/90 leading-relaxed mb-1">
+              <p className="font-serif italic text-sm text-[#2A0E3D] leading-relaxed mb-1">
                 « Il y eut un soir et il y eut un matin, un jour. »
               </p>
               <p className="text-xs text-[#8A8378]">Genèse 1:5</p>
@@ -218,17 +233,17 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
 
 function CompteAReboursCard({ value, label }: { value: number; label: string }) {
   return (
-    <div className="text-center p-3 rounded-md bg-[#2A0E3D]/5 border border-[#C9A227]/20">
+    <div className="text-center p-3 rounded-lg bg-[#2A0E3D]/5 border border-[#C9A227]/20">
       <motion.div
         key={value}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.2 }}
-        className="font-serif text-2xl font-semibold text-[#1E0F2B]"
+        className="font-serif text-2xl font-bold text-[#1E0F2B]"
       >
         {value.toString().padStart(2, "0")}
       </motion.div>
-      <div className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-semibold">
+      <div className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-bold">
         {label}
       </div>
     </div>
@@ -249,6 +264,5 @@ function determinerJourEnCours(
     }
   }
 
-  // Si on est avant le début de l'année biblique, retourner le premier jour
   return jours[0] || null;
 }

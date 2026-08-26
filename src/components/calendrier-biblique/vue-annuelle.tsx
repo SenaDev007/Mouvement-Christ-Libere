@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sun, Cloud, Snowflake, Leaf } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import type { AnneeBibliqueData, JourBiblique, Fete } from "./calendrier-app";
 import { cn } from "@/lib/utils";
 
@@ -9,150 +9,215 @@ interface VueAnnuelleProps {
   annee: AnneeBibliqueData;
 }
 
-const SAISON_IMAGES = {
-  printemps: "https://images.unsplash.com/photo-1463936575829-25148e1db1b8?q=80&w=1920&auto=format&fit=crop",
-  ete: "https://images.unsplash.com/photo-1551269901-5c5e14c25df9?q=80&w=1920&auto=format&fit=crop",
-  automne: "https://images.unsplash.com/photo-1507006640577-59363a78103e?q=80&w=1920&auto=format&fit=crop",
-  hiver: "https://images.unsplash.com/photo-1483631226437-9bf9eb5d3c3c?q=80&w=1920&auto=format&fit=crop",
-};
-
 const NOMS_TRIMESTRES = [
-  { nom: "Trimestre 1 — Printemps", icon: Leaf, color: "#C9A227", bgImage: SAISON_IMAGES.printemps, mois: [1, 2, 3] },
-  { nom: "Trimestre 2 — Été", icon: Sun, color: "#5B7052", bgImage: SAISON_IMAGES.ete, mois: [4, 5, 6] },
-  { nom: "Trimestre 3 — Automne", icon: Cloud, color: "#8C5FA8", bgImage: SAISON_IMAGES.automne, mois: [7, 8, 9] },
-  { nom: "Trimestre 4 — Hiver", icon: Snowflake, color: "#8A8378", bgImage: SAISON_IMAGES.hiver, mois: [10, 11, 12] },
+  "Trimestre 1 — Printemps",
+  "Trimestre 2 — Été",
+  "Trimestre 3 — Automne",
+  "Trimestre 4 — Hiver",
 ];
 
-const NOMS_MOIS = [
-  "Aviv", "Ziv", "Sivan", "Tammouz", "Av", "Éloul",
-  "Éthanim", "Boul", "Kislev", "Tévet", "Shevat", "Adar",
+// Images de fond saisonnières (Unsplash — paysages bibliques professionnels)
+const SAISON_BG: Array<{
+  image: string;
+  overlay: string;
+  emoji: string;
+}> = [
+  // Printemps — champ de fleurs sauvages en Israël
+  {
+    image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop",
+    overlay: "linear-gradient(135deg, rgba(42,14,61,0.85) 0%, rgba(42,14,61,0.65) 50%, rgba(201,162,39,0.3) 100%)",
+    emoji: "printemps",
+  },
+  // Été — champ de blé doré sous soleil
+  {
+    image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1920&auto=format&fit=crop",
+    overlay: "linear-gradient(135deg, rgba(42,14,61,0.82) 0%, rgba(201,162,39,0.45) 50%, rgba(42,14,61,0.7) 100%)",
+    emoji: "été",
+  },
+  // Automne — vignes et feuilles rouilles
+  {
+    image: "https://images.unsplash.com/photo-1507371341162-763b5e419408?q=80&w=1920&auto=format&fit=crop",
+    overlay: "linear-gradient(135deg, rgba(42,14,61,0.85) 0%, rgba(124,92,184,0.4) 50%, rgba(156,126,30,0.5) 100%)",
+    emoji: "automne",
+  },
+  // Hiver — montagnes enneigées de Jérusalem
+  {
+    image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?q=80&w=1920&auto=format&fit=crop",
+    overlay: "linear-gradient(135deg, rgba(42,14,61,0.88) 0%, rgba(250,246,239,0.25) 50%, rgba(42,14,61,0.75) 100%)",
+    emoji: "hiver",
+  },
 ];
 
-const NOMS_JOURS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+const NOMS_JOURS_COURTS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
 export function VueAnnuelle({ annee }: VueAnnuelleProps) {
-  const fetesParJour = new Map<number, Fete>();
+  // Grouper les jours par trimestre
+  const trimestres = [1, 2, 3, 4].map((numT) => ({
+    numero: numT,
+    nom: NOMS_TRIMESTRES[numT - 1],
+    jours: annee.jours.filter((j) => j.trimestre === numT),
+    saison: SAISON_BG[numT - 1],
+  }));
+
+  // Construire un map jour de l'année → fêtes
+  const fetesMap = new Map<number, Fete>();
   for (const fete of annee.fetes) {
     const jourCorrespondant = annee.jours.find((j) => {
-      const dateGreg = new Date(j.dateGregorienne);
-      const dateFete = new Date(fete.dateGregorienne);
-      return dateGreg.getTime() === dateFete.getTime();
+      const dateGreg = new Date(j.dateGregorienne).getTime();
+      const dateFete = new Date(fete.dateGregorienne).getTime();
+      return dateGreg === dateFete;
     });
     if (jourCorrespondant) {
-      fetesParJour.set(jourCorrespondant.jourDeAnnee, fete);
+      fetesMap.set(jourCorrespondant.jourDeAnnee, fete);
     }
   }
 
   return (
-    <div className="space-y-12">
-      {NOMS_TRIMESTRES.map((trimestre, tIdx) => {
-        const Icon = trimestre.icon;
-        const joursT = annee.jours.filter((j) => j.trimestre === tIdx + 1);
+    <div className="space-y-8">
+      {/* Légende */}
+      <div className="flex flex-wrap items-center gap-4 text-xs bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-[#8A8378]/15 shadow-sm">
+        <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
+          <span className="w-3 h-3 rounded bg-[#C9A227]" />
+          Fête de l&apos;Éternel
+        </span>
+        <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
+          <span className="w-3 h-3 rounded bg-[#2A0E3D]/30" />
+          Shabbat hebdomadaire
+        </span>
+        <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
+          <span className="w-3 h-3 rounded border-2 border-[#C9A227] bg-[#FAF6EF]" />
+          Jour en cours
+        </span>
+      </div>
 
-        return (
+      {/* Grille des 4 trimestres avec images saisonnières */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {trimestres.map((trimestre, idx) => (
           <motion.div
-            key={tIdx}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: tIdx * 0.1 }}
-            className="rounded-3xl shadow-lg overflow-hidden border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] relative"
+            key={trimestre.numero}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: idx * 0.1 }}
+            className="relative rounded-2xl overflow-hidden shadow-xl border border-[#8A8378]/20"
+            style={{
+              backgroundImage: `url(${trimestre.saison.image})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
           >
-            {/* Background image de saison */}
-            <div className="absolute inset-0 z-0">
-              <img src={trimestre.bgImage} alt={trimestre.nom} className="w-full h-full object-cover opacity-10" />
-              <div className="absolute inset-0 bg-white/80" />
-            </div>
+            {/* Overlay coloré pour la lisibilité */}
+            <div
+              className="absolute inset-0"
+              style={{ background: trimestre.saison.overlay }}
+            />
 
-            {/* Content */}
-            <div className="relative z-10 p-6 md:p-8">
-              {/* Header trimestre */}
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#8A8378]/10">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full" style={{ backgroundColor: `${trimestre.color}15` }}>
-                  <Icon className="w-6 h-6" style={{ color: trimestre.color }} />
-                </div>
-                <div>
-                  <h3 className="font-serif text-xl font-bold text-[#1E0F2B]">{trimestre.nom}</h3>
-                  <p className="text-xs text-[#8A8378]">91 jours · 13 semaines</p>
-                </div>
+            {/* Contenu */}
+            <div className="relative z-10 p-6 backdrop-blur-[1px]">
+              {/* En-tête trimestre */}
+              <div className="flex items-baseline justify-between mb-1">
+                <h3 className="font-serif text-xl font-bold text-[#FAF6EF] drop-shadow-lg">
+                  {trimestre.nom}
+                </h3>
+              </div>
+              <p className="text-xs text-[#FAF6EF]/80 mb-5 font-semibold uppercase tracking-[0.12em]">
+                {trimestre.jours.length} jours · 13 semaines
+              </p>
+
+              {/* En-tête jours de la semaine */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {NOMS_JOURS_COURTS.map((jour, i) => (
+                  <div
+                    key={jour}
+                    className={cn(
+                      "text-center text-[10px] uppercase tracking-wider font-bold py-1 rounded",
+                      i === 6
+                        ? "text-[#C9A227] bg-[#FAF6EF]/10"
+                        : "text-[#FAF6EF]/70"
+                    )}
+                  >
+                    {jour}
+                  </div>
+                ))}
               </div>
 
-              {/* 3 mois du trimestre — séparés visiblement */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {trimestre.mois.map((numMois) => {
-                  const joursMois = joursT.filter((j) => j.mois === numMois);
-                  const fetesMois = annee.fetes.filter((f) => {
-                    const jc = annee.jours.find((j) => {
-                      const d1 = new Date(j.dateGregorienne);
-                      const d2 = new Date(f.dateGregorienne);
-                      return d1.getTime() === d2.getTime();
-                    });
-                    return jc?.mois === numMois;
-                  });
-
-                  return (
-                    <div key={numMois} className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-sm">
-                      <h4 className="font-serif text-lg font-bold text-[#1E0F2B] text-center mb-3">
-                        {NOMS_MOIS[numMois - 1]}
-                      </h4>
-                      <p className="text-[10px] text-[#8A8378] text-center mb-4">
-                        {joursMois.length} jours
-                      </p>
-
-                      <div className="grid grid-cols-7 gap-1 mb-2">
-                        {NOMS_JOURS.map((jour, i) => (
-                          <div key={i} className={cn(
-                            "text-center text-[9px] font-bold py-1 rounded-lg",
-                            jour === "Sam" ? "bg-[#2A0E3D]/10 text-[#2A0E3D]" : "text-[#8A8378]"
-                          )}>
-                            {jour}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="grid grid-cols-7 gap-1">
-                        {joursMois.map((jour) => {
-                          const fete = fetesParJour.get(jour.jourDeAnnee);
-                          const isShabbat = jour.estShabbat;
-                          return (
-                            <div
-                              key={jour.jourDeAnnee}
-                              className={cn(
-                                "aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] font-medium transition-all cursor-pointer",
-                                fete
-                                  ? "bg-[#C9A227] text-[#1E0F2B] font-bold"
-                                  : isShabbat
-                                  ? "bg-[#2A0E3D]/10 text-[#2A0E3D]"
-                                  : "bg-white text-[#1E0F2B] hover:bg-[#C9A227]/10"
-                              )}
-                              title={fete ? `${fete.nomFr} — ${fete.referenceEcritures}` : `${NOMS_MOIS[numMois - 1]} ${jour.jourDuMois}`}
-                            >
-                              {jour.jourDuMois}
-                              {fete && <span className="w-1 h-1 rounded-full bg-[#1E0F2B] mt-0.5" />}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {fetesMois.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-[#8A8378]/10 space-y-1">
-                          {fetesMois.map((fete, i) => (
-                            <div key={i} className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-[#C9A227] flex-shrink-0" />
-                              <span className="text-[10px] font-semibold text-[#1E0F2B]">{fete.nomFr}</span>
-                              {fete.nomHebrew && <span className="text-[10px] text-[#8C5FA8]">{fete.nomHebrew}</span>}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              {/* Grille des jours */}
+              <div className="grid grid-cols-7 gap-1">
+                {organiserJoursParSemaine(trimestre.jours).map((semaine, semIdx) =>
+                  semaine.map((jour, jourIdx) => (
+                    <JourCell
+                      key={`${semIdx}-${jourIdx}`}
+                      jour={jour}
+                      fete={jour ? fetesMap.get(jour.jourDeAnnee) : undefined}
+                    />
+                  ))
+                )}
               </div>
             </div>
           </motion.div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
+}
+
+function JourCell({ jour, fete }: { jour: JourBiblique | null; fete?: Fete }) {
+  if (!jour) {
+    return <div className="aspect-square rounded bg-[#FAF6EF]/5" />;
+  }
+
+  const maintenant = new Date();
+  const dateGreg = new Date(jour.dateGregorienne);
+  const estAujourdhui = dateGreg.toDateString() === maintenant.toDateString();
+
+  return (
+    <div
+      title={`${jour.jourDuMois} ${jour.nomMois} — ${jour.nomJourSemaine}${fete ? ` — ${fete.nomFr}` : ""}`}
+      className={cn(
+        "aspect-square rounded-md text-[10px] flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-110 hover:z-10 relative backdrop-blur-sm",
+        fete
+          ? "text-[#FAF6EF] font-bold shadow-md"
+          : jour.estShabbat
+            ? "bg-[#2A0E3D]/40 text-[#FAF6EF] font-medium border border-[#FAF6EF]/20"
+            : "bg-[#FAF6EF]/85 border border-[#FAF6EF]/30 text-[#1E0F2B] hover:border-[#C9A227]/60 hover:bg-[#FAF6EF]",
+        estAujourdhui && "ring-2 ring-[#C9A227] ring-offset-1 ring-offset-[#2A0E3D]/40"
+      )}
+      style={fete ? { backgroundColor: fete.couleur } : {}}
+    >
+      <span>{jour.jourDuMois}</span>
+      {fete && (
+        <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-[#FAF6EF]" />
+      )}
+    </div>
+  );
+}
+
+function organiserJoursParSemaine(jours: JourBiblique[]): (JourBiblique | null)[][] {
+  if (jours.length === 0) return [];
+
+  const semaines: (JourBiblique | null)[][] = [];
+  let semaineCourante: (JourBiblique | null)[] = [];
+
+  const premierJour = jours[0];
+  const jourDeSemainePremier = premierJour.jourDeSemaine;
+
+  for (let i = 1; i < jourDeSemainePremier; i++) {
+    semaineCourante.push(null);
+  }
+
+  for (const jour of jours) {
+    semaineCourante.push(jour);
+    if (semaineCourante.length === 7) {
+      semaines.push(semaineCourante);
+      semaineCourante = [];
+    }
+  }
+
+  if (semaineCourante.length > 0) {
+    while (semaineCourante.length < 7) {
+      semaineCourante.push(null);
+    }
+    semaines.push(semaineCourante);
+  }
+
+  return semaines;
 }

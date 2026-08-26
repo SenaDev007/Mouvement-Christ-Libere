@@ -2,17 +2,24 @@
  * API Client — Mouvement Christ Libère V2
  *
  * Wrapper around fetch() that prepends the backend URL.
- * Uses API_URL env var (set on Vercel) — falls back to relative URLs
- * if not set (for local dev where frontend + API are on the same origin).
  *
- * ⭐ IMPORTANT: This file is imported by both server and client components.
- *    - API_URL works on server components (Vercel injects it)
- *    - For client components, we also check NEXT_PUBLIC_API_URL
- *    - On Vercel, set BOTH: API_URL and NEXT_PUBLIC_API_URL
- *    - If neither is set, falls back to relative URLs (same origin)
+ * Variable d'environnement utilisée :
+ *   - Côté serveur (Server Components, API routes) : `API_URL`
+ *   - Côté client (Client Components)              : `NEXT_PUBLIC_API_URL`
+ *
+ * On combine les deux pour fonctionner dans les deux contextes.
+ * Si aucune n'est définie (dev local), on utilise une URL relative (same origin).
+ *
+ * Usage:
+ *   import { api } from "@/lib/api-client";
+ *   const res = await api.get("/api/yeshua-connect/conversations");
+ *   const res = await api.post("/api/auth/login", { email, password });
  */
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||  // ⭐ client-side (Vercel)
+  process.env.API_URL ||               // server-side only
+  "";                                  // fallback: relative URLs
 
 function buildUrl(path: string): string {
   if (!API_URL) return path; // relative (same origin)
