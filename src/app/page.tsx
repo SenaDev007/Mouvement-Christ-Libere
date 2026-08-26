@@ -154,6 +154,97 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═════ VERS DEUX SERVITEURS ═════ */}
+      <section className="py-24 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-bold mb-3">
+              Deux serviteurs, un même appel
+            </p>
+            <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#1E0F2B]">
+              Découvrez leur parcours
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+            {/* Pam */}
+            <Link
+              href="/pam"
+              className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
+            >
+              <div className="flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#2A0E3D] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#C9A227] transition-all">
+                <Image
+                  src="/pam.jpeg"
+                  alt="Pam — Afrika Alkebulane Pamela Dali"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-3">
+                Afrika Alkebulane Pamela Dali
+              </h3>
+              <p className="text-xs uppercase tracking-wide text-[#C9A227] font-semibold mb-3">
+                Servante de l'Éternel
+              </p>
+              <p className="text-sm text-[#8A8378] leading-relaxed mb-6">
+                Témoignages de visites au ciel, révélations prophétiques, enseignements
+                sur la sanctification et le retour de Yeshua HaMashiach.
+              </p>
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
+                Lire la biographie
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            </Link>
+
+            {/* Center: Marriage */}
+            <div className="flex flex-col items-center justify-center p-8">
+              <div className="w-px h-16 bg-[#C9A227]/30 mb-6 hidden lg:block" />
+              <div className="text-center">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#C9A227]/10 mb-4">
+                  <Heart className="w-8 h-8 text-[#C9A227]" />
+                </div>
+                <p className="font-serif text-lg italic text-[#8A8378] text-center max-w-xs">
+                  « Deux appels qui se rejoignent, deux ministères distincts qui s'articulent
+                  sans se confondre. »
+                </p>
+              </div>
+              <div className="w-px h-16 bg-[#C9A227]/30 mt-6 hidden lg:block" />
+            </div>
+
+            {/* Pasteur Kongo */}
+            <Link
+              href="/pasteur-kongo"
+              className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
+            >
+              <div className="flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#2A0E3D] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#C9A227] transition-all">
+                <Image
+                  src="/pasteur-kongo.jpeg"
+                  alt="Pasteur Kongo"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-3">
+                Pasteur Kongo
+              </h3>
+              <p className="text-xs uppercase tracking-wide text-[#C9A227] font-semibold mb-3">
+                Ministère pastoral
+              </p>
+              <p className="text-sm text-[#8A8378] leading-relaxed mb-6">
+                Enseignements pastoraux, soins des brebis, discernement spirituel
+                et accompagnement de la communauté dans la foi.
+              </p>
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
+                Lire la biographie
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ═════ FEATURES (Ce que nous offrons) ═════ */}
       <section className="py-24 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4">
@@ -244,87 +335,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═════ VERS DEUX SERVITEURS ═════ */}
-      <section className="py-24 bg-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-            {/* Pam */}
-            <Link
-              href="/pam"
-              className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
-            >
-              <div className="flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#2A0E3D] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#C9A227] transition-all">
-                <Image
-                  src="/pam.jpeg"
-                  alt="Pam — Afrika Alkebulane Pamela Dali"
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-3">
-                Afrika Alkebulane Pamela Dali
-              </h3>
-              <p className="text-xs uppercase tracking-wide text-[#C9A227] font-semibold mb-3">
-                Servante de l'Éternel
-              </p>
-              <p className="text-sm text-[#8A8378] leading-relaxed mb-6">
-                Témoignages de visites au ciel, révélations prophétiques, enseignements
-                sur la sanctification et le retour de Yeshua HaMashiach.
-              </p>
-              <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
-                Lire la biographie
-                <ArrowRight className="w-4 h-4" />
-              </span>
-            </Link>
-
-            {/* Center: Marriage */}
-            <div className="flex flex-col items-center justify-center p-8">
-              <div className="w-px h-16 bg-[#C9A227]/30 mb-6 hidden lg:block" />
-              <div className="text-center">
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#C9A227]/10 mb-4">
-                  <Heart className="w-8 h-8 text-[#C9A227]" />
-                </div>
-                <p className="font-serif text-lg italic text-[#8A8378] text-center max-w-xs">
-                  « Deux appels qui se rejoignent, deux ministères distincts qui s'articulent
-                  sans se confondre. »
-                </p>
-              </div>
-              <div className="w-px h-16 bg-[#C9A227]/30 mt-6 hidden lg:block" />
-            </div>
-
-            {/* Pasteur Kongo */}
-            <Link
-              href="/pasteur-kongo"
-              className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
-            >
-              <div className="flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#2A0E3D] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#C9A227] transition-all">
-                <Image
-                  src="/pasteur-kongo.jpeg"
-                  alt="Pasteur Kongo"
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-3">
-                Pasteur Kongo
-              </h3>
-              <p className="text-xs uppercase tracking-wide text-[#C9A227] font-semibold mb-3">
-                Ministère pastoral
-              </p>
-              <p className="text-sm text-[#8A8378] leading-relaxed mb-6">
-                Enseignements pastoraux, soins des brebis, discernement spirituel
-                et accompagnement de la communauté dans la foi.
-              </p>
-              <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
-                Lire la biographie
-                <ArrowRight className="w-4 h-4" />
-              </span>
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ═════ VERS DEUX SERVITEURS (déplacé après STATS) ═════ */}
+      {/* Section déplacée plus haut — voir après STATS */}
 
       {/* ═════ MARQUEE DE VERSETS ═════ */}
       <section className="bg-[#2A0E3D] border-y border-[#C9A227]/20 py-6 overflow-hidden">
@@ -397,35 +409,7 @@ export default function Home() {
       </section>
 
       {/* ═════ NAVIGATION RAPIDE ═════ */}
-      <section className="py-20 bg-[#FAF6EF] relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { label: "Pam", href: "/pam", icon: Users },
-              { label: "Pasteur Kongo", href: "/pasteur-kongo", icon: Users },
-              { label: "Témoignages", href: "/temoignages", icon: FileText },
-              { label: "Enseignements", href: "/enseignements", icon: BookOpen },
-              { label: "Vidéos", href: "/videos", icon: Video },
-              { label: "Bible", href: "/bible", icon: BookOpen },
-              { label: "Calendrier", href: "/calendrier-biblique", icon: Calendar },
-            ].map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={i}
-                  href={item.href}
-                  className="group flex flex-col items-center gap-3 p-6 bg-white rounded-2xl shadow-sm border border-[#8A8378]/10 hover:border-[#C9A227]/40 hover:shadow-md transition-all duration-300"
-                >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#C9A227]/10 group-hover:bg-[#C9A227]/20 transition-colors">
-                    <Icon className="w-6 h-6 text-[#C9A227]" />
-                  </div>
-                  <span className="text-sm font-semibold text-[#1E0F2B]">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/* Section supprimée — redondante avec la navbar et le footer */}
     </div>
   );
 }

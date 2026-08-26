@@ -41,8 +41,14 @@ export function WorldMap({
   });
 
   const projectPoint = (lat: number, lng: number) => {
+    // Projection Mercator (compatible avec dotted-map)
+    // Conversion lat/lng vers coordonnées x/y sur un viewBox 800x400
     const x = (lng + 180) * (800 / 360);
-    const y = (90 - lat) * (400 / 180);
+    // Projection Mercator : lat → y avec correction non-linéaire
+    const latRad = (lat * Math.PI) / 180;
+    const mercY = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+    // Normaliser sur 400px de hauteur (map du pôle -85° à +85°)
+    const y = 200 - (mercY * 200) / Math.log(Math.tan(Math.PI / 4 + (85 * Math.PI) / 360));
     return { x, y };
   };
 
