@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
@@ -9,6 +9,7 @@ import { CarteDisperses, type MembreDisperse } from "@/components/disperses/cart
 import { MagneticButton } from "@/components/magic/magnetic-button";
 import { MapPin, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { api } from "@/lib/api-client";
 
 export default function DispersesPage() {
   const [membres, setMembres] = useState<MembreDisperse[]>([]);
@@ -28,7 +29,7 @@ export default function DispersesPage() {
   });
 
   useEffect(() => {
-    fetch("/api/disperses")
+    fetch(api.url("/api/disperses"))
       .then((res) => res.json())
       .then((data) => {
         setMembres(data.membres || []);
@@ -64,7 +65,7 @@ export default function DispersesPage() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/disperses", {
+      const res = await fetch(api.url("/api/disperses"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -72,7 +73,7 @@ export default function DispersesPage() {
       if (res.ok) {
         setSubmitted(true);
         // Recharger les membres
-        const data = await fetch("/api/disperses").then((r) => r.json());
+        const data = await fetch(api.url("/api/disperses")).then((r) => r.json());
         setMembres(data.membres || []);
       }
     } catch (err) {
@@ -85,6 +86,7 @@ export default function DispersesPage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920&auto=format&fit=crop"
         kicker="Rassemblement des fils d'Israël"
         title="Carte des dispersés"
         subtitle="Les fils d'Israël dispersés parmi les nations, dont la réunification est un signe des temps prophétique (Ésaïe 11:12, Ézéchiel 37). Ajoutez votre position pour rendre visible l'accomplissement de la promesse."

@@ -325,7 +325,7 @@ function CallContactSelector({
   onSelect: (type: "audio" | "video", contact: string) => void;
 }) {
   const [contacts] = useState([
-    { name: "PAM", role: "Servante de l'Éternel", available: true },
+    { name: "Pam", role: "Servante de l'Éternel", available: true },
     { name: "Pasteur Kongo", role: "Pasteur", available: true },
     { name: "Équipe pastorale", role: "Modérateurs", available: false },
   ]);

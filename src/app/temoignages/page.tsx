@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { TestimonyCard } from "@/components/premium/testimony-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
@@ -39,6 +39,7 @@ export default async function TemoignagesPage({ searchParams }: PageProps) {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop"
         kicker="Récits rapportés"
         title="Témoignages"
         subtitle="Des récits d'expériences spirituelles authentiques, rapportés tels qu'ils ont été vécus et confiés à la communauté. Chaque témoignage est confronté à la Parole écrite."

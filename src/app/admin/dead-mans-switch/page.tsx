@@ -12,6 +12,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 
 interface DMS {
   id: string;
@@ -35,7 +36,7 @@ export default function DeadMansSwitchAdminPage() {
   const fetchSwitches = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/dead-mans-switch");
+      const res = await fetch(api.url("/api/dead-mans-switch"));
       if (res.ok) {
         const data = await res.json();
         setSwitches(data.switches || []);
@@ -50,7 +51,7 @@ export default function DeadMansSwitchAdminPage() {
   useEffect(() => { fetchSwitches(); }, []);
 
   const handleSignal = async (id?: string) => {
-    await fetch("/api/dead-mans-switch/signal", {
+    await fetch(api.url("/api/dead-mans-switch/signal"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
@@ -62,7 +63,7 @@ export default function DeadMansSwitchAdminPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await fetch("/api/dead-mans-switch", {
+      await fetch(api.url("/api/dead-mans-switch"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -105,7 +106,7 @@ export default function DeadMansSwitchAdminPage() {
           <div>
             <p className="text-sm font-semibold text-ink mb-1">Comment ça fonctionne</p>
             <p className="text-xs text-stone leading-relaxed">
-              Si PAM et le Pasteur Kongo cessent de manifester leur présence pendant {form.delaiJours} jours
+              Si Pam et le Pasteur Kongo cessent de manifester leur présence pendant {form.delaiJours} jours
               (paramétrable), le contenu réservé est automatiquement publié.
               Un cron job (Vercel) vérifie chaque jour à 3h00 UTC.
               Cliquer sur « Signaler activité » réinitialise le compteur.

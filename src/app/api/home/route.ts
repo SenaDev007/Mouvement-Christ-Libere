@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const mockData = {
     servants: [
-      { code: "pam", fullName: "Afrika Alkebulane Pamela Dali", shortName: "PAM", role: "Servante de l'Éternel", bio: "Témoignages d'enlèvements au ciel, instructions reçues du Seigneur Yeshoua, conformité à la Parole. Figure contemporaine du patriarche Hénoch." },
+      { code: "pam", fullName: "Afrika Alkebulane Pamela Dali", shortName: "Pam", role: "Servante de l'Éternel", bio: "Témoignages d'enlèvements au ciel, instructions reçues du Seigneur Yeshoua, conformité à la Parole. Figure contemporaine du patriarche Hénoch." },
       { code: "kongo", fullName: "Pasteur Kongo", shortName: "Pasteur Kongo", role: "Époux, ministre pastoral", bio: "Ministère pastoral complémentaire, enseignements et partages spirituels." },
     ],
     testimonies: [],

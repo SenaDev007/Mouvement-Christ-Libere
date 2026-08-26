@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Hash, BookOpen, Loader2, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 
 interface StrongEntry {
   numero: string;
@@ -37,7 +38,7 @@ export function StrongTooltip({ numero, children, className }: StrongTooltipProp
     if (entry || loading) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/bible-v2/strong/${encodeURIComponent(numero)}`);
+      const res = await fetch(api.url(`/api/bible-v2/strong/${encodeURIComponent(numero)}`));
       if (res.ok) {
         const data = await res.json();
         setEntry(data);

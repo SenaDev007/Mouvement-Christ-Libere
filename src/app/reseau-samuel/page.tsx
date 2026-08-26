@@ -1,4 +1,4 @@
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
@@ -8,6 +8,7 @@ export default function ReseauSamuelPage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1518709268805-4e9042af2176?q=80&w=1920&auto=format&fit=crop"
         kicker="Messagerie de secours — Mode mesh offline"
         title="Réseau Samuel"
         subtitle="Samuel, dans la Bible, est celui qui entend l'appel de Dieu et prête sa voix. Le réseau Samuel est un système de messagerie de secours qui fonctionne même sans Internet — via Bluetooth et Wi-Fi Direct, de téléphone à téléphone."

@@ -1,4 +1,4 @@
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
@@ -8,6 +8,7 @@ export default function StreamingPage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1598488035139-bdbb35331026?q=80&w=1920&auto=format&fit=crop"
         kicker="Streaming multiplateforme automatisé"
         title="Streaming RTMP"
         subtitle="Un live lancé depuis le site est diffusé simultanément sur YouTube, Facebook, TikTok et Odysee. Le site reste la source de référence — même si les plateformes suppriment."
@@ -33,7 +34,7 @@ export default function StreamingPage() {
                 <div className="flex items-center justify-center w-16 h-16 rounded-full bg-imperial text-ivory mb-2">
                   <Radio className="w-7 h-7" />
                 </div>
-                <p className="text-xs font-semibold text-ink">PAM / Pasteur Kongo</p>
+                <p className="text-xs font-semibold text-ink">Pam / Pasteur Kongo</p>
                 <p className="text-[10px] text-stone">OBS / Streamlabs</p>
               </div>
 
@@ -72,7 +73,7 @@ export default function StreamingPage() {
           <div id="architecture" className="card-gold-top p-8 mb-8">
             <h3 className="font-serif text-xl font-semibold text-ink mb-6">Architecture détaillée</h3>
             <div className="space-y-4">
-              <Step num="1" title="Source — Encodeur" description="PAM ou le Pasteur Kongo ouvre un live depuis OBS Studio, Streamlabs, ou un encodeur matériel. Le flux RTMP est envoyé vers le serveur Ant Media." />
+              <Step num="1" title="Source — Encodeur" description="Pam ou le Pasteur Kongo ouvre un live depuis OBS Studio, Streamlabs, ou un encodeur matériel. Le flux RTMP est envoyé vers le serveur Ant Media." />
               <Step num="2" title="Serveur — Ant Media Server" description="Reçoit le flux RTMP, le transcode en plusieurs qualités (ABR : 1080p, 720p, 480p, 240p), et le redistribue en HLS/DASH." />
               <Step num="3" title="Site web — Lecteur HLS" description="Le flux HLS est servi au lecteur vidéo intégré du site, via Cloudflare CDN pour la mise en cache et la scalabilité." />
               <Step num="4" title="Restreamer — Multi-destination" description="Un module restreamer (FFmpeg) envoie une copie du flux RTMP vers YouTube, Facebook, TikTok et Odysee simultanément." />
@@ -130,7 +131,7 @@ export default function StreamingPage() {
         <div className="relative">
           <QuoteBlock
             text="Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe."
-            reference="PAM — Mouvement Christ Libère"
+            reference="Pam — Mouvement Christ Libère"
             variant="dark"
           />
         </div>

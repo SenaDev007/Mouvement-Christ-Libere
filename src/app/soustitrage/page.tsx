@@ -12,11 +12,12 @@ import {
   FileText,
   Play,
 } from "lucide-react";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 
 const LANGUES = [
   { code: "fr", nom: "Français", drapeau: "🇫🇷" },
@@ -56,7 +57,7 @@ export default function SousTitragePage() {
   const [whisperConfigure, setWhisperConfigure] = useState(false);
 
   useEffect(() => {
-    fetch("/api/soustitres")
+    fetch(api.url("/api/soustitres"))
       .then((r) => r.json())
       .then((data) => setWhisperConfigure(data.mode === "production"))
       .catch(() => {});
@@ -74,7 +75,7 @@ export default function SousTitragePage() {
     setError("");
 
     try {
-      const res = await fetch("/api/soustitres", {
+      const res = await fetch(api.url("/api/soustitres"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -109,6 +110,7 @@ export default function SousTitragePage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?q=80&w=1920&auto=format&fit=crop"
         kicker="Sous-titrage IA multilingue"
         title="Sous-titres automatiques"
         subtitle="Génération de sous-titres multilingues via Whisper (OpenAI). Pour que la Parole atteigne les dispersés d'Israël partout où ils se trouvent, dans leur langue."

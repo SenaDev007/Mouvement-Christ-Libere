@@ -12,11 +12,12 @@ import {
   HandHeart,
   Sparkles,
 } from "lucide-react";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 
 interface Demande {
   id: string;
@@ -60,7 +61,7 @@ export default function IntercessionPage() {
   const fetchDemandes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/intercession${filtre !== "tous" ? `?categorie=${filtre}` : ""}`);
+      const res = await fetch(api.url(`/api/intercession${filtre !== "tous" ? `?categorie=${filtre}` : ""}`));
       if (res.ok) {
         const data = await res.json();
         setDemandes(data.demandes || []);
@@ -77,7 +78,7 @@ export default function IntercessionPage() {
 
   const handlePrier = async (id: string) => {
     try {
-      await fetch(`/api/intercession/${id}/prier`, { method: "POST" });
+      await fetch(api.url(`/api/intercession/${id}/prier`), { method: "POST" });
       setDemandes((prev) =>
         prev.map((d) =>
           d.id === id ? { ...d, prayCount: d.prayCount + 1, statut: "en_priere" } : d
@@ -93,7 +94,7 @@ export default function IntercessionPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch("/api/intercession", {
+      const res = await fetch(api.url("/api/intercession"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -117,6 +118,7 @@ export default function IntercessionPage() {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=1920&auto=format&fit=crop"
         kicker="Moteur spirituel de la communauté"
         title="Chaîne d'intercession"
         subtitle="Le moteur spirituel de la communauté. Déposez vos demandes de prière, priez pour les autres, partageez les exaucements. Quand deux ou trois s'accordent, le Seigneur est au milieu."

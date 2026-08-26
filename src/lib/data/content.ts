@@ -118,7 +118,7 @@ export const BIOGRAPHIES: Record<Exclude<ServantId, "commun">, BiographyMileston
     },
     {
       date: "La rencontre",
-      title: "La rencontre avec PAM",
+      title: "La rencontre avec Pam",
       description:
         "La reconnaissance de deux appels complémentaires. Le ministère pastoral et le ministère prophétique qui se rencontrent sans se confondre. Une alliance dans le Seigneur.",
       verseRef: "Amos 3:3",
@@ -128,7 +128,7 @@ export const BIOGRAPHIES: Record<Exclude<ServantId, "commun">, BiographyMileston
       date: "Aujourd'hui",
       title: "Servir dans la continuité",
       description:
-        "Poursuite du ministère pastoral, en harmonie avec le ministère prophétique de PAM. Enseignements, partages, accompagnement des frères et sœurs dans la foi.",
+        "Poursuite du ministère pastoral, en harmonie avec le ministère prophétique de Pam. Enseignements, partages, accompagnement des frères et sœurs dans la foi.",
       verseRef: "2 Timothée 4:2",
       verseText:
         "Prêche la parole, insiste en temps et hors de temps, reprends, censure, exhorte.",
@@ -354,7 +354,7 @@ export const CHANNELS: Channel[] = [
   {
     id: "c1",
     name: "Annonces officielles",
-    description: "Communications officielles de PAM et du Pasteur Kongo.",
+    description: "Communications officielles de Pam et du Pasteur Kongo.",
     type: "annonce",
     members: 0,
     encrypted: false,

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { PageHero } from "@/components/magic/page-hero";
+import { PageHero } from "@/components/site/page-hero";
 import { TeachingCard } from "@/components/premium/teaching-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
@@ -42,6 +42,7 @@ export default async function EnseignementsPage({ searchParams }: PageProps) {
   return (
     <div>
       <PageHero
+        imageSrc="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1920&auto=format&fit=crop"
         kicker="Études bibliques"
         title="Enseignements"
         subtitle="Des études bibliques classées par thème, par livre et par niveau, pour approfondir à votre rythme. Transmis avec rigueur, confrontés à la Parole."
@@ -102,6 +103,9 @@ export default async function EnseignementsPage({ searchParams }: PageProps) {
                 </button>
                 <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors">
                   Email à un proche
+                </button>
+                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors">
+                  Télécharger en PDF
                 </button>
               </div>
             </div>
