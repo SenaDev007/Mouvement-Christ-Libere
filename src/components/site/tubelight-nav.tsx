@@ -12,6 +12,8 @@ import {
   Globe,
   Users,
   ChevronRight,
+  Sparkles,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -20,10 +22,10 @@ const navItems = [
   { name: "Biographie", url: "/biographie", icon: User },
   { name: "Témoignages", url: "/temoignages", icon: FileText },
   { name: "Enseignements", url: "/enseignements", icon: BookOpen },
-  { name: "Vidéos", url: "/videos", icon: Video },
+  { name: "Vidéos & Lives", url: "/videos", icon: Video },
   { name: "Bible", url: "/bible", icon: BookOpen },
   { name: "Calendrier", url: "/calendrier-biblique", icon: Calendar },
-  { name: "Dispersés", url: "/disperses", icon: Globe },
+  { name: "Yeshua Connect", url: "/yeshua-connect", icon: MessageSquare },
   { name: "Communauté", url: "/communaute", icon: Users },
 ];
 
@@ -45,7 +47,7 @@ export function TubelightNav() {
       {/* Tubelight navbar — floating, centrée */}
       <NavBar items={isMobile ? mobileItems : navItems} />
 
-      {/* CTA "Rejoindre" — desktop only, positionné en bas à droite pour éviter le chevauchement */}
+      {/* CTA "Rejoindre" — desktop only, positionné en bas à droite */}
       <div className="hidden lg:block fixed bottom-6 right-6 z-50">
         <Link
           href="/communaute"
