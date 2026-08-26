@@ -8,6 +8,7 @@ import { TextShimmer, GradientText } from "@/components/magic/text-shimmer";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock } from "@/components/premium/section-divider";
+import ScrollExpandMedia from "@/components/blocks/scroll-expansion-hero";
 import Image from "next/image";
 
 const VERSES = [
