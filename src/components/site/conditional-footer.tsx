@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Footer } from "@/components/ui/modem-animated-footer";
-import { Sparkles, Mail, Youtube, Facebook, Instagram } from "lucide-react";
+import { Mail, Youtube, Facebook, Instagram } from "lucide-react";
 
 const socialLinks = [
   {
@@ -51,7 +51,6 @@ export function ConditionalFooter() {
       brandDescription="Témoignages, enseignements et vie de communauté — au service du rassemblement, au son du chofar."
       socialLinks={socialLinks}
       navLinks={navLinks}
-      brandIcon={<Sparkles className="w-8 sm:w-10 md:w-14 h-8 sm:h-10 md:h-14 text-[#1E0F2B] drop-shadow-lg" />}
     />
   );
 }

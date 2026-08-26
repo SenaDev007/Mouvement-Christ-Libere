@@ -114,31 +114,30 @@ export const Footer = ({
           </div>
         </div>
 
-        {/* Large background text */}
+        {/* Large background text — sur une seule ligne */}
         <div
-          className="bg-gradient-to-b from-[#C9A227]/15 via-[#C9A227]/5 to-transparent bg-clip-text text-transparent leading-none absolute left-1/2 -translate-x-1/2 bottom-40 md:bottom-32 font-extrabold tracking-tighter pointer-events-none select-none text-center px-4 font-serif"
+          className="bg-gradient-to-b from-[#C9A227]/15 via-[#C9A227]/5 to-transparent bg-clip-text text-transparent leading-none absolute left-1/2 -translate-x-1/2 bottom-44 md:bottom-36 font-extrabold tracking-tighter pointer-events-none select-none text-center font-serif whitespace-nowrap"
           style={{
-            fontSize: "clamp(2.5rem, 10vw, 8rem)",
-            maxWidth: "95vw",
+            fontSize: "clamp(2rem, 8vw, 6rem)",
           }}
         >
           CHRIST LIBÈRE
         </div>
 
-        {/* Bottom logo */}
-        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_20px_rgba(201,162,39,0.3)] bottom-24 md:bottom-20 backdrop-blur-sm rounded-3xl bg-[#1A0826]/60 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-3 -translate-x-1/2 z-10">
-          <div className="w-12 sm:w-16 md:w-24 h-12 sm:h-16 md:h-24 bg-gradient-to-br from-[#C9A227] to-[#A3821C] rounded-2xl flex items-center justify-center shadow-lg">
-            {brandIcon || (
-              <Sparkles className="w-8 sm:w-10 md:w-14 h-8 sm:h-10 md:h-14 text-[#1E0F2B] drop-shadow-lg" />
-            )}
-          </div>
+        {/* Bottom logo — image de shofar */}
+        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_20px_rgba(201,162,39,0.3)] bottom-28 md:bottom-24 backdrop-blur-sm rounded-3xl bg-[#1A0826]/60 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-2 -translate-x-1/2 z-10">
+          <img
+            src="/shofar.png"
+            alt="Shofar"
+            className="w-14 sm:w-20 md:w-28 h-14 sm:h-20 md:h-28 object-contain rounded-2xl"
+          />
         </div>
 
         {/* Bottom line */}
-        <div className="absolute bottom-32 sm:bottom-34 backdrop-blur-sm h-1 bg-gradient-to-r from-transparent via-[#C9A227]/30 to-transparent w-full left-1/2 -translate-x-1/2"></div>
+        <div className="absolute bottom-36 md:bottom-32 backdrop-blur-sm h-1 bg-gradient-to-r from-transparent via-[#C9A227]/30 to-transparent w-full left-1/2 -translate-x-1/2"></div>
 
         {/* Bottom shadow */}
-        <div className="bg-gradient-to-t from-[#2A0E3D] via-[#2A0E3D]/80 blur-[1em] to-[#2A0E3D]/40 absolute bottom-28 w-full h-24"></div>
+        <div className="bg-gradient-to-t from-[#2A0E3D] via-[#2A0E3D]/80 blur-[1em] to-[#2A0E3D]/40 absolute bottom-32 w-full h-24"></div>
       </footer>
     </section>
   );
