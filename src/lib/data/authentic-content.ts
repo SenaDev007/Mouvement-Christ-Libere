@@ -13,7 +13,7 @@ export const PAM_BIOGRAPHY = [
   {
     date: "",
     title: "Mes Origines et la Marque d'Adonaï",
-    description: "Je suis née en Afrique, sur cette terre que les anciens appelaient Alkebulan, « la mère de l'humanité ». Mon parcours terrestre a commencé dans la douleur et le vide: j'ai perdu mon père très tôt, je n'ai pas connu ma mère et j'ai grandi chez mon oncle, au sein d'une famille de cinq enfants. Je n'ai pas eu la chance d'aller à l'école, je ne savais ni lire ni écrire, et j'ignorais tout des Écritures saintes.\n\nMais avant même que je ne vienne au monde, H&M Adonaï m'avait déjà choisie et mise à part. Il a posé sur mon corps physique un sceau indélébile: une tache de naissance sous la forme de la **carte d'Afrique**. C'est la marque de feu de la consécration de l'Éternel. À cause de cette marque, mon cœur brûle pour ce continent; je ressens spirituellement toutes ses douleurs, ses guerres, ses pillages, et je suis poussée à intercéder sans cesse pour le réveil et la délivrance de l'Afrique.\n\n---",
+    description: "Je suis née en Afrique, sur cette terre que les anciens appelaient Alkebulan, « la mère de l'humanité ». Mon parcours terrestre a commencé dans la douleur et le vide: j'ai perdu mon père très tôt, je n'ai pas connu ma mère et j'ai grandi chez mon oncle, au sein d'une famille de cinq enfants. Je n'ai pas eu la chance d'aller à l'école, je ne savais ni lire ni écrire, et j'ignorais tout des Écritures saintes.\n\nMais avant même que je ne vienne au monde, Adonaï m'avait déjà choisie et mise à part. Il a posé sur mon corps physique un sceau indélébile: une tache de naissance sous la forme de la **carte d'Afrique**. C'est la marque de feu de la consécration de l'Éternel. À cause de cette marque, mon cœur brûle pour ce continent; je ressens spirituellement toutes ses douleurs, ses guerres, ses pillages, et je suis poussée à intercéder sans cesse pour le réveil et la délivrance de l'Afrique.\n\n---",
     verseRef: "",
     verseText: "",
     order: 1,
@@ -284,11 +284,11 @@ Yeshua m'a révélé que Dieu est en train de se choisir dans le secret une arm�
 
 Je ne me suis pas retrouvée dans une visite paisible, mais directement au milieu d'un grand jugement effrayant. Il y avait une foule immense de personnes formant un rang interminable dont on ne voyait pas la fin. Une atmosphère de terreur absolue et de panique générale régnait sur ce rang; tout le monde tremblait, les gens pleuraient en réalisant la dureté de ce qui se passait. J'étais moi-même dans ce rang, encadrée par des anges robustes qui agissaient comme des protocoles sévères sans sourire. Prise d'une sueur froide, je me suis mise à crier à Dieu dans mon cœur: *“Seigneur Jésus, pardonne-moi pour mes péchés, pardonne mes manquements!”* Un homme devant moi m'a chuchoté: *“C'est le rang du Grand Jugement.”* »
 
-**Le Trône de Cristal de H&M Adonaï et la rivière de cristal**
+**Le Trône de Cristal de Adonaï et la rivière de cristal**
 
 « En avançant et en penchant ma tête pour regarder devant, j'ai vu le trône glorieux d'Adonaï. C'était un immense trône de cristal transparent, blanc et pur comme du diamant, environné d'un arc-en-ciel majestueux.
 
-Sur ce trône était assise la Majesté divine, H&M Adonaï. Sa robe était d'un blanc étincelant qui s'étirait comme du néon de lumière, sa barbe et sa chevelure étaient blanches comme de la laine, d'une beauté indicible. Il portait une couronne de cristal ornée d'une pierre précieuse d'un bleu royal éclatant. L'Éternel était d'un calme et d'une sévérité absolue. Juste sous ses pieds, une rivière de cristal pur coulait sous le trône. »
+Sur ce trône était assise la Majesté divine, Adonaï. Sa robe était d'un blanc étincelant qui s'étirait comme du néon de lumière, sa barbe et sa chevelure étaient blanches comme de la laine, d'une beauté indicible. Il portait une couronne de cristal ornée d'une pierre précieuse d'un bleu royal éclatant. L'Éternel était d'un calme et d'une sévérité absolue. Juste sous ses pieds, une rivière de cristal pur coulait sous le trône. »
 
 **Le Livre de Vie: Un livre vivant activé par l'eau du Trône**
 
@@ -364,7 +364,7 @@ Dès que j'ai pris le bébé dans mes bras, le Saint-Esprit est venu se tenir ph
 
 **Le chiffre 60 et le secret de l'orientation vers l'Est**
 
-« Je me suis tournée vers l'Est, car c'est dans cette direction que se trouve spirituellement le Trône de H&M Adonaï. J'ai soulevé l'enfant de mes deux mains vers l'Est. \\n\\nÀ cet instant précis, mes yeux spirituels se sont ouverts dans des visions d'une profondeur inouïe. En regardant la tête de l'enfant, j'ai vu flotter au-dessus de son fontanel le chiffre **60**. Le Saint-Esprit m'a révélé: *“Cet enfant vivra exactement 60 ans sur cette terre avant de rendre son dernier souffle.”* J'étais émerveillée. \\n\\nL'Esprit m'a dit: *“Pam, maintenant que tu connais le temps qui lui est imparti, ne fais pas une prière banale. Programme la vie de cet enfant étape par étape dans le monde spirituel.”* »
+« Je me suis tournée vers l'Est, car c'est dans cette direction que se trouve spirituellement le Trône de Adonaï. J'ai soulevé l'enfant de mes deux mains vers l'Est. \\n\\nÀ cet instant précis, mes yeux spirituels se sont ouverts dans des visions d'une profondeur inouïe. En regardant la tête de l'enfant, j'ai vu flotter au-dessus de son fontanel le chiffre **60**. Le Saint-Esprit m'a révélé: *“Cet enfant vivra exactement 60 ans sur cette terre avant de rendre son dernier souffle.”* J'étais émerveillée. \\n\\nL'Esprit m'a dit: *“Pam, maintenant que tu connais le temps qui lui est imparti, ne fais pas une prière banale. Programme la vie de cet enfant étape par étape dans le monde spirituel.”* »
 
 **La programmation prophétique étape par étape**
 
@@ -468,7 +468,7 @@ Prise de panique devant la violence du supplice que subissait le jeune David, j'
 
 « Le Seigneur m'a dit calmement: **“Regarde, Pam, regarde bien et apprends ce qu’est la patience”**. En observant attentivement David à travers les yeux de l'Esprit, j'ai réalisé un mystère: malgré les coups de Goliath, malgré la poussière et la défaite apparente, David n'avait aucune peur dans son cœur et il refusait catégoriquement d'abandonner. Il avait une foi absolue, inébranlable, ancrée dans la certitude que Dieu ne l'abandonnerait jamais. Il a enduré la souffrance et la fatigue avec une patience héroïque.
 
-Le combat a duré très longtemps. Et c'est seulement lorsque David est arrivé au bout de son endurance, au moment précis où la foi et la patience avaient fait leur œuvre parfaite, que la puissance de H&M Adonaï a pénétré physiquement en lui. David a alors saisi sa fronde avec une force surnaturelle et a lancé la pierre. L'ange m'a montré la trajectoire: la pierre, habitée par l'Esprit de Dieu, est partie comme une balle et s'est enfoncée profondément dans le front du géant qui s'est écroulé mort.
+Le combat a duré très longtemps. Et c'est seulement lorsque David est arrivé au bout de son endurance, au moment précis où la foi et la patience avaient fait leur œuvre parfaite, que la puissance de Adonaï a pénétré physiquement en lui. David a alors saisi sa fronde avec une force surnaturelle et a lancé la pierre. L'ange m'a montré la trajectoire: la pierre, habitée par l'Esprit de Dieu, est partie comme une balle et s'est enfoncée profondément dans le front du géant qui s'est écroulé mort.
 
 Le Seigneur m'a dit: *“Pam, j’ai permis que tu vois cela pour t’enseigner la patience. Aujourd'hui, on enseigne aux chrétiens la facilité: viens à l'église et tu seras riche, prie et tu seras guéri en un instant. On ne leur enseigne pas l'endurance, le combat et la patience. Mais sache que Dieu est la patience même, et que c'est à travers l'épreuve et l'endurance que la foi se fortifie pour remporter la victoire”*. »
 
@@ -531,10 +531,10 @@ C'est grâce à l'intercession, à l'endurance et à la sainte obstination de Ma
   },
   {
     title: "Le Piège du Faux Parler en Langue de mon Enfance et le Véritable Baptême du Saint-Esprit",
-    short: "La distinction entre le baptême d'eau et le baptême de feu « Mes bien-aimés, je veux vous révéler une grande vérité spirituelle concernant la manifestation de la puissance de H&M Adonaï. Il y a deux...",
+    short: "La distinction entre le baptême d'eau et le baptême de feu « Mes bien-aimés, je veux vous révéler une grande vérité spirituelle concernant la manifestation de la puissance de Adonaï. Il y a deux...",
     content: `**La distinction entre le baptême d'eau et le baptême de feu**
 
-« Mes bien-aimés, je veux vous révéler une grande vérité spirituelle concernant la manifestation de la puissance de H&M Adonaï. Il y a deux baptêmes distincts: le baptême d'eau et le baptême de feu. Le baptême d'eau, c'est une décision consciente que nous prenons. Nous décidons de passer par les eaux par engagement envers le Seigneur Jésus-Christ. Mais le baptême de l’Esprit, ou baptême de feu, on ne le décide pas, on ne le planifie pas et on ne le force pas. Il vient de lui-même, de manière entièrement souveraine et naturelle, au moment opportun que l'Esprit de Dieu a fixé pour notre vie. Le baptême de feu représente la puissance spirituelle de Dieu agissant en nous, alors que le baptême d'eau représente la douceur, la repentance et notre engagement. »
+« Mes bien-aimés, je veux vous révéler une grande vérité spirituelle concernant la manifestation de la puissance de Adonaï. Il y a deux baptêmes distincts: le baptême d'eau et le baptême de feu. Le baptême d'eau, c'est une décision consciente que nous prenons. Nous décidons de passer par les eaux par engagement envers le Seigneur Jésus-Christ. Mais le baptême de l’Esprit, ou baptême de feu, on ne le décide pas, on ne le planifie pas et on ne le force pas. Il vient de lui-même, de manière entièrement souveraine et naturelle, au moment opportun que l'Esprit de Dieu a fixé pour notre vie. Le baptême de feu représente la puissance spirituelle de Dieu agissant en nous, alors que le baptême d'eau représente la douceur, la repentance et notre engagement. »
 
 **Le piège du parler en langue forcé à l'âge de huit ans**
 
@@ -544,7 +544,7 @@ Ils se sont mis à écrire des syllabes au tableau, en grand: **“RI-BA-BA”**
 
 **Ma délivrance et le vrai parler en langue reçu au ciel en 2011**
 
-« J'ai continué à parler cette fausse langue depuis l'âge de huit ans jusqu'à ma mort spirituelle et physique, le 18 juillet 2011. C'est seulement lorsque mon âme est montée dans le Royaume des Cieux, devant le Trône de H&M Adonaï, que j'ai été véritablement baptisée du Saint-Esprit pour la toute première fois.
+« J'ai continué à parler cette fausse langue depuis l'âge de huit ans jusqu'à ma mort spirituelle et physique, le 18 juillet 2011. C'est seulement lorsque mon âme est montée dans le Royaume des Cieux, devant le Trône de Adonaï, que j'ai été véritablement baptisée du Saint-Esprit pour la toute première fois.
 
 Pendant que je me tenais devant le Trône, l'Esprit m'a dit: *“Vas-y Pam, parle! Parle maintenant!”* Et à cet instant, ma véritable langue spirituelle est sortie de mon âme. C'était un fleuve surnaturel, un mélange d'arabe pur d'une beauté indicible et d'hébreu ancien (araméen). Quand je suis revenue à la vie sur la terre, et que je me suis mise à parler cette langue de feu, j'ai réalisé la supercherie: *“Mais Seigneur, qu'est-ce que je parlais depuis mon enfance aux Assemblées de Dieu?”* Le Saint-Esprit m'a répondu avec clarté: *“Pam, ce n'était pas ma langue. C'était une langue forcée par les hommes.”*
 
@@ -566,7 +566,7 @@ C'est un immense entrepôt céleste géré par les anges du Créateur. Quand j'y
 
 **Le secret des duplicatas spirituels et la guérison divine**
 
-« Le Saint-Esprit m'a alors révélé un secret divin capital. Lorsque H&M Adonaï nous crée dans le secret pour nous envoyer sur la terre, Il crée notre corps spirituel et notre corps physique. Mais pour chaque être humain, le Créateur fabrique également des **duplicatas parfaits** de tous nos membres et organes, qu'Il garde en réserve dans ce grand magasin céleste.
+« Le Saint-Esprit m'a alors révélé un secret divin capital. Lorsque Adonaï nous crée dans le secret pour nous envoyer sur la terre, Il crée notre corps spirituel et notre corps physique. Mais pour chaque être humain, le Créateur fabrique également des **duplicatas parfaits** de tous nos membres et organes, qu'Il garde en réserve dans ce grand magasin céleste.
 
 C'est exactement comme les fabricants de téléphones portables sur la terre: lorsqu'ils conçoivent un modèle de téléphone, comme un nokia, they fabriquent en même temps des milliers de pièces de rechange (plaquettes, écrans, boutons, batteries) pour remplacer celles qui s'useront ou se casseront plus tard [638-639].
 
@@ -604,7 +604,7 @@ Cela signifie que nous n'inventons rien par notre propre intelligence. Personne 
 
 **La colère d'Adonaï contre les pasteurs qui vendent les révélations au prix fort**
 
-« C'est pourquoi H&M Adonaï m'a chargée d'adresser une mise en garde sévère à tous les écrivains chrétiens et à tous les pasteurs: vous n'avez pas le droit de vendre ces livres d'inspiration divine à des prix exorbitants (12 000, 50 000 ou 60 000 francs) sous prétexte que vous avez fait des efforts pour les écrire. Vous les avez reçus gratuitement du Saint-Esprit, vous devez les mettre à la disposition du peuple à des prix dérisoires, uniquement pour couvrir les frais d'impression.
+« C'est pourquoi Adonaï m'a chargée d'adresser une mise en garde sévère à tous les écrivains chrétiens et à tous les pasteurs: vous n'avez pas le droit de vendre ces livres d'inspiration divine à des prix exorbitants (12 000, 50 000 ou 60 000 francs) sous prétexte que vous avez fait des efforts pour les écrire. Vous les avez reçus gratuitement du Saint-Esprit, vous devez les mettre à la disposition du peuple à des prix dérisoires, uniquement pour couvrir les frais d'impression.
 
 Le Seigneur m'a dit avec fermeté que beaucoup d'hommes de Dieu rateront le ciel et iront en enfer uniquement à cause de cette cupidité spirituelle, car ils ont fait commerce des trésors sacrés de la bibliothèque d'Adonaï. »
 
@@ -628,7 +628,7 @@ Cet ange a pour mission d'enregistrer de manière légale et officielle tous les
 
 « Après le départ de l'ange en robe violette, un autre ange est envoyé pour rester à tes côtés: c'est ton premier **ange gardien** [647-648]. Ce premier ange veille sur toi de ta naissance jusqu'à l'âge de 12 ans. À l'âge de 12 ans, un second ange gardien prend le relais et reste avec toi pour te guider et te protéger jusqu'à ta mort physique.
 
-Chaque année, à la date exacte de ta naissance, la porte spirituelle par laquelle tu es venu sur la terre s'ouvre à nouveau dans les cieux. H&M Adonaï convoque alors l'ange violet qui a assisté à ta naissance afin d'évaluer ta marche et de libérer de nouvelles grâces, de nouvelles bénédictions et de nouveaux miracles pour ta vie terrestre. »
+Chaque année, à la date exacte de ta naissance, la porte spirituelle par laquelle tu es venu sur la terre s'ouvre à nouveau dans les cieux. Adonaï convoque alors l'ange violet qui a assisté à ta naissance afin d'évaluer ta marche et de libérer de nouvelles grâces, de nouvelles bénédictions et de nouveaux miracles pour ta vie terrestre. »
 
 **Le danger de falsifier son âge pour les intérêts du monde**
 
@@ -662,7 +662,7 @@ En faisant cela, sans le savoir, les mariés dédient leur mariage, leur intimit
 
 **L'instruction d'Adonaï pour préserver la pureté du lit conjugal**
 
-« H&M Adonaï demande à Ses enfants d'arrêter de copier les rituels du monde. Le premier jour de votre mariage, vous devez être dans votre propre maison, dans un lieu sanctifié et purifié par la prière, afin d'offrir votre première semence à l'Éternel en prémices de bénédictions. Ne livrez pas la gloire de votre foyer sur les autels d'Isabelle. »
+« Adonaï demande à Ses enfants d'arrêter de copier les rituels du monde. Le premier jour de votre mariage, vous devez être dans votre propre maison, dans un lieu sanctifié et purifié par la prière, afin d'offrir votre première semence à l'Éternel en prémices de bénédictions. Ne livrez pas la gloire de votre foyer sur les autels d'Isabelle. »
 
 ---`,
     themes: ["Altar-Hôtel", "Lune de Miel"],
@@ -695,7 +695,7 @@ Le jour de ton anniversaire, mets-toi à genoux dans ta chambre. Appelle tes par
 
 
 ---
-*« Tout ce qui a été révélé à mon esprit est la pure vérité de H&M Adonaï. Que l'Église de Yeshua HaMashiach se lève dans la maturité, dans la sanctification et dans la puissance du Saint-Esprit pour préparer son retour glorieux. » — Chantre Pamela Dali*`,
+*« Tout ce qui a été révélé à mon esprit est la pure vérité de Adonaï. Que l'Église de Yeshua HaMashiach se lève dans la maturité, dans la sanctification et dans la puissance du Saint-Esprit pour préparer son retour glorieux. » — Chantre Pamela Dali*`,
     themes: ["Anniversaire", "Rituels"],
     bookRef: "Témoignage authentique",
     readingTime: "5 min",
@@ -703,7 +703,7 @@ Le jour de ton anniversaire, mets-toi à genoux dans ta chambre. Appelle tes par
   {
     title: "Visite du Royaume des Cieux — Introduction: L’Alliance du Secret et de la Grâce",
     short: "« Tout a commencé en 2003. J’étais une jeune fille orpheline de père, je n'avais pas connu ma mère, et je grandissais sous la garde de mon oncle avec mes quatre frères et sœurs — nous étions cinq au...",
-    content: `« Tout a commencé en 2003. J’étais une jeune fille orpheline de père, je n'avais pas connu ma mère, et je grandissais sous la garde de mon oncle avec mes quatre frères et sœurs — nous étions cinq au total dans la maison. Je n'avais jamais été à l'école, je ne savais ni lire ni écrire, et j'ignorais tout de la Parole de Dieu et de la théologie. Mais H&M Adonaï avait un plan secret pour ma vie, une élection souveraine qui s'est manifestée à travers une expérience surnaturelle qui a bouleversé notre existence à tout jamais. »
+    content: `« Tout a commencé en 2003. J’étais une jeune fille orpheline de père, je n'avais pas connu ma mère, et je grandissais sous la garde de mon oncle avec mes quatre frères et sœurs — nous étions cinq au total dans la maison. Je n'avais jamais été à l'école, je ne savais ni lire ni écrire, et j'ignorais tout de la Parole de Dieu et de la théologie. Mais Adonaï avait un plan secret pour ma vie, une élection souveraine qui s'est manifestée à travers une expérience surnaturelle qui a bouleversé notre existence à tout jamais. »
 
 ---`,
     themes: ["Ciel", "Enlèvement", "Trône d'Adonaï", "Saint-Esprit"],
@@ -918,8 +918,8 @@ Il m'a répondu avec une grande tristesse: **“Pam, ce sont les enfants avorté
   },
   {
     title: "Visite du Royaume des Cieux — Dernière Partie: Les Recommandations Finales d’Adonaï, la Loi du Hasard et le Sceau Musical",
-    short: "« Avant mon retour définitif dans mon enveloppe charnelle, le Seigneur H&M Adonaï et le Saint-Esprit m'ont confié des clés d'une profondeur absolue pour sceller ma marche et éclairer mon ministère:...",
-    content: `« Avant mon retour définitif dans mon enveloppe charnelle, le Seigneur H&M Adonaï et le Saint-Esprit m'ont confié des clés d'une profondeur absolue pour sceller ma marche et éclairer mon ministère:
+    short: "« Avant mon retour définitif dans mon enveloppe charnelle, le Seigneur Adonaï et le Saint-Esprit m'ont confié des clés d'une profondeur absolue pour sceller ma marche et éclairer mon ministère:...",
+    content: `« Avant mon retour définitif dans mon enveloppe charnelle, le Seigneur Adonaï et le Saint-Esprit m'ont confié des clés d'une profondeur absolue pour sceller ma marche et éclairer mon ministère:
 
 ### 1. Les Seize Anges de Destinée et leurs fonctions
 Pendant que j'étais devant le Trône, j'ai demandé à Adonaï de m'enseigner précisément le rôle et les fonctions réelles de Ses anges. Le Seigneur m'a alors permis de choisir **seize anges de combat et de ministère**. Il a déposé Sa bénédiction sur eux et m'a révélé leurs fonctions exactes: ils m'accompagnent et me défendent sur terre, manifestant activement Sa puissance de guérison, de libération et de révélation prophétique dans tout ce que j'entreprends pour Sa gloire.
@@ -966,7 +966,7 @@ export const AUTHENTIC_TEACHINGS = [
 
 « Lorsque j’ai visité le Royaume des Cieux pour la première fois en 2003, et tout au long de mes six enlèvements célestes, le Seigneur m'a ouvert les yeux sur le mystère de la Trinité. Sur la terre, on vous enseigne souvent trois divinités séparées, mais je vous dis la vérité: au ciel, il n’y a pas trois chaises ou trois trônes pour le Père, le Fils et le Saint-Esprit. Il n’y a qu’un seul Trône, et c’est la même et unique personne qui s'y manifeste sous différentes formes.
 
-Quand j’étais devant le Trône de l’Éternel de H&M Adonaï, le Saint-Esprit qui m’accompagnait disparaissait pour devenir un vent spirituel. Quand je me tenais devant l’Agneau, Yeshua HaMashiach, le Saint-Esprit devenait invisible. Et lorsque je me retrouvais devant le visage d'Adonaï, je ne voyais ni Jésus ni le Saint-Esprit, mais une lumière d'une intensité insoutenable qui couvrait Sa face. Le Saint-Esprit m'a révélé que cette lumière aveuglante, c’était Lui-même. J'ai demandé: *“Comment fais-tu pour être à la fois cette lumière glorieuse sur le Trône et cette personne douce ici à mes côtés?”* Il m’a répondu avec une humilité infinie: *“Pam, c’est l’un de mes pouvoirs.”* Vous possédez un corps, un esprit et une âme; c’est exactement la même chose pour Dieu. »
+Quand j’étais devant le Trône de l’Éternel de Adonaï, le Saint-Esprit qui m’accompagnait disparaissait pour devenir un vent spirituel. Quand je me tenais devant l’Agneau, Yeshua HaMashiach, le Saint-Esprit devenait invisible. Et lorsque je me retrouvais devant le visage d'Adonaï, je ne voyais ni Jésus ni le Saint-Esprit, mais une lumière d'une intensité insoutenable qui couvrait Sa face. Le Saint-Esprit m'a révélé que cette lumière aveuglante, c’était Lui-même. J'ai demandé: *“Comment fais-tu pour être à la fois cette lumière glorieuse sur le Trône et cette personne douce ici à mes côtés?”* Il m’a répondu avec une humilité infinie: *“Pam, c’est l’un de mes pouvoirs.”* Vous possédez un corps, un esprit et une âme; c’est exactement la même chose pour Dieu. »
 
 **Le Saint-Esprit est une personne réelle, douce et sensible**
 
@@ -1005,7 +1005,7 @@ C’est exactement la même chose avec le Saint-Esprit. Si vous ne reconnaissez 
     excerpt: "Le Shabbat est le samedi, pas le dimanche « Un frère m'a écrit à plusieurs reprises pour me demander ce qu'est le Shabbat. Je vous apporte la réponse d'Adonaï, car ce n'est pas ma propre sagesse: le Shabbat remonte à la création du monde dans la...",
     content: `**Le Shabbat est le samedi, pas le dimanche**
 
-« Un frère m'a écrit à plusieurs reprises pour me demander ce qu'est le Shabbat. Je vous apporte la réponse d'Adonaï, car ce n'est pas ma propre sagesse: le Shabbat remonte à la création du monde dans la Genèse. Après avoir créé les cieux, la terre, les planètes et les animaux en six jours, H&M Adonaï s'est reposé le septième jour, l'a béni et l'a sanctifié.
+« Un frère m'a écrit à plusieurs reprises pour me demander ce qu'est le Shabbat. Je vous apporte la réponse d'Adonaï, car ce n'est pas ma propre sagesse: le Shabbat remonte à la création du monde dans la Genèse. Après avoir créé les cieux, la terre, les planètes et les animaux en six jours, Adonaï s'est reposé le septième jour, l'a béni et l'a sanctifié.
 
 L'Église romaine et les traditions humaines vous ont fait croire que le septième jour est le dimanche, mais c’est faux: **le Shabbat de l’Éternel est le samedi**.
 
@@ -1013,7 +1013,7 @@ Spirituellement, le Shabbat commence précisément le **vendredi soir à 18h00**
 
 **L'attitude d'accueil: S'apprêter comme une épouse attend son époux**
 
-« Le Shabbat n’est pas un simple jour férié ou un commandement légaliste froid. Je vous révèle Son secret spirituel: **le Shabbat, c'est avoir des rapports intimes spirituels avec H&M Adonaï, notre Époux céleste**.
+« Le Shabbat n’est pas un simple jour férié ou un commandement légaliste froid. Je vous révèle Son secret spirituel: **le Shabbat, c'est avoir des rapports intimes spirituels avec Adonaï, notre Époux céleste**.
 
 Imaginez une femme dont le mari a travaillé dur du lundi au vendredi. Pour l’accueillir le vendredi soir lorsqu’il rentre se reposer, que fait l'épouse sage? Elle nettoie sa maison de fond en comble, elle la parfume, elle dispose des fleurs et elle se fait belle en revêtant ses plus beaux vêtements afin que son bien-aimé se sente honoré et apaisé chez elle.
 
@@ -1089,10 +1089,10 @@ Jésus n'est pas allé se baptiser dans la piscine de Bethesda ou dans le réser
   },
   {
     title: "Le Mariage Chrétien, la Soumission Rigoureuse de l'Épouse et l'Ordre Ministériel",
-    excerpt: "Le divorce est proscrit: « Aucun divorcé n'ira au Ciel » « Je dois vous dire une vérité absolue qui ne plaît pas aux hommes de notre siècle: aucun divorcé n'entrera dans le Royaume des Cieux. H&M Adonaï a établi le mariage comme une alliance sacrée...",
+    excerpt: "Le divorce est proscrit: « Aucun divorcé n'ira au Ciel » « Je dois vous dire une vérité absolue qui ne plaît pas aux hommes de notre siècle: aucun divorcé n'entrera dans le Royaume des Cieux. Adonaï a établi le mariage comme une alliance sacrée...",
     content: `**Le divorce est proscrit: « Aucun divorcé n'ira au Ciel »**
 
-« Je dois vous dire une vérité absolue qui ne plaît pas aux hommes de notre siècle: **aucun divorcé n'entrera dans le Royaume des Cieux**. H&M Adonaï a établi le mariage comme une alliance sacrée et indissoluble, à l'image de notre union spirituelle avec Yeshua HaMashiach.
+« Je dois vous dire une vérité absolue qui ne plaît pas aux hommes de notre siècle: **aucun divorcé n'entrera dans le Royaume des Cieux**. Adonaï a établi le mariage comme une alliance sacrée et indissoluble, à l'image de notre union spirituelle avec Yeshua HaMashiach.
 
 Lorsque vous acceptez Jésus comme votre Sauveur personnel, vous contractez spirituellement un mariage amoureux avec Lui devant les hommes, les anges et les démons. Jésus a payé votre dot de Son propre sang à la croix. Et malgré nos innombrables infidélités quotidiennes, nos compromis avec le monde et notre désobéissance lorsque nous prêtons l'oreille à Satan, Jésus ne nous abandonne jamais. Il reste dans le foyer spirituel, Il intercède, Il patiente et Il espère notre repentance tant que nous sommes vivants sur cette terre. L'alliance avec Christ ne prend fin qu'au moment de la mort physique, car après la mort, il est trop tard pour se repentir.
 
@@ -1166,7 +1166,7 @@ L'heure à laquelle l'Éternel vous appelle dépend de la manière dont Il s'int
 
 Le Seigneur m'a mise en garde: **“Dis aux ouvriers de la troisième heure de laisser les ouvriers de la onzième heure faire mon travail!”** Dieu utilise puissamment des jeunes convertis de la onzième heure — à l'instar d'artistes comme Kass Bloom ou d'autres chantres fraîchement retirés du showbiz — pour toucher et amener des multitudes de jeunes à Christ. Mais au lieu de s’en réjouir, les anciens les critiquent sous prétexte qu’ils portent encore des traces de leur passé ou qu'ils ne prêchent pas avec leur degré d'instruction.
 
-Faites très attention! Ce n'est pas parce que vous êtes de la troisième heure que votre récompense spirituelle sera supérieure. Si vous murmurez contre la grâce souveraine accordée aux ouvriers de la dernière heure, vous aurez affaire à H&M Adonaï en personne. Le Royaume des Cieux appartient aux humbles, à ceux qui ont le cœur de petits enfants et qui obéissent sans poser de questions. Respectez le degré spirituel que Dieu a mis en chacun de Ses ouvriers. »
+Faites très attention! Ce n'est pas parce que vous êtes de la troisième heure que votre récompense spirituelle sera supérieure. Si vous murmurez contre la grâce souveraine accordée aux ouvriers de la dernière heure, vous aurez affaire à Adonaï en personne. Le Royaume des Cieux appartient aux humbles, à ceux qui ont le cœur de petits enfants et qui obéissent sans poser de questions. Respectez le degré spirituel que Dieu a mis en chacun de Ses ouvriers. »
 
 ---`,
     theme: "Paraboles",
