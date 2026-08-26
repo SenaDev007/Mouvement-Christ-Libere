@@ -5,13 +5,14 @@
  * Uses API_URL env var (set on Vercel) — falls back to relative URLs
  * if not set (for local dev where frontend + API are on the same origin).
  *
- * Usage:
- *   import { api } from "@/lib/api-client";
- *   const res = await api.get("/api/yeshua-connect/conversations");
- *   const res = await api.post("/api/auth/login", { email, password });
+ * ⭐ IMPORTANT: This file is imported by both server and client components.
+ *    - API_URL works on server components (Vercel injects it)
+ *    - For client components, we also check NEXT_PUBLIC_API_URL
+ *    - On Vercel, set BOTH: API_URL and NEXT_PUBLIC_API_URL
+ *    - If neither is set, falls back to relative URLs (same origin)
  */
 
-const API_URL = process.env.API_URL || "";
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "";
 
 function buildUrl(path: string): string {
   if (!API_URL) return path; // relative (same origin)

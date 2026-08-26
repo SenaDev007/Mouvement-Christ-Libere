@@ -1,44 +1,53 @@
-import { db } from "@/lib/db";
+"use client";
+
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { PageHero } from "@/components/site/page-hero";
 import { VideoCard } from "@/components/premium/video-card";
-import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { LiveBanner, NextLiveCard } from "@/components/premium/live-banner";
-import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
-import { VideosFilters } from "@/components/premium/videos-filters";
+import { QuoteBlock } from "@/components/premium/section-divider";
+import { Loader2, ArrowRight, Play, Eye, Radio, ChevronRight } from "lucide-react";
+import { api } from "@/lib/api-client";
+import Link from "next/link";
 
-export const dynamic = "force-dynamic";
-
-interface PageProps {
-  searchParams: Promise<{ servant?: string }>;
+interface Video {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  views: number;
+  publishedAt: string;
+  isLive: boolean;
+  servant: { code: string; shortName: string };
 }
 
-export default async function VideosPage({ searchParams }: PageProps) {
-  const { servant } = await searchParams;
+interface LiveStream {
+  title: string;
+  scheduledAt: string;
+  servant: { shortName: string };
+}
 
-  const where: Record<string, unknown> = {};
-  if (servant && servant !== "all") {
-    where.servant = { code: servant };
-  }
+export default function VideosPage() {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [nextLive, setNextLive] = useState<LiveStream | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [videos, servants, nextLive] = await Promise.all([
-    db.video.findMany({
-      where,
-      orderBy: [{ isLive: "desc" }, { publishedAt: "desc" }],
-      include: { servant: true },
-    }),
-    db.servant.findMany({ where: { isActive: true } }),
-    db.liveStream.findFirst({
-      where: { status: "SCHEDULED", scheduledAt: { gte: new Date() } },
-      orderBy: { scheduledAt: "asc" },
-      include: { servant: true },
-    }),
-  ]);
+  useEffect(() => {
+    Promise.all([
+      fetch(api.url("/api/videos")).then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch(api.url("/api/liveStream/next")).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([vids, live]) => {
+      setVideos(Array.isArray(vids) ? vids : (vids?.videos || []));
+      setNextLive(live);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
 
   const liveVideo = videos.find((v) => v.isLive);
   const regularVideos = videos.filter((v) => !v.isLive);
 
   return (
-    <div>
+    <div className="min-h-screen">
       <PageHero
         imageSrc="https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=1920&auto=format&fit=crop"
         kicker="Vidéos & Lives"
@@ -47,61 +56,51 @@ export default async function VideosPage({ searchParams }: PageProps) {
         primaryCta={{ label: "Voir les enseignements", href: "/enseignements" }}
       />
 
-      {/* Bandeau live si actif */}
+      {/* Bandeau live */}
       {liveVideo && (
-        <LiveBanner
-          title={liveVideo.title}
-          href="#"
-          isLive
-        />
+        <LiveBanner title={liveVideo.title} href="#" isLive />
       )}
 
-      {/* Filtres */}
-      <VideosFilters
-        servants={servants.map((s) => ({ code: s.code, name: s.shortName }))}
-        currentServant={servant || "all"}
-      />
-
       {/* Grille vidéos */}
-      <section className="bg-[#FAF6EF] py-20 md:py-24">
-        <div className="container mx-auto max-w-7xl px-4">
-          <PremiumSectionHeading
-            kicker="Les dernières vidéos"
-            title="Enseignements vidéo et lives enregistrés"
-            subtitle="Chaque vidéo est conservée dans son intégralité, indépendamment des plateformes externes. La source de vérité reste ici."
-          />
-
-          {/* Mode étude toggle */}
-          <div className="flex justify-end mt-6">
-            <button
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-imperial/30 text-imperial hover:bg-imperial/5 transition-colors"
-              onClick={() => {
-                // Toggle study mode (client-side — hides suggestions)
-                const grid = document.querySelector('.videos-grid');
-                if (grid) grid.classList.toggle('hidden');
-              }}
-            >
-              Mode étude (masquer les suggestions)
-            </button>
+      <section className="py-24 bg-[#FAF6EF] relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <p className="text-xs uppercase tracking-[0.25em] text-[#C9A227] font-semibold mb-3">Les dernières vidéos</p>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1E0F2B] leading-tight">
+              Enseignements vidéo et lives
+            </h2>
+            <p className="text-base text-[#8A8378] mt-4 max-w-2xl mx-auto">
+              Chaque vidéo est conservée dans son intégralité, indépendamment des plateformes externes.
+            </p>
           </div>
 
-          <div className="videos-grid grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-12">
-            {regularVideos.map((v, i) => (
-              <VideoCard
-                key={v.id}
-                title={v.title}
-                description={v.description}
-                duration={v.duration}
-                views={v.views}
-                date={v.publishedAt?.toISOString() || v.createdAt.toISOString()}
-                href="#"
-                servantPortrait={v.servant.code === "pam" ? "AP" : "PK"}
-                servantName={v.servant.shortName}
-                isLive={v.isLive}
-                delay={i * 0.05}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
+            </div>
+          ) : regularVideos.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-[#8A8378]">Aucune vidéo disponible pour l'instant.</p>
+            </div>
+          ) : (
+            <div className="videos-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {regularVideos.map((v, i) => (
+                <VideoCard
+                  key={v.id}
+                  title={v.title}
+                  description={v.description}
+                  duration={v.duration}
+                  views={v.views}
+                  date={v.publishedAt}
+                  href="#"
+                  servantPortrait={v.servant?.code === "pam" ? "Pam" : "PK"}
+                  servantName={v.servant?.shortName || ""}
+                  isLive={v.isLive}
+                  delay={i * 0.05}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Bandeau permanent */}
           <div className="mt-16 p-6 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-2xl">
@@ -117,8 +116,8 @@ export default async function VideosPage({ searchParams }: PageProps) {
             <div className="mt-8 max-w-md mx-auto">
               <NextLiveCard
                 title={nextLive.title}
-                scheduledAt={nextLive.scheduledAt.toISOString()}
-                servantName={nextLive.servant.shortName}
+                scheduledAt={nextLive.scheduledAt}
+                servantName={nextLive.servant?.shortName || ""}
                 href="#"
               />
             </div>
@@ -126,12 +125,10 @@ export default async function VideosPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      <SectionDivider variant="ornament" />
-
       {/* Citation */}
-      <section className="bg-[#2A0E3D] py-24 md:py-32 relative overflow-hidden">
+      <section className="py-24 bg-[#2A0E3D] relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
-        <div className="relative">
+        <div className="relative max-w-3xl mx-auto px-4">
           <QuoteBlock
             text="Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe."
             reference="Pam — Mouvement Christ Libère"
