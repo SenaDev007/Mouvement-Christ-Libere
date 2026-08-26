@@ -67,7 +67,14 @@ export default function Home() {
       {/* ═════ HERO ═════ */}
       <section className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
         <div className="absolute inset-0 z-0">
-          <img src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop" alt="Ciel étoilé" className="w-full h-full object-cover opacity-30" />
+          <Image
+            src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop"
+            alt="Ciel étoilé"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-30"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/90 to-[#1A0826]" />
         </div>
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">

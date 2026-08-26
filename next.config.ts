@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "**" },
     ],
+    // ⭐ Optimisation : cache plus long + tailles d'appareil courantes
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 jours
+    deviceSizes: [360, 414, 640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
   async headers() {
@@ -40,6 +44,13 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/_next/static/(.*)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // ⭐ Cache longue durée pour les assets statiques (logo, photos, favicons)
+        source: "/(logo-christ-libere.png|pam.jpeg|pasteur-kongo.jpeg|favicon.ico|apple-icon.png|icon-32.png|manifest-192.png|manifest-512.png|shofar.png)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],

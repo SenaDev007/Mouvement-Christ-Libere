@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, Sparkles } from "lucide-react";
 
 interface PageHeroProps {
@@ -18,7 +19,14 @@ export function PageHero({ kicker, title, subtitle, imageSrc, primaryCta, second
     <section className="relative min-h-[60vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
       {/* Background */}
       <div className="absolute inset-0 z-0">
-        <img src={imageSrc} alt={title} className="w-full h-full object-cover opacity-20" />
+        <Image
+          src={imageSrc}
+          alt={title}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-20"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/90 to-[#1A0826]" />
       </div>
 

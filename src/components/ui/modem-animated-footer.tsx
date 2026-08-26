@@ -131,12 +131,15 @@ export const Footer = ({
           CHRIST LIBÈRE
         </div>
 
-        {/* Bottom logo — image de shofar */}
-        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_20px_rgba(201,162,39,0.3)] bottom-28 md:bottom-24 backdrop-blur-sm rounded-3xl bg-[#1A0826]/60 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-2 -translate-x-1/2 z-10">
-          <img
-            src="/shofar.png"
-            alt="Shofar"
-            className="w-14 sm:w-20 md:w-28 h-14 sm:h-20 md:h-28 object-contain rounded-2xl"
+        {/* Bottom logo — logo Christ Libère (remplace shofar) */}
+        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_20px_rgba(201,162,39,0.3)] bottom-28 md:bottom-24 backdrop-blur-[2px] rounded-3xl bg-[#1A0826]/20 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-3 -translate-x-1/2 z-10">
+          <Image
+            src="/logo-christ-libere.png"
+            alt="Christ Libère"
+            width={80}
+            height={80}
+            className="w-14 sm:w-20 md:w-28 h-14 sm:h-20 md:h-28 object-contain"
+            priority
           />
         </div>
 
