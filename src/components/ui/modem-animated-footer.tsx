@@ -47,7 +47,7 @@ export const Footer = ({
   return (
     <section className={cn("relative w-full mt-0 overflow-hidden", className)}>
       <footer className="border-t border-[#C9A227]/20 bg-[#2A0E3D] mt-20 relative">
-        <div className="max-w-7xl flex flex-col justify-between mx-auto min-h-[30rem] sm:min-h-[35rem] md:min-h-[40rem] relative p-4 py-10 pb-48 md:pb-56">
+        <div className="max-w-7xl flex flex-col justify-between mx-auto min-h-[30rem] sm:min-h-[35rem] md:min-h-[40rem] relative p-4 py-10 pb-44 md:pb-48">
           <div className="flex flex-col mb-12 sm:mb-20 md:mb-0 w-full">
             <div className="w-full flex flex-col items-center">
               <div className="space-y-2 flex flex-col items-center flex-1">
@@ -114,12 +114,6 @@ export const Footer = ({
               )}
             </div>
           </div>
-
-          <div className="mt-8 md:mt-12 flex flex-col gap-2 md:gap-1 items-center justify-center md:flex-row md:items-center md:justify-between px-4 md:px-0 z-20 relative">
-            <p className="text-xs text-[#FAF6EF]/40 text-center md:text-left">
-              © {new Date().getFullYear()} {brandName}. Tous les contenus appartiennent à leurs auteurs. Usage personnel et non commercial.
-            </p>
-          </div>
         </div>
 
         {/* Large background text — responsive (visible sur mobile) */}
@@ -133,7 +127,7 @@ export const Footer = ({
         </div>
 
         {/* Bottom logo — logo Christ Libère (remplace shofar) */}
-        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_25px_rgba(201,162,39,0.4)] bottom-4 md:bottom-6 backdrop-blur-[2px] rounded-3xl bg-[#1A0826]/20 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-3 md:p-4 -translate-x-1/2 z-10">
+        <div className="absolute hover:border-[#C9A227] duration-400 drop-shadow-[0_0px_25px_rgba(201,162,39,0.4)] bottom-10 md:bottom-12 backdrop-blur-[2px] rounded-3xl bg-[#1A0826]/20 left-1/2 border-2 border-[#C9A227]/30 flex items-center justify-center p-3 md:p-4 -translate-x-1/2 z-10">
           <Image
             src="/logo-christ-libere.png"
             alt="Christ Libère"
@@ -142,6 +136,13 @@ export const Footer = ({
             className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain"
             priority
           />
+        </div>
+
+        {/* Copyright — tout en bas, après le logo */}
+        <div className="relative z-20 flex justify-center pb-4 pt-2">
+          <p className="text-xs text-[#FAF6EF]/40 text-center">
+            © {new Date().getFullYear()} {brandName}. Tous les contenus appartiennent à leurs auteurs. Usage personnel et non commercial.
+          </p>
         </div>
       </footer>
     </section>
