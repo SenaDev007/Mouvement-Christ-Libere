@@ -176,7 +176,7 @@ export function ContextualNav() {
           </Popover>
 
           {/* Logo avec halo lumineux */}
-          <Link href="/" className="flex items-center gap-2.5 group/logo">
+          <Link href="/" className="flex items-center gap-1.5 group/logo">
             <div className="relative">
               {/* Halo lumineux pulsant */}
               <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
@@ -190,8 +190,9 @@ export function ContextualNav() {
                 priority
               />
             </div>
-            <span className="font-serif text-xl md:text-2xl font-bold text-[#FAF6EF]">
-              Christ Libère
+            <span className="text-xl md:text-2xl font-bold">
+              <span style={{ color: "#C9A227" }}>Christ</span>{" "}
+              <span style={{ color: "#FAF6EF" }}>Libère</span>
             </span>
           </Link>
 

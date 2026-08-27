@@ -56,17 +56,17 @@ export default function Home() {
     <div className="min-h-screen">
       {/* ═════ HERO ═════ */}
       <section className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
-        {/* Background image */}
+        {/* Background image — Pam et Pasteur Kongo */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop"
-            alt="Ciel étoilé"
+            src="/pam-kongo-hero.webp"
+            alt="Pam et Pasteur Kongo"
             fill
             priority
             sizes="100vw"
-            className="object-cover opacity-30"
+            className="object-cover object-center opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/90 to-[#1A0826]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/70 via-[#2A0E3D]/80 to-[#1A0826]" />
         </div>
 
         {/* Content */}

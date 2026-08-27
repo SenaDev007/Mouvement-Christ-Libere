@@ -51,7 +51,7 @@ export const Footer = ({
           <div className="flex flex-col mb-12 sm:mb-20 md:mb-0 w-full">
             <div className="w-full flex flex-col items-center">
               <div className="space-y-2 flex flex-col items-center flex-1">
-                <div className="flex items-center gap-3 group/logo">
+                <div className="flex items-center gap-2 group/logo">
                   <div className="relative">
                     <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
                     <Image
@@ -63,8 +63,9 @@ export const Footer = ({
                       priority
                     />
                   </div>
-                  <span className="text-[#FAF6EF] text-2xl md:text-4xl font-bold font-serif">
-                    {brandName}
+                  <span className="text-2xl md:text-4xl font-bold">
+                    <span style={{ color: "#C9A227" }}>Christ</span>{" "}
+                    <span style={{ color: "#FAF6EF" }}>Libère</span>
                   </span>
                 </div>
                 <p className="text-[#FAF6EF]/60 font-medium text-center w-full max-w-sm sm:w-96 px-4 sm:px-0 text-sm">
