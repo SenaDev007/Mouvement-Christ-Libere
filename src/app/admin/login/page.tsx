@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Lock, LogIn, AlertCircle, Loader2, User, ChevronRight } from "lucide-react";
 
@@ -52,20 +53,34 @@ export default function AdminLoginPage() {
         transition={{ duration: 0.6 }}
         className="w-full max-w-md"
       >
-        {/* En-tête logo + titre */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#2A0E3D] border border-[#C9A227]/30 mb-4">
-            <Lock className="w-7 h-7 text-[#C9A227]" />
+        {/* En-tête : logo Christ Libère + nom */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="relative mb-4">
+            {/* Halo lumineux doré */}
+            <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
+            <Image
+              src="/logo-christ-libere.png"
+              alt="Christ Libère"
+              width={80}
+              height={80}
+              className="relative w-16 h-16 md:w-20 md:h-20 object-contain"
+              priority
+            />
           </div>
-          <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1">
-            Back Office
+          {/* Nom "Christ Libère" — Christ en or, Libère en ivoire */}
+          <h1
+            className="text-3xl md:text-4xl font-bold mb-1"
+            style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
+          >
+            <span style={{ color: "#C9A227" }}>Christ</span>
+            <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
           </h1>
-          <p className="text-sm text-[#8A8378]">
-            Mouvement Christ Libère — Espace réservé
+          <p className="text-xs uppercase tracking-[0.25em] font-bold text-[#C9A227]">
+            Back Office
           </p>
         </div>
 
-        {/* Carte formulaire (même style que /login) */}
+        {/* Carte formulaire */}
         <form
           onSubmit={handleSubmit}
           className="bg-white rounded-lg border border-stone-200 border-t-[3px] border-t-[#C9A227] p-8 space-y-5"
@@ -137,15 +152,15 @@ export default function AdminLoginPage() {
         </form>
 
         {/* Note de bas */}
-        <p className="text-center text-xs text-[#8A8378] mt-6 leading-relaxed">
+        <p className="text-center text-xs text-[#FAF6EF]/60 mt-6 leading-relaxed">
           Accès réservé aux super administrateurs (Pam, Pasteur Kongo)
           <br />
           et aux administrateurs délégués autorisés.
         </p>
 
         {/* Retour à l'accueil */}
-        <p className="text-center text-xs text-[#8A8378] mt-4">
-          <Link href="/" className="hover:text-[#1E0F2B] transition-colors">
+        <p className="text-center text-xs text-[#FAF6EF]/60 mt-4">
+          <Link href="/" className="hover:text-[#C9A227] transition-colors">
             ← Retour à l&apos;accueil
           </Link>
         </p>

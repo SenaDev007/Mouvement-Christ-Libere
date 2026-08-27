@@ -308,3 +308,21 @@
   background: rgba(138, 131, 120, 0.2);
   border-radius: 3px;
 }
+
+/* ============================================================
+   Halo lumineux du logo Christ Libère (pages de login)
+   ============================================================ */
+@keyframes logoHaloPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.5);
+    opacity: 0.7;
+  }
+  50% {
+    box-shadow: 0 0 30px 8px rgba(201, 162, 39, 0.35);
+    opacity: 1;
+  }
+}
+.logo-halo {
+  animation: logoHaloPulse 3s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(201, 162, 39, 0.2) 0%, transparent 70%);
+}
