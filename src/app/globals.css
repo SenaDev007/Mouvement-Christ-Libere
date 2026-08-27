@@ -296,3 +296,15 @@
 .live-marquee-inner:hover {
   animation-play-state: paused;
 }
+
+/* Scrollbar discret pour chips horizontaux mobile */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(138, 131, 120, 0.2);
+  border-radius: 3px;
+}

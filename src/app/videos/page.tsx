@@ -156,12 +156,12 @@ export default function VideosPage() {
       </section>
 
       {/* BARRE DE RECHERCHE + ONGLETS */}
-      <section className="sticky top-16 md:top-20 z-30 bg-[#FAF6EF] border-b border-[#8A8378]/15 py-3">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2">
+      <section className="sticky top-16 md:top-20 z-30 bg-[#FAF6EF] border-b border-[#8A8378]/15 py-2 md:py-3">
+        <div className="max-w-7xl mx-auto px-3 md:px-4">
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
               <ServantTabButton active={activeTab === "pam"} onClick={() => { setActiveTab("pam"); setActiveCategory(null); }} name="Pam" count={allVideos.filter(v => v.servant === "pam").length} photo="/pam.jpeg" />
-              <ServantTabButton active={activeTab === "kongo"} onClick={() => { setActiveTab("kongo"); setActiveCategory(null); }} name="Pasteur Kongo" count={allVideos.filter(v => v.servant === "kongo").length} photo="/pasteur-kongo.jpeg" />
+              <ServantTabButton active={activeTab === "kongo"} onClick={() => { setActiveTab("kongo"); setActiveCategory(null); }} name="Kongo" count={allVideos.filter(v => v.servant === "kongo").length} photo="/pasteur-kongo.jpeg" />
             </div>
             <div className="flex-1 min-w-[200px] relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
@@ -214,16 +214,37 @@ export default function VideosPage() {
               </div>
             )}
 
+            {/* Chips de catégories scrollables horizontalement (mobile) */}
+            <div className="lg:hidden mb-4 overflow-x-auto scrollbar-thin">
+              <div className="flex items-center gap-2 pb-2 whitespace-nowrap">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0",
+                      activeCategory === cat.id
+                        ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                        : "bg-white text-[#1E0F2B] border border-[#8A8378]/20"
+                    )}
+                  >
+                    {cat.name}
+                    <span className={cn("text-[10px]", activeCategory === cat.id ? "text-[#C9A227]" : "text-[#8A8378]")}>{cat.videos.length}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid lg:grid-cols-[1fr_240px] gap-6">
               {/* Colonne principale : vidéos de la catégorie active */}
-              <div className="min-w-0">
+              <div className="min-w-0 order-2 lg:order-1">
                 {activeCat && (
                   <>
                     <div className="flex items-center gap-2 mb-4">
-                      <h2 className="font-bold text-lg text-[#1E0F2B]">{activeCat.name}</h2>
+                      <h2 className="font-bold text-base md:text-lg text-[#1E0F2B]">{activeCat.name}</h2>
                       <span className="text-xs text-[#8A8378]">{activeCat.videos.length} vidéo{activeCat.videos.length > 1 ? "s" : ""}</span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                       {activeCat.videos.map((video) => (
                         <YouTubeStyleCard key={video.id} video={video} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
                       ))}
@@ -232,8 +253,8 @@ export default function VideosPage() {
                 )}
               </div>
 
-              {/* Sidebar droite : liste des catégories (style YouTube) */}
-              <div className="space-y-1.5">
+              {/* Sidebar droite : liste des catégories (desktop uniquement) */}
+              <div className="hidden lg:block space-y-1.5 order-1 lg:order-2">
                 <h3 className="font-bold text-xs text-[#1E0F2B] uppercase tracking-wider mb-3">Catégories</h3>
                 {categories.map((cat) => (
                   <button
@@ -515,13 +536,13 @@ function ServantTabButton({ active, onClick, name, count, photo }: {
 }) {
   return (
     <button onClick={onClick} className={cn(
-      "inline-flex items-center gap-2.5 px-4 py-2 rounded-full font-bold transition-all duration-300",
+      "inline-flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full font-bold transition-all duration-300",
       active ? "bg-[#2A0E3D] text-[#FAF6EF] shadow-md" : "bg-white text-[#1E0F2B] border border-[#8A8378]/20 hover:border-[#C9A227]/40"
     )}>
-      <div className="relative w-7 h-7 rounded-full overflow-hidden ring-1 ring-[#C9A227]/30">
+      <div className="relative w-6 h-6 md:w-7 md:h-7 rounded-full overflow-hidden ring-1 ring-[#C9A227]/30 flex-shrink-0">
         <Image src={photo} alt={name} width={28} height={28} className="w-full h-full object-cover" />
       </div>
-      <span className="text-sm">{name}</span>
+      <span className="text-xs md:text-sm">{name}</span>
       <span className={cn("text-[10px] font-semibold", active ? "text-[#C9A227]" : "text-[#8A8378]")}>{count}</span>
     </button>
   );
