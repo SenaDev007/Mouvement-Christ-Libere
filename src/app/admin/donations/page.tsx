@@ -162,7 +162,7 @@ export default async function AdminDonationsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  <div className=" flex-shrink-0">
                     <DeleteButton entity="donations" id={d.id} />
                   </div>
                 </div>

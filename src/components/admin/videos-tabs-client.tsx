@@ -320,7 +320,7 @@ export function VideosTabsClient({ videos, servants }: VideosTabsClientProps) {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-[#8A8378]/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-[#8A8378]/10 ">
                     <Link
                       href={`/admin/videos/${v.id}/edit`}
                       className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"

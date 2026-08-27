@@ -123,7 +123,7 @@ export default async function AdminContactRequestsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex flex-col gap-1 flex-shrink-0 ">
                     {r.status !== "ANSWERED" && (
                       <UpdateContactStatusButton id={r.id} status="ANSWERED" icon="check" />
                     )}
