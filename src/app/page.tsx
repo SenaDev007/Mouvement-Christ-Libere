@@ -64,9 +64,57 @@ export default function Home() {
             fill
             priority
             sizes="100vw"
-            className="object-cover object-center opacity-40"
+            className="object-cover object-center opacity-60"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/70 via-[#2A0E3D]/80 to-[#1A0826]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/50 via-[#2A0E3D]/60 to-[#1A0826]" />
+        </div>
+
+        {/* Particules célestes + icônes chofar */}
+        <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
+          {Array.from({ length: 25 }).map((_, i) => {
+            const isShofar = i % 5 === 0;
+            const left = Math.random() * 100;
+            const top = Math.random() * 100;
+            const size = 8 + Math.random() * 16;
+            const delay = Math.random() * 5;
+            const duration = 8 + Math.random() * 12;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{
+                  opacity: [0, 0.6, 0],
+                  y: [20, -40, -80],
+                  x: [0, Math.random() * 30 - 15],
+                }}
+                transition={{
+                  duration,
+                  delay,
+                  repeat: Infinity,
+                  repeatDelay: Math.random() * 3,
+                }}
+                style={{
+                  position: "absolute",
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  fontSize: `${size}px`,
+                }}
+              >
+                {isShofar ? (
+                  <span style={{ fontSize: `${size + 4}px`, filter: "drop-shadow(0 0 4px rgba(201,162,39,0.5))" }}>📯</span>
+                ) : (
+                  <span style={{
+                    width: `${size / 2}px`,
+                    height: `${size / 2}px`,
+                    borderRadius: "50%",
+                    background: `radial-gradient(circle, rgba(201,162,39,${0.3 + Math.random() * 0.4}) 0%, transparent 70%)`,
+                    display: "block",
+                    filter: "blur(0.5px)",
+                  }} />
+                )}
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Content */}
@@ -129,6 +177,16 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Séparateur sinusoïdal entre hero et stats */}
+      <div className="relative bg-[#1A0826]">
+        <svg className="w-full h-12 md:h-16" viewBox="0 0 1200 80" preserveAspectRatio="none">
+          <path
+            d="M0,40 C200,80 400,0 600,40 C800,80 1000,0 1200,40 L1200,80 L0,80 Z"
+            fill="#FAF6EF"
+          />
+        </svg>
+      </div>
+
       {/* ═════ STATS ═════ */}
       <section className="py-20 bg-[#FAF6EF] relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4">
@@ -166,7 +224,7 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
             {/* Pam */}
             <Link
               href="/pam"
@@ -368,7 +426,7 @@ export default function Home() {
       </section>
 
       {/* ═════ CTA COMMUNAUTÉ ═════ */}
-      <section className="py-24 bg-[#2A0E3D] relative overflow-hidden">
+      <section className="py-12 bg-[#2A0E3D] relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative max-w-4xl mx-auto px-4 text-center">
           <motion.div

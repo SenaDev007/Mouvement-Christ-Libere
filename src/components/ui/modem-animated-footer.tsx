@@ -46,12 +46,12 @@ export const Footer = ({
 }: FooterProps) => {
   return (
     <section className={cn("relative w-full mt-0 overflow-hidden", className)}>
-      <footer className="border-t border-[#C9A227]/20 bg-[#2A0E3D] mt-20 relative">
-        <div className="max-w-7xl flex flex-col justify-between mx-auto min-h-[30rem] sm:min-h-[35rem] md:min-h-[40rem] relative p-4 py-10 pb-56 md:pb-64">
+      <footer className="border-t border-[#C9A227]/20 bg-[#2A0E3D] mt-8 relative">
+        <div className="max-w-7xl flex flex-col justify-between mx-auto min-h-[30rem] sm:min-h-[35rem] md:min-h-[40rem] relative p-4 py-8 pb-40 md:pb-44">
           <div className="flex flex-col mb-12 sm:mb-20 md:mb-0 w-full">
             <div className="w-full flex flex-col items-center">
               <div className="space-y-2 flex flex-col items-center flex-1">
-                <div className="flex items-center gap-2 group/logo">
+                <div className="flex items-center gap-1 group/logo">
                   <div className="relative">
                     <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
                     <Image
@@ -64,8 +64,8 @@ export const Footer = ({
                     />
                   </div>
                   <span className="text-2xl md:text-4xl font-bold">
-                    <span style={{ color: "#C9A227" }}>Christ</span>{" "}
-                    <span style={{ color: "#FAF6EF" }}>Libère</span>
+                    <span style={{ color: "#C9A227" }}>Christ</span>
+                    <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
                   </span>
                 </div>
                 <p className="text-[#FAF6EF]/60 font-medium text-center w-full max-w-sm sm:w-96 px-4 sm:px-0 text-sm">

@@ -48,6 +48,14 @@ export const metadata: Metadata = {
       "Enseignements, témoignages et vie de communauté. Un espace de foi centralisé.",
     type: "website",
     locale: "fr_FR",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Christ Libère — Pam & Pasteur Kongo",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
