@@ -68,6 +68,8 @@ function getSortedCategories(videos: VideoItem[], servant: ServantTab) {
   return result;
 }
 
+type SortOrder = "recent" | "oldest" | "title";
+
 export default function VideosPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<ServantTab>("pam");
@@ -76,6 +78,7 @@ export default function VideosPage() {
   const [allVideos, setAllVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
 
   useEffect(() => {
     fetch("/api/videos")
@@ -85,17 +88,36 @@ export default function VideosPage() {
   }, []);
 
   const filteredVideos = useMemo(() => {
-    if (!searchQuery.trim()) return allVideos;
-    const q = searchQuery.toLowerCase();
-    return allVideos.filter(v =>
-      v.title.toLowerCase().includes(q) ||
-      v.description.toLowerCase().includes(q) ||
-      v.category.toLowerCase().includes(q)
-    );
-  }, [allVideos, searchQuery]);
+    let vids = allVideos;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      vids = vids.filter(v =>
+        v.title.toLowerCase().includes(q) ||
+        v.description.toLowerCase().includes(q) ||
+        v.category.toLowerCase().includes(q)
+      );
+    }
+    // Tri
+    const sorted = [...vids];
+    if (sortOrder === "recent") {
+      sorted.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    } else if (sortOrder === "oldest") {
+      sorted.sort((a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime());
+    } else if (sortOrder === "title") {
+      sorted.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    return sorted;
+  }, [allVideos, searchQuery, sortOrder]);
 
   const categories = useMemo(() => getSortedCategories(filteredVideos, activeTab), [filteredVideos, activeTab]);
   const currentVideos = filteredVideos.filter(v => v.servant === activeTab);
+
+  // Vidéos récentes (8 plus récentes du serviteur actuel)
+  const recentVideos = useMemo(() => {
+    return [...currentVideos]
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .slice(0, 8);
+  }, [currentVideos]);
 
   // Auto-sélection première catégorie
   useEffect(() => {
@@ -151,6 +173,16 @@ export default function VideosPage() {
                 </button>
               )}
             </div>
+            {/* Filtre de tri */}
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+              className="px-3 py-2 rounded-full border border-[#8A8378]/25 bg-white text-xs font-semibold text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] flex-shrink-0"
+            >
+              <option value="recent">Plus récentes</option>
+              <option value="oldest">Plus anciennes</option>
+              <option value="title">A → Z</option>
+            </select>
           </div>
         </div>
       </section>
@@ -165,6 +197,23 @@ export default function VideosPage() {
           ) : filteredVideos.length === 0 ? (
             <div className="text-center py-20"><p className="text-[#8A8378]">Aucune vidéo ne correspond à votre recherche.</p></div>
           ) : (
+            <>
+            {/* Section Vidéos récentes (en première ligne) */}
+            {!searchQuery && (
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="w-5 h-5 text-[#C9A227]" />
+                  <h2 className="font-bold text-lg text-[#1E0F2B]">Vidéos récentes</h2>
+                  <span className="text-xs text-[#8A8378]">{recentVideos.length} vidéos</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {recentVideos.map((video) => (
+                    <YouTubeStyleCard key={`recent-${video.id}`} video={video} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid lg:grid-cols-[1fr_240px] gap-6">
               {/* Colonne principale : vidéos de la catégorie active */}
               <div className="min-w-0">
@@ -206,6 +255,7 @@ export default function VideosPage() {
                 ))}
               </div>
             </div>
+            </>
           )}
         </div>
       </section>
@@ -285,18 +335,39 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] pt-20 md:pt-24">
+    <div className="min-h-screen bg-[#FAF6EF] pt-16 md:pt-20">
+      {/* Barre du haut (titre + recherche, style YouTube) */}
+      <div className="sticky top-16 md:top-20 z-30 bg-[#FAF6EF] border-b border-[#8A8378]/15 py-2 px-4">
+        <div className="max-w-[1800px] mx-auto flex items-center gap-3">
+          <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors flex-shrink-0">
+            <ChevronLeft className="w-4 h-4" />
+            Retour
+          </button>
+          <div className="h-4 w-px bg-[#8A8378]/20" />
+          <p className="text-sm font-bold text-[#1E0F2B] truncate flex-1">{video.title}</p>
+          <div className="relative w-48 md:w-64 flex-shrink-0">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8A8378]" />
+            <input
+              type="text"
+              placeholder="Rechercher..."
+              className="w-full pl-8 pr-3 py-1.5 rounded-full border border-[#8A8378]/25 bg-white text-xs text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227]"
+              onChange={(e) => {
+                const q = e.target.value.toLowerCase();
+                const filtered = allVideos.filter(v =>
+                  v.title.toLowerCase().includes(q) || v.category.toLowerCase().includes(q)
+                );
+                // Mettre à jour les recommandées filtrées
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-[1800px] mx-auto px-4 py-4">
         <div className="grid lg:grid-cols-[1fr_380px] gap-5">
           <div className="min-w-0">
-            {/* Bouton retour en HAUT */}
-            <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors mb-3">
-              <ChevronLeft className="w-4 h-4" />
-              Retour à la liste
-            </button>
-
-            {/* Titre au-dessus de la vidéo (style YouTube) */}
-            <div className="mb-3">
+            {/* Catégorie au-dessus de la vidéo */}
+            <div className="mb-2">
               <span className="text-xs uppercase tracking-[0.15em] font-bold text-[#C9A227]">{video.category}</span>
             </div>
 
