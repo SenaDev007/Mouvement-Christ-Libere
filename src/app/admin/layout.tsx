@@ -74,6 +74,13 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // ⚠️ Sur /admin/login : pas de sidebar, pas de topbar, juste le contenu plein écran.
+  // On ne doit rien afficher de l'interface d'administration tant que l'utilisateur
+  // n'est pas authentifié.
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
   const handleLogout = async () => {
     await fetch("/admin/api/logout", { method: "POST" });
     router.push("/admin/login");
