@@ -19,10 +19,10 @@ const VERSES = [
 ];
 
 const STATS = [
-  { value: 31, suffix: "", label: "témoignages authentiques" },
-  { value: 544, suffix: "", label: "vidéos publiées" },
-  { value: 7, suffix: "", label: "jalons biographiques" },
-  { value: 24, suffix: "h", label: "délai de réponse" },
+  { key: "testimonies", suffix: "", label: "témoignages authentiques" },
+  { key: "videos", suffix: "", label: "vidéos publiées" },
+  { key: "biographies", suffix: "", label: "biographies publiées" },
+  { key: "responseTime", suffix: "h", label: "délai de réponse" },
 ];
 
 const FEATURES = [
@@ -53,6 +53,16 @@ const FEATURES = [
 ];
 
 export default function Home() {
+  const [statsData, setStatsData] = useState<Record<string, number>>({
+    testimonies: 0, videos: 0, biographies: 0, responseTime: 24,
+  });
+
+  useEffect(() => {
+    fetch("/api/stats")
+      .then(r => r.json())
+      .then(data => setStatsData(data))
+      .catch(() => {});
+  }, []);
   return (
     <div className="min-h-screen">
       {/* ═════ HERO ═════ */}
@@ -63,7 +73,7 @@ export default function Home() {
             src="/pam-kongo-hero.webp"
             alt="Pam et Pasteur Kongo"
             className="w-full h-full opacity-60"
-            style={{ objectFit: "cover", objectPosition: "center 25%" }}
+            style={{ objectFit: "cover", objectPosition: "center center" }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/50 via-[#2A0E3D]/60 to-[#1A0826]" />
         </div>
@@ -175,14 +185,14 @@ export default function Home() {
       </section>
 
       {/* Séparateur oblique ascendant (gauche→droite) entre hero et stats */}
-      <div className="relative bg-[#1A0826]" style={{ height: "60px" }}>
-        <svg className="absolute bottom-0 w-full h-full" viewBox="0 0 1200 60" preserveAspectRatio="none">
-          <polygon points="0,60 1200,0 1200,60" fill="#FAF6EF" />
+      <div className="relative bg-[#1A0826]" style={{ height: "30px" }}>
+        <svg className="absolute bottom-0 w-full h-full" viewBox="0 0 1200 30" preserveAspectRatio="none">
+          <polygon points="0,30 1200,0 1200,30" fill="#FAF6EF" />
         </svg>
       </div>
 
       {/* ═════ STATS ═════ */}
-      <section className="py-20 bg-[#FAF6EF] relative overflow-hidden">
+      <section className="py-8 bg-[#FAF6EF] relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {STATS.map((stat, i) => (
@@ -195,7 +205,7 @@ export default function Home() {
                 className="text-center"
               >
                 <div className="font-serif font-extrabold text-4xl md:text-5xl text-[#C9A227] mb-2">
-                  <AnimatedCounter target={stat.value} suffix={stat.suffix} />
+                  <AnimatedCounter target={statsData[stat.key] || 0} suffix={stat.suffix} />
                 </div>
                 <div className="text-sm text-[#8A8378] font-medium">
                   {stat.label}
@@ -249,11 +259,11 @@ export default function Home() {
               </span>
             </Link>
 
-            {/* Center: Marriage */}
-            <div className="flex flex-col items-center justify-center p-8">
-              <div className="w-px h-16 bg-[#C9A227]/30 mb-6 hidden lg:block" />
+            {/* Center: Marriage — cœur centré verticalement */}
+            <div className="flex flex-col items-center justify-center p-8 self-center">
+              <div className="w-px h-12 bg-[#C9A227]/30 mb-4 hidden lg:block" />
               <div className="text-center">
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#C9A227]/10 mb-4">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#C9A227]/10 mb-4 mx-auto">
                   <Heart className="w-8 h-8 text-[#C9A227]" />
                 </div>
                 <p className="font-serif text-lg italic text-[#8A8378] text-center max-w-xs">
@@ -261,7 +271,7 @@ export default function Home() {
                   sans se confondre. »
                 </p>
               </div>
-              <div className="w-px h-16 bg-[#C9A227]/30 mt-6 hidden lg:block" />
+              <div className="w-px h-12 bg-[#C9A227]/30 mt-4 hidden lg:block" />
             </div>
 
             {/* Pasteur Kongo */}

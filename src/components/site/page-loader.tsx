@@ -27,13 +27,11 @@ export function PageLoader() {
         >
           {/* Image de fond : les deux serviteurs */}
           <div className="absolute inset-0 z-0">
-            <Image
+            <img
               src="/pam-kongo-hero.webp"
               alt=""
-              fill
-              className="object-cover opacity-15"
-              sizes="100vw"
-              priority
+              className="w-full h-full opacity-20"
+              style={{ objectFit: "cover", objectPosition: "center center" }}
             />
             <div className="absolute inset-0 bg-[#1A0826]/70" />
           </div>
