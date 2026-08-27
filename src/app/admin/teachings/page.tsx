@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { Plus, Pencil, BookOpen, Clock, Tag, GraduationCap } from "lucide-react";
+import { Pencil, BookOpen, Clock, Tag, GraduationCap } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
+import { NewTeachingButton } from "@/components/admin/create-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,17 @@ const LEVEL_CONFIG = {
 };
 
 export default async function AdminTeachingsPage() {
-  const teachings = await db.teaching.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { servant: true },
-  });
+  const [teachings, servants] = await Promise.all([
+    db.teaching.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { servant: true },
+    }),
+    db.servant.findMany({
+      where: { isActive: true },
+      select: { id: true, shortName: true, code: true },
+      orderBy: { code: "asc" },
+    }),
+  ]);
 
   // Stats par niveau
   const stats = {
@@ -40,13 +48,7 @@ export default async function AdminTeachingsPage() {
             Études classées par thème, livre et niveau.
           </p>
         </div>
-        <Link
-          href="/admin/teachings/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
-        >
-          <Plus className="w-4 h-4" />
-          Nouvel enseignement
-        </Link>
+        <NewTeachingButton servants={servants} accentColor="#C9A227" />
       </div>
 
       {/* Stats par niveau */}

@@ -1,15 +1,23 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { Plus, Pencil, BookOpen, Calendar, Quote, Crown } from "lucide-react";
+import { Pencil, BookOpen, Calendar, Quote, Crown } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
+import { NewBiographyButton } from "@/components/admin/create-buttons";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminBiographiesPage() {
-  const biographies = await db.biography.findMany({
-    orderBy: [{ servantId: "asc" }, { order: "asc" }],
-    include: { servant: true },
-  });
+  const [biographies, servants] = await Promise.all([
+    db.biography.findMany({
+      orderBy: [{ servantId: "asc" }, { order: "asc" }],
+      include: { servant: true },
+    }),
+    db.servant.findMany({
+      where: { isActive: true },
+      select: { id: true, shortName: true, code: true },
+      orderBy: { code: "asc" },
+    }),
+  ]);
 
   // Grouper par serviteur
   const byServant = biographies.reduce((acc, b) => {
@@ -34,13 +42,7 @@ export default async function AdminBiographiesPage() {
             {biographies.length} jalon{biographies.length > 1 ? "s" : ""} biographique{biographies.length > 1 ? "s" : ""} au total.
           </p>
         </div>
-        <Link
-          href="/admin/biographies/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
-        >
-          <Plus className="w-4 h-4" />
-          Nouveau jalon
-        </Link>
+        <NewBiographyButton servants={servants} accentColor="#C9A227" />
       </div>
 
       {/* Sections par serviteur */}

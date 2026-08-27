@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { Plus, Pencil, FileText, Clock, Eye, EyeOff, Archive, Sparkles } from "lucide-react";
+import { Pencil, FileText, Clock, Eye, EyeOff, Archive, Sparkles } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
+import { NewTestimonyButton } from "@/components/admin/create-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,17 @@ const STATUS_CONFIG = {
 };
 
 export default async function AdminTestimoniesPage() {
-  const testimonies = await db.testimony.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { servant: true },
-  });
+  const [testimonies, servants] = await Promise.all([
+    db.testimony.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { servant: true },
+    }),
+    db.servant.findMany({
+      where: { isActive: true },
+      select: { id: true, shortName: true, code: true },
+      orderBy: { code: "asc" },
+    }),
+  ]);
 
   // Stats rapides
   const stats = {
@@ -40,13 +48,7 @@ export default async function AdminTestimoniesPage() {
             Gestion et modération des témoignages.
           </p>
         </div>
-        <Link
-          href="/admin/testimonies/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
-        >
-          <Plus className="w-4 h-4" />
-          Nouveau témoignage
-        </Link>
+        <NewTestimonyButton servants={servants} accentColor="#C9A227" />
       </div>
 
       {/* Stats rapides */}

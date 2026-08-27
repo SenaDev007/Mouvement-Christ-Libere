@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
-import { Plus, Pencil, Crown, Video, FileText, BookOpen, Radio, BookMarked } from "lucide-react";
+import { Pencil, Crown, Video, FileText, BookOpen, Radio, BookMarked } from "lucide-react";
+import { NewServantButton } from "@/components/admin/create-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -36,14 +37,7 @@ export default async function AdminServantsPage() {
             Gérez les serviteurs principaux du mouvement.
           </p>
         </div>
-        <button
-          type="button"
-          data-modal="servant"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
-        >
-          <Plus className="w-4 h-4" />
-          Nouveau serviteur
-        </button>
+        <NewServantButton accentColor="#C9A227" />
       </div>
 
       {/* Cartes serviteurs */}
