@@ -41,8 +41,13 @@ const navLinks = [
 export function ConditionalFooter() {
   const pathname = usePathname();
 
-  // Masquer le footer sur /yeshua-connect (chat plein écran)
-  if (pathname?.startsWith("/yeshua-connect")) {
+  // Masquer le footer sur :
+  // - /yeshua-connect (chat plein écran)
+  // - /admin/* (le back-office a sa propre sidebar, pas besoin de footer public)
+  if (
+    pathname?.startsWith("/yeshua-connect") ||
+    pathname?.startsWith("/admin")
+  ) {
     return null;
   }
 

@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   LayoutDashboard,
   Users,
@@ -97,15 +98,32 @@ export default function AdminLayout({
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
+          {/* Header avec logo Christ Libère */}
           <div className="px-5 py-5 border-b border-[#C9A227]/15">
             <div className="flex items-center justify-between">
-              <div>
-                <div className="font-serif text-lg font-semibold text-[#FAF6EF]">
-                  Backoffice
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
+                  <Image
+                    src="/logo-christ-libere.png"
+                    alt="Christ Libère"
+                    width={40}
+                    height={40}
+                    className="relative w-10 h-10 object-contain"
+                    priority
+                  />
                 </div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/70 font-semibold">
-                  Christ Libère
+                <div>
+                  <div
+                    className="text-lg font-bold leading-tight"
+                    style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
+                  >
+                    <span style={{ color: "#C9A227" }}>Christ</span>
+                    <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/70 font-semibold">
+                    Backoffice
+                  </div>
                 </div>
               </div>
               <button
@@ -185,7 +203,7 @@ export default function AdminLayout({
 
       {/* Contenu principal */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar mobile */}
+        {/* Topbar mobile avec logo */}
         <header className="lg:hidden sticky top-0 z-20 bg-[#2A0E3D] text-[#FAF6EF] px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -194,7 +212,22 @@ export default function AdminLayout({
           >
             <Menu className="w-5 h-5" />
           </button>
-          <span className="font-serif text-sm font-semibold">Backoffice</span>
+          <div className="flex items-center gap-2">
+            <Image
+              src="/logo-christ-libere.png"
+              alt="Christ Libère"
+              width={24}
+              height={24}
+              className="w-6 h-6 object-contain"
+            />
+            <span
+              className="text-sm font-bold"
+              style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
+            >
+              <span style={{ color: "#C9A227" }}>Christ</span>
+              <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
+            </span>
+          </div>
           <div className="w-5" />
         </header>
 

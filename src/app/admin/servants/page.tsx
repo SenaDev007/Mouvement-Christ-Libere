@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { Plus, Pencil, Crown, Video, FileText, BookOpen, Radio, BookMarked } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -22,73 +23,129 @@ export default async function AdminServantsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1">
+            Gestion des serviteurs
+          </p>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
             Serviteurs
           </h1>
-          <p className="text-sm text-[#8A8378]">
-            Gérez les deux serviteurs principaux (PAM et Pasteur Kongo).
+          <p className="text-sm text-[#8A8378] mt-1">
+            Gérez les serviteurs principaux du mouvement.
           </p>
         </div>
         <Link
           href="/admin/servants/new"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
         >
           <Plus className="w-4 h-4" />
           Nouveau serviteur
         </Link>
       </div>
 
-      <div className="grid gap-4">
-        {servants.map((s) => (
-          <div key={s.id} className="card-gold-top p-5">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4 flex-1 min-w-0">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-[#C9A227] bg-[#C9A227]/10 flex-shrink-0">
-                  <span className="font-serif text-sm font-semibold text-[#C9A227]">
-                    {s.code === "pam" ? "AP" : "PK"}
-                  </span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="font-serif text-lg font-semibold text-[#1E0F2B]">
-                      {s.fullName}
-                    </h2>
-                    {!s.isActive && (
-                      <span className="text-[10px] uppercase tracking-[0.18em] text-state-danger font-semibold">
-                        Inactif
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-[#8A8378] uppercase tracking-[0.18em] font-semibold mt-0.5">
-                    {s.shortName} · {s.role}
-                  </p>
-                  <p className="text-sm text-[#1E0F2B]/70 mt-2 line-clamp-2">{s.bio}</p>
+      {/* Cartes serviteurs */}
+      <div className="grid md:grid-cols-2 gap-5">
+        {servants.map((s) => {
+          const isPam = s.code === "pam";
+          const accentColor = isPam ? "#C9A227" : "#8C5FA8";
+          const initials = isPam ? "PAM" : "PK";
 
-                  <div className="flex flex-wrap gap-3 mt-3 text-xs text-[#8A8378]">
-                    <span>{s._count.biographies} biographies</span>
-                    <span>· {s._count.testimonies} témoignages</span>
-                    <span>· {s._count.teachings} enseignements</span>
-                    <span>· {s._count.videos} vidéos</span>
-                    <span>· {s._count.liveStreams} lives</span>
+          return (
+            <div
+              key={s.id}
+              className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden hover:shadow-lg transition-shadow"
+            >
+              {/* En-tête avec gradient */}
+              <div
+                className="px-6 py-5 relative overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, ${accentColor}15 0%, transparent 100%)`,
+                }}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"
+                  style={{ background: `${accentColor}20` }}
+                />
+                <div className="relative z-10 flex items-start justify-between">
+                  <div className="flex items-start gap-4">
+                    {/* Avatar avec initiales */}
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-white text-sm shadow-md"
+                      style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}CC)` }}
+                    >
+                      {initials}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-[#1E0F2B]">{s.fullName}</h2>
+                        {isPam && <Crown className="w-4 h-4 text-[#C9A227]" />}
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.15em] font-semibold mt-0.5" style={{ color: accentColor }}>
+                        {s.shortName} · {s.role}
+                      </p>
+                      {!s.isActive && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 mt-2">
+                          Inactif
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  <Link
+                    href={`/admin/servants/${s.id}/edit`}
+                    className="p-2 rounded-lg hover:bg-white/60 text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
+                    aria-label="Modifier"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Link>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 ml-4">
-                <Link
-                  href={`/admin/servants/${s.id}/edit`}
-                  className="p-2 rounded hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
-                  aria-label="Modifier"
-                >
-                  <Pencil className="w-4 h-4" />
+              {/* Bio */}
+              {s.bio && (
+                <div className="px-6 py-3 border-b border-[#8A8378]/10">
+                  <p className="text-sm text-[#1E0F2B]/70 line-clamp-2 leading-relaxed">{s.bio}</p>
+                </div>
+              )}
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-5 divide-x divide-[#8A8378]/10">
+                <Link href={`/admin/videos?servant=${s.code}`} className="p-3 text-center hover:bg-[#FAF6EF] transition-colors group">
+                  <Video className="w-4 h-4 mx-auto text-[#8A8378] group-hover:text-[#C9A227] transition-colors" />
+                  <div className="text-base font-bold text-[#1E0F2B] mt-1">{s._count.videos}</div>
+                  <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Vidéos</div>
+                </Link>
+                <Link href={`/admin/testimonies?servant=${s.code}`} className="p-3 text-center hover:bg-[#FAF6EF] transition-colors group">
+                  <FileText className="w-4 h-4 mx-auto text-[#8A8378] group-hover:text-[#C9A227] transition-colors" />
+                  <div className="text-base font-bold text-[#1E0F2B] mt-1">{s._count.testimonies}</div>
+                  <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Témoig.</div>
+                </Link>
+                <Link href={`/admin/teachings?servant=${s.code}`} className="p-3 text-center hover:bg-[#FAF6EF] transition-colors group">
+                  <BookOpen className="w-4 h-4 mx-auto text-[#8A8378] group-hover:text-[#C9A227] transition-colors" />
+                  <div className="text-base font-bold text-[#1E0F2B] mt-1">{s._count.teachings}</div>
+                  <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Enseig.</div>
+                </Link>
+                <Link href={`/admin/biographies?servant=${s.code}`} className="p-3 text-center hover:bg-[#FAF6EF] transition-colors group">
+                  <BookMarked className="w-4 h-4 mx-auto text-[#8A8378] group-hover:text-[#C9A227] transition-colors" />
+                  <div className="text-base font-bold text-[#1E0F2B] mt-1">{s._count.biographies}</div>
+                  <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Biog.</div>
+                </Link>
+                <Link href={`/admin/lives?servant=${s.code}`} className="p-3 text-center hover:bg-[#FAF6EF] transition-colors group">
+                  <Radio className="w-4 h-4 mx-auto text-[#8A8378] group-hover:text-[#C9A227] transition-colors" />
+                  <div className="text-base font-bold text-[#1E0F2B] mt-1">{s._count.liveStreams}</div>
+                  <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Lives</div>
                 </Link>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {servants.length === 0 && (
+        <div className="bg-white rounded-2xl border border-dashed border-[#8A8378]/30 p-12 text-center">
+          <p className="text-sm text-[#8A8378] italic">Aucun serviteur enregistré pour l&apos;instant.</p>
+        </div>
+      )}
     </div>
   );
 }
