@@ -55,10 +55,10 @@ export default function DispersesPage() {
   });
 
   useEffect(() => {
-    fetch(api.url("/api/disperses"))
+    fetch("/api/disperses")
       .then((res) => res.json())
       .then((data) => {
-        setMembres(data.membres || []);
+        setMembres(data.membres || data.members || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -91,7 +91,7 @@ export default function DispersesPage() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch(api.url("/api/disperses"), {
+      const res = await fetch("/api/disperses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -99,8 +99,8 @@ export default function DispersesPage() {
       if (res.ok) {
         setSubmitted(true);
         // Recharger les membres
-        const data = await fetch(api.url("/api/disperses")).then((r) => r.json());
-        setMembres(data.membres || []);
+        const data = await fetch("/api/disperses").then((r) => r.json());
+        setMembres(data.membres || data.members || []);
       }
     } catch (err) {
       console.error(err);
