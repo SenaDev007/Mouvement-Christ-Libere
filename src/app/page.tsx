@@ -53,15 +53,13 @@ const FEATURES = [
 ];
 
 export default function Home() {
-  const [statsData, setStatsData] = useState<Record<string, number>>({
-    testimonies: 0, videos: 0, biographies: 0, responseTime: 24,
-  });
+  const [statsData, setStatsData] = useState<Record<string, number> | null>(null);
 
   useEffect(() => {
     fetch("/api/stats")
       .then(r => r.json())
       .then(data => setStatsData({ ...data, responseTime: 24 }))
-      .catch(() => {});
+      .catch(() => setStatsData({ testimonies: 0, videos: 0, biographies: 0, responseTime: 24 }));
   }, []);
   return (
     <div className="min-h-screen">
@@ -205,7 +203,11 @@ export default function Home() {
                 className="text-center"
               >
                 <div className="font-serif font-extrabold text-4xl md:text-5xl text-[#C9A227] mb-2">
-                  <AnimatedCounter target={statsData[stat.key] || 0} suffix={stat.suffix} />
+                  {statsData ? (
+                    <AnimatedCounter target={statsData[stat.key] || 0} suffix={stat.suffix} />
+                  ) : (
+                    <span className="inline-block w-12 h-8 bg-[#C9A227]/20 rounded animate-pulse" />
+                  )}
                 </div>
                 <div className="text-sm text-[#8A8378] font-medium">
                   {stat.label}
