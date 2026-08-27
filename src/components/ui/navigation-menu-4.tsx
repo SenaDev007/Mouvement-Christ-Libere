@@ -175,24 +175,22 @@ export function ContextualNav() {
             </PopoverContent>
           </Popover>
 
-          {/* Logo avec halo lumineux */}
-          <Link href="/" className="flex items-center gap-1 group/logo">
-            <div className="relative">
-              {/* Halo lumineux pulsant */}
-              <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
-              {/* Image logo */}
-              <Image
-                src="/logo-christ-libere.png"
-                alt="Christ Libère"
-                width={56}
-                height={56}
-                className="relative w-12 h-12 md:w-14 md:h-14 object-contain"
-                priority
-              />
-            </div>
-            <span className="text-xl md:text-2xl font-bold">
+          {/* Logo Christ Libère */}
+          <Link href="/" className="flex items-center gap-2 group/logo">
+            <Image
+              src="/logo-christ-libere.png"
+              alt="Christ Libère"
+              width={56}
+              height={56}
+              className="relative w-12 h-12 md:w-14 md:h-14 object-contain"
+              priority
+            />
+            <span
+              className="text-xl md:text-2xl font-bold"
+              style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
+            >
               <span style={{ color: "#C9A227" }}>Christ</span>
-              <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
+              <span style={{ color: "#FAF6EF" }}>&nbsp;&nbsp;Libère</span>
             </span>
           </Link>
 

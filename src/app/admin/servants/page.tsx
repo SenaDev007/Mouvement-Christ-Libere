@@ -36,13 +36,14 @@ export default async function AdminServantsPage() {
             Gérez les serviteurs principaux du mouvement.
           </p>
         </div>
-        <Link
-          href="/admin/servants/new"
+        <button
+          type="button"
+          data-modal="servant"
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
         >
           <Plus className="w-4 h-4" />
           Nouveau serviteur
-        </Link>
+        </button>
       </div>
 
       {/* Cartes serviteurs */}
@@ -69,13 +70,23 @@ export default async function AdminServantsPage() {
                 />
                 <div className="relative z-10 flex items-start justify-between">
                   <div className="flex items-start gap-4">
-                    {/* Avatar avec initiales */}
-                    <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-white text-sm shadow-md"
-                      style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}CC)` }}
-                    >
-                      {initials}
-                    </div>
+                    {/* Photo du serviteur ou initiales fallback */}
+                    {s.portraitUrl ? (
+                      <Image
+                        src={s.portraitUrl}
+                        alt={s.fullName}
+                        width={56}
+                        height={56}
+                        className="w-14 h-14 rounded-2xl object-cover shadow-md"
+                      />
+                    ) : (
+                      <div
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-white text-sm shadow-md"
+                        style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}CC)` }}
+                      >
+                        {initials}
+                      </div>
+                    )}
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-bold text-[#1E0F2B]">{s.fullName}</h2>

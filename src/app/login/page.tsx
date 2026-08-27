@@ -55,25 +55,21 @@ export default function LoginPage() {
       >
         {/* En-tête : logo Christ Libère + nom */}
         <div className="flex flex-col items-center mb-8">
-          <div className="relative mb-4">
-            {/* Halo lumineux doré */}
-            <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
-            <Image
-              src="/logo-christ-libere.png"
-              alt="Christ Libère"
-              width={80}
-              height={80}
-              className="relative w-16 h-16 md:w-20 md:h-20 object-contain"
-              priority
-            />
-          </div>
+          <Image
+            src="/logo-christ-libere.png"
+            alt="Christ Libère"
+            width={80}
+            height={80}
+            className="relative w-16 h-16 md:w-20 md:h-20 object-contain mb-4"
+            priority
+          />
           {/* Nom "Christ Libère" — Christ en or, Libère en ivoire */}
           <h1
             className="text-3xl md:text-4xl font-bold mb-1"
             style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
           >
             <span style={{ color: "#C9A227" }}>Christ</span>
-            <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
+            <span style={{ color: "#FAF6EF" }}>&nbsp;&nbsp;Libère</span>
           </h1>
           <p className="text-xs uppercase tracking-[0.25em] font-bold text-[#C9A227]">
             Espace membre

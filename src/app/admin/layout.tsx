@@ -18,7 +18,6 @@ import {
   Menu,
   X,
   ExternalLink,
-  Calendar,
   ShieldAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,7 +44,6 @@ const NAV_SECTIONS = [
     items: [
       { label: "Vidéos", href: "/admin/videos", icon: Video },
       { label: "Lives", href: "/admin/lives", icon: Radio },
-      { label: "Calendrier", href: "/admin/calendar", icon: Calendar },
     ],
   },
   {
@@ -102,17 +100,14 @@ export default function AdminLayout({
           <div className="px-5 py-5 border-b border-[#C9A227]/15">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
-                  <Image
-                    src="/logo-christ-libere.png"
-                    alt="Christ Libère"
-                    width={40}
-                    height={40}
-                    className="relative w-10 h-10 object-contain"
-                    priority
-                  />
-                </div>
+                <Image
+                  src="/logo-christ-libere.png"
+                  alt="Christ Libère"
+                  width={40}
+                  height={40}
+                  className="relative w-10 h-10 object-contain"
+                  priority
+                />
                 <div>
                   <div
                     className="text-lg font-bold leading-tight"
