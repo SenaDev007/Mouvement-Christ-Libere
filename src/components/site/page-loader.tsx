@@ -11,7 +11,7 @@ export function PageLoader() {
 
   useEffect(() => {
     setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 600);
+    const timer = setTimeout(() => setLoading(false), 5000);
     return () => clearTimeout(timer);
   }, [pathname]);
 
@@ -21,7 +21,7 @@ export function PageLoader() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, transition: { duration: 0.8 } }}
           transition={{ duration: 0.3 }}
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A0826]"
         >
@@ -75,27 +75,26 @@ export function PageLoader() {
             />
           </motion.div>
 
-          {/* Texte "Christ Libère" sous le logo */}
+          {/* Texte "Christ Libère" + barre de progression 5s */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="absolute bottom-1/3 z-10 text-center"
+            className="absolute bottom-1/4 z-10 text-center"
           >
-            <p className="text-lg font-bold">
+            <p className="text-lg font-bold mb-3">
               <span style={{ color: "#C9A227" }}>Christ</span>
               <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
             </p>
-            <motion.div
-              animate={{ width: ["0%", "100%", "0%"] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="h-0.5 bg-[#C9A227] mx-auto mt-2"
-              style={{ width: "60px" }}
-            />
+            {/* Barre de progression qui se remplit en 5 secondes */}
+            <div className="w-48 h-1 bg-[#FAF6EF]/10 rounded-full overflow-hidden mx-auto">
+              <motion.div
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 5, ease: "easeInOut" }}
+                className="h-full bg-[#C9A227] rounded-full"
+              />
+            </div>
           </motion.div>
         </motion.div>
       )}
