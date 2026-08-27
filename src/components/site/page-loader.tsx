@@ -36,64 +36,71 @@ export function PageLoader() {
             <div className="absolute inset-0 bg-[#1A0826]/70" />
           </div>
 
-          {/* Logo pulsatif */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{
-              scale: [1, 1.1, 1],
-              opacity: [0.8, 1, 0.8],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="relative z-10"
-          >
-            {/* Halo doré derrière le logo */}
+          {/* Conteneur centré (logo + texte + barre) */}
+          <div className="relative z-10 flex flex-col items-center justify-center gap-6 px-4">
+            {/* Logo pulsatif */}
             <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
               animate={{
-                scale: [1, 1.3, 1],
-                opacity: [0.3, 0.6, 0.3],
+                scale: [1, 1.1, 1],
+                opacity: [0.8, 1, 0.8],
               }}
               transition={{
                 duration: 1.5,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="absolute -inset-4 rounded-full bg-[#C9A227]/20 blur-2xl"
-            />
-            <Image
-              src="/logo-christ-libere.png"
-              alt="Christ Libère"
-              width={80}
-              height={80}
-              className="relative w-16 h-16 md:w-20 md:h-20 object-contain"
-              priority
-            />
-          </motion.div>
+              className="relative"
+            >
+              {/* Halo doré derrière le logo */}
+              <motion.div
+                animate={{
+                  scale: [1, 1.3, 1],
+                  opacity: [0.3, 0.6, 0.3],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="absolute -inset-4 rounded-full bg-[#C9A227]/20 blur-2xl"
+              />
+              <Image
+                src="/logo-christ-libere.png"
+                alt="Christ Libère"
+                width={80}
+                height={80}
+                className="relative w-16 h-16 md:w-20 md:h-20 object-contain"
+                priority
+              />
+            </motion.div>
 
-          {/* Texte "Christ Libère" + barre de progression 5s */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="absolute bottom-1/4 z-10 text-center"
-          >
-            <p className="text-lg font-bold mb-3">
+            {/* Texte "Christ Libère" */}
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-lg font-bold"
+            >
               <span style={{ color: "#C9A227" }}>Christ</span>
               <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
-            </p>
+            </motion.p>
+
             {/* Barre de progression qui se remplit en 5 secondes */}
-            <div className="w-48 h-1 bg-[#FAF6EF]/10 rounded-full overflow-hidden mx-auto">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="w-48 h-1 bg-[#FAF6EF]/10 rounded-full overflow-hidden"
+            >
               <motion.div
                 initial={{ width: "0%" }}
                 animate={{ width: "100%" }}
                 transition={{ duration: 5, ease: "easeInOut" }}
                 className="h-full bg-[#C9A227] rounded-full"
               />
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

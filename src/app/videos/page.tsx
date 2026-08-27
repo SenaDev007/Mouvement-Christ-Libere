@@ -198,22 +198,6 @@ export default function VideosPage() {
             <div className="text-center py-20"><p className="text-[#8A8378]">Aucune vidéo ne correspond à votre recherche.</p></div>
           ) : (
             <>
-            {/* Section Vidéos récentes (en première ligne) */}
-            {!searchQuery && (
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-5 h-5 text-[#C9A227]" />
-                  <h2 className="font-bold text-lg text-[#1E0F2B]">Vidéos récentes</h2>
-                  <span className="text-xs text-[#8A8378]">{recentVideos.length} vidéos</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {recentVideos.map((video) => (
-                    <YouTubeStyleCard key={`recent-${video.id}`} video={video} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Chips de catégories scrollables horizontalement (mobile) */}
             <div className="lg:hidden mb-4 overflow-x-auto scrollbar-thin">
               <div className="flex items-center gap-2 pb-2 whitespace-nowrap">
@@ -236,8 +220,25 @@ export default function VideosPage() {
             </div>
 
             <div className="grid lg:grid-cols-[1fr_240px] gap-6">
-              {/* Colonne principale : vidéos de la catégorie active */}
-              <div className="min-w-0 order-2 lg:order-1">
+              {/* Colonne principale : vidéos récentes + catégorie active */}
+              <div className="min-w-0">
+                {/* Section Vidéos récentes */}
+                {!searchQuery && (
+                  <div className="mb-8">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Clock className="w-5 h-5 text-[#C9A227]" />
+                      <h2 className="font-bold text-base md:text-lg text-[#1E0F2B]">Vidéos récentes</h2>
+                      <span className="text-xs text-[#8A8378]">{recentVideos.length} vidéos</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                      {recentVideos.map((video) => (
+                        <YouTubeStyleCard key={`recent-${video.id}`} video={video} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Vidéos de la catégorie active */}
                 {activeCat && (
                   <>
                     <div className="flex items-center gap-2 mb-4">
@@ -254,7 +255,7 @@ export default function VideosPage() {
               </div>
 
               {/* Sidebar droite : liste des catégories (desktop uniquement) */}
-              <div className="hidden lg:block space-y-1.5 order-1 lg:order-2">
+              <div className="hidden lg:block space-y-1.5">
                 <h3 className="font-bold text-xs text-[#1E0F2B] uppercase tracking-wider mb-3">Catégories</h3>
                 {categories.map((cat) => (
                   <button
