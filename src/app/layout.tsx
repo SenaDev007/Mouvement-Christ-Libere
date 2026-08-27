@@ -10,6 +10,7 @@ import { ConditionalFooter } from "@/components/site/conditional-footer";
 import { NextAuthProvider } from "@/components/auth/next-auth-provider";
 import { LiveAnnouncementBar } from "@/components/site/live-announcement-bar";
 import { PageLoader } from "@/components/site/page-loader";
+import { LayoutShell } from "@/components/site/layout-shell";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -81,15 +82,9 @@ export default function RootLayout({
         <PageLoader />
         <NextAuthProvider>
           <ServantProvider>
-            {/* Navbar fixe en haut */}
-            <ContextualNav />
-            {/* Main : padding-top compense la navbar fixe */}
-            {/* Barre d'annonce live dans le flux normal (juste sous la navbar) */}
-            <main className="flex-1 pt-16 md:pt-20">
-              <LiveAnnouncementBar />
+            <LayoutShell>
               {children}
-            </main>
-            <ConditionalFooter />
+            </LayoutShell>
           </ServantProvider>
         </NextAuthProvider>
         <Toaster />
