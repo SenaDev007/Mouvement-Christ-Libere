@@ -281,3 +281,9 @@
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+/* Clignotement bouton live */
+@keyframes liveBtnBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
