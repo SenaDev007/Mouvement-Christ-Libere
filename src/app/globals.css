@@ -11,7 +11,7 @@
 @theme inline {
   /* === Polices === */
   --font-sans: var(--font-inter);
-  --font-serif: var(--font-cormorant), "Playfair Display", Georgia, serif;
+  --font-serif: var(--font-cormorant);
 
   /* === Palette de couleurs custom (Concept D) === */
   --color-imperial: #2A0E3D;
@@ -257,69 +257,61 @@
 }
 
 /* ============================================================
-   Halo lumineux du logo Christ Libère
-   Effet étincelant pulsant en forme de carte d'Afrique
+   Leaflet Map — Thème sombre Christ Libère
    ============================================================ */
 
-.logo-halo {
-  background: radial-gradient(
-    ellipse at center,
-    rgba(201, 162, 39, 0.4) 0%,
-    rgba(201, 162, 39, 0.2) 30%,
-    rgba(201, 162, 39, 0.08) 50%,
-    transparent 70%
-  );
-  filter: blur(8px);
-  animation: logoHaloPulse 3s ease-in-out infinite;
-  z-index: -1;
+.leaflet-container {
+  font-family: var(--font-inter), sans-serif !important;
 }
 
-@keyframes logoHaloPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.6;
-    filter: blur(8px);
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 1;
-    filter: blur(12px);
-  }
+.leaflet-popup-content-wrapper {
+  background: #FAF6EF !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(201, 162, 39, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Halo étincelant — couche supplémentaire avec rotation */
-.logo-halo::before {
-  content: "";
-  position: absolute;
-  inset: -20%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    rgba(201, 162, 39, 0.3) 60deg,
-    transparent 120deg,
-    rgba(221, 190, 85, 0.4) 180deg,
-    transparent 240deg,
-    rgba(201, 162, 39, 0.3) 300deg,
-    transparent 360deg
-  );
-  border-radius: 50%;
-  filter: blur(6px);
-  animation: logoHaloRotate 4s linear infinite;
-  z-index: -1;
+.leaflet-popup-tip {
+  background: #FAF6EF !important;
+  border: 1px solid rgba(201, 162, 39, 0.3) !important;
 }
 
-@keyframes logoHaloRotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.leaflet-popup-content {
+  margin: 8px 12px !important;
 }
 
-/* Effet de brillance sur le logo lui-même */
-.group\/logo img,
-.group\/logo Image {
-  filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.5));
-  transition: filter 0.3s ease;
+.leaflet-tooltip {
+  background: #2A0E3D !important;
+  color: #C9A227 !important;
+  border: 1px solid rgba(201, 162, 39, 0.3) !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 3px 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
-.group\/logo:hover img {
-  filter: drop-shadow(0 0 12px rgba(201, 162, 39, 0.8));
+.leaflet-tooltip-top:before {
+  border-top-color: #2A0E3D !important;
+}
+
+.leaflet-control-zoom a {
+  background: #2A0E3D !important;
+  color: #C9A227 !important;
+  border: 1px solid rgba(201, 162, 39, 0.2) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: #3D1A54 !important;
+  color: #DDBE55 !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(26, 8, 38, 0.8) !important;
+  color: rgba(250, 246, 239, 0.5) !important;
+  font-size: 9px !important;
+}
+
+.leaflet-control-attribution a {
+  color: rgba(201, 162, 39, 0.6) !important;
 }
