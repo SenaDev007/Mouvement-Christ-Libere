@@ -49,71 +49,81 @@ export function LiveAnnouncementBar() {
   const linkHref = isLive && live.youtubeUrl ? live.youtubeUrl : "/videos";
   const linkTarget = isLive && live.youtubeUrl ? "_blank" : undefined;
 
-  // Couleurs : rouge pour programmé, vert pour live
-  const bgColor = isLive
+  // Couleur or pour programmé, vert pour live
+  const bgGradient = isLive
     ? "linear-gradient(90deg, #16a34a 0%, #15803d 100%)"
-    : "linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)";
-  const borderColor = isLive ? "rgba(20, 83, 45, 0.3)" : "rgba(127, 29, 29, 0.3)";
+    : "linear-gradient(90deg, #C9A227 0%, #DDBE55 50%, #C9A227 100%)";
+
+  // Texte complet à faire défiler
+  const announcementText = isLive
+    ? `${live.title} — ${live.servantName} est en direct maintenant !`
+    : `${live.title} — ${live.servantName} • ${formatDate(scheduledDate)} à ${formatTime(scheduledDate)}${isToday ? " (aujourd'hui)" : ""}`;
 
   return (
     <div
-      className="live-announcement-bar relative w-full border-b"
-      style={{ background: bgColor, borderColor }}
+      className="live-announcement-bar relative w-full overflow-hidden border-b"
+      style={{
+        background: bgGradient,
+        borderColor: isLive ? "rgba(20, 83, 45, 0.3)" : "rgba(156, 126, 30, 0.3)",
+      }}
     >
-      <div className="relative flex items-center justify-center gap-2.5 py-2 px-4 max-w-full mx-auto flex-wrap">
-        {/* Icône TV / Radio */}
-        {isLive ? (
-          <Radio className="w-4 h-4 flex-shrink-0" style={{ color: "#ffffff" }} />
+      <div className="relative flex items-center py-2 px-4 gap-2.5">
+        {/* Icône fixe à gauche */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isLive ? (
+            <Radio className="w-4 h-4" style={{ color: "#ffffff" }} />
         ) : (
-          <Tv className="w-4 h-4 flex-shrink-0" style={{ color: "#ffffff" }} />
-        )}
-
-        {/* Point clignotant — rouge si programmé, vert si live */}
-        <span className="relative flex h-3 w-3 flex-shrink-0">
-          <span
-            className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-            style={{ backgroundColor: isLive ? "#4ade80" : "#fca5a5" }}
-          />
-          <span
-            className="relative inline-flex rounded-full h-3 w-3"
-            style={{ backgroundColor: isLive ? "#4ade80" : "#f87171" }}
-          />
-        </span>
-
-        {/* Badge statut */}
-        <span
-          className="text-xs uppercase tracking-[0.12em] font-bold flex-shrink-0"
-          style={{ color: "#ffffff" }}
-        >
-          {isLive ? "En direct" : "Direct programmé"}
-        </span>
-
-        {/* Séparateur */}
-        <span style={{ color: "rgba(255,255,255,0.3)" }}>|</span>
-
-        {/* Titre du live — non tronqué */}
-        <span
-          className="text-sm font-semibold flex-shrink min-w-0"
-          style={{ color: "#ffffff" }}
-        >
-          {live.title} — {live.servantName}
-          {!isLive && (
-            <span style={{ opacity: 0.8, marginLeft: "4px" }}>
-              • {formatDate(scheduledDate)} à {formatTime(scheduledDate)}
-              {isToday ? " (aujourd'hui)" : ""}
-            </span>
+            <Tv className="w-4 h-4" style={{ color: "#1E0F2B" }} />
           )}
-        </span>
+          {/* Point clignotant */}
+          <span className="relative flex h-3 w-3">
+            <span
+              className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+              style={{ backgroundColor: isLive ? "#4ade80" : "#dc2626" }}
+            />
+            <span
+              className="relative inline-flex rounded-full h-3 w-3"
+              style={{ backgroundColor: isLive ? "#4ade80" : "#dc2626" }}
+            />
+          </span>
+          {/* Badge statut */}
+          <span
+            className="text-xs uppercase tracking-[0.12em] font-bold whitespace-nowrap"
+            style={{ color: isLive ? "#ffffff" : "#1E0F2B" }}
+          >
+            {isLive ? "En direct" : "Direct programmé"}
+          </span>
+        </div>
 
-        {/* Bouton d'action — clignotant */}
+        {/* Séparateur fixe */}
+        <span style={{ color: isLive ? "rgba(255,255,255,0.3)" : "rgba(30,15,43,0.2)" }}>|</span>
+
+        {/* Zone de texte défilant (marquee) */}
+        <div className="flex-1 overflow-hidden min-w-0">
+          <div
+            className="live-marquee-inner whitespace-nowrap"
+            style={{
+              animation: "liveMarquee 25s linear infinite",
+            }}
+          >
+            <span
+              className="text-sm font-semibold"
+              style={{ color: isLive ? "#ffffff" : "#1E0F2B" }}
+            >
+              {announcementText}
+            </span>
+          </div>
+        </div>
+
+        {/* Bouton d'action fixe à droite — clignotant */}
         <Link
           href={linkHref}
           target={linkTarget}
           rel={linkTarget === "_blank" ? "noopener noreferrer" : undefined}
-          className="live-action-btn flex-shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all hover:scale-105"
+          className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all hover:scale-105"
           style={{
-            backgroundColor: "#ffffff",
-            color: isLive ? "#15803d" : "#dc2626",
+            backgroundColor: isLive ? "#ffffff" : "#1E0F2B",
+            color: isLive ? "#15803d" : "#C9A227",
             animation: "liveBtnBlink 1.5s ease-in-out infinite",
           }}
         >
