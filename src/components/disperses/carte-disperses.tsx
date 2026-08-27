@@ -37,14 +37,21 @@ const NIVEAU_LABELS: Record<string, string> = {
   chercheur: "Chercheur",
 };
 
-const LANGUE_DRAPEAUX: Record<string, string> = {
-  FR: "🇫🇷",
-  EN: "🇬🇧",
-  ES: "🇪🇸",
-  PT: "🇵🇹",
-  HE: "🇮🇱",
-  AM: "🇪🇹",
+// Drapeaux par code pays (ISO 2 lettres)
+const PAYS_DRAPEAUX: Record<string, string> = {
+  FR: "🇫🇷", CI: "🇨🇮", BJ: "🇧🇯", SN: "🇸🇳", ML: "🇲🇱", BF: "🇧🇫",
+  NG: "🇳🇬", GH: "🇬🇭", TG: "🇹🇬", NE: "🇳🇪", CM: "🇨🇲", CD: "🇨🇩",
+  CG: "🇨🇬", GA: "🇬🇦", US: "🇺🇸", CA: "🇨🇦", GB: "🇬🇧", BE: "🇧🇪",
+  CH: "🇨🇭", DE: "🇩🇪", IT: "🇮🇹", ES: "🇪🇸", PT: "🇵🇹", NL: "🇳🇱",
+  IL: "🇮🇱", BR: "🇧🇷", MX: "🇲🇽", AR: "🇦🇷", CL: "🇨🇱", CO: "🇨🇴",
+  AU: "🇦🇺", NZ: "🇳🇿", ZA: "🇿🇦", EG: "🇪🇬", MA: "🇲🇦", DZ: "🇩🇿",
+  TN: "🇹🇳", LY: "🇱🇾", ET: "🇪🇹", KE: "🇰🇪", UG: "🇺🇬", TZ: "🇹🇿",
+  RW: "🇷🇼", BI: "🇧🇮", ZM: "🇿🇲", ZW: "🇿🇼", MZ: "🇲🇿", AO: "🇦🇴",
 };
+
+function getDrapeau(pays: string): string {
+  return PAYS_DRAPEAUX[pays.toUpperCase()] || "🌐";
+}
 
 // Coordonnées de Jérusalem
 const JERUSALEM = { lat: 31.7683, lng: 35.2137 };
@@ -183,6 +190,59 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
               {/* Lignes de latitude (équateur, tropiques) */}
               <line x1="0" y1="250" x2="1000" y2="250" stroke="rgba(201, 162, 39, 0.12)" strokeWidth="0.5" strokeDasharray="4 4" />
 
+              {/* Traits reliant les points entre eux */}
+              {membresFiltres.length > 1 && pinPositions && (() => {
+                const pins = membresFiltres
+                  .map(m => pinPositions.find((p: any) => p.membre.id === m.id))
+                  .filter(Boolean) as Array<{ x: number; y: number; membre: MembreDisperse }>;
+
+                const lines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+                for (let i = 0; i < pins.length - 1; i++) {
+                  lines.push({ x1: pins[i].x, y1: pins[i].y, x2: pins[i + 1].x, y2: pins[i + 1].y });
+                }
+
+                return lines.map((line, i) => (
+                  <motion.line
+                    key={`line-${i}`}
+                    x1={line.x1}
+                    y1={line.y1}
+                    x2={line.x2}
+                    y2={line.y2}
+                    stroke="rgba(201, 162, 39, 0.35)"
+                    strokeWidth="1"
+                    strokeDasharray="3 3"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 1.5, delay: i * 0.1 }}
+                  />
+                ));
+              })()}
+
+              {/* Traits reliant chaque point à Jérusalem */}
+              {pinPositions && (() => {
+                const jerusalemPin = pinPositions?.jerusalemPos;
+                if (!jerusalemPin) return null;
+                return membresFiltres.map((membre) => {
+                  const pin = pinPositions.find((p: any) => p.membre.id === membre.id);
+                  if (!pin) return null;
+                  return (
+                    <motion.line
+                      key={`line-jerusalem-${membre.id}`}
+                      x1={pin.x}
+                      y1={pin.y}
+                      x2={jerusalemPin.x}
+                      y2={jerusalemPin.y}
+                      stroke="rgba(201, 162, 39, 0.15)"
+                      strokeWidth="0.5"
+                      strokeDasharray="2 4"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                    />
+                  );
+                });
+              })()}
+
               {/* Points des dispersés (overlay interactif) */}
               {membresFiltres.map((membre, idx) => {
                 const pin = pinPositions?.find((p: any) => p.membre.id === membre.id);
@@ -302,7 +362,7 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-[#1E0F2B] truncate">{m.pseudonyme}</p>
                   <p className="text-[10px] text-[#8A8378]">
-                    {LANGUE_DRAPEAUX[m.langue] || "🌐"} {m.ville || m.pays}
+                    {getDrapeau(m.pays)} {m.ville || m.pays}
                   </p>
                 </div>
               </button>
@@ -349,7 +409,7 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
                       {membreSelectionne.pseudonyme}
                     </h3>
                     <p className="text-xs opacity-80">
-                      {LANGUE_DRAPEAUX[membreSelectionne.langue]}{" "}
+                      {getDrapeau(membreSelectionne.pays)}{" "}
                       {membreSelectionne.ville}, {membreSelectionne.pays}
                     </p>
                   </div>

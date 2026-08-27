@@ -19,6 +19,7 @@ interface VideoCardProProps {
 }
 
 export function VideoCardPro({
+  youtubeId,
   title,
   description,
   duration,
@@ -58,7 +59,7 @@ export function VideoCardPro({
         {/* Miniature YouTube */}
         <div className="relative aspect-video bg-[#1A0826] overflow-hidden">
           <img
-            src={`https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg`}
+            src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
             alt={title}
             className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500"
             loading="lazy"
