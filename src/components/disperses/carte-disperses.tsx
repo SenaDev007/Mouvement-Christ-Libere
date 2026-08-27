@@ -285,16 +285,6 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
                 );
               })}
             </svg>
-
-            {/* Overlay stats */}
-            <div className="absolute top-4 left-4 bg-[#2A0E3D]/80 backdrop-blur-sm text-[#FAF6EF] px-3 py-2 rounded-md border border-[#C9A227]/20 pointer-events-none">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/80 font-semibold mb-1">
-                Dispersés d'Israël
-              </p>
-              <p className="font-serif text-lg font-semibold">
-                {stats.total} membres · {stats.pays} pays
-              </p>
-            </div>
           </div>
 
           {/* Légende */}
