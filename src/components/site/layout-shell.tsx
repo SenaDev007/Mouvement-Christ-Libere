@@ -5,12 +5,11 @@ import { ContextualNav } from "@/components/ui/navigation-menu-4";
 import { ConditionalFooter } from "@/components/site/conditional-footer";
 import { LiveAnnouncementBar } from "@/components/site/live-announcement-bar";
 
-// Routes où la navbar et le footer doivent être masqués
-// (pages d'authentification : login membre, login admin, inscription)
-const HIDDEN_ROUTES = ["/login", "/register", "/admin/login"];
+// Routes où la navbar, footer et barre live doivent être masqués
+// (pages plein écran : auth, studio live, visionneuse live)
+const HIDDEN_ROUTES = ["/login", "/register", "/admin/login", "/live/"];
 
 // Routes où la barre d'annonce live ne doit pas s'afficher
-// (pages plein écran comme le studio live, le chat, le back-office)
 const NO_LIVE_BAR_ROUTES = ["/admin", "/yeshua-connect", "/live/"];
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
@@ -24,7 +23,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   );
 
   if (isHiddenRoute) {
-    // Page d'authentification : ni navbar, ni footer, ni padding-top
+    // Page plein écran : ni navbar, ni footer, ni padding-top, ni barre live
     return <main className="flex-1">{children}</main>;
   }
 

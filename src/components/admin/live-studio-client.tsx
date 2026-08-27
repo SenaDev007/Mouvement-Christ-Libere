@@ -162,11 +162,23 @@ export function LiveStudioClient({
       await room.connect(url, token);
       setInfo("Connecté à LiveKit — publication du flux...");
 
-      // Publier les tracks locales
+      // Publier les tracks locales (vidéo + audio séparément)
+      // ⚠️ publishStream n'existe plus dans livekit-client v2.x
+      // Utiliser publishTrack pour chaque piste individuelle
       if (localStreamRef.current) {
-        await room.localParticipant.publishStream(localStreamRef.current, {
-          videoCodec: "h264",
-        });
+        const videoTrack = localStreamRef.current.getVideoTracks()[0];
+        const audioTrack = localStreamRef.current.getAudioTracks()[0];
+
+        if (videoTrack) {
+          await room.localParticipant.publishTrack(videoTrack, {
+            source: Track.Source.Camera,
+          });
+        }
+        if (audioTrack) {
+          await room.localParticipant.publishTrack(audioTrack, {
+            source: Track.Source.Microphone,
+          });
+        }
       }
 
       setIsLive(true);

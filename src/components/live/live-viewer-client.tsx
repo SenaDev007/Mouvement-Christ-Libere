@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { Room, RoomEvent, Track } from "livekit-client";
 import {
   Radio, Users, Clock, Calendar, Share2, AlertCircle,
-  Play, Eye, ExternalLink,
+  Play, Eye, ExternalLink, Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
@@ -34,7 +35,6 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [countdown, setCountdown] = useState("");
   const [isLive, setIsLive] = useState(live.status === "LIVE");
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<unknown>(null);
 
   // ─── Compte à rebours si programmé ───
   useEffect(() => {
@@ -91,37 +91,84 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     return () => clearInterval(interval);
   }, [live.status, live.id]);
 
-  // ─── Lecteur HLS si live en cours ───
+  // ─── Connexion LiveKit pour recevoir le flux du serviteur ───
+  const [connecting, setConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState("");
+  const roomRef = useRef<Room | null>(null);
+
   useEffect(() => {
     if (live.status !== "LIVE" || !live.livekitRoomName) return;
 
-    // Pour LiveKit, on utiliserait le lecteur WebRTC natif
-    // Pour l'instant, fallback sur YouTube si disponible
+    // Si on a une URL YouTube, on utilise l'iframe YouTube (pas besoin de LiveKit)
     if (live.youtubeUrl) return;
 
-    // Si on a un hlsUrl, utiliser hls.js
-    const loadHls = async () => {
+    const connectToRoom = async () => {
+      setConnecting(true);
+      setConnectionError("");
       try {
-        const Hls = (await import("hls.js")).default;
-        if (videoRef.current && Hls.isSupported()) {
-          const hls = new Hls({
-            liveDurationInfinity: true,
-            lowLatencyMode: true,
-          });
-          hlsRef.current = hls;
-          // URL HLS serait construite depuis LiveKit
-          // hls.loadSource(hlsUrl);
-          // hls.attachMedia(videoRef.current);
+        // 1. Récupérer un token subscriber
+        const tokenRes = await fetch("/api/livekit/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomName: live.livekitRoomName,
+            role: "subscriber",
+            participantName: "Visiteur",
+          }),
+        });
+        if (!tokenRes.ok) {
+          const data = await tokenRes.json();
+          throw new Error(data.error || "Token LiveKit indisponible");
         }
+        const { token, url } = await tokenRes.json();
+
+        // 2. Connecter la room en tant que subscriber
+        const room = new Room({
+          adaptiveStream: true,
+          dynacast: true,
+        });
+        roomRef.current = room;
+
+        await room.connect(url, token);
+
+        // 3. Écouter les tracks publiées par le serviteur
+        room.on(RoomEvent.TrackSubscribed, (track) => {
+          if (track.kind === Track.Kind.Video && videoRef.current) {
+            track.attach(videoRef.current);
+          } else if (track.kind === Track.Kind.Audio) {
+            const audioEl = document.createElement("audio");
+            track.attach(audioEl);
+            audioEl.play().catch(() => {});
+          }
+        });
+
+        // 4. Attacher les tracks déjà publiées
+        room.remoteParticipants.forEach((participant) => {
+          participant.getTrackPublications().forEach((pub) => {
+            if (pub.track && pub.track.kind === Track.Kind.Video && videoRef.current) {
+              pub.track.attach(videoRef.current);
+            } else if (pub.track && pub.track.kind === Track.Kind.Audio) {
+              const audioEl = document.createElement("audio");
+              pub.track.attach(audioEl);
+              audioEl.play().catch(() => {});
+            }
+          });
+        });
+
+        setConnecting(false);
       } catch (err) {
-        console.error("[live] HLS load error:", err);
+        console.error("[live/viewer] LiveKit connection error:", err);
+        setConnectionError(err instanceof Error ? err.message : "Erreur de connexion");
+        setConnecting(false);
       }
     };
 
-    loadHls();
+    connectToRoom();
+
     return () => {
-      if (hlsRef.current) {
-        (hlsRef.current as { destroy: () => void }).destroy();
+      if (roomRef.current) {
+        roomRef.current.disconnect();
+        roomRef.current = null;
       }
     };
   }, [live.status, live.livekitRoomName, live.youtubeUrl]);
@@ -131,7 +178,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   return (
     <div className="min-h-screen bg-[#1A0826]">
       {/* ─── Lecteur vidéo + Chat ─── */}
-      <div className="pt-20 px-4 pb-8">
+      <div className="px-4 py-4 pb-8">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-[1fr_350px] gap-4">
           {/* Colonne gauche : vidéo + infos */}
@@ -148,14 +195,36 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               />
             )}
 
-            {/* Si LIVE sans YouTube — lecteur WebRTC/HLS natif */}
+            {/* Si LIVE sans YouTube — lecteur WebRTC LiveKit natif */}
             {isLive && !live.youtubeUrl && (
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className="w-full h-full object-cover"
-              />
+              <>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted={false}
+                  className="w-full h-full object-cover"
+                />
+                {/* Overlay de connexion */}
+                {connecting && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-[#1A0826]/80">
+                    <div className="text-center text-[#FAF6EF]">
+                      <Loader2 className="w-10 h-10 text-[#C9A227] mx-auto mb-3 animate-spin" />
+                      <p className="text-sm">Connexion au live en cours...</p>
+                    </div>
+                  </div>
+                )}
+                {/* Overlay d'erreur */}
+                {connectionError && !connecting && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-[#1A0826]/80">
+                    <div className="text-center text-[#FAF6EF] p-8">
+                      <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
+                      <p className="text-sm font-bold mb-1">Impossible de se connecter au live</p>
+                      <p className="text-xs text-[#FAF6EF]/60">{connectionError}</p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Si programmé — compte à rebours */}
