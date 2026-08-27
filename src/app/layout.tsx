@@ -8,6 +8,7 @@ import { ScrollProgress } from "@/components/magic/scroll-progress";
 import { ContextualNav } from "@/components/ui/navigation-menu-4";
 import { ConditionalFooter } from "@/components/site/conditional-footer";
 import { NextAuthProvider } from "@/components/auth/next-auth-provider";
+import { LiveAnnouncementBar } from "@/components/site/live-announcement-bar";
 
 const playfair = Playfair_Display({
   variable: "--font-cormorant",
@@ -76,9 +77,11 @@ export default function RootLayout({
         <ScrollProgress />
         <NextAuthProvider>
           <ServantProvider>
-            {/* ⭐ Nouvelle navbar fixe en haut (h-14 = 56px) */}
+            {/* ⭐ Navbar fixe en haut */}
             <ContextualNav />
-            {/* Padding-top pour la navbar fixe (56px + 8px marge) */}
+            {/* ⭐ Barre d'annonce live (entre navbar et contenu) */}
+            <LiveAnnouncementBar />
+            {/* Padding-top pour la navbar fixe */}
             <main className="flex-1 pt-16 md:pt-20">{children}</main>
             <ConditionalFooter />
           </ServantProvider>
