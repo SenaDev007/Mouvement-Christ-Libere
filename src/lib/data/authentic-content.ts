@@ -1151,10 +1151,10 @@ Adonaï me l'a dit clairement: **Il n'a que faire des restes de votre vieillesse
   },
   {
     title: "Les Ouvriers des Différentes Heures et les Degrés Spirituels",
-    excerpt: "Les ouvriers de la troisième heure face aux ouvriers de la onzième heure « Un frère du Congo-Brazzaville m'a posé la question sur la signification spirituelle des ouvriers de la troisième, sixième, neuvième et onzième heure mentionnés dans la...",
+    excerpt: "Les ouvriers de la troisième heure face aux ouvriers de la onzième heure « Un frère du Kongo-Brazzaville m'a posé la question sur la signification spirituelle des ouvriers de la troisième, sixième, neuvième et onzième heure mentionnés dans la...",
     content: `**Les ouvriers de la troisième heure face aux ouvriers de la onzième heure**
 
-« Un frère du Congo-Brazzaville m'a posé la question sur la signification spirituelle des ouvriers de la troisième, sixième, neuvième et onzième heure mentionnés dans la parabole de Matthieu 20. Le Seigneur m’a révélé qu’il s’agit d’une question de **degrés spirituels et de protocoles de compréhension**.
+« Un frère du Kongo-Brazzaville m'a posé la question sur la signification spirituelle des ouvriers de la troisième, sixième, neuvième et onzième heure mentionnés dans la parabole de Matthieu 20. Le Seigneur m’a révélé qu’il s’agit d’une question de **degrés spirituels et de protocoles de compréhension**.
 
 L'heure à laquelle l'Éternel vous appelle dépend de la manière dont Il s'introduit dans votre vie, de la force avec laquelle Il se révèle à vous et des fardeaux doctrinaux qu'Il dépose dans votre esprit.
 * **Les ouvriers de la troisième heure**: Ce sont les devanciers, les théologiens, les pasteurs de longue date et les chrétiens qui marchent dans la foi depuis des décennies. Ils ont supporté la chaleur du jour, le jeûne, le dépouillement et les règles strictes de la Parole depuis le matin.
