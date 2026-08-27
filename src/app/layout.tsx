@@ -74,10 +74,10 @@ export default function RootLayout({
             {/* Navbar fixe en haut */}
             <ContextualNav />
             {/* Barre d'annonce live — positionnée sous la navbar fixe */}
-            <div className="fixed top-16 md:top-20 left-0 right-0 z-40">
+            <div style={{ position: "fixed", top: "64px", left: 0, right: 0, zIndex: 45 }}>
               <LiveAnnouncementBar />
             </div>
-            {/* Padding-top compense navbar (64-80px) + barre live (~49px si visible) */}
+            {/* Padding-top compense navbar + barre live */}
             <main className="flex-1 pt-16 md:pt-20">{children}</main>
             <ConditionalFooter />
           </ServantProvider>
