@@ -106,7 +106,7 @@ export default function AdminLoginPage() {
                 required
                 autoFocus
                 disabled={loading}
-                placeholder="Ex : Pam, Pasteur Kongo, ou email"
+                placeholder="Votre pseudonyme ou email"
                 autoComplete="username"
                 className="w-full pl-10 pr-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
               />
@@ -153,9 +153,7 @@ export default function AdminLoginPage() {
 
         {/* Note de bas */}
         <p className="text-center text-xs text-[#FAF6EF]/60 mt-6 leading-relaxed">
-          Accès réservé aux super administrateurs (Pam, Pasteur Kongo)
-          <br />
-          et aux administrateurs délégués autorisés.
+          Accès réservé aux super administrateurs et administrateurs autorisés.
         </p>
 
         {/* Retour à l'accueil */}
