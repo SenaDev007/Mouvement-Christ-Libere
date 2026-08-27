@@ -59,14 +59,11 @@ export default function Home() {
       <section className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
         {/* Background image — Pam et Pasteur Kongo */}
         <div className="absolute inset-0 z-0">
-          <Image
+          <img
             src="/pam-kongo-hero.webp"
             alt="Pam et Pasteur Kongo"
-            fill
-            priority
-            sizes="100vw"
-            className="opacity-60"
-            style={{ objectFit: "cover", objectPosition: "center 30%" }}
+            className="w-full h-full opacity-60"
+            style={{ objectFit: "cover", objectPosition: "center 25%" }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/50 via-[#2A0E3D]/60 to-[#1A0826]" />
         </div>
