@@ -15,6 +15,7 @@
     "db:seed": "bun run prisma/seed.ts",
     "db:seed:calendar": "bun run prisma/seed-calendar.ts",
     "db:seed:admins": "bun run prisma/seed-super-admins.ts",
+    "db:seed:kongo-content": "node scripts/seed-kongo-content.js",
     "db:studio": "prisma studio"
   },
   "dependencies": {
