@@ -11,7 +11,7 @@
 @theme inline {
   /* === Polices === */
   --font-sans: var(--font-inter);
-  --font-serif: var(--font-cormorant);
+  --font-serif: 'Segoe UI', 'Segoe UI Variable', var(--font-inter), sans-serif;
 
   /* === Palette de couleurs custom (Concept D) === */
   --color-imperial: #2A0E3D;
@@ -254,4 +254,16 @@
 .focus-mode {
   background: #1A0826;
   transition: background 400ms ease;
+}
+
+/* ============================================================
+   Barre d'annonce live — animation shimmer
+   ============================================================ */
+@keyframes liveShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.live-announcement-bar {
+  font-family: var(--font-inter), "Segoe UI", "Segoe UI Variable", sans-serif;
 }

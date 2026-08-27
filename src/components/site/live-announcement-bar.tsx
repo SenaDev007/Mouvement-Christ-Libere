@@ -40,65 +40,64 @@ export function LiveAnnouncementBar() {
   const now = new Date();
   const isToday = scheduledDate.toDateString() === now.toDateString();
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Africa/Porto-Novo",
-    });
-  };
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Porto-Novo" });
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("fr-FR", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      timeZone: "Africa/Porto-Novo",
-    });
-  };
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", timeZone: "Africa/Porto-Novo" });
 
   const linkHref = isLive && live.youtubeUrl ? live.youtubeUrl : "/videos";
   const linkTarget = isLive && live.youtubeUrl ? "_blank" : undefined;
 
   return (
     <div
-      className={`relative overflow-hidden border-b z-30 ${
-        isLive
-          ? "bg-gradient-to-r from-red-600 to-red-700 border-red-800/30"
-          : "bg-gradient-to-r from-[#C9A227] to-[#DDBE55] border-[#9C7E1E]/30"
-      }`}
+      className="live-announcement-bar relative overflow-hidden border-b z-30"
+      style={{
+        background: isLive
+          ? "linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)"
+          : "linear-gradient(90deg, #C9A227 0%, #DDBE55 50%, #C9A227 100%)",
+        borderColor: isLive ? "rgba(127, 29, 29, 0.3)" : "rgba(156, 126, 30, 0.3)",
+      }}
     >
-      <div className="relative flex items-center justify-center gap-3 py-2.5 px-4">
+      <div className="relative flex items-center justify-center gap-3 py-2.5 px-4 max-w-7xl mx-auto">
         {/* Point pulsant */}
         <span className="relative flex h-3 w-3 flex-shrink-0">
           {isLive && (
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+            <span
+              className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+              style={{ backgroundColor: "#ffffff" }}
+            />
           )}
           <span
-            className={`relative inline-flex rounded-full h-3 w-3 ${
-              isLive ? "bg-white" : "bg-[#1E0F2B]"
-            }`}
-          ></span>
+            className="relative inline-flex rounded-full h-3 w-3"
+            style={{ backgroundColor: isLive ? "#ffffff" : "#1E0F2B" }}
+          />
         </span>
 
         {/* Badge statut */}
         <span
-          className={`text-xs uppercase tracking-[0.15em] font-bold flex-shrink-0 ${
-            isLive ? "text-white" : "text-[#1E0F2B]"
-          }`}
+          className="text-xs uppercase tracking-[0.15em] font-bold flex-shrink-0"
+          style={{ color: isLive ? "#ffffff" : "#1E0F2B", fontFamily: "var(--font-inter), 'Segoe UI', sans-serif" }}
         >
-          {isLive ? "🔴 En direct" : "📺 Direct programmé"}
+          {isLive ? "En direct" : "Direct programmé"}
         </span>
 
-        {/* Texte de l'annonce */}
+        {/* Séparateur */}
         <span
-          className={`text-sm font-semibold truncate ${
-            isLive ? "text-white" : "text-[#1E0F2B]"
-          }`}
+          className="text-sm flex-shrink-0"
+          style={{ color: isLive ? "rgba(255,255,255,0.4)" : "rgba(30,15,43,0.3)" }}
+        >
+          |
+        </span>
+
+        {/* Titre du live */}
+        <span
+          className="text-sm font-semibold truncate"
+          style={{ color: isLive ? "#ffffff" : "#1E0F2B", fontFamily: "var(--font-inter), 'Segoe UI', sans-serif" }}
         >
           {live.title} — {live.servantName}
           {!isLive && (
-            <span className="opacity-80 ml-1">
+            <span style={{ opacity: 0.8, marginLeft: "4px" }}>
               • {formatDate(scheduledDate)} à {formatTime(scheduledDate)}
               {isToday ? " (aujourd'hui)" : ""}
             </span>
@@ -110,11 +109,12 @@ export function LiveAnnouncementBar() {
           href={linkHref}
           target={linkTarget}
           rel={linkTarget === "_blank" ? "noopener noreferrer" : undefined}
-          className={`flex-shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all hover:scale-105 ${
-            isLive
-              ? "bg-white text-red-600 hover:bg-white/90"
-              : "bg-[#1E0F2B] text-[#C9A227] hover:bg-[#1E0F2B]/90"
-          }`}
+          className="live-action-btn flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105"
+          style={{
+            backgroundColor: isLive ? "#ffffff" : "#1E0F2B",
+            color: isLive ? "#dc2626" : "#C9A227",
+            fontFamily: "var(--font-inter), 'Segoe UI', sans-serif",
+          }}
         >
           {isLive ? (
             <>
@@ -133,18 +133,12 @@ export function LiveAnnouncementBar() {
 
       {/* Effet de brillance (shimmer) */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="live-shimmer absolute inset-0 pointer-events-none"
         style={{
-          background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)`,
-          animation: "shimmer 3s ease-in-out infinite",
+          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)",
+          animation: "liveShimmer 3s ease-in-out infinite",
         }}
       />
-      <style jsx>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(200%); }
-        }
-      `}</style>
     </div>
   );
 }
