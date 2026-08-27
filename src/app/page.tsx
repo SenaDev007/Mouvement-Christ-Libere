@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,10 +19,10 @@ const VERSES = [
 ];
 
 const STATS = [
-  { value: "31", label: "témoignages authentiques" },
-  { value: "8", label: "enseignements publiés" },
-  { value: "7", label: "jalons biographiques" },
-  { value: "24h", label: "délai de réponse" },
+  { value: 31, suffix: "", label: "témoignages authentiques" },
+  { value: 544, suffix: "", label: "vidéos publiées" },
+  { value: 7, suffix: "", label: "jalons biographiques" },
+  { value: 24, suffix: "h", label: "délai de réponse" },
 ];
 
 const FEATURES = [
@@ -69,47 +70,45 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/50 via-[#2A0E3D]/60 to-[#1A0826]" />
         </div>
 
-        {/* Particules célestes + icônes chofar */}
+        {/* Particules célestes blanches (du haut vers le bas) + icônes chofar */}
         <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
-          {Array.from({ length: 25 }).map((_, i) => {
-            const isShofar = i % 5 === 0;
-            const left = Math.random() * 100;
-            const top = Math.random() * 100;
-            const size = 8 + Math.random() * 16;
-            const delay = Math.random() * 5;
-            const duration = 8 + Math.random() * 12;
+          {Array.from({ length: 30 }).map((_, i) => {
+            const isShofar = i % 6 === 0;
+            const left = (i * 37) % 100; // Distribution régulière
+            const size = 3 + (i % 4) * 2;
+            const delay = (i * 0.3) % 4;
+            const duration = 6 + (i % 5) * 2;
             return (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: -30 }}
                 animate={{
-                  opacity: [0, 0.6, 0],
-                  y: [20, -40, -80],
-                  x: [0, Math.random() * 30 - 15],
+                  opacity: [0, 0.7, 0],
+                  y: [-30, 800],
                 }}
                 transition={{
                   duration,
                   delay,
                   repeat: Infinity,
-                  repeatDelay: Math.random() * 3,
+                  ease: "linear",
                 }}
                 style={{
                   position: "absolute",
                   left: `${left}%`,
-                  top: `${top}%`,
-                  fontSize: `${size}px`,
+                  top: 0,
                 }}
               >
                 {isShofar ? (
-                  <span style={{ fontSize: `${size + 4}px`, filter: "drop-shadow(0 0 4px rgba(201,162,39,0.5))" }}>📯</span>
+                  <span style={{ fontSize: `${size + 6}px`, filter: "drop-shadow(0 0 4px rgba(255,255,255,0.4))", opacity: 0.4 }}>📯</span>
                 ) : (
                   <span style={{
-                    width: `${size / 2}px`,
-                    height: `${size / 2}px`,
+                    width: `${size}px`,
+                    height: `${size}px`,
                     borderRadius: "50%",
-                    background: `radial-gradient(circle, rgba(201,162,39,${0.3 + Math.random() * 0.4}) 0%, transparent 70%)`,
+                    background: "rgba(255,255,255,0.6)",
                     display: "block",
                     filter: "blur(0.5px)",
+                    boxShadow: "0 0 4px rgba(255,255,255,0.3)",
                   }} />
                 )}
               </motion.div>
@@ -177,13 +176,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Séparateur sinusoïdal entre hero et stats */}
-      <div className="relative bg-[#1A0826]">
-        <svg className="w-full h-12 md:h-16" viewBox="0 0 1200 80" preserveAspectRatio="none">
-          <path
-            d="M0,40 C200,80 400,0 600,40 C800,80 1000,0 1200,40 L1200,80 L0,80 Z"
-            fill="#FAF6EF"
-          />
+      {/* Séparateur oblique ascendant (gauche→droite) entre hero et stats */}
+      <div className="relative bg-[#1A0826]" style={{ height: "60px" }}>
+        <svg className="absolute bottom-0 w-full h-full" viewBox="0 0 1200 60" preserveAspectRatio="none">
+          <polygon points="0,60 1200,0 1200,60" fill="#FAF6EF" />
         </svg>
       </div>
 
@@ -201,7 +197,7 @@ export default function Home() {
                 className="text-center"
               >
                 <div className="font-serif font-extrabold text-4xl md:text-5xl text-[#C9A227] mb-2">
-                  {stat.value}
+                  <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                 </div>
                 <div className="text-sm text-[#8A8378] font-medium">
                   {stat.label}
@@ -470,4 +466,41 @@ export default function Home() {
       {/* Section supprimée — redondante avec la navbar et le footer */}
     </div>
   );
+}
+
+// ============================================================
+// COMPTEUR ANIMÉ (0 → target au scroll)
+// ============================================================
+function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          const duration = 1500;
+          const steps = 60;
+          const increment = target / steps;
+          let current = 0;
+          const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+              setCount(target);
+              clearInterval(timer);
+            } else {
+              setCount(Math.floor(current));
+            }
+          }, duration / steps);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [target, hasAnimated]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
 }

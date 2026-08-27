@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, Facebook, Twitter, Instagram, Link2, Check, Share2 } from "lucide-react";
+import { Link2, Check, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { WhatsAppIcon, FacebookIcon, XIcon, InstagramIcon } from "@/components/videos/social-icons";
 
 interface ShareButtonsProps {
   url: string;
@@ -20,42 +21,10 @@ export function ShareButtons({ url, title, className, variant = "light" }: Share
   const encodedTitle = encodeURIComponent(title);
 
   const shareLinks = [
-    {
-      name: "WhatsApp",
-      icon: MessageCircle,
-      href: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
-      color: "hover:bg-[#25D366] hover:border-[#25D366] hover:text-white",
-      bgColor: isDark ? "bg-[#FAF6EF]/5" : "bg-[#25D366]/8",
-      borderColor: isDark ? "border-[#FAF6EF]/15" : "border-[#25D366]/20",
-      textColor: isDark ? "text-[#FAF6EF]/70" : "text-[#25D366]",
-    },
-    {
-      name: "Facebook",
-      icon: Facebook,
-      href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-      color: "hover:bg-[#1877F2] hover:border-[#1877F2] hover:text-white",
-      bgColor: isDark ? "bg-[#FAF6EF]/5" : "bg-[#1877F2]/8",
-      borderColor: isDark ? "border-[#FAF6EF]/15" : "border-[#1877F2]/20",
-      textColor: isDark ? "text-[#FAF6EF]/70" : "text-[#1877F2]",
-    },
-    {
-      name: "Twitter",
-      icon: Twitter,
-      href: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
-      color: "hover:bg-[#000000] hover:border-[#000000] hover:text-white",
-      bgColor: isDark ? "bg-[#FAF6EF]/5" : "bg-[#1E0F2B]/5",
-      borderColor: isDark ? "border-[#FAF6EF]/15" : "border-[#1E0F2B]/15",
-      textColor: isDark ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]",
-    },
-    {
-      name: "Instagram",
-      icon: Instagram,
-      href: `https://www.instagram.com/`,
-      color: "hover:bg-gradient-to-br hover:from-[#833AB4] hover:via-[#FD1D1D] hover:to-[#FCB045] hover:border-transparent hover:text-white",
-      bgColor: isDark ? "bg-[#FAF6EF]/5" : "bg-gradient-to-br from-[#833AB4]/8 to-[#FCB045]/8",
-      borderColor: isDark ? "border-[#FAF6EF]/15" : "border-[#833AB4]/20",
-      textColor: isDark ? "text-[#FAF6EF]/70" : "text-[#833AB4]",
-    },
+    { name: "WhatsApp", Icon: WhatsAppIcon, href: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}` },
+    { name: "Facebook", Icon: FacebookIcon, href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` },
+    { name: "X", Icon: XIcon, href: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}` },
+    { name: "Instagram", Icon: InstagramIcon, href: `https://www.instagram.com/` },
   ];
 
   const handleCopy = async () => {
@@ -70,21 +39,19 @@ export function ShareButtons({ url, title, className, variant = "light" }: Share
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      {/* Label */}
       <div className="flex items-center gap-2">
         <Share2 className={cn("w-4 h-4", isDark ? "text-[#C9A227]" : "text-[#C9A227]")} />
         <span className={cn(
           "text-xs uppercase tracking-[0.18em] font-bold",
           isDark ? "text-[#C9A227]" : "text-[#9C7E1E]"
         )}>
-          Partager ce témoignage
+          Partager
         </span>
       </div>
 
-      {/* Boutons */}
       <div className="flex flex-wrap items-center gap-2.5">
         {shareLinks.map((link) => {
-          const Icon = link.icon;
+          const Icon = link.Icon;
           return (
             <a
               key={link.name}
@@ -92,21 +59,14 @@ export function ShareButtons({ url, title, className, variant = "light" }: Share
               target="_blank"
               rel="noopener noreferrer"
               title={`Partager sur ${link.name}`}
-              className={cn(
-                "group inline-flex items-center justify-center w-11 h-11 rounded-xl border transition-all duration-300 hover:scale-110 hover:shadow-lg",
-                link.bgColor,
-                link.borderColor,
-                link.textColor,
-                link.color
-              )}
+              className="group inline-flex items-center justify-center w-11 h-11 rounded-xl border border-[#8A8378]/15 transition-all duration-300 hover:scale-110 hover:shadow-lg bg-white"
             >
-              <Icon className="w-5 h-5" />
+              <Icon size={20} />
               <span className="sr-only">{link.name}</span>
             </a>
           );
         })}
 
-        {/* Bouton copier le lien */}
         <button
           onClick={handleCopy}
           title="Copier le lien"

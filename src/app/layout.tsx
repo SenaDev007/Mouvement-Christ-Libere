@@ -9,6 +9,7 @@ import { ContextualNav } from "@/components/ui/navigation-menu-4";
 import { ConditionalFooter } from "@/components/site/conditional-footer";
 import { NextAuthProvider } from "@/components/auth/next-auth-provider";
 import { LiveAnnouncementBar } from "@/components/site/live-announcement-bar";
+import { PageLoader } from "@/components/site/page-loader";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -77,6 +78,7 @@ export default function RootLayout({
         style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', var(--font-inter), sans-serif" }}
       >
         <ScrollProgress />
+        <PageLoader />
         <NextAuthProvider>
           <ServantProvider>
             {/* Navbar fixe en haut */}
