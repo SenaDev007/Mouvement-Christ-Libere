@@ -7,6 +7,7 @@ import {
   Users, Clock, AlertCircle, CheckCircle2, Settings,
 } from "lucide-react";
 import Link from "next/link";
+import { LiveChat } from "@/components/live/live-chat";
 
 interface LiveStudioClientProps {
   liveId: string;
@@ -491,6 +492,11 @@ export function LiveStudioClient({
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Chat en direct — visible par le serviteur pendant la diffusion */}
+          {isLive && (
+            <LiveChat liveId={liveId} isLive={isLive} />
           )}
 
           {/* Aide */}

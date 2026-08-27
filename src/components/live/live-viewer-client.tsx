@@ -6,6 +6,8 @@ import {
   Play, Eye, ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
+import { LiveChat } from "@/components/live/live-chat";
+import { LiveReactions } from "@/components/live/live-reactions";
 
 interface LiveViewerClientProps {
   live: {
@@ -128,9 +130,12 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
   return (
     <div className="min-h-screen bg-[#1A0826]">
-      {/* ─── Lecteur vidéo ─── */}
+      {/* ─── Lecteur vidéo + Chat ─── */}
       <div className="pt-20 px-4 pb-8">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-[1fr_350px] gap-4">
+          {/* Colonne gauche : vidéo + infos */}
+          <div className="space-y-4">
           {/* Conteneur vidéo */}
           <div className="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl">
             {/* Si LIVE avec YouTube */}
@@ -220,10 +225,15 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                 </span>
               </div>
             )}
+
+            {/* Réactions flottantes (façon YouTube) */}
+            {isLive && (
+              <LiveReactions liveId={live.id} isLive={isLive} />
+            )}
           </div>
 
           {/* ─── Infos du live ─── */}
-          <div className="mt-6 grid md:grid-cols-[1fr_300px] gap-6">
+          <div className="grid md:grid-cols-[1fr_220px] gap-4">
             {/* Contenu principal */}
             <div>
               <h1
@@ -356,6 +366,12 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                 </p>
               </Link>
             </div>
+          </div>
+          </div>
+          {/* Colonne droite : Chat en direct */}
+          <div>
+            <LiveChat liveId={live.id} isLive={isLive} />
+          </div>
           </div>
         </div>
       </div>

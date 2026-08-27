@@ -227,6 +227,7 @@ model LiveStream {
   updatedAt    DateTime  @updatedAt
 
   servant      Servant   @relation(fields: [servantId], references: [id])
+  chatMessages LiveChatMessage[]
 
   @@index([servantId])
   @@index([status])
@@ -238,6 +239,23 @@ enum LiveStatus {
   LIVE
   ENDED
   CANCELLED
+}
+
+// Messages et réactions du chat live (façon YouTube)
+model LiveChatMessage {
+  id          String   @id @default(cuid())
+  liveId      String
+  userId      String?
+  userName    String
+  content     String
+  type        String   @default("message") // "message" | "reaction"
+  emoji       String?  // pour les réactions: "❤️", "👍", "🔥", etc.
+  createdAt   DateTime @default(now())
+
+  live        LiveStream @relation(fields: [liveId], references: [id], onDelete: Cascade)
+
+  @@index([liveId, createdAt])
+  @@index([type])
 }
 
 // Configuration des clés RTMP par serviteur (YouTube, Facebook, TikTok, Odysee)
