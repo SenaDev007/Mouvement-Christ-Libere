@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
-import { Pencil, Crown, Video, FileText, BookOpen, Radio, BookMarked } from "lucide-react";
+import { Pencil, Crown, Video, FileText, BookOpen, Radio, BookMarked, Radio as RadioIcon } from "lucide-react";
 import { NewServantButton } from "@/components/admin/create-buttons";
 
 export const dynamic = "force-dynamic";
@@ -102,6 +102,14 @@ export default async function AdminServantsPage() {
                     aria-label="Modifier"
                   >
                     <Pencil className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href={`/admin/servants/${s.id}/stream-config`}
+                    className="p-2 rounded-lg hover:bg-white/60 text-[#8A8378] hover:text-[#C9A227] transition-colors"
+                    aria-label="Configuration streaming"
+                    title="Configuration RTMP"
+                  >
+                    <RadioIcon className="w-4 h-4" />
                   </Link>
                 </div>
               </div>

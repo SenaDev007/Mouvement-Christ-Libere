@@ -25,7 +25,13 @@ export async function GET() {
         status: activeLive.status,
         servantName: activeLive.servant.shortName,
         servantCode: activeLive.servant.code,
+        servantPortraitUrl: activeLive.servant.portraitUrl,
         youtubeUrl: activeLive.youtubeUrl,
+        facebookUrl: activeLive.facebookUrl,
+        tiktokUrl: activeLive.tiktokUrl,
+        livekitRoomName: activeLive.livekitRoomName,
+        viewerCount: activeLive.viewerCount,
+        thumbnailUrl: activeLive.thumbnailUrl,
       },
     });
   } catch (error) {

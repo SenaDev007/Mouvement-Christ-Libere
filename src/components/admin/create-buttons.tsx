@@ -394,3 +394,106 @@ export function NewTeachingButton({ servants, accentColor = "#C9A227" }: NewTeac
     </>
   );
 }
+
+// =============================================
+// Bouton + Modal pour Programmer un Live
+// =============================================
+interface NewLiveButtonProps {
+  servants: ServantLite[];
+  accentColor?: string;
+}
+
+export function NewLiveButton({ servants, accentColor = "#C9A227" }: NewLiveButtonProps) {
+  const [open, setOpen] = useState(false);
+
+  const fields: CreateField[] = [
+    {
+      name: "servantId",
+      label: "Serviteur",
+      type: "select",
+      options: servants.map((s) => ({ value: s.id, label: s.shortName })),
+      required: true,
+    },
+    {
+      name: "scheduledAt",
+      label: "Date & heure",
+      type: "datetime-local",
+      required: true,
+    },
+    {
+      name: "title",
+      label: "Titre du live",
+      type: "text",
+      placeholder: "Ex: Enseignement sur l'horloge céleste",
+      required: true,
+      fullWidth: true,
+    },
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+      placeholder: "Décrivez le sujet du live...",
+      fullWidth: true,
+    },
+    {
+      name: "thumbnailUrl",
+      label: "URL miniature (optionnel)",
+      type: "text",
+      placeholder: "https://...",
+      fullWidth: true,
+    },
+    {
+      name: "streamToYoutube",
+      label: "Diffuser sur YouTube",
+      type: "checkbox",
+      defaultValue: true,
+      fullWidth: true,
+    },
+    {
+      name: "streamToFacebook",
+      label: "Diffuser sur Facebook",
+      type: "checkbox",
+      defaultValue: false,
+      fullWidth: true,
+    },
+    {
+      name: "streamToTiktok",
+      label: "Diffuser sur TikTok",
+      type: "checkbox",
+      defaultValue: false,
+      fullWidth: true,
+    },
+    {
+      name: "multistreamEnabled",
+      label: "Activer le multistreaming",
+      type: "checkbox",
+      defaultValue: true,
+      fullWidth: true,
+      help: "Si activé, le live sera diffusé simultanément sur les plateformes cochées ci-dessus (nécessite les clés RTMP configurées pour le serviteur)",
+    },
+  ];
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md"
+        style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
+      >
+        <Plus className="w-4 h-4" />
+        Programmer un live
+      </button>
+      <CreateEntityModal
+        open={open}
+        onClose={() => setOpen(false)}
+        entity="lives"
+        title="Programmer un live"
+        subtitle="Planifier une session de streaming en direct"
+        fields={fields}
+        accentColor={accentColor}
+        size="lg"
+      />
+    </>
+  );
+}

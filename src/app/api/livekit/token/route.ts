@@ -1,90 +1,120 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { AccessToken } from "livekit-server-sdk";
 import { db } from "@/lib/db";
+import { cookies } from "next/headers";
+import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 
 /**
  * POST /api/livekit/token
  *
- * Issues a LiveKit access token for the authenticated user to join a room.
- * Body: { roomName, isUrgent? }
+ * Génère un token LiveKit pour qu'un serviteur (Pam, Pasteur Kongo) diffuse un live
+ * ou qu'un visiteur regarde le live sur le site public.
  *
- * The token grants the user publish + subscribe permissions.
- * For urgent calls, the DND preference is bypassed.
+ * Body: { roomName, role: "publisher" | "subscriber", participantName? }
  *
- * Env vars required:
- *   LIVEKIT_API_KEY
- *   LIVEKIT_API_SECRET
- *   LIVEKIT_URL  (e.g. wss://christ-libere.livekit.cloud)
+ * - publisher : permissions canPublish (pour le serviteur qui diffuse)
+ * - subscriber : permissions canSubscribe uniquement (pour les visiteurs)
+ *
+ * Pour les publishers : vérifie que l'utilisateur est authentifié admin (cookie admin_session).
+ * Pour les subscribers : pas d'auth requise (le live est public).
  */
 
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
 const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
 
+interface TokenRequestBody {
+  roomName?: string;
+  role?: "publisher" | "subscriber";
+  participantName?: string;
+  liveId?: string;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-    }
+    const body: TokenRequestBody = await req.json();
+    const { roomName, role = "subscriber", participantName, liveId } = body;
 
-    const { roomName, isUrgent = false } = await req.json();
     if (!roomName) {
       return NextResponse.json({ error: "roomName requis" }, { status: 400 });
     }
 
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: { id: true, name: true, dndEnabled: true, dndUntil: true },
-    });
+    let identity: string;
+    let name: string;
+    const isPublisher = role === "publisher";
 
-    if (!user) {
-      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
-    }
+    if (isPublisher) {
+      // Vérifier l'authentification admin (cookie admin_session)
+      const cookieStore = await cookies();
+      const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-    // Check DND — bypass if urgent
-    if (!isUrgent && user.dndEnabled) {
-      const now = new Date();
-      if (!user.dndUntil || new Date(user.dndUntil) > now) {
-        return NextResponse.json({
-          error: "Le destinataire est en mode Ne pas déranger",
-          dndActive: true,
-        }, { status: 403 });
+      if (!sessionToken || !verifySessionToken(sessionToken)) {
+        return NextResponse.json(
+          { error: "Authentification admin requise pour diffuser un live" },
+          { status: 401 }
+        );
       }
+
+      // Décoder le userId et le rôle depuis le token
+      try {
+        const parts = sessionToken.split(".");
+        const data = JSON.parse(Buffer.from(parts[0], "base64url").toString());
+        const userParts = data.user.split(":");
+        if (userParts.length < 3 || userParts[0] !== "admin") {
+          return NextResponse.json(
+            { error: "Token de session invalide" },
+            { status: 401 }
+          );
+        }
+        identity = userParts[1];
+        name = participantName || "Serviteur";
+      } catch {
+        return NextResponse.json(
+          { error: "Session invalide" },
+          { status: 401 }
+        );
+      }
+
+      // Vérifier que le live existe et appartient bien à ce serviteur
+      if (liveId) {
+        const live = await db.liveStream.findUnique({
+          where: { id: liveId },
+          select: { id: true, status: true, livekitRoomName: true },
+        });
+        if (!live) {
+          return NextResponse.json(
+            { error: "Live introuvable" },
+            { status: 404 }
+          );
+        }
+      }
+    } else {
+      // Subscriber : identité anonyme
+      identity = `viewer-${Math.random().toString(36).substring(2, 10)}`;
+      name = participantName || "Visiteur";
     }
 
-    // Generate LiveKit token
-    const participantName = user.name || session.user.email || "Membre";
+    // Générer le token LiveKit
     const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
-      identity: user.id,
-      name: participantName,
+      identity,
+      name,
     });
 
     at.addGrant({
       room: roomName,
       roomJoin: true,
-      canPublish: true,
+      canPublish: isPublisher,
       canSubscribe: true,
-      canPublishData: true,
+      canPublishData: isPublisher,
     });
 
     const token = await at.toJwt();
-    const livekitUrl = process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
-
-    // Log the call in the database
-    await db.call.create({
-      data: {
-        initiatorId: user.id,
-        recipientId: user.id, // TODO: get recipient from roomName
-        type: "AUDIO", // TODO: pass as param
-        status: "MISSED",
-      },
-    });
+    const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
 
     return NextResponse.json({
       token,
       url: livekitUrl,
       roomName,
+      role,
     });
   } catch (error) {
     console.error("[livekit/token] Error:", error);

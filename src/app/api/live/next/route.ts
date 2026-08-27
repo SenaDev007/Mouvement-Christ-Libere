@@ -28,7 +28,9 @@ export async function GET() {
         status: nextLive.status,
         servantName: nextLive.servant.shortName,
         servantCode: nextLive.servant.code,
+        servantPortraitUrl: nextLive.servant.portraitUrl,
         youtubeUrl: nextLive.youtubeUrl,
+        thumbnailUrl: nextLive.thumbnailUrl,
       },
     });
   } catch (error) {

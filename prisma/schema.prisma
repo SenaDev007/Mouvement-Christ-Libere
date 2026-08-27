@@ -89,6 +89,7 @@ model Servant {
   teachings   Teaching[]
   videos      Video[]
   liveStreams LiveStream[]
+  streamConfig ServantStreamConfig?
 }
 
 // --- Biographies (frise chronologique) ---
@@ -212,6 +213,16 @@ model LiveStream {
   facebookUrl  String?
   tiktokUrl    String?
   odyseeUrl    String?
+  // ─── V2.0 — LiveKit + multistreaming ───
+  livekitRoomName  String?
+  multistreamEnabled Boolean @default(false)
+  streamToYoutube   Boolean  @default(false)
+  streamToFacebook  Boolean  @default(false)
+  streamToTiktok    Boolean  @default(false)
+  streamToOdysee    Boolean  @default(false)
+  recordingUrl      String?
+  viewerCount       Int      @default(0)
+  thumbnailUrl      String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -227,6 +238,24 @@ enum LiveStatus {
   LIVE
   ENDED
   CANCELLED
+}
+
+// Configuration des clés RTMP par serviteur (YouTube, Facebook, TikTok, Odysee)
+model ServantStreamConfig {
+  id              String   @id @default(cuid())
+  servantId       String   @unique
+  youtubeRtmpUrl  String?
+  youtubeRtmpKey  String?
+  facebookRtmpUrl String?
+  facebookRtmpKey String?
+  tiktokRtmpUrl   String?
+  tiktokRtmpKey   String?
+  odyseeRtmpUrl   String?
+  odyseeRtmpKey   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  servant         Servant  @relation(fields: [servantId], references: [id])
 }
 
 // --- Média social intégré ---

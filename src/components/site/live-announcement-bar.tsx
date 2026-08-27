@@ -46,8 +46,8 @@ export function LiveAnnouncementBar() {
   const formatDate = (date: Date) =>
     date.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", timeZone: "Africa/Porto-Novo" });
 
-  const linkHref = isLive && live.youtubeUrl ? live.youtubeUrl : "/videos";
-  const linkTarget = isLive && live.youtubeUrl ? "_blank" : undefined;
+  const linkHref = live?.id ? `/live/${live.id}` : "/videos";
+  const linkTarget = undefined;
 
   // Couleur or pour programmé, vert pour live
   const bgGradient = isLive

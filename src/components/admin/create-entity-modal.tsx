@@ -11,7 +11,7 @@ interface FieldOption {
 export interface CreateField {
   name: string;
   label: string;
-  type: "text" | "textarea" | "select" | "number" | "checkbox" | "tags";
+  type: "text" | "textarea" | "select" | "number" | "checkbox" | "tags" | "datetime-local" | "date";
   placeholder?: string;
   help?: string;
   required?: boolean;
@@ -130,12 +130,15 @@ export function CreateEntityModal({
     setError("");
 
     try {
-      // Préparer le body : convertir les nombres
+      // Préparer le body : convertir les nombres et dates
       const body: Record<string, unknown> = {};
       for (const field of fields) {
         const value = form[field.name];
         if (field.type === "number") {
           body[field.name] = Number(value) || 0;
+        } else if (field.type === "datetime-local" || field.type === "date") {
+          // Convertir en ISO string si valeur présente
+          body[field.name] = value ? new Date(value as string).toISOString() : null;
         } else {
           body[field.name] = value;
         }
@@ -267,10 +270,19 @@ export function CreateEntityModal({
     }
 
     // text / number
+    // text / number / datetime-local / date
+    const inputType = field.type === "number"
+      ? "number"
+      : field.type === "datetime-local"
+        ? "datetime-local"
+        : field.type === "date"
+          ? "date"
+          : "text";
+
     return (
       <ModalField key={field.name} label={field.label} required={field.required} fullWidth={field.fullWidth}>
         <input
-          type={field.type === "number" ? "number" : "text"}
+          type={inputType}
           value={String(value)}
           onChange={(e) =>
             setValue(field.name, field.type === "number" ? Number(e.target.value) : e.target.value)

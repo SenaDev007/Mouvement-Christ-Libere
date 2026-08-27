@@ -1,7 +1,9 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { Plus, Pencil, Radio, Calendar, Clock, Video, Crown } from "lucide-react";
+import { Plus, Pencil, Radio, Calendar, Clock, Video, Crown, ExternalLink } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
+import { NewLiveButton } from "@/components/admin/create-buttons";
+import { LiveQuickActions } from "@/components/admin/live-quick-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +15,17 @@ const STATUS_CONFIG = {
 };
 
 export default async function AdminLivesPage() {
-  const lives = await db.liveStream.findMany({
-    orderBy: { scheduledAt: "desc" },
-    include: { servant: true },
-  });
+  const [lives, servants] = await Promise.all([
+    db.liveStream.findMany({
+      orderBy: { scheduledAt: "desc" },
+      include: { servant: true },
+    }),
+    db.servant.findMany({
+      where: { isActive: true },
+      select: { id: true, shortName: true, code: true },
+      orderBy: { code: "asc" },
+    }),
+  ]);
 
   // Stats
   const now = new Date();
@@ -42,13 +51,7 @@ export default async function AdminLivesPage() {
             Sessions programmées et passées.
           </p>
         </div>
-        <Link
-          href="/admin/lives/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
-        >
-          <Plus className="w-4 h-4" />
-          Programmer un live
-        </Link>
+        <NewLiveButton servants={servants} accentColor="#C9A227" />
       </div>
 
       {/* Stats */}
@@ -138,6 +141,28 @@ export default async function AdminLivesPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {(l.status === "SCHEDULED" || l.status === "LIVE") && (
+                      <Link
+                        href={`/admin/lives/${l.id}/studio`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-xs font-bold hover:bg-[#3D1A54] transition-colors"
+                        title="Aller au studio"
+                      >
+                        <Video className="w-3 h-3" />
+                        Studio
+                      </Link>
+                    )}
+                    {l.status === "LIVE" && (
+                      <Link
+                        href={`/live/${l.id}`}
+                        target="_blank"
+                        className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                        aria-label="Voir le live"
+                        title="Voir sur le site"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </Link>
+                    )}
+                    <LiveQuickActions liveId={l.id} status={l.status} />
                     <Link
                       href={`/admin/lives/${l.id}/edit`}
                       className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
