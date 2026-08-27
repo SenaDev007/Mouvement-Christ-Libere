@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
 import { LiveReactions } from "@/components/live/live-reactions";
+import { VideoPlayerPro } from "@/components/live/video-player-pro";
 
 interface LiveViewerClientProps {
   live: {
@@ -195,36 +196,16 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               />
             )}
 
-            {/* Si LIVE sans YouTube — lecteur WebRTC LiveKit natif */}
+            {/* Si LIVE sans YouTube — lecteur WebRTC LiveKit natif avec contrôles pro */}
             {isLive && !live.youtubeUrl && (
-              <>
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted={false}
-                  className="w-full h-full object-cover"
-                />
-                {/* Overlay de connexion */}
-                {connecting && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#1A0826]/80">
-                    <div className="text-center text-[#FAF6EF]">
-                      <Loader2 className="w-10 h-10 text-[#C9A227] mx-auto mb-3 animate-spin" />
-                      <p className="text-sm">Connexion au live en cours...</p>
-                    </div>
-                  </div>
-                )}
-                {/* Overlay d'erreur */}
-                {connectionError && !connecting && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#1A0826]/80">
-                    <div className="text-center text-[#FAF6EF] p-8">
-                      <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
-                      <p className="text-sm font-bold mb-1">Impossible de se connecter au live</p>
-                      <p className="text-xs text-[#FAF6EF]/60">{connectionError}</p>
-                    </div>
-                  </div>
-                )}
-              </>
+              <VideoPlayerPro
+                videoRef={videoRef}
+                isLive={isLive}
+                viewerCount={live.viewerCount}
+                connecting={connecting}
+                connectionError={connectionError}
+                onRetry={() => window.location.reload()}
+              />
             )}
 
             {/* Si programmé — compte à rebours */}
