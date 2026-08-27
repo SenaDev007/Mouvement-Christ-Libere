@@ -1,29 +1,74 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import {
   Play, Eye, ChevronRight, ChevronDown,
   Calendar, Video as VideoIcon, ThumbsUp, Share2, Download,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  getCategoriesByServant,
-  getAllVideos,
-  type VideoItem,
-} from "@/lib/data/videos-exemple";
+
+interface VideoItem {
+  id: string;
+  youtubeId: string;
+  title: string;
+  description: string;
+  duration: string;
+  views: number;
+  publishedAt: string;
+  category: string;
+  servant: "pam" | "kongo";
+  servantName: string;
+  thumbnailUrl?: string;
+}
+
+interface VideoCategory {
+  id: string;
+  name: string;
+  description: string;
+  servant: "pam" | "kongo";
+  videos: VideoItem[];
+}
 
 type ServantTab = "pam" | "kongo";
+
+function getCategoriesFromVideos(videos: VideoItem[], servant: "pam" | "kongo"): VideoCategory[] {
+  const filtered = videos.filter(v => v.servant === servant);
+  const catsMap = new Map<string, VideoItem[]>();
+  for (const v of filtered) {
+    if (!catsMap.has(v.category)) catsMap.set(v.category, []);
+    catsMap.get(v.category)!.push(v);
+  }
+  return Array.from(catsMap.entries()).map(([name, vs], i) => ({
+    id: `${servant}-cat-${i}`,
+    name,
+    description: "",
+    servant,
+    videos: vs,
+  }));
+}
 
 export default function VideosPage() {
   const [activeTab, setActiveTab] = useState<ServantTab>("pam");
   const [currentVideo, setCurrentVideo] = useState<VideoItem | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [allVideos, setAllVideos] = useState<VideoItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const allVideos = useMemo(() => getAllVideos(), []);
-  const pamCategories = useMemo(() => getCategoriesByServant("pam"), []);
-  const kongoCategories = useMemo(() => getCategoriesByServant("kongo"), []);
+  useEffect(() => {
+    fetch("/api/videos")
+      .then(r => r.json())
+      .then(data => {
+        setAllVideos(data.videos || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const pamCategories = useMemo(() => getCategoriesFromVideos(allVideos, "pam"), [allVideos]);
+  const kongoCategories = useMemo(() => getCategoriesFromVideos(allVideos, "kongo"), [allVideos]);
 
   const currentCategories = activeTab === "pam" ? pamCategories : kongoCategories;
   const currentVideos = activeTab === "pam"
@@ -101,6 +146,12 @@ export default function VideosPage() {
       {/* VIDÉOS PAR CATÉGORIE */}
       <section className="py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
+            </div>
+          ) : (
+          <>
           {/* En-tête serviteur */}
           <div className="flex items-center gap-4 mb-8 pb-6 border-b border-[#8A8378]/15">
             <div className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#C9A227]/30 flex-shrink-0">
@@ -170,6 +221,8 @@ export default function VideosPage() {
               );
             })}
           </div>
+          </>
+          )}
         </div>
       </section>
     </div>
