@@ -17,6 +17,7 @@
     "db:seed:admins": "bun run prisma/seed-super-admins.ts",
     "db:seed:kongo-content": "node scripts/seed-kongo-content.js",
     "db:rename-kongo": "node scripts/rename-congo-to-kongo.js",
+    "db:clean-kongo": "node scripts/clean-kongo-content.js",
     "db:studio": "prisma studio"
   },
   "dependencies": {

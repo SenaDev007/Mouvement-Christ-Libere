@@ -97,10 +97,12 @@ export default async function TeachingDetailPage({ params }: PageProps) {
               <Clock className="w-3.5 h-3.5 text-[#C9A227]" />
               {teaching.readingTime}
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-[#C9A227]" />
-              {teaching.book}
-            </span>
+            {teaching.book && (
+              <span className="inline-flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-[#C9A227]" />
+                {teaching.book}
+              </span>
+            )}
             {teaching.publishedAt && (
               <span className="inline-flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-[#C9A227]" />

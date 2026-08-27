@@ -64,12 +64,14 @@ export function TeachingCard({ title, excerpt, theme, book, level, readingTime, 
           </p>
 
           {/* Référence biblique */}
-          <div className="mb-4">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#C9A227]/8 text-[#9C7E1E] border border-[#C9A227]/15">
-              <BookOpen className="w-3 h-3" />
-              {book}
-            </span>
-          </div>
+          {book && (
+            <div className="mb-4">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#C9A227]/8 text-[#9C7E1E] border border-[#C9A227]/15">
+                <BookOpen className="w-3 h-3" />
+                {book}
+              </span>
+            </div>
+          )}
 
           {/* Pied de carte */}
           <div className="flex items-center justify-between pt-4 mt-auto border-t border-[#8A8378]/12">

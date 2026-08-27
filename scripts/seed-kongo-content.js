@@ -53,12 +53,14 @@ function cleanMarkdown(text) {
 
 /**
  * Extrait un titre propre depuis un header markdown
+ * Supprime aussi les numérotations en début (1., 2., 3., etc.)
  */
 function extractTitle(headerLine) {
-  return headerLine
+  const raw = headerLine
     .replace(/^#+\s*/, "")
     .replace(/\s*#+\s*$/, "")
     .trim();
+  return stripNumbering(raw);
 }
 
 /**
@@ -102,23 +104,54 @@ function detectLevel(title, content) {
 }
 
 /**
- * Détecte un livre biblique mentionné
+ * Détecte un livre biblique mentionné avec référence complète
+ * Retourne "Genèse 15:13" si trouvé, sinon juste "Genèse", sinon ""
  */
 function detectBook(content) {
   const books = [
+    "1 Samuel", "2 Samuel", "1 Rois", "2 Rois", "1 Chroniques", "2 Chroniques",
+    "1 Corinthiens", "2 Corinthiens", "1 Thessaloniciens", "2 Thessaloniciens",
+    "1 Timothée", "2 Timothée", "1 Pierre", "2 Pierre", "1 Jean", "2 Jean", "3 Jean",
     "Genèse", "Exode", "Lévitique", "Nombres", "Deutéronome",
     "Josué", "Juges", "Ruth", "Samuel", "Rois", "Chroniques",
-    "Psaumes", "Proverbes", "Ecclésiaste", "Cantique",
+    "Psaumes", "Psaume", "Proverbes", "Ecclésiaste", "Cantique",
     "Ésaïe", "Ézéchiel", "Daniel", "Joël", "Abdias", "Jonas",
     "Matthieu", "Marc", "Luc", "Jean", "Actes", "Romains",
     "Corinthiens", "Galates", "Éphésiens", "Philippiens",
     "Thessaloniciens", "Timothée", "Tite", "Hébreux",
-    "Apocalypse"
+    "Jacques", "Jude", "Apocalypse"
   ];
+
+  // Chercher d'abord une référence complète (Livre chapitre:verset)
+  for (const book of books) {
+    const regex = new RegExp(`${book.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+\\d+:\\d+`, "");
+    const match = content.match(regex);
+    if (match) return match[0];
+  }
+  // Sinon chercher juste Livre chapitre
+  for (const book of books) {
+    const regex = new RegExp(`${book.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+\\d+`, "");
+    const match = content.match(regex);
+    if (match) return match[0];
+  }
+  // Sinon juste le nom du livre
   for (const book of books) {
     if (content.includes(book)) return book;
   }
   return "";
+}
+
+/**
+ * Supprime les numérotations en début de titre
+ * "1. Titre" → "Titre", "2) Titre" → "Titre", "10 - Titre" → "Titre"
+ */
+function stripNumbering(title) {
+  if (!title) return title;
+  return title
+    .replace(/^\s*\d+\.\s*/, "")
+    .replace(/^\s*\d+\)\s*/, "")
+    .replace(/^\s*\d+\s*[-—]\s*/, "")
+    .trim();
 }
 
 // =============================================
