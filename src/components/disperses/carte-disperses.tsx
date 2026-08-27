@@ -190,54 +190,69 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
               {/* Lignes de latitude (équateur, tropiques) */}
               <line x1="0" y1="250" x2="1000" y2="250" stroke="rgba(201, 162, 39, 0.12)" strokeWidth="0.5" strokeDasharray="4 4" />
 
-              {/* Traits reliant les points entre eux */}
+              {/* Courbes reliant les points entre eux */}
               {membresFiltres.length > 1 && pinPositions && (() => {
                 const pins = membresFiltres
                   .map(m => pinPositions.find((p: any) => p.membre.id === m.id))
                   .filter(Boolean) as Array<{ x: number; y: number; membre: MembreDisperse }>;
 
-                const lines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+                // Générer des courbes de Bézier entre points consécutifs
+                const curves: Array<{ d: string }> = [];
                 for (let i = 0; i < pins.length - 1; i++) {
-                  lines.push({ x1: pins[i].x, y1: pins[i].y, x2: pins[i + 1].x, y2: pins[i + 1].y });
+                  const x1 = pins[i].x, y1 = pins[i].y;
+                  const x2 = pins[i + 1].x, y2 = pins[i + 1].y;
+                  // Point de contrôle : milieu + offset vertical pour courbe
+                  const midX = (x1 + x2) / 2;
+                  const midY = (y1 + y2) / 2;
+                  const offset = Math.abs(x2 - x1) * 0.3;
+                  const cx = midX;
+                  const cy = midY - offset;
+                  curves.push({ d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` });
                 }
 
-                return lines.map((line, i) => (
-                  <motion.line
-                    key={`line-${i}`}
-                    x1={line.x1}
-                    y1={line.y1}
-                    x2={line.x2}
-                    y2={line.y2}
-                    stroke="rgba(201, 162, 39, 0.35)"
-                    strokeWidth="1"
-                    strokeDasharray="3 3"
+                return curves.map((curve, i) => (
+                  <motion.path
+                    key={`curve-${i}`}
+                    d={curve.d}
+                    fill="none"
+                    stroke="rgba(201, 162, 39, 0.4)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeDasharray="4 3"
                     initial={{ pathLength: 0, opacity: 0 }}
                     animate={{ pathLength: 1, opacity: 1 }}
-                    transition={{ duration: 1.5, delay: i * 0.1 }}
+                    transition={{ duration: 1.5, delay: i * 0.15, ease: "easeInOut" }}
                   />
                 ));
               })()}
 
-              {/* Traits reliant chaque point à Jérusalem */}
+              {/* Courbes reliant chaque point à Jérusalem */}
               {pinPositions && (() => {
                 const jerusalemPin = pinPositions?.jerusalemPos;
                 if (!jerusalemPin) return null;
                 return membresFiltres.map((membre) => {
                   const pin = pinPositions.find((p: any) => p.membre.id === membre.id);
                   if (!pin) return null;
+                  const x1 = pin.x, y1 = pin.y;
+                  const x2 = jerusalemPin.x, y2 = jerusalemPin.y;
+                  const midX = (x1 + x2) / 2;
+                  const midY = (y1 + y2) / 2;
+                  const offset = Math.abs(x2 - x1) * 0.25;
+                  const cx = midX;
+                  const cy = midY - offset;
+                  const d = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
                   return (
-                    <motion.line
-                      key={`line-jerusalem-${membre.id}`}
-                      x1={pin.x}
-                      y1={pin.y}
-                      x2={jerusalemPin.x}
-                      y2={jerusalemPin.y}
-                      stroke="rgba(201, 162, 39, 0.15)"
-                      strokeWidth="0.5"
-                      strokeDasharray="2 4"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 1, delay: 0.5 }}
+                    <motion.path
+                      key={`curve-jerusalem-${membre.id}`}
+                      d={d}
+                      fill="none"
+                      stroke="rgba(201, 162, 39, 0.2)"
+                      strokeWidth="0.8"
+                      strokeLinecap="round"
+                      strokeDasharray="3 4"
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{ duration: 1.5, delay: 0.5, ease: "easeInOut" }}
                     />
                   );
                 });
