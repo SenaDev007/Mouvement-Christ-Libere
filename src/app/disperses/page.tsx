@@ -1,41 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
+import { CarteDisperses, type MembreDisperse } from "@/components/disperses/carte-disperses";
 import { MagneticButton } from "@/components/magic/magnetic-button";
 import { MapPin, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "@/lib/api-client";
-
-// Types exportés depuis carte-disperses
-export interface MembreDisperse {
-  id: string;
-  pseudonyme: string;
-  pays: string;
-  ville?: string;
-  latitude: number;
-  longitude: number;
-  langue: string;
-  niveau: string;
-  message?: string;
-}
-
-// Chargement dynamique (ssr: false) car Leaflet utilise window
-const CarteDisperses = dynamic(
-  () => import("@/components/disperses/carte-disperses").then((m) => m.CarteDisperses),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-[500px] bg-[#1A0826] rounded-2xl">
-        <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
-      </div>
-    ),
-  }
-);
 
 export default function DispersesPage() {
   const [membres, setMembres] = useState<MembreDisperse[]>([]);

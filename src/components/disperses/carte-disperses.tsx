@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip } from "react-leaflet";
+import DottedMap from "dotted-map";
+import Image from "next/image";
 import { MapPin, Users, Globe, X, MessageCircle } from "lucide-react";
-import "leaflet/dist/leaflet.css";
 import { cn } from "@/lib/utils";
 
 export interface MembreDisperse {
@@ -46,16 +46,70 @@ const LANGUE_DRAPEAUX: Record<string, string> = {
   AM: "🇪🇹",
 };
 
-// Coordonnées de Jérusalem (référence)
-const JERUSALEM: [number, number] = [31.7683, 35.2137];
+// Coordonnées de Jérusalem
+const JERUSALEM = { lat: 31.7683, lng: 35.2137 };
 
 export function CarteDisperses({ membres }: CarteDispersesProps) {
+  const [membreSelectionne, setMembreSelectionne] = useState<MembreDisperse | null>(null);
   const [filtreNiveau, setFiltreNiveau] = useState<string | null>(null);
 
   const membresFiltres = useMemo(() => {
     if (!filtreNiveau) return membres;
     return membres.filter((m) => m.niveau === filtreNiveau);
   }, [membres, filtreNiveau]);
+
+  // Générer la carte dotted-map avec pins intégrés (alignement parfait)
+  const { svgMap, pinPositions } = useMemo(() => {
+    const map = new DottedMap({ height: 80, grid: "diagonal" });
+
+    // Ajouter Jérusalem comme pin de référence
+    const jerusalemPin = map.addPin({
+      lat: JERUSALEM.lat,
+      lng: JERUSALEM.lng,
+      svgOptions: { color: "#C9A227", radius: 0.6 },
+    });
+
+    // Ajouter chaque membre comme pin
+    const positions: Array<{ membre: MembreDisperse; x: number; y: number }> = [];
+    for (const membre of membres) {
+      const couleur = NIVEAU_COULEURS[membre.niveau] || NIVEAU_COULEURS.chercheur;
+      const pin = map.addPin({
+        lat: membre.latitude,
+        lng: membre.longitude,
+        svgOptions: { color: couleur, radius: 0.5 },
+      });
+      if (pin) {
+        positions.push({ membre, x: pin.x, y: pin.y });
+      }
+    }
+
+    const svg = map.getSVG({
+      radius: 0.25,
+      color: "#FAF6EF30",
+      shape: "circle",
+      backgroundColor: "#1A0826",
+    });
+
+    // Extraire les dimensions du viewBox
+    const viewBoxMatch = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+    const width = viewBoxMatch ? parseFloat(viewBoxMatch[1]) : 1000;
+    const height = viewBoxMatch ? parseFloat(viewBoxMatch[2]) : 500;
+
+    return {
+      svgMap: svg,
+      pinPositions: positions.map((p) => ({
+        ...p,
+        x: (p.x / width) * 1000,
+        y: (p.y / height) * 500,
+      })),
+      jerusalemPos: jerusalemPin
+        ? {
+            x: (jerusalemPin.x / width) * 1000,
+            y: (jerusalemPin.y / height) * 500,
+          }
+        : null,
+    } as any;
+  }, [membres]);
 
   const stats = useMemo(() => {
     const pays = new Set(membres.map((m) => m.pays));
@@ -108,107 +162,76 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
             ))}
           </div>
 
-          {/* Carte Leaflet — vraie carte géographique */}
-          <div className="relative rounded-2xl overflow-hidden border-2 border-[#C9A227]/20" style={{ height: "500px" }}>
-            <MapContainer
-              center={[20, 10]}
-              zoom={2}
-              minZoom={2}
-              maxZoom={10}
-              scrollWheelZoom={true}
-              style={{ width: "100%", height: "100%", background: "#1A0826" }}
-              worldCopyJump={true}
+          {/* Carte dotted-map avec overlay interactif */}
+          <div className="relative bg-[#1A0826] rounded-2xl overflow-hidden border-2 border-[#C9A227]/20" style={{ aspectRatio: "2 / 1" }}>
+            {/* Fond dotted-map */}
+            <Image
+              src={`data:image/svg+xml;utf8,${encodeURIComponent(svgMap)}`}
+              alt="Carte du monde — Dispersés d'Israël"
+              fill
+              sizes="(max-width: 1024px) 100vw, 75vw"
+              className="object-cover pointer-events-none select-none"
+              draggable={false}
+            />
+
+            {/* Overlay SVG pour points interactifs */}
+            <svg
+              viewBox="0 0 1000 500"
+              className="absolute inset-0 w-full h-full"
+              preserveAspectRatio="xMidYMid meet"
             >
-              {/* Fond de carte — style sombre élégant */}
-              <TileLayer
-                attribution='&copy; OpenStreetMap'
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              />
+              {/* Lignes de latitude (équateur, tropiques) */}
+              <line x1="0" y1="250" x2="1000" y2="250" stroke="rgba(201, 162, 39, 0.12)" strokeWidth="0.5" strokeDasharray="4 4" />
 
-              {/* Point Jérusalem (référence) */}
-              <CircleMarker
-                center={JERUSALEM}
-                radius={8}
-                pathOptions={{
-                  color: "#C9A227",
-                  fillColor: "#C9A227",
-                  fillOpacity: 0.8,
-                  weight: 2,
-                }}
-              >
-                <Tooltip permanent direction="top" offset={[0, -8]} className="custom-tooltip">
-                  Jérusalem
-                </Tooltip>
-                <Popup>
-                  <div className="text-center">
-                    <strong>Jérusalem</strong>
-                    <br />
-                    <span className="text-xs">Lieu de référence — où l'Éternel a mis son nom</span>
-                  </div>
-                </Popup>
-              </CircleMarker>
-
-              {/* Points des dispersés */}
-              {membresFiltres.map((membre) => {
+              {/* Points des dispersés (overlay interactif) */}
+              {membresFiltres.map((membre, idx) => {
+                const pin = pinPositions?.find((p: any) => p.membre.id === membre.id);
+                if (!pin) return null;
                 const couleur = NIVEAU_COULEURS[membre.niveau] || NIVEAU_COULEURS.chercheur;
                 return (
-                  <CircleMarker
-                    key={membre.id}
-                    center={[membre.latitude, membre.longitude]}
-                    radius={7}
-                    pathOptions={{
-                      color: "#FAF6EF",
-                      fillColor: couleur,
-                      fillOpacity: 0.9,
-                      weight: 2,
-                    }}
-                  >
-                    <Popup>
-                      <div className="p-1 min-w-[180px]">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                            style={{ backgroundColor: couleur }}
-                          >
-                            {membre.pseudonyme.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-bold text-sm">{membre.pseudonyme}</p>
-                            <p className="text-xs text-gray-500">
-                              {LANGUE_DRAPEAUX[membre.langue] || "🌐"} {membre.ville || ""} {membre.pays}
-                            </p>
-                          </div>
-                        </div>
-                        {membre.message && (
-                          <p className="text-xs italic text-gray-600 mb-2">« {membre.message} »</p>
-                        )}
-                        <div className="flex items-center gap-2 text-xs">
-                          <span
-                            className="px-2 py-0.5 rounded-full font-semibold"
-                            style={{
-                              backgroundColor: `${couleur}20`,
-                              color: couleur,
-                            }}
-                          >
-                            {NIVEAU_LABELS[membre.niveau] || membre.niveau}
-                          </span>
-                          <span className="text-gray-400">
-                            {membre.latitude.toFixed(1)}°, {membre.longitude.toFixed(1)}°
-                          </span>
-                        </div>
-                      </div>
-                    </Popup>
-                  </CircleMarker>
+                  <g key={membre.id}>
+                    {/* Halo pulsant */}
+                    <motion.circle
+                      cx={pin.x}
+                      cy={pin.y}
+                      r="8"
+                      fill={couleur}
+                      opacity="0.2"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: [1, 1.8, 1], opacity: [0.3, 0, 0.3] }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        delay: idx * 0.2,
+                        ease: "easeInOut",
+                      }}
+                      style={{ transformOrigin: `${pin.x}px ${pin.y}px` }}
+                    />
+                    {/* Point central */}
+                    <motion.circle
+                      cx={pin.x}
+                      cy={pin.y}
+                      r="5"
+                      fill={couleur}
+                      stroke="#FAF6EF"
+                      strokeWidth="1.5"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.5, delay: idx * 0.05 }}
+                      className="cursor-pointer"
+                      onClick={() => setMembreSelectionne(membre)}
+                    />
+                  </g>
                 );
               })}
-            </MapContainer>
+            </svg>
 
             {/* Overlay stats */}
-            <div className="absolute top-3 left-3 z-[1000] bg-[#2A0E3D]/90 backdrop-blur-sm text-[#FAF6EF] px-3 py-2 rounded-lg border border-[#C9A227]/30 pointer-events-none">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/80 font-semibold mb-0.5">
+            <div className="absolute top-4 left-4 bg-[#2A0E3D]/80 backdrop-blur-sm text-[#FAF6EF] px-3 py-2 rounded-md border border-[#C9A227]/20 pointer-events-none">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/80 font-semibold mb-1">
                 Dispersés d'Israël
               </p>
-              <p className="font-serif text-base font-semibold">
+              <p className="font-serif text-lg font-semibold">
                 {stats.total} membres · {stats.pays} pays
               </p>
             </div>
@@ -267,8 +290,9 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
           </h3>
           <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-discrete">
             {membresFiltres.slice(0, 8).map((m) => (
-              <div
+              <button
                 key={m.id}
+                onClick={() => setMembreSelectionne(m)}
                 className="w-full text-left p-2 rounded hover:bg-[#C9A227]/5 transition-colors flex items-center gap-2"
               >
                 <span
@@ -281,11 +305,97 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
                     {LANGUE_DRAPEAUX[m.langue] || "🌐"} {m.ville || m.pays}
                   </p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Modal détail membre */}
+      <AnimatePresence>
+        {membreSelectionne && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 backdrop-blur-sm"
+            onClick={() => setMembreSelectionne(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#FAF6EF] rounded-2xl max-w-md w-full overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                className="p-6 text-[#FAF6EF] relative"
+                style={{ backgroundColor: NIVEAU_COULEURS[membreSelectionne.niveau] }}
+              >
+                <button
+                  onClick={() => setMembreSelectionne(null)}
+                  className="absolute top-4 right-4 p-1.5 rounded hover:bg-[#FAF6EF]/20"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#FAF6EF]/20 border border-[#FAF6EF]/30">
+                    <span className="font-serif text-lg font-semibold">
+                      {membreSelectionne.pseudonyme.charAt(0)}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-xl font-semibold">
+                      {membreSelectionne.pseudonyme}
+                    </h3>
+                    <p className="text-xs opacity-80">
+                      {LANGUE_DRAPEAUX[membreSelectionne.langue]}{" "}
+                      {membreSelectionne.ville}, {membreSelectionne.pays}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    style={{
+                      backgroundColor: `${NIVEAU_COULEURS[membreSelectionne.niveau]}20`,
+                      color: NIVEAU_COULEURS[membreSelectionne.niveau],
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: NIVEAU_COULEURS[membreSelectionne.niveau] }}
+                    />
+                    {NIVEAU_LABELS[membreSelectionne.niveau]}
+                  </span>
+                </div>
+
+                {membreSelectionne.message && (
+                  <div className="p-4 bg-[#2A0E3D]/5 rounded-md border border-[#C9A227]/20 mb-4">
+                    <p className="font-serif italic text-sm text-[#1E0F2B]/80 leading-relaxed">
+                      « {membreSelectionne.message} »
+                    </p>
+                  </div>
+                )}
+
+                <div className="text-xs text-[#8A8378] space-y-1">
+                  <p>
+                    <strong className="text-[#1E0F2B]">Position :</strong>{" "}
+                    {membreSelectionne.latitude.toFixed(1)}°, {membreSelectionne.longitude.toFixed(1)}°
+                    <span className="text-[#8A8378]/60 ml-1">(arrondie à 0.1° pour anonymat)</span>
+                  </p>
+                  <p>
+                    <strong className="text-[#1E0F2B]">Langue :</strong> {membreSelectionne.langue}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
