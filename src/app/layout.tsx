@@ -71,8 +71,13 @@ export default function RootLayout({
         <ScrollProgress />
         <NextAuthProvider>
           <ServantProvider>
+            {/* Navbar fixe en haut */}
             <ContextualNav />
-            <LiveAnnouncementBar />
+            {/* Barre d'annonce live — positionnée sous la navbar fixe */}
+            <div className="fixed top-16 md:top-20 left-0 right-0 z-40">
+              <LiveAnnouncementBar />
+            </div>
+            {/* Padding-top compense navbar (64-80px) + barre live (~49px si visible) */}
             <main className="flex-1 pt-16 md:pt-20">{children}</main>
             <ConditionalFooter />
           </ServantProvider>

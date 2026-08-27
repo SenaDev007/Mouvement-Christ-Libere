@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Radio, ChevronRight, Clock } from "lucide-react";
+import { Radio, ChevronRight, Clock, Bell } from "lucide-react";
 import Link from "next/link";
 
 interface LiveAnnouncement {
@@ -51,7 +51,7 @@ export function LiveAnnouncementBar() {
 
   return (
     <div
-      className="live-announcement-bar relative overflow-hidden border-b z-30"
+      className="live-announcement-bar relative overflow-hidden border-b"
       style={{
         background: isLive
           ? "linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)"
@@ -59,9 +59,16 @@ export function LiveAnnouncementBar() {
         borderColor: isLive ? "rgba(127, 29, 29, 0.3)" : "rgba(156, 126, 30, 0.3)",
       }}
     >
-      <div className="relative flex items-center justify-center gap-3 py-2.5 px-4 max-w-7xl mx-auto">
+      <div className="relative flex items-center justify-center gap-3 py-2 px-4 max-w-7xl mx-auto">
+        {/* Icône Radio (LIVE) ou Bell (programmé) */}
+        {isLive ? (
+          <Radio className="w-4 h-4 flex-shrink-0" style={{ color: "#ffffff" }} />
+        ) : (
+          <Bell className="w-4 h-4 flex-shrink-0" style={{ color: "#1E0F2B" }} />
+        )}
+
         {/* Point pulsant */}
-        <span className="relative flex h-3 w-3 flex-shrink-0">
+        <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
           {isLive && (
             <span
               className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
@@ -69,35 +76,30 @@ export function LiveAnnouncementBar() {
             />
           )}
           <span
-            className="relative inline-flex rounded-full h-3 w-3"
+            className="relative inline-flex rounded-full h-2.5 w-2.5"
             style={{ backgroundColor: isLive ? "#ffffff" : "#1E0F2B" }}
           />
         </span>
 
         {/* Badge statut */}
         <span
-          className="text-xs uppercase tracking-[0.15em] font-bold flex-shrink-0"
-          style={{ color: isLive ? "#ffffff" : "#1E0F2B", fontFamily: "var(--font-inter), 'Segoe UI', sans-serif" }}
+          className="text-xs uppercase tracking-[0.12em] font-bold flex-shrink-0"
+          style={{ color: isLive ? "#ffffff" : "#1E0F2B" }}
         >
           {isLive ? "En direct" : "Direct programmé"}
         </span>
 
         {/* Séparateur */}
-        <span
-          className="text-sm flex-shrink-0"
-          style={{ color: isLive ? "rgba(255,255,255,0.4)" : "rgba(30,15,43,0.3)" }}
-        >
-          |
-        </span>
+        <span style={{ color: isLive ? "rgba(255,255,255,0.3)" : "rgba(30,15,43,0.2)" }}>|</span>
 
         {/* Titre du live */}
         <span
           className="text-sm font-semibold truncate"
-          style={{ color: isLive ? "#ffffff" : "#1E0F2B", fontFamily: "var(--font-inter), 'Segoe UI', sans-serif" }}
+          style={{ color: isLive ? "#ffffff" : "#1E0F2B" }}
         >
           {live.title} — {live.servantName}
           {!isLive && (
-            <span style={{ opacity: 0.8, marginLeft: "4px" }}>
+            <span style={{ opacity: 0.75, marginLeft: "4px" }}>
               • {formatDate(scheduledDate)} à {formatTime(scheduledDate)}
               {isToday ? " (aujourd'hui)" : ""}
             </span>
@@ -109,21 +111,20 @@ export function LiveAnnouncementBar() {
           href={linkHref}
           target={linkTarget}
           rel={linkTarget === "_blank" ? "noopener noreferrer" : undefined}
-          className="live-action-btn flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105"
+          className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all hover:scale-105"
           style={{
             backgroundColor: isLive ? "#ffffff" : "#1E0F2B",
             color: isLive ? "#dc2626" : "#C9A227",
-            fontFamily: "var(--font-inter), 'Segoe UI', sans-serif",
           }}
         >
           {isLive ? (
             <>
-              <Radio className="w-3.5 h-3.5" />
+              <Radio className="w-3 h-3" />
               Rejoindre
             </>
           ) : (
             <>
-              <Clock className="w-3.5 h-3.5" />
+              <Clock className="w-3 h-3" />
               Rappel
             </>
           )}
@@ -133,9 +134,9 @@ export function LiveAnnouncementBar() {
 
       {/* Effet de brillance (shimmer) */}
       <div
-        className="live-shimmer absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)",
+          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)",
           animation: "liveShimmer 3s ease-in-out infinite",
         }}
       />
