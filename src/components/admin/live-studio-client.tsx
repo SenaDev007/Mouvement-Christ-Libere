@@ -64,6 +64,9 @@ export function LiveStudioClient({
   const viewerPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
 
   const initCamera = useCallback(async () => {
     try {
@@ -214,6 +217,36 @@ export function LiveStudioClient({
       setStatus("LIVE");
       setInfo("Vous êtes en direct !");
 
+      // ─── Démarrer l'enregistrement du canvas composite (MediaRecorder) ───
+      // On enregistre le stream du canvas (caméra + overlays) pour avoir un replay.
+      const recordStream = overlayStreamRef.current || localStreamRef.current;
+      if (recordStream && typeof MediaRecorder !== "undefined") {
+        try {
+          // Combiner vidéo du canvas + audio du micro dans un seul stream
+          const combinedStream = new MediaStream();
+          recordStream.getVideoTracks().forEach((t) => combinedStream.addTrack(t));
+          if (localStreamRef.current) {
+            localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
+          }
+          const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+            ? "video/webm;codecs=vp9,opus"
+            : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+            ? "video/webm;codecs=vp8,opus"
+            : "video/webm";
+          const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
+          recordedChunksRef.current = [];
+          recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+          };
+          recorder.start(1000); // collecter les données toutes les 1s
+          mediaRecorderRef.current = recorder;
+          setIsRecording(true);
+          console.log("[studio] Enregistrement démarré");
+        } catch (err) {
+          console.error("[studio] MediaRecorder failed:", err);
+        }
+      }
+
       const startTime = Date.now();
       durationTimerRef.current = setInterval(() => {
         setStreamDuration(Math.floor((Date.now() - startTime) / 1000));
@@ -244,12 +277,70 @@ export function LiveStudioClient({
     setShowStopModal(false);
     setLoading(true);
     setError("");
+    setInfo("Arrêt de l'enregistrement et archivage du replay...");
     try {
+      // ─── Arrêter le MediaRecorder et récupérer le blob ───
+      let recordingBlob: Blob | null = null;
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        recordingBlob = await new Promise<Blob | null>((resolve) => {
+          const recorder = mediaRecorderRef.current!;
+          recorder.onstop = () => {
+            if (recordedChunksRef.current.length > 0) {
+              const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+              resolve(blob);
+            } else {
+              resolve(null);
+            }
+          };
+          recorder.stop();
+        });
+        setIsRecording(false);
+        console.log(`[studio] Enregistrement arrêté — ${recordingBlob ? Math.round(recordingBlob.size / 1024 / 1024) : 0}MB`);
+      }
+
       if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+
+      // ─── Uploader le replay si disponible ───
+      let recordingUrl: string | null = null;
+      if (recordingBlob && recordingBlob.size > 0) {
+        const sizeMB = recordingBlob.size / 1024 / 1024;
+        if (sizeMB <= 4) {
+          // Assez petit pour uploader via API (limite Vercel ~4.5MB)
+          setInfo("Upload du replay en cours...");
+          const formData = new FormData();
+          formData.append("file", recordingBlob, "replay.webm");
+          formData.append("liveId", liveId);
+          try {
+            const uploadRes = await fetch(`/api/live/${liveId}/recording`, {
+              method: "POST",
+              body: formData,
+            });
+            if (uploadRes.ok) {
+              const data = await uploadRes.json();
+              recordingUrl = data.recordingUrl;
+              console.log("[studio] Replay uploadé:", recordingUrl);
+            }
+          } catch (err) {
+            console.error("[studio] Upload replay failed:", err);
+          }
+        } else {
+          // Trop gros pour Vercel — télécharger localement
+          setInfo(`Replay trop volumineux (${Math.round(sizeMB)}MB) — téléchargement local...`);
+          const url = URL.createObjectURL(recordingBlob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `replay-${liveId}.webm`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      }
+
       const res = await fetch("/api/live/stop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ liveId }),
+        body: JSON.stringify({ liveId, recordingUrl }),
       });
       if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Erreur arrêt"); }
       setIsLive(false);
@@ -379,6 +470,11 @@ export function LiveStudioClient({
                 {isLive && (
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${isPaused ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-red-600 text-white"}`}>
                     {isPaused ? <><Pause className="w-3 h-3" fill="currentColor" /> PAUSE</> : <><span className="w-2 h-2 rounded-full bg-white animate-pulse" /> LIVE</>}
+                  </span>
+                )}
+                {isLive && isRecording && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/10 text-white text-[10px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> REC
                   </span>
                 )}
                 {!isLive && status !== "ENDED" && (

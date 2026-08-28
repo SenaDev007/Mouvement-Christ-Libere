@@ -43,7 +43,7 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !videoUrl) return;
+    if (!video || !currentVideoUrl) return;
     const onLoadedMetadata = () => {
       setTrimEnd(video.duration);
       setTotalDuration(video.duration);
@@ -51,7 +51,7 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
     };
     video.addEventListener("loadedmetadata", onLoadedMetadata);
     return () => video.removeEventListener("loadedmetadata", onLoadedMetadata);
-  }, [videoUrl]);
+  }, [currentVideoUrl]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -110,6 +110,10 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
 
   const [exportProgress, setExportProgress] = useState<string[]>([]);
   const [exportError, setExportError] = useState("");
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(videoUrl);
+  const videoUploadRef = useRef<HTMLInputElement>(null);
 
   const handleExport = async () => {
     setExporting(true);
@@ -145,6 +149,42 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
     const m = Math.floor(s / 60);
     const sec = Math.floor(s % 60);
     return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("video/")) {
+      setUploadError("Veuillez sélectionner un fichier vidéo (MP4, WebM, etc.)");
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setUploadError(`Fichier trop volumineux (${Math.round(file.size / 1024 / 1024)}MB — max 4MB)`);
+      return;
+    }
+    setUploadingVideo(true);
+    setUploadError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/videos/${videoId}/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Erreur upload");
+      }
+      const data = await res.json();
+      setCurrentVideoUrl(data.videoUrl);
+      // Recharger pour que le composant vidéo prenne en compte la nouvelle source
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setUploadingVideo(false);
+      if (videoUploadRef.current) videoUploadRef.current.value = "";
+    }
   };
 
   return (
@@ -191,15 +231,44 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
         <div className="space-y-4">
           {/* Preview */}
           <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
-            {videoUrl ? (
-              <video ref={videoRef} src={videoUrl} className="w-full h-full object-contain"
+            {currentVideoUrl ? (
+              <video ref={videoRef} src={currentVideoUrl} className="w-full h-full object-contain"
                 onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                 onEnded={() => setIsPlaying(false)} />
             ) : (
               <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
-                <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
-                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Aucune vidéo source</p>
-                <p className="text-xs text-[#FAF6EF]/50 max-w-sm">Le replay n'a pas encore été traité. Vous pouvez ajouter une intro/outro et exporter pour générer la vidéo finale.</p>
+                {uploadingVideo ? (
+                  <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
+                ) : (
+                  <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
+                )}
+                <p className="text-sm font-bold text-[#FAF6EF] mb-1">
+                  {uploadingVideo ? "Upload en cours..." : "Aucune vidéo source"}
+                </p>
+                <p className="text-xs text-[#FAF6EF]/50 max-w-sm mb-4">
+                  {uploadingVideo
+                    ? "Veuillez patienter pendant l'upload du replay..."
+                    : "Uploadez le replay enregistré (format MP4 ou WebM, max 4MB)"}
+                </p>
+                {!uploadingVideo && (
+                  <button
+                    onClick={() => videoUploadRef.current?.click()}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Uploader le replay
+                  </button>
+                )}
+                {uploadError && (
+                  <p className="text-xs text-red-400 mt-3 max-w-sm">{uploadError}</p>
+                )}
+                <input
+                  ref={videoUploadRef}
+                  type="file"
+                  accept="video/*"
+                  onChange={handleVideoUpload}
+                  className="hidden"
+                />
               </div>
             )}
             {thumbnail && activeTab === "thumbnail" && (
@@ -212,13 +281,13 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
 
           {/* Controls */}
           <div className="flex items-center justify-center gap-3 bg-white rounded-xl p-3 border border-[#8A8378]/15">
-            <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B] transition-colors" disabled={!videoUrl}>
+            <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B] transition-colors" disabled={!currentVideoUrl}>
               <SkipBack className="w-5 h-5" />
             </button>
-            <button onClick={togglePlay} className="p-3 rounded-full bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40" disabled={!videoUrl}>
+            <button onClick={togglePlay} className="p-3 rounded-full bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40" disabled={!currentVideoUrl}>
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
-            <button onClick={() => handleSeek(Math.min(trimEnd, currentTime + 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B] transition-colors" disabled={!videoUrl}>
+            <button onClick={() => handleSeek(Math.min(trimEnd, currentTime + 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B] transition-colors" disabled={!currentVideoUrl}>
               <SkipForward className="w-5 h-5" />
             </button>
             <span className="text-xs text-[#8A8378] ml-2">{formatTime(currentTime)} / {formatTime(totalDuration)}</span>
@@ -263,13 +332,13 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
                 <label className="text-[10px] text-[#8A8378] uppercase font-bold">Début : {formatTime(trimStart)}</label>
                 <input type="range" min="0" max={totalDuration} step="0.1" value={trimStart}
                   onChange={(e) => setTrimStart(Math.min(parseFloat(e.target.value), trimEnd))}
-                  className="w-full accent-[#C9A227]" disabled={!videoUrl} />
+                  className="w-full accent-[#C9A227]" disabled={!currentVideoUrl} />
               </div>
               <div className="flex-1">
                 <label className="text-[10px] text-[#8A8378] uppercase font-bold">Fin : {formatTime(trimEnd)}</label>
                 <input type="range" min="0" max={totalDuration} step="0.1" value={trimEnd}
                   onChange={(e) => setTrimEnd(Math.max(parseFloat(e.target.value), trimStart))}
-                  className="w-full accent-[#C9A227]" disabled={!videoUrl} />
+                  className="w-full accent-[#C9A227]" disabled={!currentVideoUrl} />
               </div>
             </div>
           </div>
@@ -297,8 +366,8 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
               <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Découpage</h3>
               <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">Ajustez le début et la fin du replay. Les zones rouges sur la timeline indiquent les parties qui seront supprimées.</p>
               <div className="flex gap-2">
-                <button onClick={() => setTrimStart(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors" disabled={!videoUrl}>Définir début</button>
-                <button onClick={() => setTrimEnd(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors" disabled={!videoUrl}>Définir fin</button>
+                <button onClick={() => setTrimStart(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors" disabled={!currentVideoUrl}>Définir début</button>
+                <button onClick={() => setTrimEnd(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors" disabled={!currentVideoUrl}>Définir fin</button>
               </div>
               <div className="px-3 py-2 rounded-lg bg-[#2A0E3D]/5">
                 <p className="text-xs text-[#1E0F2B]/70">Durée finale : <span className="font-bold text-[#1E0F2B]">{formatTime(trimEnd - trimStart)}</span></p>
