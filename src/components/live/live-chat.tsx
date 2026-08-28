@@ -99,6 +99,16 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
     fetchXp();
   }, [liveId]);
 
+  // Reset des messages quand le liveId change (nouveau live = nouvelle session)
+  useEffect(() => {
+    setMessages([]);
+    seenIdsRef.current = new Set();
+    lastTimestampRef.current = null;
+    setViewerCount(0);
+    setShowScrollDown(false);
+    setPinnedMessage(null);
+  }, [liveId]);
+
   const seenIdsRef = useRef<Set<string>>(new Set());
 
   const fetchMessages = useCallback(async () => {

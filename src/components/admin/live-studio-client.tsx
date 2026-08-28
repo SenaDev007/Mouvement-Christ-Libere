@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
+import { LiveReactions } from "@/components/live/live-reactions";
 import { MediaOverlay } from "@/components/live/media-overlay";
 
 interface LiveStudioClientProps {
@@ -300,6 +301,9 @@ export function LiveStudioClient({
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-600 text-white text-xs font-bold"><Monitor className="w-3 h-3" /> Partage d'écran</span>
               </div>
             )}
+
+            {/* Réactions flottantes (visibles par le diffuseur) */}
+            {isLive && <LiveReactions liveId={liveId} isLive={isLive} />}
           </div>
 
           {/* ═══ Infos sous la vidéo (façon YouTube) ═══ */}

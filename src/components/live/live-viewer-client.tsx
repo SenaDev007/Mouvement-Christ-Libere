@@ -41,6 +41,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [countdown, setCountdown] = useState("");
   const [isLive, setIsLive] = useState(live.status === "LIVE");
   const [connecting, setConnecting] = useState(false);
+  const [liveDuration, setLiveDuration] = useState("");
   const [connectionError, setConnectionError] = useState("");
   const [showDescription, setShowDescription] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -154,6 +155,21 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     const interval = setInterval(fetchViewers, 5000);
     return () => clearInterval(interval);
   }, [isLive, live.id]);
+
+  // Durée du live (affichée côté viewer)
+  useEffect(() => {
+    if (!isLive || !live.startedAt) return;
+    const update = () => {
+      const elapsed = Math.floor((Date.now() - new Date(live.startedAt).getTime()) / 1000);
+      const h = Math.floor(elapsed / 3600);
+      const m = Math.floor((elapsed % 3600) / 60);
+      const s = elapsed % 60;
+      setLiveDuration(h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}` : `${m}:${s.toString().padStart(2, "0")}`);
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [isLive, live.startedAt]);
 
   // Connexion LiveKit subscriber
   useEffect(() => {
@@ -398,6 +414,17 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               )}
 
               {/* Réactions */}
+              {/* Durée du live (overlay) */}
+              {isLive && hasJoined && liveDuration && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-red-600 text-white text-xs font-bold">
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    EN DIRECT · {liveDuration}
+                  </span>
+                </div>
+              )}
+
+              {/* Réactions flottantes */}
               {isLive && hasJoined && <LiveReactions liveId={live.id} isLive={isLive} />}
             </div>
 

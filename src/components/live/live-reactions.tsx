@@ -25,6 +25,19 @@ export function LiveReactions({ liveId, isLive }: LiveReactionsProps) {
   const lastTimestampRef = useRef<string | null>(null);
   const seenIdsRef = useRef<Set<string>>(new Set());
   const burstTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showReactionBar, setShowReactionBar] = useState(true);
+
+  // Afficher la barre de réactions toutes les 20s pendant 5s
+  useEffect(() => {
+    if (!isLive) return;
+    const cycle = () => {
+      setShowReactionBar(true);
+      setTimeout(() => setShowReactionBar(false), 5000);
+    };
+    cycle(); // Afficher au démarrage
+    const interval = setInterval(cycle, 20000);
+    return () => clearInterval(interval);
+  }, [isLive]);
 
   useEffect(() => {
     const saved = localStorage.getItem("live-chat-username");
@@ -120,8 +133,13 @@ export function LiveReactions({ liveId, isLive }: LiveReactionsProps) {
         ))}
       </div>
 
-      {/* ─── Barre de réactions — positionnée en bas à droite, compacte ─── */}
-      <div className="absolute bottom-3 right-3 z-20 flex items-center gap-0.5 bg-black/60 backdrop-blur-md rounded-full px-1.5 py-1 border border-white/10">
+      {/* ─── Barre de réactions — VERTICALE, coin droit, apparaît/disparaît ─── */}
+      <div
+        className="absolute bottom-3 right-3 z-20 flex flex-col items-center gap-1 bg-black/60 backdrop-blur-md rounded-full px-1.5 py-2 border border-white/10 transition-opacity duration-300"
+        style={{ opacity: showReactionBar ? 1 : 0 }}
+        onMouseEnter={() => setShowReactionBar(true)}
+        onMouseLeave={() => setShowReactionBar(false)}
+      >
         {REACTION_EMOJIS.map((emoji) => (
           <button
             key={emoji}
