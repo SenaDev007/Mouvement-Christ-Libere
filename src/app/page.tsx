@@ -9,6 +9,7 @@ import {
   Calendar, MessageSquare, Heart, ArrowRight,
 } from "lucide-react";
 import { AutoRefresh } from "@/components/site/auto-refresh";
+import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 
 const VERSES = [
   "Et Hénoch marcha avec Dieu", "Genèse 5:24",
@@ -67,6 +68,8 @@ export default function Home() {
       <AutoRefresh intervalMs={30000} />
       {/* ═════ HERO ═════ */}
       <section className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
+        {/* Carte flottante du prochain live — en haut du hero */}
+        <UpcomingLiveFloat />
         {/* Background image — Pam et Pasteur Kongo */}
         <div className="absolute inset-0 z-0">
           <img

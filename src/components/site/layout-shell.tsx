@@ -31,8 +31,6 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       <div className="pt-16 md:pt-20">
         {/* Barre d'annonce live (texte défilant) */}
         {showLiveBar && <LiveAnnouncementBar />}
-        {/* Carte miniature du prochain live — juste sous la barre d'annonce */}
-        {showLiveBar && <UpcomingLiveFloat />}
         <main className="flex-1">
           {children}
         </main>

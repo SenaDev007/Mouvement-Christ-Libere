@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Radio, Clock, Calendar, ChevronRight, Play } from "lucide-react";
+import { Radio, Clock, Calendar, Play } from "lucide-react";
 
 interface UpcomingLive {
   id: string;
@@ -15,10 +15,10 @@ interface UpcomingLive {
 }
 
 /**
- * Affiche la miniature du prochain live juste sous la barre d'annonce.
- * - Position: sticky sous la barre d'annonce (pas en bas du hero)
+ * Affiche la miniature du prochain live qui flotte en HAUT du hero.
+ * - Position: absolute top-4 right-4 (haut à droite du hero)
  * - Effet pulsatile pour attirer l'attention
- * - Badge "Live à venir" avec fond transparent (ne cache pas le visage)
+ * - Badge fond transparent (ne cache pas le visage)
  * - Signal vert "En direct" quand le live est en cours
  */
 export function UpcomingLiveFloat() {
@@ -63,68 +63,72 @@ export function UpcomingLiveFloat() {
   if (!live || !live.thumbnailUrl) return null;
 
   const isLive = live.status === "LIVE";
-  const accentColor = live.servantCode === "pam" ? "#C9A227" : "#8C5FA8";
 
   return (
-    <div className="relative w-full bg-[#1A0826] py-2 px-4 border-b border-[#C9A227]/10">
-      <div className="max-w-7xl mx-auto flex items-center justify-center">
-        <Link
-          href={`/live/${live.id}`}
-          className="group relative flex items-center gap-3 max-w-md w-full"
-        >
-          {/* Miniature avec effet pulsatile */}
-          <div className="relative flex-shrink-0">
-            {/* Halo pulsatile */}
-            <div
-              className={`absolute -inset-1 rounded-lg ${isLive ? "bg-green-500/30" : "bg-[#C9A227]/30"} blur-sm`}
-              style={{ animation: "livePulse 2s ease-in-out infinite" }}
-            />
-            {/* Image */}
-            <div className="relative w-20 h-12 rounded-md overflow-hidden border border-[#C9A227]/30">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={live.thumbnailUrl} alt={live.title} className="w-full h-full object-cover" />
-            </div>
-          </div>
+    <Link
+      href={`/live/${live.id}`}
+      className="absolute top-4 right-4 z-30 group"
+    >
+      <div className="relative">
+        {/* Halo pulsatile */}
+        <div
+          className={`absolute -inset-1.5 rounded-xl blur-md ${isLive ? "bg-green-500/40" : "bg-[#C9A227]/40"}`}
+          style={{ animation: "livePulse 2s ease-in-out infinite" }}
+        />
 
-          {/* Texte */}
-          <div className="flex-1 min-w-0">
-            {/* Badge — fond transparent */}
+        {/* Carte */}
+        <div className="relative bg-[#1A0826]/80 backdrop-blur-md rounded-xl overflow-hidden border border-[#C9A227]/30 shadow-2xl w-56 transition-all group-hover:scale-105">
+          {/* Miniature */}
+          <div className="relative aspect-video overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={live.thumbnailUrl} alt={live.title} className="w-full h-full object-cover" />
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0826] via-transparent to-transparent" />
+
+            {/* Badge — fond transparent, en haut à gauche */}
             {isLive ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-400 mb-0.5">
+              <span className="absolute top-2 left-2 inline-flex items-center gap-1 text-[10px] font-bold text-green-400">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 EN DIRECT
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#C9A227] mb-0.5">
+              <span className="absolute top-2 left-2 inline-flex items-center gap-1 text-[10px] font-bold text-[#C9A227]">
                 <Calendar className="w-2.5 h-2.5" />
                 LIVE À VENIR
               </span>
             )}
-            <p className="text-xs font-bold text-white line-clamp-1">{live.title}</p>
-            <p className="text-[10px] text-white/50">
-              {live.servantName} {isLive ? "" : `· ${countdown}`}
+
+            {/* Titre en bas de la miniature */}
+            <p className="absolute bottom-1.5 left-2 right-2 text-[11px] font-bold text-white line-clamp-1">
+              {live.title}
             </p>
           </div>
 
-          {/* Bouton */}
-          <div
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all group-hover:scale-105 ${
-              isLive ? "bg-green-600 text-white" : "bg-[#C9A227] text-[#1E0F2B]"
-            }`}
-          >
-            {isLive ? (
-              <span className="flex items-center gap-1">
-                <Play className="w-2.5 h-2.5" fill="currentColor" />
-                Regarder
-              </span>
-            ) : (
-              <span className="flex items-center gap-1">
-                <Clock className="w-2.5 h-2.5" />
-                {countdown}
-              </span>
-            )}
+          {/* Barre inférieure */}
+          <div className="flex items-center justify-between px-2 py-1.5 bg-[#1A0826]">
+            <span className="text-[9px] text-white/50 truncate">
+              {live.servantName}
+              {!isLive && countdown && ` · ${countdown}`}
+            </span>
+            <div
+              className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                isLive ? "bg-green-600 text-white" : "bg-[#C9A227] text-[#1E0F2B]"
+              }`}
+            >
+              {isLive ? (
+                <span className="flex items-center gap-0.5">
+                  <Play className="w-2 h-2" fill="currentColor" />
+                  Regarder
+                </span>
+              ) : (
+                <span className="flex items-center gap-0.5">
+                  <Clock className="w-2 h-2" />
+                  {countdown}
+                </span>
+              )}
+            </div>
           </div>
-        </Link>
+        </div>
       </div>
 
       <style jsx>{`
@@ -133,6 +137,6 @@ export function UpcomingLiveFloat() {
           50% { opacity: 0.8; transform: scale(1.08); }
         }
       `}</style>
-    </div>
+    </Link>
   );
 }
