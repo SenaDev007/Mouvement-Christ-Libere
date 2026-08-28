@@ -10,7 +10,7 @@ import { ChevronRight, Loader2, User, Lock, AlertCircle } from "lucide-react";
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/yeshua-connect";
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const [pseudonyme, setPseudonyme] = useState("");
   const [password, setPassword] = useState("");
