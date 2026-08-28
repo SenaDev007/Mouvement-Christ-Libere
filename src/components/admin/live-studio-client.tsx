@@ -304,6 +304,38 @@ export function LiveStudioClient({
             )}
           </div>
 
+          {/* ═══ Infos sous la vidéo (façon YouTube) ═══ */}
+          <div className="bg-white rounded-xl p-4 border border-[#8A8378]/15 space-y-3">
+            <h2 className="text-base font-bold text-[#1E0F2B]">{title}</h2>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#2A0E3D] flex items-center justify-center text-[#C9A227] font-bold text-xs">
+                  {servantName.charAt(0)}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#1E0F2B]">{servantName}</p>
+                  <p className="text-[10px] text-[#8A8378]">
+                    {isLive ? `En direct · ${viewerCount} spectateur${viewerCount > 1 ? "s" : ""}` : "Studio de diffusion"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {isLive && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 text-white text-xs font-bold">
+                    <Radio className="w-3 h-3" />
+                    {formatDuration(streamDuration)}
+                  </span>
+                )}
+                {isLive && bitrate > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#2A0E3D]/5 text-[#8A8378] text-xs font-bold">
+                    <Wifi className="w-3 h-3" />
+                    {bitrate} kbps
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* ═══ Barre de contrôles ═══ */}
           <div className="bg-white rounded-xl p-4 space-y-4 border border-[#8A8378]/15">
             <div className="flex items-center justify-center gap-2">

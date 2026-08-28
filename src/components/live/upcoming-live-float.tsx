@@ -15,11 +15,15 @@ interface UpcomingLive {
 }
 
 /**
- * Affiche la miniature du prochain live qui flotte en HAUT du hero.
- * - Position: absolute top-4 right-4 (haut à droite du hero)
- * - Taille: w-80 (320px) — plus grande
- * - Badge icône Radio rouge avec animation aller-retour gauche→droite
- * - Signal vert "EN DIRECT" quand le live est en cours
+ * Miniature du prochain live qui flotte en HAUT du hero.
+ *
+ * En HAUT de la miniature:
+ * - Si SCHEDULED: icône Radio rouge seule (pas de texte) sur fond rouge
+ * - Si LIVE: icône Radio verte seule sur fond vert
+ *
+ * En BAS (barre inférieure):
+ * - Si SCHEDULED: "LIVE À VENIR" (texte rouge sur fond rouge léger) + compte à rebours
+ * - Si LIVE: "EN COURS" (texte vert sur fond vert) + bouton "Rejoindre"
  */
 export function UpcomingLiveFloat() {
   const [live, setLive] = useState<UpcomingLive | null>(null);
@@ -38,7 +42,7 @@ export function UpcomingLiveFloat() {
       } catch {}
     };
     fetchUpcoming();
-    const interval = setInterval(fetchUpcoming, 30000);
+    const interval = setInterval(fetchUpcoming, 15000); // 15s pour plus de dynamisme
     return () => clearInterval(interval);
   }, []);
 
@@ -47,7 +51,7 @@ export function UpcomingLiveFloat() {
     const update = () => {
       const target = new Date(live.scheduledAt).getTime();
       const diff = target - Date.now();
-      if (diff <= 0) { setCountdown("Bientôt..."); return; }
+      if (diff <= 0) { setCountdown("À venir"); return; }
       const days = Math.floor(diff / 86400000);
       const hours = Math.floor((diff % 86400000) / 3600000);
       const minutes = Math.floor((diff % 3600000) / 60000);
@@ -76,31 +80,34 @@ export function UpcomingLiveFloat() {
           style={{ animation: "livePulse 2s ease-in-out infinite" }}
         />
 
-        {/* Carte — plus grande (w-80 = 320px) */}
+        {/* Carte */}
         <div className="relative bg-[#1A0826]/80 backdrop-blur-md rounded-2xl overflow-hidden border border-[#C9A227]/30 shadow-2xl w-80 transition-all group-hover:scale-105">
           {/* Miniature */}
           <div className="relative aspect-video overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={live.thumbnailUrl} alt={live.title} className="w-full h-full object-cover" />
+            <img
+              src={live.thumbnailUrl}
+              alt={live.title}
+              className="w-full h-full object-cover"
+              loading="eager"
+            />
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0826] via-[#1A0826]/20 to-transparent" />
 
-            {/* Badge avec icône Radio rouge + animation aller-retour */}
+            {/* EN HAUT: icône Radio seule (pas de texte) */}
             {isLive ? (
               <div
-                className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-600/90 backdrop-blur-sm"
+                className="absolute top-3 left-3 w-8 h-8 rounded-full bg-green-600 flex items-center justify-center"
                 style={{ animation: "livePulse 2s ease-in-out infinite" }}
               >
-                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                <span className="text-[11px] font-bold text-white">EN DIRECT</span>
+                <Radio className="w-4 h-4 text-white" fill="white" />
               </div>
             ) : (
               <div
-                className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-600/90 backdrop-blur-sm"
+                className="absolute top-3 left-3 w-8 h-8 rounded-full bg-red-600 flex items-center justify-center"
                 style={{ animation: "badgeSlide 3s ease-in-out infinite" }}
               >
-                <Radio className="w-3.5 h-3.5 text-white" fill="white" />
-                <span className="text-[11px] font-bold text-white">LIVE À VENIR</span>
+                <Radio className="w-4 h-4 text-white" fill="white" />
               </div>
             )}
 
@@ -110,29 +117,35 @@ export function UpcomingLiveFloat() {
             </p>
           </div>
 
-          {/* Barre inférieure */}
+          {/* EN BAS: barre avec statut + action */}
           <div className="flex items-center justify-between px-3 py-2 bg-[#1A0826]">
-            <span className="text-[11px] text-white/60 truncate">
-              {live.servantName}
-              {!isLive && countdown && ` · ${countdown}`}
-            </span>
-            <div
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-bold ${
-                isLive ? "bg-green-600 text-white" : "bg-[#C9A227] text-[#1E0F2B]"
-              }`}
-            >
-              {isLive ? (
-                <span className="flex items-center gap-1">
-                  <Play className="w-2.5 h-2.5" fill="currentColor" />
-                  Regarder
+            {isLive ? (
+              <>
+                {/* Statut: EN COURS (vert) */}
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-600/20 border border-green-500/30 text-[10px] font-bold text-green-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  EN COURS
                 </span>
-              ) : (
-                <span className="flex items-center gap-1">
+                {/* Bouton: Rejoindre (vert) */}
+                <div className="flex-shrink-0 px-3 py-1 rounded-full bg-green-600 text-white text-[10px] font-bold flex items-center gap-1">
+                  <Play className="w-2.5 h-2.5" fill="currentColor" />
+                  Rejoindre
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Statut: LIVE À VENIR (rouge) */}
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-600/20 border border-red-500/30 text-[10px] font-bold text-red-400">
+                  <Radio className="w-2.5 h-2.5" />
+                  LIVE À VENIR
+                </span>
+                {/* Compte à rebours */}
+                <div className="flex-shrink-0 px-3 py-1 rounded-full bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5" />
                   {countdown}
-                </span>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -144,8 +157,8 @@ export function UpcomingLiveFloat() {
         }
         @keyframes badgeSlide {
           0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(8px); }
-          75% { transform: translateX(-8px); }
+          25% { transform: translateX(6px); }
+          75% { transform: translateX(-6px); }
         }
       `}</style>
     </Link>

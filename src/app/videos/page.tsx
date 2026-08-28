@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WhatsAppIcon, FacebookIcon, XIcon, InstagramIcon } from "@/components/videos/social-icons";
+import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 
 interface VideoItem {
   id: string;
@@ -149,7 +150,9 @@ export default function VideosPage() {
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
       {/* HERO compact */}
-      <section className="bg-[#2A0E3D] pt-24 pb-4">
+      <section className="relative bg-[#2A0E3D] pt-24 pb-4 overflow-hidden">
+        {/* Miniature live flottante */}
+        <UpcomingLiveFloat />
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-2 mb-2">
             <VideoIcon className="w-4 h-4 text-[#C9A227]" />
