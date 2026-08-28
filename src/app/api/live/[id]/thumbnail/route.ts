@@ -40,9 +40,9 @@ export async function POST(
     const base64Data = matches[2];
     const buffer = Buffer.from(base64Data, "base64");
 
-    // Limiter à 5MB
-    if (buffer.length > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: "Image trop lourde (max 5MB)" }, { status: 400 });
+    // Limiter à 10MB (après compression base64 — l'image compressée fait ~200-300KB)
+    if (buffer.length > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: "Image trop lourde (max 10MB)" }, { status: 400 });
     }
 
     // Sauvegarder le fichier

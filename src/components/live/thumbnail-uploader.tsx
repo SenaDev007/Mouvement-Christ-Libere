@@ -34,8 +34,8 @@ async function compressImage(file: File, maxWidth = 1280, maxHeight = 720, quali
           height = maxHeight;
         }
 
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = Math.round(width);
+        canvas.height = Math.round(height);
 
         const ctx = canvas.getContext("2d");
         if (!ctx) {
@@ -43,16 +43,28 @@ async function compressImage(file: File, maxWidth = 1280, maxHeight = 720, quali
           return;
         }
 
-        ctx.drawImage(img, 0, 0, width, height);
+        // Fond blanc pour les PNG transparents (évite fond noir après JPEG)
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
         // Convertir en JPEG compressé
         const compressed = canvas.toDataURL("image/jpeg", quality);
-        resolve(compressed);
+
+        // Vérifier la taille finale — si trop grosse, recompresser avec qualité moindre
+        const sizeKB = Math.round((compressed.length * 3) / 4 / 1024); // base64 → bytes
+        if (sizeKB > 500) {
+          // Recompresser avec qualité 0.6
+          const recompressed = canvas.toDataURL("image/jpeg", 0.6);
+          resolve(recompressed);
+        } else {
+          resolve(compressed);
+        }
       };
-      img.onerror = () => reject(new Error("Image invalide"));
+      img.onerror = () => reject(new Error("Image invalide ou format non supporté (utilisez JPG ou PNG)"));
       img.src = e.target?.result as string;
     };
-    reader.onerror = () => reject(new Error("Lecture échouée"));
+    reader.onerror = () => reject(new Error("Lecture du fichier échouée"));
     reader.readAsDataURL(file);
   });
 }
@@ -71,8 +83,8 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
       setError("Veuillez sélectionner une image");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image trop lourde (max 5MB)");
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Image trop lourde (max 10MB)");
       return;
     }
 
@@ -163,7 +175,7 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
                 <Upload className="w-5 h-5 text-[#C9A227]" />
               </div>
               <span className="text-xs font-medium text-[#8A8378]">Cliquez pour uploader une miniature</span>
-              <span className="text-[10px] text-[#8A8378]/60">JPG, PNG — max 5MB — format 16:9 recommandé</span>
+              <span className="text-[10px] text-[#8A8378]/60">JPG, PNG — max 10MB — format 16:9 recommandé</span>
             </>
           )}
         </button>
