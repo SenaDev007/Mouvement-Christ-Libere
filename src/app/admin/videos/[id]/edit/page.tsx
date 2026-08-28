@@ -1,46 +1,31 @@
 import { db } from "@/lib/db";
-import { AdminForm, type FieldDef } from "@/components/admin/admin-form";
 import { notFound } from "next/navigation";
+import { PostProduction } from "@/components/live/post-production";
 
 export const dynamic = "force-dynamic";
 
-export default async function EditVideoPage({
+export default async function VideoEditPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const video = await db.video.findUnique({ where: { id } });
-  if (!video) notFound();
 
-  const servants = await db.servant.findMany();
+  const video = await db.video.findUnique({
+    where: { id },
+    include: { servant: true },
+  });
 
-  const FIELDS: FieldDef[] = [
-    {
-      name: "servantId",
-      label: "Serviteur",
-      type: "select",
-      options: servants.map((s) => ({ value: s.id, label: s.shortName })),
-      required: true,
-    },
-    { name: "title", label: "Titre", type: "text", required: true, fullWidth: true },
-    { name: "description", label: "Description", type: "textarea", fullWidth: true },
-    { name: "duration", label: "Durée", type: "text" },
-    { name: "videoUrl", label: "URL vidéo", type: "text" },
-    { name: "hlsUrl", label: "URL HLS", type: "text" },
-    { name: "thumbnailUrl", label: "URL miniature", type: "text" },
-    { name: "views", label: "Vues", type: "number" },
-    { name: "isLive", label: "En direct", type: "checkbox" },
-  ];
+  if (!video) {
+    notFound();
+  }
 
   return (
-    <AdminForm
-      entity="videos"
-      initialData={video as unknown as Record<string, unknown>}
-      fields={FIELDS}
-      redirectTo="/admin/videos"
-      title="Modifier la vidéo"
-      subtitle={video.title}
+    <PostProduction
+      videoId={video.id}
+      videoUrl={video.videoUrl}
+      title={video.title}
+      servantName={video.servant.shortName}
     />
   );
 }

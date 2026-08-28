@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
+import { MediaOverlay } from "@/components/live/media-overlay";
 
 interface LiveStudioClientProps {
   liveId: string;
@@ -49,6 +50,8 @@ export function LiveStudioClient({
   const [viewerCount, setViewerCount] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayStreamRef = useRef<MediaStream | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const roomRef = useRef<Room | null>(null);
@@ -319,6 +322,16 @@ export function LiveStudioClient({
                 {screenSharing ? <MonitorOff className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
                 <span className="text-[10px] font-medium">{screenSharing ? "Stop" : "Écran"}</span>
               </button>
+
+              {/* Overlay médias (images, slides, texte) */}
+              <MediaOverlay
+                canvasRef={canvasRef}
+                isLive={isLive}
+                onCanvasStream={(stream) => {
+                  overlayStreamRef.current = stream;
+                  // TODO: publier le stream du canvas comme track LiveKit
+                }}
+              />
             </div>
 
             <div className="flex justify-center">
