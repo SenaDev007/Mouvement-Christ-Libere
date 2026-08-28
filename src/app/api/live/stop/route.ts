@@ -2,34 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { RoomServiceClient } from "livekit-server-sdk";
-
-/**
- * POST /api/live/stop
- *
- * Termine un live : change le statut à ENDED, remplit endedAt,
- * arrête les egress RTMP et archive le replay si un recording est disponible.
- *
- * Body: { liveId, recordingUrl? }
- */
 
 const LIVEKIT_URL = process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
 const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
 
-const roomService = new RoomServiceClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
-
 export async function POST(req: NextRequest) {
   try {
-    // Vérifier l'authentification admin
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
     if (!sessionToken || !verifySessionToken(sessionToken)) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     const { liveId, recordingUrl } = await req.json();
@@ -37,7 +21,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "liveId requis" }, { status: 400 });
     }
 
-    // Récupérer le live
     const live = await db.liveStream.findUnique({
       where: { id: liveId },
       include: { servant: true },
@@ -48,14 +31,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Arrêter les egress RTMP (best effort)
-    if (live.livekitRoomName) {
+    let roomService: { listEgress: (opts: { roomName: string }) => Promise<{ egressId: string }[]>; stopEgress: (id: string) => Promise<void> } | null = null;
+    try {
+      const { RoomServiceClient } = await import("livekit-server-sdk");
+      roomService = new RoomServiceClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+    } catch (e) {
+      console.error("[live/stop] LiveKit SDK not available:", e);
+    }
+
+    if (roomService && live.livekitRoomName) {
       try {
-        // List all egress and stop them
         const egresses = await roomService.listEgress({ roomName: live.livekitRoomName });
         for (const egress of egresses) {
           try {
             await roomService.stopEgress(egress.egressId);
-            console.log(`[live/stop] Stopped egress ${egress.egressId}`);
           } catch (err) {
             console.error(`[live/stop] Failed to stop egress ${egress.egressId}:`, err);
           }
@@ -65,8 +54,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Mettre à jour le live : statut ENDED + endedAt + recordingUrl
-    const updated = await db.liveStream.update({
+    // Calculer la durée du live
+    let durationStr = "";
+    if (live.startedAt) {
+      const durationMs = (live.endedAt || new Date()).getTime() - new Date(live.startedAt).getTime();
+      const h = Math.floor(durationMs / 3600000);
+      const m = Math.floor((durationMs % 3600000) / 60000);
+      const s = Math.floor((durationMs % 60000) / 1000);
+      durationStr = h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}` : `${m}:${s.toString().padStart(2, "0")}`;
+    }
+
+    // Mettre à jour le live : statut ENDED + endedAt
+    await db.liveStream.update({
       where: { id: liveId },
       data: {
         status: "ENDED",
@@ -75,41 +74,62 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Archiver en tant que vidéo (replay) si un recording est disponible
-    if (recordingUrl || live.youtubeUrl) {
-      try {
-        const replayUrl = recordingUrl || live.youtubeUrl;
+    // ─── Toujours archiver le replay en tant que vidéo ───
+    // Même sans recordingUrl, on crée l'entrée pour qu'elle apparaisse dans le module vidéo
+    const replayUrl = recordingUrl || live.youtubeUrl || null;
+    const liveDate = new Date(live.startedAt || live.scheduledAt);
+    const dateStr = liveDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+    try {
+      // Vérifier si un replay existe déjà (éviter les doublons)
+      const existingReplay = await db.video.findFirst({
+        where: {
+          servantId: live.servantId,
+          title: { startsWith: `${live.title} (Replay)` },
+        },
+      });
+
+      if (!existingReplay) {
         await db.video.create({
           data: {
             servantId: live.servantId,
             title: `${live.title} (Replay)`,
-            description: `Replay du live du ${new Date(live.startedAt || live.scheduledAt).toLocaleDateString("fr-FR")} — ${live.description || ""}`,
-            duration: "",
+            description: `Replay du live du ${dateStr}${live.description ? ` — ${live.description}` : ""}`,
+            duration: durationStr,
             views: 0,
             isLive: false,
             videoUrl: replayUrl,
             hlsUrl: recordingUrl || null,
-            thumbnailUrl: live.thumbnailUrl || null,
+            thumbnailUrl: live.thumbnailUrl || `https://img.youtube.com/vi/default/hqdefault.jpg`,
             publishedAt: new Date(),
           },
         });
         console.log(`[live/stop] Replay archivé pour le live ${liveId}`);
-      } catch (err) {
-        console.error("[live/stop] Failed to archive replay:", err);
+      } else {
+        // Mettre à jour le replay existant
+        await db.video.update({
+          where: { id: existingReplay.id },
+          data: {
+            videoUrl: replayUrl || existingReplay.videoUrl,
+            hlsUrl: recordingUrl || existingReplay.hlsUrl,
+            duration: durationStr || existingReplay.duration,
+            thumbnailUrl: live.thumbnailUrl || existingReplay.thumbnailUrl,
+          },
+        });
+        console.log(`[live/stop] Replay mis à jour pour le live ${liveId}`);
       }
+    } catch (err) {
+      console.error("[live/stop] Failed to archive replay:", err);
     }
 
     return NextResponse.json({
       success: true,
       liveId,
       status: "ENDED",
-      archived: !!(recordingUrl || live.youtubeUrl),
+      archived: true,
     });
   } catch (error) {
     console.error("[live/stop] Error:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de l'arrêt du live" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur lors de l'arrêt" }, { status: 500 });
   }
 }

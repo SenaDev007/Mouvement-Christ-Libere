@@ -48,6 +48,8 @@ export async function GET(request: NextRequest) {
 
 function categorize(title: string, servant: string): string {
   const t = title.toLowerCase();
+  // Les replays de lives vont dans "Lives & Directs"
+  if (t.includes("replay") || t.includes("(live)")) return "Lives & Directs";
   if (servant === "kongo") {
     if (t.includes("prière") || t.includes("délivrance")) return "Prière & Délivrance";
     if (t.includes("enseignement") || t.includes("prédication")) return "Enseignements & Prédications";
