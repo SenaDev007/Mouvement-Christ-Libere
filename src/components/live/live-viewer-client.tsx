@@ -5,7 +5,7 @@ import { Room, RoomEvent, Track } from "livekit-client";
 import {
   Radio, Eye, Calendar, AlertCircle,
   Heart, Bookmark, MoreHorizontal,
-  CheckCircle2, ChevronDown, ChevronUp, Clock, Users,
+  CheckCircle2, ChevronDown, ChevronUp, Clock, Users, X,
 } from "lucide-react";
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
@@ -222,11 +222,18 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     else { setLiked(true); setLikeCount((c) => c + 1); }
   };
 
-  const handleRegistered = (member: { id: string; firstName: string }) => {
+  const [showAccountPrompt, setShowAccountPrompt] = useState(false);
+
+  const handleRegistered = (member: { id: string; firstName: string; isAnonymous: boolean }) => {
     setMemberId(member.id);
     setViewerFirstName(member.firstName);
     setHasJoined(true);
     setShowJoinModal(false);
+
+    // Si join anonyme, afficher la notification "Créez un compte" après 3s
+    if (member.isAnonymous) {
+      setTimeout(() => setShowAccountPrompt(true), 3000);
+    }
   };
 
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
@@ -240,6 +247,48 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         onRegistered={handleRegistered}
         liveTitle={live.title}
       />
+
+      {/* Notification "Créez un compte" (façon YouTube) */}
+      {showAccountPrompt && (
+        <div className="fixed bottom-6 right-6 z-[90] max-w-sm animate-slideIn">
+          <div className="bg-white rounded-2xl shadow-2xl border border-[#C9A227]/30 p-4 flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#C9A227]/10 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-[#C9A227]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-[#1E0F2B] mb-1">
+                Bonjour {viewerFirstName} ! 👋
+              </p>
+              <p className="text-xs text-[#8A8378] leading-relaxed mb-3">
+                Créez un compte gratuit pour suivre tous les lives, gagner de l'XP
+                et participer à la communauté à tout moment.
+              </p>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/register"
+                  className="px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-xs font-bold hover:bg-[#DDBE55] transition-colors"
+                >
+                  Créer un compte
+                </Link>
+                <button
+                  onClick={() => setShowAccountPrompt(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
+                >
+                  Plus tard
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAccountPrompt(false)}
+              className="p-0.5 rounded hover:bg-[#8A8378]/10 text-[#8A8378] flex-shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-[1800px] mx-auto px-2 md:px-4 py-4">
         <div className="grid lg:grid-cols-[1fr_380px] gap-4">

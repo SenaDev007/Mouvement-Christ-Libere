@@ -278,8 +278,20 @@ export function ContextualNav() {
           </div>
         </div>
 
-        {/* Right side — CTA */}
+        {/* Right side — Auth + CTA */}
         <div className="flex items-center gap-2">
+          <Link
+            href="/login"
+            className="hidden sm:inline-flex items-center text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors px-3 py-1.5"
+          >
+            Se connecter
+          </Link>
+          <Button asChild size="sm" variant="ghost" className="text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 text-sm">
+            <Link href="/register">
+              Créer un compte
+            </Link>
+          </Button>
+          <div className="w-px h-5 bg-[#C9A227]/20 hidden sm:block" />
           <Button asChild size="sm" className="bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] text-sm">
             <Link href="/communaute">
               Rejoindre
