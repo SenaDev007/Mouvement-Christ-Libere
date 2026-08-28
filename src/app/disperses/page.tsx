@@ -66,10 +66,12 @@ export default function DispersesPage() {
     }
     setSubmitting(true);
     try {
+      // Inclure le sessionId LiveMember si disponible (inscription unique)
+      const sessionId = typeof window !== "undefined" ? localStorage.getItem("live-session-id") : null;
       const res = await fetch(api.url("/api/disperses"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, sessionId }),
       });
       if (res.ok) {
         setSubmitted(true);

@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { pseudonyme, pays, ville, latitude, longitude, langue, niveau, message } = body;
+    const { pseudonyme, pays, ville, latitude, longitude, langue, niveau, message, sessionId } = body;
 
     if (!pseudonyme || !pays || latitude == null || longitude == null) {
       return NextResponse.json(
@@ -146,20 +146,68 @@ export async function POST(request: NextRequest) {
     const latArrondie = Math.round(latitude * 10) / 10;
     const lonArrondie = Math.round(longitude * 10) / 10;
 
-    try {
-      const membre = await db.disperseMember.create({
-        data: {
-          pseudonyme: pseudonyme.substring(0, 100),
-          pays: pays.toUpperCase().substring(0, 2),
-          ville: ville?.substring(0, 100) || null,
-          latitude: latArrondie,
-          longitude: lonArrondie,
-          langue: (langue || "FR").toUpperCase().substring(0, 5),
-          niveau: niveau || "chercheur",
-          message: message?.substring(0, 1000) || null,
-          isPublic: true,
-        },
+    // Si un sessionId LiveMember est fourni, récupérer le memberId
+    let liveMemberId: string | null = null;
+    if (sessionId) {
+      const member = await db.liveMember.findUnique({
+        where: { sessionId },
+        select: { id: true },
       });
+      if (member) liveMemberId = member.id;
+    }
+
+    try {
+      // Si le membre Live existe déjà sur la carte, on met à jour
+      let membre;
+      if (liveMemberId) {
+        const existing = await db.disperseMember.findFirst({
+          where: { liveMemberId },
+        });
+        if (existing) {
+          membre = await db.disperseMember.update({
+            where: { id: existing.id },
+            data: {
+              pseudonyme: pseudonyme.substring(0, 100),
+              pays: pays.toUpperCase().substring(0, 2),
+              ville: ville?.substring(0, 100) || null,
+              latitude: latArrondie,
+              longitude: lonArrondie,
+              langue: (langue || "FR").toUpperCase().substring(0, 5),
+              niveau: niveau || "chercheur",
+              message: message?.substring(0, 1000) || null,
+            },
+          });
+        } else {
+          membre = await db.disperseMember.create({
+            data: {
+              liveMemberId,
+              pseudonyme: pseudonyme.substring(0, 100),
+              pays: pays.toUpperCase().substring(0, 2),
+              ville: ville?.substring(0, 100) || null,
+              latitude: latArrondie,
+              longitude: lonArrondie,
+              langue: (langue || "FR").toUpperCase().substring(0, 5),
+              niveau: niveau || "chercheur",
+              message: message?.substring(0, 1000) || null,
+              isPublic: true,
+            },
+          });
+        }
+      } else {
+        membre = await db.disperseMember.create({
+          data: {
+            pseudonyme: pseudonyme.substring(0, 100),
+            pays: pays.toUpperCase().substring(0, 2),
+            ville: ville?.substring(0, 100) || null,
+            latitude: latArrondie,
+            longitude: lonArrondie,
+            langue: (langue || "FR").toUpperCase().substring(0, 5),
+            niveau: niveau || "chercheur",
+            message: message?.substring(0, 1000) || null,
+            isPublic: true,
+          },
+        });
+      }
 
       return NextResponse.json({ success: true, id: membre.id }, { status: 201 });
     } catch {

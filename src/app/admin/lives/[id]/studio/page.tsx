@@ -43,7 +43,7 @@ export default async function LiveStudioPage({
         youtube: live.streamToYoutube,
         facebook: live.streamToFacebook,
         tiktok: live.streamToTiktok,
-        odysee: live.streamToOdysee,
+        instagram: live.streamToInstagram,
       }}
     />
   );

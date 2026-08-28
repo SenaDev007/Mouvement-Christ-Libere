@@ -6,7 +6,7 @@ import {
   Video, VideoOff, Mic, MicOff, Radio, Square, Loader2,
   Users, Clock, AlertCircle, CheckCircle2, Settings,
   Monitor, MonitorOff, Wifi, Activity,
-  Youtube, Facebook, Music2, Video as VideoIcon,
+  Youtube, Facebook, Music2, Instagram,
   ChevronDown, ChevronUp, Eye, MessageCircle, BarChart3,
   X,
 } from "lucide-react";
@@ -24,7 +24,7 @@ interface LiveStudioClientProps {
     youtube: boolean;
     facebook: boolean;
     tiktok: boolean;
-    odysee: boolean;
+    instagram: boolean;
   };
 }
 
@@ -457,7 +457,7 @@ export function LiveStudioClient({
                     { label: "YouTube", active: multistream.youtube, icon: Youtube, color: "#FF0000" },
                     { label: "Facebook", active: multistream.facebook, icon: Facebook, color: "#1877F2" },
                     { label: "TikTok", active: multistream.tiktok, icon: Music2, color: "#000000" },
-                    { label: "Odysee", active: multistream.odysee, icon: VideoIcon, color: "#FA326E" },
+                    { label: "Instagram", active: multistream.instagram, icon: Instagram, color: "#E1306C" },
                   ].map((p) => {
                     const Icon = p.icon;
                     return (

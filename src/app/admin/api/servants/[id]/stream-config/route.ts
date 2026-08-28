@@ -42,8 +42,8 @@ export async function POST(
         facebookRtmpKey: body.facebookRtmpKey || null,
         tiktokRtmpUrl: body.tiktokRtmpUrl || null,
         tiktokRtmpKey: body.tiktokRtmpKey || null,
-        odyseeRtmpUrl: body.odyseeRtmpUrl || null,
-        odyseeRtmpKey: body.odyseeRtmpKey || null,
+        instagramRtmpUrl: body.instagramRtmpUrl || null,
+        instagramRtmpKey: body.instagramRtmpKey || null,
       },
       update: {
         youtubeRtmpUrl: body.youtubeRtmpUrl || null,
@@ -52,8 +52,8 @@ export async function POST(
         facebookRtmpKey: body.facebookRtmpKey || null,
         tiktokRtmpUrl: body.tiktokRtmpUrl || null,
         tiktokRtmpKey: body.tiktokRtmpKey || null,
-        odyseeRtmpUrl: body.odyseeRtmpUrl || null,
-        odyseeRtmpKey: body.odyseeRtmpKey || null,
+        instagramRtmpUrl: body.instagramRtmpUrl || null,
+        instagramRtmpKey: body.instagramRtmpKey || null,
       },
     });
 

@@ -212,14 +212,14 @@ model LiveStream {
   youtubeUrl   String?
   facebookUrl  String?
   tiktokUrl    String?
-  odyseeUrl    String?
+  instagramUrl    String?
   // ─── V2.0 — LiveKit + multistreaming ───
   livekitRoomName  String?
   multistreamEnabled Boolean @default(false)
   streamToYoutube   Boolean  @default(false)
   streamToFacebook  Boolean  @default(false)
   streamToTiktok    Boolean  @default(false)
-  streamToOdysee    Boolean  @default(false)
+  streamToInstagram    Boolean  @default(false)
   recordingUrl      String?
   viewerCount       Int      @default(0)
   thumbnailUrl      String?
@@ -274,6 +274,7 @@ model LiveMember {
   updatedAt   DateTime @updatedAt
 
   liveViewers LiveViewer[]
+  disperses   DisperseMember[]
 
   @@index([contact])
 }
@@ -295,7 +296,7 @@ model LiveViewer {
   @@index([memberId])
 }
 
-// Configuration des clés RTMP par serviteur (YouTube, Facebook, TikTok, Odysee)
+// Configuration des clés RTMP par serviteur (YouTube, Facebook, TikTok, Instagram)
 model ServantStreamConfig {
   id              String   @id @default(cuid())
   servantId       String   @unique
@@ -305,8 +306,8 @@ model ServantStreamConfig {
   facebookRtmpKey String?
   tiktokRtmpUrl   String?
   tiktokRtmpKey   String?
-  odyseeRtmpUrl   String?
-  odyseeRtmpKey   String?
+  instagramRtmpUrl   String?
+  instagramRtmpKey   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -546,20 +547,24 @@ model UserCalendarPreference {
 // --- Carte des dispersés d'Israël (V3) ---
 
 model DisperseMember {
-  id          String   @id @default(cuid())
-  pseudonyme  String   // nom ou pseudo, pas de vrai nom
-  pays        String   // code ISO 2 lettres (FR, CI, US, etc.)
-  ville       String?
-  latitude    Float    // arrondi à 0.1° pour anonymat
-  longitude   Float    // arrondi à 0.1° pour anonymat
-  langue      String   // FR, EN, ES, PT, HE, AM, etc.
-  niveau      String   @default("chercheur") // chercheur, croyant, disciple, pasteur
-  message     String?  @db.Text // témoignage court optionnel
-  isPublic    Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  liveMemberId  String?  // lien vers LiveMember (inscription unique)
+  pseudonyme    String   // nom ou pseudo, pas de vrai nom
+  pays          String   // code ISO 2 lettres (FR, CI, US, etc.)
+  ville         String?
+  latitude      Float    // arrondi à 0.1° pour anonymat
+  longitude     Float    // arrondi à 0.1° pour anonymat
+  langue        String   // FR, EN, ES, PT, HE, AM, etc.
+  niveau        String   @default("chercheur") // chercheur, croyant, disciple, pasteur
+  message       String?  @db.Text // témoignage court optionnel
+  isPublic      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  liveMember    LiveMember? @relation(fields: [liveMemberId], references: [id], onDelete: SetNull)
 
   @@index([pays])
   @@index([langue])
+  @@index([liveMemberId])
 }
 
 // --- Chaîne d'intercession (V4) ---

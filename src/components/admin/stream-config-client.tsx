@@ -15,8 +15,8 @@ interface StreamConfigClientProps {
     facebookRtmpKey?: string | null;
     tiktokRtmpUrl?: string | null;
     tiktokRtmpKey?: string | null;
-    odyseeRtmpUrl?: string | null;
-    odyseeRtmpKey?: string | null;
+    instagramRtmpUrl?: string | null;
+    instagramRtmpKey?: string | null;
   } | null;
 }
 
@@ -24,7 +24,7 @@ const DEFAULT_URLS = {
   youtube: "rtmp://a.rtmp.youtube.com/live2",
   facebook: "rtmps://live-api-s.facebook.com:443/rtmp/",
   tiktok: "rtmp://push.tiktokcdn.com/live",
-  odysee: "rtmp://a.rtmp.odysee.com/live",
+  instagram: "rtmp://a.rtmp.instagram.com/live",
 };
 
 export function StreamConfigClient({ servantId, servantName, initialConfig }: StreamConfigClientProps) {
@@ -36,8 +36,8 @@ export function StreamConfigClient({ servantId, servantName, initialConfig }: St
     facebookRtmpKey: initialConfig?.facebookRtmpKey || "",
     tiktokRtmpUrl: initialConfig?.tiktokRtmpUrl || "",
     tiktokRtmpKey: initialConfig?.tiktokRtmpKey || "",
-    odyseeRtmpUrl: initialConfig?.odyseeRtmpUrl || "",
-    odyseeRtmpKey: initialConfig?.odyseeRtmpKey || "",
+    instagramRtmpUrl: initialConfig?.instagramRtmpUrl || "",
+    instagramRtmpKey: initialConfig?.instagramRtmpKey || "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -94,12 +94,12 @@ export function StreamConfigClient({ servantId, servantName, initialConfig }: St
       help: "Compte business requis — Clé via TikTok Live Studio",
     },
     {
-      key: "odysee" as const,
-      label: "Odysee",
+      key: "instagram" as const,
+      label: "Instagram",
       icon: Video,
       color: "#FA326E",
-      defaultUrl: DEFAULT_URLS.odysee,
-      help: "Clé dans les paramètres de chaîne Odysee",
+      defaultUrl: DEFAULT_URLS.instagram,
+      help: "Clé dans les paramètres de chaîne Instagram",
     },
   ];
 

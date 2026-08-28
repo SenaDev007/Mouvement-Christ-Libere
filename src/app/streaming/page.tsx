@@ -11,7 +11,7 @@ export default function StreamingPage() {
         imageSrc="https://images.unsplash.com/photo-1598488035139-bdbb35331026?q=80&w=1920&auto=format&fit=crop"
         kicker="Streaming multiplateforme automatisé"
         title="Streaming RTMP"
-        subtitle="Un live lancé depuis le site est diffusé simultanément sur YouTube, Facebook, TikTok et Odysee. Le site reste la source de référence — même si les plateformes suppriment."
+        subtitle="Un live lancé depuis le site est diffusé simultanément sur YouTube, Facebook, TikTok et Instagram. Le site reste la source de référence — même si les plateformes suppriment."
         primaryCta={{ label: "Architecture", href: "#architecture" }}
         secondaryCta={{ label: "Déploiement", href: "#deploiement" }}
       />
@@ -57,7 +57,7 @@ export default function StreamingPage() {
                 <Platform icon={Youtube} label="YouTube" color="text-state-danger" />
                 <Platform icon={Facebook} label="Facebook" color="text-[#8C5FA8]" />
                 <Platform icon={Radio} label="TikTok" color="text-[#8A8378]" />
-                <Platform icon={Cloud} label="Odysee" color="text-state-success" />
+                <Platform icon={Cloud} label="Instagram" color="text-state-success" />
               </div>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function StreamingPage() {
               <Step num="1" title="Source — Encodeur" description="Pam ou le Pasteur Kongo ouvre un live depuis OBS Studio, Streamlabs, ou un encodeur matériel. Le flux RTMP est envoyé vers le serveur Ant Media." />
               <Step num="2" title="Serveur — Ant Media Server" description="Reçoit le flux RTMP, le transcode en plusieurs qualités (ABR : 1080p, 720p, 480p, 240p), et le redistribue en HLS/DASH." />
               <Step num="3" title="Site web — Lecteur HLS" description="Le flux HLS est servi au lecteur vidéo intégré du site, via Cloudflare CDN pour la mise en cache et la scalabilité." />
-              <Step num="4" title="Restreamer — Multi-destination" description="Un module restreamer (FFmpeg) envoie une copie du flux RTMP vers YouTube, Facebook, TikTok et Odysee simultanément." />
+              <Step num="4" title="Restreamer — Multi-destination" description="Un module restreamer (FFmpeg) envoie une copie du flux RTMP vers YouTube, Facebook, TikTok et Instagram simultanément." />
               <Step num="5" title="Archivage — automatique" description="À la fin du live, la vidéo est automatiquement archivée sur le site (haute qualité) + une copie chiffrée sur stockage secondaire (Backblaze B2)." />
               <Step num="6" title="Redondance — serveur secondaire" description="Un second serveur Ant Media, dans une autre juridiction, peut prendre le relais en cas de panne. Basculement automatique via DNS." />
             </div>
@@ -88,7 +88,7 @@ export default function StreamingPage() {
             <div className="space-y-4 text-sm">
               <DeployStep title="1. Préparer le VPS" code="Ubuntu 22.04 LTS, 4 vCPU, 8GB RAM minimum&#10;Ports ouverts : 1935 (RTMP), 5080 (HTTP), 5443 (HTTPS)" />
               <DeployStep title="2. Installer Ant Media Server" code="wget https://raw.githubusercontent.com/ant-media/Scripts/master/install_ant-media-server.sh&#10;sudo bash install_ant-media-server.sh -i latest" />
-              <DeployStep title="3. Configurer le resteaming" code="# Dans Ant Media → Applications → LiveApp → Restreaming&#10;# Ajouter les destinations :&#10;# YouTube : rtmp://a.rtmp.youtube.com/live2/YOUR_KEY&#10;# Facebook : rtmps://live-api-s.facebook.com:443/rtmp/YOUR_KEY&#10;# TikTok : rtmp://push.tiktokcdn.com/live/YOUR_KEY&#10;# Odysee : rtmp://live.odysee.com/live/YOUR_KEY" />
+              <DeployStep title="3. Configurer le resteaming" code="# Dans Ant Media → Applications → LiveApp → Restreaming&#10;# Ajouter les destinations :&#10;# YouTube : rtmp://a.rtmp.youtube.com/live2/YOUR_KEY&#10;# Facebook : rtmps://live-api-s.facebook.com:443/rtmp/YOUR_KEY&#10;# TikTok : rtmp://push.tiktokcdn.com/live/YOUR_KEY&#10;# Instagram : rtmp://live.instagram.com/live/YOUR_KEY" />
               <DeployStep title="4. Configurer les variables Vercel" code="ANT_MEDIA_SERVER_URL=https://ams.mouvementchristlibere.org&#10;LIVEKIT_API_KEY=...&#10;LIVEKIT_API_SECRET=..." />
             </div>
           </div>

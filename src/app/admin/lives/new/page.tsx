@@ -39,7 +39,7 @@ export default async function NewLivePage() {
     { name: "youtubeUrl", label: "URL YouTube", type: "text" },
     { name: "facebookUrl", label: "URL Facebook", type: "text" },
     { name: "tiktokUrl", label: "URL TikTok", type: "text" },
-    { name: "odyseeUrl", label: "URL Odysee", type: "text" },
+    { name: "instagramUrl", label: "URL Instagram", type: "text" },
   ];
 
   return (

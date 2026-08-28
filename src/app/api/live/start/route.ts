@@ -94,10 +94,10 @@ export async function POST(req: NextRequest) {
           name: "tiktok",
         });
       }
-      if (live.streamToOdysee && config.odyseeRtmpUrl && config.odyseeRtmpKey) {
+      if (live.streamToInstagram && config.instagramRtmpUrl && config.instagramRtmpKey) {
         destinations.push({
-          url: `${config.odyseeRtmpUrl}/${config.odyseeRtmpKey}`,
-          name: "odysee",
+          url: `${config.instagramRtmpUrl}/${config.instagramRtmpKey}`,
+          name: "instagram",
         });
       }
 
