@@ -259,24 +259,40 @@ model LiveChatMessage {
   @@index([type])
 }
 
-// Viewers connectés à un live (pour comptage réel)
-model LiveViewer {
+// Membre inscrit sur la plateforme (inscription unique pour tous les lives)
+model LiveMember {
   id          String   @id @default(cuid())
-  liveId      String
-  sessionId   String   @unique // identifiant unique par session navigateur
+  sessionId   String   @unique // identifiant unique par navigateur (localStorage)
   firstName   String
   lastName    String?
   country     String?
   city        String?
   contact     String?
-  xpPoints    Int      @default(0)
+  totalXp     Int      @default(0)
+  livesWatched Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  liveViewers LiveViewer[]
+
+  @@index([contact])
+}
+
+// Sessions de visionnage (un membre qui regarde un live spécifique)
+model LiveViewer {
+  id          String   @id @default(cuid())
+  liveId      String
+  memberId    String
+  xpPoints    Int      @default(0) // XP gagné pendant CE live
   isActive    Boolean  @default(true)
   joinedAt    DateTime @default(now())
   leftAt      DateTime?
 
-  live        LiveStream @relation(fields: [liveId], references: [id], onDelete: Cascade)
+  live        LiveStream  @relation(fields: [liveId], references: [id], onDelete: Cascade)
+  member      LiveMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@index([liveId, isActive])
+  @@index([memberId])
 }
 
 // Configuration des clés RTMP par serviteur (YouTube, Facebook, TikTok, Odysee)

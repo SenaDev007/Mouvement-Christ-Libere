@@ -50,6 +50,7 @@ const NAV_SECTIONS = [
     title: "Communauté",
     items: [
       { label: "Canaux", href: "/admin/channels", icon: MessageSquare },
+      { label: "Membres Live", href: "/admin/live-members", icon: Users },
       { label: "Utilisateurs", href: "/admin/users", icon: UserCog },
     ],
   },

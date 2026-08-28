@@ -86,7 +86,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
     if (saved) { setUserName(saved); setShowNamePrompt(false); }
     // XP réel depuis le viewer en DB
     const fetchXp = async () => {
-      const sid = localStorage.getItem("live-session-id");
+      const mid = localStorage.getItem("live-member-id");
       if (!sid) return;
       try {
         const res = await fetch(`/api/live/${liveId}/viewers`);
@@ -185,13 +185,13 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
         setInput("");
         fetchMessages();
         // +1 XP via l'API (viewer en DB)
-        const sid = localStorage.getItem("live-session-id");
-        if (sid) {
+        const mid = localStorage.getItem("live-member-id");
+        if (mid) {
           try {
             const xpRes = await fetch(`/api/live/${liveId}/viewers`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ sessionId: sid, xp: 1 }),
+              body: JSON.stringify({ memberId: mid, xp: 1 }),
             });
             if (xpRes.ok) {
               const xpData = await xpRes.json();

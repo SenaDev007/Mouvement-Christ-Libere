@@ -3,18 +3,18 @@ import { db } from "@/lib/db";
 
 /**
  * GET /api/live/[id]/viewers
- * Retourne le nombre réel de viewers actifs.
+ * Retourne le nombre réel de viewers actifs sur ce live.
  *
  * POST /api/live/[id]/viewers
- * Un viewer rejoint le live (création ou reprise de session).
- * Body: { sessionId, firstName, lastName?, country?, city?, contact? }
+ * Un membre rejoint un live (crée une session LiveViewer).
+ * Body: { memberId }
  *
- * DELETE /api/live/[id]/viewers?sessionId=xxx
- * Un viewer quitte le live (déconnexion).
+ * DELETE /api/live/[id]/viewers?memberId=xxx
+ * Un viewer quitte le live.
  *
  * PATCH /api/live/[id]/viewers
- * Ajouter des XP à un viewer.
- * Body: { sessionId, xp }
+ * Ajouter des XP à un viewer pour ce live.
+ * Body: { memberId, xp }
  */
 
 export async function GET(
@@ -40,43 +40,49 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { sessionId, firstName, lastName, country, city, contact } = body;
+    const { memberId } = body;
 
-    if (!sessionId || !firstName) {
-      return NextResponse.json({ error: "sessionId et firstName requis" }, { status: 400 });
+    if (!memberId) {
+      return NextResponse.json({ error: "memberId requis" }, { status: 400 });
     }
 
-    // Upsert : si le viewer existe déjà (même sessionId), le réactiver
-    const viewer = await db.liveViewer.upsert({
-      where: { sessionId },
-      create: {
-        liveId: id,
-        sessionId,
-        firstName,
-        lastName: lastName || null,
-        country: country || null,
-        city: city || null,
-        contact: contact || null,
-        isActive: true,
-        leftAt: null,
-      },
-      update: {
-        isActive: true,
-        leftAt: null,
-        firstName,
-        lastName: lastName || null,
-        country: country || null,
-        city: city || null,
-        contact: contact || null,
-      },
+    // Vérifier que le membre existe
+    const member = await db.liveMember.findUnique({ where: { id: memberId } });
+    if (!member) {
+      return NextResponse.json({ error: "Membre introuvable" }, { status: 404 });
+    }
+
+    // Upsert : si le viewer existe déjà pour ce live, le réactiver
+    const viewer = await db.liveViewer.findFirst({
+      where: { liveId: id, memberId },
     });
 
-    // Compter le nouveau total
+    if (viewer) {
+      await db.liveViewer.update({
+        where: { id: viewer.id },
+        data: { isActive: true, leftAt: null, joinedAt: new Date() },
+      });
+    } else {
+      await db.liveViewer.create({
+        data: {
+          liveId: id,
+          memberId,
+          isActive: true,
+        },
+      });
+
+      // Incrémenter livesWatched du membre
+      await db.liveMember.update({
+        where: { id: memberId },
+        data: { livesWatched: { increment: 1 } },
+      });
+    }
+
     const count = await db.liveViewer.count({
       where: { liveId: id, isActive: true },
     });
 
-    return NextResponse.json({ success: true, viewerId: viewer.id, viewerCount: count });
+    return NextResponse.json({ success: true, viewerCount: count });
   } catch (error) {
     console.error("[viewers POST] Error:", error);
     return NextResponse.json({ error: "Erreur" }, { status: 500 });
@@ -90,14 +96,14 @@ export async function DELETE(
   try {
     const { id } = await params;
     const url = new URL(req.url);
-    const sessionId = url.searchParams.get("sessionId");
+    const memberId = url.searchParams.get("memberId");
 
-    if (!sessionId) {
-      return NextResponse.json({ error: "sessionId requis" }, { status: 400 });
+    if (!memberId) {
+      return NextResponse.json({ error: "memberId requis" }, { status: 400 });
     }
 
     await db.liveViewer.updateMany({
-      where: { liveId: id, sessionId },
+      where: { liveId: id, memberId, isActive: true },
       data: { isActive: false, leftAt: new Date() },
     });
 
@@ -119,18 +125,25 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { sessionId, xp } = body;
+    const { memberId, xp } = body;
 
-    if (!sessionId) {
-      return NextResponse.json({ error: "sessionId requis" }, { status: 400 });
+    if (!memberId) {
+      return NextResponse.json({ error: "memberId requis" }, { status: 400 });
     }
 
-    const viewer = await db.liveViewer.update({
-      where: { sessionId },
+    // Incrémenter XP sur la session LiveViewer
+    await db.liveViewer.updateMany({
+      where: { liveId: id, memberId, isActive: true },
       data: { xpPoints: { increment: xp || 1 } },
     });
 
-    return NextResponse.json({ success: true, xpPoints: viewer.xpPoints });
+    // Incrémenter aussi le totalXP du membre
+    const member = await db.liveMember.update({
+      where: { id: memberId },
+      data: { totalXp: { increment: xp || 1 } },
+    });
+
+    return NextResponse.json({ success: true, totalXp: member.totalXp });
   } catch (error) {
     console.error("[viewers PATCH] Error:", error);
     return NextResponse.json({ error: "Erreur" }, { status: 500 });

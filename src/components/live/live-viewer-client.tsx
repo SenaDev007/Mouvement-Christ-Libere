@@ -47,8 +47,9 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [viewerCount, setViewerCount] = useState(0);
   const [hasJoined, setHasJoined] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [memberId, setMemberId] = useState<string | null>(null);
   const [viewerFirstName, setViewerFirstName] = useState<string>("");
+  const [checkingMember, setCheckingMember] = useState(true);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
@@ -102,15 +103,30 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     return () => clearInterval(interval);
   }, [isLive, live.id]);
 
-  // Vérifier si déjà inscrit
+  // Vérifier si le membre est déjà inscrit (inscription unique)
   useEffect(() => {
-    const savedSession = localStorage.getItem("live-session-id");
-    const savedName = localStorage.getItem("live-join-firstName");
-    if (savedSession && savedName) {
-      setSessionId(savedSession);
-      setViewerFirstName(savedName);
-      setHasJoined(true);
+    const sessionId = localStorage.getItem("live-session-id");
+    if (!sessionId) {
+      setCheckingMember(false);
+      return;
     }
+
+    const checkMember = async () => {
+      try {
+        const res = await fetch(`/api/live-members/me?sessionId=${sessionId}`);
+        const data = await res.json();
+        if (data.member) {
+          setMemberId(data.member.id);
+          setViewerFirstName(data.member.firstName);
+          localStorage.setItem("live-chat-username", data.member.firstName);
+          localStorage.setItem("live-member-id", data.member.id);
+          setHasJoined(true);
+        }
+      } catch {}
+      setCheckingMember(false);
+    };
+
+    checkMember();
   }, []);
 
   // Connexion LiveKit subscriber
@@ -168,10 +184,19 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
     connectToRoom();
 
+    // Rejoindre le live (enregistrer la session viewer en DB)
+    if (memberId) {
+      fetch(`/api/live/${live.id}/viewers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      }).catch(() => {});
+    }
+
     // Déconnexion à la fermeture de la page
     const handleBeforeUnload = () => {
-      if (sessionId) {
-        navigator.sendBeacon(`/api/live/${live.id}/viewers?sessionId=${sessionId}`, "");
+      if (memberId) {
+        navigator.sendBeacon(`/api/live/${live.id}/viewers?memberId=${memberId}`, "");
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -180,11 +205,11 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
       if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
       window.removeEventListener("beforeunload", handleBeforeUnload);
       // Marquer comme inactif
-      if (sessionId) {
-        fetch(`/api/live/${live.id}/viewers?sessionId=${sessionId}`, { method: "DELETE" }).catch(() => {});
+      if (memberId) {
+        fetch(`/api/live/${live.id}/viewers?memberId=${memberId}`, { method: "DELETE" }).catch(() => {});
       }
     };
-  }, [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined, sessionId, live.id, viewerFirstName]);
+  }, [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined, memberId, live.id, viewerFirstName]);
 
   const accentColor = live.servantCode === "pam" ? "#C9A227" : "#8C5FA8";
   const getYouTubeEmbedUrl = (url: string) => {
@@ -197,9 +222,9 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     else { setLiked(true); setLikeCount((c) => c + 1); }
   };
 
-  const handleJoined = (sid: string, name: string) => {
-    setSessionId(sid);
-    setViewerFirstName(name);
+  const handleRegistered = (member: { id: string; firstName: string }) => {
+    setMemberId(member.id);
+    setViewerFirstName(member.firstName);
     setHasJoined(true);
     setShowJoinModal(false);
   };
@@ -208,12 +233,11 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
-      {/* Modal d'inscription au live */}
+      {/* Modal d'inscription unique */}
       <LiveJoinModal
         open={showJoinModal}
         onClose={() => setShowJoinModal(false)}
-        onJoined={handleJoined}
-        liveId={live.id}
+        onRegistered={handleRegistered}
         liveTitle={live.title}
       />
 
