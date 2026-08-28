@@ -99,6 +99,8 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
     fetchXp();
   }, [liveId]);
 
+  const seenIdsRef = useRef<Set<string>>(new Set());
+
   const fetchMessages = useCallback(async () => {
     try {
       const since = lastTimestampRef.current;
@@ -107,12 +109,20 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
       if (!res.ok) return;
       const data = await res.json();
       if (data.messages && data.messages.length > 0) {
-        setMessages((prev) => [...prev, ...data.messages].slice(-300));
-        lastTimestampRef.current = data.messages[data.messages.length - 1].createdAt;
-        if (isAtBottomRef.current) {
-          setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-        } else {
-          setShowScrollDown(true);
+        // Déduplication par ID
+        const newMessages = data.messages.filter((msg: ChatMessage) => {
+          if (seenIdsRef.current.has(msg.id)) return false;
+          seenIdsRef.current.add(msg.id);
+          return true;
+        });
+        if (newMessages.length > 0) {
+          setMessages((prev) => [...prev, ...newMessages].slice(-300));
+          lastTimestampRef.current = newMessages[newMessages.length - 1].createdAt;
+          if (isAtBottomRef.current) {
+            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+          } else {
+            setShowScrollDown(true);
+          }
         }
       }
     } catch {}
