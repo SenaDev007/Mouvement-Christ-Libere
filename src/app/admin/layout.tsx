@@ -19,6 +19,7 @@ import {
   X,
   ExternalLink,
   ShieldAlert,
+  Cloud,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -61,6 +62,12 @@ const NAV_SECTIONS = [
       { label: "Dons", href: "/admin/donations", icon: Heart },
       { label: "Intercession", href: "/intercession", icon: Heart },
       { label: "Dead Man's Switch", href: "/admin/dead-mans-switch", icon: ShieldAlert },
+    ],
+  },
+  {
+    title: "Système",
+    items: [
+      { label: "Stockage B2", href: "/admin/b2-test", icon: Cloud },
     ],
   },
 ];
