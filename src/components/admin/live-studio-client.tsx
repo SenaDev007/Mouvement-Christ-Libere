@@ -196,18 +196,40 @@ export function LiveStudioClient({
 
       if (localStreamRef.current) {
         const audioTrack = localStreamRef.current.getAudioTracks()[0];
+
+        // ─── S'assurer que le canvas stream existe (fallback si pas encore créé) ───
+        if (!overlayStreamRef.current && canvasRef.current) {
+          try {
+            overlayStreamRef.current = canvasRef.current.captureStream(30);
+            console.log("[studio] Canvas stream créé en fallback");
+          } catch (err) {
+            console.error("[studio] captureStream fallback failed:", err);
+          }
+        }
+
+        // Publier le STREAM DU CANVAS COMPOSITE (caméra + overlays visibles par les viewers)
+        let videoPublished = false;
         if (overlayStreamRef.current) {
           const canvasVideoTrack = overlayStreamRef.current.getVideoTracks()[0];
           if (canvasVideoTrack) {
-            await room.localParticipant.publishTrack(canvasVideoTrack, {
-              source: Track.Source.Camera,
-              name: "composite",
-            });
+            try {
+              await room.localParticipant.publishTrack(canvasVideoTrack, {
+                source: Track.Source.Camera,
+                name: "composite",
+              });
+              videoPublished = true;
+              console.log("[studio] Canvas composite publié via LiveKit");
+            } catch (err) {
+              console.error("[studio] Failed to publish canvas track:", err);
+            }
           }
-        } else {
+        }
+        if (!videoPublished) {
+          // Fallback : publier la caméra brute si le canvas n'est pas prêt
           const videoTrack = localStreamRef.current.getVideoTracks()[0];
           if (videoTrack) {
             await room.localParticipant.publishTrack(videoTrack, { source: Track.Source.Camera });
+            console.log("[studio] Caméra brute publiée (fallback)");
           }
         }
         if (audioTrack) await room.localParticipant.publishTrack(audioTrack, { source: Track.Source.Microphone });

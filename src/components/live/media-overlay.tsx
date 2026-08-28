@@ -66,9 +66,18 @@ export function MediaOverlay({
   const slideInputRef = useRef<HTMLInputElement>(null);
   const animationFrameRef = useRef<number | null>(null);
 
+  // Drag state for overlays on canvas
+  const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
+  const dragStateRef = useRef<{
+    type: "image" | "text" | null;
+    id: string | null;
+    offsetX: number;
+    offsetY: number;
+  }>({ type: null, id: null, offsetX: 0, offsetY: 0 });
+
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelPos, setPanelPos] = useState<{ x: number; y: number } | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingPanel, setIsDraggingPanel] = useState(false);
   const dragOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -82,11 +91,11 @@ export function MediaOverlay({
     if (!panelRef.current) return;
     const rect = panelRef.current.getBoundingClientRect();
     dragOffsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    setIsDragging(true);
+    setIsDraggingPanel(true);
   };
 
   useEffect(() => {
-    if (!isDragging) return;
+    if (!isDraggingPanel) return;
     const handleMove = (e: MouseEvent) => {
       const newX = e.clientX - dragOffsetRef.current.x;
       const newY = e.clientY - dragOffsetRef.current.y;
@@ -97,14 +106,199 @@ export function MediaOverlay({
         y: Math.max(0, Math.min(maxY, newY)),
       });
     };
-    const handleUp = () => setIsDragging(false);
+    const handleUp = () => setIsDraggingPanel(false);
     window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseup", handleUp);
     return () => {
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("mouseup", handleUp);
     };
-  }, [isDragging]);
+  }, [isDraggingPanel]);
+
+  // ─── Convert screen coords to canvas coords (1280×720) ───
+  const getCanvasCoords = useCallback((clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 1280 / rect.width;
+    const scaleY = 720 / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  }, [canvasRef]);
+
+  // ─── Hit test: find which overlay is at the given canvas coords ───
+  const hitTest = useCallback((canvasX: number, canvasY: number): { type: "image" | "text"; id: string } | null => {
+    // Check text first (drawn on top)
+    if (textOverlay.visible && textOverlay.text) {
+      const tx = (textOverlay.x / 100) * 1280;
+      const ty = (textOverlay.y / 100) * 720;
+      // Approximate text bounds (generous hit area)
+      const halfW = Math.min(textOverlay.text.length * textOverlay.size * 0.4, 600);
+      const halfH = textOverlay.size * 0.7;
+      if (Math.abs(canvasX - tx) < halfW && Math.abs(canvasY - ty) < halfH) {
+        return { type: "text", id: "text" };
+      }
+    }
+    // Check images (reverse order — topmost first)
+    for (let i = overlayImages.length - 1; i >= 0; i--) {
+      const img = overlayImages[i];
+      if (!img.visible) continue;
+      if (canvasX >= img.x && canvasX <= img.x + img.width &&
+          canvasY >= img.y && canvasY <= img.y + img.height) {
+        return { type: "image", id: img.id };
+      }
+    }
+    return null;
+  }, [textOverlay, overlayImages]);
+
+  // ─── Canvas interaction: pointer down (mouse + touch) ───
+  const handleCanvasPointerDown = useCallback((e: React.PointerEvent) => {
+    if (!showOverlay || isPaused) return;
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+    const hit = hitTest(x, y);
+    if (hit) {
+      e.preventDefault();
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      dragStateRef.current = {
+        type: hit.type,
+        id: hit.id,
+        offsetX: x,
+        offsetY: y,
+      };
+      // Store original position for delta calculation
+      if (hit.type === "image") {
+        const img = overlayImages.find((i) => i.id === hit.id);
+        if (img) {
+          dragStateRef.current.offsetX = x - img.x;
+          dragStateRef.current.offsetY = y - img.y;
+        }
+      } else if (hit.type === "text") {
+        dragStateRef.current.offsetX = x - (textOverlay.x / 100) * 1280;
+        dragStateRef.current.offsetY = y - (textOverlay.y / 100) * 720;
+      }
+      setSelectedOverlayId(hit.id);
+    } else {
+      setSelectedOverlayId(null);
+    }
+  }, [showOverlay, isPaused, getCanvasCoords, hitTest, overlayImages, textOverlay]);
+
+  // ─── Canvas interaction: pointer move (drag) ───
+  const handleCanvasPointerMove = useCallback((e: React.PointerEvent) => {
+    const ds = dragStateRef.current;
+    if (!ds.type || !ds.id) return;
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+    const newX = x - ds.offsetX;
+    const newY = y - ds.offsetY;
+
+    if (ds.type === "image") {
+      setOverlayImages((prev) => prev.map((img) =>
+        img.id === ds.id ? { ...img, x: Math.max(0, Math.min(1280 - img.width, newX)), y: Math.max(0, Math.min(720 - img.height, newY)) } : img
+      ));
+    } else if (ds.type === "text") {
+      const xPct = Math.max(0, Math.min(100, (newX / 1280) * 100));
+      const yPct = Math.max(0, Math.min(100, (newY / 720) * 100));
+      setTextOverlay((prev) => ({ ...prev, x: xPct, y: yPct }));
+    }
+  }, [getCanvasCoords]);
+
+  // ─── Canvas interaction: pointer up ───
+  const handleCanvasPointerUp = useCallback((e: React.PointerEvent) => {
+    if (dragStateRef.current.type) {
+      try { (e.target as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+    }
+    dragStateRef.current = { type: null, id: null, offsetX: 0, offsetY: 0 };
+  }, []);
+
+  // ─── Attach interaction listeners to canvas ───
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    // Make canvas interactive when overlays are visible
+    const updateCursor = () => {
+      if (!showOverlay || isPaused) {
+        canvas.style.cursor = "default";
+        canvas.style.pointerEvents = "none";
+      } else {
+        canvas.style.pointerEvents = "auto";
+      }
+    };
+    updateCursor();
+    // Use pointer events for unified mouse + touch
+    const pointerDown = (e: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = 1280 / rect.width;
+      const scaleY = 720 / rect.height;
+      const cx = (e.clientX - rect.left) * scaleX;
+      const cy = (e.clientY - rect.top) * scaleY;
+      const hit = hitTest(cx, cy);
+      if (hit) {
+        e.preventDefault();
+        canvas.setPointerCapture(e.pointerId);
+        if (hit.type === "image") {
+          const img = overlayImages.find((i) => i.id === hit.id);
+          if (img) {
+            dragStateRef.current = { type: "image", id: hit.id, offsetX: cx - img.x, offsetY: cy - img.y };
+          }
+        } else {
+          dragStateRef.current = { type: "text", id: "text", offsetX: cx - (textOverlay.x / 100) * 1280, offsetY: cy - (textOverlay.y / 100) * 720 };
+        }
+        setSelectedOverlayId(hit.id);
+        canvas.style.cursor = "grabbing";
+      } else {
+        setSelectedOverlayId(null);
+      }
+    };
+    const pointerMove = (e: PointerEvent) => {
+      const ds = dragStateRef.current;
+      if (!ds.type) {
+        // Update cursor for hover
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = 1280 / rect.width;
+        const scaleY = 720 / rect.height;
+        const cx = (e.clientX - rect.left) * scaleX;
+        const cy = (e.clientY - rect.top) * scaleY;
+        const hit = hitTest(cx, cy);
+        canvas.style.cursor = hit ? "grab" : "default";
+        return;
+      }
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = 1280 / rect.width;
+      const scaleY = 720 / rect.height;
+      const cx = (e.clientX - rect.left) * scaleX;
+      const cy = (e.clientY - rect.top) * scaleY;
+      const newX = cx - ds.offsetX;
+      const newY = cy - ds.offsetY;
+      if (ds.type === "image") {
+        setOverlayImages((prev) => prev.map((img) =>
+          img.id === ds.id ? { ...img, x: Math.max(0, Math.min(1280 - img.width, newX)), y: Math.max(0, Math.min(720 - img.height, newY)) } : img
+        ));
+      } else if (ds.type === "text") {
+        const xPct = Math.max(0, Math.min(100, (newX / 1280) * 100));
+        const yPct = Math.max(0, Math.min(100, (newY / 720) * 100));
+        setTextOverlay((prev) => ({ ...prev, x: xPct, y: yPct }));
+      }
+    };
+    const pointerUp = (e: PointerEvent) => {
+      if (dragStateRef.current.type) {
+        try { canvas.releasePointerCapture(e.pointerId); } catch {}
+      }
+      dragStateRef.current = { type: null, id: null, offsetX: 0, offsetY: 0 };
+      canvas.style.cursor = "default";
+    };
+    canvas.addEventListener("pointerdown", pointerDown);
+    canvas.addEventListener("pointermove", pointerMove);
+    canvas.addEventListener("pointerup", pointerUp);
+    canvas.addEventListener("pointercancel", pointerUp);
+    return () => {
+      canvas.removeEventListener("pointerdown", pointerDown);
+      canvas.removeEventListener("pointermove", pointerMove);
+      canvas.removeEventListener("pointerup", pointerUp);
+      canvas.removeEventListener("pointercancel", pointerUp);
+    };
+  }, [canvasRef, showOverlay, isPaused, hitTest, overlayImages, textOverlay]);
 
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -169,7 +363,17 @@ export function MediaOverlay({
         for (const overlayImg of overlayImages) {
           if (!overlayImg.visible) continue;
           const img = getCachedImage(overlayImg.src);
-          if (img) ctx.drawImage(img, overlayImg.x, overlayImg.y, overlayImg.width, overlayImg.height);
+          if (img) {
+            ctx.drawImage(img, overlayImg.x, overlayImg.y, overlayImg.width, overlayImg.height);
+            // Draw selection border if selected
+            if (selectedOverlayId === overlayImg.id) {
+              ctx.strokeStyle = "#C9A227";
+              ctx.lineWidth = 3;
+              ctx.setLineDash([8, 4]);
+              ctx.strokeRect(overlayImg.x, overlayImg.y, overlayImg.width, overlayImg.height);
+              ctx.setLineDash([]);
+            }
+          }
         }
       }
 
@@ -187,9 +391,21 @@ export function MediaOverlay({
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
+        // Draw selection border for text
+        if (selectedOverlayId === "text") {
+          const tx = (textOverlay.x / 100) * canvas.width;
+          const ty = (textOverlay.y / 100) * canvas.height;
+          const halfW = Math.min(textOverlay.text.length * textOverlay.size * 0.4, 600);
+          const halfH = textOverlay.size * 0.7;
+          ctx.strokeStyle = "#C9A227";
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 3]);
+          ctx.strokeRect(tx - halfW, ty - halfH, halfW * 2, halfH * 2);
+          ctx.setLineDash([]);
+        }
       }
     }
-  }, [canvasRef, videoSourceRef, overlayImages, activeTab, slides, currentSlide, showOverlay, textOverlay, isPaused, mirror]);
+  }, [canvasRef, videoSourceRef, overlayImages, activeTab, slides, currentSlide, showOverlay, textOverlay, isPaused, mirror, selectedOverlayId]);
 
   useEffect(() => {
     const render = () => {
@@ -279,11 +495,18 @@ export function MediaOverlay({
         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
           showOverlay ? "bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30" : "bg-white/10 text-white hover:bg-white/15"
         }`}
-        title={showOverlay ? "Overlay actif" : "Overlay inactif"}
+        title={showOverlay ? "Overlay actif — glissez les éléments sur la vidéo" : "Overlay inactif"}
       >
         {showOverlay ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
         <span className="hidden sm:inline">{showOverlay ? "Overlay ON" : "Overlay OFF"}</span>
       </button>
+
+      {/* Hint when overlay is active */}
+      {showOverlay && (
+        <span className="hidden md:inline text-[10px] text-white/40 px-2">
+          ↑ Glissez les éléments sur la vidéo
+        </span>
+      )}
 
       {showPanel && panelPos !== null && (
         <div
@@ -334,7 +557,7 @@ export function MediaOverlay({
                 <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
                 <div className="grid grid-cols-3 gap-2">
                   {overlayImages.map((img) => (
-                    <div key={img.id} className="relative group rounded-lg overflow-hidden border-2 border-white/10">
+                    <div key={img.id} className={`relative group rounded-lg overflow-hidden border-2 ${selectedOverlayId === img.id ? "border-[#C9A227]" : "border-white/10"}`}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={img.src} alt="overlay" className="w-full aspect-video object-cover" />
                       {!img.visible && <div className="absolute inset-0 bg-black/60" />}
@@ -350,6 +573,9 @@ export function MediaOverlay({
                   ))}
                 </div>
                 {overlayImages.length === 0 && <p className="text-xs text-white/30 text-center italic py-4">Aucune image uploadée</p>}
+                {overlayImages.length > 0 && (
+                  <p className="text-[10px] text-white/40 italic">Astuce : activez l'overlay ON, puis glissez les images directement sur la vidéo</p>
+                )}
               </div>
             )}
 
@@ -411,26 +637,15 @@ export function MediaOverlay({
                       className="w-full h-9 rounded-lg border border-white/10 bg-[#0F0F0F]" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">Position X : {textOverlay.x}%</label>
-                    <input type="range" min="0" max="100" value={textOverlay.x}
-                      onChange={(e) => setTextOverlay({ ...textOverlay, x: parseInt(e.target.value) })}
-                      className="w-full accent-[#C9A227]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">Position Y : {textOverlay.y}%</label>
-                    <input type="range" min="0" max="100" value={textOverlay.y}
-                      onChange={(e) => setTextOverlay({ ...textOverlay, y: parseInt(e.target.value) })}
-                      className="w-full accent-[#C9A227]" />
-                  </div>
-                </div>
                 <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 cursor-pointer">
                   <input type="checkbox" checked={textOverlay.visible}
                     onChange={(e) => setTextOverlay({ ...textOverlay, visible: e.target.checked })}
                     className="w-4 h-4 accent-[#C9A227]" />
                   <span className="text-sm text-white">Afficher le texte</span>
                 </label>
+                {textOverlay.visible && (
+                  <p className="text-[10px] text-white/40 italic">Astuce : glissez le texte directement sur la vidéo pour le repositionner</p>
+                )}
               </div>
             )}
           </div>
