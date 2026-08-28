@@ -13,10 +13,13 @@ import {
   Mail,
   ChevronRight,
   Menu,
+  LogOut,
+  UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -98,8 +101,16 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 
 export function ContextualNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const isFullScreenPage = pathname?.startsWith("/yeshua-connect");
+  const isAuthenticated = status === "authenticated" && session?.user;
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/" });
+  };
 
   // Sur /yeshua-connect, la navbar est en haut fixe (pas en bas flottante)
   return (
@@ -280,17 +291,89 @@ export function ContextualNav() {
 
         {/* Right side — Auth + CTA */}
         <div className="flex items-center gap-2">
-          <Link
-            href="/login"
-            className="hidden sm:inline-flex items-center text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors px-3 py-1.5"
-          >
-            Se connecter
-          </Link>
-          <Button asChild size="sm" variant="ghost" className="text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 text-sm">
-            <Link href="/register">
-              Créer un compte
-            </Link>
-          </Button>
+          {isAuthenticated ? (
+            /* ═══ Utilisateur connecté — avatar + menu déroulant ═══ */
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-[#FAF6EF]/10 transition-colors"
+              >
+                {session.user.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt={session.user.name || "User"}
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#C9A227] flex items-center justify-center text-[#1E0F2B] font-bold text-sm">
+                    {(session.user.name || session.user.email || "U").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="hidden sm:inline text-sm font-medium text-[#FAF6EF] max-w-[100px] truncate">
+                  {session.user.name || "Mon compte"}
+                </span>
+              </button>
+
+              {/* Menu déroulant utilisateur */}
+              {userMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                  <div className="absolute top-full right-0 mt-2 z-50 bg-white rounded-xl shadow-2xl border border-[#8A8378]/15 py-2 min-w-[200px]">
+                    <div className="px-4 py-2 border-b border-[#8A8378]/10">
+                      <p className="text-sm font-bold text-[#1E0F2B] truncate">
+                        {session.user.name || "Utilisateur"}
+                      </p>
+                      {session.user.email && (
+                        <p className="text-xs text-[#8A8378] truncate">{session.user.email}</p>
+                      )}
+                    </div>
+                    <Link
+                      href="/yeshua-connect"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-[#1E0F2B] hover:bg-[#2A0E3D]/5 transition-colors"
+                    >
+                      <MessageSquare className="w-4 h-4 text-[#8A8378]" />
+                      Yeshua Connect
+                    </Link>
+                    <Link
+                      href="/disperses"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-[#1E0F2B] hover:bg-[#2A0E3D]/5 transition-colors"
+                    >
+                      <Globe className="w-4 h-4 text-[#8A8378]" />
+                      Carte des dispersés
+                    </Link>
+                    <div className="border-t border-[#8A8378]/10 mt-1 pt-1">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Se déconnecter
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            /* ═══ Utilisateur non connecté — boutons auth ═══ */
+            <>
+              <Link
+                href="/login"
+                className="hidden sm:inline-flex items-center text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors px-3 py-1.5"
+              >
+                Se connecter
+              </Link>
+              <Button asChild size="sm" variant="ghost" className="text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 text-sm">
+                <Link href="/register">
+                  Créer un compte
+                </Link>
+              </Button>
+            </>
+          )}
           <div className="w-px h-5 bg-[#C9A227]/20 hidden sm:block" />
           <Button asChild size="sm" className="bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] text-sm">
             <Link href="/communaute">

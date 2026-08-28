@@ -24,16 +24,13 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     return <main className="flex-1">{children}</main>;
   }
 
-  // La navbar est fixed top-0 avec h-14 (56px)
-  // On utilise pt-14 pour pousser tout le contenu sous la navbar
-  // La barre d'annonce va entre la navbar et le contenu principal
+  // La navbar est fixed top-0 avec h-16 (64px mobile) / md:h-20 (80px desktop)
+  // pt-16 = 64px (mobile), md:pt-20 = 80px (desktop) → contenu sous la navbar
   return (
     <>
       <ContextualNav />
-      <div className="pt-14">
-        {/* Barre d'annonce live — juste sous la navbar */}
+      <div className="pt-16 md:pt-20">
         {showLiveBar && <LiveAnnouncementBar />}
-        {/* Contenu principal */}
         <main className="flex-1">
           {children}
         </main>
