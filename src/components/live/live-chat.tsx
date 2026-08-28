@@ -183,26 +183,26 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
 
   if (!isLive) {
     return (
-      <div className="flex flex-col h-full bg-[#0f0f0f] rounded-xl overflow-hidden border border-white/10">
-        <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2">
+      <div className="flex flex-col h-full bg-[#FAF6EF] rounded-xl overflow-hidden border border-[#8A8378]/15">
+        <div className="px-4 py-3 border-b border-[#8A8378]/15 flex items-center gap-2">
           <MessageCircle className="w-4 h-4 text-[#C9A227]" />
-          <span className="text-sm font-bold text-white">Chat</span>
+          <span className="text-sm font-bold text-[#1E0F2B]">Chat</span>
         </div>
         <div className="flex-1 flex items-center justify-center p-8">
-          <p className="text-sm text-white/40 text-center italic">Le chat sera disponible lorsque le live commencera.</p>
+          <p className="text-sm text-[#1E0F2B]/40 text-center italic">Le chat sera disponible lorsque le live commencera.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#0f0f0f] rounded-xl overflow-hidden border border-white/10">
+    <div className="flex flex-col h-full bg-[#FAF6EF] rounded-xl overflow-hidden border border-[#8A8378]/15">
       {/* ═══ Header avec dropdown Top Chat + XP + options ═══ */}
-      <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between flex-shrink-0 relative">
+      <div className="px-4 py-3 border-b border-[#8A8378]/15 flex items-center justify-between flex-shrink-0 relative">
         <div className="relative">
           <button
             onClick={() => setShowModeDropdown(!showModeDropdown)}
-            className="flex items-center gap-1.5 text-sm font-bold text-white hover:text-white/80 transition-colors"
+            className="flex items-center gap-1.5 text-sm font-bold text-[#1E0F2B] hover:text-[#1E0F2B]/80 transition-colors"
           >
             {chatMode === "top" ? "Top Chat" : "Chat en direct"}
             <ChevronDown className={`w-4 h-4 transition-transform ${showModeDropdown ? "rotate-180" : ""}`} />
@@ -211,20 +211,20 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
           {showModeDropdown && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowModeDropdown(false)} />
-              <div className="absolute top-full left-0 mt-1 z-20 bg-[#1f1f1f] rounded-lg shadow-xl border border-white/10 py-1 min-w-[200px]">
+              <div className="absolute top-full left-0 mt-1 z-20 bg-white rounded-lg shadow-xl border border-[#8A8378]/15 py-1 min-w-[200px]">
                 <button
                   onClick={() => { setChatMode("top"); setShowModeDropdown(false); }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors ${chatMode === "top" ? "text-white font-bold" : "text-white/60"}`}
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-[#2A0E3D]/5 transition-colors ${chatMode === "top" ? "text-[#1E0F2B] font-bold" : "text-[#1E0F2B]/60"}`}
                 >
                   Top Chat
-                  <p className="text-xs text-white/40 font-normal">Masque les messages indésirables</p>
+                  <p className="text-xs text-[#1E0F2B]/40 font-normal">Masque les messages indésirables</p>
                 </button>
                 <button
                   onClick={() => { setChatMode("all"); setShowModeDropdown(false); }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors ${chatMode === "all" ? "text-white font-bold" : "text-white/60"}`}
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-[#2A0E3D]/5 transition-colors ${chatMode === "all" ? "text-[#1E0F2B] font-bold" : "text-[#1E0F2B]/60"}`}
                 >
                   Chat en direct
-                  <p className="text-xs text-white/40 font-normal">Tous les messages</p>
+                  <p className="text-xs text-[#1E0F2B]/40 font-normal">Tous les messages</p>
                 </button>
               </div>
             </>
@@ -233,7 +233,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
 
         <div className="flex items-center gap-2">
           {/* Viewers */}
-          <div className="flex items-center gap-1 text-xs text-white/50">
+          <div className="flex items-center gap-1 text-xs text-[#1E0F2B]/50">
             <Users className="w-3 h-3" />
             {viewerCount}
           </div>
@@ -248,24 +248,24 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
           <div className="relative">
             <button
               onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-              className="p-1 rounded hover:bg-white/10 text-white/50 transition-colors"
+              className="p-1 rounded hover:bg-[#2A0E3D]/10 text-[#1E0F2B]/50 transition-colors"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
             {showOptionsMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowOptionsMenu(false)} />
-                <div className="absolute top-full right-0 mt-1 z-20 bg-[#1f1f1f] rounded-lg shadow-xl border border-white/10 py-1 min-w-[180px]">
+                <div className="absolute top-full right-0 mt-1 z-20 bg-white rounded-lg shadow-xl border border-[#8A8378]/15 py-1 min-w-[180px]">
                   <button
                     onClick={() => { setSlowMode(!slowMode); setShowOptionsMenu(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:bg-white/5 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1E0F2B]/70 hover:bg-[#2A0E3D]/5 transition-colors"
                   >
                     <Shield className="w-3.5 h-3.5" />
                     Mode lent : {slowMode ? "ON" : "OFF"}
                   </button>
                   <button
                     onClick={() => { setChatCollapsed(!chatCollapsed); setShowOptionsMenu(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:bg-white/5 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1E0F2B]/70 hover:bg-[#2A0E3D]/5 transition-colors"
                   >
                     <ChevronDown className="w-3.5 h-3.5" />
                     {chatCollapsed ? "Déplier" : "Replier"}
@@ -278,7 +278,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
           {/* Fermer */}
           <button
             onClick={() => setChatCollapsed(!chatCollapsed)}
-            className="p-1 rounded-full hover:bg-white/10 text-white/50 transition-colors"
+            className="p-1 rounded-full hover:bg-[#2A0E3D]/10 text-[#1E0F2B]/50 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -288,13 +288,13 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
       {!chatCollapsed && (
         <>
           {/* ═══ Bannière mode (façon YouTube "Mode Abonnés uniquement") ═══ */}
-          <div className="px-4 py-2.5 bg-[#1a1a1a] border-b border-white/5 flex items-start gap-2.5">
+          <div className="px-4 py-2.5 bg-[#FAF6EF] border-b border-[#8A8378]/10 flex items-start gap-2.5">
             <div className="w-5 h-5 rounded bg-[#C9A227] flex items-center justify-center flex-shrink-0 mt-0.5">
               <span className="text-[10px] font-bold text-[#1E0F2B]">▶</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-white/70 leading-relaxed">
-                Mode <span className="font-bold text-white">"Ouvert à tous"</span>. Les messages publiés proviennent de tous les spectateurs. Soyez respectueux.
+              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">
+                Mode <span className="font-bold text-[#1E0F2B]">"Ouvert à tous"</span>. Les messages publiés proviennent de tous les spectateurs. Soyez respectueux.
               </p>
               <button className="text-xs text-blue-400 hover:underline mt-0.5">En savoir plus</button>
             </div>
@@ -305,12 +305,12 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
             <div className="px-4 py-2 bg-[#C9A227]/10 border-b border-[#C9A227]/20 flex items-start gap-2">
               <Pin className="w-3 h-3 text-[#C9A227] flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-white/90 break-words">
+                <p className="text-xs text-[#1E0F2B]/90 break-words">
                   <span className="font-bold text-[#C9A227]">{pinnedMessage.userName}: </span>
                   {pinnedMessage.content}
                 </p>
               </div>
-              <button onClick={() => setPinnedMessage(null)} className="p-0.5 rounded hover:bg-white/10 text-white/40">
+              <button onClick={() => setPinnedMessage(null)} className="p-0.5 rounded hover:bg-[#2A0E3D]/10 text-[#1E0F2B]/40">
                 <X className="w-3 h-3" />
               </button>
             </div>
@@ -325,7 +325,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
           >
             {displayMessages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <p className="text-xs text-white/30 italic">
+                <p className="text-xs text-[#1E0F2B]/30 italic">
                   {chatMode === "top" ? "Aucun message pertinent..." : "Soyez le premier à écrire..."}
                 </p>
               </div>
@@ -333,11 +333,11 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
               displayMessages.map((msg) => (
                 <div
                   key={msg.id}
-                  className="flex items-start gap-2 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors group"
+                  className="flex items-start gap-2 px-2 py-1 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors group"
                 >
                   {/* Avatar */}
                   <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5"
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-[#1E0F2B] flex-shrink-0 mt-0.5"
                     style={{ backgroundColor: getAvatarColor(msg.userName) }}
                   >
                     {getInitials(msg.userName)}
@@ -345,13 +345,13 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
                   {/* Message */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-xs font-bold text-white/90 truncate max-w-[120px]">{msg.userName}</span>
-                      <span className="text-[10px] text-white/30 flex-shrink-0">{formatChatTime(msg.createdAt)}</span>
+                      <span className="text-xs font-bold text-[#1E0F2B]/90 truncate max-w-[120px]">{msg.userName}</span>
+                      <span className="text-[10px] text-[#1E0F2B]/30 flex-shrink-0">{formatChatTime(msg.createdAt)}</span>
                     </div>
-                    <p className="text-xs text-white/80 break-words leading-relaxed">{msg.content}</p>
+                    <p className="text-xs text-[#1E0F2B]/80 break-words leading-relaxed">{msg.content}</p>
                   </div>
                   {/* Like */}
-                  <button className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 text-white/40 hover:text-[#C9A227] transition-all flex-shrink-0">
+                  <button className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-[#2A0E3D]/10 text-[#1E0F2B]/40 hover:text-[#C9A227] transition-all flex-shrink-0">
                     <Heart className="w-3 h-3" />
                   </button>
                 </div>
@@ -374,10 +374,10 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
           )}
 
           {/* ═══ Input ═══ */}
-          <div className="border-t border-white/10 p-3 flex-shrink-0">
+          <div className="border-t border-[#8A8378]/15 p-3 flex-shrink-0">
             {showNamePrompt ? (
               <div className="space-y-2">
-                <p className="text-xs text-white/60 mb-2">Choisissez votre nom pour participer :</p>
+                <p className="text-xs text-[#1E0F2B]/60 mb-2">Choisissez votre nom pour participer :</p>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -387,7 +387,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
                     placeholder="Votre nom"
                     maxLength={30}
                     autoFocus
-                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white text-sm placeholder:text-white/30 focus:outline-none focus:bg-white/10 border border-white/10"
+                    className="flex-1 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-[#1E0F2B] text-sm placeholder:text-[#1E0F2B]/30 focus:outline-none focus:bg-[#2A0E3D]/10 border border-[#8A8378]/15"
                   />
                   <button
                     onClick={handleSetName}
@@ -403,7 +403,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
                 <form onSubmit={handleSend} className="flex items-center gap-2">
                   {/* Avatar chaîne dans l'input (façon YouTube) */}
                   <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-[#1E0F2B] flex-shrink-0"
                     style={{ backgroundColor: getAvatarColor(userName) }}
                   >
                     {getInitials(userName)}
@@ -414,7 +414,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={slowMode ? "Mode lent activé (5s entre messages)..." : "Écrivez un message..."}
                     maxLength={500}
-                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white text-sm placeholder:text-white/30 focus:outline-none focus:bg-white/10 border border-white/10"
+                    className="flex-1 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-[#1E0F2B] text-sm placeholder:text-[#1E0F2B]/30 focus:outline-none focus:bg-[#2A0E3D]/10 border border-[#8A8378]/15"
                   />
                   <button
                     type="submit"
@@ -426,11 +426,11 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
                 </form>
                 {/* Barre statut (façon YouTube) */}
                 <div className="flex items-center justify-between mt-2 px-1">
-                  <div className="flex items-center gap-1 text-[10px] text-white/40">
+                  <div className="flex items-center gap-1 text-[10px] text-[#1E0F2B]/40">
                     <Info className="w-3 h-3" />
                     {slowMode ? "Mode lent actif" : "Mode ouvert"}
                   </div>
-                  <button className="text-white/40 hover:text-[#C9A227] transition-colors">
+                  <button className="text-[#1E0F2B]/40 hover:text-[#C9A227] transition-colors">
                     <Heart className="w-3.5 h-3.5" />
                   </button>
                 </div>
