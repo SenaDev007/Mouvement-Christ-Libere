@@ -4,13 +4,15 @@ import { useState, useEffect, useRef } from "react";
 import { Room, RoomEvent, Track } from "livekit-client";
 import {
   Radio, Eye, Calendar, AlertCircle,
-  Heart, Share2, Bookmark, MoreHorizontal,
-  CheckCircle2, ChevronDown, ChevronUp, Clock,
+  Heart, Bookmark, MoreHorizontal,
+  CheckCircle2, ChevronDown, ChevronUp, Clock, Users,
 } from "lucide-react";
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
 import { LiveReactions } from "@/components/live/live-reactions";
 import { VideoPlayerPro } from "@/components/live/video-player-pro";
+import { LiveJoinModal } from "@/components/live/live-join-modal";
+import { ShareButton } from "@/components/live/share-button";
 
 interface LiveViewerClientProps {
   live: {
@@ -42,20 +44,22 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [viewerCount, setViewerCount] = useState(0);
+  const [hasJoined, setHasJoined] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [viewerFirstName, setViewerFirstName] = useState<string>("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
 
-  // Compte à rebours — SANS reload automatique
+  // Compte à rebours
   useEffect(() => {
     if (live.status !== "SCHEDULED") return;
     const update = () => {
       const target = new Date(live.scheduledAt).getTime();
       const diff = target - Date.now();
-      if (diff <= 0) {
-        setCountdown("Le live commence maintenant...");
-        return;
-      }
+      if (diff <= 0) { setCountdown("Le live commence maintenant..."); return; }
       const days = Math.floor(diff / 86400000);
       const hours = Math.floor((diff % 86400000) / 3600000);
       const minutes = Math.floor((diff % 3600000) / 60000);
@@ -67,7 +71,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     return () => clearInterval(interval);
   }, [live.status, live.scheduledAt]);
 
-  // Polling statut — SANS reload, juste mise à jour de l'état
+  // Polling statut
   useEffect(() => {
     if (live.status !== "SCHEDULED") return;
     const checkStatus = async () => {
@@ -83,9 +87,36 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     return () => clearInterval(interval);
   }, [live.status, live.id]);
 
+  // Compteur viewers réel depuis l'API
+  useEffect(() => {
+    if (!isLive) return;
+    const fetchViewers = async () => {
+      try {
+        const res = await fetch(`/api/live/${live.id}/viewers`);
+        const data = await res.json();
+        setViewerCount(data.count || 0);
+      } catch {}
+    };
+    fetchViewers();
+    const interval = setInterval(fetchViewers, 5000);
+    return () => clearInterval(interval);
+  }, [isLive, live.id]);
+
+  // Vérifier si déjà inscrit
+  useEffect(() => {
+    const savedSession = localStorage.getItem("live-session-id");
+    const savedName = localStorage.getItem("live-join-firstName");
+    if (savedSession && savedName) {
+      setSessionId(savedSession);
+      setViewerFirstName(savedName);
+      setHasJoined(true);
+    }
+  }, []);
+
   // Connexion LiveKit subscriber
   useEffect(() => {
     if (!isLive || !live.livekitRoomName || live.youtubeUrl) return;
+    if (!hasJoined) return; // Ne se connecte que si le viewer a rejoint
 
     const connectToRoom = async () => {
       setConnecting(true);
@@ -94,7 +125,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         const tokenRes = await fetch("/api/livekit/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomName: live.livekitRoomName, role: "subscriber", participantName: "Visiteur" }),
+          body: JSON.stringify({ roomName: live.livekitRoomName, role: "subscriber", participantName: viewerFirstName || "Visiteur" }),
         });
         if (!tokenRes.ok) {
           const data = await tokenRes.json();
@@ -136,8 +167,24 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     };
 
     connectToRoom();
-    return () => { if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; } };
-  }, [isLive, live.livekitRoomName, live.youtubeUrl]);
+
+    // Déconnexion à la fermeture de la page
+    const handleBeforeUnload = () => {
+      if (sessionId) {
+        navigator.sendBeacon(`/api/live/${live.id}/viewers?sessionId=${sessionId}`, "");
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      // Marquer comme inactif
+      if (sessionId) {
+        fetch(`/api/live/${live.id}/viewers?sessionId=${sessionId}`, { method: "DELETE" }).catch(() => {});
+      }
+    };
+  }, [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined, sessionId, live.id, viewerFirstName]);
 
   const accentColor = live.servantCode === "pam" ? "#C9A227" : "#8C5FA8";
   const getYouTubeEmbedUrl = (url: string) => {
@@ -146,37 +193,70 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   };
 
   const handleLike = () => {
-    if (liked) {
-      setLiked(false);
-      setLikeCount((c) => Math.max(0, c - 1));
-    } else {
-      setLiked(true);
-      setLikeCount((c) => c + 1);
-    }
+    if (liked) { setLiked(false); setLikeCount((c) => Math.max(0, c - 1)); }
+    else { setLiked(true); setLikeCount((c) => c + 1); }
   };
+
+  const handleJoined = (sid: string, name: string) => {
+    setSessionId(sid);
+    setViewerFirstName(name);
+    setHasJoined(true);
+    setShowJoinModal(false);
+  };
+
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
+      {/* Modal d'inscription au live */}
+      <LiveJoinModal
+        open={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onJoined={handleJoined}
+        liveId={live.id}
+        liveTitle={live.title}
+      />
+
       <div className="max-w-[1800px] mx-auto px-2 md:px-4 py-4">
         <div className="grid lg:grid-cols-[1fr_380px] gap-4">
-          {/* ═══ Colonne gauche : Vidéo + Infos ═══ */}
+          {/* ═══ Colonne gauche ═══ */}
           <div className="space-y-3">
             {/* Conteneur vidéo */}
             <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
-              {isLive && live.youtubeUrl && (
+              {isLive && live.youtubeUrl && hasJoined && (
                 <iframe src={getYouTubeEmbedUrl(live.youtubeUrl)} className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
               )}
-              {isLive && !live.youtubeUrl && (
+              {isLive && !live.youtubeUrl && hasJoined && (
                 <VideoPlayerPro
                   videoRef={videoRef}
                   isLive={isLive}
-                  viewerCount={live.viewerCount}
+                  viewerCount={viewerCount}
                   connecting={connecting}
                   connectionError={connectionError}
                   onRetry={() => window.location.reload()}
                 />
               )}
+
+              {/* Écran "Rejoindre le live" si pas encore inscrit */}
+              {isLive && !hasJoined && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826]">
+                  <div className="text-center text-[#FAF6EF] p-8">
+                    <Radio className="w-12 h-12 text-red-500 mx-auto mb-4 animate-pulse" />
+                    <p className="text-lg font-bold mb-2">Le live est en cours</p>
+                    <p className="text-sm text-[#FAF6EF]/60 mb-6">Rejoignez la diffusion pour regarder et participer au chat</p>
+                    <button
+                      onClick={() => setShowJoinModal(true)}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors shadow-lg"
+                    >
+                      <Radio className="w-4 h-4" />
+                      Rejoindre le live
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Live programmé */}
               {live.status === "SCHEDULED" && !isLive && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826]">
                   <div className="text-center text-[#FAF6EF] p-8 relative z-10">
@@ -185,13 +265,23 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                     <p className="text-xl md:text-2xl font-bold mb-4">{new Date(live.scheduledAt).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</p>
                     {countdown && (
                       <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold">
-                        <Clock className="w-4 h-4" />
-                        {countdown}
+                        <Clock className="w-4 h-4" />{countdown}
                       </div>
                     )}
+                    {/* Bouton pré-inscription */}
+                    <div className="mt-4">
+                      <button
+                        onClick={() => setShowJoinModal(true)}
+                        className="text-xs text-[#C9A227] hover:underline"
+                      >
+                        Pré-inscription →
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
+
+              {/* Live terminé */}
               {live.status === "ENDED" && !isLive && (
                 <div className="absolute inset-0 flex items-center justify-center bg-[#2A0E3D]">
                   <div className="text-center text-[#FAF6EF] p-8">
@@ -201,18 +291,18 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                   </div>
                 </div>
               )}
-              {/* Réactions flottantes */}
-              {isLive && <LiveReactions liveId={live.id} isLive={isLive} />}
+
+              {/* Réactions */}
+              {isLive && hasJoined && <LiveReactions liveId={live.id} isLive={isLive} />}
             </div>
 
-            {/* ─── Titre ─── */}
+            {/* Titre */}
             <h1 className="text-lg md:text-xl font-bold text-[#1E0F2B] leading-snug" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
               {live.title}
             </h1>
 
-            {/* ─── Barre chaîne + actions ─── */}
+            {/* Barre chaîne + actions */}
             <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#8A8378]/15">
-              {/* Gauche : chaîne (sans bouton s'abonner) */}
               <div className="flex items-center gap-3">
                 {live.servantPortraitUrl ? (
                   <img src={live.servantPortraitUrl} alt={live.servantName} className="w-10 h-10 rounded-full object-cover border-2" style={{ borderColor: accentColor }} />
@@ -226,94 +316,86 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                     <span className="text-sm font-bold text-[#1E0F2B]">{live.servantName}</span>
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#C9A227]" />
                   </div>
-                  <p className="text-xs text-[#8A8378]">
-                    {isLive ? `${live.viewerCount} spectateurs en direct` : "Diffusion à venir"}
+                  <p className="text-xs text-[#8A8378] flex items-center gap-1">
+                    {isLive && <><Users className="w-3 h-3" />{viewerCount} spectateur{viewerCount > 1 ? "s" : ""} en direct</>}
+                    {!isLive && "Diffusion à venir"}
                   </p>
                 </div>
               </div>
 
-              {/* Droite : actions (cœur + partager + enregistrer) */}
               <div className="flex items-center gap-1">
-                {/* Like en cœur (pas de dislike) */}
-                <button
-                  onClick={handleLike}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors"
-                >
-                  <Heart className={`w-4 h-4 ${liked ? "text-[#C9A227] fill-[#C9A227]" : "text-[#1E0F2B]"}`} />
+                {/* Bouton cœur rouge */}
+                <button onClick={handleLike}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors">
+                  <Heart className={`w-4 h-4 ${liked ? "text-red-500 fill-red-500" : "text-[#1E0F2B]"}`} />
                   {likeCount > 0 && <span className="text-xs font-medium text-[#1E0F2B]">{likeCount}</span>}
                 </button>
 
-                {/* Partager */}
-                <button className="flex items-center gap-1.5 px-3 py-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors">
-                  <Share2 className="w-4 h-4 text-[#1E0F2B]" />
-                  <span className="text-xs font-medium text-[#1E0F2B] hidden sm:inline">Partager</span>
-                </button>
+                {/* Partager avec icônes officielles */}
+                <ShareButton url={currentUrl} title={live.title} />
 
                 {/* Enregistrer */}
-                <button
-                  onClick={() => setSaved(!saved)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors"
-                >
+                <button onClick={() => setSaved(!saved)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors">
                   <Bookmark className={`w-4 h-4 ${saved ? "text-[#C9A227] fill-[#C9A227]" : "text-[#1E0F2B]"}`} />
                   <span className="text-xs font-medium text-[#1E0F2B] hidden sm:inline">Enregistrer</span>
                 </button>
 
-                {/* Plus */}
                 <button className="p-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors">
                   <MoreHorizontal className="w-4 h-4 text-[#1E0F2B]" />
                 </button>
               </div>
             </div>
 
-            {/* ─── Description repliable ─── */}
+            {/* Description repliable */}
             <div className="bg-white rounded-xl p-3 border border-[#8A8378]/15 cursor-pointer" onClick={() => setShowDescription(!showDescription)}>
-              {/* Ligne 1 : viewers + date */}
               <div className="flex items-center gap-2 text-xs mb-1">
                 {isLive && (
                   <span className="font-bold text-[#1E0F2B] flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-                    {live.viewerCount} spectateurs en direct
+                    {viewerCount} spectateur{viewerCount > 1 ? "s" : ""} en direct
                   </span>
                 )}
                 <span className="text-[#8A8378]">
                   Diffusée le {new Date(live.startedAt || live.scheduledAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
                 </span>
               </div>
-              {/* Ligne 2 : description */}
               {live.description && (
                 <div className="text-sm text-[#1E0F2B]/80">
-                  <p className={`leading-relaxed ${showDescription ? "" : "line-clamp-2"}`}>
-                    {live.description}
-                  </p>
+                  <p className={`leading-relaxed ${showDescription ? "" : "line-clamp-2"}`}>{live.description}</p>
                   <button className="text-xs text-[#C9A227] font-medium mt-1 flex items-center gap-1">
-                    {showDescription ? (
-                      <><ChevronUp className="w-3 h-3" />Afficher moins</>
-                    ) : (
-                      <><ChevronDown className="w-3 h-3" />...afficher plus</>
-                    )}
+                    {showDescription ? <><ChevronUp className="w-3 h-3" />Afficher moins</> : <><ChevronDown className="w-3 h-3" />...afficher plus</>}
                   </button>
                 </div>
               )}
-
-              {/* Liens plateformes */}
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#8A8378]/10">
                 <span className="text-xs text-[#8A8378]">Regarder sur :</span>
-                {live.youtubeUrl && (
-                  <a href={live.youtubeUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-red-600/10 text-red-600 text-xs font-bold hover:bg-red-600/20 transition-colors">YouTube</a>
-                )}
-                {live.facebookUrl && (
-                  <a href={live.facebookUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-blue-600/10 text-blue-600 text-xs font-bold hover:bg-blue-600/20 transition-colors">Facebook</a>
-                )}
-                {live.tiktokUrl && (
-                  <a href={live.tiktokUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#1E0F2B]/10 text-[#1E0F2B] text-xs font-bold hover:bg-[#1E0F2B]/20 transition-colors">TikTok</a>
-                )}
+                {live.youtubeUrl && <a href={live.youtubeUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-red-600/10 text-red-600 text-xs font-bold hover:bg-red-600/20 transition-colors">YouTube</a>}
+                {live.facebookUrl && <a href={live.facebookUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-blue-600/10 text-blue-600 text-xs font-bold hover:bg-blue-600/20 transition-colors">Facebook</a>}
+                {live.tiktokUrl && <a href={live.tiktokUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#1E0F2B]/10 text-[#1E0F2B] text-xs font-bold hover:bg-[#1E0F2B]/20 transition-colors">TikTok</a>}
               </div>
             </div>
           </div>
 
           {/* ═══ Colonne droite : Chat ═══ */}
           <div className="h-[calc(100vh-180px)] lg:h-auto lg:max-h-[calc(100vh-140px)]">
-            <LiveChat liveId={live.id} isLive={isLive} />
+            {hasJoined ? (
+              <LiveChat liveId={live.id} isLive={isLive} />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full bg-white rounded-xl border border-[#8A8378]/15 p-8">
+                <p className="text-sm text-[#8A8378] text-center mb-4">
+                  Le chat est disponible après avoir rejoint le live
+                </p>
+                {isLive && (
+                  <button
+                    onClick={() => setShowJoinModal(true)}
+                    className="px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+                  >
+                    Rejoindre le live
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -228,6 +228,7 @@ model LiveStream {
 
   servant      Servant   @relation(fields: [servantId], references: [id])
   chatMessages LiveChatMessage[]
+  viewers      LiveViewer[]
 
   @@index([servantId])
   @@index([status])
@@ -256,6 +257,26 @@ model LiveChatMessage {
 
   @@index([liveId, createdAt])
   @@index([type])
+}
+
+// Viewers connectés à un live (pour comptage réel)
+model LiveViewer {
+  id          String   @id @default(cuid())
+  liveId      String
+  sessionId   String   @unique // identifiant unique par session navigateur
+  firstName   String
+  lastName    String?
+  country     String?
+  city        String?
+  contact     String?
+  xpPoints    Int      @default(0)
+  isActive    Boolean  @default(true)
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+
+  live        LiveStream @relation(fields: [liveId], references: [id], onDelete: Cascade)
+
+  @@index([liveId, isActive])
 }
 
 // Configuration des clés RTMP par serviteur (YouTube, Facebook, TikTok, Odysee)

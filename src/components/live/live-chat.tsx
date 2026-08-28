@@ -84,9 +84,19 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
   useEffect(() => {
     const saved = localStorage.getItem("live-chat-username");
     if (saved) { setUserName(saved); setShowNamePrompt(false); }
-    // XP depuis localStorage
-    const xp = localStorage.getItem(`live-xp-${liveId}`);
-    if (xp) setXpPoints(parseInt(xp));
+    // XP réel depuis le viewer en DB
+    const fetchXp = async () => {
+      const sid = localStorage.getItem("live-session-id");
+      if (!sid) return;
+      try {
+        const res = await fetch(`/api/live/${liveId}/viewers`);
+        // XP stocké dans le viewer, on le récupère indirectement
+        // Pour l'instant depuis localStorage, synchronisé à l'envoi de messages
+        const xp = localStorage.getItem(`live-xp-${liveId}`);
+        if (xp) setXpPoints(parseInt(xp));
+      } catch {}
+    };
+    fetchXp();
   }, [liveId]);
 
   const fetchMessages = useCallback(async () => {
@@ -115,14 +125,20 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
     return () => clearInterval(interval);
   }, [isLive, fetchMessages]);
 
+  // Compteur viewers réel depuis l'API
   useEffect(() => {
     if (!isLive) return;
-    setViewerCount(Math.floor(Math.random() * 80) + 20);
-    const interval = setInterval(() => {
-      setViewerCount((prev) => Math.max(10, prev + Math.floor(Math.random() * 7) - 3));
-    }, 5000);
+    const fetchViewers = async () => {
+      try {
+        const res = await fetch(`/api/live/${liveId}/viewers`);
+        const data = await res.json();
+        setViewerCount(data.count || 0);
+      } catch {}
+    };
+    fetchViewers();
+    const interval = setInterval(fetchViewers, 5000);
     return () => clearInterval(interval);
-  }, [isLive]);
+  }, [isLive, liveId]);
 
   const handleScroll = () => {
     const container = messagesContainerRef.current;
@@ -168,10 +184,24 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
       if (res.ok) {
         setInput("");
         fetchMessages();
-        // +1 XP par message
-        const newXp = xpPoints + 1;
-        setXpPoints(newXp);
-        localStorage.setItem(`live-xp-${liveId}`, newXp.toString());
+        // +1 XP via l'API (viewer en DB)
+        const sid = localStorage.getItem("live-session-id");
+        if (sid) {
+          try {
+            const xpRes = await fetch(`/api/live/${liveId}/viewers`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sessionId: sid, xp: 1 }),
+            });
+            if (xpRes.ok) {
+              const xpData = await xpRes.json();
+              if (xpData.xpPoints !== undefined) {
+                setXpPoints(xpData.xpPoints);
+                localStorage.setItem(`live-xp-${liveId}`, xpData.xpPoints.toString());
+              }
+            }
+          } catch {}
+        }
       }
     } catch {} finally { setSending(false); }
   };

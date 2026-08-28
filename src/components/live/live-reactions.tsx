@@ -103,14 +103,15 @@ export function LiveReactions({ liveId, isLive }: LiveReactionsProps) {
 
   return (
     <>
-      {/* ─── Réactions flottantes ─── */}
+      {/* ─── Réactions flottantes — côté droit uniquement (ne cache pas le visage) ─── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
         {floating.map((f) => (
           <div
             key={f.id}
             className="absolute bottom-16 text-2xl md:text-3xl will-change-transform"
             style={{
-              left: `${f.x}%`,
+              right: `${5 + Math.random() * 15}%`,
+              left: "auto",
               animation: "reactionFloat 3.5s ease-out forwards",
             }}
           >
@@ -119,13 +120,13 @@ export function LiveReactions({ liveId, isLive }: LiveReactionsProps) {
         ))}
       </div>
 
-      {/* ─── Barre de réactions (façon YouTube) ─── */}
-      <div className="absolute bottom-20 right-4 z-20 flex items-center gap-1 bg-black/60 backdrop-blur-md rounded-full px-2 py-1.5 border border-white/10">
+      {/* ─── Barre de réactions — positionnée en bas à droite, compacte ─── */}
+      <div className="absolute bottom-3 right-3 z-20 flex items-center gap-0.5 bg-black/60 backdrop-blur-md rounded-full px-1.5 py-1 border border-white/10">
         {REACTION_EMOJIS.map((emoji) => (
           <button
             key={emoji}
             onClick={() => sendReaction(emoji)}
-            className="text-xl hover:scale-125 active:scale-90 transition-transform duration-150 p-0.5"
+            className="text-lg hover:scale-125 active:scale-90 transition-transform duration-150 p-0.5"
             title={`Réagir ${emoji}`}
           >
             {emoji}
@@ -133,7 +134,7 @@ export function LiveReactions({ liveId, isLive }: LiveReactionsProps) {
         ))}
         {/* Compteur burst */}
         {burstCount > 1 && (
-          <span className="ml-1 text-xs font-bold text-[#C9A227] bg-[#C9A227]/20 rounded-full px-2 py-0.5">
+          <span className="ml-1 text-xs font-bold text-[#C9A227] bg-[#C9A227]/20 rounded-full px-1.5 py-0.5">
             ×{burstCount}
           </span>
         )}
