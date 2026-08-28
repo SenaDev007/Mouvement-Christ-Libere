@@ -326,13 +326,14 @@ export function LiveStudioClient({
       let recordingUrl: string | null = null;
       if (recordingBlob && recordingBlob.size > 0) {
         const sizeMB = recordingBlob.size / 1024 / 1024;
-        if (sizeMB <= 4) {
-          // Assez petit pour uploader via API (limite Vercel ~4.5MB)
-          setInfo("Upload du replay en cours...");
-          const formData = new FormData();
-          formData.append("file", recordingBlob, "replay.webm");
-          formData.append("liveId", liveId);
-          try {
+        setInfo(`Upload du replay (${Math.round(sizeMB)}MB)...`);
+
+        try {
+          if (sizeMB <= 4) {
+            // Petit fichier : upload direct via API (FormData)
+            const formData = new FormData();
+            formData.append("file", recordingBlob, "replay.webm");
+            formData.append("liveId", liveId);
             const uploadRes = await fetch(`/api/live/${liveId}/recording`, {
               method: "POST",
               body: formData,
@@ -340,14 +341,42 @@ export function LiveStudioClient({
             if (uploadRes.ok) {
               const data = await uploadRes.json();
               recordingUrl = data.recordingUrl;
-              console.log("[studio] Replay uploadé:", recordingUrl);
+              console.log("[studio] Replay uploadé (API):", recordingUrl);
+            } else {
+              const errData = await uploadRes.json().catch(() => ({}));
+              throw new Error(errData.error || `HTTP ${uploadRes.status}`);
             }
-          } catch (err) {
-            console.error("[studio] Upload replay failed:", err);
+          } else {
+            // Gros fichier : upload direct vers B2 via URL pré-signée
+            // 1. Demander l'URL pré-signée
+            const presignRes = await fetch(`/api/live/${liveId}/presign`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ contentType: "video/webm" }),
+            });
+            if (!presignRes.ok) {
+              const errData = await presignRes.json().catch(() => ({}));
+              throw new Error(errData.error || "Impossible de générer l'URL d'upload");
+            }
+            const { uploadUrl, publicUrl } = await presignRes.json();
+
+            // 2. Upload direct vers B2
+            setInfo(`Upload du replay vers B2 (${Math.round(sizeMB)}MB) — veuillez patienter...`);
+            const uploadRes = await fetch(uploadUrl, {
+              method: "PUT",
+              body: recordingBlob,
+              headers: { "Content-Type": "video/webm" },
+            });
+            if (!uploadRes.ok) {
+              throw new Error(`Upload B2 échoué: HTTP ${uploadRes.status}`);
+            }
+            recordingUrl = publicUrl;
+            console.log("[studio] Replay uploadé (B2 direct):", recordingUrl);
           }
-        } else {
-          // Trop gros pour Vercel — télécharger localement
-          setInfo(`Replay trop volumineux (${Math.round(sizeMB)}MB) — téléchargement local...`);
+        } catch (err) {
+          console.error("[studio] Upload replay failed:", err);
+          // Fallback : téléchargement local
+          setInfo(`Upload échoué — téléchargement local du replay...`);
           const url = URL.createObjectURL(recordingBlob);
           const a = document.createElement("a");
           a.href = url;

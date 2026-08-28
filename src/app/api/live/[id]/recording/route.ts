@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { uploadToB2, generateKey, isB2Configured } from "@/lib/b2";
 
 /**
  * POST /api/live/[id]/recording
@@ -9,12 +10,8 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
  * Upload un replay vidéo (webm) enregistré côté client via MediaRecorder.
  * Le fichier est reçu en multipart/form-data (champ "file").
  *
- * Stockage : Le blob est converti en data URL base64 et stocké dans la colonne
- * videoUrl de la table Video (type TEXT — pas de limite PostgreSQL).
- *
- * Note : Vercel a un FS read-only en production, donc on ne peut pas écrire
- * de fichier. Le base64 en DB fonctionne pour les vidéos < ~4MB (limite body Vercel).
- * Pour les vidéos plus grandes, le client télécharge le fichier localement.
+ * Stockage : Backblaze B2 (compatible S3). URL publique retournée et stockée en DB.
+ * Fallback : si B2 n'est pas configuré, stockage base64 en DB (limite ~4MB).
  */
 export async function POST(
   req: NextRequest,
@@ -35,25 +32,35 @@ export async function POST(
       return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });
     }
 
-    // Vérifier la taille (limite ~4MB pour Vercel body)
-    if (file.size > 4 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "Fichier trop volumineux (max 4MB pour upload auto — téléchargez localement)" },
-        { status: 413 }
-      );
-    }
-
-    // Convertir en data URL base64
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const base64 = buffer.toString("base64");
     const mimeType = file.type || "video/webm";
-    const dataUrl = `data:${mimeType};base64,${base64}`;
+
+    let recordingUrl: string;
+
+    if (isB2Configured()) {
+      // ─── Upload vers Backblaze B2 ───
+      const ext = mimeType.includes("webm") ? "webm" : mimeType.includes("mp4") ? "mp4" : "bin";
+      const key = generateKey("replays", id, ext);
+      recordingUrl = await uploadToB2(key, buffer, mimeType);
+      console.log(`[recording] Uploadé vers B2: ${recordingUrl} (${Math.round(buffer.length / 1024 / 1024)}MB)`);
+    } else {
+      // ─── Fallback : base64 en DB (limite ~4MB Vercel) ───
+      if (buffer.length > 4 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: "Fichier trop volumineux (max 4MB sans B2 — configurez Backblaze B2 pour les gros fichiers)" },
+          { status: 413 }
+        );
+      }
+      const base64 = buffer.toString("base64");
+      recordingUrl = `data:${mimeType};base64,${base64}`;
+      console.log(`[recording] Stocké en base64 (fallback, ${Math.round(buffer.length / 1024)}KB)`);
+    }
 
     // Mettre à jour le live avec le recordingUrl
     await db.liveStream.update({
       where: { id },
-      data: { recordingUrl: dataUrl },
+      data: { recordingUrl },
     });
 
     // Mettre à jour aussi le replay (Video) si il existe déjà
@@ -73,18 +80,22 @@ export async function POST(
       if (existingReplay) {
         await db.video.update({
           where: { id: existingReplay.id },
-          data: { videoUrl: dataUrl },
+          data: { videoUrl: recordingUrl },
         });
       }
     }
 
     return NextResponse.json({
       success: true,
-      recordingUrl: dataUrl,
+      recordingUrl,
       size: Math.round(file.size / 1024),
+      storage: isB2Configured() ? "b2" : "base64",
     });
   } catch (error) {
     console.error("[recording upload] Error:", error);
-    return NextResponse.json({ error: "Erreur upload recording" }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Erreur upload recording" },
+      { status: 500 }
+    );
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { uploadToB2, generateKey, isB2Configured } from "@/lib/b2";
 
 /**
  * POST /api/videos/[id]/upload
@@ -9,8 +10,8 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
  * Upload une vidéo source pour la post-production (replay manuel).
  * Reçoit le fichier en multipart/form-data (champ "file").
  *
- * Stockage : data URL base64 dans la colonne videoUrl (type TEXT).
- * Limite : ~4MB (contrainte Vercel body).
+ * Stockage : Backblaze B2 (compatible S3). URL publique retournée et stockée en DB.
+ * Fallback : si B2 n'est pas configuré, stockage base64 en DB (limite ~4MB).
  */
 export async function POST(
   req: NextRequest,
@@ -35,31 +36,47 @@ export async function POST(
       return NextResponse.json({ error: "Type de fichier non supporté (utilisez MP4, WebM, etc.)" }, { status: 400 });
     }
 
-    if (file.size > 4 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "Fichier trop volumineux (max 4MB — compressez ou raccourcissez la vidéo)" },
-        { status: 413 }
-      );
-    }
-
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const base64 = buffer.toString("base64");
     const mimeType = file.type;
-    const dataUrl = `data:${mimeType};base64,${base64}`;
+
+    let videoUrl: string;
+
+    if (isB2Configured()) {
+      // ─── Upload vers Backblaze B2 ───
+      const ext = mimeType.includes("webm") ? "webm" : mimeType.includes("mp4") ? "mp4" : "bin";
+      const key = generateKey("videos", id, ext);
+      videoUrl = await uploadToB2(key, buffer, mimeType);
+      console.log(`[video upload] Uploadé vers B2: ${videoUrl} (${Math.round(buffer.length / 1024 / 1024)}MB)`);
+    } else {
+      // ─── Fallback : base64 en DB (limite ~4MB Vercel) ───
+      if (buffer.length > 4 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: "Fichier trop volumineux (max 4MB sans B2 — configurez Backblaze B2 pour les gros fichiers)" },
+          { status: 413 }
+        );
+      }
+      const base64 = buffer.toString("base64");
+      videoUrl = `data:${mimeType};base64,${base64}`;
+      console.log(`[video upload] Stocké en base64 (fallback, ${Math.round(buffer.length / 1024)}KB)`);
+    }
 
     await db.video.update({
       where: { id },
-      data: { videoUrl: dataUrl },
+      data: { videoUrl },
     });
 
     return NextResponse.json({
       success: true,
-      videoUrl: dataUrl,
+      videoUrl,
       size: Math.round(file.size / 1024),
+      storage: isB2Configured() ? "b2" : "base64",
     });
   } catch (error) {
     console.error("[video upload] Error:", error);
-    return NextResponse.json({ error: "Erreur upload vidéo" }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Erreur upload vidéo" },
+      { status: 500 }
+    );
   }
 }

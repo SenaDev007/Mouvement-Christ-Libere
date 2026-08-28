@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { uploadToB2, generateKey, isB2Configured } from "@/lib/b2";
 
 /**
  * POST /api/live/[id]/thumbnail
  *
- * Stocke la miniature d'un live directement en DB (base64 data URL).
+ * Stocke la miniature d'un live.
  *
- * On n'écrit PAS sur le système de fichiers car Vercel a un FS en lecture seule
- * en production. Le base64 est stocké dans la colonne thumbnailUrl (type TEXT)
- * et s'affiche directement via <img src="data:image/jpeg;base64,...">.
+ * Stockage : Backblaze B2 (compatible S3). URL publique retournée et stockée en DB.
+ * Fallback : si B2 n'est pas configuré, stockage base64 en DB (data URL).
  *
  * Body: { thumbnail: "data:image/jpeg;base64,..." }
  */
@@ -39,23 +39,41 @@ export async function POST(
       return NextResponse.json({ error: "Format invalide" }, { status: 400 });
     }
 
+    const ext = matches[1] === "jpeg" ? "jpg" : matches[1];
     const base64Data = matches[2];
     const buffer = Buffer.from(base64Data, "base64");
+    const mimeType = `image/${matches[1] === "jpg" ? "jpeg" : matches[1]}`;
 
-    // Limiter à 10MB (l'image compressée côté client fait ~200-300KB)
+    // Limiter à 10MB
     if (buffer.length > 10 * 1024 * 1024) {
       return NextResponse.json({ error: "Image trop lourde (max 10MB)" }, { status: 400 });
     }
 
-    // Stocker le data URL directement en DB (pas d'écriture fichier — Vercel FS read-only)
+    let thumbnailUrl: string;
+
+    if (isB2Configured()) {
+      // ─── Upload vers Backblaze B2 ───
+      const key = generateKey("thumbnails", `live-${id}`, ext);
+      thumbnailUrl = await uploadToB2(key, buffer, mimeType);
+      console.log(`[thumbnail] Uploadé vers B2: ${thumbnailUrl}`);
+    } else {
+      // ─── Fallback : base64 en DB ───
+      thumbnailUrl = thumbnail; // data URL
+      console.log(`[thumbnail] Stocké en base64 (fallback, ${Math.round(buffer.length / 1024)}KB)`);
+    }
+
+    // Stocker l'URL en DB
     await db.liveStream.update({
       where: { id },
-      data: { thumbnailUrl: thumbnail },
+      data: { thumbnailUrl },
     });
 
-    return NextResponse.json({ success: true, thumbnailUrl: thumbnail });
+    return NextResponse.json({ success: true, thumbnailUrl });
   } catch (error) {
     console.error("[thumbnail upload] Error:", error);
-    return NextResponse.json({ error: "Erreur upload" }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Erreur upload" },
+      { status: 500 }
+    );
   }
 }
