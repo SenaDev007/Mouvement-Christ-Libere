@@ -3,11 +3,12 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import {
   Pencil, UserPlus, Crown, Shield, MessageSquare, Users as UsersIcon,
-  Mail, MapPin, Clock, CheckCircle2, AlertCircle, Trash2, Crown as CrownIcon,
+  Mail, MapPin, Clock, CheckCircle2, AlertCircle, Trash2, Crown as CrownIcon, Search,
 } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { flagFromCountryCode } from "@/lib/data/flags";
+import { EditUserModal } from "@/components/admin/edit-user-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -115,10 +116,29 @@ function decodeSessionUser(token: string): { userId: string; role: string } | nu
   }
 }
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; role?: string }>;
+}) {
+  const { q, role: roleFilter } = await searchParams;
+
+  // Construire le filtre de recherche
+  const where: Record<string, unknown> = {};
+  if (q && q.trim()) {
+    where.OR = [
+      { name: { contains: q.trim(), mode: "insensitive" } },
+      { email: { contains: q.trim(), mode: "insensitive" } },
+    ];
+  }
+  if (roleFilter && roleFilter !== "all") {
+    where.role = roleFilter;
+  }
+
   const users = await db.user.findMany({
+    where,
     orderBy: [{ role: "asc" }, { createdAt: "desc" }],
-    take: 100,
+    take: 200,
   });
 
   // Récupération du rôle de l'admin courant
@@ -222,27 +242,32 @@ export default async function AdminUsersPage() {
         </div>
       )}
 
-      {/* Onglets filtres (visuel — le filtrage se fera côté client via un composant dédié si besoin) */}
+      {/* Barre de recherche */}
+      <form className="relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+        <input
+          type="text"
+          name="q"
+          defaultValue={q || ""}
+          placeholder="Rechercher par nom ou email..."
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-white text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+        />
+      </form>
+
+      {/* Onglets filtres */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Filtrer:</span>
+        <Link href="/admin/users" className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${!roleFilter || roleFilter === "all" ? "bg-[#1E0F2B] text-white border-[#1E0F2B]" : "bg-[#2A0E3D]/5 text-[#8A8378] border-[#8A8378]/20 hover:border-[#C9A227]/40"}`}>Tous</Link>
         {roleGroups.map((g) => (
-          <span
+          <Link
             key={g.id}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border"
-            style={{
-              borderColor: `${g.color}30`,
-              backgroundColor: `${g.color}08`,
-              color: g.color,
-            }}
+            href={`/admin/users?role=${g.id}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${roleFilter === g.id ? "text-white border-transparent" : "hover:border-[#C9A227]/40"}`}
+            style={roleFilter === g.id ? { backgroundColor: g.color, borderColor: g.color } : { borderColor: `${g.color}30`, backgroundColor: `${g.color}08`, color: g.color }}
           >
             {g.label}
-            <span
-              className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white"
-              style={{ backgroundColor: g.color }}
-            >
-              {g.count}
-            </span>
-          </span>
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: g.color }}>{g.count}</span>
+          </Link>
         ))}
       </div>
 
@@ -323,13 +348,12 @@ export default async function AdminUsersPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1  flex-shrink-0">
-                  <Link
-                    href={`/admin/users/${u.id}/edit`}
-                    className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
-                    aria-label="Modifier"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Link>
+                  <EditUserModal
+                    userId={u.id}
+                    currentRole={u.role}
+                    isVerified={u.isVerified}
+                    isSuperAdmin={isSuperAdmin}
+                  />
                   {u.role !== "SUPER_ADMIN" && (
                     <DeleteButton entity="users" id={u.id} />
                   )}

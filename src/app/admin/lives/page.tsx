@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { Plus, Pencil, Radio, Calendar, Clock, Video, Crown, ExternalLink } from "lucide-react";
+import { Plus, Radio, Calendar, Clock, Video, Crown, ExternalLink } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { NewLiveButton } from "@/components/admin/new-live-modal";
+import { EditLiveModal } from "@/components/admin/edit-live-modal";
 import { LiveQuickActions } from "@/components/admin/live-quick-actions";
 
 export const dynamic = "force-dynamic";
@@ -163,13 +164,7 @@ export default async function AdminLivesPage() {
                       </Link>
                     )}
                     <LiveQuickActions liveId={l.id} status={l.status} />
-                    <Link
-                      href={`/admin/lives/${l.id}/edit`}
-                      className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
-                      aria-label="Modifier"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Link>
+                    <EditLiveModal liveId={l.id} servants={servants} />
                     <DeleteButton entity="lives" id={l.id} />
                   </div>
                 </div>
