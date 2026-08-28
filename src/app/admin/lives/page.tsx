@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import { Plus, Pencil, Radio, Calendar, Clock, Video, Crown, ExternalLink } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
-import { NewLiveButton } from "@/components/admin/create-buttons";
+import { NewLiveButton } from "@/components/admin/new-live-modal";
 import { LiveQuickActions } from "@/components/admin/live-quick-actions";
 
 export const dynamic = "force-dynamic";

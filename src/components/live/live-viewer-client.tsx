@@ -332,6 +332,12 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               {/* Live programmé */}
               {live.status === "SCHEDULED" && !isLive && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826]">
+                  {/* Miniature en fond si disponible */}
+                  {live.thumbnailUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={live.thumbnailUrl} alt={live.title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#2A0E3D] via-[#2A0E3D]/60 to-[#2A0E3D]/40" />
                   <div className="text-center text-[#FAF6EF] p-8 relative z-10">
                     <Calendar className="w-12 h-12 text-[#C9A227] mx-auto mb-4" />
                     <p className="text-xs uppercase tracking-[0.2em] font-bold text-[#C9A227] mb-2">Live programmé</p>

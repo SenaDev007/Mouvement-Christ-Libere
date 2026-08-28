@@ -8,6 +8,7 @@ import {
   ChevronRight, Sparkles, BookOpen, FileText, Video, Users,
   Calendar, MessageSquare, Heart, ArrowRight,
 } from "lucide-react";
+import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 
 const VERSES = [
   "Et Hénoch marcha avec Dieu", "Genèse 5:24",
@@ -180,6 +181,9 @@ export default function Home() {
             </Link>
           </motion.div>
         </div>
+
+        {/* Carte flottante du prochain live (miniature) */}
+        <UpcomingLiveFloat />
       </section>
 
       {/* Séparateur oblique ascendant (gauche→droite) entre hero et stats */}
