@@ -16,6 +16,8 @@ import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 interface VideoItem {
   id: string;
   youtubeId: string;
+  videoUrl?: string | null;
+  hlsUrl?: string | null;
   title: string;
   description: string;
   duration: string;
@@ -25,6 +27,8 @@ interface VideoItem {
   servant: "pam" | "kongo";
   servantName: string;
   thumbnailUrl?: string;
+  isLive?: boolean;
+  hasNativeVideo?: boolean;
 }
 
 // Ordre fixe des catégories
@@ -402,15 +406,40 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
               <span className="text-xs uppercase tracking-[0.15em] font-bold text-[#C9A227]">{video.category}</span>
             </div>
 
-            {/* Lecteur YouTube */}
+            {/* Lecteur vidéo : YouTube iframe SI youtubeId, sinon lecteur natif <video> */}
             <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-2xl" style={{ aspectRatio: "16 / 9" }}>
-              <iframe
-                src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-                title={video.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full"
-              />
+              {video.youtubeId ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+                  title={video.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
+              ) : video.videoUrl ? (
+                <video
+                  src={video.videoUrl}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="absolute inset-0 w-full h-full"
+                  poster={video.thumbnailUrl || undefined}
+                >
+                  Votre navigateur ne supporte pas la lecture vidéo.
+                </video>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+                  {video.thumbnailUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={video.thumbnailUrl} alt={video.title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                  )}
+                  <div className="relative z-10">
+                    <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
+                    <p className="text-sm font-bold text-[#FAF6EF] mb-1">Replay en cours de traitement</p>
+                    <p className="text-xs text-[#FAF6EF]/50">La vidéo sera disponible prochainement</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Titre vidéo */}
@@ -491,7 +520,13 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
             {recommended.map((rec) => (
               <button key={rec.id} onClick={() => onSelectVideo(rec)} className="group flex gap-2.5 w-full text-left hover:bg-[#2A0E3D]/5 rounded-lg p-1.5 transition-colors">
                 <div className="relative w-40 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-[#1A0826]">
-                  <img src={rec.thumbnailUrl || `https://img.youtube.com/vi/${rec.youtubeId}/mqdefault.jpg`} alt={rec.title} className="w-full h-full object-cover" loading="lazy" />
+                  <img
+                    src={rec.thumbnailUrl || (rec.youtubeId ? `https://img.youtube.com/vi/${rec.youtubeId}/mqdefault.jpg` : "/logo-christ-libere.png")}
+                    alt={rec.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).src = "/logo-christ-libere.png"; }}
+                    loading="lazy"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-[#1E0F2B] line-clamp-2 group-hover:text-[#C9A227] transition-colors leading-snug mb-1">{rec.title}</p>
@@ -515,7 +550,13 @@ function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () =>
     <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.3 }}>
       <button onClick={onClick} className="group block w-full text-left">
         <div className="relative aspect-video rounded-xl overflow-hidden bg-[#1A0826] mb-2.5">
-          <img src={video.thumbnailUrl || `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+          <img
+            src={video.thumbnailUrl || (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg` : "/logo-christ-libere.png")}
+            alt={video.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => { (e.target as HTMLImageElement).src = "/logo-christ-libere.png"; }}
+            loading="lazy"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="flex items-center justify-center w-11 h-11 rounded-full bg-[#C9A227] shadow-lg">

@@ -55,6 +55,7 @@ export async function GET(
         content: m.content,
         type: m.type,
         emoji: m.emoji,
+        likeCount: m.likeCount,
         createdAt: m.createdAt.toISOString(),
       })),
     });
@@ -114,6 +115,7 @@ export async function POST(
         content: message.content,
         type: message.type,
         emoji: message.emoji,
+        likeCount: message.likeCount,
         createdAt: message.createdAt.toISOString(),
       },
     });

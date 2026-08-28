@@ -70,6 +70,18 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Nettoyer les messages de chat du live précédent (s'il y en avait)
+    // pour éviter que les anciens commentaires réapparaissent sur la nouvelle session.
+    await db.liveChatMessage.deleteMany({
+      where: { liveId },
+    });
+
+    // Réinitialiser le compteur de viewers
+    await db.liveViewer.updateMany({
+      where: { liveId, isActive: true },
+      data: { isActive: false, leftAt: new Date() },
+    });
+
     // Démarrer le multistreaming RTMP si activé
     const egressIds: string[] = [];
     if (live.multistreamEnabled && live.servant.streamConfig) {

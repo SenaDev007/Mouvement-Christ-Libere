@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import {
   Scissors, Upload, Download, Play, Pause, SkipBack, SkipForward,
-  Image as ImageIcon, Type, Music, Film, Plus, Trash2, Loader2,
-  ChevronLeft, ChevronRight, Layers,
+  Image as ImageIcon, Type, Film, Plus, Trash2, Loader2,
+  Layers, Video as VideoIcon,
 } from "lucide-react";
 
 interface PostProductionProps {
@@ -18,23 +18,12 @@ interface TimelineClip {
   id: string;
   type: "intro" | "main" | "outro" | "image" | "text";
   label: string;
-  duration: number; // secondes
+  duration: number;
   src?: string;
   text?: string;
   color: string;
 }
 
-/**
- * Post-production façon CapCut.
- * Permet de :
- * - Trimmer le replay (couper début/fin)
- * - Ajouter un teaser intro (upload vidéo)
- * - Ajouter un teaser outro (upload vidéo)
- * - Ajouter des images d'overlay
- * - Ajouter du texte
- * - Changer la miniature
- * - Timeline visuelle avec clips
- */
 export function PostProduction({ videoId, videoUrl, title, servantName }: PostProductionProps) {
   const [timeline, setTimeline] = useState<TimelineClip[]>([
     { id: "main", type: "main", label: "Replay principal", duration: 0, color: "#2A0E3D" },
@@ -52,22 +41,18 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
-  // Charger la vidéo et sa durée
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !videoUrl) return;
-
     const onLoadedMetadata = () => {
       setTrimEnd(video.duration);
       setTotalDuration(video.duration);
       setTimeline((prev) => prev.map((clip) => clip.type === "main" ? { ...clip, duration: video.duration } : clip));
     };
-
     video.addEventListener("loadedmetadata", onLoadedMetadata);
     return () => video.removeEventListener("loadedmetadata", onLoadedMetadata);
   }, [videoUrl]);
 
-  // Play/pause
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
@@ -75,7 +60,6 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
     else { video.pause(); setIsPlaying(false); }
   };
 
-  // Seek
   const handleSeek = (time: number) => {
     const video = videoRef.current;
     if (!video) return;
@@ -83,7 +67,6 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
     setCurrentTime(time);
   };
 
-  // Upload intro/outro
   const handleUploadClip = (type: "intro" | "outro") => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -94,18 +77,13 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
       video.src = src;
       video.onloadedmetadata = () => {
         const newClip: TimelineClip = {
-          id: `${type}-${Date.now()}`,
-          type,
+          id: `${type}-${Date.now()}`, type,
           label: type === "intro" ? "Teaser Intro" : "Teaser Outro",
-          duration: video.duration,
-          src,
+          duration: video.duration, src,
           color: type === "intro" ? "#C9A227" : "#8C5FA8",
         };
-        if (type === "intro") {
-          setTimeline((prev) => [newClip, ...prev]);
-        } else {
-          setTimeline((prev) => [...prev, newClip]);
-        }
+        if (type === "intro") setTimeline((prev) => [newClip, ...prev]);
+        else setTimeline((prev) => [...prev, newClip]);
         setTotalDuration((prev) => prev + video.duration);
       };
     };
@@ -113,19 +91,15 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Upload thumbnail
   const handleThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
-      setThumbnail(event.target?.result as string);
-    };
+    reader.onload = (event) => { setThumbnail(event.target?.result as string); };
     reader.readAsDataURL(file);
     if (thumbnailInputRef.current) thumbnailInputRef.current.value = "";
   };
 
-  // Delete clip
   const deleteClip = (id: string) => {
     const clip = timeline.find((c) => c.id === id);
     if (clip && clip.type !== "main") {
@@ -134,7 +108,6 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
     }
   };
 
-  // Export réel via API FFmpeg
   const [exportProgress, setExportProgress] = useState<string[]>([]);
   const [exportError, setExportError] = useState("");
 
@@ -142,12 +115,9 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
     setExporting(true);
     setExportError("");
     setExportProgress(["Initialisation du rendu..."]);
-
     try {
-      // Préparer les URLs des teasers
       const introClip = timeline.find((c) => c.type === "intro");
       const outroClip = timeline.find((c) => c.type === "outro");
-
       const res = await fetch(`/api/videos/${videoId}/render`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,20 +130,10 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
           title: title,
         }),
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Erreur de rendu");
-      }
-
+      if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Erreur de rendu"); }
       const data = await res.json();
       setExportProgress(data.steps || ["Terminé"]);
-
-      // Mettre à jour l'UI
-      if (data.videoUrl) {
-        // Recharger pour voir la vidéo mise à jour
-        setTimeout(() => window.location.reload(), 2000);
-      }
+      if (data.videoUrl) setTimeout(() => window.location.reload(), 2000);
     } catch (err) {
       setExportError(err instanceof Error ? err.message : "Erreur");
     } finally {
@@ -188,44 +148,36 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
   };
 
   return (
-    <div className="bg-[#0f0f0f] text-white min-h-screen">
-      {/* ═══ Header ═══ */}
-      <div className="border-b border-white/10 px-6 py-4">
+    <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+      {/* Header */}
+      <div className="border-b border-[#8A8378]/15 px-6 py-4 bg-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <Film className="w-5 h-5 text-[#C9A227]" />
-              Post-production
+            <h1 className="text-xl font-bold flex items-center gap-2 text-[#1E0F2B]">
+              <Film className="w-5 h-5 text-[#C9A227]" />Post-production
             </h1>
-            <p className="text-xs text-white/50 mt-1">{title} — {servantName}</p>
+            <p className="text-xs text-[#8A8378] mt-1">{title} — {servantName}</p>
           </div>
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40"
-          >
+          <button onClick={handleExport} disabled={exporting}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 shadow-md">
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {exporting ? "Rendu en cours..." : "Exporter"}
           </button>
         </div>
       </div>
 
-      {/* Progress export */}
       {(exporting || exportProgress.length > 0 || exportError) && (
         <div className="px-6 pb-4">
-          <div className={`rounded-xl p-4 ${exportError ? "bg-red-900/30 border border-red-700/40" : "bg-[#2A0E3D]/30 border border-[#C9A227]/20"}`}>
+          <div className={`rounded-xl p-4 ${exportError ? "bg-red-50 border border-red-200" : "bg-[#2A0E3D]/5 border border-[#C9A227]/20"}`}>
             {exportError ? (
-              <p className="text-sm text-red-300">❌ {exportError}</p>
+              <p className="text-sm text-red-700">✗ {exportError}</p>
             ) : (
               <>
-                <p className="text-xs font-bold text-[#C9A227] uppercase tracking-wider mb-2">
-                  {exporting ? "Rendu en cours..." : "✅ Rendu terminé"}
-                </p>
+                <p className="text-xs font-bold text-[#C9A227] uppercase tracking-wider mb-2">{exporting ? "Rendu en cours..." : "✓ Rendu terminé"}</p>
                 <ul className="space-y-1">
                   {exportProgress.map((step, i) => (
-                    <li key={i} className="text-xs text-white/70 flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227]" />
-                      {step}
+                    <li key={i} className="text-xs text-[#1E0F2B]/70 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227]" />{step}
                     </li>
                   ))}
                 </ul>
@@ -236,25 +188,20 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
       )}
 
       <div className="grid lg:grid-cols-[1fr_320px] gap-4 p-4">
-        {/* ═══ Colonne gauche : Preview + Timeline ═══ */}
         <div className="space-y-4">
-          {/* Preview vidéo */}
-          <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
+          {/* Preview */}
+          <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
             {videoUrl ? (
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                className="w-full h-full object-contain"
+              <video ref={videoRef} src={videoUrl} className="w-full h-full object-contain"
                 onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                onEnded={() => setIsPlaying(false)}
-              />
+                onEnded={() => setIsPlaying(false)} />
             ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-white/40">Aucune vidéo source</p>
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+                <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
+                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Aucune vidéo source</p>
+                <p className="text-xs text-[#FAF6EF]/50 max-w-sm">Le replay n'a pas encore été traité. Vous pouvez ajouter une intro/outro et exporter pour générer la vidéo finale.</p>
               </div>
             )}
-
-            {/* Overlay thumbnail preview */}
             {thumbnail && activeTab === "thumbnail" && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -263,215 +210,155 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
             )}
           </div>
 
-          {/* Contrôles lecture */}
-          <div className="flex items-center justify-center gap-3 bg-white/5 rounded-xl p-3">
-            <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-white/10">
+          {/* Controls */}
+          <div className="flex items-center justify-center gap-3 bg-white rounded-xl p-3 border border-[#8A8378]/15">
+            <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B] transition-colors" disabled={!videoUrl}>
               <SkipBack className="w-5 h-5" />
             </button>
-            <button onClick={togglePlay} className="p-3 rounded-full bg-[#C9A227] text-[#1E0F2B]">
+            <button onClick={togglePlay} className="p-3 rounded-full bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40" disabled={!videoUrl}>
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
-            <button onClick={() => handleSeek(Math.min(trimEnd, currentTime + 10))} className="p-2 rounded-lg hover:bg-white/10">
+            <button onClick={() => handleSeek(Math.min(trimEnd, currentTime + 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B] transition-colors" disabled={!videoUrl}>
               <SkipForward className="w-5 h-5" />
             </button>
-            <span className="text-xs text-white/60 ml-2">
-              {formatTime(currentTime)} / {formatTime(totalDuration)}
-            </span>
+            <span className="text-xs text-[#8A8378] ml-2">{formatTime(currentTime)} / {formatTime(totalDuration)}</span>
           </div>
 
-          {/* Timeline visuelle (façon CapCut) */}
-          <div className="bg-white/5 rounded-xl p-4">
+          {/* Timeline */}
+          <div className="bg-white rounded-xl p-4 border border-[#8A8378]/15">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-[#C9A227]" />
-              <span className="text-xs font-bold uppercase tracking-wider">Timeline</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#1E0F2B]">Timeline</span>
             </div>
-
-            {/* Barre timeline */}
-            <div className="relative h-16 bg-black/30 rounded-lg overflow-hidden flex">
+            <div className="relative h-16 bg-[#2A0E3D]/10 rounded-lg overflow-hidden flex">
               {timeline.map((clip) => {
-                const widthPercent = (clip.duration / totalDuration) * 100;
+                const widthPercent = totalDuration > 0 ? (clip.duration / totalDuration) * 100 : 100;
                 return (
-                  <div
-                    key={clip.id}
-                    className="relative h-full flex items-center justify-center text-xs font-bold text-white border-r border-black/30 group"
-                    style={{ width: `${widthPercent}%`, backgroundColor: clip.color }}
-                  >
+                  <div key={clip.id} className="relative h-full flex items-center justify-center text-xs font-bold text-white border-r border-black/30 group"
+                    style={{ width: `${widthPercent}%`, backgroundColor: clip.color }}>
                     <span className="px-2 truncate">{clip.label}</span>
                     <span className="absolute bottom-1 right-1 text-[9px] text-white/60">{formatTime(clip.duration)}</span>
                     {clip.type !== "main" && (
-                      <button
-                        onClick={() => deleteClip(clip.id)}
-                        className="absolute top-1 right-1 p-0.5 rounded bg-red-600/80 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
+                      <button onClick={() => deleteClip(clip.id)} className="absolute top-1 right-1 p-0.5 rounded bg-red-600/80 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Trash2 className="w-2.5 h-2.5" />
                       </button>
                     )}
                   </div>
                 );
               })}
-
-              {/* Curseur de lecture */}
-              <div
-                className="absolute top-0 bottom-0 w-0.5 bg-[#C9A227] pointer-events-none"
-                style={{ left: `${(currentTime / totalDuration) * 100}%` }}
-              >
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#C9A227]" />
-              </div>
-
-              {/* Zones trim (rouge semi-transparent) */}
-              <div
-                className="absolute top-0 bottom-0 left-0 bg-red-900/40 pointer-events-none"
-                style={{ width: `${(trimStart / totalDuration) * 100}%` }}
-              />
-              <div
-                className="absolute top-0 bottom-0 right-0 bg-red-900/40 pointer-events-none"
-                style={{ width: `${((totalDuration - trimEnd) / totalDuration) * 100}%` }}
-              />
+              {totalDuration > 0 && (
+                <div className="absolute top-0 bottom-0 w-0.5 bg-[#C9A227] pointer-events-none" style={{ left: `${(currentTime / totalDuration) * 100}%` }}>
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#C9A227]" />
+                </div>
+              )}
+              {totalDuration > 0 && (
+                <>
+                  <div className="absolute top-0 bottom-0 left-0 bg-red-900/30 pointer-events-none" style={{ width: `${(trimStart / totalDuration) * 100}%` }} />
+                  <div className="absolute top-0 bottom-0 right-0 bg-red-900/30 pointer-events-none" style={{ width: `${((totalDuration - trimEnd) / totalDuration) * 100}%` }} />
+                </>
+              )}
             </div>
-
-            {/* Handles trim */}
             <div className="flex items-center gap-4 mt-3">
               <div className="flex-1">
-                <label className="text-[10px] text-white/50 uppercase">Début: {formatTime(trimStart)}</label>
-                <input
-                  type="range" min="0" max={totalDuration} step="0.1"
-                  value={trimStart}
+                <label className="text-[10px] text-[#8A8378] uppercase font-bold">Début : {formatTime(trimStart)}</label>
+                <input type="range" min="0" max={totalDuration} step="0.1" value={trimStart}
                   onChange={(e) => setTrimStart(Math.min(parseFloat(e.target.value), trimEnd))}
-                  className="w-full accent-[#C9A227]"
-                />
+                  className="w-full accent-[#C9A227]" disabled={!videoUrl} />
               </div>
               <div className="flex-1">
-                <label className="text-[10px] text-white/50 uppercase">Fin: {formatTime(trimEnd)}</label>
-                <input
-                  type="range" min="0" max={totalDuration} step="0.1"
-                  value={trimEnd}
+                <label className="text-[10px] text-[#8A8378] uppercase font-bold">Fin : {formatTime(trimEnd)}</label>
+                <input type="range" min="0" max={totalDuration} step="0.1" value={trimEnd}
                   onChange={(e) => setTrimEnd(Math.max(parseFloat(e.target.value), trimStart))}
-                  className="w-full accent-[#C9A227]"
-                />
+                  className="w-full accent-[#C9A227]" disabled={!videoUrl} />
               </div>
             </div>
           </div>
         </div>
 
-        {/* ═══ Colonne droite : Tabs outils ═══ */}
+        {/* Tools */}
         <div className="space-y-3">
-          {/* Tabs */}
-          <div className="flex gap-1 bg-white/5 rounded-xl p-1">
-            <button onClick={() => setActiveTab("trim")}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "trim" ? "bg-white/10 text-white" : "text-white/50"}`}>
+          <div className="flex gap-1 bg-white rounded-xl p-1 border border-[#8A8378]/15">
+            <button onClick={() => setActiveTab("trim")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "trim" ? "bg-[#2A0E3D] text-white" : "text-[#8A8378] hover:text-[#1E0F2B]"}`}>
               <Scissors className="w-3.5 h-3.5 inline" />
             </button>
-            <button onClick={() => setActiveTab("intro-outro")}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "intro-outro" ? "bg-white/10 text-white" : "text-white/50"}`}>
+            <button onClick={() => setActiveTab("intro-outro")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "intro-outro" ? "bg-[#2A0E3D] text-white" : "text-[#8A8378] hover:text-[#1E0F2B]"}`}>
               <Film className="w-3.5 h-3.5 inline" />
             </button>
-            <button onClick={() => setActiveTab("overlay")}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "overlay" ? "bg-white/10 text-white" : "text-white/50"}`}>
+            <button onClick={() => setActiveTab("overlay")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "overlay" ? "bg-[#2A0E3D] text-white" : "text-[#8A8378] hover:text-[#1E0F2B]"}`}>
               <ImageIcon className="w-3.5 h-3.5 inline" />
             </button>
-            <button onClick={() => setActiveTab("thumbnail")}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "thumbnail" ? "bg-white/10 text-white" : "text-white/50"}`}>
+            <button onClick={() => setActiveTab("thumbnail")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "thumbnail" ? "bg-[#2A0E3D] text-white" : "text-[#8A8378] hover:text-[#1E0F2B]"}`}>
               <Type className="w-3.5 h-3.5 inline" />
             </button>
           </div>
 
-          {/* Tab Trim */}
           {activeTab === "trim" && (
-            <div className="bg-white/5 rounded-xl p-4 space-y-3">
-              <h3 className="text-xs uppercase tracking-wider font-bold text-white/50">Découpage</h3>
-              <p className="text-xs text-white/60">Ajustez le début et la fin du replay. Les zones rouges sur la timeline indiquent les parties qui seront supprimées.</p>
+            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A8378]/15">
+              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Découpage</h3>
+              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">Ajustez le début et la fin du replay. Les zones rouges sur la timeline indiquent les parties qui seront supprimées.</p>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setTrimStart(currentTime)}
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#C9A227] text-xs font-bold hover:bg-[#C9A227]/30"
-                >
-                  Définir début
-                </button>
-                <button
-                  onClick={() => setTrimEnd(currentTime)}
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#C9A227] text-xs font-bold hover:bg-[#C9A227]/30"
-                >
-                  Définir fin
-                </button>
+                <button onClick={() => setTrimStart(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors" disabled={!videoUrl}>Définir début</button>
+                <button onClick={() => setTrimEnd(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors" disabled={!videoUrl}>Définir fin</button>
               </div>
-              <div className="px-3 py-2 rounded-lg bg-black/30">
-                <p className="text-xs text-white/60">Durée finale: <span className="font-bold text-white">{formatTime(trimEnd - trimStart)}</span></p>
-                <p className="text-xs text-white/40">Supprimé: {formatTime(trimStart)} au début + {formatTime(totalDuration - trimEnd)} à la fin</p>
+              <div className="px-3 py-2 rounded-lg bg-[#2A0E3D]/5">
+                <p className="text-xs text-[#1E0F2B]/70">Durée finale : <span className="font-bold text-[#1E0F2B]">{formatTime(trimEnd - trimStart)}</span></p>
+                <p className="text-xs text-[#8A8378]">Supprimé : {formatTime(trimStart)} au début + {formatTime(totalDuration - trimEnd)} à la fin</p>
               </div>
             </div>
           )}
 
-          {/* Tab Intro/Outro */}
           {activeTab === "intro-outro" && (
-            <div className="bg-white/5 rounded-xl p-4 space-y-3">
-              <h3 className="text-xs uppercase tracking-wider font-bold text-white/50">Teaser Intro / Outro</h3>
-              <p className="text-xs text-white/60">Ajoutez une vidéo d'intro et d'outro qui seront concaténées avec le replay.</p>
-
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3 rounded-xl border-2 border-dashed border-white/20 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-white/60 hover:text-[#C9A227]"
-              >
-                <Upload className="w-4 h-4" />
-                Uploader un teaser
+            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A8378]/15">
+              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Teaser Intro / Outro</h3>
+              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">Ajoutez une vidéo d'intro et d'outro qui seront concaténées avec le replay.</p>
+              <button onClick={() => fileInputRef.current?.click()}
+                className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+                <Upload className="w-4 h-4" />Uploader un teaser
               </button>
-              <input ref={fileInputRef} type="file" accept="video/*" className="hidden"
-                onChange={(e) => { handleUploadClip("intro")(e); }} />
-
+              <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={(e) => { handleUploadClip("intro")(e); }} />
               <div className="space-y-2">
                 {timeline.filter((c) => c.type === "intro" || c.type === "outro").map((clip) => (
-                  <div key={clip.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/30">
+                  <div key={clip.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#2A0E3D]/5">
                     <Film className="w-3.5 h-3.5" style={{ color: clip.color }} />
-                    <span className="text-xs flex-1 truncate">{clip.label}</span>
-                    <span className="text-[10px] text-white/40">{formatTime(clip.duration)}</span>
-                    <button onClick={() => deleteClip(clip.id)} className="p-1 rounded hover:bg-red-600/20 text-red-400">
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    <span className="text-xs flex-1 truncate text-[#1E0F2B]">{clip.label}</span>
+                    <span className="text-[10px] text-[#8A8378]">{formatTime(clip.duration)}</span>
+                    <button onClick={() => deleteClip(clip.id)} className="p-1 rounded hover:bg-red-600/20 text-red-500"><Trash2 className="w-3 h-3" /></button>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Tab Overlay */}
           {activeTab === "overlay" && (
-            <div className="bg-white/5 rounded-xl p-4 space-y-3">
-              <h3 className="text-xs uppercase tracking-wider font-bold text-white/50">Images & Texte</h3>
-              <p className="text-xs text-white/60">Ajoutez des images ou du texte par-dessus la vidéo.</p>
-              <button className="w-full py-3 rounded-xl border-2 border-dashed border-white/20 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-white/60 hover:text-[#C9A227]">
-                <Plus className="w-4 h-4" />
-                Ajouter une image
+            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A8378]/15">
+              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Images & Texte</h3>
+              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">Ajoutez des images ou du texte par-dessus la vidéo.</p>
+              <button className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+                <Plus className="w-4 h-4" />Ajouter une image
               </button>
-              <button className="w-full py-3 rounded-xl border-2 border-dashed border-white/20 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-white/60 hover:text-[#C9A227]">
-                <Type className="w-4 h-4" />
-                Ajouter du texte
+              <button className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+                <Type className="w-4 h-4" />Ajouter du texte
               </button>
-              <p className="text-[10px] text-white/30 italic">Bientôt disponible — nécessite FFmpeg serveur</p>
+              <p className="text-[10px] text-[#8A8378] italic">Bientôt disponible — nécessite FFmpeg serveur</p>
             </div>
           )}
 
-          {/* Tab Thumbnail */}
           {activeTab === "thumbnail" && (
-            <div className="bg-white/5 rounded-xl p-4 space-y-3">
-              <h3 className="text-xs uppercase tracking-wider font-bold text-white/50">Miniature</h3>
-              <p className="text-xs text-white/60">Changez la miniature affichée dans le module vidéo.</p>
+            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A8378]/15">
+              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Miniature</h3>
+              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">Changez la miniature affichée dans le module vidéo.</p>
               {thumbnail ? (
                 <div className="relative rounded-xl overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={thumbnail} alt="miniature" className="w-full aspect-video object-cover" />
-                  <button
-                    onClick={() => setThumbnail(null)}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-600/90 text-white"
-                  >
+                  <button onClick={() => setThumbnail(null)} className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-600/90 text-white hover:bg-red-600 transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ) : (
-                <button
-                  onClick={() => thumbnailInputRef.current?.click()}
-                  className="w-full aspect-video rounded-xl border-2 border-dashed border-white/20 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-white/60"
-                >
-                  <Upload className="w-4 h-4" />
-                  Uploader une miniature
+                <button onClick={() => thumbnailInputRef.current?.click()}
+                  className="w-full aspect-video rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+                  <Upload className="w-4 h-4" />Uploader une miniature
                 </button>
               )}
               <input ref={thumbnailInputRef} type="file" accept="image/*" className="hidden" onChange={handleThumbnailUpload} />

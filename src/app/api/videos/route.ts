@@ -21,12 +21,23 @@ export async function GET(request: NextRequest) {
       include: { servant: true },
     });
 
-    // Extraire le youtubeId de videoUrl
+    // Extraire le youtubeId de videoUrl (si c'est une URL YouTube)
     const formatted = videos.map((v) => {
-      const youtubeId = v.videoUrl?.match(/v=([a-zA-Z0-9_-]{11})/)?.[1] || "";
+      const youtubeId = v.videoUrl?.match(/v=([a-zA-Z0-9_-]{11})/)?.[1]
+        || v.videoUrl?.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)?.[1]
+        || "";
+      // Détecter si la vidéo a une source lisible (mp4 local, HLS, ou YouTube)
+      const hasNativeVideo = !!v.videoUrl && (
+        v.videoUrl.endsWith(".mp4")
+        || v.videoUrl.startsWith("/rendered-videos/")
+        || v.videoUrl.startsWith("data:video")
+        || v.videoUrl.startsWith("http")
+      ) && !youtubeId;
       return {
         id: v.id,
         youtubeId,
+        videoUrl: v.videoUrl,
+        hlsUrl: v.hlsUrl,
         title: v.title,
         description: v.description,
         duration: v.duration || "",
@@ -36,6 +47,8 @@ export async function GET(request: NextRequest) {
         servant: v.servant.code,
         servantName: v.servant.shortName,
         thumbnailUrl: v.thumbnailUrl || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : ""),
+        isLive: v.isLive,
+        hasNativeVideo,
       };
     });
 

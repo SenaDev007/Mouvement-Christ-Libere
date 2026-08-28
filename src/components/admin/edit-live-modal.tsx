@@ -27,6 +27,7 @@ export function EditLiveModal({ liveId, servants }: EditLiveModalProps) {
     streamToYoutube: true,
     streamToFacebook: false,
     streamToTiktok: false,
+    streamToInstagram: false,
     multistreamEnabled: true,
   });
 
@@ -54,6 +55,7 @@ export function EditLiveModal({ liveId, servants }: EditLiveModalProps) {
             streamToYoutube: live.streamToYoutube ?? true,
             streamToFacebook: live.streamToFacebook ?? false,
             streamToTiktok: live.streamToTiktok ?? false,
+            streamToInstagram: live.streamToInstagram ?? false,
             multistreamEnabled: live.multistreamEnabled ?? true,
           });
         }
@@ -221,6 +223,12 @@ export function EditLiveModal({ liveId, servants }: EditLiveModalProps) {
                   onChange={(e) => setForm({ ...form, streamToTiktok: e.target.checked })}
                   className="w-4 h-4 accent-[#C9A227]" />
                 <span className="text-sm font-semibold text-[#1E0F2B]">Diffuser sur TikTok</span>
+              </label>
+              <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
+                <input type="checkbox" checked={form.streamToInstagram}
+                  onChange={(e) => setForm({ ...form, streamToInstagram: e.target.checked })}
+                  className="w-4 h-4 accent-[#C9A227]" />
+                <span className="text-sm font-semibold text-[#1E0F2B]">Diffuser sur Instagram</span>
               </label>
               <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
                 <input type="checkbox" checked={form.multistreamEnabled}

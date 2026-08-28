@@ -80,6 +80,13 @@ export async function POST(req: NextRequest) {
     const liveDate = new Date(live.startedAt || live.scheduledAt);
     const dateStr = liveDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
+    // Calculer le nombre total de viewers uniques du live (cumul sur la session)
+    // → sera transféré comme "views" de la vidéo archivée
+    const uniqueViewerCount = await db.liveViewer.count({
+      where: { liveId: liveId },
+    });
+    const totalViews = Math.max(live.viewerCount, uniqueViewerCount);
+
     try {
       // Vérifier si un replay existe déjà (éviter les doublons)
       const existingReplay = await db.video.findFirst({
@@ -96,17 +103,18 @@ export async function POST(req: NextRequest) {
             title: `${live.title} (Replay)`,
             description: `Replay du live du ${dateStr}${live.description ? ` — ${live.description}` : ""}`,
             duration: durationStr,
-            views: 0,
+            views: totalViews,
             isLive: false,
             videoUrl: replayUrl,
             hlsUrl: recordingUrl || null,
-            thumbnailUrl: live.thumbnailUrl || `https://img.youtube.com/vi/default/hqdefault.jpg`,
+            thumbnailUrl: live.thumbnailUrl || (live.youtubeUrl ? `https://img.youtube.com/vi/${extractYoutubeId(live.youtubeUrl)}/hqdefault.jpg` : null),
             publishedAt: new Date(),
           },
         });
-        console.log(`[live/stop] Replay archivé pour le live ${liveId}`);
+        console.log(`[live/stop] Replay archivé pour le live ${liveId} (${totalViews} vues)`);
       } else {
-        // Mettre à jour le replay existant
+        // Mettre à jour le replay existant — cumuler les vues
+        const newViews = Math.max(existingReplay.views, totalViews);
         await db.video.update({
           where: { id: existingReplay.id },
           data: {
@@ -114,9 +122,10 @@ export async function POST(req: NextRequest) {
             hlsUrl: recordingUrl || existingReplay.hlsUrl,
             duration: durationStr || existingReplay.duration,
             thumbnailUrl: live.thumbnailUrl || existingReplay.thumbnailUrl,
+            views: newViews,
           },
         });
-        console.log(`[live/stop] Replay mis à jour pour le live ${liveId}`);
+        console.log(`[live/stop] Replay mis à jour pour le live ${liveId} (${newViews} vues)`);
       }
     } catch (err) {
       console.error("[live/stop] Failed to archive replay:", err);
@@ -132,4 +141,10 @@ export async function POST(req: NextRequest) {
     console.error("[live/stop] Error:", error);
     return NextResponse.json({ error: "Erreur lors de l'arrêt" }, { status: 500 });
   }
+}
+
+// Helper : extraire l'ID YouTube d'une URL
+function extractYoutubeId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return match ? match[1] : null;
 }

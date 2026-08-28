@@ -12,6 +12,7 @@ interface ChatMessage {
   content: string;
   type: string;
   emoji: string | null;
+  likeCount?: number;
   createdAt: string;
 }
 
@@ -84,19 +85,25 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
   useEffect(() => {
     const saved = localStorage.getItem("live-chat-username");
     if (saved) { setUserName(saved); setShowNamePrompt(false); }
-    // XP réel depuis le viewer en DB
     const fetchXp = async () => {
       const mid = localStorage.getItem("live-member-id");
-      if (!sid) return;
+      if (!mid) return;
       try {
-        const res = await fetch(`/api/live/${liveId}/viewers`);
-        // XP stocké dans le viewer, on le récupère indirectement
-        // Pour l'instant depuis localStorage, synchronisé à l'envoi de messages
         const xp = localStorage.getItem(`live-xp-${liveId}`);
         if (xp) setXpPoints(parseInt(xp));
       } catch {}
     };
     fetchXp();
+  }, [liveId]);
+
+  const seenIdsRef = useRef<Set<string>>(new Set());
+  const likedMessagesRef = useRef<Set<string>>(new Set());
+  // Charger les IDs de messages déjà likés depuis localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`live-liked-${liveId}`);
+      if (stored) likedMessagesRef.current = new Set(JSON.parse(stored));
+    } catch {}
   }, [liveId]);
 
   // Reset des messages quand le liveId change (nouveau live = nouvelle session)
@@ -109,7 +116,34 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
     setPinnedMessage(null);
   }, [liveId]);
 
-  const seenIdsRef = useRef<Set<string>>(new Set());
+  const handleLikeMessage = useCallback(async (msg: ChatMessage) => {
+    const alreadyLiked = likedMessagesRef.current.has(msg.id);
+    const newLikedState = !alreadyLiked;
+
+    // Mise à jour optimiste locale
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === msg.id
+          ? { ...m, likeCount: Math.max(0, (m.likeCount || 0) + (newLikedState ? 1 : -1)) }
+          : m
+      )
+    );
+
+    if (newLikedState) likedMessagesRef.current.add(msg.id);
+    else likedMessagesRef.current.delete(msg.id);
+
+    try {
+      localStorage.setItem(`live-liked-${liveId}`, JSON.stringify([...likedMessagesRef.current]));
+    } catch {}
+
+    try {
+      await fetch(`/api/live/${liveId}/chat/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId: msg.id, liked: newLikedState }),
+      });
+    } catch {}
+  }, [liveId]);
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -380,7 +414,10 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
                 </p>
               </div>
             ) : (
-              displayMessages.map((msg) => (
+              displayMessages.map((msg) => {
+                const isLiked = likedMessagesRef.current.has(msg.id);
+                const count = msg.likeCount || 0;
+                return (
                 <div
                   key={msg.id}
                   className="flex items-start gap-2 px-2 py-1 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors group"
@@ -401,11 +438,21 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
                     <p className="text-xs text-[#1E0F2B]/80 break-words leading-relaxed">{msg.content}</p>
                   </div>
                   {/* Like */}
-                  <button className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-[#2A0E3D]/10 text-[#1E0F2B]/40 hover:text-[#C9A227] transition-all flex-shrink-0">
-                    <Heart className="w-3 h-3" />
+                  <button
+                    onClick={() => handleLikeMessage(msg)}
+                    className={`flex items-center gap-1 px-1.5 py-1 rounded-full text-[10px] font-bold transition-all flex-shrink-0 ${
+                      isLiked
+                        ? "text-red-500 opacity-100"
+                        : "text-[#1E0F2B]/40 opacity-0 group-hover:opacity-100 hover:text-[#C9A227]"
+                    }`}
+                    aria-label={isLiked ? "Retirer le like" : "Aimer ce message"}
+                  >
+                    <Heart className={`w-3 h-3 transition-transform ${isLiked ? "fill-red-500 scale-110" : ""} hover:scale-125`} />
+                    {count > 0 && <span>{count}</span>}
                   </button>
                 </div>
-              ))
+                );
+              })
             )}
             <div ref={messagesEndRef} />
           </div>

@@ -251,6 +251,7 @@ model LiveChatMessage {
   content     String
   type        String   @default("message") // "message" | "reaction"
   emoji       String?  // pour les réactions: "❤️", "👍", "🔥", etc.
+  likeCount   Int      @default(0)
   createdAt   DateTime @default(now())
 
   live        LiveStream @relation(fields: [liveId], references: [id], onDelete: Cascade)
