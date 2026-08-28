@@ -134,27 +134,51 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
     }
   };
 
-  // Export (simulation)
+  // Export réel via API FFmpeg
+  const [exportProgress, setExportProgress] = useState<string[]>([]);
+  const [exportError, setExportError] = useState("");
+
   const handleExport = async () => {
     setExporting(true);
-    // TODO: FFmpeg serveur pour concaténation réelle
-    // Pour l'instant, on simule
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    setExportError("");
+    setExportProgress(["Initialisation du rendu..."]);
 
-    // Sauvegarder les métadonnées
     try {
-      await fetch(`/admin/api/videos/${videoId}`, {
-        method: "PATCH",
+      // Préparer les URLs des teasers
+      const introClip = timeline.find((c) => c.type === "intro");
+      const outroClip = timeline.find((c) => c.type === "outro");
+
+      const res = await fetch(`/api/videos/${videoId}/render`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: `${title} (Édité)`,
+          trimStart: trimStart > 0 ? trimStart : undefined,
+          trimEnd: trimEnd < totalDuration ? trimEnd : undefined,
+          introUrl: introClip?.src,
+          outroUrl: outroClip?.src,
           thumbnailUrl: thumbnail,
+          title: title,
         }),
       });
-    } catch {}
 
-    setExporting(false);
-    alert("Export terminé ! Les métadonnées ont été sauvegardées. La concaténation vidéo nécessite FFmpeg serveur.");
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Erreur de rendu");
+      }
+
+      const data = await res.json();
+      setExportProgress(data.steps || ["Terminé"]);
+
+      // Mettre à jour l'UI
+      if (data.videoUrl) {
+        // Recharger pour voir la vidéo mise à jour
+        setTimeout(() => window.location.reload(), 2000);
+      }
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const formatTime = (s: number) => {
@@ -181,10 +205,35 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40"
           >
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            {exporting ? "Export..." : "Exporter"}
+            {exporting ? "Rendu en cours..." : "Exporter"}
           </button>
         </div>
       </div>
+
+      {/* Progress export */}
+      {(exporting || exportProgress.length > 0 || exportError) && (
+        <div className="px-6 pb-4">
+          <div className={`rounded-xl p-4 ${exportError ? "bg-red-900/30 border border-red-700/40" : "bg-[#2A0E3D]/30 border border-[#C9A227]/20"}`}>
+            {exportError ? (
+              <p className="text-sm text-red-300">❌ {exportError}</p>
+            ) : (
+              <>
+                <p className="text-xs font-bold text-[#C9A227] uppercase tracking-wider mb-2">
+                  {exporting ? "Rendu en cours..." : "✅ Rendu terminé"}
+                </p>
+                <ul className="space-y-1">
+                  {exportProgress.map((step, i) => (
+                    <li key={i} className="text-xs text-white/70 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227]" />
+                      {step}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-[1fr_320px] gap-4 p-4">
         {/* ═══ Colonne gauche : Preview + Timeline ═══ */}
