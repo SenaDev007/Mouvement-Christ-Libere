@@ -24,8 +24,8 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
       setError("Veuillez sélectionner une image");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Image trop lourde (max 2MB)");
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image trop lourde (max 5MB)");
       return;
     }
 
@@ -119,7 +119,7 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
                 <Upload className="w-5 h-5 text-[#C9A227]" />
               </div>
               <span className="text-xs font-medium text-[#8A8378]">Cliquez pour uploader une miniature</span>
-              <span className="text-[10px] text-[#8A8378]/60">JPG, PNG — max 2MB — format 16:9 recommandé</span>
+              <span className="text-[10px] text-[#8A8378]/60">JPG, PNG — max 5MB — format 16:9 recommandé</span>
             </>
           )}
         </button>
