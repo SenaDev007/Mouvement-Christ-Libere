@@ -4,8 +4,10 @@ import { TestimonyCard } from "@/components/premium/testimony-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { TestimoniesFilters } from "@/components/premium/testimonies-filters";
+import { AutoRefresh } from "@/components/site/auto-refresh";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface PageProps {
   searchParams: Promise<{ theme?: string; servant?: string }>;
@@ -38,6 +40,7 @@ export default async function TemoignagesPage({ searchParams }: PageProps) {
 
   return (
     <div>
+      <AutoRefresh intervalMs={30000} />
       <PageHero
         imageSrc="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop"
         kicker="Récits rapportés"

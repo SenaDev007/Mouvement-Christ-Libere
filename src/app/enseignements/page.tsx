@@ -4,8 +4,10 @@ import { TeachingCard } from "@/components/premium/teaching-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { TeachingsSearch } from "@/components/premium/teachings-search";
+import { AutoRefresh } from "@/components/site/auto-refresh";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface PageProps {
   searchParams: Promise<{ q?: string; level?: string; servant?: string }>;
@@ -41,6 +43,7 @@ export default async function EnseignementsPage({ searchParams }: PageProps) {
 
   return (
     <div>
+      <AutoRefresh intervalMs={30000} />
       <PageHero
         imageSrc="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1920&auto=format&fit=crop"
         kicker="Études bibliques"

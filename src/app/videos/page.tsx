@@ -81,10 +81,16 @@ export default function VideosPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
 
   useEffect(() => {
-    fetch("/api/videos")
-      .then(r => r.json())
-      .then(data => { setAllVideos(data.videos || []); setLoading(false); })
-      .catch(() => setLoading(false));
+    const fetchVideos = () => {
+      fetch("/api/videos")
+        .then(r => r.json())
+        .then(data => { setAllVideos(data.videos || []); setLoading(false); })
+        .catch(() => setLoading(false));
+    };
+    fetchVideos();
+    // Auto-refresh toutes les 30 secondes pour capter les nouveaux replays
+    const interval = setInterval(fetchVideos, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const filteredVideos = useMemo(() => {

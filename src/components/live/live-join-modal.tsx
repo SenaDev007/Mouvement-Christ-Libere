@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Loader2, User, CheckCircle2, UserPlus, LogIn, Sparkles } from "lucide-react";
+import { X, Loader2, User, CheckCircle2, UserPlus, LogIn, Sparkles, Globe } from "lucide-react";
 import Link from "next/link";
+import { COUNTRIES } from "@/lib/data/countries";
+import { flagFromCountryCode } from "@/lib/data/flags";
 
 interface LiveMember {
   id: string;
@@ -311,14 +313,21 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">Pays</label>
-                    <input
-                      type="text"
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      maxLength={2}
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] uppercase"
-                      placeholder="FR, CI, US..."
-                    />
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378] z-10" />
+                      <select
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] appearance-none"
+                      >
+                        <option value="">Sélectionner...</option>
+                        {COUNTRIES.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {flagFromCountryCode(c.code)} {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">Ville</label>
