@@ -49,12 +49,15 @@ export async function POST(req: NextRequest) {
     const passwordHash = await bcrypt.hash(password, 12);
 
     // Create user
+    // Les membres (rôle MEMBER) sont auto-validés — pas besoin d'approbation admin.
+    // Seuls les rôles supérieurs (ADMIN, MODERATOR, ANIMATOR) nécessitent validation.
     const user = await db.user.create({
       data: {
         name,
         email: email.toLowerCase(),
         passwordHash,
         role: "MEMBER",
+        isVerified: true, // Auto-validation pour les membres
         isMinor: false,
         acceptedTerms: new Date(),
       },
@@ -64,6 +67,7 @@ export async function POST(req: NextRequest) {
       success: true,
       userId: user.id,
       email: user.email,
+      autoVerified: true,
     });
   } catch (error) {
     console.error("[auth/register] Error:", error);
