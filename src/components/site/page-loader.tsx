@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export function PageLoader() {
   const pathname = usePathname();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);

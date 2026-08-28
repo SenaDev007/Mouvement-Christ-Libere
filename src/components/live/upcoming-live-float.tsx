@@ -81,7 +81,7 @@ export function UpcomingLiveFloat() {
         />
 
         {/* Carte */}
-        <div className="relative bg-[#1A0826]/80 backdrop-blur-md rounded-2xl overflow-hidden border border-[#C9A227]/30 shadow-2xl w-80 transition-all group-hover:scale-105">
+        <div className="relative bg-[#1A0826]/80 backdrop-blur-md rounded-2xl overflow-hidden border border-[#C9A227]/30 shadow-2xl w-64 transition-all group-hover:scale-105">
           {/* Miniature */}
           <div className="relative aspect-video overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
