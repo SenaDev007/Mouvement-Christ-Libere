@@ -6,6 +6,7 @@ import { ServantProvider } from "@/components/site/servant-context";
 import { ScrollProgress } from "@/components/magic/scroll-progress";
 import { NextAuthProvider } from "@/components/auth/next-auth-provider";
 import { LayoutShell } from "@/components/site/layout-shell";
+import { PageLoader } from "@/components/site/page-loader";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -61,6 +62,7 @@ export default function RootLayout({
         className={`${cormorant.variable} ${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
         <ScrollProgress />
+        <PageLoader />
         <NextAuthProvider>
           <ServantProvider>
             <LayoutShell>
