@@ -61,16 +61,8 @@ export function NewLiveButton({ servants, accentColor = "#C9A227" }: NewLiveButt
 
       const data = await res.json();
 
-      // Si on a une miniature en base64, l'uploader maintenant qu'on a l'ID
-      if (form.thumbnailUrl && form.thumbnailUrl.startsWith("data:image/") && data.item?.id) {
-        try {
-          await fetch(`/api/live/${data.item.id}/thumbnail`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ thumbnail: form.thumbnailUrl }),
-          });
-        } catch {}
-      }
+      // Le thumbnailUrl (base64) est déjà stocké via /admin/api/lives (colonne TEXT en DB)
+      // Pas besoin d'appeler /api/live/[id]/thumbnail séparément
 
       window.location.reload();
     } catch (err) {

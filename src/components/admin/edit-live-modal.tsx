@@ -92,16 +92,9 @@ export function EditLiveModal({ liveId, servants }: EditLiveModalProps) {
         throw new Error(data.error || "Erreur");
       }
 
-      // Upload thumbnail si base64
-      if (form.thumbnailUrl && form.thumbnailUrl.startsWith("data:image/")) {
-        try {
-          await fetch(`/api/live/${liveId}/thumbnail`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ thumbnail: form.thumbnailUrl }),
-          });
-        } catch {}
-      }
+      // Le thumbnailUrl (base64) est déjà stocké via /admin/api/lives/${liveId} (colonne TEXT en DB)
+      // ou via /api/live/[id]/thumbnail au moment de la sélection (ThumbnailUploader avec liveId)
+      // Pas besoin d'appeler /api/live/[id]/thumbnail séparément ici
 
       window.location.reload();
     } catch (err) {

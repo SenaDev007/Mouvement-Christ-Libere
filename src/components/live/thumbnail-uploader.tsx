@@ -116,7 +116,9 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
         onThumbnailChange(compressed);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur");
+      const msg = err instanceof Error ? err.message : "Erreur";
+      setError(msg);
+      // Ne pas écraser le preview si la compression a réussi mais l'upload a échoué
       if (preview) onThumbnailChange(preview);
     } finally {
       setUploading(false);
