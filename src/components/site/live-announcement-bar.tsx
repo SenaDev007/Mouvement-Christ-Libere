@@ -68,42 +68,30 @@ export function LiveAnnouncementBar() {
       }}
     >
       <div className="relative flex items-center py-2 px-4 gap-2.5">
-        {/* Icône fixe à gauche */}
+        {/* Icône fixe à gauche — icône Radio clignotante (pas de TV, pas de point rouge) */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {isLive ? (
-            <Radio className="w-4 h-4" style={{ color: "#ffffff" }} />
-        ) : (
-            <Tv className="w-4 h-4" style={{ color: "#1E0F2B" }} />
-          )}
-          {/* Point clignotant */}
-          <span className="relative flex h-3 w-3">
-            <span
-              className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-              style={{ backgroundColor: isLive ? "#4ade80" : "#dc2626" }}
-            />
-            <span
-              className="relative inline-flex rounded-full h-3 w-3"
-              style={{ backgroundColor: isLive ? "#4ade80" : "#dc2626" }}
-            />
-          </span>
-          {/* Badge statut */}
+          <Radio
+            className="w-4 h-4"
+            style={{ color: isLive ? "#ffffff" : "#1E0F2B", animation: "liveBtnBlink 1.5s ease-in-out infinite" }}
+          />
+          {/* Badge statut — desktop uniquement sur mobile on cache */}
           <span
-            className="text-xs uppercase tracking-[0.12em] font-bold whitespace-nowrap"
+            className="hidden sm:inline text-xs uppercase tracking-[0.12em] font-bold whitespace-nowrap"
             style={{ color: isLive ? "#ffffff" : "#1E0F2B" }}
           >
             {isLive ? "En direct" : "Direct programmé"}
           </span>
         </div>
 
-        {/* Séparateur fixe */}
-        <span style={{ color: isLive ? "rgba(255,255,255,0.3)" : "rgba(30,15,43,0.2)" }}>|</span>
+        {/* Séparateur fixe — desktop uniquement */}
+        <span className="hidden sm:inline" style={{ color: isLive ? "rgba(255,255,255,0.3)" : "rgba(30,15,43,0.2)" }}>|</span>
 
         {/* Zone de texte défilant (marquee) */}
         <div className="flex-1 overflow-hidden min-w-0">
           <div
             className="live-marquee-inner whitespace-nowrap"
             style={{
-              animation: "liveMarquee 25s linear infinite",
+              animation: "liveMarquee 15s linear infinite",
             }}
           >
             <span
@@ -115,7 +103,7 @@ export function LiveAnnouncementBar() {
           </div>
         </div>
 
-        {/* Bouton d'action fixe à droite — clignotant */}
+        {/* Bouton d'action fixe à droite */}
         <Link
           href={linkHref}
           target={linkTarget}
@@ -130,15 +118,17 @@ export function LiveAnnouncementBar() {
           {isLive ? (
             <>
               <Radio className="w-3 h-3" />
-              Rejoindre
+              <span className="hidden sm:inline">Rejoindre</span>
+              <span className="sm:hidden">Live</span>
             </>
           ) : (
             <>
-              <Clock className="w-3 h-3" />
-              Rappel
+              <span className="hidden sm:inline">Rejoindre</span>
+              <span className="sm:hidden">Rejoindre</span>
+              <ChevronRight className="w-3 h-3" />
             </>
           )}
-          <ChevronRight className="w-3 h-3" />
+          {isLive && <ChevronRight className="w-3 h-3" />}
         </Link>
       </div>
 

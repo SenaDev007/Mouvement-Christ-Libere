@@ -71,7 +71,7 @@ export function UpcomingLiveFloat() {
   return (
     <Link
       href={`/live/${live.id}`}
-      className="absolute top-4 right-4 z-30 group"
+      className="absolute top-4 right-4 z-30 group hidden sm:block"
     >
       <div className="relative">
         {/* Halo pulsatile */}

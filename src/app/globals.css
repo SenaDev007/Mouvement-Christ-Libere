@@ -278,6 +278,12 @@
 .animate-marquee {
   animation: marquee 30s linear infinite;
 }
+/* Vitesse plus rapide sur mobile */
+@media (max-width: 640px) {
+  .animate-marquee {
+    animation-duration: 15s;
+  }
+}
 .animate-marquee:hover {
   animation-play-state: paused;
 }

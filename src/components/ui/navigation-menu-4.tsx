@@ -15,6 +15,8 @@ import {
   Menu,
   LogOut,
   UserCircle,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -361,13 +363,31 @@ export function ContextualNav() {
           ) : (
             /* ═══ Utilisateur non connecté — boutons auth ═══ */
             <>
+              {/* Mobile: icône seule */}
+              <Link
+                href="/login"
+                className="sm:hidden p-2 rounded-lg text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors"
+                aria-label="Se connecter"
+              >
+                <LogIn className="w-5 h-5" />
+              </Link>
+              {/* Desktop: texte */}
               <Link
                 href="/login"
                 className="hidden sm:inline-flex items-center text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors px-3 py-1.5"
               >
                 Se connecter
               </Link>
-              <Button asChild size="sm" variant="ghost" className="text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 text-sm">
+              {/* Mobile: icône seule */}
+              <Link
+                href="/register"
+                className="sm:hidden p-2 rounded-lg text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 transition-colors"
+                aria-label="Créer un compte"
+              >
+                <UserPlus className="w-5 h-5" />
+              </Link>
+              {/* Desktop: texte */}
+              <Button asChild size="sm" variant="ghost" className="hidden sm:flex text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 text-sm">
                 <Link href="/register">
                   Créer un compte
                 </Link>

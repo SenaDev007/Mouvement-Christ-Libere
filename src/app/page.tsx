@@ -173,7 +173,7 @@ export default function Home() {
               href="/pam"
               className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300"
             >
-              Découvrir le témoignage de PAM
+              Découvrir Pam
               <ChevronRight className="w-4 h-4 ml-2" />
             </Link>
             <Link
@@ -367,7 +367,7 @@ export default function Home() {
       </section>
 
       {/* ═════ DERNIER ENSEIGNEMENT ═════ */}
-      <section className="py-24 bg-[#FAF6EF] relative overflow-hidden">
+      <section className="py-24 bg-[#2A0E3D] relative overflow-hidden">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-12">
             <p className="text-xs uppercase tracking-[0.25em] text-[#C9A227] font-semibold mb-3">
@@ -437,7 +437,7 @@ export default function Home() {
       </section>
 
       {/* ═════ CTA COMMUNAUTÉ ═════ */}
-      <section className="py-12 bg-[#2A0E3D] relative overflow-hidden">
+      <section className="py-12 bg-[#FAF6EF] relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative max-w-4xl mx-auto px-4 text-center">
           <motion.div
