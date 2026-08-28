@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Room, RoomEvent, Track } from "livekit-client";
+import { useSession } from "next-auth/react";
 import {
   Radio, Eye, Calendar, AlertCircle,
   Heart, Bookmark, MoreHorizontal,
@@ -36,6 +37,7 @@ interface LiveViewerClientProps {
 }
 
 export function LiveViewerClient({ live }: LiveViewerClientProps) {
+  const { data: session, status } = useSession();
   const [countdown, setCountdown] = useState("");
   const [isLive, setIsLive] = useState(live.status === "LIVE");
   const [connecting, setConnecting] = useState(false);
@@ -53,6 +55,56 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
+
+  // ─── Auto-join pour utilisateurs NextAuth connectés ───
+  useEffect(() => {
+    if (status === "loading") return; // Attendre que la session soit résolue
+
+    if (status === "authenticated" && session?.user) {
+      // Utilisateur connecté via NextAuth → auto-join (pas de modal)
+      setMemberId(session.user.id || null);
+      setViewerFirstName(session.user.name || "Membre");
+      setHasJoined(true);
+      setCheckingMember(false);
+
+      // Créer/mettre à jour le LiveMember si pas déjà fait
+      const sessionId = localStorage.getItem("live-session-id");
+      if (sessionId) {
+        fetch("/api/live-members/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            firstName: session.user.name || "Membre",
+          }),
+        }).catch(() => {});
+      }
+      return;
+    }
+
+    // Utilisateur non connecté → vérifier le LiveMember en localStorage
+    const sid = localStorage.getItem("live-session-id");
+    if (!sid) {
+      setCheckingMember(false);
+      return;
+    }
+
+    const checkMember = async () => {
+      try {
+        const res = await fetch(`/api/live-members/me?sessionId=${sid}`);
+        const data = await res.json();
+        if (data.member) {
+          setMemberId(data.member.id);
+          setViewerFirstName(data.member.firstName);
+          localStorage.setItem("live-chat-username", data.member.firstName);
+          setHasJoined(true);
+        }
+      } catch {}
+      setCheckingMember(false);
+    };
+
+    checkMember();
+  }, [status, session]);
 
   // Compte à rebours
   useEffect(() => {
@@ -102,32 +154,6 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     const interval = setInterval(fetchViewers, 5000);
     return () => clearInterval(interval);
   }, [isLive, live.id]);
-
-  // Vérifier si le membre est déjà inscrit (inscription unique)
-  useEffect(() => {
-    const sessionId = localStorage.getItem("live-session-id");
-    if (!sessionId) {
-      setCheckingMember(false);
-      return;
-    }
-
-    const checkMember = async () => {
-      try {
-        const res = await fetch(`/api/live-members/me?sessionId=${sessionId}`);
-        const data = await res.json();
-        if (data.member) {
-          setMemberId(data.member.id);
-          setViewerFirstName(data.member.firstName);
-          localStorage.setItem("live-chat-username", data.member.firstName);
-          localStorage.setItem("live-member-id", data.member.id);
-          setHasJoined(true);
-        }
-      } catch {}
-      setCheckingMember(false);
-    };
-
-    checkMember();
-  }, []);
 
   // Connexion LiveKit subscriber
   useEffect(() => {

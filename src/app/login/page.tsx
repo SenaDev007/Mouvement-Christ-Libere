@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { signIn } from "next-auth/react";
 import { ChevronRight, Loader2, User, Lock, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
@@ -24,23 +25,23 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pseudonyme, password }),
-      });
+    // Utiliser signIn() de NextAuth au lieu de l'API custom
+    const result = await signIn("credentials", {
+      redirect: false,
+      pseudonyme,
+      password,
+    });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Échec de la connexion");
-      }
-
+    if (result?.error) {
+      setError(result.error === "CredentialsSignin"
+        ? "Pseudonyme/email ou mot de passe incorrect"
+        : result.error);
+      setLoading(false);
+    } else if (result?.ok) {
       router.push(callbackUrl);
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
-    } finally {
+    } else {
+      setError("Erreur de connexion");
       setLoading(false);
     }
   };
@@ -63,7 +64,6 @@ export default function LoginPage() {
             className="relative w-16 h-16 md:w-20 md:h-20 object-contain mb-4"
             priority
           />
-          {/* Nom "Christ Libère" — Christ en or, Libère en ivoire */}
           <h1
             className="text-3xl md:text-4xl font-bold mb-1"
             style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
