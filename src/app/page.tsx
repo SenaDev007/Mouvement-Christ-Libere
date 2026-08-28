@@ -8,7 +8,6 @@ import {
   ChevronRight, Sparkles, BookOpen, FileText, Video, Users,
   Calendar, MessageSquare, Heart, ArrowRight,
 } from "lucide-react";
-import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 import { AutoRefresh } from "@/components/site/auto-refresh";
 
 const VERSES = [
@@ -183,9 +182,6 @@ export default function Home() {
             </Link>
           </motion.div>
         </div>
-
-        {/* Carte flottante du prochain live (miniature) */}
-        <UpcomingLiveFloat />
       </section>
 
       {/* Séparateur oblique ascendant (gauche→droite) entre hero et stats */}

@@ -9,6 +9,54 @@ interface ThumbnailUploaderProps {
   onThumbnailChange: (url: string | null) => void;
 }
 
+/**
+ * Compresse une image côté client via canvas.
+ * - Redimensionne à max 1280x720 (16:9)
+ * - Compresse en JPEG qualité 0.85
+ * - Retourne un base64 optimisé (< 200KB typiquement)
+ */
+async function compressImage(file: File, maxWidth = 1280, maxHeight = 720, quality = 0.85): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let { width, height } = img;
+
+        // Redimensionner en gardant le ratio
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Canvas non supporté"));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convertir en JPEG compressé
+        const compressed = canvas.toDataURL("image/jpeg", quality);
+        resolve(compressed);
+      };
+      img.onerror = () => reject(new Error("Image invalide"));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error("Lecture échouée"));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange }: ThumbnailUploaderProps) {
   const [preview, setPreview] = useState<string | null>(currentThumbnail || null);
   const [uploading, setUploading] = useState(false);
@@ -19,7 +67,6 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validation
     if (!file.type.startsWith("image/")) {
       setError("Veuillez sélectionner une image");
       return;
@@ -32,38 +79,36 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
     setError("");
     setUploading(true);
 
-    // Convertir en base64 pour l'aperçu
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64 = event.target?.result as string;
-      setPreview(base64);
+    try {
+      // Compresser l'image côté client (rapide, < 1s)
+      const compressed = await compressImage(file);
 
-      // Si on a un liveId, uploader vers le serveur
+      // Aperçu immédiat
+      setPreview(compressed);
+
+      // Upload si on a un liveId
       if (liveId) {
-        try {
-          const res = await fetch(`/api/live/${liveId}/thumbnail`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ thumbnail: base64 }),
-          });
-          if (!res.ok) {
-            const data = await res.json();
-            throw new Error(data.error || "Erreur upload");
-          }
+        const res = await fetch(`/api/live/${liveId}/thumbnail`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ thumbnail: compressed }),
+        });
+        if (!res.ok) {
           const data = await res.json();
-          onThumbnailChange(data.thumbnailUrl);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "Erreur");
-          // Garder le base64 comme aperçu même si l'upload échoue
-          onThumbnailChange(base64);
+          throw new Error(data.error || "Erreur upload");
         }
+        const data = await res.json();
+        onThumbnailChange(data.thumbnailUrl);
       } else {
-        // Pas de liveId (modal de création) — garder le base64
-        onThumbnailChange(base64);
+        // Pas de liveId (modal de création) — garder le base64 compressé
+        onThumbnailChange(compressed);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+      if (preview) onThumbnailChange(preview);
+    } finally {
       setUploading(false);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleRemove = () => {
@@ -82,7 +127,6 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
         <div className="relative rounded-xl overflow-hidden border-2 border-[#8A8378]/20 group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="Miniature" className="w-full aspect-video object-cover" />
-          {/* Overlay actions */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
             <button
               type="button"

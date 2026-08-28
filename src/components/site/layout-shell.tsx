@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { ContextualNav } from "@/components/ui/navigation-menu-4";
 import { ConditionalFooter } from "@/components/site/conditional-footer";
 import { LiveAnnouncementBar } from "@/components/site/live-announcement-bar";
+import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 
 // Routes où navbar, footer et barre live sont masqués (pages d'auth)
 const HIDDEN_ROUTES = ["/login", "/register", "/admin/login"];
@@ -24,13 +25,14 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     return <main className="flex-1">{children}</main>;
   }
 
-  // La navbar est fixed top-0 avec h-16 (64px mobile) / md:h-20 (80px desktop)
-  // pt-16 = 64px (mobile), md:pt-20 = 80px (desktop) → contenu sous la navbar
   return (
     <>
       <ContextualNav />
       <div className="pt-16 md:pt-20">
+        {/* Barre d'annonce live (texte défilant) */}
         {showLiveBar && <LiveAnnouncementBar />}
+        {/* Carte miniature du prochain live — juste sous la barre d'annonce */}
+        {showLiveBar && <UpcomingLiveFloat />}
         <main className="flex-1">
           {children}
         </main>
