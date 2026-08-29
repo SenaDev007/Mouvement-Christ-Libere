@@ -22,7 +22,7 @@ function adminAuth(req: any, res: any, next: any) {
 
 // --- R2 test ---
 router.get("/r2-test", adminAuth, async (req, res) => {
-  const action = req.query.action as string || "status";
+  const action = (req.query.action as string) || "status";
   if (action === "status") {
     return res.json({
       configured: isR2Configured(),
@@ -58,7 +58,7 @@ router.get("/r2-test", adminAuth, async (req, res) => {
 // --- Recording upload (FormData, up to 100MB) ---
 router.post("/:id/recording", adminAuth, upload.single("file"), async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const file = req.file;
     if (!file) return res.status(400).json({ error: "Fichier manquant" });
 
@@ -91,8 +91,8 @@ router.post("/:id/recording", adminAuth, upload.single("file"), async (req, res)
 router.post("/:id/presign", adminAuth, async (req, res) => {
   try {
     if (!isR2Configured()) return res.status(503).json({ error: "R2 non configuré" });
-    const { id } = req.params;
-    const { contentType = "video/webm" } = req.body;
+    const id = String(req.params.id);
+    const contentType: string = req.body?.contentType || "video/webm";
     const ext = contentType.includes("mp4") ? "mp4" : "webm";
     const key = generateKey("replays", id, ext);
     const uploadUrl = await getPresignedUploadUrl(key, contentType, 7200);
@@ -106,7 +106,7 @@ router.post("/:id/presign", adminAuth, async (req, res) => {
 // --- Thumbnail upload ---
 router.post("/:id/thumbnail", adminAuth, async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { thumbnail } = req.body;
     if (!thumbnail || !thumbnail.startsWith("data:image/")) return res.status(400).json({ error: "Image invalide" });
     const matches = thumbnail.match(/^data:image\/(\w+);base64,(.+)$/);
@@ -133,8 +133,8 @@ router.post("/:id/thumbnail", adminAuth, async (req, res) => {
 // --- Chat messages ---
 router.get("/:id/chat", async (req, res) => {
   try {
-    const { id } = req.params;
-    const since = req.query.since as string;
+    const id = String(req.params.id);
+    const since = (req.query.since as string) || "";
     const where: any = { liveId: id };
     if (since) where.createdAt = { gt: new Date(since) };
     const messages = await db.liveChatMessage.findMany({
@@ -156,7 +156,7 @@ router.get("/:id/chat", async (req, res) => {
 
 router.post("/:id/chat", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { userName, content, type = "message", emoji } = req.body;
     if (!userName || !content) return res.status(400).json({ error: "userName et content requis" });
     const trimmed = content.trim().substring(0, 500);
@@ -180,7 +180,7 @@ router.post("/:id/chat", async (req, res) => {
 // --- Like a message ---
 router.post("/:id/chat/like", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { messageId, liked } = req.body;
     if (!messageId) return res.status(400).json({ error: "messageId requis" });
     const message = await db.liveChatMessage.findFirst({ where: { id: messageId, liveId: id }, select: { id: true, likeCount: true } });
@@ -196,7 +196,7 @@ router.post("/:id/chat/like", async (req, res) => {
 // --- Viewers ---
 router.get("/:id/viewers", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const count = await db.liveViewer.count({ where: { liveId: id, isActive: true } });
     res.json({ count });
   } catch {
@@ -206,7 +206,7 @@ router.get("/:id/viewers", async (req, res) => {
 
 router.post("/:id/viewers", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { memberId } = req.body;
     if (!memberId) return res.status(400).json({ error: "memberId requis" });
     const member = await db.liveMember.findUnique({ where: { id: memberId } });
@@ -227,8 +227,8 @@ router.post("/:id/viewers", async (req, res) => {
 
 router.delete("/:id/viewers", async (req, res) => {
   try {
-    const { id } = req.params;
-    const memberId = req.query.memberId as string;
+    const id = String(req.params.id);
+    const memberId = (req.query.memberId as string) || "";
     if (!memberId) return res.status(400).json({ error: "memberId requis" });
     await db.liveViewer.updateMany({ where: { liveId: id, memberId, isActive: true }, data: { isActive: false, leftAt: new Date() } });
     const count = await db.liveViewer.count({ where: { liveId: id, isActive: true } });
@@ -240,7 +240,7 @@ router.delete("/:id/viewers", async (req, res) => {
 
 router.patch("/:id/viewers", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { memberId, xp } = req.body;
     if (!memberId) return res.status(400).json({ error: "memberId requis" });
     await db.liveViewer.updateMany({ where: { liveId: id, memberId, isActive: true }, data: { xpPoints: { increment: xp || 1 } } });

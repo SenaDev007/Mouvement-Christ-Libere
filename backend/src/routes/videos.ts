@@ -20,7 +20,7 @@ function adminAuth(req: any, res: any, next: any) {
 // --- List videos ---
 router.get("/", async (req, res) => {
   try {
-    const servant = req.query.servant as string;
+    const servant = (req.query.servant as string) || "";
     const where: any = {};
     if (servant && servant !== "all") where.servant = { code: servant };
     const videos = await db.video.findMany({ where, orderBy: { publishedAt: "desc" }, include: { servant: true } });
@@ -47,7 +47,7 @@ router.get("/", async (req, res) => {
 // --- Upload video source ---
 router.post("/:id/upload", adminAuth, upload.single("file"), async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const file = req.file;
     if (!file) return res.status(400).json({ error: "Fichier manquant" });
     if (!file.mimetype.startsWith("video/")) return res.status(400).json({ error: "Type non supporté" });
@@ -70,7 +70,7 @@ router.post("/:id/upload", adminAuth, upload.single("file"), async (req, res) =>
 // --- Get video source ---
 router.get("/:id/source", adminAuth, async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const video = await db.video.findUnique({ where: { id }, select: { videoUrl: true } });
     if (!video) return res.status(404).json({ error: "Vidéo introuvable" });
     res.json({ videoUrl: video.videoUrl });
@@ -82,7 +82,7 @@ router.get("/:id/source", adminAuth, async (req, res) => {
 // --- Like video ---
 router.post("/:id/like", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     await db.video.update({ where: { id }, data: { views: { increment: 1 } } });
     res.json({ success: true });
   } catch {

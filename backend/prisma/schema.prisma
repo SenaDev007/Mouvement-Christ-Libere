@@ -1,4 +1,4 @@
-// Prisma schema — Mouvement Christ Libère
+// Prisma schema — Christ Libère
 // PostgreSQL pour compatibilité Vercel (serverless incompatible SQLite)
 
 generator client {
@@ -54,6 +54,7 @@ model User {
   communityMembers CommunityMember[]
   testimonies   Testimony[] @relation("TestimonyAuthor")
   contactRequests ContactRequest[]
+  bibleBookmarks BibleBookmark[]
 
   @@index([role])
   @@index([country])
@@ -88,6 +89,7 @@ model Servant {
   teachings   Teaching[]
   videos      Video[]
   liveStreams LiveStream[]
+  streamConfig ServantStreamConfig?
 }
 
 // --- Biographies (frise chronologique) ---
@@ -210,11 +212,23 @@ model LiveStream {
   youtubeUrl   String?
   facebookUrl  String?
   tiktokUrl    String?
-  odyseeUrl    String?
+  instagramUrl    String?
+  // ─── V2.0 — LiveKit + multistreaming ───
+  livekitRoomName  String?
+  multistreamEnabled Boolean @default(false)
+  streamToYoutube   Boolean  @default(false)
+  streamToFacebook  Boolean  @default(false)
+  streamToTiktok    Boolean  @default(false)
+  streamToInstagram    Boolean  @default(false)
+  recordingUrl      String?
+  viewerCount       Int      @default(0)
+  thumbnailUrl      String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   servant      Servant   @relation(fields: [servantId], references: [id])
+  chatMessages LiveChatMessage[]
+  viewers      LiveViewer[]
 
   @@index([servantId])
   @@index([status])
@@ -226,6 +240,79 @@ enum LiveStatus {
   LIVE
   ENDED
   CANCELLED
+}
+
+// Messages et réactions du chat live (façon YouTube)
+model LiveChatMessage {
+  id          String   @id @default(cuid())
+  liveId      String
+  userId      String?
+  userName    String
+  content     String
+  type        String   @default("message") // "message" | "reaction"
+  emoji       String?  // pour les réactions: "❤️", "👍", "🔥", etc.
+  likeCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  live        LiveStream @relation(fields: [liveId], references: [id], onDelete: Cascade)
+
+  @@index([liveId, createdAt])
+  @@index([type])
+}
+
+// Membre inscrit sur la plateforme (inscription unique pour tous les lives)
+model LiveMember {
+  id          String   @id @default(cuid())
+  sessionId   String   @unique // identifiant unique par navigateur (localStorage)
+  firstName   String
+  lastName    String?
+  country     String?
+  city        String?
+  contact     String?
+  totalXp     Int      @default(0)
+  livesWatched Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  liveViewers LiveViewer[]
+  disperses   DisperseMember[]
+
+  @@index([contact])
+}
+
+// Sessions de visionnage (un membre qui regarde un live spécifique)
+model LiveViewer {
+  id          String   @id @default(cuid())
+  liveId      String
+  memberId    String
+  xpPoints    Int      @default(0) // XP gagné pendant CE live
+  isActive    Boolean  @default(true)
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+
+  live        LiveStream  @relation(fields: [liveId], references: [id], onDelete: Cascade)
+  member      LiveMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([liveId, isActive])
+  @@index([memberId])
+}
+
+// Configuration des clés RTMP par serviteur (YouTube, Facebook, TikTok, Instagram)
+model ServantStreamConfig {
+  id              String   @id @default(cuid())
+  servantId       String   @unique
+  youtubeRtmpUrl  String?
+  youtubeRtmpKey  String?
+  facebookRtmpUrl String?
+  facebookRtmpKey String?
+  tiktokRtmpUrl   String?
+  tiktokRtmpKey   String?
+  instagramRtmpUrl   String?
+  instagramRtmpKey   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  servant         Servant  @relation(fields: [servantId], references: [id])
 }
 
 // --- Média social intégré ---
@@ -461,20 +548,24 @@ model UserCalendarPreference {
 // --- Carte des dispersés d'Israël (V3) ---
 
 model DisperseMember {
-  id          String   @id @default(cuid())
-  pseudonyme  String   // nom ou pseudo, pas de vrai nom
-  pays        String   // code ISO 2 lettres (FR, CI, US, etc.)
-  ville       String?
-  latitude    Float    // arrondi à 0.1° pour anonymat
-  longitude   Float    // arrondi à 0.1° pour anonymat
-  langue      String   // FR, EN, ES, PT, HE, AM, etc.
-  niveau      String   @default("chercheur") // chercheur, croyant, disciple, pasteur
-  message     String?  @db.Text // témoignage court optionnel
-  isPublic    Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  liveMemberId  String?  // lien vers LiveMember (inscription unique)
+  pseudonyme    String   // nom ou pseudo, pas de vrai nom
+  pays          String   // code ISO 2 lettres (FR, CI, US, etc.)
+  ville         String?
+  latitude      Float    // arrondi à 0.1° pour anonymat
+  longitude     Float    // arrondi à 0.1° pour anonymat
+  langue        String   // FR, EN, ES, PT, HE, AM, etc.
+  niveau        String   @default("chercheur") // chercheur, croyant, disciple, pasteur
+  message       String?  @db.Text // témoignage court optionnel
+  isPublic      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  liveMember    LiveMember? @relation(fields: [liveMemberId], references: [id], onDelete: SetNull)
 
   @@index([pays])
   @@index([langue])
+  @@index([liveMemberId])
 }
 
 // --- Chaîne d'intercession (V4) ---
@@ -515,4 +606,26 @@ model DeadMansSwitch {
   updatedAt       DateTime @updatedAt
 
   @@index([estDeclenche])
+}
+
+// --- Bible bookmarks (V3) ---
+
+model BibleBookmark {
+  id          String   @id @default(cuid())
+  userId      String
+  version     String   // ex: "fr-apee", "en-kjv"
+  livreId     String   // ex: "gn", "mt"
+  livreNom    String   // ex: "Genèse", "Matthieu"
+  chapitre    Int
+  verset      Int
+  texte       String   @db.Text // texte du verset
+  note        String?  @db.Text // note personnelle (optionnel)
+  couleur     String?  // couleur de marque-page (optionnel)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, version, livreId, chapitre, verset])
+  @@index([userId])
 }
