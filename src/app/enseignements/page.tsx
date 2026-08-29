@@ -7,7 +7,6 @@ import { TeachingsSearch } from "@/components/premium/teachings-search";
 import { AutoRefresh } from "@/components/site/auto-refresh";
 
 export const revalidate = 30; // Cache 30s au lieu de force-dynamic (évite cold start DB)
-export const revalidate = 0;
 
 interface PageProps {
   searchParams: Promise<{ q?: string; level?: string; servant?: string }>;
