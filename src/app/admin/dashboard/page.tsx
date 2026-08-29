@@ -6,12 +6,15 @@ import {
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30; // Timeout 30s (Vercel serverless)
 
 async function getStats() {
   const [
     servants, biographies, testimonies, teachings, videos, channels,
     contactRequests, donations, liveStreams, pendingTestimonies, pendingContacts,
     pamServant, kongoServant,
+    totalDonations, totalViews,
+    recentTestimonies, recentContactRequests, upcomingLives,
   ] = await Promise.all([
     db.servant.count(),
     db.biography.count(),
@@ -26,12 +29,12 @@ async function getStats() {
     db.contactRequest.count({ where: { status: "PENDING" } }),
     db.servant.findFirst({ where: { code: "pam" }, include: { _count: { select: { videos: true, testimonies: true, teachings: true } } } }),
     db.servant.findFirst({ where: { code: "kongo" }, include: { _count: { select: { videos: true, testimonies: true, teachings: true } } } }),
+    db.donation.aggregate({ _sum: { amount: true } }),
+    db.video.aggregate({ _sum: { views: true } }),
+    db.testimony.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { servant: true } }),
+    db.contactRequest.findMany({ take: 5, orderBy: { createdAt: "desc" } }),
+    db.liveStream.findMany({ take: 3, where: { scheduledAt: { gte: new Date() }, status: "SCHEDULED" }, orderBy: { scheduledAt: "asc" }, include: { servant: true } }),
   ]);
-
-  const totalDonations = await db.donation.aggregate({ _sum: { amount: true } });
-
-  // Vues totales des vidéos
-  const totalViews = await db.video.aggregate({ _sum: { views: true } });
 
   return {
     servants, biographies, testimonies, teachings, videos, channels,
@@ -40,29 +43,14 @@ async function getStats() {
     totalViews: totalViews._sum.views || 0,
     pam: pamServant,
     kongo: kongoServant,
+    recentTestimonies,
+    recentContactRequests,
+    upcomingLives,
   };
 }
 
 export default async function AdminDashboardPage() {
   const stats = await getStats();
-
-  const recentTestimonies = await db.testimony.findMany({
-    take: 5,
-    orderBy: { createdAt: "desc" },
-    include: { servant: true },
-  });
-
-  const recentContactRequests = await db.contactRequest.findMany({
-    take: 5,
-    orderBy: { createdAt: "desc" },
-  });
-
-  const upcomingLives = await db.liveStream.findMany({
-    take: 3,
-    where: { scheduledAt: { gte: new Date() }, status: "SCHEDULED" },
-    orderBy: { scheduledAt: "asc" },
-    include: { servant: true },
-  });
 
   // Cards principales (KPIs)
   const kpiCards = [
@@ -256,10 +244,10 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-[#8A8378]/10">
-            {recentTestimonies.length === 0 ? (
+            {stats.recentTestimonies.length === 0 ? (
               <p className="text-sm text-[#8A8378] italic p-5 text-center">Aucun témoignage.</p>
             ) : (
-              recentTestimonies.map((t) => (
+              stats.recentTestimonies.map((t) => (
                 <div key={t.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#FAF6EF] transition-colors">
                   <div className="min-w-0 flex-1 mr-3">
                     <p className="text-sm font-medium text-[#1E0F2B] truncate">{t.title}</p>
@@ -295,10 +283,10 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-[#8A8378]/10">
-            {recentContactRequests.length === 0 ? (
+            {stats.recentContactRequests.length === 0 ? (
               <p className="text-sm text-[#8A8378] italic p-5 text-center">Aucune demande.</p>
             ) : (
-              recentContactRequests.map((c) => (
+              stats.recentContactRequests.map((c) => (
                 <div key={c.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#FAF6EF] transition-colors">
                   <div className="min-w-0 flex-1 mr-3">
                     <p className="text-sm font-medium text-[#1E0F2B] truncate">{c.name}</p>
@@ -332,11 +320,11 @@ export default async function AdminDashboardPage() {
             Gérer →
           </Link>
         </div>
-        {upcomingLives.length === 0 ? (
+        {stats.upcomingLives.length === 0 ? (
           <p className="text-sm text-[#8A8378] italic p-5 text-center">Aucun direct programmé.</p>
         ) : (
           <div className="grid md:grid-cols-3 gap-3 p-4">
-            {upcomingLives.map((live) => (
+            {stats.upcomingLives.map((live) => (
               <div key={live.id} className="p-4 rounded-xl border border-[#8A8378]/20 bg-gradient-to-br from-[#FAF6EF] to-white">
                 <div className="flex items-center gap-2 mb-2">
                   <Radio className="w-3.5 h-3.5 text-[#5B7052]" />
