@@ -181,7 +181,7 @@ app.use(
 import http from "http";
 import { initSocketServer } from "./socket/yeshua-connect";
 
-const PORT = parseInt(process.env.PORT || "3001", 10);
+const PORT = parseInt(process.env.PORT || "3000", 10);
 const httpServer = http.createServer(app);
 
 // Initialize Socket.io for real-time messaging

@@ -482,7 +482,7 @@ export function MediaOverlay({
         type="button"
         onClick={() => setShowPanel(!showPanel)}
         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          showOverlay ? "bg-[#C9A227]/20 text-[#C9A227] hover:bg-[#C9A227]/30" : "bg-white/10 text-white hover:bg-white/15"
+          showOverlay ? "bg-[#C9A227]/20 text-[#C9A227] hover:bg-[#C9A227]/30" : "bg-[#2A0E3D]/5 text-[#1E0F2B] hover:bg-[#2A0E3D]/10"
         }`}
       >
         <ImageIcon className="w-4 h-4" />
@@ -493,7 +493,7 @@ export function MediaOverlay({
         type="button"
         onClick={() => setShowOverlay(!showOverlay)}
         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          showOverlay ? "bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30" : "bg-white/10 text-white hover:bg-white/15"
+          showOverlay ? "bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30" : "bg-[#2A0E3D]/5 text-[#1E0F2B] hover:bg-[#2A0E3D]/10"
         }`}
         title={showOverlay ? "Overlay actif — glissez les éléments sur la vidéo" : "Overlay inactif"}
       >
@@ -503,7 +503,7 @@ export function MediaOverlay({
 
       {/* Hint when overlay is active */}
       {showOverlay && (
-        <span className="hidden md:inline text-[10px] text-white/40 px-2">
+        <span className="hidden md:inline text-[10px] text-[#1E0F2B]/40 px-2">
           ↑ Glissez les éléments sur la vidéo
         </span>
       )}
@@ -511,7 +511,7 @@ export function MediaOverlay({
       {showPanel && panelPos !== null && (
         <div
           ref={panelRef}
-          className="fixed z-50 bg-[#1F1F1F] rounded-2xl shadow-2xl border border-white/10 w-[600px] max-w-[90vw] overflow-hidden"
+          className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-[#8A8378]/20 w-[600px] max-w-[90vw] overflow-hidden"
           style={{ left: `${panelPos.x}px`, top: `${panelPos.y}px` }}
         >
           <div
@@ -521,28 +521,28 @@ export function MediaOverlay({
             <div className="flex items-center gap-2 text-[#FAF6EF]">
               <GripVertical className="w-4 h-4 text-[#C9A227]" />
               <span className="text-xs font-bold uppercase tracking-wider">Gestion des médias</span>
-              <span className="text-[10px] text-white/40 ml-2">Glissez pour déplacer</span>
+              <span className="text-[10px] text-[#1E0F2B]/40 ml-2">Glissez pour déplacer</span>
             </div>
             <button
               onClick={() => setShowPanel(false)}
-              className="p-1 rounded hover:bg-white/10 text-[#FAF6EF]/70 transition-colors"
+              className="p-1 rounded hover:bg-[#2A0E3D]/5 text-[#FAF6EF]/70 transition-colors"
               onMouseDown={(e) => e.stopPropagation()}
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex gap-1 bg-white/5 p-1 border-b border-white/5">
+          <div className="flex gap-1 bg-[#2A0E3D]/5 p-1 border-b border-[#8A8378]/15">
             <button onClick={() => setActiveTab("images")}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "images" ? "bg-white text-[#0F0F0F]" : "text-white/50 hover:text-white"}`}>
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "images" ? "bg-white text-[#0F0F0F]" : "text-[#1E0F2B]/50 hover:text-[#1E0F2B]"}`}>
               <ImageIcon className="w-3.5 h-3.5 inline mr-1" />Images
             </button>
             <button onClick={() => setActiveTab("slides")}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "slides" ? "bg-white text-[#0F0F0F]" : "text-white/50 hover:text-white"}`}>
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "slides" ? "bg-white text-[#0F0F0F]" : "text-[#1E0F2B]/50 hover:text-[#1E0F2B]"}`}>
               <FileText className="w-3.5 h-3.5 inline mr-1" />Slides
             </button>
             <button onClick={() => setActiveTab("text")}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "text" ? "bg-white text-[#0F0F0F]" : "text-white/50 hover:text-white"}`}>
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "text" ? "bg-white text-[#0F0F0F]" : "text-[#1E0F2B]/50 hover:text-[#1E0F2B]"}`}>
               <Type className="w-3.5 h-3.5 inline mr-1" />Texte
             </button>
           </div>
@@ -551,13 +551,13 @@ export function MediaOverlay({
             {activeTab === "images" && (
               <div className="space-y-3">
                 <button onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-3 rounded-xl border-2 border-dashed border-white/20 hover:border-[#C9A227] flex items-center justify-center gap-2 text-sm text-white/50 hover:text-[#C9A227] transition-colors">
+                  className="w-full py-3 rounded-xl border-2 border-dashed border-white/20 hover:border-[#C9A227] flex items-center justify-center gap-2 text-sm text-[#1E0F2B]/50 hover:text-[#C9A227] transition-colors">
                   <Upload className="w-4 h-4" />Uploader une image
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
                 <div className="grid grid-cols-3 gap-2">
                   {overlayImages.map((img) => (
-                    <div key={img.id} className={`relative group rounded-lg overflow-hidden border-2 ${selectedOverlayId === img.id ? "border-[#C9A227]" : "border-white/10"}`}>
+                    <div key={img.id} className={`relative group rounded-lg overflow-hidden border-2 ${selectedOverlayId === img.id ? "border-[#C9A227]" : "border-[#8A8378]/20"}`}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={img.src} alt="overlay" className="w-full aspect-video object-cover" />
                       {!img.visible && <div className="absolute inset-0 bg-black/60" />}
@@ -565,16 +565,16 @@ export function MediaOverlay({
                         <button onClick={() => toggleImageVisibility(img.id)} className="p-1.5 rounded-lg bg-white/90 text-[#0F0F0F] hover:bg-white">
                           {img.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                         </button>
-                        <button onClick={() => deleteImage(img.id)} className="p-1.5 rounded-lg bg-red-600/90 text-white hover:bg-red-600">
+                        <button onClick={() => deleteImage(img.id)} className="p-1.5 rounded-lg bg-red-600/90 text-[#1E0F2B] hover:bg-red-600">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
-                {overlayImages.length === 0 && <p className="text-xs text-white/30 text-center italic py-4">Aucune image uploadée</p>}
+                {overlayImages.length === 0 && <p className="text-xs text-[#1E0F2B]/30 text-center italic py-4">Aucune image uploadée</p>}
                 {overlayImages.length > 0 && (
-                  <p className="text-[10px] text-white/40 italic">Astuce : activez l'overlay ON, puis glissez les images directement sur la vidéo</p>
+                  <p className="text-[10px] text-[#1E0F2B]/40 italic">Astuce : activez l'overlay ON, puis glissez les images directement sur la vidéo</p>
                 )}
               </div>
             )}
@@ -582,29 +582,29 @@ export function MediaOverlay({
             {activeTab === "slides" && (
               <div className="space-y-3">
                 <button onClick={() => slideInputRef.current?.click()}
-                  className="w-full py-3 rounded-xl border-2 border-dashed border-white/20 hover:border-[#C9A227] flex items-center justify-center gap-2 text-sm text-white/50 hover:text-[#C9A227] transition-colors">
+                  className="w-full py-3 rounded-xl border-2 border-dashed border-white/20 hover:border-[#C9A227] flex items-center justify-center gap-2 text-sm text-[#1E0F2B]/50 hover:text-[#C9A227] transition-colors">
                   <Upload className="w-4 h-4" />Uploader des slides
                 </button>
                 <input ref={slideInputRef} type="file" accept="image/*" multiple onChange={handleSlidesUpload} className="hidden" />
                 {slides.length > 0 && (
                   <>
-                    <div className="flex items-center justify-between bg-white/5 rounded-xl p-2">
+                    <div className="flex items-center justify-between bg-[#2A0E3D]/5 rounded-xl p-2">
                       <button onClick={() => setCurrentSlide((prev) => Math.max(0, prev - 1))} disabled={currentSlide === 0}
-                        className="p-2 rounded-lg hover:bg-white/10 text-white disabled:opacity-30">
+                        className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B] disabled:opacity-30">
                         <ChevronLeft className="w-4 h-4" />
                       </button>
-                      <span className="text-xs font-bold text-white">Slide {currentSlide + 1} / {slides.length}</span>
+                      <span className="text-xs font-bold text-[#1E0F2B]">Slide {currentSlide + 1} / {slides.length}</span>
                       <button onClick={() => setCurrentSlide((prev) => Math.min(slides.length - 1, prev + 1))} disabled={currentSlide >= slides.length - 1}
-                        className="p-2 rounded-lg hover:bg-white/10 text-white disabled:opacity-30">
+                        className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B] disabled:opacity-30">
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="relative rounded-xl overflow-hidden border-2 border-white/10">
+                    <div className="relative rounded-xl overflow-hidden border-2 border-[#8A8378]/20">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={slides[currentSlide]?.src} alt="slide" className="w-full aspect-video object-contain bg-[#0F0F0F]" />
+                      <img src={slides[currentSlide]?.src} alt="slide" className="w-full aspect-video object-contain bg-[#FAF6EF]" />
                       {slides[currentSlide] && (
                         <button onClick={() => deleteSlide(slides[currentSlide].id)}
-                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-600/90 text-white hover:bg-red-600">
+                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-600/90 text-[#1E0F2B] hover:bg-red-600">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
@@ -617,43 +617,43 @@ export function MediaOverlay({
             {activeTab === "text" && (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">Texte à afficher</label>
+                  <label className="block text-xs font-bold text-[#1E0F2B]/70 uppercase tracking-wider mb-1.5">Texte à afficher</label>
                   <input type="text" value={textOverlay.text}
                     onChange={(e) => setTextOverlay({ ...textOverlay, text: e.target.value })}
                     placeholder="Ex: Verset du jour..." maxLength={100}
-                    className="w-full px-3 py-2 rounded-xl border-2 border-white/10 bg-[#0F0F0F] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#C9A227]" />
+                    className="w-full px-3 py-2 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] placeholder:text-[#1E0F2B]/30 focus:outline-none focus:border-[#C9A227]" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">Taille : {textOverlay.size}px</label>
+                    <label className="block text-xs font-bold text-[#1E0F2B]/70 uppercase tracking-wider mb-1.5">Taille : {textOverlay.size}px</label>
                     <input type="range" min="16" max="72" value={textOverlay.size}
                       onChange={(e) => setTextOverlay({ ...textOverlay, size: parseInt(e.target.value) })}
                       className="w-full accent-[#C9A227]" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-1.5">Couleur</label>
+                    <label className="block text-xs font-bold text-[#1E0F2B]/70 uppercase tracking-wider mb-1.5">Couleur</label>
                     <input type="color" value={textOverlay.color}
                       onChange={(e) => setTextOverlay({ ...textOverlay, color: e.target.value })}
-                      className="w-full h-9 rounded-lg border border-white/10 bg-[#0F0F0F]" />
+                      className="w-full h-9 rounded-lg border border-[#8A8378]/20 bg-[#FAF6EF]" />
                   </div>
                 </div>
-                <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 cursor-pointer">
+                <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 cursor-pointer">
                   <input type="checkbox" checked={textOverlay.visible}
                     onChange={(e) => setTextOverlay({ ...textOverlay, visible: e.target.checked })}
                     className="w-4 h-4 accent-[#C9A227]" />
-                  <span className="text-sm text-white">Afficher le texte</span>
+                  <span className="text-sm text-[#1E0F2B]">Afficher le texte</span>
                 </label>
                 {textOverlay.visible && (
-                  <p className="text-[10px] text-white/40 italic">Astuce : glissez le texte directement sur la vidéo pour le repositionner</p>
+                  <p className="text-[10px] text-[#1E0F2B]/40 italic">Astuce : glissez le texte directement sur la vidéo pour le repositionner</p>
                 )}
               </div>
             )}
           </div>
 
-          <div className="px-4 py-3 border-t border-white/5 flex items-center justify-between">
-            <span className="text-xs text-white/40">{showOverlay ? "● Overlay actif" : "○ Overlay inactif"}</span>
+          <div className="px-4 py-3 border-t border-[#8A8378]/15 flex items-center justify-between">
+            <span className="text-xs text-[#1E0F2B]/40">{showOverlay ? "● Overlay actif" : "○ Overlay inactif"}</span>
             <button onClick={() => setShowOverlay(!showOverlay)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${showOverlay ? "bg-emerald-600 text-white" : "bg-[#C9A227] text-[#0F0F0F]"}`}>
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${showOverlay ? "bg-emerald-600 text-[#1E0F2B]" : "bg-[#C9A227] text-[#0F0F0F]"}`}>
               {showOverlay ? "Désactiver" : "Activer l'overlay"}
             </button>
           </div>
