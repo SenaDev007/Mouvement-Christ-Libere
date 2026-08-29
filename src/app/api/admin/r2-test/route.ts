@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { isB2Configured, uploadToB2, getPublicUrl, generateKey } from "@/lib/b2";
+import { isR2Configured, uploadToR2, getPublicUrl, generateKey } from "@/lib/r2";
 
 /**
- * GET /api/admin/b2-test
+ * GET /api/admin/r2-test
  *
- * Vérifie la configuration Backblaze B2 et teste un upload.
+ * Vérifie la configuration Cloudflare R2 et teste un upload.
  * Utile pour diagnostiquer les problèmes de stockage.
  */
 export async function GET(req: NextRequest) {
@@ -23,25 +23,27 @@ export async function GET(req: NextRequest) {
     // ─── Status : vérifier la config ───
     if (action === "status") {
       return NextResponse.json({
-        configured: isB2Configured(),
-        bucket: process.env.B2_BUCKET_NAME || "(non défini)",
-        endpoint: process.env.B2_ENDPOINT || "(non défini)",
-        keyId: process.env.B2_KEY_ID ? `${process.env.B2_KEY_ID.substring(0, 8)}...` : "(non défini)",
-        applicationKey: process.env.B2_APPLICATION_KEY ? "(défini)" : "(non défini)",
+        configured: isR2Configured(),
+        provider: "Cloudflare R2",
+        accountId: process.env.R2_ACCOUNT_ID ? `${process.env.R2_ACCOUNT_ID.substring(0, 8)}...` : "(non défini)",
+        bucket: process.env.R2_BUCKET_NAME || "(non défini)",
+        publicUrl: process.env.R2_PUBLIC_URL || "(non défini — utilisera r2.dev)",
+        accessKeyId: process.env.R2_ACCESS_KEY_ID ? `${process.env.R2_ACCESS_KEY_ID.substring(0, 8)}...` : "(non défini)",
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ? "(défini)" : "(non défini)",
       });
     }
 
     // ─── Test : upload un petit fichier de test ───
     if (action === "test") {
-      if (!isB2Configured()) {
-        return NextResponse.json({ error: "B2 non configuré" }, { status: 503 });
+      if (!isR2Configured()) {
+        return NextResponse.json({ error: "R2 non configuré" }, { status: 503 });
       }
 
-      const testContent = `Christ Libère — test B2 ${new Date().toISOString()}`;
+      const testContent = `Christ Libère — test R2 ${new Date().toISOString()}`;
       const buffer = Buffer.from(testContent, "utf-8");
-      const key = generateKey("test", "b2", "txt");
+      const key = generateKey("test", "r2", "txt");
 
-      const publicUrl = await uploadToB2(key, buffer, "text/plain");
+      const publicUrl = await uploadToR2(key, buffer, "text/plain");
 
       return NextResponse.json({
         success: true,
@@ -54,9 +56,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ error: "Action inconnue (status ou test)" }, { status: 400 });
   } catch (error) {
-    console.error("[b2-test] Error:", error);
+    console.error("[r2-test] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Erreur test B2" },
+      { error: error instanceof Error ? error.message : "Erreur test R2" },
       { status: 500 }
     );
   }

@@ -67,7 +67,7 @@ const NAV_SECTIONS = [
   {
     title: "Système",
     items: [
-      { label: "Stockage B2", href: "/admin/b2-test", icon: Cloud },
+      { label: "Stockage R2", href: "/admin/r2-test", icon: Cloud },
     ],
   },
 ];

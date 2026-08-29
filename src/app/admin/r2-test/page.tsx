@@ -4,15 +4,17 @@ import { useState, useEffect } from "react";
 import { CheckCircle2, XCircle, Loader2, Cloud, TestTube } from "lucide-react";
 import Link from "next/link";
 
-interface B2Status {
+interface R2Status {
   configured: boolean;
+  provider: string;
+  accountId: string;
   bucket: string;
-  endpoint: string;
-  keyId: string;
-  applicationKey: string;
+  publicUrl: string;
+  accessKeyId: string;
+  secretAccessKey: string;
 }
 
-interface B2TestResult {
+interface R2TestResult {
   success: boolean;
   message: string;
   publicUrl?: string;
@@ -20,15 +22,15 @@ interface B2TestResult {
   content?: string;
 }
 
-export default function B2TestPage() {
-  const [status, setStatus] = useState<B2Status | null>(null);
+export default function R2TestPage() {
+  const [status, setStatus] = useState<R2Status | null>(null);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<B2TestResult | null>(null);
+  const [testResult, setTestResult] = useState<R2TestResult | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/admin/b2-test?action=status")
+    fetch("/api/admin/r2-test?action=status")
       .then((r) => r.json())
       .then((data) => {
         if (data.error) {
@@ -46,7 +48,7 @@ export default function B2TestPage() {
     setTestResult(null);
     setError("");
     try {
-      const res = await fetch("/api/admin/b2-test?action=test");
+      const res = await fetch("/api/admin/r2-test?action=test");
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Erreur test");
@@ -67,7 +69,7 @@ export default function B2TestPage() {
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2">
               <Cloud className="w-5 h-5 text-[#C9A227]" />
-              Test Backblaze B2
+              Test Cloudflare R2
             </h1>
             <p className="text-xs text-[#8A8378] mt-1">
               Vérification du stockage des vidéos replays et miniatures
@@ -96,26 +98,34 @@ export default function B2TestPage() {
           ) : status ? (
             <div className="space-y-2">
               <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
+                <span className="text-xs text-[#8A8378]">Fournisseur</span>
+                <span className="text-xs font-bold text-[#1E0F2B]">{status.provider}</span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
                 <span className="text-xs text-[#8A8378]">Statut</span>
                 <span className={`text-xs font-bold ${status.configured ? "text-emerald-600" : "text-red-600"}`}>
                   {status.configured ? "✓ Configuré" : "✗ Non configuré"}
                 </span>
               </div>
               <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
+                <span className="text-xs text-[#8A8378]">Account ID</span>
+                <span className="text-xs font-mono text-[#1E0F2B]">{status.accountId}</span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
                 <span className="text-xs text-[#8A8378]">Bucket</span>
                 <span className="text-xs font-mono text-[#1E0F2B]">{status.bucket}</span>
               </div>
               <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Endpoint S3</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.endpoint}</span>
+                <span className="text-xs text-[#8A8378]">URL publique</span>
+                <span className="text-xs font-mono text-[#1E0F2B]">{status.publicUrl}</span>
               </div>
               <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Key ID</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.keyId}</span>
+                <span className="text-xs text-[#8A8378]">Access Key ID</span>
+                <span className="text-xs font-mono text-[#1E0F2B]">{status.accessKeyId}</span>
               </div>
               <div className="flex items-center justify-between py-1.5">
-                <span className="text-xs text-[#8A8378]">Application Key</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.applicationKey}</span>
+                <span className="text-xs text-[#8A8378]">Secret Access Key</span>
+                <span className="text-xs font-mono text-[#1E0F2B]">{status.secretAccessKey}</span>
               </div>
             </div>
           ) : null}
@@ -128,7 +138,7 @@ export default function B2TestPage() {
             Test d'upload
           </h2>
           <p className="text-xs text-[#8A8378] mb-3">
-            Uploade un petit fichier texte de test vers B2 pour vérifier que l'écriture fonctionne.
+            Uploade un petit fichier texte de test vers R2 pour vérifier que l'écriture fonctionne.
           </p>
           <button
             onClick={runTest}
@@ -174,45 +184,34 @@ export default function B2TestPage() {
               Ajoutez ces variables d'environnement sur Vercel :
             </p>
             <pre className="text-[10px] bg-[#1E0F2B] text-[#C9A227] p-3 rounded-lg overflow-x-auto">
-{`B2_KEY_ID=votre_keyID
-B2_APPLICATION_KEY=votre_secret
-B2_BUCKET_NAME=nom-du-bucket
-B2_ENDPOINT=s3.us-west-004.backblazeb2.com`}
+{`R2_ACCOUNT_ID=votre_account_id
+R2_ACCESS_KEY_ID=votre_access_key
+R2_SECRET_ACCESS_KEY=votre_secret
+R2_BUCKET_NAME=nom-du-bucket
+R2_PUBLIC_URL=https://cdn.mouvementchristlibere.org`}
             </pre>
             <p className="text-[10px] text-[#8A8378] mt-3">
-              Docs : <a href="https://www.backblaze.com/b2/docs/s3_compatible_api" target="_blank" rel="noopener noreferrer" className="text-[#C9A227] hover:underline">B2 S3 Compatible API</a>
+              Docs : <a href="https://developers.cloudflare.com/r2/api/s3/api/" target="_blank" rel="noopener noreferrer" className="text-[#C9A227] hover:underline">R2 S3 API</a>
             </p>
           </div>
         )}
 
-        {/* CORS config */}
+        {/* Setup instructions */}
         {status?.configured && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-4">
             <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wider mb-2">
-              ⚠️ Configuration CORS du bucket B2
+              ℹ️ Configuration R2 (déjà faite)
             </h3>
-            <p className="text-xs text-blue-800 mb-3">
-              Pour que les vidéos et images B2 se chargent correctement sur le site,
-              configurez les CORS rules du bucket sur le dashboard Backblaze :
+            <p className="text-xs text-blue-800 mb-2">
+              R2 est configuré. Pour activer l'accès public aux fichiers :
             </p>
-            <pre className="text-[10px] bg-[#1E0F2B] text-[#FAF6EF] p-3 rounded-lg overflow-x-auto">
-{`[
-  {
-    "corsRuleName": "christ-libere",
-    "allowedOrigins": [
-      "https://mouvement-christ-libere.vercel.app",
-      "https://mouvementchristlibere.org"
-    ],
-    "allowedHeaders": ["*"],
-    "allowedOperations": [
-      "s3_get", "s3_head", "s3_put"
-    ],
-    "maxAgeSeconds": 3600
-  }
-]`}
-            </pre>
+            <ol className="text-xs text-blue-800 list-decimal list-inside space-y-1">
+              <li>Dashboard Cloudflare → R2 → votre bucket → Settings</li>
+              <li>Activez "Public access" via un domaine custom (recommandé) ou r2.dev</li>
+              <li>Renseignez R2_PUBLIC_URL avec votre domaine custom (optionnel mais recommandé)</li>
+            </ol>
             <p className="text-[10px] text-blue-700 mt-2">
-              Dashboard B2 → Bucket Settings → CORS Rules → Edit
+              Avantage R2 : zéro frais de transfert sortant (egress gratuit)
             </p>
           </div>
         )}

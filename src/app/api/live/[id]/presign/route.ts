@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { getPresignedUploadUrl, getPublicUrl, generateKey, isB2Configured } from "@/lib/b2";
+import { getPresignedUploadUrl, getPublicUrl, generateKey, isR2Configured } from "@/lib/r2";
 
 /**
  * POST /api/live/[id]/presign
@@ -23,9 +23,9 @@ export async function POST(
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    if (!isB2Configured()) {
+    if (!isR2Configured()) {
       return NextResponse.json(
-        { error: "Backblaze B2 non configuré. Ajoutez B2_KEY_ID, B2_APPLICATION_KEY, B2_BUCKET_NAME, B2_ENDPOINT dans .env" },
+        { error: "Cloudflare R2 non configuré. Ajoutez R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME dans .env" },
         { status: 503 }
       );
     }

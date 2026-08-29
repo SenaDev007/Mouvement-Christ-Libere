@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { uploadToB2, generateKey, isB2Configured } from "@/lib/b2";
+import { uploadToR2, generateKey, isR2Configured } from "@/lib/r2";
 
 /**
  * POST /api/live/[id]/thumbnail
@@ -51,11 +51,11 @@ export async function POST(
 
     let thumbnailUrl: string;
 
-    if (isB2Configured()) {
-      // ─── Upload vers Backblaze B2 ───
+    if (isR2Configured()) {
+      // ─── Upload vers Cloudflare R2 ───
       const key = generateKey("thumbnails", `live-${id}`, ext);
-      thumbnailUrl = await uploadToB2(key, buffer, mimeType);
-      console.log(`[thumbnail] Uploadé vers B2: ${thumbnailUrl}`);
+      thumbnailUrl = await uploadToR2(key, buffer, mimeType);
+      console.log(`[thumbnail] Uploadé vers R2: ${thumbnailUrl}`);
     } else {
       // ─── Fallback : base64 en DB ───
       thumbnailUrl = thumbnail; // data URL

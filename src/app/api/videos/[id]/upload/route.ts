@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { uploadToB2, generateKey, isB2Configured } from "@/lib/b2";
+import { uploadToR2, generateKey, isR2Configured } from "@/lib/r2";
 
 /**
  * POST /api/videos/[id]/upload
@@ -42,17 +42,17 @@ export async function POST(
 
     let videoUrl: string;
 
-    if (isB2Configured()) {
-      // ─── Upload vers Backblaze B2 ───
+    if (isR2Configured()) {
+      // ─── Upload vers Cloudflare R2 ───
       const ext = mimeType.includes("webm") ? "webm" : mimeType.includes("mp4") ? "mp4" : "bin";
       const key = generateKey("videos", id, ext);
-      videoUrl = await uploadToB2(key, buffer, mimeType);
-      console.log(`[video upload] Uploadé vers B2: ${videoUrl} (${Math.round(buffer.length / 1024 / 1024)}MB)`);
+      videoUrl = await uploadToR2(key, buffer, mimeType);
+      console.log(`[video upload] Uploadé vers R2: ${videoUrl} (${Math.round(buffer.length / 1024 / 1024)}MB)`);
     } else {
       // ─── Fallback : base64 en DB (limite ~4MB Vercel) ───
       if (buffer.length > 4 * 1024 * 1024) {
         return NextResponse.json(
-          { error: "Fichier trop volumineux (max 4MB sans B2 — configurez Backblaze B2 pour les gros fichiers)" },
+          { error: "Fichier trop volumineux (max 4MB sans R2 — configurez Cloudflare R2 pour les gros fichiers)" },
           { status: 413 }
         );
       }
@@ -70,7 +70,7 @@ export async function POST(
       success: true,
       videoUrl,
       size: Math.round(file.size / 1024),
-      storage: isB2Configured() ? "b2" : "base64",
+      storage: isR2Configured() ? "r2" : "base64",
     });
   } catch (error) {
     console.error("[video upload] Error:", error);
