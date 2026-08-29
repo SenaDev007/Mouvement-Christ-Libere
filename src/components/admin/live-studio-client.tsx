@@ -420,13 +420,13 @@ export function LiveStudioClient({
               const data = await uploadRes.json();
               recordingUrl = data.recordingUrl;
               console.log("[studio] Replay uploadé (API):", recordingUrl);
+              setInfo(`✓ Replay uploadé (${data.storage || 'DB'})`);
             } else {
               const errData = await uploadRes.json().catch(() => ({}));
               throw new Error(errData.error || `HTTP ${uploadRes.status}`);
             }
           } else {
-            // Gros fichier : upload direct vers B2 via URL pré-signée
-            // 1. Demander l'URL pré-signée
+            // Gros fichier : upload direct vers R2 via URL pré-signée
             const presignRes = await apiFetch(`/api/live/${liveId}/presign`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -434,27 +434,30 @@ export function LiveStudioClient({
             });
             if (!presignRes.ok) {
               const errData = await presignRes.json().catch(() => ({}));
-              throw new Error(errData.error || "Impossible de générer l'URL d'upload");
+              throw new Error(errData.error || "Impossible de générer l'URL d'upload R2");
             }
             const { uploadUrl, publicUrl } = await presignRes.json();
 
-            // 2. Upload direct vers B2
-            setInfo(`Upload du replay vers B2 (${Math.round(sizeMB)}MB) — veuillez patienter...`);
+            // Upload direct vers R2
+            setInfo(`Upload du replay vers R2 (${Math.round(sizeMB)}MB) — patientez...`);
             const uploadRes = await fetch(uploadUrl, {
               method: "PUT",
               body: recordingBlob,
               headers: { "Content-Type": "video/webm" },
             });
             if (!uploadRes.ok) {
-              throw new Error(`Upload B2 échoué: HTTP ${uploadRes.status}`);
+              throw new Error(`Upload R2 échoué: HTTP ${uploadRes.status}`);
             }
             recordingUrl = publicUrl;
-            console.log("[studio] Replay uploadé (B2 direct):", recordingUrl);
+            console.log("[studio] Replay uploadé (R2 direct):", recordingUrl);
+            setInfo(`✓ Replay uploadé vers R2 (${Math.round(sizeMB)}MB)`);
           }
         } catch (err) {
-          console.error("[studio] Upload replay failed:", err);
-          // Fallback : téléchargement local
+          const errMsg = err instanceof Error ? err.message : "erreur inconnue";
+          console.error("[studio] Upload replay failed:", errMsg);
+          setError(`Upload replay échoué: ${errMsg}`);
           setInfo(`Upload échoué — téléchargement local du replay...`);
+          // Téléchargement local en fallback
           const url = URL.createObjectURL(recordingBlob);
           const a = document.createElement("a");
           a.href = url;

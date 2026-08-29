@@ -55,13 +55,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Calculer la durée du live
+    const now = new Date();
     let durationStr = "";
     if (live.startedAt) {
-      const durationMs = (live.endedAt || new Date()).getTime() - new Date(live.startedAt).getTime();
-      const h = Math.floor(durationMs / 3600000);
-      const m = Math.floor((durationMs % 3600000) / 60000);
-      const s = Math.floor((durationMs % 60000) / 1000);
-      durationStr = h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}` : `${m}:${s.toString().padStart(2, "0")}`;
+      const durationMs = now.getTime() - new Date(live.startedAt).getTime();
+      if (durationMs > 0) {
+        const h = Math.floor(durationMs / 3600000);
+        const m = Math.floor((durationMs % 3600000) / 60000);
+        const s = Math.floor((durationMs % 60000) / 1000);
+        durationStr = h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}` : `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+      }
     }
 
     // Mettre à jour le live : statut ENDED + endedAt

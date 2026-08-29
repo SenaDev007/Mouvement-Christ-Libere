@@ -13,7 +13,7 @@ import { EgressClient, StreamOutput } from "livekit-server-sdk";
  * Body: { } (utilise les clés RTMP configurées sur le serviteur)
  */
 
-const LIVEKIT_URL = process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
+const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
 const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
 
