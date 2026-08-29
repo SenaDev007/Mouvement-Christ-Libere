@@ -22,6 +22,7 @@ export function LiveAnnouncementBar() {
   const [lives, setLives] = useState<LiveAnnouncement[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -43,14 +44,14 @@ export function LiveAnnouncementBar() {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-rotate between lives every 4 seconds
+  // Auto-rotate between lives every 4 seconds — PAUSE au survol
   useEffect(() => {
-    if (lives.length <= 1) return;
+    if (lives.length <= 1 || isHovered) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % lives.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, [lives.length]);
+  }, [lives.length, isHovered]);
 
   if (!mounted || lives.length === 0) return null;
 
@@ -81,6 +82,8 @@ export function LiveAnnouncementBar() {
   return (
     <div
       className="live-announcement-bar relative w-full overflow-hidden border-b"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         background: bgGradient,
         borderColor: isLive ? "rgba(20, 83, 45, 0.3)" : "rgba(156, 126, 30, 0.3)",

@@ -23,6 +23,7 @@ export function UpcomingLiveFloat() {
   const [lives, setLives] = useState<UpcomingLive[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [countdown, setCountdown] = useState("");
+  const [isHovered, setIsHovered] = useState(false);
 
   const fetchUpcoming = useCallback(async () => {
     try {
@@ -45,14 +46,14 @@ export function UpcomingLiveFloat() {
     return () => clearInterval(interval);
   }, [fetchUpcoming]);
 
-  // Auto-rotate carousel every 5 seconds if multiple lives
+  // Auto-rotate carousel every 5 seconds if multiple lives — PAUSE au survol
   useEffect(() => {
-    if (lives.length <= 1) return;
+    if (lives.length <= 1 || isHovered) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % lives.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [lives.length]);
+  }, [lives.length, isHovered]);
 
   const live = lives[currentIndex];
 
@@ -93,6 +94,8 @@ export function UpcomingLiveFloat() {
     <Link
       href={`/live/${live.id}`}
       className="absolute top-4 right-4 z-30 group hidden sm:block"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative">
         {/* Halo pulsatile */}

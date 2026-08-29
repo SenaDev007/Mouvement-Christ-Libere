@@ -65,7 +65,7 @@ export default function Home() {
       .catch(() => setStatsData({ testimonies: 0, videos: 0, biographies: 0, responseTime: 24 }));
   }, []);
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#FAF6EF]">
       <AutoRefresh intervalMs={30000} />
       {/* ═════ HERO ═════ */}
       <section className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
@@ -374,7 +374,7 @@ export default function Home() {
             <p className="text-xs uppercase tracking-[0.25em] text-[#C9A227] font-semibold mb-3">
               Le dernier enseignement
             </p>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1E0F2B] leading-tight">
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#FAF6EF] leading-tight">
               Pour approfondir la Parole
             </h2>
           </div>
@@ -450,10 +450,10 @@ export default function Home() {
             <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-semibold mb-4">
               Communauté
             </p>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#FAF6EF] leading-tight mb-6">
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1E0F2B] leading-tight mb-6">
               Rejoignez les canaux d'échange
             </h2>
-            <p className="text-base md:text-lg text-[#FAF6EF]/60 leading-relaxed max-w-2xl mx-auto mb-10">
+            <p className="text-base md:text-lg text-[#1E0F2B]/70 leading-relaxed max-w-2xl mx-auto mb-10">
               Des espaces d'échange organisés par thème, modérés avec attention,
               pour grandir ensemble dans la foi. Canaux ouverts, canaux restreints chiffrés,
               intercession — à chacun son rythme.
