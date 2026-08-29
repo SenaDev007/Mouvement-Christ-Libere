@@ -1,52 +1,32 @@
 /**
- * API Client — Centralise tous les appels vers le backend Railway avec fallback.
+ * API Client — Centralise tous les appels API.
  *
- * Stratégie :
- * 1. Si NEXT_PUBLIC_API_URL est défini → essayer le backend Railway d'abord
- * 2. Si le backend Railway timeout (5s) ou erreur → fallback vers les APIs Next.js locales
- * 3. Si NEXT_PUBLIC_API_URL n'est pas défini → utiliser directement les APIs Next.js locales
+ * Stratégie (inversée pour la performance) :
+ * 1. Par défaut : utiliser les APIs Next.js locales (rapide, pas de délai)
+ * 2. N'utiliser le backend Railway QUE si NEXT_PUBLIC_USE_BACKEND=true
+ *    ET NEXT_PUBLIC_API_URL est défini
  *
- * Cela garantit que le site fonctionne toujours, même si Railway est down.
+ * Cela évite le délai de 3s (timeout Railway) sur chaque requête
+ * quand Railway est down.
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
-const BACKEND_TIMEOUT = 3000; // 3s max avant fallback (réduit pour ne pas bloquer l'UI)
 
 /**
- * Détermine si on doit utiliser le backend Railway ou les APIs locales.
- * On désactive le backend si :
- * - NEXT_PUBLIC_API_URL n'est pas défini
- * - Ou s'il pointe vers localhost (dev local)
- * - Ou si DISABLE_BACKEND est défini (pour forcer les APIs Next.js locales)
+ * Détermine si on doit utiliser le backend Railway.
+ * Par défaut : NON (utiliser les APIs Next.js locales).
+ * Pour activer Railway : NEXT_PUBLIC_USE_BACKEND=true sur Vercel.
  */
 function shouldUseBackend(): boolean {
+  if (process.env.NEXT_PUBLIC_USE_BACKEND !== "true") return false;
   if (!API_URL) return false;
   if (API_URL.includes("localhost")) return false;
-  if (process.env.NEXT_PUBLIC_DISABLE_BACKEND === "true") return false;
   return true;
 }
 
 /**
- * Wrapper fetch avec timeout.
- */
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (err) {
-    clearTimeout(timeoutId);
-    throw err;
-  }
-}
-
-/**
- * Wrapper fetch qui essaie le backend Railway d'abord, puis fallback Next.js local.
+ * Wrapper fetch qui utilise les APIs Next.js locales par défaut.
+ * Si NEXT_PUBLIC_USE_BACKEND=true, redirige vers Railway.
  */
 export async function apiFetch(
   path: string,
@@ -71,19 +51,22 @@ export async function apiFetch(
     headers,
   };
 
-  // Si pas de backend configuré → utiliser directement les APIs Next.js locales
+  // Par défaut : API Next.js locale (rapide, pas de délai)
   if (!shouldUseBackend()) {
     return fetch(path, fetchOptions);
   }
 
-  // Essayer le backend Railway avec timeout
+  // Backend Railway activé : rediriger vers Railway avec timeout 5s + fallback
   const backendUrl = `${API_URL}${path}`;
   try {
-    const response = await fetchWithTimeout(backendUrl, fetchOptions, BACKEND_TIMEOUT);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(backendUrl, { ...fetchOptions, signal: controller.signal });
+    clearTimeout(timeoutId);
     return response;
   } catch {
-    // Fallback : utiliser l'API Next.js locale
-    console.warn(`[api-client] Backend Railway timeout pour ${path}, fallback vers API locale`);
+    // Fallback : API Next.js locale
+    console.warn(`[api-client] Backend Railway timeout pour ${path}, fallback local`);
     return fetch(path, fetchOptions);
   }
 }
