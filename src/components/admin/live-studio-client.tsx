@@ -130,6 +130,17 @@ export function LiveStudioClient({
       const screenTrack = screenStreamRef.current.getVideoTracks()[0];
       if (screenTrack) screenTrack.enabled = !newPaused;
     }
+    // Arrêter le minuteur en pause, le reprendre en play
+    if (newPaused) {
+      if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
+    } else {
+      // Reprendre le minuteur depuis le temps écoulé actuel
+      const elapsed = streamDuration;
+      const resumeTime = Date.now() - elapsed * 1000;
+      durationTimerRef.current = setInterval(() => {
+        setStreamDuration(Math.floor((Date.now() - resumeTime) / 1000));
+      }, 1000);
+    }
   };
 
   // ─── Mode encodeur externe (OBS) ───
@@ -240,15 +251,18 @@ export function LiveStudioClient({
       fetchViewers();
       viewerPollRef.current = setInterval(fetchViewers, 5000);
 
-      // ─── 3. Essayer de se connecter à LiveKit (peut échouer silencieusement) ───
+      // ─── 3. Se connecter à LiveKit (CRITIQUE — les viewers ont besoin de ça) ───
       try {
         const tokenRes = await apiFetch("/api/livekit/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ roomName, role: "publisher", participantName: servantName, liveId }),
         });
-        if (tokenRes.ok) {
-          const { token, url } = await tokenRes.json();
+        if (!tokenRes.ok) {
+          const tokenErr = await tokenRes.json().catch(() => ({}));
+          throw new Error(tokenErr.error || `Token LiveKit: HTTP ${tokenRes.status}`);
+        }
+        const { token, url } = await tokenRes.json();
 
           const room = new Room({
             adaptiveStream: true,
@@ -329,13 +343,11 @@ export function LiveStudioClient({
               setError(`RTMP egress: ${err instanceof Error ? err.message : "erreur"}`);
             }
           }
-        } else {
-          console.warn("[studio] Token LiveKit non disponible — live sans diffusion WebRTC");
-          setInfo("Live démarré (sans diffusion WebRTC — vérifiez LiveKit).");
-        }
       } catch (err) {
-        console.error("[studio] LiveKit connection failed (continuing without):", err);
-        setInfo("Live démarré (LiveKit indisponible — le chat et les overlays fonctionnent).");
+        const errMsg = err instanceof Error ? err.message : "erreur inconnue";
+        console.error("[studio] LiveKit connection failed:", errMsg);
+        setError(`Connexion LiveKit échouée: ${errMsg}. Les viewers ne pourront pas voir le flux.`);
+        setInfo("⚠ LiveKit indisponible — les viewers voient un écran noir.");
       }
 
       // ─── 4. Démarrer l'enregistrement du canvas (MediaRecorder) ───

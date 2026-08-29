@@ -199,6 +199,11 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         room.on(RoomEvent.TrackSubscribed, (track) => {
           if (track.kind === Track.Kind.Video && videoRef.current) {
             track.attach(videoRef.current);
+            // Forcer le play (muted autoplay devrait marcher)
+            videoRef.current.muted = true;
+            videoRef.current.play().catch((err) => {
+              console.warn("[viewer] Video play failed:", err);
+            });
           } else if (track.kind === Track.Kind.Audio) {
             const audioEl = document.createElement("audio");
             track.attach(audioEl);
@@ -210,6 +215,8 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
           participant.getTrackPublications().forEach((pub) => {
             if (pub.track && pub.track.kind === Track.Kind.Video && videoRef.current) {
               pub.track.attach(videoRef.current);
+              videoRef.current.muted = true;
+              videoRef.current.play().catch(() => {});
             } else if (pub.track && pub.track.kind === Track.Kind.Audio) {
               const audioEl = document.createElement("audio");
               pub.track.attach(audioEl);
