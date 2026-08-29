@@ -44,6 +44,8 @@ function getClient(): S3Client {
       accessKeyId: cfg.accessKeyId,
       secretAccessKey: cfg.secretAccessKey,
     },
+    // R2 nécessite le style "path" pour certaines opérations
+    forcePathStyle: true,
   });
   return s3Client;
 }
@@ -192,7 +194,10 @@ export async function diagnoseR2(): Promise<{
   details.push(`Bucket configuré : ${cfg.bucket}`);
   details.push(`Endpoint : https://${cfg.accountId}.r2.cloudflarestorage.com`);
 
-  // ─── Test 1 : ListBuckets (vérifie les credentials) ───
+  // ─── Test 1 : ListBuckets (vérifie les credentials globalement) ───
+  // Note : Un token R2 scoped à un bucket spécifique n'a PAS la permission
+  // ListBuckets (qui nécessite "Admin Read & Write"). Si ListBuckets échoue
+  // avec AccessDenied, on ne s'arrête pas — on teste l'upload quand même.
   try {
     const buckets = await listBucketsR2();
     result.credentialsValid = true;
@@ -201,34 +206,59 @@ export async function diagnoseR2(): Promise<{
 
     result.bucketExists = buckets.some((b) => b.name === cfg.bucket);
     if (!result.bucketExists) {
-      details.push(`✗ Le bucket "${cfg.bucket}" n'existe pas ou n'est pas accessible avec ce token`);
-      details.push(`  Buckets disponibles : ${result.bucketsAccessible.join(", ") || "(aucun)"}`);
-      result.error = `Bucket "${cfg.bucket}" introuvable`;
-      result.errorCode = "NoSuchBucket";
+      details.push(`⚠ Le bucket "${cfg.bucket}" n'apparaît pas dans la liste (peut être normal si le token est scoped)`);
+    } else {
+      details.push(`✓ Bucket "${cfg.bucket}" trouvé dans la liste`);
+    }
+  } catch (err) {
+    const code = extractErrorCode(err);
+    const msg = err instanceof Error ? err.message : "Erreur ListBuckets";
+    if (code === "AccessDenied" || code === "HTTP 403") {
+      // AccessDenied sur ListBuckets = token scoped à un bucket (normal)
+      details.push(`⚠ ListBuckets refusé (AccessDenied) — token probablement scoped au bucket "${cfg.bucket}"`);
+      details.push("  → Ce n'est PAS un problème : les tokens scoped n'ont pas la permission ListBuckets");
+      details.push("  → Test de l'upload en cours...");
+      result.credentialsValid = true; // On suppose que les credentials sont OK, on le confirmera avec l'upload
+      result.bucketExists = true; // On suppose que le bucket existe, on le confirmera avec l'upload
+    } else {
+      // Autre erreur = credentials vraiment invalides
+      result.error = msg;
+      result.errorCode = code;
+      details.push(`✗ Échec ListBuckets : ${msg} (code: ${code})`);
+      details.push("  → Vérifiez R2_ACCESS_KEY_ID et R2_SECRET_ACCESS_KEY (copier-coller sans espaces)");
+      details.push("  → Vérifiez que R2_ACCOUNT_ID est correct (ID du compte Cloudflare, pas du bucket)");
       return result;
     }
-    details.push(`✓ Bucket "${cfg.bucket}" accessible`);
-  } catch (err) {
-    result.error = err instanceof Error ? err.message : "Erreur ListBuckets";
-    result.errorCode = extractErrorCode(err);
-    details.push(`✗ Échec ListBuckets : ${result.error} (code: ${result.errorCode})`);
-    details.push("  → Vérifiez R2_ACCESS_KEY_ID et R2_SECRET_ACCESS_KEY");
-    details.push("  → Vérifiez que le token R2 a la permission 'Object Read & Write'");
-    return result;
   }
 
-  // ─── Test 2 : Upload test (vérifie les permissions d'écriture) ───
+  // ─── Test 2 : Upload test (vérifie les permissions d'écriture sur le bucket) ───
   try {
     const testKey = `test/diagnostic-${Date.now()}.txt`;
     const testBuffer = Buffer.from(`R2 diagnostic ${new Date().toISOString()}`, "utf-8");
     await uploadToR2(testKey, testBuffer, "text/plain");
     result.canWrite = true;
-    details.push("✓ Upload test réussi — permissions d'écriture OK");
+    details.push("✓ Upload test réussi — permissions d'écriture OK sur le bucket");
+    details.push(`✓ URL publique : ${getPublicUrl(testKey)}`);
   } catch (err) {
-    result.error = err instanceof Error ? err.message : "Erreur upload";
-    result.errorCode = extractErrorCode(err);
-    details.push(`✗ Échec upload : ${result.error} (code: ${result.errorCode})`);
-    details.push("  → Le token n'a peut-être pas la permission 'Object Write' sur ce bucket");
+    const code = extractErrorCode(err);
+    const msg = err instanceof Error ? err.message : "Erreur upload";
+    result.error = msg;
+    result.errorCode = code;
+    details.push(`✗ Échec upload : ${msg} (code: ${code})`);
+
+    // Messages spécifiques selon le code d'erreur
+    if (code === "AccessDenied" || code === "HTTP 403") {
+      details.push("  → Le token n'a pas la permission 'Object Write' sur ce bucket");
+      details.push("  → Dashboard Cloudflare → R2 → Manage R2 API Tokens → éditer le token");
+      details.push("  → Cocher 'Object Read & Write' pour le bucket concerné");
+    } else if (code === "NoSuchBucket") {
+      details.push(`  → Le bucket "${cfg.bucket}" n'existe pas sur ce compte R2`);
+      details.push("  → Vérifiez R2_BUCKET_NAME (sensible à la casse)");
+    } else if (code === "InvalidAccessKeyId") {
+      details.push("  → R2_ACCESS_KEY_ID invalide");
+    } else if (code === "SignatureDoesNotMatch") {
+      details.push("  → R2_SECRET_ACCESS_KEY invalide (la signature ne correspond pas)");
+    }
   }
 
   return result;
