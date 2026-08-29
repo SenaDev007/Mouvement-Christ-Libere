@@ -1,51 +1,91 @@
 /**
- * API Client — Centralise tous les appels vers le backend Railway.
+ * API Client — Centralise tous les appels vers le backend Railway avec fallback.
  *
- * Le frontend Next.js (Vercel) appelle ce client qui route vers le backend
- * Express (Railway) via NEXT_PUBLIC_API_URL.
+ * Stratégie :
+ * 1. Si NEXT_PUBLIC_API_URL est défini → essayer le backend Railway d'abord
+ * 2. Si le backend Railway timeout (5s) ou erreur → fallback vers les APIs Next.js locales
+ * 3. Si NEXT_PUBLIC_API_URL n'est pas défini → utiliser directement les APIs Next.js locales
  *
- * Avantages :
- * - Pas de limite de body size (Railway = illimité vs Vercel = 4.5MB)
- * - Variables d'environnement centralisées sur Railway (R2, DB, LiveKit)
- * - Pas de cold start serverless (Railway garde le process en vie)
- * - WebSockets natifs pour le temps réel
+ * Cela garantit que le site fonctionne toujours, même si Railway est down.
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const BACKEND_TIMEOUT = 3000; // 3s max avant fallback (réduit pour ne pas bloquer l'UI)
 
 /**
- * Wrapper fetch qui ajoute automatiquement credentials: 'include'
- * pour envoyer les cookies d'auth cross-origin vers le backend Railway.
+ * Détermine si on doit utiliser le backend Railway ou les APIs locales.
+ * On désactive le backend si :
+ * - NEXT_PUBLIC_API_URL n'est pas défini
+ * - Ou s'il pointe vers localhost (dev local)
+ * - Ou si DISABLE_BACKEND est défini (pour forcer les APIs Next.js locales)
+ */
+function shouldUseBackend(): boolean {
+  if (!API_URL) return false;
+  if (API_URL.includes("localhost")) return false;
+  if (process.env.NEXT_PUBLIC_DISABLE_BACKEND === "true") return false;
+  return true;
+}
+
+/**
+ * Wrapper fetch avec timeout.
+ */
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
+}
+
+/**
+ * Wrapper fetch qui essaie le backend Railway d'abord, puis fallback Next.js local.
  */
 export async function apiFetch(
   path: string,
   options: RequestInit = {},
 ): Promise<Response> {
-  const url = path.startsWith("http") ? path : `${API_URL}${path}`;
-
-  // Pour FormData, ne pas forcer Content-Type (le navigateur le fait avec boundary)
   const isFormData = options.body instanceof FormData;
   const headers: Record<string, string> = {
     ...options.headers as Record<string, string>,
   };
 
-  // Forwarder le token admin si présent (pour les routes admin)
   if (typeof window !== "undefined") {
     headers["X-Admin-Token"] = getAdminToken();
   }
 
-  // Supprimer Content-Type pour FormData (le navigateur le définit avec boundary)
   if (isFormData) {
     delete headers["Content-Type"];
   }
 
-  const response = await fetch(url, {
+  const fetchOptions: RequestInit = {
     ...options,
     credentials: "include",
     headers,
-  });
+  };
 
-  return response;
+  // Si pas de backend configuré → utiliser directement les APIs Next.js locales
+  if (!shouldUseBackend()) {
+    return fetch(path, fetchOptions);
+  }
+
+  // Essayer le backend Railway avec timeout
+  const backendUrl = `${API_URL}${path}`;
+  try {
+    const response = await fetchWithTimeout(backendUrl, fetchOptions, BACKEND_TIMEOUT);
+    return response;
+  } catch {
+    // Fallback : utiliser l'API Next.js locale
+    console.warn(`[api-client] Backend Railway timeout pour ${path}, fallback vers API locale`);
+    return fetch(path, fetchOptions);
+  }
 }
 
 /**
@@ -89,7 +129,6 @@ export async function apiUpload<T = unknown>(
   const res = await apiFetch(path, {
     method: "POST",
     body: formData,
-    // Ne pas définir Content-Type pour FormData (le navigateur le fait avec boundary)
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({ error: res.statusText }));
@@ -111,7 +150,7 @@ function getAdminToken(): string {
  * Vérifie si l'API backend est configurée.
  */
 export function isBackendConfigured(): boolean {
-  return !!API_URL;
+  return shouldUseBackend();
 }
 
 /**
@@ -126,5 +165,12 @@ export function getApiUrl(): string {
  * Usage : fetch(api.url("/api/contact"))
  */
 export const api = {
-  url: (path: string) => path.startsWith("http") ? path : `${API_URL}${path}`,
+  url: (path: string) => {
+    // Si backend configuré, retourner l'URL Railway
+    // Sinon, retourner le chemin relatif (API Next.js locale)
+    if (shouldUseBackend()) {
+      return path.startsWith("http") ? path : `${API_URL}${path}`;
+    }
+    return path;
+  },
 };

@@ -11,7 +11,7 @@ import { calculerFetesPourAnnee } from "@/lib/calendrier/fetes";
 import { libelleAnneeBiblique } from "@/lib/calendrier/conversion";
 
 export const runtime = "nodejs";
-export const revalidate = 60; // Cache 60s
+export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export const runtime = "nodejs";
-export const revalidate = 60; // Cache 60s
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {

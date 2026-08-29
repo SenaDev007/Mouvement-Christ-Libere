@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-export const revalidate = 30; // Cache 30s (évite cold start DB à chaque visite)
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const mockData = {

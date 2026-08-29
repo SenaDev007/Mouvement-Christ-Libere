@@ -13,7 +13,7 @@ import {
 } from "@/lib/whisper/sous-titrage";
 
 export const runtime = "nodejs";
-export const revalidate = 60; // Cache 60s
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   return NextResponse.json({
