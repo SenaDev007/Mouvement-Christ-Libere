@@ -68,7 +68,26 @@ export async function POST(
     }
 
     if (destinations.length === 0) {
-      return NextResponse.json({ error: "Aucune destination RTMP configurée" }, { status: 400 });
+      // Diagnoser pourquoi aucune destination n'est configurée
+      const diag: string[] = [];
+      if (streamToYoutube) {
+        diag.push(`YouTube: RTMP URL=${config.youtubeRtmpUrl ? "✓" : "✗ (manquant)"}, Key=${config.youtubeRtmpKey ? "✓" : "✗ (manquant)"}`);
+      } else { diag.push("YouTube: non activé sur ce live"); }
+      if (streamToFacebook) {
+        diag.push(`Facebook: RTMP URL=${config.facebookRtmpUrl ? "✓" : "✗"}, Key=${config.facebookRtmpKey ? "✓" : "✗"}`);
+      }
+      if (streamToTiktok) {
+        diag.push(`TikTok: RTMP URL=${config.tiktokRtmpUrl ? "✓" : "✗"}, Key=${config.tiktokRtmpKey ? "✓" : "✗"}`);
+      }
+      if (streamToInstagram) {
+        diag.push(`Instagram: RTMP URL=${config.instagramRtmpUrl ? "✓" : "✗"}, Key=${config.instagramRtmpKey ? "✓" : "✗"}`);
+      }
+      return NextResponse.json({
+        error: "Aucune destination RTMP configurée",
+        diagnostic: diag,
+        multistreamEnabled: live.multistreamEnabled,
+        streamConfigExists: !!live.servant.streamConfig,
+      }, { status: 400 });
     }
 
     // Démarrer les egress RTMP

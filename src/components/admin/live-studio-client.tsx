@@ -309,19 +309,24 @@ export function LiveStudioClient({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
               });
-              if (egressRes.ok) {
-                const egressData = await egressRes.json();
-                console.log("[studio] Egress RTMP:", egressData);
-                if (egressData.totalStarted > 0) {
-                  setInfo(`Multistreaming actif (${egressData.totalStarted} destination(s))`);
-                } else if (egressData.totalFailed > 0) {
-                  setInfo(`Multistreaming: ${egressData.totalFailed} destination(s) ont échoué — vérifiez les clés RTMP`);
-                }
-              } else {
-                console.warn("[studio] Egress API failed:", egressRes.status);
+              const egressData = await egressRes.json().catch(() => ({}));
+              console.log("[studio] Egress RTMP response:", egressData);
+
+              if (egressRes.ok && egressData.totalStarted > 0) {
+                setInfo(`✓ Multistreaming actif (${egressData.totalStarted} destination(s))`);
+              } else if (egressRes.ok && egressData.totalFailed > 0) {
+                const failed = egressData.results?.filter((r: { egressId: string | null }) => !r.egressId).map((r: { name: string; error?: string }) => `${r.name}: ${r.error || "échec"}`).join(", ");
+                setInfo(`⚠ Multistreaming: ${egressData.totalFailed} échec(s) — ${failed}`);
+                setError(`RTMP échoué: ${failed}`);
+              } else if (!egressRes.ok) {
+                const errMsg = egressData.error || `HTTP ${egressRes.status}`;
+                const diag = egressData.diagnostic ? `\n${egressData.diagnostic.join("\n")}` : "";
+                setInfo(`⚠ Multistreaming échoué: ${errMsg}${diag}`);
+                setError(`Multistreaming: ${errMsg}${diag}`);
               }
             } catch (err) {
               console.error("[studio] Failed to start RTMP egress:", err);
+              setError(`RTMP egress: ${err instanceof Error ? err.message : "erreur"}`);
             }
           }
         } else {
