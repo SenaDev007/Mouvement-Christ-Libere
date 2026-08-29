@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { RoomServiceClient } from "livekit-server-sdk";
+import { EgressClient, StreamOutput } from "livekit-server-sdk";
 
 /**
  * POST /api/live/start
@@ -19,7 +19,15 @@ const LIVEKIT_URL = process.env.LIVEKIT_URL || "wss://christ-libere.livekit.clou
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
 const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
 
-const roomService = new RoomServiceClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+// EgressClient pour le multistreaming RTMP (séparé de RoomServiceClient)
+function getEgressClient(): EgressClient | null {
+  try {
+    return new EgressClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+  } catch (err) {
+    console.error("[live/start] EgressClient init failed:", err);
+    return null;
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -70,8 +78,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Nettoyer les messages de chat du live précédent (s'il y en avait)
-    // pour éviter que les anciens commentaires réapparaissent sur la nouvelle session.
+    // Nettoyer les messages de chat du live précédent
     await db.liveChatMessage.deleteMany({
       where: { liveId },
     });
@@ -82,48 +89,63 @@ export async function POST(req: NextRequest) {
       data: { isActive: false, leftAt: new Date() },
     });
 
-    // Démarrer le multistreaming RTMP si activé
+    // ─── Démarrer le multistreaming RTMP si activé ───
     const egressIds: string[] = [];
     if (live.multistreamEnabled && live.servant.streamConfig) {
       const config = live.servant.streamConfig;
-      const destinations: { url: string; name: string }[] = [];
+      const egressClient = getEgressClient();
 
-      if (live.streamToYoutube && config.youtubeRtmpUrl && config.youtubeRtmpKey) {
-        destinations.push({
-          url: `${config.youtubeRtmpUrl}/${config.youtubeRtmpKey}`,
-          name: "youtube",
-        });
-      }
-      if (live.streamToFacebook && config.facebookRtmpUrl && config.facebookRtmpKey) {
-        destinations.push({
-          url: `${config.facebookRtmpUrl}/${config.facebookRtmpKey}`,
-          name: "facebook",
-        });
-      }
-      if (live.streamToTiktok && config.tiktokRtmpUrl && config.tiktokRtmpKey) {
-        destinations.push({
-          url: `${config.tiktokRtmpUrl}/${config.tiktokRtmpKey}`,
-          name: "tiktok",
-        });
-      }
-      if (live.streamToInstagram && config.instagramRtmpUrl && config.instagramRtmpKey) {
-        destinations.push({
-          url: `${config.instagramRtmpUrl}/${config.instagramRtmpKey}`,
-          name: "instagram",
-        });
-      }
+      if (!egressClient) {
+        console.error("[live/start] EgressClient non disponible — multistreaming désactivé");
+      } else {
+        // Construire la liste des destinations RTMP
+        const destinations: { url: string; name: string }[] = [];
 
-      // Démarrer les egress RTMP via LiveKit
-      for (const dest of destinations) {
-        try {
-          const egress = await roomService.startRTMPEgress(roomName, {
-            rtmpUrl: dest.url,
-            name: dest.name,
+        if (live.streamToYoutube && config.youtubeRtmpUrl && config.youtubeRtmpKey) {
+          destinations.push({
+            url: `${config.youtubeRtmpUrl}/${config.youtubeRtmpKey}`,
+            name: "youtube",
           });
-          egressIds.push(egress.egressId || dest.name);
-          console.log(`[live/start] RTMP egress started for ${dest.name}: ${egress.egressId}`);
-        } catch (err) {
-          console.error(`[live/start] Failed to start RTMP for ${dest.name}:`, err);
+        }
+        if (live.streamToFacebook && config.facebookRtmpUrl && config.facebookRtmpKey) {
+          destinations.push({
+            url: `${config.facebookRtmpUrl}/${config.facebookRtmpKey}`,
+            name: "facebook",
+          });
+        }
+        if (live.streamToTiktok && config.tiktokRtmpUrl && config.tiktokRtmpKey) {
+          destinations.push({
+            url: `${config.tiktokRtmpUrl}/${config.tiktokRtmpKey}`,
+            name: "tiktok",
+          });
+        }
+        if (live.streamToInstagram && config.instagramRtmpUrl && config.instagramRtmpKey) {
+          destinations.push({
+            url: `${config.instagramRtmpUrl}/${config.instagramRtmpKey}`,
+            name: "instagram",
+          });
+        }
+
+        // Démarrer un egress RTMP par destination
+        for (const dest of destinations) {
+          try {
+            // startRoomCompositeEgress(roomName, output, layout?, options?)
+            const streamOutput = new StreamOutput({ urls: [dest.url] });
+            const egressInfo = await egressClient.startRoomCompositeEgress(
+              roomName,
+              streamOutput,
+              "speaker",
+            );
+            const egressId = egressInfo.egressId || dest.name;
+            egressIds.push(egressId);
+            console.log(`[live/start] RTMP egress started for ${dest.name}: ${egressId}`);
+          } catch (err) {
+            console.error(`[live/start] Failed to start RTMP for ${dest.name}:`, err);
+          }
+        }
+
+        if (destinations.length === 0) {
+          console.log("[live/start] Multistreaming activé mais aucune destination RTMP configurée");
         }
       }
     }

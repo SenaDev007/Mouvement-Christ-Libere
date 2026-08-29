@@ -30,28 +30,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Live introuvable" }, { status: 404 });
     }
 
-    // Arrêter les egress RTMP (best effort)
-    let roomService: { listEgress: (opts: { roomName: string }) => Promise<{ egressId: string }[]>; stopEgress: (id: string) => Promise<void> } | null = null;
+    // Arrêter les egress RTMP (best effort) — utiliser EgressClient
     try {
-      const { RoomServiceClient } = await import("livekit-server-sdk");
-      roomService = new RoomServiceClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
-    } catch (e) {
-      console.error("[live/stop] LiveKit SDK not available:", e);
-    }
+      const { EgressClient } = await import("livekit-server-sdk");
+      const egressClient = new EgressClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
 
-    if (roomService && live.livekitRoomName) {
-      try {
-        const egresses = await roomService.listEgress({ roomName: live.livekitRoomName });
-        for (const egress of egresses) {
-          try {
-            await roomService.stopEgress(egress.egressId);
-          } catch (err) {
-            console.error(`[live/stop] Failed to stop egress ${egress.egressId}:`, err);
+      if (live.livekitRoomName) {
+        try {
+          const egresses = await egressClient.listEgress({ roomName: live.livekitRoomName });
+          for (const egress of egresses) {
+            try {
+              await egressClient.stopEgress(egress.egressId);
+              console.log(`[live/stop] Stopped egress ${egress.egressId}`);
+            } catch (err) {
+              console.error(`[live/stop] Failed to stop egress ${egress.egressId}:`, err);
+            }
           }
+        } catch (err) {
+          console.error("[live/stop] Failed to list/stop egresses:", err);
         }
-      } catch (err) {
-        console.error("[live/stop] Failed to list/stop egresses:", err);
       }
+    } catch (e) {
+      console.error("[live/stop] EgressClient not available:", e);
     }
 
     // Calculer la durée du live
