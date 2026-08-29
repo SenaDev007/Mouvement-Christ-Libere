@@ -201,106 +201,25 @@ export function LiveStudioClient({
     setError("");
     setInfo("");
     try {
-      const startRes = await apiFetch("/api/live/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ liveId }),
-      });
-      if (!startRes.ok) { const data = await startRes.json(); throw new Error(data.error || "Erreur démarrage"); }
-
-      const tokenRes = await apiFetch("/api/livekit/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomName, role: "publisher", participantName: servantName, liveId }),
-      });
-      if (!tokenRes.ok) { const data = await tokenRes.json(); throw new Error(data.error || "Erreur token LiveKit"); }
-      const { token, url } = await tokenRes.json();
-
-      const room = new Room({
-        adaptiveStream: true,
-        dynacast: true,
-        videoCaptureDefaults: { resolution: { width: 1280, height: 720 } },
-        publishDefaults: { videoCodec: "h264" },
-      });
-      roomRef.current = room;
-      await room.connect(url, token);
-      setInfo("Connecté à LiveKit — publication du flux...");
-
-      if (localStreamRef.current) {
-        const audioTrack = localStreamRef.current.getAudioTracks()[0];
-
-        // ─── S'assurer que le canvas stream existe (fallback si pas encore créé) ───
-        if (!overlayStreamRef.current && canvasRef.current) {
-          try {
-            overlayStreamRef.current = canvasRef.current.captureStream(30);
-            console.log("[studio] Canvas stream créé en fallback");
-          } catch (err) {
-            console.error("[studio] captureStream fallback failed:", err);
-          }
-        }
-
-        // Publier le STREAM DU CANVAS COMPOSITE (caméra + overlays visibles par les viewers)
-        let videoPublished = false;
-        if (overlayStreamRef.current) {
-          const canvasVideoTrack = overlayStreamRef.current.getVideoTracks()[0];
-          if (canvasVideoTrack) {
-            try {
-              await room.localParticipant.publishTrack(canvasVideoTrack, {
-                source: Track.Source.Camera,
-                name: "composite",
-              });
-              videoPublished = true;
-              console.log("[studio] Canvas composite publié via LiveKit");
-            } catch (err) {
-              console.error("[studio] Failed to publish canvas track:", err);
-            }
-          }
-        }
-        if (!videoPublished) {
-          // Fallback : publier la caméra brute si le canvas n'est pas prêt
-          const videoTrack = localStreamRef.current.getVideoTracks()[0];
-          if (videoTrack) {
-            await room.localParticipant.publishTrack(videoTrack, { source: Track.Source.Camera });
-            console.log("[studio] Caméra brute publiée (fallback)");
-          }
-        }
-        if (audioTrack) await room.localParticipant.publishTrack(audioTrack, { source: Track.Source.Microphone });
+      // ─── 1. Démarrer le live côté DB (statut LIVE + startedAt) ───
+      let roomConnected = false;
+      try {
+        const startRes = await apiFetch("/api/live/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ liveId }),
+        });
+        if (!startRes.ok) { const data = await startRes.json(); throw new Error(data.error || "Erreur démarrage"); }
+      } catch (err) {
+        // Si l'API start échoue, on continue quand même — le live peut fonctionner sans DB
+        console.error("[studio] /api/live/start failed (continuing anyway):", err);
+        setError("Attention: l'API start a échoué, mais le studio continue.");
       }
 
+      // ─── 2. Démarrer les TIMERS immédiatement (ne dépend pas de LiveKit) ───
       setIsLive(true);
       setStatus("LIVE");
       setInfo("Vous êtes en direct !");
-
-      // ─── Démarrer l'enregistrement du canvas composite (MediaRecorder) ───
-      // On enregistre le stream du canvas (caméra + overlays) pour avoir un replay.
-      const recordStream = overlayStreamRef.current || localStreamRef.current;
-      if (recordStream && typeof MediaRecorder !== "undefined") {
-        try {
-          // Combiner vidéo du canvas + audio du micro dans un seul stream
-          const combinedStream = new MediaStream();
-          recordStream.getVideoTracks().forEach((t) => combinedStream.addTrack(t));
-          if (localStreamRef.current) {
-            localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
-          }
-          const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-            ? "video/webm;codecs=vp9,opus"
-            : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-            ? "video/webm;codecs=vp8,opus"
-            : "video/webm";
-          const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
-          recordedChunksRef.current = [];
-          recorder.ondataavailable = (e) => {
-            if (e.data.size > 0) recordedChunksRef.current.push(e.data);
-          };
-          recorder.start(1000); // collecter les données toutes les 1s
-          mediaRecorderRef.current = recorder;
-          setIsRecording(true);
-          console.log("[studio] Enregistrement démarré");
-        } catch (err) {
-          console.error("[studio] MediaRecorder failed:", err);
-        }
-      }
-
       const startTime = Date.now();
       durationTimerRef.current = setInterval(() => {
         setStreamDuration(Math.floor((Date.now() - startTime) / 1000));
@@ -320,6 +239,103 @@ export function LiveStudioClient({
       };
       fetchViewers();
       viewerPollRef.current = setInterval(fetchViewers, 5000);
+
+      // ─── 3. Essayer de se connecter à LiveKit (peut échouer silencieusement) ───
+      try {
+        const tokenRes = await apiFetch("/api/livekit/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomName, role: "publisher", participantName: servantName, liveId }),
+        });
+        if (tokenRes.ok) {
+          const { token, url } = await tokenRes.json();
+
+          const room = new Room({
+            adaptiveStream: true,
+            dynacast: true,
+            videoCaptureDefaults: { resolution: { width: 1280, height: 720 } },
+            publishDefaults: { videoCodec: "h264" },
+          });
+          roomRef.current = room;
+          await room.connect(url, token);
+          setInfo("Connecté à LiveKit — publication du flux...");
+          roomConnected = true;
+
+          if (localStreamRef.current) {
+            const audioTrack = localStreamRef.current.getAudioTracks()[0];
+
+            // S'assurer que le canvas stream existe
+            if (!overlayStreamRef.current && canvasRef.current) {
+              try {
+                overlayStreamRef.current = canvasRef.current.captureStream(30);
+              } catch (err) {
+                console.error("[studio] captureStream failed:", err);
+              }
+            }
+
+            // Publier le canvas composite
+            let videoPublished = false;
+            if (overlayStreamRef.current) {
+              const canvasVideoTrack = overlayStreamRef.current.getVideoTracks()[0];
+              if (canvasVideoTrack) {
+                try {
+                  await room.localParticipant.publishTrack(canvasVideoTrack, {
+                    source: Track.Source.Camera,
+                    name: "composite",
+                  });
+                  videoPublished = true;
+                  console.log("[studio] Canvas composite publié via LiveKit");
+                } catch (err) {
+                  console.error("[studio] Failed to publish canvas track:", err);
+                }
+              }
+            }
+            if (!videoPublished) {
+              const videoTrack = localStreamRef.current.getVideoTracks()[0];
+              if (videoTrack) {
+                await room.localParticipant.publishTrack(videoTrack, { source: Track.Source.Camera });
+                console.log("[studio] Caméra brute publiée (fallback)");
+              }
+            }
+            if (audioTrack) await room.localParticipant.publishTrack(audioTrack, { source: Track.Source.Microphone });
+          }
+        } else {
+          console.warn("[studio] Token LiveKit non disponible — live sans diffusion WebRTC");
+          setInfo("Live démarré (sans diffusion WebRTC — vérifiez LiveKit).");
+        }
+      } catch (err) {
+        console.error("[studio] LiveKit connection failed (continuing without):", err);
+        setInfo("Live démarré (LiveKit indisponible — le chat et les overlays fonctionnent).");
+      }
+
+      // ─── 4. Démarrer l'enregistrement du canvas (MediaRecorder) ───
+      // Ne dépend pas de LiveKit — enregistre le canvas localement pour le replay
+      const recordStream = overlayStreamRef.current || localStreamRef.current;
+      if (recordStream && typeof MediaRecorder !== "undefined") {
+        try {
+          const combinedStream = new MediaStream();
+          recordStream.getVideoTracks().forEach((t) => combinedStream.addTrack(t));
+          if (localStreamRef.current) {
+            localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
+          }
+          const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+            ? "video/webm;codecs=vp9,opus"
+            : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+            ? "video/webm;codecs=vp8,opus"
+            : "video/webm";
+          const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
+          recordedChunksRef.current = [];
+          recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+          };
+          recorder.start(1000);
+          mediaRecorderRef.current = recorder;
+          setIsRecording(true);
+          console.log("[studio] Enregistrement démarré");
+        } catch (err) {
+          console.error("[studio] MediaRecorder failed:", err);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
