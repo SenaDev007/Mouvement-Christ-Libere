@@ -37,12 +37,23 @@ export async function apiFetch(
     ...options.headers as Record<string, string>,
   };
 
-  if (typeof window !== "undefined") {
-    headers["X-Admin-Token"] = getAdminToken();
-  }
-
   if (isFormData) {
     delete headers["Content-Type"];
+  }
+
+  // Par défaut : API Next.js locale (rapide, pas de délai)
+  // Ne PAS ajouter credentials:include ni X-Admin-Token pour les appels locaux
+  // (les APIs Next.js utilisent le cookie admin_session automatiquement via same-origin)
+  if (!shouldUseBackend()) {
+    return fetch(path, {
+      ...options,
+      headers,
+    });
+  }
+
+  // Backend Railway activé : ajouter credentials + X-Admin-Token pour cross-origin
+  if (typeof window !== "undefined") {
+    headers["X-Admin-Token"] = getAdminToken();
   }
 
   const fetchOptions: RequestInit = {
@@ -51,12 +62,7 @@ export async function apiFetch(
     headers,
   };
 
-  // Par défaut : API Next.js locale (rapide, pas de délai)
-  if (!shouldUseBackend()) {
-    return fetch(path, fetchOptions);
-  }
-
-  // Backend Railway activé : rediriger vers Railway avec timeout 5s + fallback
+  // Backend Railway avec timeout 5s + fallback
   const backendUrl = `${API_URL}${path}`;
   try {
     const controller = new AbortController();
@@ -67,7 +73,7 @@ export async function apiFetch(
   } catch {
     // Fallback : API Next.js locale
     console.warn(`[api-client] Backend Railway timeout pour ${path}, fallback local`);
-    return fetch(path, fetchOptions);
+    return fetch(path, { ...options, headers });
   }
 }
 
