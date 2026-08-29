@@ -6,7 +6,7 @@ import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider
 import { TestimoniesFilters } from "@/components/premium/testimonies-filters";
 import { AutoRefresh } from "@/components/site/auto-refresh";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30; // Cache 30s au lieu de force-dynamic (évite cold start DB)
 export const revalidate = 0;
 
 interface PageProps {

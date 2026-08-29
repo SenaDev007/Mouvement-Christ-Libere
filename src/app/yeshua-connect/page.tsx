@@ -2,7 +2,7 @@ import { YeshuaConnect } from "@/components/yeshua-connect/YeshuaConnect";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30; // Cache 30s au lieu de force-dynamic (évite cold start DB)
 
 /**
  * Yeshua Connect — Page de messagerie.

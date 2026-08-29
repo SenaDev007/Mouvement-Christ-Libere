@@ -94,7 +94,7 @@ export default function VideosPage() {
     };
     fetchVideos();
     // Auto-refresh toutes les 30 secondes pour capter les nouveaux replays
-    const interval = setInterval(fetchVideos, 30000);
+    const interval = setInterval(fetchVideos, 60000); // 60s au lieu de 30s (réduit charge DB)
     return () => clearInterval(interval);
   }, []);
 

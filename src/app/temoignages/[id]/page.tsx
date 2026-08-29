@@ -6,7 +6,7 @@ import { ChevronRight, Clock, BookOpen, Quote, Calendar, User } from "lucide-rea
 import { MarkdownText } from "@/components/site/markdown-text";
 import { ShareButtons } from "@/components/site/share-buttons";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30; // Cache 30s au lieu de force-dynamic (évite cold start DB)
 
 interface PageProps {
   params: Promise<{ id: string }>;

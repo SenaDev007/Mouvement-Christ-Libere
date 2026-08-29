@@ -6,7 +6,7 @@ import { isMatrixConfigured } from "@/lib/matrix";
 import { AlertCircle, Lock } from "lucide-react";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30; // Cache 30s au lieu de force-dynamic (évite cold start DB)
 
 interface PageProps {
   params: Promise<{ id: string }>;
