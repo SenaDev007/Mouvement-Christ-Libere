@@ -40,6 +40,10 @@ export interface ChatConversation {
   participants: ChatParticipant[];
   isEncrypted: boolean;
   unreadCount: number;
+  /** ⭐ V2.1 — Date du dernier message lu (ISO string).
+   * Permet au client de calculer les unread en temps réel quand de
+   * nouveaux messages arrivent via Socket.io. */
+  lastReadAt?: string;
 }
 
 export interface ChatMessage {

@@ -1,7 +1,27 @@
 "use client";
 
 import { io, Socket } from "socket.io-client";
-import { api } from "@/lib/api-client";
+
+/**
+ * Récupère l'URL de base du backend Socket.io.
+ *
+ * Priorité :
+ *   1. NEXT_PUBLIC_API_URL (Railway backend déployé)
+ *   2. http://localhost:3001 (backend Express local en dev)
+ *
+ * ⚠️ On lit NEXT_PUBLIC_API_URL directement (pas via api-client) pour rester
+ * indépendant de la logique shouldUseBackend() — Socket.io a besoin d'une
+ * URL absolue même en mode "API Next.js locale" pour le REST.
+ */
+function getSocketUrl(): string {
+  if (typeof window === "undefined") return "";
+  const railwayUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (railwayUrl && railwayUrl.length > 0 && !railwayUrl.includes("localhost")) {
+    return railwayUrl.replace(/\/$/, "");
+  }
+  // Dev local — backend Express sur le port 3001
+  return "http://localhost:3001";
+}
 
 /**
  * Socket.io client singleton for Yeshua Connect.
@@ -30,7 +50,7 @@ export function getSocket(token?: string | null, userId?: string | null): Socket
   if (socket?.connected) return socket;
   if (!token || !userId) return null;
 
-  const socketUrl = api.baseUrl || (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "");
+  const socketUrl = getSocketUrl();
 
   socket = io(`${socketUrl}/yeshua-connect`, {
     auth: { token, userId },

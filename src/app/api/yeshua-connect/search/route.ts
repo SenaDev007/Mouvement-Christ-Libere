@@ -1,19 +1,54 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { auth } from "@/auth";
+
+/** Rôles pouvant voir tous les canaux (y compris RESTRICTED). */
+const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
 
 /**
  * GET /api/yeshua-connect/search?q=...
  * Global search across messages, channels, and users.
+ *
+ * - 🔒 Authentification NextAuth requise.
+ * - 🔒 Les résultats dans canaux RESTRICTED ne sont retournés qu'aux rôles privilégiés.
+ * - 🔒 Les messages retournés sont limités aux canaux dont l'utilisateur est membre
+ *   (sauf rôles privilégiés qui voient tout pour modération).
  */
 export async function GET(req: Request) {
   try {
+    // 🔒 Authentification NextAuth
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
+    const userId = session.user.id;
+    const userRole = session.user.role;
+    const isPrivileged = PRIVILEGED_ROLES.has(userRole || "");
+
     const url = new URL(req.url);
     const q = url.searchParams.get("q") || "";
     if (!q.trim()) return NextResponse.json({ messages: [], channels: [], users: [] });
 
+    // Pour les utilisateurs non privilégiés, on limite la recherche aux canaux
+    // dont ils sont membres (pour ne pas fuiter le contenu de canaux privés).
+    const accessibleChannelFilter = isPrivileged
+      ? {}
+      : {
+          channel: {
+            OR: [
+              { isRestricted: false, type: { not: "RESTRICTED" } },
+              { members: { some: { userId } } },
+            ],
+          },
+        };
+
     const [messages, channels, users] = await Promise.all([
       db.message.findMany({
-        where: { content: { contains: q, mode: "insensitive" }, isDeleted: false },
+        where: {
+          content: { contains: q, mode: "insensitive" },
+          isDeleted: false,
+          ...accessibleChannelFilter,
+        },
         take: 10,
         orderBy: { createdAt: "desc" },
         include: {
@@ -22,7 +57,12 @@ export async function GET(req: Request) {
         },
       }),
       db.channel.findMany({
-        where: { name: { contains: q, mode: "insensitive" } },
+        where: {
+          name: { contains: q, mode: "insensitive" },
+          ...(isPrivileged
+            ? {}
+            : { isRestricted: false, type: { not: "RESTRICTED" } }),
+        },
         take: 10,
       }),
       db.user.findMany({

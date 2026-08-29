@@ -356,6 +356,7 @@ model Channel {
   isEncrypted  Boolean      @default(false)
   isRestricted Boolean      @default(false)
   order        Int          @default(0)
+  lastMessageAt DateTime?   // ⭐ V2.1 — date du dernier message (tri des canaux)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -409,14 +410,30 @@ model Message {
   replyToId  String?
   isEdited   Boolean   @default(false)
   isDeleted  Boolean   @default(false)
+  // ⭐ V2.1 — Épinglage des messages
+  isPinned   Boolean   @default(false)
+  pinnedAt   DateTime?
+  pinnedBy   String?
+  // ⭐ V2.1 — Métadonnées des pièces jointes (audio, image, fichier)
+  attachmentName String?
+  attachmentSize Int?
+  attachmentMime String?
+  duration   Float?   // durée audio/vidéo en secondes
+  // ⭐ V2.1 — Verset biblique partagé
+  verseRef   String?
+  verseText  String?
+  // ⭐ V2.1 — Historique d'édition (anciens contenus + timestamps)
+  editedHistory Json?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   channel    Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions  MessageReaction[]
 
   @@index([channelId, createdAt])
   @@index([userId])
+  @@index([isPinned])
 }
 
 enum MessageType {
@@ -426,6 +443,20 @@ enum MessageType {
   VIDEO
   FILE
   POLL
+}
+
+// ⭐ V2.1 — Réactions emoji persistées sur les messages
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
 }
 
 // --- Appels audio/vidéo ---
