@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useRef, useEffect } from "react";
 import {
   Scissors, Upload, Download, Play, Pause, SkipBack, SkipForward,
@@ -54,7 +55,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     // Fetch l'URL via API (les data URLs base64 ne peuvent pas passer via props SSR)
     let cancelled = false;
     setLoadingVideo(true);
-    fetch(`/api/videos/${videoId}/source`)
+    apiFetch(`/api/videos/${videoId}/source`)
       .then((r) => r.json())
       .then((data) => {
         if (!cancelled && data.videoUrl) {
@@ -155,7 +156,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(`/api/videos/${videoId}/upload`, { method: "POST", body: formData });
+      const res = await apiFetch(`/api/videos/${videoId}/upload`, { method: "POST", body: formData });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Erreur upload");
@@ -178,7 +179,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     try {
       const introClip = timeline.find((c) => c.type === "intro");
       const outroClip = timeline.find((c) => c.type === "outro");
-      const res = await fetch(`/api/videos/${videoId}/render`, {
+      const res = await apiFetch(`/api/videos/${videoId}/render`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

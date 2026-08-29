@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -87,7 +88,7 @@ export default function VideosPage() {
 
   useEffect(() => {
     const fetchVideos = () => {
-      fetch("/api/videos")
+      apiFetch("/api/videos")
         .then(r => r.json())
         .then(data => { setAllVideos(data.videos || []); setLoading(false); })
         .catch(() => setLoading(false));
@@ -347,7 +348,7 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
 
     // Persister en DB
     try {
-      await fetch(`/api/videos/${video.id}/like`, { method: "POST" });
+      await apiFetch(`/api/videos/${video.id}/like`, { method: "POST" });
     } catch {}
   };
 

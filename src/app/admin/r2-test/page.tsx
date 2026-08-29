@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect } from "react";
 import { CheckCircle2, XCircle, Loader2, Cloud, TestTube } from "lucide-react";
 import Link from "next/link";
@@ -35,7 +36,7 @@ export default function R2TestPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/admin/r2-test?action=status")
+    apiFetch("/api/live/r2-test?action=status")
       .then((r) => r.json())
       .then((data) => {
         if (data.error) {
@@ -53,7 +54,7 @@ export default function R2TestPage() {
     setTestResult(null);
     setError("");
     try {
-      const res = await fetch("/api/admin/r2-test?action=test");
+      const res = await apiFetch("/api/live/r2-test?action=test");
       const data = await res.json();
       // La réponse peut être 200 (success) ou 500/503 (erreur) avec details
       setTestResult(data);

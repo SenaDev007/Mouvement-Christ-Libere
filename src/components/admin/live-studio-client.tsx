@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Room, RoomEvent, Track } from "livekit-client";
 import {
@@ -169,14 +170,14 @@ export function LiveStudioClient({
     setError("");
     setInfo("");
     try {
-      const startRes = await fetch("/api/live/start", {
+      const startRes = await apiFetch("/api/live/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ liveId }),
       });
       if (!startRes.ok) { const data = await startRes.json(); throw new Error(data.error || "Erreur démarrage"); }
 
-      const tokenRes = await fetch("/api/livekit/token", {
+      const tokenRes = await apiFetch("/api/livekit/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roomName, role: "publisher", participantName: servantName, liveId }),
@@ -281,7 +282,7 @@ export function LiveStudioClient({
 
       const fetchViewers = async () => {
         try {
-          const res = await fetch(`/api/live/${liveId}/viewers`);
+          const res = await apiFetch(`/api/live/${liveId}/viewers`);
           const data = await res.json();
           setViewerCount(data.count || 0);
         } catch {}
@@ -334,7 +335,7 @@ export function LiveStudioClient({
             const formData = new FormData();
             formData.append("file", recordingBlob, "replay.webm");
             formData.append("liveId", liveId);
-            const uploadRes = await fetch(`/api/live/${liveId}/recording`, {
+            const uploadRes = await apiFetch(`/api/live/${liveId}/recording`, {
               method: "POST",
               body: formData,
             });
@@ -349,7 +350,7 @@ export function LiveStudioClient({
           } else {
             // Gros fichier : upload direct vers B2 via URL pré-signée
             // 1. Demander l'URL pré-signée
-            const presignRes = await fetch(`/api/live/${liveId}/presign`, {
+            const presignRes = await apiFetch(`/api/live/${liveId}/presign`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ contentType: "video/webm" }),
@@ -388,7 +389,7 @@ export function LiveStudioClient({
         }
       }
 
-      const res = await fetch("/api/live/stop", {
+      const res = await apiFetch("/api/live/stop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ liveId, recordingUrl }),

@@ -36,6 +36,8 @@ import calendrierBibliqueRoutes from "./routes/calendrier-biblique";
 import bibleV2Routes from "./routes/bible-v2";
 import soustitresRoutes from "./routes/soustitres";
 import deadMansSwitchRoutes from "./routes/dead-mans-switch";
+import liveRoutes from "./routes/live";
+import videosRoutes from "./routes/videos";
 
 const app = express();
 
@@ -125,6 +127,33 @@ app.use("/api/calendrier-biblique", calendrierBibliqueRoutes);
 app.use("/api/bible-v2", bibleV2Routes);
 app.use("/api/soustitres", soustitresRoutes);
 app.use("/api/dead-mans-switch", deadMansSwitchRoutes);
+app.use("/api/live", liveRoutes);
+app.use("/api/videos", videosRoutes);
+
+// --- Warmup endpoint (garde Neon DB éveillée) ---
+app.get("/api/warmup", async (_req, res) => {
+  try {
+    const { db } = await import("./lib/db");
+    await db.user.count();
+    res.json({ status: "warm", timestamp: new Date().toISOString() });
+  } catch (error) {
+    res.status(500).json({ status: "error", error: "DB unreachable" });
+  }
+});
+
+// --- Stats endpoint ---
+app.get("/api/stats", async (_req, res) => {
+  try {
+    const { db } = await import("./lib/db");
+    const [videos, testimonies, teachings, liveStreams] = await Promise.all([
+      db.video.count(), db.testimony.count(), db.teaching.count(), db.liveStream.count(),
+    ]);
+    const totalViews = await db.video.aggregate({ _sum: { views: true } });
+    res.json({ videos, testimonies, teachings, liveStreams, totalViews: totalViews._sum.views || 0 });
+  } catch {
+    res.json({ videos: 0, testimonies: 0, teachings: 0, liveStreams: 0, totalViews: 0 });
+  }
+});
 
 // --- 404 handler for unknown API routes ---
 app.use("/api", (req, res) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect } from "react";
 import { Tv, ChevronRight, Clock, Radio } from "lucide-react";
 import Link from "next/link";
@@ -21,7 +22,7 @@ export function LiveAnnouncementBar() {
     setMounted(true);
     const fetchLive = async () => {
       try {
-        const res = await fetch("/api/live/next");
+        const res = await apiFetch("/api/live/next");
         if (res.ok) {
           const data = await res.json();
           setLive(data.live);

@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -266,7 +267,7 @@ function OngletLecture() {
     setData(null);
     setVersetSelectionne(null);
     try {
-      const res = await fetch(`/api/bible-v2/${version}/${livre}/${chapitre}`);
+      const res = await apiFetch(`/api/bible-v2/${version}/${livre}/${chapitre}`);
       if (res.ok) setData(await res.json());
     } catch (err) {
       console.error(err);
@@ -283,7 +284,7 @@ function OngletLecture() {
       setParallelData(null);
       return;
     }
-    fetch(`/api/bible-v2/${parallelVersion}/${livre}/${chapitre}`)
+    apiFetch(`/api/bible-v2/${parallelVersion}/${livre}/${chapitre}`)
       .then((r) => r.ok ? r.json() : null)
       .then(setParallelData)
       .catch(() => setParallelData(null));
@@ -312,7 +313,7 @@ function OngletLecture() {
     Promise.all(
       data.versets.map(async (v) => {
         try {
-          const res = await fetch(`/api/bible-v2/hebrew/${oshbCode}/${chapitre}/${v.numero}`);
+          const res = await apiFetch(`/api/bible-v2/hebrew/${oshbCode}/${chapitre}/${v.numero}`);
           if (res.ok) {
             const d = await res.json();
             if (d?.mots) newHebrew[v.numero] = d.mots;
@@ -833,7 +834,7 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
 
   // Vérifier si le verset est déjà en marque-page
   useEffect(() => {
-    fetch("/api/bible/bookmarks")
+    apiFetch("/api/bible/bookmarks")
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (data?.bookmarks) {
@@ -868,7 +869,7 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
       setHebrewWords(null);
       return;
     }
-    fetch(`/api/bible-v2/hebrew/${oshbCode}/${chapitre}/${verset}`)
+    apiFetch(`/api/bible-v2/hebrew/${oshbCode}/${chapitre}/${verset}`)
       .then((r) => r.ok ? r.json() : null)
       .then((data) => setHebrewWords(data?.mots || null))
       .catch(() => setHebrewWords(null));
@@ -881,7 +882,7 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
     Promise.all(
       autres.map(async (v) => {
         try {
-          const res = await fetch(`/api/bible-v2/${v.code}/${livreId}/${chapitre}`);
+          const res = await apiFetch(`/api/bible-v2/${v.code}/${livreId}/${chapitre}`);
           if (res.ok) {
             const data = await res.json();
             const versetData = data.versets?.find((vv: VersetData) => vv.numero === verset);
@@ -898,7 +899,7 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
     try {
       if (isBookmarked) {
         // Récupérer l'ID du bookmark à supprimer
-        const res = await fetch("/api/bible/bookmarks");
+        const res = await apiFetch("/api/bible/bookmarks");
         if (res.ok) {
           const data = await res.json();
           const bookmark = data.bookmarks.find(
@@ -909,13 +910,13 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
               b.verset === verset
           );
           if (bookmark) {
-            await fetch(`/api/bible/bookmarks/${bookmark.id}`, { method: "DELETE" });
+            await apiFetch(`/api/bible/bookmarks/${bookmark.id}`, { method: "DELETE" });
             setIsBookmarked(false);
           }
         }
       } else {
         // Ajouter le marque-page
-        const res = await fetch("/api/bible/bookmarks", {
+        const res = await apiFetch("/api/bible/bookmarks", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1063,7 +1064,7 @@ function OngletRecherche() {
     setLoading(true);
     setARecherche(true);
     try {
-      const res = await fetch(`/api/bible-v2/search?version=${version}&q=${encodeURIComponent(query)}`);
+      const res = await apiFetch(`/api/bible-v2/search?version=${version}&q=${encodeURIComponent(query)}`);
       if (res.ok) {
         const data = await res.json();
         setResultats(data.resultats || []);
@@ -1155,7 +1156,7 @@ function OngletStrong() {
     if (!numero.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/bible-v2/strong/${encodeURIComponent(numero)}`);
+      const res = await apiFetch(`/api/bible-v2/strong/${encodeURIComponent(numero)}`);
       if (res.ok) {
         setResult(await res.json());
       } else {
@@ -1304,7 +1305,7 @@ function OngletHebreu() {
   const fetchVerset = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/bible-v2/hebrew/${livre}/${chapitre}/${verset}`);
+      const res = await apiFetch(`/api/bible-v2/hebrew/${livre}/${chapitre}/${verset}`);
       if (res.ok) {
         setData(await res.json());
       } else {
@@ -1402,7 +1403,7 @@ function OngletPeshitta() {
   const fetchChapitre = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/bible-v2/peshitta/${livre}/${chapitre}`);
+      const res = await apiFetch(`/api/bible-v2/peshitta/${livre}/${chapitre}`);
       if (res.ok) {
         setData(await res.json());
       } else {
@@ -1489,7 +1490,7 @@ function OngletConcordance() {
     if (!numero.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/bible-v2/concordance/${encodeURIComponent(numero)}?limite=30`);
+      const res = await apiFetch(`/api/bible-v2/concordance/${encodeURIComponent(numero)}?limite=30`);
       if (res.ok) {
         setData(await res.json());
       }
@@ -1597,7 +1598,7 @@ function OngletComparatif() {
     await Promise.all(
       versionsSelectionnees.map(async (version) => {
         try {
-          const res = await fetch(`/api/bible-v2/${version}/${livre}/${chapitre}`);
+          const res = await apiFetch(`/api/bible-v2/${version}/${livre}/${chapitre}`);
           if (res.ok) {
             const data = await res.json();
             const versetData = data.versets[verset - 1];

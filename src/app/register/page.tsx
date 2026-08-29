@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState } from "react";
 import Image from "next/image";
 import { User, Mail, Lock, Loader2, AlertCircle, ShieldCheck, MapPin, Users, Search } from "lucide-react";
@@ -64,7 +65,7 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await apiFetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

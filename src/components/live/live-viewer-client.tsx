@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect, useRef } from "react";
 import { Room, RoomEvent, Track } from "livekit-client";
 import { useSession } from "next-auth/react";
@@ -71,7 +72,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
       // Créer/mettre à jour le LiveMember si pas déjà fait
       const sessionId = localStorage.getItem("live-session-id");
       if (sessionId) {
-        fetch("/api/live-members/register", {
+        apiFetch("/api/live-members/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -92,7 +93,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
     const checkMember = async () => {
       try {
-        const res = await fetch(`/api/live-members/me?sessionId=${sid}`);
+        const res = await apiFetch(`/api/live-members/me?sessionId=${sid}`);
         const data = await res.json();
         if (data.member) {
           setMemberId(data.member.id);
@@ -130,7 +131,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     if (live.status !== "SCHEDULED") return;
     const checkStatus = async () => {
       try {
-        const res = await fetch("/api/live/next");
+        const res = await apiFetch("/api/live/next");
         const data = await res.json();
         if (data.live?.id === live.id && data.live.status === "LIVE") {
           setIsLive(true);
@@ -146,7 +147,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     if (!isLive) return;
     const fetchViewers = async () => {
       try {
-        const res = await fetch(`/api/live/${live.id}/viewers`);
+        const res = await apiFetch(`/api/live/${live.id}/viewers`);
         const data = await res.json();
         setViewerCount(data.count || 0);
       } catch {}
@@ -180,7 +181,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
       setConnecting(true);
       setConnectionError("");
       try {
-        const tokenRes = await fetch("/api/livekit/token", {
+        const tokenRes = await apiFetch("/api/livekit/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ roomName: live.livekitRoomName, role: "subscriber", participantName: viewerFirstName || "Visiteur" }),
@@ -228,7 +229,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
     // Rejoindre le live (enregistrer la session viewer en DB)
     if (memberId) {
-      fetch(`/api/live/${live.id}/viewers`, {
+      apiFetch(`/api/live/${live.id}/viewers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
@@ -248,7 +249,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       // Marquer comme inactif
       if (memberId) {
-        fetch(`/api/live/${live.id}/viewers?memberId=${memberId}`, { method: "DELETE" }).catch(() => {});
+        apiFetch(`/api/live/${live.id}/viewers?memberId=${memberId}`, { method: "DELETE" }).catch(() => {});
       }
     };
   }, [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined, memberId, live.id, viewerFirstName]);

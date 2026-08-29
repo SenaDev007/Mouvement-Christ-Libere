@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Send, MessageCircle, Users, X, ChevronDown, Pin, Heart,
@@ -137,7 +138,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
     } catch {}
 
     try {
-      await fetch(`/api/live/${liveId}/chat/like`, {
+      await apiFetch(`/api/live/${liveId}/chat/like`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageId: msg.id, liked: newLikedState }),
@@ -184,7 +185,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
     if (!isLive) return;
     const fetchViewers = async () => {
       try {
-        const res = await fetch(`/api/live/${liveId}/viewers`);
+        const res = await apiFetch(`/api/live/${liveId}/viewers`);
         const data = await res.json();
         setViewerCount(data.count || 0);
       } catch {}
@@ -230,7 +231,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
 
     setSending(true);
     try {
-      const res = await fetch(`/api/live/${liveId}/chat`, {
+      const res = await apiFetch(`/api/live/${liveId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userName, content: input.trim(), type: "message" }),
@@ -242,7 +243,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
         const mid = localStorage.getItem("live-member-id");
         if (mid) {
           try {
-            const xpRes = await fetch(`/api/live/${liveId}/viewers`, {
+            const xpRes = await apiFetch(`/api/live/${liveId}/viewers`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ memberId: mid, xp: 1 }),

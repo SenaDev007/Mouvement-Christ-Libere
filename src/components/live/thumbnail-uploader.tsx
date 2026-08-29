@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useRef } from "react";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 
@@ -100,7 +101,7 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
 
       // Upload si on a un liveId
       if (liveId) {
-        const res = await fetch(`/api/live/${liveId}/thumbnail`, {
+        const res = await apiFetch(`/api/live/${liveId}/thumbnail`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ thumbnail: compressed }),

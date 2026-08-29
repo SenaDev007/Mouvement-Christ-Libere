@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Radio, Clock, Play } from "lucide-react";
@@ -32,7 +33,7 @@ export function UpcomingLiveFloat() {
   useEffect(() => {
     const fetchUpcoming = async () => {
       try {
-        const res = await fetch("/api/live/next");
+        const res = await apiFetch("/api/live/next");
         const data = await res.json();
         if (data.live && (data.live.status === "SCHEDULED" || data.live.status === "LIVE") && data.live.thumbnailUrl) {
           setLive(data.live);

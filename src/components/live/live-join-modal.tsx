@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect } from "react";
 import { X, Loader2, User, CheckCircle2, UserPlus, LogIn, Sparkles, Globe } from "lucide-react";
 import Link from "next/link";
@@ -49,7 +50,7 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
     const checkMember = async () => {
       setChecking(true);
       try {
-        const res = await fetch(`/api/live-members/me?sessionId=${sessionId}`);
+        const res = await apiFetch(`/api/live-members/me?sessionId=${sessionId}`);
         const data = await res.json();
         if (data.member) {
           setExistingMember(data.member);
@@ -80,7 +81,7 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
     try {
       const sessionId = localStorage.getItem("live-session-id") || `s-${Date.now()}`;
 
-      const res = await fetch("/api/live-members/register", {
+      const res = await apiFetch("/api/live-members/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -127,7 +128,7 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
     try {
       const sessionId = localStorage.getItem("live-session-id") || `s-${Date.now()}`;
 
-      const res = await fetch("/api/live-members/register", {
+      const res = await apiFetch("/api/live-members/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,97 +1,130 @@
 /**
- * API Client — Christ Libère V2
+ * API Client — Centralise tous les appels vers le backend Railway.
  *
- * Wrapper around fetch() that prepends the backend URL.
+ * Le frontend Next.js (Vercel) appelle ce client qui route vers le backend
+ * Express (Railway) via NEXT_PUBLIC_API_URL.
  *
- * Variable d'environnement utilisée :
- *   - Côté serveur (Server Components, API routes) : `API_URL`
- *   - Côté client (Client Components)              : `NEXT_PUBLIC_API_URL`
- *
- * On combine les deux pour fonctionner dans les deux contextes.
- * Si aucune n'est définie (dev local), on utilise une URL relative (same origin).
- *
- * Usage:
- *   import { api } from "@/lib/api-client";
- *   const res = await api.get("/api/yeshua-connect/conversations");
- *   const res = await api.post("/api/auth/login", { email, password });
+ * Avantages :
+ * - Pas de limite de body size (Railway = illimité vs Vercel = 4.5MB)
+ * - Variables d'environnement centralisées sur Railway (R2, DB, LiveKit)
+ * - Pas de cold start serverless (Railway garde le process en vie)
+ * - WebSockets natifs pour le temps réel
  */
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||  // ⭐ client-side (Vercel)
-  process.env.API_URL ||               // server-side only
-  "";                                  // fallback: relative URLs
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-function buildUrl(path: string): string {
-  if (!API_URL) return path; // relative (same origin)
-  return `${API_URL}${path}`;
-}
-
-interface FetchOptions extends RequestInit {
-  json?: unknown;
-}
-
-async function request<T = unknown>(
+/**
+ * Wrapper fetch qui ajoute automatiquement credentials: 'include'
+ * pour envoyer les cookies d'auth cross-origin vers le backend Railway.
+ */
+export async function apiFetch(
   path: string,
-  options: FetchOptions = {}
-): Promise<T> {
-  const { json, ...fetchOptions } = options;
+  options: RequestInit = {},
+): Promise<Response> {
+  const url = path.startsWith("http") ? path : `${API_URL}${path}`;
 
+  // Pour FormData, ne pas forcer Content-Type (le navigateur le fait avec boundary)
+  const isFormData = options.body instanceof FormData;
   const headers: Record<string, string> = {
-    ...((fetchOptions.headers as Record<string, string>) || {}),
+    ...options.headers as Record<string, string>,
   };
 
-  if (json !== undefined) {
-    headers["Content-Type"] = "application/json";
-    fetchOptions.body = JSON.stringify(json);
+  // Forwarder le token admin si présent (pour les routes admin)
+  if (typeof window !== "undefined") {
+    headers["X-Admin-Token"] = getAdminToken();
   }
 
-  // Include credentials (cookies) for auth
-  fetchOptions.credentials = "include";
-
-  const res = await fetch(buildUrl(path), { ...fetchOptions, headers });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(error.error || `HTTP ${res.status}`);
+  // Supprimer Content-Type pour FormData (le navigateur le définit avec boundary)
+  if (isFormData) {
+    delete headers["Content-Type"];
   }
 
-  // Handle 204 No Content
-  if (res.status === 204) return undefined as T;
+  const response = await fetch(url, {
+    ...options,
+    credentials: "include",
+    headers,
+  });
 
-  return res.json() as Promise<T>;
+  return response;
 }
 
+/**
+ * Wrapper pour les appels JSON (GET par défaut).
+ */
+export async function apiGet<T = unknown>(path: string): Promise<T> {
+  const res = await apiFetch(path);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(data.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+/**
+ * Wrapper pour les POST JSON.
+ */
+export async function apiPost<T = unknown>(
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  const res = await apiFetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(data.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+/**
+ * Wrapper pour les POST avec FormData (uploads de fichiers).
+ */
+export async function apiUpload<T = unknown>(
+  path: string,
+  formData: FormData,
+): Promise<T> {
+  const res = await apiFetch(path, {
+    method: "POST",
+    body: formData,
+    // Ne pas définir Content-Type pour FormData (le navigateur le fait avec boundary)
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(data.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+/**
+ * Récupère le token admin depuis le cookie (pour forward vers le backend).
+ */
+function getAdminToken(): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie.match(/admin_session=([^;]+)/);
+  return match ? match[1] : "";
+}
+
+/**
+ * Vérifie si l'API backend est configurée.
+ */
+export function isBackendConfigured(): boolean {
+  return !!API_URL;
+}
+
+/**
+ * Retourne l'URL de base du backend.
+ */
+export function getApiUrl(): string {
+  return API_URL;
+}
+
+/**
+ * Objet api pour la compatibilité avec l'ancien code.
+ * Usage : fetch(api.url("/api/contact"))
+ */
 export const api = {
-  get: <T = unknown>(path: string, options?: FetchOptions) =>
-    request<T>(path, { ...options, method: "GET" }),
-
-  post: <T = unknown>(path: string, json?: unknown, options?: FetchOptions) =>
-    request<T>(path, { ...options, method: "POST", json }),
-
-  put: <T = unknown>(path: string, json?: unknown, options?: FetchOptions) =>
-    request<T>(path, { ...options, method: "PUT", json }),
-
-  delete: <T = unknown>(path: string, options?: FetchOptions) =>
-    request<T>(path, { ...options, method: "DELETE" }),
-
-  /**
-   * For file uploads (FormData) — don't set Content-Type, let the browser set it.
-   */
-  upload: <T = unknown>(path: string, formData: FormData, options?: FetchOptions) =>
-    request<T>(path, {
-      ...options,
-      method: "POST",
-      body: formData,
-      headers: { ...((options?.headers as Record<string, string>) || {}) },
-    }),
-
-  /**
-   * Get the raw URL (for use in <a href> or window.location)
-   */
-  url: (path: string) => buildUrl(path),
-
-  /**
-   * Get the base API URL (for Socket.io client config)
-   */
-  baseUrl: API_URL,
+  url: (path: string) => path.startsWith("http") ? path : `${API_URL}${path}`,
 };

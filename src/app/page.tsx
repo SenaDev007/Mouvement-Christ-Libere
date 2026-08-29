@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -58,7 +59,7 @@ export default function Home() {
   const [statsData, setStatsData] = useState<Record<string, number> | null>(null);
 
   useEffect(() => {
-    fetch("/api/stats")
+    apiFetch("/api/stats")
       .then(r => r.json())
       .then(data => setStatsData({ ...data, responseTime: 24 }))
       .catch(() => setStatsData({ testimonies: 0, videos: 0, biographies: 0, responseTime: 24 }));

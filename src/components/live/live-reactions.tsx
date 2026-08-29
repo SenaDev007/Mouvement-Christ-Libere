@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect, useRef, useCallback } from "react";
 
 interface FloatingReaction {
@@ -101,7 +102,7 @@ export function LiveReactions({ liveId, isLive }: LiveReactionsProps) {
       const count = Math.min(newCount, 5); // max 5 d'un coup
       for (let i = 0; i < count; i++) {
         setTimeout(() => {
-          fetch(`/api/live/${liveId}/chat`, {
+          apiFetch(`/api/live/${liveId}/chat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userName: name, content: emoji, type: "reaction", emoji }),

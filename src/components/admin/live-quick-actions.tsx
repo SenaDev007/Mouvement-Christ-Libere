@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { Play, Square, Loader2 } from "lucide-react";
 
@@ -19,7 +20,7 @@ export function LiveQuickActions({ liveId, status }: LiveQuickActionsProps) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/live/start", {
+      const res = await apiFetch("/api/live/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ liveId }),
@@ -40,7 +41,7 @@ export function LiveQuickActions({ liveId, status }: LiveQuickActionsProps) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/live/stop", {
+      const res = await apiFetch("/api/live/stop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ liveId }),
