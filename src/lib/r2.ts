@@ -4,51 +4,53 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 /**
  * Cloudflare R2 — Helper de stockage compatible S3.
  *
- * Variables d'environnement requises :
+ * Variables d'environnement requises (à configurer sur Vercel) :
  * - R2_ACCOUNT_ID       : ID de compte Cloudflare (ex: a1b2c3d4e5f6...)
  * - R2_ACCESS_KEY_ID    : Access Key ID (créée via R2 → Manage R2 API Tokens)
  * - R2_SECRET_ACCESS_KEY: Secret Access Key
  * - R2_BUCKET_NAME      : Nom du bucket R2
  * - R2_PUBLIC_URL       : (optionnel) Domaine public personnalisé lié au bucket
- *                         ex: https://cdn.mouvementchristlibere.org
- *                         Si non défini, utilise l'URL de dev R2.
+ *
+ * ⚠️ Les variables sont lues au RUNTIME (pas au top-level) pour garantir
+ * qu'elles sont fraîches même après un redéploiement Vercel.
  *
  * Docs : https://developers.cloudflare.com/r2/api/s3/api/
- *
- * Avantages R2 vs B2 :
- * - Zéro frais de transfert sortant (egress gratuit)
- * - Intégration native Cloudflare (CDN, Cache Rules)
- * - Compatible S3 API
  */
 
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || "";
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || "";
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || "";
-const R2_BUCKET = process.env.R2_BUCKET_NAME || "";
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || ""; // optionnel : domaine custom
+function getConfig() {
+  return {
+    accountId: process.env.R2_ACCOUNT_ID || "",
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+    bucket: process.env.R2_BUCKET_NAME || "",
+    publicUrl: process.env.R2_PUBLIC_URL || "",
+  };
+}
 
 let s3Client: S3Client | null = null;
 
 function getClient(): S3Client {
   if (s3Client) return s3Client;
-  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET) {
+  const cfg = getConfig();
+  if (!cfg.accountId || !cfg.accessKeyId || !cfg.secretAccessKey || !cfg.bucket) {
     throw new Error(
       "Cloudflare R2 non configuré. Variables requises : R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME"
     );
   }
   s3Client = new S3Client({
     region: "auto",
-    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    endpoint: `https://${cfg.accountId}.r2.cloudflarestorage.com`,
     credentials: {
-      accessKeyId: R2_ACCESS_KEY_ID,
-      secretAccessKey: R2_SECRET_ACCESS_KEY,
+      accessKeyId: cfg.accessKeyId,
+      secretAccessKey: cfg.secretAccessKey,
     },
   });
   return s3Client;
 }
 
 export function isR2Configured(): boolean {
-  return !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET);
+  const cfg = getConfig();
+  return !!(cfg.accountId && cfg.accessKeyId && cfg.secretAccessKey && cfg.bucket);
 }
 
 /**
@@ -57,20 +59,16 @@ export function isR2Configured(): boolean {
  * - Sinon : utilise l'URL de dev R2 (public-dev URL à activer sur le bucket)
  */
 export function getPublicUrl(key: string): string {
-  if (R2_PUBLIC_URL) {
-    return `${R2_PUBLIC_URL.replace(/\/$/, "")}/${key}`;
+  const cfg = getConfig();
+  if (cfg.publicUrl) {
+    return `${cfg.publicUrl.replace(/\/$/, "")}/${key}`;
   }
   // Fallback : URL publique de dev R2 (r2.dev)
-  return `https://pub-${R2_ACCOUNT_ID}.r2.dev/${key}`;
+  return `https://pub-${cfg.accountId}.r2.dev/${key}`;
 }
 
 /**
  * Upload un fichier vers R2 et retourne l'URL publique.
- *
- * @param key   Chemin dans le bucket (ex: "replays/live-abc123.webm")
- * @param body  Buffer ou Uint8Array
- * @param contentType  MIME type
- * @returns URL publique du fichier
  */
 export async function uploadToR2(
   key: string,
@@ -78,9 +76,10 @@ export async function uploadToR2(
   contentType: string
 ): Promise<string> {
   const client = getClient();
+  const cfg = getConfig();
   await client.send(
     new PutObjectCommand({
-      Bucket: R2_BUCKET,
+      Bucket: cfg.bucket,
       Key: key,
       Body: body,
       ContentType: contentType,
@@ -94,9 +93,10 @@ export async function uploadToR2(
  */
 export async function deleteFromR2(key: string): Promise<void> {
   const client = getClient();
+  const cfg = getConfig();
   await client.send(
     new DeleteObjectCommand({
-      Bucket: R2_BUCKET,
+      Bucket: cfg.bucket,
       Key: key,
     })
   );
@@ -108,8 +108,6 @@ export async function deleteFromR2(key: string): Promise<void> {
 export function extractKeyFromUrl(url: string): string | null {
   try {
     const u = new URL(url);
-    // Format custom domain: https://cdn.domain.com/{key}
-    // Format r2.dev: https://pub-{accountId}.r2.dev/{key}
     const parts = u.pathname.split("/").filter(Boolean);
     if (parts.length >= 1) {
       return parts.join("/");
@@ -131,12 +129,6 @@ export function generateKey(prefix: string, id: string, ext: string): string {
 
 /**
  * Génère une URL pré-signée pour upload direct depuis le navigateur vers R2.
- * Permet d'uploader de gros fichiers (> 4.5MB) sans passer par le body Vercel.
- *
- * @param key          Chemin dans le bucket
- * @param contentType  MIME type attendu
- * @param expiresIn    Durée de validité (défaut: 1h)
- * @returns URL pré-signée PUT
  */
 export async function getPresignedUploadUrl(
   key: string,
@@ -144,8 +136,9 @@ export async function getPresignedUploadUrl(
   expiresIn = 3600
 ): Promise<string> {
   const client = getClient();
+  const cfg = getConfig();
   const command = new PutObjectCommand({
-    Bucket: R2_BUCKET,
+    Bucket: cfg.bucket,
     Key: key,
     ContentType: contentType,
   });
@@ -154,8 +147,6 @@ export async function getPresignedUploadUrl(
 
 /**
  * Liste tous les buckets R2 accessibles avec les credentials actuels.
- * Utile pour vérifier que les credentials sont valides (indépendamment des
- * permissions d'écriture sur un bucket spécifique).
  */
 export async function listBucketsR2(): Promise<{ name: string; creationDate?: string }[]> {
   const client = getClient();
@@ -168,7 +159,6 @@ export async function listBucketsR2(): Promise<{ name: string; creationDate?: st
 
 /**
  * Diagnostic complet R2 — teste credentials, bucket existence, permissions écriture.
- * Retourne un rapport détaillé pour identifier la cause d'une erreur.
  */
 export async function diagnoseR2(): Promise<{
   credentialsValid: boolean;
@@ -179,6 +169,7 @@ export async function diagnoseR2(): Promise<{
   errorCode?: string;
   details: string[];
 }> {
+  const cfg = getConfig();
   const details: string[] = [];
   const result = {
     credentialsValid: false,
@@ -193,12 +184,13 @@ export async function diagnoseR2(): Promise<{
   if (!isR2Configured()) {
     result.error = "R2 non configuré — variables d'environnement manquantes";
     details.push("Variables requises : R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME");
+    details.push(`Valeurs actuelles : accountId=${cfg.accountId ? "✓" : "✗"}, accessKeyId=${cfg.accessKeyId ? "✓" : "✗"}, secretAccessKey=${cfg.secretAccessKey ? "✓" : "✗"}, bucket=${cfg.bucket ? "✓" : "✗"}`);
     return result;
   }
 
-  details.push(`Account ID : ${R2_ACCOUNT_ID.substring(0, 8)}...`);
-  details.push(`Bucket configuré : ${R2_BUCKET}`);
-  details.push(`Endpoint : https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`);
+  details.push(`Account ID : ${cfg.accountId.substring(0, 8)}...`);
+  details.push(`Bucket configuré : ${cfg.bucket}`);
+  details.push(`Endpoint : https://${cfg.accountId}.r2.cloudflarestorage.com`);
 
   // ─── Test 1 : ListBuckets (vérifie les credentials) ───
   try {
@@ -207,16 +199,15 @@ export async function diagnoseR2(): Promise<{
     result.bucketsAccessible = buckets.map((b) => b.name);
     details.push(`✓ Credentials valides — ${buckets.length} bucket(s) accessible(s) : ${buckets.map((b) => b.name).join(", ") || "(aucun)"}`);
 
-    // Vérifier si le bucket configuré existe
-    result.bucketExists = buckets.some((b) => b.name === R2_BUCKET);
+    result.bucketExists = buckets.some((b) => b.name === cfg.bucket);
     if (!result.bucketExists) {
-      details.push(`✗ Le bucket "${R2_BUCKET}" n'existe pas ou n'est pas accessible avec ce token`);
+      details.push(`✗ Le bucket "${cfg.bucket}" n'existe pas ou n'est pas accessible avec ce token`);
       details.push(`  Buckets disponibles : ${result.bucketsAccessible.join(", ") || "(aucun)"}`);
-      result.error = `Bucket "${R2_BUCKET}" introuvable`;
+      result.error = `Bucket "${cfg.bucket}" introuvable`;
       result.errorCode = "NoSuchBucket";
       return result;
     }
-    details.push(`✓ Bucket "${R2_BUCKET}" accessible`);
+    details.push(`✓ Bucket "${cfg.bucket}" accessible`);
   } catch (err) {
     result.error = err instanceof Error ? err.message : "Erreur ListBuckets";
     result.errorCode = extractErrorCode(err);

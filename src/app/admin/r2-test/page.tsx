@@ -12,6 +12,7 @@ interface R2Status {
   publicUrl: string;
   accessKeyId: string;
   secretAccessKey: string;
+  envCheck?: Record<string, boolean>;
 }
 
 interface R2TestResult {
@@ -132,6 +133,27 @@ export default function R2TestPage() {
                 <span className="text-xs text-[#8A8378]">Secret Access Key</span>
                 <span className="text-xs font-mono text-[#1E0F2B]">{status.secretAccessKey}</span>
               </div>
+
+              {/* Vérification des variables d'environnement */}
+              {status.envCheck && (
+                <div className="mt-3 pt-3 border-t border-[#8A8378]/10">
+                  <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-2">
+                    Variables d'environnement Vercel
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {Object.entries(status.envCheck).map(([key, present]) => (
+                      <div key={key} className="flex items-center gap-1.5 text-[10px]">
+                        {present ? (
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                        ) : (
+                          <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                        )}
+                        <span className={`font-mono ${present ? "text-[#1E0F2B]" : "text-red-600"}`}>{key}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : null}
         </div>
