@@ -26,10 +26,6 @@
       "schedule": "0 3 * * *"
     },
     {
-      "path": "/api/dead-mans-switch/cron",
-      "schedule": "0 4 * * *"
-    },
-    {
       "path": "/api/cron/shabbat-reminder",
       "schedule": "0 16 * * 5"
     }
