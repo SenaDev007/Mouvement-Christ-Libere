@@ -5,7 +5,7 @@ import { QuoteBlock } from "@/components/premium/section-divider";
 import Link from "next/link";
 import { ChevronRight, MessageSquare, ArrowRight } from "lucide-react";
 
-export const revalidate = 30; // Cache 30s au lieu de force-dynamic (évite cold start DB)
+export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
 export default async function CommunautePage() {
   const channels = await db.channel.findMany({

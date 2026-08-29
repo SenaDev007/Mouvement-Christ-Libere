@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { LiveViewerClient } from "@/components/live/live-viewer-client";
 
-export const revalidate = 30; // Cache 30s au lieu de force-dynamic (évite cold start DB)
+export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
 export default async function LivePage({
   params,

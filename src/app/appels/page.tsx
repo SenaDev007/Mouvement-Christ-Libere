@@ -6,7 +6,7 @@ import { CallScreen } from "@/components/premium/call-screen";
 import { PhoneCall, PhoneMissed, Video, Phone, Clock, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const revalidate = 30; // Cache 30s au lieu de force-dynamic (évite cold start DB)
+export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
 export default async function AppelsPage() {
   // Pour la démo, on simule un historique d'appels

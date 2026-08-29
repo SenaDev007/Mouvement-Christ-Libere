@@ -8,7 +8,7 @@ import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 
-export const revalidate = 30; // Cache 30s au lieu de force-dynamic (évite cold start DB)
+export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
 export default async function CalendrierBibliquePage() {
   const now = new Date();
