@@ -18,6 +18,10 @@
 
   "crons": [
     {
+      "path": "/api/warmup",
+      "schedule": "*/4 * * * *"
+    },
+    {
       "path": "/api/cron/cleanup-sessions",
       "schedule": "0 3 * * *"
     },

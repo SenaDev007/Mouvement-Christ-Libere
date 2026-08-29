@@ -44,8 +44,9 @@ function getClient(): S3Client {
       accessKeyId: cfg.accessKeyId,
       secretAccessKey: cfg.secretAccessKey,
     },
-    // R2 nécessite le style "path" pour certaines opérations
-    forcePathStyle: true,
+    // R2 utilise virtual-hosted-style par défaut :
+    // https://{bucket}.{accountId}.r2.cloudflarestorage.com
+    // NE PAS mettre forcePathStyle: true (cause Access Denied sur R2)
   });
   return s3Client;
 }
@@ -193,6 +194,8 @@ export async function diagnoseR2(): Promise<{
   details.push(`Account ID : ${cfg.accountId.substring(0, 8)}...`);
   details.push(`Bucket configuré : ${cfg.bucket}`);
   details.push(`Endpoint : https://${cfg.accountId}.r2.cloudflarestorage.com`);
+  details.push(`URL d'upload : https://${cfg.bucket}.${cfg.accountId}.r2.cloudflarestorage.com/{key}`);
+  details.push(`Style : virtual-hosted (par défaut R2 — ne pas utiliser forcePathStyle)`);
 
   // ─── Test 1 : ListBuckets (vérifie les credentials globalement) ───
   // Note : Un token R2 scoped à un bucket spécifique n'a PAS la permission
