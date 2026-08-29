@@ -508,11 +508,13 @@ export function LiveStudioClient({
             onMouseMove={showControlsTemporarily}
             onMouseLeave={() => isLive && setShowControls(false)}
           >
+            {/* Vidéo source — doit être LISIBLE (pas opacity:0 ni 1px) pour que le canvas puisse dessiner les frames */}
             <video ref={videoRef} autoPlay muted playsInline
-              className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
-              style={{ width: "1px", height: "1px", top: 0, left: 0 }} />
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ opacity: 0.01, pointerEvents: "none", zIndex: 0 }} />
             <canvas ref={canvasRef} width={1280} height={720}
-              className="absolute inset-0 w-full h-full object-cover" />
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ zIndex: 1 }} />
 
             {!cameraOn && cameraReady && !screenSharing && !isPaused && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/80 pointer-events-none">

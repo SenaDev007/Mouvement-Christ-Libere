@@ -69,7 +69,7 @@ export function MediaOverlay({
   // Drag state for overlays on canvas
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const dragStateRef = useRef<{
-    type: "image" | "text" | null;
+    type: "image" | "text" | "resize" | null;
     id: string | null;
     offsetX: number;
     offsetY: number;
@@ -232,6 +232,24 @@ export function MediaOverlay({
       const scaleY = 720 / rect.height;
       const cx = (e.clientX - rect.left) * scaleX;
       const cy = (e.clientY - rect.top) * scaleY;
+
+      // Vérifier si on clique sur la poignée de redimensionnement de l'image sélectionnée
+      if (selectedOverlayId) {
+        const selectedImg = overlayImages.find((i) => i.id === selectedOverlayId);
+        if (selectedImg && selectedImg.visible) {
+          const handleSize = 12;
+          const hx = selectedImg.x + selectedImg.width - handleSize / 2;
+          const hy = selectedImg.y + selectedImg.height - handleSize / 2;
+          if (cx >= hx && cx <= hx + handleSize && cy >= hy && cy <= hy + handleSize) {
+            e.preventDefault();
+            canvas.setPointerCapture(e.pointerId);
+            dragStateRef.current = { type: "resize", id: selectedImg.id, offsetX: cx, offsetY: cy };
+            canvas.style.cursor = "nwse-resize";
+            return;
+          }
+        }
+      }
+
       const hit = hitTest(cx, cy);
       if (hit) {
         e.preventDefault();
@@ -259,6 +277,21 @@ export function MediaOverlay({
         const scaleY = 720 / rect.height;
         const cx = (e.clientX - rect.left) * scaleX;
         const cy = (e.clientY - rect.top) * scaleY;
+
+        // Vérifier si on survole la poignée de redimensionnement
+        if (selectedOverlayId) {
+          const selectedImg = overlayImages.find((i) => i.id === selectedOverlayId);
+          if (selectedImg && selectedImg.visible) {
+            const handleSize = 12;
+            const hx = selectedImg.x + selectedImg.width - handleSize / 2;
+            const hy = selectedImg.y + selectedImg.height - handleSize / 2;
+            if (cx >= hx && cx <= hx + handleSize && cy >= hy && cy <= hy + handleSize) {
+              canvas.style.cursor = "nwse-resize";
+              return;
+            }
+          }
+        }
+
         const hit = hitTest(cx, cy);
         canvas.style.cursor = hit ? "grab" : "default";
         return;
@@ -275,6 +308,19 @@ export function MediaOverlay({
         setOverlayImages((prev) => prev.map((img) =>
           img.id === ds.id ? { ...img, x: Math.max(0, Math.min(1280 - img.width, newX)), y: Math.max(0, Math.min(720 - img.height, newY)) } : img
         ));
+      } else if (ds.type === "resize") {
+        // Redimensionner l'image sélectionnée en préservant le ratio
+        setOverlayImages((prev) => prev.map((img) => {
+          if (img.id !== ds.id) return img;
+          const selectedImg = overlayImages.find((i) => i.id === ds.id);
+          if (!selectedImg) return img;
+          // Calculer la nouvelle largeur basée sur la position du curseur
+          const newWidth = Math.max(50, Math.min(1280 - img.x, cx - img.x));
+          // Préserver le ratio original
+          const originalRatio = selectedImg.height / selectedImg.width;
+          const newHeight = Math.round(newWidth * originalRatio);
+          return { ...img, width: newWidth, height: newHeight };
+        }));
       } else if (ds.type === "text") {
         const xPct = Math.max(0, Math.min(100, (newX / 1280) * 100));
         const yPct = Math.max(0, Math.min(100, (newY / 720) * 100));
@@ -365,13 +411,22 @@ export function MediaOverlay({
           const img = getCachedImage(overlayImg.src);
           if (img) {
             ctx.drawImage(img, overlayImg.x, overlayImg.y, overlayImg.width, overlayImg.height);
-            // Draw selection border if selected
+            // Draw selection border + resize handle if selected
             if (selectedOverlayId === overlayImg.id) {
               ctx.strokeStyle = "#C9A227";
               ctx.lineWidth = 3;
               ctx.setLineDash([8, 4]);
               ctx.strokeRect(overlayImg.x, overlayImg.y, overlayImg.width, overlayImg.height);
               ctx.setLineDash([]);
+              // Poignée de redimensionnement (coin inférieur droit)
+              const handleSize = 12;
+              const hx = overlayImg.x + overlayImg.width - handleSize / 2;
+              const hy = overlayImg.y + overlayImg.height - handleSize / 2;
+              ctx.fillStyle = "#C9A227";
+              ctx.fillRect(hx, hy, handleSize, handleSize);
+              ctx.strokeStyle = "#FFFFFF";
+              ctx.lineWidth = 2;
+              ctx.strokeRect(hx, hy, handleSize, handleSize);
             }
           }
         }
