@@ -299,6 +299,31 @@ export function LiveStudioClient({
             }
             if (audioTrack) await room.localParticipant.publishTrack(audioTrack, { source: Track.Source.Microphone });
           }
+
+          // ─── Démarrer le multistreaming RTMP APRÈS publication du track ───
+          // L'egress nécessite que la room ait un participant qui publie
+          if (multistream.enabled) {
+            try {
+              setInfo("Démarrage du multistreaming RTMP...");
+              const egressRes = await apiFetch(`/api/live/${liveId}/egress`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+              });
+              if (egressRes.ok) {
+                const egressData = await egressRes.json();
+                console.log("[studio] Egress RTMP:", egressData);
+                if (egressData.totalStarted > 0) {
+                  setInfo(`Multistreaming actif (${egressData.totalStarted} destination(s))`);
+                } else if (egressData.totalFailed > 0) {
+                  setInfo(`Multistreaming: ${egressData.totalFailed} destination(s) ont échoué — vérifiez les clés RTMP`);
+                }
+              } else {
+                console.warn("[studio] Egress API failed:", egressRes.status);
+              }
+            } catch (err) {
+              console.error("[studio] Failed to start RTMP egress:", err);
+            }
+          }
         } else {
           console.warn("[studio] Token LiveKit non disponible — live sans diffusion WebRTC");
           setInfo("Live démarré (sans diffusion WebRTC — vérifiez LiveKit).");

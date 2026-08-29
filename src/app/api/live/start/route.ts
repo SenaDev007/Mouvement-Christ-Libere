@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { EgressClient, StreamOutput } from "livekit-server-sdk";
 
 /**
  * POST /api/live/start
@@ -18,16 +17,6 @@ import { EgressClient, StreamOutput } from "livekit-server-sdk";
 const LIVEKIT_URL = process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
 const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
-
-// EgressClient pour le multistreaming RTMP (séparé de RoomServiceClient)
-function getEgressClient(): EgressClient | null {
-  try {
-    return new EgressClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
-  } catch (err) {
-    console.error("[live/start] EgressClient init failed:", err);
-    return null;
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -89,66 +78,11 @@ export async function POST(req: NextRequest) {
       data: { isActive: false, leftAt: new Date() },
     });
 
-    // ─── Démarrer le multistreaming RTMP si activé ───
+    // ─── Multistreaming RTMP ───
+    // NOTE : L'egress RTMP est démarré par /api/live/[id]/egress APRES que le studio
+    // s'est connecté à LiveKit et publie un track. L'egress nécessite une room active
+    // avec un participant qui publie — sinon il n'y a rien à streamer vers YouTube.
     const egressIds: string[] = [];
-    if (live.multistreamEnabled && live.servant.streamConfig) {
-      const config = live.servant.streamConfig;
-      const egressClient = getEgressClient();
-
-      if (!egressClient) {
-        console.error("[live/start] EgressClient non disponible — multistreaming désactivé");
-      } else {
-        // Construire la liste des destinations RTMP
-        const destinations: { url: string; name: string }[] = [];
-
-        if (live.streamToYoutube && config.youtubeRtmpUrl && config.youtubeRtmpKey) {
-          destinations.push({
-            url: `${config.youtubeRtmpUrl}/${config.youtubeRtmpKey}`,
-            name: "youtube",
-          });
-        }
-        if (live.streamToFacebook && config.facebookRtmpUrl && config.facebookRtmpKey) {
-          destinations.push({
-            url: `${config.facebookRtmpUrl}/${config.facebookRtmpKey}`,
-            name: "facebook",
-          });
-        }
-        if (live.streamToTiktok && config.tiktokRtmpUrl && config.tiktokRtmpKey) {
-          destinations.push({
-            url: `${config.tiktokRtmpUrl}/${config.tiktokRtmpKey}`,
-            name: "tiktok",
-          });
-        }
-        if (live.streamToInstagram && config.instagramRtmpUrl && config.instagramRtmpKey) {
-          destinations.push({
-            url: `${config.instagramRtmpUrl}/${config.instagramRtmpKey}`,
-            name: "instagram",
-          });
-        }
-
-        // Démarrer un egress RTMP par destination
-        for (const dest of destinations) {
-          try {
-            // startRoomCompositeEgress(roomName, output, layout?, options?)
-            const streamOutput = new StreamOutput({ urls: [dest.url] });
-            const egressInfo = await egressClient.startRoomCompositeEgress(
-              roomName,
-              streamOutput,
-              "speaker",
-            );
-            const egressId = egressInfo.egressId || dest.name;
-            egressIds.push(egressId);
-            console.log(`[live/start] RTMP egress started for ${dest.name}: ${egressId}`);
-          } catch (err) {
-            console.error(`[live/start] Failed to start RTMP for ${dest.name}:`, err);
-          }
-        }
-
-        if (destinations.length === 0) {
-          console.log("[live/start] Multistreaming activé mais aucune destination RTMP configurée");
-        }
-      }
-    }
 
     return NextResponse.json({
       success: true,
