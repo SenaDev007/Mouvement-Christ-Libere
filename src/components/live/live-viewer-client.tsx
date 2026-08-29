@@ -357,7 +357,13 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               {/* Écran "Rejoindre le live" si pas encore inscrit */}
               {isLive && !hasJoined && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826]">
-                  <div className="text-center text-[#FAF6EF] p-8">
+                  {/* Miniature du live en fond si disponible */}
+                  {live.thumbnailUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={live.thumbnailUrl} alt={live.title} className="absolute inset-0 w-full h-full object-cover opacity-40" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#2A0E3D] via-[#2A0E3D]/70 to-[#2A0E3D]/50" />
+                  <div className="text-center text-[#FAF6EF] p-8 relative z-10">
                     <Radio className="w-12 h-12 text-red-500 mx-auto mb-4 animate-pulse" />
                     <p className="text-lg font-bold mb-2">Le live est en cours</p>
                     <p className="text-sm text-[#FAF6EF]/60 mb-6">Rejoignez la diffusion pour regarder et participer au chat</p>

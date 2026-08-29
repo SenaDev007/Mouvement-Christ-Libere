@@ -571,9 +571,9 @@ export function LiveStudioClient({
               </div>
               {isLive && (
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 text-[#1E0F2B] text-xs font-bold backdrop-blur-sm"><Clock className="w-3 h-3" />{formatDuration(streamDuration)}</span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 text-[#1E0F2B] text-xs font-bold backdrop-blur-sm"><Wifi className="w-3 h-3" />{bitrate} kbps</span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 text-[#1E0F2B] text-xs font-bold backdrop-blur-sm"><Eye className="w-3 h-3" />{viewerCount}</span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2A0E3D]/80 text-white text-xs font-bold backdrop-blur-sm"><Clock className="w-3 h-3" />{formatDuration(streamDuration)}</span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2A0E3D]/80 text-white text-xs font-bold backdrop-blur-sm"><Wifi className="w-3 h-3" />{bitrate} kbps</span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2A0E3D]/80 text-white text-xs font-bold backdrop-blur-sm"><Eye className="w-3 h-3" />{viewerCount}</span>
                 </div>
               )}
             </div>
@@ -581,14 +581,14 @@ export function LiveStudioClient({
             {/* HUD bottom */}
             <div className={`absolute bottom-4 left-4 right-4 flex items-end justify-between z-20 transition-opacity duration-300 ${showControls || !isLive ? "opacity-100" : "opacity-0"}`}>
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 text-[#1E0F2B] text-xs font-bold backdrop-blur-sm">{servantName}</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2A0E3D]/80 text-white text-xs font-bold backdrop-blur-sm">{servantName}</span>
                 {screenSharing && (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-600 text-[#1E0F2B] text-xs font-bold"><Monitor className="w-3 h-3" /> Partage d'écran</span>
                 )}
               </div>
               {isLive && (
                 <button onClick={toggleFullscreen}
-                  className="p-2 rounded-md bg-black/60 text-[#1E0F2B] hover:bg-black/80 transition-colors backdrop-blur-sm"
+                  className="p-2 rounded-md bg-[#2A0E3D]/80 text-white hover:bg-[#2A0E3D] transition-colors backdrop-blur-sm"
                   title={isFullscreen ? "Quitter plein écran" : "Plein écran"}>
                   {isFullscreen ? <X className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 </button>

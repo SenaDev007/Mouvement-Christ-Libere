@@ -436,9 +436,18 @@ export function MediaOverlay({
       const reader = new FileReader();
       reader.onload = (event) => {
         const src = event.target?.result as string;
-        setOverlayImages((prev) => [...prev, {
-          id: `img-${Date.now()}-${Math.random()}`, src, x: 100, y: 50, width: 400, height: 225, visible: true,
-        }]);
+        // Charger l'image pour récupérer ses dimensions réelles et préserver le ratio
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 400;
+          const ratio = img.naturalHeight / img.naturalWidth;
+          const w = Math.min(maxW, img.naturalWidth);
+          const h = Math.round(w * ratio);
+          setOverlayImages((prev) => [...prev, {
+            id: `img-${Date.now()}-${Math.random()}`, src, x: 100, y: 50, width: w, height: h, visible: true,
+          }]);
+        };
+        img.src = src;
       };
       reader.readAsDataURL(file);
     });
