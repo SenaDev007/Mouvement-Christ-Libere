@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { isR2Configured, uploadToR2, getPublicUrl, generateKey } from "@/lib/r2";
+import { isR2Configured, diagnoseR2 } from "@/lib/r2";
 
 /**
  * GET /api/admin/r2-test
  *
  * Vérifie la configuration Cloudflare R2 et teste un upload.
- * Utile pour diagnostiquer les problèmes de stockage.
+ * Action "diagnose" : diagnostic complet (credentials + bucket + permissions)
  */
 export async function GET(req: NextRequest) {
   try {
@@ -33,32 +33,58 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // ─── Test : upload un petit fichier de test ───
-    if (action === "test") {
+    // ─── Diagnose : test complet avec détails ───
+    if (action === "test" || action === "diagnose") {
       if (!isR2Configured()) {
-        return NextResponse.json({ error: "R2 non configuré" }, { status: 503 });
+        return NextResponse.json(
+          {
+            error: "R2 non configuré — variables d'environnement manquantes",
+            details: [
+              "Variables requises : R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME",
+              "R2_PUBLIC_URL est optionnel (domaine custom CDN)",
+            ],
+          },
+          { status: 503 }
+        );
       }
 
-      const testContent = `Christ Libère — test R2 ${new Date().toISOString()}`;
-      const buffer = Buffer.from(testContent, "utf-8");
-      const key = generateKey("test", "r2", "txt");
-
-      const publicUrl = await uploadToR2(key, buffer, "text/plain");
+      const diag = await diagnoseR2();
 
       return NextResponse.json({
-        success: true,
-        message: "Upload test réussi",
-        publicUrl,
-        size: buffer.length,
-        content: testContent,
+        success: diag.canWrite,
+        message: diag.canWrite
+          ? "Upload test réussi — R2 fonctionne correctement"
+          : diag.error || "Échec du test R2",
+        credentialsValid: diag.credentialsValid,
+        bucketsAccessible: diag.bucketsAccessible,
+        bucketExists: diag.bucketExists,
+        canWrite: diag.canWrite,
+        error: diag.error,
+        errorCode: diag.errorCode,
+        details: diag.details,
       });
     }
 
-    return NextResponse.json({ error: "Action inconnue (status ou test)" }, { status: 400 });
+    return NextResponse.json({ error: "Action inconnue (status, test, diagnose)" }, { status: 400 });
   } catch (error) {
     console.error("[r2-test] Error:", error);
+    // Capturer les détails de l'erreur S3
+    const errDetails: string[] = [];
+    if (error && typeof error === "object") {
+      const e = error as Record<string, unknown>;
+      if (e.name) errDetails.push(`Erreur : ${e.name}`);
+      if (e.message) errDetails.push(`Message : ${e.message}`);
+      const metadata = e.$metadata as Record<string, unknown> | undefined;
+      if (metadata) {
+        if (metadata.httpStatusCode) errDetails.push(`HTTP : ${metadata.httpStatusCode}`);
+        if (metadata.requestId) errDetails.push(`Request ID : ${metadata.requestId}`);
+      }
+    }
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Erreur test R2" },
+      {
+        error: error instanceof Error ? error.message : "Erreur test R2",
+        details: errDetails.length > 0 ? errDetails : ["Erreur inconnue"],
+      },
       { status: 500 }
     );
   }

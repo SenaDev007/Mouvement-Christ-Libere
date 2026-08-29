@@ -17,9 +17,13 @@ interface R2Status {
 interface R2TestResult {
   success: boolean;
   message: string;
-  publicUrl?: string;
-  size?: number;
-  content?: string;
+  credentialsValid?: boolean;
+  bucketsAccessible?: string[];
+  bucketExists?: boolean;
+  canWrite?: boolean;
+  error?: string;
+  errorCode?: string;
+  details?: string[];
 }
 
 export default function R2TestPage() {
@@ -50,10 +54,11 @@ export default function R2TestPage() {
     try {
       const res = await fetch("/api/admin/r2-test?action=test");
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Erreur test");
-      }
+      // La réponse peut être 200 (success) ou 500/503 (erreur) avec details
       setTestResult(data);
+      if (!res.ok && data.error && !data.details) {
+        setError(data.error);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur");
     } finally {
@@ -150,16 +155,71 @@ export default function R2TestPage() {
           </button>
 
           {testResult && (
-            <div className="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-              <p className="text-xs font-bold text-emerald-700 mb-2">
-                <CheckCircle2 className="w-3.5 h-3.5 inline mr-1" />
+            <div className={`mt-4 p-4 rounded-lg border ${testResult.success ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}>
+              <p className={`text-sm font-bold mb-3 flex items-center gap-2 ${testResult.success ? "text-emerald-700" : "text-red-700"}`}>
+                {testResult.success ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                 {testResult.message}
               </p>
-              <div className="space-y-1 text-xs text-[#1E0F2B]">
-                <div><span className="text-[#8A8378]">URL publique :</span> <a href={testResult.publicUrl} target="_blank" rel="noopener noreferrer" className="text-[#C9A227] hover:underline break-all">{testResult.publicUrl}</a></div>
-                <div><span className="text-[#8A8378]">Taille :</span> {testResult.size} bytes</div>
-                <div><span className="text-[#8A8378]">Contenu :</span> {testResult.content}</div>
+
+              {/* Diagnostic détaillé */}
+              <div className="space-y-1.5 text-xs">
+                {testResult.credentialsValid !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A8378] w-40">Credentials :</span>
+                    {testResult.credentialsValid ? (
+                      <span className="text-emerald-600 font-bold">✓ Valides</span>
+                    ) : (
+                      <span className="text-red-600 font-bold">✗ Invalides</span>
+                    )}
+                  </div>
+                )}
+                {testResult.bucketsAccessible && testResult.bucketsAccessible.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#8A8378] w-40">Buckets accessibles :</span>
+                    <span className="text-[#1E0F2B] font-mono">{testResult.bucketsAccessible.join(", ")}</span>
+                  </div>
+                )}
+                {testResult.bucketExists !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A8378] w-40">Bucket configuré :</span>
+                    {testResult.bucketExists ? (
+                      <span className="text-emerald-600 font-bold">✓ Existe</span>
+                    ) : (
+                      <span className="text-red-600 font-bold">✗ Introuvable</span>
+                    )}
+                  </div>
+                )}
+                {testResult.canWrite !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A8378] w-40">Permission écriture :</span>
+                    {testResult.canWrite ? (
+                      <span className="text-emerald-600 font-bold">✓ OK</span>
+                    ) : (
+                      <span className="text-red-600 font-bold">✗ Refusée</span>
+                    )}
+                  </div>
+                )}
+                {testResult.errorCode && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A8378] w-40">Code d'erreur :</span>
+                    <span className="text-red-600 font-mono font-bold">{testResult.errorCode}</span>
+                  </div>
+                )}
               </div>
+
+              {/* Détails techniques */}
+              {testResult.details && testResult.details.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-[#8A8378]/20">
+                  <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-2">Détails du diagnostic</p>
+                  <ul className="space-y-1">
+                    {testResult.details.map((d, i) => (
+                      <li key={i} className={`text-[10px] font-mono ${d.startsWith("✗") ? "text-red-600" : d.startsWith("✓") ? "text-emerald-600" : "text-[#8A8378]"}`}>
+                        {d}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>
