@@ -38,6 +38,7 @@ export default async function LiveStudioPage({
       title={live.title}
       servantName={live.servant.shortName}
       servantPortraitUrl={live.servant.portraitUrl}
+      thumbnailUrl={live.thumbnailUrl}
       status={live.status}
       multistream={{
         enabled: live.multistreamEnabled,

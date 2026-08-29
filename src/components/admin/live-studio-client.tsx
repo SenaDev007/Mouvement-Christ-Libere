@@ -9,7 +9,7 @@ import {
   Monitor, MonitorOff, Wifi, Activity,
   Youtube, Facebook, Music2, Instagram,
   ChevronDown, ChevronUp, Eye, MessageCircle, BarChart3,
-  X, Pause, Play, Maximize2,
+  X, Pause, Play, Maximize2, Cast, Copy,
 } from "lucide-react";
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
@@ -22,6 +22,7 @@ interface LiveStudioClientProps {
   title: string;
   servantName: string;
   servantPortraitUrl?: string | null;
+  thumbnailUrl?: string | null;
   status: string;
   multistream: {
     enabled: boolean;
@@ -33,7 +34,7 @@ interface LiveStudioClientProps {
 }
 
 export function LiveStudioClient({
-  liveId, roomName, title, servantName, servantPortraitUrl, status: initialStatus, multistream,
+  liveId, roomName, title, servantName, servantPortraitUrl, thumbnailUrl, status: initialStatus, multistream,
 }: LiveStudioClientProps) {
   const [status, setStatus] = useState(initialStatus);
   const [isLive, setIsLive] = useState(initialStatus === "LIVE");
@@ -53,6 +54,9 @@ export function LiveStudioClient({
   const [viewerCount, setViewerCount] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [sourceMode, setSourceMode] = useState<"webcam" | "encoder">("webcam");
+  const [ingressInfo, setIngressInfo] = useState<{ rtmpUrl: string; streamKey: string; obsInstructions: string[] } | null>(null);
+  const [copiedField, setCopiedField] = useState("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -126,6 +130,33 @@ export function LiveStudioClient({
       const screenTrack = screenStreamRef.current.getVideoTracks()[0];
       if (screenTrack) screenTrack.enabled = !newPaused;
     }
+  };
+
+  // ─── Mode encodeur externe (OBS) ───
+  const fetchIngressInfo = async () => {
+    try {
+      const res = await apiFetch(`/api/live/${liveId}/ingress`);
+      if (res.ok) {
+        const data = await res.json();
+        setIngressInfo(data);
+      }
+    } catch (err) {
+      console.error("[studio] Failed to fetch ingress:", err);
+    }
+  };
+
+  const handleSourceModeChange = (mode: "webcam" | "encoder") => {
+    setSourceMode(mode);
+    if (mode === "encoder" && !ingressInfo) {
+      fetchIngressInfo();
+    }
+  };
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(""), 2000);
+    });
   };
 
   const toggleScreenShare = async () => {
@@ -502,12 +533,17 @@ export function LiveStudioClient({
 
             {isPaused && (
               <div className="absolute inset-0 flex items-center justify-center bg-[#1A0826]/90 backdrop-blur-sm pointer-events-none z-30">
-                <div className="text-center">
+                {/* Miniature du live en fond si disponible */}
+                {thumbnailUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={thumbnailUrl} alt="Miniature" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+                )}
+                <div className="relative z-10 text-center">
                   <div className="w-20 h-20 rounded-full bg-[#C9A227]/20 flex items-center justify-center mx-auto mb-4">
                     <Pause className="w-10 h-10 text-[#C9A227]" fill="currentColor" />
                   </div>
                   <p className="text-xl font-bold text-[#C9A227]">Diffusion en pause</p>
-                  <p className="text-xs text-white/50 mt-2">Les viewers voient cet écran</p>
+                  <p className="text-xs text-white/50 mt-2">Les viewers voient la miniature du live</p>
                   <button onClick={togglePause}
                     className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors pointer-events-auto">
                     <Play className="w-4 h-4" fill="currentColor" />Reprendre
@@ -560,6 +596,87 @@ export function LiveStudioClient({
             </div>
 
             {isLive && <LiveReactions liveId={liveId} isLive={isLive} />}
+          </div>
+
+          {/* Source mode selector — Webcam vs Encodeur externe (OBS) */}
+          <div className="bg-[#1F1F1F] rounded-xl p-3 border border-white/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Cast className="w-4 h-4 text-[#C9A227]" />
+              <span className="text-xs font-bold text-white uppercase tracking-wider">Source vidéo</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSourceModeChange("webcam")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${sourceMode === "webcam" ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-white/10 text-white hover:bg-white/15"}`}
+              >
+                <Video className="w-4 h-4" />
+                Webcam
+              </button>
+              <button
+                onClick={() => handleSourceModeChange("encoder")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${sourceMode === "encoder" ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-white/10 text-white hover:bg-white/15"}`}
+              >
+                <Cast className="w-4 h-4" />
+                Encodeur externe (OBS)
+              </button>
+            </div>
+
+            {/* Encoder info panel */}
+            {sourceMode === "encoder" && ingressInfo && (
+              <div className="mt-3 space-y-2 p-3 rounded-lg bg-[#0F0F0F] border border-white/10">
+                <p className="text-xs font-bold text-[#C9A227] uppercase tracking-wider mb-2">
+                  Configuration OBS Studio
+                </p>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-[10px] text-white/50 uppercase">URL du serveur RTMP</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={ingressInfo.rtmpUrl}
+                        className="flex-1 px-3 py-1.5 rounded-lg bg-[#1F1F1F] text-xs text-white font-mono border border-white/10"
+                      />
+                      <button
+                        onClick={() => copyToClipboard(ingressInfo.rtmpUrl, "rtmpUrl")}
+                        className="p-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20"
+                      >
+                        {copiedField === "rtmpUrl" ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-white/50 uppercase">Clé de stream</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={ingressInfo.streamKey}
+                        className="flex-1 px-3 py-1.5 rounded-lg bg-[#1F1F1F] text-xs text-white font-mono border border-white/10"
+                      />
+                      <button
+                        onClick={() => copyToClipboard(ingressInfo.streamKey, "streamKey")}
+                        className="p-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20"
+                      >
+                        {copiedField === "streamKey" ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2 pt-2 border-t border-white/10">
+                  <ol className="space-y-1">
+                    {ingressInfo.obsInstructions.map((step, i) => (
+                      <li key={i} className="text-[10px] text-white/60">{step}</li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            )}
+            {sourceMode === "encoder" && !ingressInfo && (
+              <div className="mt-3 flex items-center justify-center py-3">
+                <Loader2 className="w-5 h-5 text-[#C9A227] animate-spin" />
+              </div>
+            )}
           </div>
 
           {/* Controls bar */}

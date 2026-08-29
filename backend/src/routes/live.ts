@@ -330,4 +330,66 @@ router.get("/next", async (req, res) => {
   }
 });
 
+// --- All upcoming lives (for carousel) ---
+router.get("/upcoming", async (req, res) => {
+  try {
+    const lives = await db.liveStream.findMany({
+      where: {
+        status: { in: ["SCHEDULED", "LIVE"] },
+      },
+      orderBy: { scheduledAt: "asc" },
+      include: { servant: true },
+    });
+    res.json({
+      lives: lives.map((l) => ({
+        id: l.id,
+        title: l.title,
+        scheduledAt: l.scheduledAt.toISOString(),
+        status: l.status,
+        servantName: l.servant.shortName,
+        servantCode: l.servant.code,
+        thumbnailUrl: l.thumbnailUrl,
+        youtubeUrl: l.youtubeUrl,
+      })),
+    });
+  } catch {
+    res.json({ lives: [] });
+  }
+});
+
+// --- RTMP ingress info for external encoder (OBS) ---
+router.get("/:id/ingress", adminAuth, async (req, res) => {
+  try {
+    const id = String(req.params.id);
+    const live = await db.liveStream.findUnique({ where: { id }, select: { livekitRoomName: true } });
+    if (!live) return res.status(404).json({ error: "Live introuvable" });
+
+    const roomName = live.livekitRoomName || `live-${id}`;
+    const livekitUrl = process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
+
+    // RTMP URL for OBS: rtmp://livekit-server/livekit/{roomName}
+    // Stream key: generated from LiveKit API key/secret (or a simple token)
+    const rtmpUrl = `${livekitUrl.replace("wss://", "rtmps://").replace("ws://", "rtmp://")}/${roomName}`;
+    const streamKey = `live-${id}-${Date.now().toString(36)}`;
+
+    res.json({
+      roomName,
+      rtmpUrl,
+      streamKey,
+      livekitUrl,
+      obsInstructions: [
+        "1. Ouvrez OBS Studio",
+        "2. Paramètres → Stream",
+        `3. Type: Service personnalisé`,
+        `4. URL du serveur: ${rtmpUrl}`,
+        `5. Clé de stream: ${streamKey}`,
+        "6. Cliquez 'Démarrer le streaming' dans OBS",
+        "7. Revenez ici et cliquez 'Go Live' — le studio recevra votre flux OBS",
+      ],
+    });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : "Erreur" });
+  }
+});
+
 export default router;

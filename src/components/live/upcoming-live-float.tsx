@@ -1,9 +1,9 @@
 "use client";
 
 import { apiFetch } from "@/lib/api-client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Radio, Clock, Play } from "lucide-react";
+import { Radio, Clock, Play, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface UpcomingLive {
   id: string;
@@ -17,35 +17,44 @@ interface UpcomingLive {
 
 /**
  * Miniature du prochain live qui flotte en HAUT du hero.
- *
- * En HAUT de la miniature:
- * - Si SCHEDULED: icône Radio rouge seule (pas de texte) sur fond rouge
- * - Si LIVE: icône Radio verte seule sur fond vert
- *
- * En BAS (barre inférieure):
- * - Si SCHEDULED: "LIVE À VENIR" (texte rouge sur fond rouge léger) + compte à rebours
- * - Si LIVE: "EN COURS" (texte vert sur fond vert) + bouton "Rejoindre"
+ * Carrousel : si plusieurs lives sont programmés, ils défilent automatiquement.
  */
 export function UpcomingLiveFloat() {
-  const [live, setLive] = useState<UpcomingLive | null>(null);
+  const [lives, setLives] = useState<UpcomingLive[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [countdown, setCountdown] = useState("");
 
+  const fetchUpcoming = useCallback(async () => {
+    try {
+      const res = await apiFetch("/api/live/upcoming");
+      const data = await res.json();
+      if (data.lives && data.lives.length > 0) {
+        // Filter lives that have thumbnails
+        const withThumbs = data.lives.filter((l: UpcomingLive) => l.thumbnailUrl);
+        setLives(withThumbs);
+        if (currentIndex >= withThumbs.length) setCurrentIndex(0);
+      } else {
+        setLives([]);
+      }
+    } catch {}
+  }, [currentIndex]);
+
   useEffect(() => {
-    const fetchUpcoming = async () => {
-      try {
-        const res = await apiFetch("/api/live/next");
-        const data = await res.json();
-        if (data.live && (data.live.status === "SCHEDULED" || data.live.status === "LIVE") && data.live.thumbnailUrl) {
-          setLive(data.live);
-        } else {
-          setLive(null);
-        }
-      } catch {}
-    };
     fetchUpcoming();
-    const interval = setInterval(fetchUpcoming, 15000); // 15s pour plus de dynamisme
+    const interval = setInterval(fetchUpcoming, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchUpcoming]);
+
+  // Auto-rotate carousel every 5 seconds if multiple lives
+  useEffect(() => {
+    if (lives.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % lives.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [lives.length]);
+
+  const live = lives[currentIndex];
 
   useEffect(() => {
     if (!live || live.status !== "SCHEDULED") return;
@@ -68,6 +77,17 @@ export function UpcomingLiveFloat() {
   if (!live || !live.thumbnailUrl) return null;
 
   const isLive = live.status === "LIVE";
+
+  const goToPrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + lives.length) % lives.length);
+  };
+  const goToNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % lives.length);
+  };
 
   return (
     <Link
@@ -95,7 +115,7 @@ export function UpcomingLiveFloat() {
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0826] via-[#1A0826]/20 to-transparent" />
 
-            {/* EN HAUT: icône Radio seule (pas de texte) */}
+            {/* Badge en HAUT: icône Radio */}
             {isLive ? (
               <div
                 className="absolute top-3 left-3 w-8 h-8 rounded-full bg-green-600 flex items-center justify-center"
@@ -112,22 +132,47 @@ export function UpcomingLiveFloat() {
               </div>
             )}
 
+            {/* Carrousel navigation si plusieurs lives */}
+            {lives.length > 1 && (
+              <>
+                <button
+                  onClick={goToPrev}
+                  className="absolute top-1/2 left-1 -translate-y-1/2 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <ChevronLeft className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={goToNext}
+                  className="absolute top-1/2 right-1 -translate-y-1/2 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+                {/* Dots indicator */}
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-1">
+                  {lives.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentIndex ? "bg-[#C9A227] w-3" : "bg-white/40"}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
             {/* Titre en bas de la miniature */}
             <p className="absolute bottom-2 left-3 right-3 text-sm font-bold text-white line-clamp-1 drop-shadow-lg">
               {live.title}
             </p>
           </div>
 
-          {/* EN BAS: barre avec statut + action */}
+          {/* Barre avec statut + action */}
           <div className="flex items-center justify-between px-3 py-2 bg-[#1A0826]">
             {isLive ? (
               <>
-                {/* Statut: EN COURS (vert) */}
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-600/20 border border-green-500/30 text-[10px] font-bold text-green-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                   EN COURS
                 </span>
-                {/* Bouton: Rejoindre (vert) */}
                 <div className="flex-shrink-0 px-3 py-1 rounded-full bg-green-600 text-white text-[10px] font-bold flex items-center gap-1">
                   <Play className="w-2.5 h-2.5" fill="currentColor" />
                   Rejoindre
@@ -135,12 +180,10 @@ export function UpcomingLiveFloat() {
               </>
             ) : (
               <>
-                {/* Statut: LIVE À VENIR (rouge) */}
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-600/20 border border-red-500/30 text-[10px] font-bold text-red-400">
                   <Radio className="w-2.5 h-2.5" />
                   LIVE À VENIR
                 </span>
-                {/* Compte à rebours */}
                 <div className="flex-shrink-0 px-3 py-1 rounded-full bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5" />
                   {countdown}
@@ -148,6 +191,15 @@ export function UpcomingLiveFloat() {
               </>
             )}
           </div>
+
+          {/* Compteur de lives si plusieurs */}
+          {lives.length > 1 && (
+            <div className="px-3 py-1 bg-[#1A0826]/50 text-center">
+              <span className="text-[9px] text-white/40">
+                {currentIndex + 1} / {lives.length} lives programmés
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
