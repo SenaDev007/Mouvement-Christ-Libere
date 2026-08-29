@@ -9,7 +9,7 @@ import {
 
 interface PostProductionProps {
   videoId: string;
-  videoUrl: string | null;
+  videoUrl?: string | null;
   title: string;
   servantName: string;
 }
@@ -24,7 +24,7 @@ interface TimelineClip {
   color: string;
 }
 
-export function PostProduction({ videoId, videoUrl, title, servantName }: PostProductionProps) {
+export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, servantName }: PostProductionProps) {
   const [timeline, setTimeline] = useState<TimelineClip[]>([
     { id: "main", type: "main", label: "Replay principal", duration: 0, color: "#2A0E3D" },
   ]);
@@ -40,6 +40,31 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+
+  // ─── Récupérer l'URL de la vidéo via API (évite de passer un base64 géant via props SSR) ───
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(initialVideoUrl || null);
+  const [loadingVideo, setLoadingVideo] = useState(!initialVideoUrl);
+
+  useEffect(() => {
+    if (initialVideoUrl) {
+      setCurrentVideoUrl(initialVideoUrl);
+      setLoadingVideo(false);
+      return;
+    }
+    // Fetch l'URL via API (les data URLs base64 ne peuvent pas passer via props SSR)
+    let cancelled = false;
+    setLoadingVideo(true);
+    fetch(`/api/videos/${videoId}/source`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data.videoUrl) {
+          setCurrentVideoUrl(data.videoUrl);
+        }
+      })
+      .catch((err) => console.error("[post-production] Failed to fetch video source:", err))
+      .finally(() => { if (!cancelled) setLoadingVideo(false); });
+    return () => { cancelled = true; };
+  }, [videoId, initialVideoUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -112,8 +137,39 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
   const [exportError, setExportError] = useState("");
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(videoUrl);
   const videoUploadRef = useRef<HTMLInputElement>(null);
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("video/")) {
+      setUploadError("Veuillez sélectionner un fichier vidéo (MP4, WebM, etc.)");
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setUploadError(`Fichier trop volumineux (${Math.round(file.size / 1024 / 1024)}MB — max 4MB sans B2)`);
+      return;
+    }
+    setUploadingVideo(true);
+    setUploadError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/videos/${videoId}/upload`, { method: "POST", body: formData });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Erreur upload");
+      }
+      const data = await res.json();
+      setCurrentVideoUrl(data.videoUrl);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setUploadingVideo(false);
+      if (videoUploadRef.current) videoUploadRef.current.value = "";
+    }
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -149,42 +205,6 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
     const m = Math.floor(s / 60);
     const sec = Math.floor(s % 60);
     return `${m}:${sec.toString().padStart(2, "0")}`;
-  };
-
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("video/")) {
-      setUploadError("Veuillez sélectionner un fichier vidéo (MP4, WebM, etc.)");
-      return;
-    }
-    if (file.size > 4 * 1024 * 1024) {
-      setUploadError(`Fichier trop volumineux (${Math.round(file.size / 1024 / 1024)}MB — max 4MB)`);
-      return;
-    }
-    setUploadingVideo(true);
-    setUploadError("");
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch(`/api/videos/${videoId}/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Erreur upload");
-      }
-      const data = await res.json();
-      setCurrentVideoUrl(data.videoUrl);
-      // Recharger pour que le composant vidéo prenne en compte la nouvelle source
-      setTimeout(() => window.location.reload(), 1500);
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Erreur");
-    } finally {
-      setUploadingVideo(false);
-      if (videoUploadRef.current) videoUploadRef.current.value = "";
-    }
   };
 
   return (
@@ -235,6 +255,18 @@ export function PostProduction({ videoId, videoUrl, title, servantName }: PostPr
               <video ref={videoRef} src={currentVideoUrl} className="w-full h-full object-contain"
                 onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                 onEnded={() => setIsPlaying(false)} />
+            ) : loadingVideo ? (
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+                <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
+                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Chargement de la vidéo...</p>
+                <p className="text-xs text-[#FAF6EF]/50">Récupération de la source</p>
+              </div>
+            ) : uploadingVideo ? (
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+                <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
+                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Upload en cours...</p>
+                <p className="text-xs text-[#FAF6EF]/50">Veuillez patienter pendant l'upload du replay</p>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
                 {uploadingVideo ? (

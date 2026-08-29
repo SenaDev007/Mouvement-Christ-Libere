@@ -20,12 +20,14 @@ export default async function VideoEditPage({
     notFound();
   }
 
+  // Ne pas passer videoUrl via les props SSR — les data URLs base64 géantes
+  // dépassent la limite de sérialisation Next.js (~128KB).
+  // Le Client Component fetch l'URL via /api/videos/[id]/source.
   return (
     <PostProduction
       videoId={video.id}
-      videoUrl={video.videoUrl}
       title={video.title}
-      servantName={video.servant.shortName}
+      servantName={video.servant?.shortName || "Serviteur"}
     />
   );
 }
