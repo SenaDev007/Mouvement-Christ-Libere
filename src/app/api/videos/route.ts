@@ -26,17 +26,24 @@ export async function GET(request: NextRequest) {
       const youtubeId = v.videoUrl?.match(/v=([a-zA-Z0-9_-]{11})/)?.[1]
         || v.videoUrl?.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)?.[1]
         || "";
+
+      // IMPORTANT : Ne pas renvoyer les data URLs base64 dans la liste
+      // (ils font plusieurs MB et bloquent la sérialisation JSON)
+      // Les data URLs sont récupérées individuellement via /api/videos/[id]/source
+      const isDataUrl = v.videoUrl?.startsWith("data:");
+      const safeVideoUrl = isDataUrl ? null : v.videoUrl;
+
       // Détecter si la vidéo a une source lisible (mp4 local, HLS, ou YouTube)
-      const hasNativeVideo = !!v.videoUrl && (
-        v.videoUrl.endsWith(".mp4")
-        || v.videoUrl.startsWith("/rendered-videos/")
-        || v.videoUrl.startsWith("data:video")
-        || v.videoUrl.startsWith("http")
+      const hasNativeVideo = !!safeVideoUrl && (
+        safeVideoUrl.endsWith(".mp4")
+        || safeVideoUrl.startsWith("/rendered-videos/")
+        || safeVideoUrl.startsWith("http")
       ) && !youtubeId;
+
       return {
         id: v.id,
         youtubeId,
-        videoUrl: v.videoUrl,
+        videoUrl: safeVideoUrl,
         hlsUrl: v.hlsUrl,
         title: v.title,
         description: v.description,
