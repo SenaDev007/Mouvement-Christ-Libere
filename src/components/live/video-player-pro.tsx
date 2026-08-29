@@ -202,8 +202,9 @@ export function VideoPlayerPro({
       <video
         ref={videoRef}
         autoPlay
+        muted
         playsInline
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
       />
