@@ -113,8 +113,9 @@ export async function GET(_req: NextRequest) {
     const conversations = channels.map((ch) => {
       const lastMsg = ch.messages[0];
       // Mapper ChannelType → ConversationType
-      let convType: "CHANNEL" | "GROUP" | "DIRECT" | "PASTORS";
-      if (ch.type === "ANNOUNCEMENT") convType = "CHANNEL";
+      let convType: "CHANNEL" | "GROUP" | "DIRECT" | "PASTORS" | "VOICE";
+      if (ch.type === "VOICE") convType = "VOICE";
+      else if (ch.type === "ANNOUNCEMENT") convType = "CHANNEL";
       else if (ch.type === "RESTRICTED") convType = "PASTORS";
       else if (ch.members.length > 2) convType = "GROUP";
       else convType = "DIRECT";

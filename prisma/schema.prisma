@@ -55,6 +55,7 @@ model User {
   testimonies   Testimony[] @relation("TestimonyAuthor")
   contactRequests ContactRequest[]
   bibleBookmarks BibleBookmark[]
+  auditLogs     AuditLog[]
 
   @@index([role])
   @@index([country])
@@ -637,6 +638,23 @@ model DeadMansSwitch {
   updatedAt       DateTime @updatedAt
 
   @@index([estDeclenche])
+}
+
+// --- ⭐ V2.3 — Audit Log (modération) ---
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   // "MESSAGE_DELETE", "MESSAGE_EDIT", "MESSAGE_PIN", "USER_JOIN", "USER_LEAVE", "CHANNEL_CREATE", etc.
+  userId    String
+  targetId  String?  // ID de la cible (message, canal, etc.)
+  channelId String?
+  metadata  Json?    // détails supplémentaires (ancien contenu, nouveau contenu, etc.)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, createdAt])
+  @@index([userId])
 }
 
 // --- Bible bookmarks (V3) ---

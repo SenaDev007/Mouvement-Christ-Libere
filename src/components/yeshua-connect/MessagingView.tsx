@@ -53,8 +53,10 @@ import {
   Calendar, BarChart3, Phone, Video, Smile, FileText, Image as ImageIcon,
   StopCircle, Play, Pause, Sparkles, ChevronRight, AlertCircle,
   MessageCircle, AtSign, ChevronUp, Copy, UploadCloud,
+  ScrollText, PhoneOff, MicOff, VolumeX, Download, Film,
 } from "lucide-react";
 import Link from "next/link";
+import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant } from "livekit-client";
 import { cn } from "@/lib/utils";
 import {
   QUICK_REACTIONS,
@@ -116,6 +118,44 @@ function getAvatarColor(name: string): string {
 function getInitials(name: string): string {
   return name.split(" ").map(p => p[0]).join("").substring(0, 2).toUpperCase();
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V2.3 — RÔLES COULEURS SUR LES NOMS
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Couleur du nom d'utilisateur selon son rôle dans le canal (ChatParticipant.role).
+//   - SUPER_ADMIN : #C9A227 (or)
+//   - ADMIN       : #8C5FA8 (violet)
+//   - MODERATOR   : #5B7052 (vert)
+//   - ANIMATOR    : #3b82f6 (bleu)
+//   - MEMBER      : #8A8378 (gris, défaut)
+//
+// Le rôle peut venir soit du message (msg.senderRole — c'est le UserRole du User)
+// soit d'un ChannelMember (channelMembers[i].role — c'est le ChannelRole).
+// Les deux enums partagent les mêmes libellés (SUPER_ADMIN, ADMIN, MODERATOR,
+// ANIMATOR, MEMBER) — il y a juste MEMBER_VERIFIED en plus côté UserRole, qu'on
+// traite comme MEMBER pour la couleur.
+function getRoleColor(role?: string): string {
+  switch (role) {
+    case "SUPER_ADMIN":
+      return "#C9A227";
+    case "ADMIN":
+      return "#8C5FA8";
+    case "MODERATOR":
+      return "#5B7052";
+    case "ANIMATOR":
+      return "#3b82f6";
+    case "MEMBER_VERIFIED":
+    case "MEMBER":
+    default:
+      return "#8A8378";
+  }
+}
+
+/** Rôles pouvant consulter l'audit log (modération). */
+const AUDIT_PRIVILEGED_ROLES = new Set([
+  "SUPER_ADMIN", "ADMIN", "MODERATOR",
+]);
 
 // ═══════════════════════════════════════════════════════════════════════
 //  ⭐ V2.2 — Emoji Picker data (native Unicode, 7 catégories)
@@ -272,6 +312,8 @@ export function MessagingView() {
 
   // ─── State: calls (UI only — WebRTC V2) ──────────────────────────────
   const [callState, setCallState] = useState<"idle" | "outgoing" | "incoming" | "active">("idle");
+  // ⭐ V2.3 — Type d'appel (audio vs vidéo) pour l'overlay LiveKit
+  const [callType, setCallType] = useState<"audio" | "video">("audio");
 
   // ─── State: SlashCommands + Mentions + Threads (V2.1) ─────────────────
   // SlashCommands : ouvert quand l'input commence par "/"
@@ -315,6 +357,42 @@ export function MessagingView() {
 
   // Emoji Picker : visible/non-visible (popover shadcn).
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // ⭐ V2.3 — Galerie médias du canal
+  const [showGallery, setShowGallery] = useState(false);
+  const [galleryMedia, setGalleryMedia] = useState<ChatMessage[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  // ⭐ V2.3 — GIF Picker (Giphy API publique)
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [gifQuery, setGifQuery] = useState("");
+  const [gifResults, setGifResults] = useState<Array<{ id: string; url: string; preview: string; width?: number; height?: number }>>([]);
+  const [gifLoading, setGifLoading] = useState(false);
+  const gifSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ⭐ V2.3 — Audit Log (modération)
+  const [showAuditLog, setShowAuditLog] = useState(false);
+  const [auditEntries, setAuditEntries] = useState<any[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  // currentUserRole vient de la session NextAuth — utilisé pour conditionner
+  // l'affichage du bouton "Audit Log" (réservé aux modérateurs et +).
+  const currentUserRole = session?.user?.role;
+
+  // ⭐ V2.3 — LiveKit : Room + tracks pour les appels audio/vidéo réels
+  // (1-1) et les canaux vocaux persistants (VOICE).
+  // Une seule Room active à la fois (appel OU canal vocal). Les refs permettent
+  // aux callbacks LiveKit d'accéder à l'état sans re-créer les listeners.
+  const livekitRoomRef = useRef<Room | null>(null);
+  const localAudioTrackRef = useRef<MediaStreamTrack | null>(null);
+  const localVideoTrackRef = useRef<MediaStreamTrack | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const [localAudioMuted, setLocalAudioMuted] = useState(false);
+  const [localVideoEnabled, setLocalVideoEnabled] = useState(false);
+  const [speakerEnabled, setSpeakerEnabled] = useState(true);
+  const [remoteParticipants, setRemoteParticipants] = useState<RemoteParticipant[]>([]);
+  const [callError, setCallError] = useState<string | null>(null);
+  const [voiceChannelConnected, setVoiceChannelConnected] = useState(false);
 
   // ⭐ V2.2 — Refs "live" vers conversations + mutedConversations pour
   // accéder aux valeurs à jour dans le callback Socket.io sans re-souscrire
@@ -1157,6 +1235,382 @@ export function MessagingView() {
   };
 
   // ═════════════════════════════════════════════════════════════════════
+  //  ⭐ V2.3 — LIVEKIT : appels audio/vidéo réels + canaux vocaux persistants
+  // ═════════════════════════════════════════════════════════════════════
+  //
+  // Workflow commun :
+  //   1. Fetch /api/livekit/token avec role="publisher", roomName namespaced
+  //      ("yeshua-call-<convId>" pour les appels, "yeshua-voice-<convId>"
+  //      pour les canaux vocaux persistants).
+  //   2. Créer une Room livekit-client + connect(token).
+  //   3. Publier audio (toujours) et vidéo (si appel vidéo) via
+  //      room.localParticipant.setMicrophoneEnabled / setCameraEnabled.
+  //   4. Écouter RoomEvent.TrackSubscribed → ajouter le participant distant
+  //      à remoteParticipants (état React qui pilote le rendu vidéo/audio).
+  //   5. Hang up / Leave → room.disconnect() + stop tracks locaux.
+  //
+  // Différences appel vs canal vocal :
+  //   - Appel : overlay plein écran, bouton raccrocher ferme tout.
+  //   - Canal vocal : UI dans la zone principale (pas d'overlay), le canal
+  //     reste "ouvert" côté serveur (room LiveKit persistante), mais
+  //     l'utilisateur se déconnecte.
+
+  /** Nettoie toutes les ressources LiveKit (room + tracks + stream local). */
+  const cleanupLiveKit = useCallback(() => {
+    if (localAudioTrackRef.current) {
+      try { localAudioTrackRef.current.stop(); } catch {}
+      localAudioTrackRef.current = null;
+    }
+    if (localVideoTrackRef.current) {
+      try { localVideoTrackRef.current.stop(); } catch {}
+      localVideoTrackRef.current = null;
+    }
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((t) => { try { t.stop(); } catch {} });
+      localStreamRef.current = null;
+    }
+    if (livekitRoomRef.current) {
+      try {
+        livekitRoomRef.current.disconnect(true);
+      } catch {}
+      livekitRoomRef.current = null;
+    }
+    setRemoteParticipants([]);
+    setLocalAudioMuted(false);
+    setLocalVideoEnabled(false);
+    setCallError(null);
+  }, []);
+
+  /** Active/désactive le micro local sur la Room LiveKit active. */
+  const toggleMute = useCallback(async () => {
+    const room = livekitRoomRef.current;
+    if (!room) return;
+    try {
+      const newMuted = !localAudioMuted;
+      await room.localParticipant.setMicrophoneEnabled(!newMuted);
+      setLocalAudioMuted(newMuted);
+    } catch (e) {
+      console.error("[livekit] toggleMute failed:", e);
+    }
+  }, [localAudioMuted]);
+
+  /** Active/désactive la caméra locale (utile en appel vidéo). */
+  const toggleCamera = useCallback(async () => {
+    const room = livekitRoomRef.current;
+    if (!room) return;
+    try {
+      const newEnabled = !localVideoEnabled;
+      await room.localParticipant.setCameraEnabled(newEnabled);
+      setLocalVideoEnabled(newEnabled);
+    } catch (e) {
+      console.error("[livekit] toggleCamera failed:", e);
+    }
+  }, [localVideoEnabled]);
+
+  /**
+   * Démarre un appel audio ou vidéo via LiveKit.
+   * - roomName = `yeshua-call-<conversationId>` (namespacing pour autorisation
+   *   côté /api/livekit/token).
+   * - Publie automatiquement le micro (toujours) et la caméra (si vidéo).
+   * - Affiche l'overlay plein écran via setCallState("outgoing").
+   */
+  const startCall = useCallback(async (type: "audio" | "video") => {
+    if (!activeConvId) return;
+    setCallType(type);
+    setCallError(null);
+    // Nettoyer une éventuelle précédente room avant d'en démarrer une nouvelle
+    cleanupLiveKit();
+    try {
+      const roomName = `yeshua-call-${activeConvId}`;
+      const tokenRes = await fetch(api.url("/api/livekit/token"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomName,
+          role: "publisher",
+          participantName: currentUserName,
+        }),
+      });
+      if (!tokenRes.ok) {
+        const err = await tokenRes.json().catch(() => ({}));
+        throw new Error(err.error || `Token LiveKit: HTTP ${tokenRes.status}`);
+      }
+      const { token, url } = await tokenRes.json();
+
+      const room = new Room({
+        adaptiveStream: true,
+        dynacast: true,
+        videoCaptureDefaults: { resolution: { width: 1280, height: 720 } },
+      });
+      livekitRoomRef.current = room;
+
+      // ─── Listeners : participants distants ───────────────────────────
+      // TrackSubscribed = un participant distant publie un track audio/vidéo.
+      // ParticipantConnected / Disconnected = mise à jour de la liste.
+      room.on(RoomEvent.TrackSubscribed, () => {
+        const remotes = Array.from(room.remoteParticipants.values());
+        setRemoteParticipants(remotes);
+        setCallState("active");
+      });
+      room.on(RoomEvent.TrackUnsubscribed, () => {
+        const remotes = Array.from(room.remoteParticipants.values());
+        setRemoteParticipants(remotes);
+      });
+      room.on(RoomEvent.ParticipantConnected, () => {
+        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+      room.on(RoomEvent.ParticipantDisconnected, () => {
+        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+      room.on(RoomEvent.Disconnected, () => {
+        setCallState("idle");
+        setRemoteParticipants([]);
+      });
+      room.on(RoomEvent.ConnectionQualityChanged, () => {
+        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+
+      await room.connect(url, token);
+
+      // ─── Publier tracks locaux ────────────────────────────────────────
+      // setMicrophoneEnabled / setCameraEnabled utilisent en interne
+      // getUserMedia et publient le track sur la Room — pas besoin de gérer
+      // nous-mêmes le MediaStream local.
+      await room.localParticipant.setMicrophoneEnabled(true);
+      setLocalAudioMuted(false);
+
+      if (type === "video") {
+        await room.localParticipant.setCameraEnabled(true);
+        setLocalVideoEnabled(true);
+      } else {
+        await room.localParticipant.setCameraEnabled(false);
+        setLocalVideoEnabled(false);
+      }
+
+      setCallState("outgoing");
+    } catch (e) {
+      console.error("[livekit] startCall failed:", e);
+      setCallError(e instanceof Error ? e.message : "Échec de l'appel");
+      cleanupLiveKit();
+      setCallState("idle");
+    }
+  }, [activeConvId, cleanupLiveKit, currentUserName]);
+
+  /** Raccroche l'appel en cours (disconnect + cleanup). */
+  const endCall = useCallback(() => {
+    cleanupLiveKit();
+    setCallState("idle");
+  }, [cleanupLiveKit]);
+
+  /**
+   * Rejoint un canal vocal persistant (ChannelType.VOICE).
+   * - roomName = `yeshua-voice-<conversationId>` (persistante : reste active
+   *   côté serveur même si plus aucun participant).
+   * - Audio seulement (pas de vidéo pour les canaux vocaux).
+   * - voiceChannelConnected = true → l'UI affiche la liste des participants
+   *   connectés + bouton "Quitter le canal".
+   */
+  const joinVoiceChannel = useCallback(async () => {
+    if (!activeConvId) return;
+    setCallError(null);
+    cleanupLiveKit();
+    try {
+      const roomName = `yeshua-voice-${activeConvId}`;
+      const tokenRes = await fetch(api.url("/api/livekit/token"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomName,
+          role: "publisher",
+          participantName: currentUserName,
+        }),
+      });
+      if (!tokenRes.ok) {
+        const err = await tokenRes.json().catch(() => ({}));
+        throw new Error(err.error || `Token LiveKit: HTTP ${tokenRes.status}`);
+      }
+      const { token, url } = await tokenRes.json();
+
+      const room = new Room({ adaptiveStream: true, dynacast: true });
+      livekitRoomRef.current = room;
+
+      room.on(RoomEvent.TrackSubscribed, () => {
+        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+      room.on(RoomEvent.TrackUnsubscribed, () => {
+        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+      room.on(RoomEvent.ParticipantConnected, () => {
+        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+      room.on(RoomEvent.ParticipantDisconnected, () => {
+        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+
+      await room.connect(url, token);
+      await room.localParticipant.setMicrophoneEnabled(true);
+      await room.localParticipant.setCameraEnabled(false);
+      setLocalAudioMuted(false);
+      setLocalVideoEnabled(false);
+      setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      setVoiceChannelConnected(true);
+    } catch (e) {
+      console.error("[livekit] joinVoiceChannel failed:", e);
+      setCallError(e instanceof Error ? e.message : "Échec de la connexion au canal vocal");
+      cleanupLiveKit();
+      setVoiceChannelConnected(false);
+    }
+  }, [activeConvId, cleanupLiveKit, currentUserName]);
+
+  /** Quitte le canal vocal (disconnect — le canal reste persistant côté serveur). */
+  const leaveVoiceChannel = useCallback(() => {
+    cleanupLiveKit();
+    setVoiceChannelConnected(false);
+  }, [cleanupLiveKit]);
+
+  // ⭐ V2.3 — Cleanup LiveKit au unmount du composant (évite les fuites de
+  // tracks microphone/caméra si l'utilisateur quitte la page pendant un appel).
+  useEffect(() => {
+    return () => { cleanupLiveKit(); };
+  }, [cleanupLiveKit]);
+
+  // ═════════════════════════════════════════════════════════════════════
+  //  ⭐ V2.3 — GALERIE MÉDIAS DU CANAL
+  // ═════════════════════════════════════════════════════════════════════
+
+  const loadGallery = useCallback(async () => {
+    if (!activeConvId) return;
+    setGalleryLoading(true);
+    try {
+      // On charge un grand nombre de messages (lim=200) et on filtre côté
+      // client ceux qui ont un attachmentUrl. L'API messages supporte déjà
+      // le param `?limit=` mais pas de filtre par hasAttachment.
+      const res = await fetch(
+        api.url(`/api/yeshua-connect/conversations/${activeConvId}/messages?limit=200`),
+        { cache: "no-store" },
+      );
+      if (!res.ok) return;
+      const data: ChatMessage[] = await res.json();
+      const filtered = data.filter((m) => !!m.attachmentUrl);
+      setGalleryMedia(filtered);
+    } catch (e) {
+      console.error("loadGallery:", e);
+    } finally {
+      setGalleryLoading(false);
+    }
+  }, [activeConvId]);
+
+  // ⭐ Ouvre la galerie : trigger le fetch + ouvre le modal
+  const openGallery = useCallback(() => {
+    setShowGallery(true);
+    loadGallery();
+  }, [loadGallery]);
+
+  // ═════════════════════════════════════════════════════════════════════
+  //  ⭐ V2.3 — GIF PICKER (Giphy API publique, clé démo dc6zaTOxFJmzC)
+  // ═════════════════════════════════════════════════════════════════════
+  //
+  // L'API Giphy publique (clé "dc6zaTOxFJmzC" — clé publique démo documentée
+  // par Giphy pour usage non-commercial à faible volume) ne nécessite pas
+  // d'authentification utilisateur. Endpoint :
+  //   GET https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=QUERY&limit=24
+  //
+  // Chaque GIF est envoyé comme un message IMAGE avec attachmentUrl = URL
+  // directe du GIF (giphy-images.com). L'affichage côté messagerie utilise
+  // déjà le rendu IMAGE existant.
+
+  const GIPHY_PUBLIC_KEY = "dc6zaTOxFJmzC";
+
+  const searchGifs = useCallback(async (q: string) => {
+    setGifQuery(q);
+    if (gifSearchTimeoutRef.current) clearTimeout(gifSearchTimeoutRef.current);
+    if (!q.trim()) {
+      setGifResults([]);
+      return;
+    }
+    // Debounce 400ms pour éviter de saturer l'API à chaque frappe
+    gifSearchTimeoutRef.current = setTimeout(async () => {
+      setGifLoading(true);
+      try {
+        const url = `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_PUBLIC_KEY}&q=${encodeURIComponent(q)}&limit=24&rating=g`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        const results = (data.data || []).map((g: any) => ({
+          id: g.id as string,
+          url: g.images?.original?.url as string,
+          preview: g.images?.fixed_height_small?.url || g.images?.downsized?.url || g.images?.original?.url,
+          width: g.images?.original?.width ? parseInt(g.images.original.width, 10) : undefined,
+          height: g.images?.original?.height ? parseInt(g.images.original.height, 10) : undefined,
+        }));
+        setGifResults(results);
+      } catch (e) {
+        console.error("searchGifs:", e);
+      } finally {
+        setGifLoading(false);
+      }
+    }, 400);
+  }, []);
+
+  /** Envoie un GIF comme message IMAGE dans la conversation active. */
+  const sendGif = useCallback(async (gifUrl: string, gifName?: string) => {
+    if (!activeConvId) return;
+    setShowGifPicker(false);
+    setGifQuery("");
+    setGifResults([]);
+    try {
+      const res = await fetch(api.url(`/api/yeshua-connect/conversations/${activeConvId}/messages`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: gifName || "🎬 GIF",
+          type: "IMAGE",
+          attachmentUrl: gifUrl,
+          attachmentName: gifName || "gif.gif",
+          attachmentMime: "image/gif",
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      const newMsg: ChatMessage = await res.json();
+      setMessages(prev => ({
+        ...prev,
+        [activeConvId]: [...(prev[activeConvId] || []), newMsg],
+      }));
+      // Diffusion Socket.io (best-effort)
+      socketSendMessage(activeConvId, gifName || "🎬 GIF", undefined);
+    } catch (e) {
+      console.error("sendGif:", e);
+    }
+  }, [activeConvId, socketSendMessage]);
+
+  // ═════════════════════════════════════════════════════════════════════
+  //  ⭐ V2.3 — AUDIT LOG (modération)
+  // ═════════════════════════════════════════════════════════════════════
+
+  const loadAuditLog = useCallback(async () => {
+    if (!activeConvId) return;
+    setAuditLoading(true);
+    try {
+      const res = await fetch(
+        api.url(`/api/yeshua-connect/audit-log?channelId=${encodeURIComponent(activeConvId)}&limit=100`),
+        { cache: "no-store" },
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      setAuditEntries(data);
+    } catch (e) {
+      console.error("loadAuditLog:", e);
+    } finally {
+      setAuditLoading(false);
+    }
+  }, [activeConvId]);
+
+  const openAuditLog = useCallback(() => {
+    setShowAuditLog(true);
+    loadAuditLog();
+  }, [loadAuditLog]);
+
+  // ═════════════════════════════════════════════════════════════════════
   //  RENDER
   // ═════════════════════════════════════════════════════════════════════
 
@@ -1170,6 +1624,11 @@ export function MessagingView() {
   const channelConvs = filteredConversations.filter(c => c.type === "CHANNEL");
   const groupConvs = filteredConversations.filter(c => c.type === "GROUP" || c.type === "PASTORS");
   const directConvs = filteredConversations.filter(c => c.type === "DIRECT");
+  // ⭐ V2.3 — Canaux vocaux persistants (ChannelType.VOICE mappé vers "VOICE")
+  const voiceConvs = filteredConversations.filter(c => c.type === "VOICE");
+
+  // ⭐ V2.3 — Rôle courant privilégié ? (pour afficher le bouton Audit Log)
+  const canViewAuditLog = AUDIT_PRIVILEGED_ROLES.has(currentUserRole || "");
 
   return (
     <div className="flex h-[calc(100vh-0px)] bg-[#FAF6EF] overflow-hidden">
@@ -1282,6 +1741,11 @@ export function MessagingView() {
                 <ConvSection title="Direct" icon={<MessageSquare className="w-3 h-3" />} convs={directConvs}
                   activeConvId={activeConvId} onSelect={setActiveConvId} mutedConversations={mutedConversations} />
               )}
+              {/* ⭐ V2.3 — Canaux vocaux persistants */}
+              {voiceConvs.length > 0 && (
+                <ConvSection title="Canaux vocaux" icon={<Volume2 className="w-3 h-3" />} convs={voiceConvs}
+                  activeConvId={activeConvId} onSelect={setActiveConvId} mutedConversations={mutedConversations} />
+              )}
             </>
           )}
         </div>
@@ -1349,12 +1813,46 @@ export function MessagingView() {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={() => setCallState("outgoing")} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Appel audio">
-                <Phone className="w-4 h-4" />
+              {/* ⭐ V2.3 — Appels audio/vidéo réels via LiveKit.
+                  Masqués pour les canaux vocaux (qui utilisent leur propre UI "Rejoindre"). */}
+              {activeConv.type !== "VOICE" && (
+                <>
+                  <button
+                    onClick={() => startCall("audio")}
+                    className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
+                    title="Appel audio"
+                    disabled={callState !== "idle"}
+                  >
+                    <Phone className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => startCall("video")}
+                    className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
+                    title="Appel vidéo"
+                    disabled={callState !== "idle"}
+                  >
+                    <Video className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+              {/* ⭐ V2.3 — Galerie médias du canal */}
+              <button
+                onClick={openGallery}
+                className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
+                title="Galerie médias"
+              >
+                <ImageIcon className="w-4 h-4" />
               </button>
-              <button onClick={() => setCallState("outgoing")} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Appel vidéo">
-                <Video className="w-4 h-4" />
-              </button>
+              {/* ⭐ V2.3 — Audit Log (réservé aux modérateurs et +) */}
+              {canViewAuditLog && (
+                <button
+                  onClick={openAuditLog}
+                  className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
+                  title="Audit log (modération)"
+                >
+                  <ScrollText className="w-4 h-4" />
+                </button>
+              )}
               <button onClick={() => setShowConvSearch(!showConvSearch)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Rechercher">
                 <Search className="w-4 h-4" />
               </button>
@@ -1397,7 +1895,27 @@ export function MessagingView() {
           </div>
         )}
 
-        {/* Messages */}
+        {/* ⭐ V2.3 — CANAL VOCAL PERSISTANT (VOICE)
+            Remplace complètement la zone messages + input du chat.
+            L'utilisateur peut rejoindre/quitter le canal vocal à tout moment.
+            Le canal reste "ouvert" côté serveur (room LiveKit persistante). */}
+        {activeConv?.type === "VOICE" ? (
+          <VoiceChannelView
+            conv={activeConv}
+            connected={voiceChannelConnected}
+            remoteParticipants={remoteParticipants}
+            currentUserName={currentUserName}
+            localAudioMuted={localAudioMuted}
+            speakerEnabled={speakerEnabled}
+            error={callError}
+            onJoin={joinVoiceChannel}
+            onLeave={leaveVoiceChannel}
+            onToggleMute={toggleMute}
+            onToggleSpeaker={() => setSpeakerEnabled((s) => !s)}
+            channelMembers={channelMembers}
+          />
+        ) : (
+        /* Messages (uniquement pour les canaux non-VOICE) */
         <div ref={messagesScrollRef} className="flex-1 overflow-y-auto px-4 py-4">
           {loadingMsgs ? (
             <div className="flex items-center justify-center py-12">
@@ -1440,6 +1958,8 @@ export function MessagingView() {
                 const messageUrls = msg.type === "TEXT" && msg.content ? extractUrls(msg.content) : [];
                 // ⭐ V2.1 — Compter les réponses dans le thread (client-side)
                 const threadReplyCount = threads.filter(t => t.parentId === msg.id).length;
+                // ⭐ V2.3 — Couleur du nom selon le rôle (msg.senderRole)
+                const senderColor = getRoleColor(msg.senderRole);
                 return (
                   <div key={msg.id}>
                     {showDateSep && (
@@ -1465,9 +1985,14 @@ export function MessagingView() {
                               <p className="opacity-60 truncate">{msg.replyTo.content}</p>
                             </div>
                           )}
-                          {/* Sender name (for groups) */}
+                          {/* Sender name (for groups) — ⭐ V2.3 : couleur selon le rôle */}
                           {!isMine && (activeConv?.type === "GROUP" || activeConv?.type === "PASTORS" || activeConv?.type === "CHANNEL") && (
-                            <p className="text-xs font-bold text-[#8C5FA8] mb-0.5">{msg.senderName}</p>
+                            <p
+                              className="text-xs font-bold mb-0.5"
+                              style={{ color: senderColor }}
+                            >
+                              {msg.senderName}
+                            </p>
                           )}
                           {/* Content */}
                           {msg.type === "VERSE" && msg.verseRef ? (
@@ -1610,9 +2135,10 @@ export function MessagingView() {
             </div>
           )}
         </div>
+        )}
 
-        {/* Input bar */}
-        {activeConv && (
+        {/* Input bar — masqué pour les canaux VOICE (pas de texte, seulement audio) */}
+        {activeConv && activeConv.type !== "VOICE" && (
           <div className="p-3 border-t border-stone-100 bg-white">
             {/* ⭐ V2.2 — Paste preview : images en cours d'upload (paste clipboard) */}
             {pastedImagePreviews.length > 0 && (
@@ -1687,6 +2213,38 @@ export function MessagingView() {
                     className="w-80 p-0 border-stone-200"
                   >
                     <EmojiPicker onEmojiSelect={(emoji) => { handleEmojiSelect(emoji); }} />
+                  </PopoverContent>
+                </Popover>
+                {/* ⭐ V2.3 — GIF Picker (Giphy API publique) */}
+                <Popover open={showGifPicker} onOpenChange={(o) => {
+                  setShowGifPicker(o);
+                  if (!o) { setGifQuery(""); setGifResults([]); }
+                }}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        "p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors",
+                        showGifPicker && "bg-[#C9A227]/10 text-[#C9A227]"
+                      )}
+                      title="GIF"
+                    >
+                      <span className="text-[10px] font-bold tracking-wider">GIF</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="start"
+                    side="top"
+                    sideOffset={8}
+                    className="w-80 p-0 border-stone-200"
+                  >
+                    <GifPicker
+                      query={gifQuery}
+                      results={gifResults}
+                      loading={gifLoading}
+                      onSearch={searchGifs}
+                      onSelect={(url, name) => sendGif(url, name)}
+                    />
                   </PopoverContent>
                 </Popover>
                 {/* ⭐ V2.1 — Wrap textarea + popovers (SlashCommands + Mention autocomplete) */}
@@ -1947,20 +2505,189 @@ export function MessagingView() {
         </Modal>
       )}
 
-      {/* Call UI (outgoing — V2 WebRTC) */}
-      {callState === "outgoing" && activeConv && (
-        <div className="fixed inset-0 bg-[#2A0E3D] z-[60] flex flex-col items-center justify-center">
-          <div className="text-center">
-            <div className={cn("w-28 h-28 rounded-full mx-auto mb-5 flex items-center justify-center text-white text-4xl font-bold", getAvatarColor(activeConv.name))}>
-              {getInitials(activeConv.name)}
+      {/* ⭐ V2.3 — Galerie médias du canal */}
+      {showGallery && activeConv && (
+        <Modal onClose={() => setShowGallery(false)} title={`Galerie · ${activeConv.name}`}>
+          {galleryLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
             </div>
-            <h2 className="text-2xl font-bold text-[#FAF6EF] mb-2">{activeConv.name}</h2>
-            <p className="text-[#C9A227]">Appel en cours...</p>
-          </div>
-          <button onClick={() => setCallState("idle")} className="mt-12 w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white">
-            <Phone className="w-7 h-7 rotate-[135deg]" />
+          ) : galleryMedia.length === 0 ? (
+            <p className="text-center text-sm text-stone-400 py-8">
+              Aucun média dans ce canal pour le moment.
+            </p>
+          ) : (
+            <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto">
+              {galleryMedia.map((m) => {
+                // Catégoriser le média
+                const isImage = m.type === "IMAGE" || (m.attachmentMime?.startsWith("image/") ?? false);
+                const isVideo = m.type === "VIDEO" || (m.attachmentMime?.startsWith("video/") ?? false);
+                const isAudio = m.type === "AUDIO" || (m.attachmentMime?.startsWith("audio/") ?? false);
+                return (
+                  <div
+                    key={m.id}
+                    className="relative aspect-square rounded-lg overflow-hidden border border-stone-200 group bg-stone-50"
+                  >
+                    {isImage && m.attachmentUrl ? (
+                      <button
+                        onClick={() => setLightboxUrl(m.attachmentUrl!)}
+                        className="block w-full h-full"
+                        title={m.attachmentName || "Image"}
+                      >
+                        <img
+                          src={m.attachmentUrl}
+                          alt={m.attachmentName || "image"}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          loading="lazy"
+                        />
+                      </button>
+                    ) : isVideo && m.attachmentUrl ? (
+                      <a
+                        href={m.attachmentUrl}
+                        download={m.attachmentName}
+                        className="flex flex-col items-center justify-center w-full h-full text-stone-500 hover:bg-stone-100"
+                        title={`Vidéo: ${m.attachmentName}`}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-[#1E0F2B] flex items-center justify-center text-white mb-1">
+                          <Play className="w-4 h-4" />
+                        </div>
+                        <span className="text-[9px] truncate px-1 w-full text-center">{m.attachmentName || "Vidéo"}</span>
+                      </a>
+                    ) : isAudio && m.attachmentUrl ? (
+                      <a
+                        href={m.attachmentUrl}
+                        download={m.attachmentName}
+                        className="flex flex-col items-center justify-center w-full h-full text-stone-500 hover:bg-stone-100"
+                        title={`Audio: ${m.attachmentName}`}
+                      >
+                        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white mb-1", "bg-[#C9A227]")}>
+                          <Mic className="w-4 h-4" />
+                        </div>
+                        <span className="text-[9px] truncate px-1 w-full text-center">{m.attachmentName || "Audio"}</span>
+                      </a>
+                    ) : (
+                      <a
+                        href={m.attachmentUrl || "#"}
+                        download={m.attachmentName}
+                        className="flex flex-col items-center justify-center w-full h-full text-stone-500 hover:bg-stone-100"
+                        title={`Fichier: ${m.attachmentName}`}
+                      >
+                        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-white mb-1", getFileIcon(m.attachmentName).color)}>
+                          {getFileIcon(m.attachmentName).icon}
+                        </div>
+                        <span className="text-[9px] truncate px-1 w-full text-center">{m.attachmentName || "Fichier"}</span>
+                        <Download className="w-3 h-3 text-stone-400 mt-1" />
+                      </a>
+                    )}
+                    {/* Sender info overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-[8px] text-white truncate font-medium" style={{ color: getRoleColor(m.senderRole) }}>
+                        <span className="bg-black/40 rounded px-0.5">{m.senderName}</span>
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Modal>
+      )}
+
+      {/* ⭐ V2.3 — Lightbox plein écran pour images de la galerie */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 bg-black/90 z-[70] flex items-center justify-center p-4"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+            onClick={() => setLightboxUrl(null)}
+            aria-label="Fermer"
+          >
+            <X className="w-5 h-5" />
           </button>
+          <img
+            src={lightboxUrl}
+            alt="Aperçu"
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <a
+            href={lightboxUrl}
+            download
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-2 text-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download className="w-4 h-4" />
+            Télécharger
+          </a>
         </div>
+      )}
+
+      {/* ⭐ V2.3 — Audit Log Modal (modération) */}
+      {showAuditLog && activeConv && (
+        <Modal onClose={() => setShowAuditLog(false)} title={`Audit log · ${activeConv.name}`}>
+          {auditLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+            </div>
+          ) : auditEntries.length === 0 ? (
+            <p className="text-center text-sm text-stone-400 py-8">
+              Aucune entrée d'audit pour ce canal.
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {auditEntries.map((e: any) => (
+                <div key={e.id} className="p-2.5 bg-stone-50 rounded-lg border-l-2 border-[#C9A227]/40">
+                  <div className="flex items-center justify-between mb-1">
+                    <span
+                      className="text-xs font-bold"
+                      style={{ color: getRoleColor(e.user?.role) }}
+                    >
+                      {e.user?.name || "Utilisateur"}
+                    </span>
+                    <span className="text-[10px] text-stone-400">
+                      {new Date(e.createdAt).toLocaleString("fr-FR")}
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-[#1E0F2B]">
+                    {formatAuditAction(e.action)}
+                  </p>
+                  {e.metadata && (
+                    <pre className="text-[10px] text-stone-500 mt-1 whitespace-pre-wrap break-words font-mono bg-white/60 rounded p-1.5 max-h-24 overflow-y-auto">
+                      {formatAuditMetadata(e.metadata)}
+                    </pre>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Modal>
+      )}
+
+      {/* ⭐ V2.3 — APPELS AUDIO/VIDÉO RÉELS VIA LIVEKIT
+          Overlay plein écran affiché quand callState !== "idle".
+          - Pendant "outgoing" : en attente de l'autre participant.
+          - Pendant "active" : participant distant connecté.
+          - Vidéo locale (PIP) + vidéo distante (grand écran) si appel vidéo.
+          - Boutons : mute micro, toggle caméra (si vidéo), speaker, raccrocher. */}
+      {callState !== "idle" && activeConv && (
+        <CallOverlay
+          callState={callState}
+          callType={callType}
+          convName={activeConv.name}
+          currentUserName={currentUserName}
+          remoteParticipants={remoteParticipants}
+          localAudioMuted={localAudioMuted}
+          localVideoEnabled={localVideoEnabled}
+          speakerEnabled={speakerEnabled}
+          error={callError}
+          room={livekitRoomRef.current}
+          onToggleMute={toggleMute}
+          onToggleCamera={toggleCamera}
+          onToggleSpeaker={() => setSpeakerEnabled((s) => !s)}
+          onHangup={endCall}
+        />
       )}
     </div>
   );
@@ -2693,3 +3420,529 @@ function EmojiPicker({ onEmojiSelect }: { onEmojiSelect: (emoji: string) => void
     </div>
   );
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V2.3 — GIF PICKER (Giphy API publique, grille 3 colonnes)
+// ═══════════════════════════════════════════════════════════════════════
+
+function GifPicker({
+  query,
+  results,
+  loading,
+  onSearch,
+  onSelect,
+}: {
+  query: string;
+  results: Array<{ id: string; url: string; preview: string; width?: number; height?: number }>;
+  loading: boolean;
+  onSearch: (q: string) => void;
+  onSelect: (url: string, name?: string) => void;
+}) {
+  return (
+    <div className="flex flex-col">
+      <div className="px-3 py-2 bg-[#FAF6EF] border-b border-stone-200 flex items-center gap-2">
+        <Search className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
+        <input
+          autoFocus
+          value={query}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder="Rechercher un GIF..."
+          className="flex-1 bg-transparent text-sm outline-none placeholder:text-stone-400"
+        />
+        {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-400 flex-shrink-0" />}
+      </div>
+      <div className="p-2 max-h-72 overflow-y-auto">
+        {results.length === 0 && !loading && (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Film className="w-8 h-8 text-stone-300 mb-2" />
+            <p className="text-xs text-stone-500">
+              {query ? "Aucun GIF trouvé" : "Tapez une recherche pour afficher des GIFs"}
+            </p>
+            <p className="text-[10px] text-stone-400 mt-0.5">Propulsé par Giphy</p>
+          </div>
+        )}
+        {results.length > 0 && (
+          <div className="grid grid-cols-3 gap-1">
+            {results.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => onSelect(g.url, `gif-${g.id}.gif`)}
+                className="relative aspect-square rounded-md overflow-hidden bg-stone-100 hover:ring-2 hover:ring-[#C9A227] transition-all"
+                title="Envoyer ce GIF"
+              >
+                <img
+                  src={g.preview}
+                  alt="GIF"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V2.3 — AUDIT LOG helpers (formatage lisible des actions + metadata)
+// ═══════════════════════════════════════════════════════════════════════
+
+function formatAuditAction(action: string): string {
+  const map: Record<string, string> = {
+    MESSAGE_DELETE: "🗑️ Message supprimé",
+    MESSAGE_EDIT: "✏️ Message édité",
+    MESSAGE_PIN: "📌 Message épinglé",
+    MESSAGE_UNPIN: "📌 Message désépinglé",
+    CHANNEL_CREATE: "➕ Canal créé",
+    USER_JOIN: "👋 Utilisateur a rejoint",
+    USER_LEAVE: "👋 Utilisateur a quitté",
+  };
+  return map[action] || action;
+}
+
+function formatAuditMetadata(metadata: any): string {
+  if (!metadata) return "";
+  try {
+    const lines: string[] = [];
+    if (metadata.oldContentPreview !== undefined) {
+      lines.push(`Ancien: ${metadata.oldContentPreview || "(vide)"}`);
+    }
+    if (metadata.newContentPreview !== undefined) {
+      lines.push(`Nouveau: ${metadata.newContentPreview || "(vide)"}`);
+    }
+    if (metadata.originalContentPreview !== undefined) {
+      lines.push(`Contenu original: ${metadata.originalContentPreview || "(vide)"}`);
+    }
+    if (metadata.moderatorAction) {
+      lines.push(`Action modérateur: oui`);
+    }
+    if (metadata.forEveryone !== undefined) {
+      lines.push(`Pour tous: ${metadata.forEveryone ? "oui" : "non"}`);
+    }
+    if (metadata.name) {
+      lines.push(`Nom: ${metadata.name}`);
+    }
+    if (metadata.type) {
+      lines.push(`Type: ${metadata.type}`);
+    }
+    if (metadata.isPinned !== undefined) {
+      lines.push(`Épinglé: ${metadata.isPinned ? "oui" : "non"}`);
+    }
+    return lines.join("\n") || JSON.stringify(metadata, null, 2);
+  } catch {
+    return "";
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V2.3 — VOICE CHANNEL VIEW (canal vocal persistant)
+// ═══════════════════════════════════════════════════════════════════════
+
+function VoiceChannelView({
+  conv,
+  connected,
+  remoteParticipants,
+  currentUserName,
+  localAudioMuted,
+  speakerEnabled,
+  error,
+  onJoin,
+  onLeave,
+  onToggleMute,
+  onToggleSpeaker,
+  channelMembers,
+}: {
+  conv: ChatConversation;
+  connected: boolean;
+  remoteParticipants: RemoteParticipant[];
+  currentUserName: string;
+  localAudioMuted: boolean;
+  speakerEnabled: boolean;
+  error: string | null;
+  onJoin: () => void;
+  onLeave: () => void;
+  onToggleMute: () => void;
+  onToggleSpeaker: () => void;
+  channelMembers: Array<{ userId: string; name: string; role?: string; avatarUrl?: string }>;
+}) {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#2A0E3D]/5 to-[#FAF6EF]/30">
+      <div className="max-w-md w-full text-center">
+        {/* Icône principale */}
+        <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-[#2A0E3D] flex items-center justify-center text-white">
+          <Volume2 className="w-10 h-10" />
+        </div>
+        <h3 className="text-lg font-bold text-[#1E0F2B] mb-1">{conv.name}</h3>
+        <p className="text-xs text-stone-500 mb-6">
+          Canal vocal persistant · {conv.participants.length} membres au total
+        </p>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {!connected ? (
+          /* État déconnecté : bouton "Rejoindre" */
+          <button
+            onClick={onJoin}
+            className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] flex items-center justify-center gap-2 transition-colors"
+          >
+            <Volume2 className="w-5 h-5" />
+            🔊 Rejoindre le canal vocal
+          </button>
+        ) : (
+          /* État connecté : infos + contrôles */
+          <div className="space-y-4">
+            {/* Participants connectés */}
+            <div className="bg-white rounded-2xl border border-stone-200 p-4">
+              <p className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-3">
+                Participants connectés ({remoteParticipants.length + 1})
+              </p>
+              <div className="space-y-2">
+                {/* Moi-même (toujours connecté) */}
+                <div className="flex items-center gap-2 p-2 bg-[#C9A227]/5 rounded-lg">
+                  <div className="relative">
+                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold", getAvatarColor(currentUserName))}>
+                      {getInitials(currentUserName)}
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-[#1E0F2B]">
+                      {currentUserName} <span className="text-[10px] text-stone-400">(vous)</span>
+                    </p>
+                    <p className="text-[10px] text-stone-500">
+                      {localAudioMuted ? "🔇 Micro coupé" : "🎤 Micro actif"}
+                    </p>
+                  </div>
+                </div>
+                {/* Participants distants */}
+                {remoteParticipants.length === 0 ? (
+                  <p className="text-xs text-stone-400 text-center py-2">
+                    En attente d'autres participants...
+                  </p>
+                ) : (
+                  remoteParticipants.map((p) => (
+                    <div key={p.identity} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg">
+                      <div className="relative">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold bg-[#5B7052]">
+                          {getInitials(p.name || p.identity || "?")}
+                        </div>
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-semibold text-[#1E0F2B]">{p.name || p.identity}</p>
+                        <p className="text-[10px] text-stone-500">
+                          {p.isMicrophoneEnabled ? "🎤 Micro actif" : "🔇 Micro coupé"}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Contrôles */}
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={onToggleMute}
+                className={cn(
+                  "p-3 rounded-full transition-colors",
+                  localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
+                )}
+                title={localAudioMuted ? "Activer le micro" : "Couper le micro"}
+              >
+                {localAudioMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={onToggleSpeaker}
+                className={cn(
+                  "p-3 rounded-full transition-colors",
+                  speakerEnabled ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]" : "bg-stone-300 text-stone-600 hover:bg-stone-400"
+                )}
+                title={speakerEnabled ? "Couper le haut-parleur" : "Activer le haut-parleur"}
+              >
+                {speakerEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={onLeave}
+                className="p-3 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                title="Quitter le canal vocal"
+              >
+                <PhoneOff className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-[10px] text-stone-400">
+              Le canal reste ouvert même si vous le quittez.
+            </p>
+          </div>
+        )}
+
+        {/* Membres du canal (info) */}
+        {channelMembers.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-stone-200">
+            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2">
+              Membres du canal
+            </p>
+            <div className="flex flex-wrap gap-1 justify-center">
+              {channelMembers.slice(0, 10).map((m) => (
+                <span
+                  key={m.userId}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-100 text-[10px] font-medium"
+                  style={{ color: getRoleColor(m.role) }}
+                >
+                  {m.name}
+                </span>
+              ))}
+              {channelMembers.length > 10 && (
+                <span className="text-[10px] text-stone-400 self-center">
+                  +{channelMembers.length - 10}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V2.3 — CALL OVERLAY (appel audio/vidéo réel via LiveKit)
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Affiché en plein écran (z-60) pendant un appel LiveKit.
+// - Vidéo locale en PIP (picture-in-picture) en haut à droite.
+// - Vidéo distante en grand écran (si appel vidéo).
+// - Si appel audio uniquement : avatar centré + animation pulse.
+// - Boutons : mute micro, toggle caméra (si vidéo), speaker, raccrocher.
+
+function CallOverlay({
+  callState,
+  callType,
+  convName,
+  currentUserName,
+  remoteParticipants,
+  localAudioMuted,
+  localVideoEnabled,
+  speakerEnabled,
+  error,
+  room,
+  onToggleMute,
+  onToggleCamera,
+  onToggleSpeaker,
+  onHangup,
+}: {
+  callState: "outgoing" | "incoming" | "active";
+  callType: "audio" | "video";
+  convName: string;
+  currentUserName: string;
+  remoteParticipants: RemoteParticipant[];
+  localAudioMuted: boolean;
+  localVideoEnabled: boolean;
+  speakerEnabled: boolean;
+  error: string | null;
+  room: Room | null;
+  onToggleMute: () => void;
+  onToggleCamera: () => void;
+  onToggleSpeaker: () => void;
+  onHangup: () => void;
+}) {
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const [callDuration, setCallDuration] = useState(0);
+
+  // ⭐ Compteur de durée d'appel (démarre quand callState === "active")
+  useEffect(() => {
+    if (callState !== "active") return;
+    const interval = setInterval(() => setCallDuration((d) => d + 1), 1000);
+    return () => clearInterval(interval);
+  }, [callState]);
+
+  // ⭐ Attacher le track vidéo local au <video> PIP
+  useEffect(() => {
+    const el = localVideoRef.current;
+    if (!room || !el) return;
+    const localTrack = room.localParticipant.getTrackPublication(Track.Source.Camera);
+    if (localTrack?.track) {
+      localTrack.track.attach(el);
+    }
+    return () => {
+      if (localTrack?.track) {
+        try { localTrack.track.detach(el); } catch {}
+      }
+    };
+  }, [room, localVideoEnabled]);
+
+  // ⭐ Attacher le track vidéo distant au <video> principal
+  useEffect(() => {
+    const el = remoteVideoRef.current;
+    if (!room || !el) return;
+    const remote = remoteParticipants[0];
+    if (!remote) return;
+    const videoPub = remote.getTrackPublication(Track.Source.Camera);
+    if (videoPub?.track) {
+      videoPub.track.attach(el);
+    }
+    return () => {
+      if (videoPub?.track) {
+        try { videoPub.track.detach(el); } catch {}
+      }
+    };
+  }, [room, remoteParticipants]);
+
+  // ⭐ Attacher le track audio distant au <audio> (rendu audio)
+  useEffect(() => {
+    const el = remoteAudioRef.current;
+    if (!room || !el) return;
+    const remote = remoteParticipants[0];
+    if (!remote) return;
+    const audioPub = remote.getTrackPublication(Track.Source.Microphone);
+    if (audioPub?.track) {
+      audioPub.track.attach(el);
+    }
+    return () => {
+      if (audioPub?.track) {
+        try { audioPub.track.detach(el); } catch {}
+      }
+    };
+  }, [room, remoteParticipants]);
+
+  const formatDuration = (s: number): string => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const remoteParticipant = remoteParticipants[0];
+  const isVideoCall = callType === "video";
+
+  return (
+    <div className="fixed inset-0 bg-[#2A0E3D] z-[60] flex flex-col items-center justify-between p-6">
+      {/* Audio element caché pour le rendu audio distant */}
+      <audio ref={remoteAudioRef} autoPlay className="hidden" />
+
+      {/* Erreur éventuelle */}
+      {error && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-red-500/20 border border-red-500/40 rounded-xl text-xs text-red-200 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Zone centrale : vidéo distante OU avatar */}
+      <div className="flex-1 flex items-center justify-center w-full">
+        {isVideoCall && remoteParticipant ? (
+          /* Appel vidéo actif : vidéo distante plein écran */
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className="max-w-full max-h-full rounded-2xl object-contain"
+          />
+        ) : (
+          /* Appel audio OU en attente : avatar centré */
+          <div className="text-center">
+            <motion.div
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className={cn("w-32 h-32 rounded-full mx-auto mb-5 flex items-center justify-center text-white text-5xl font-bold", getAvatarColor(convName))}
+            >
+              {getInitials(convName)}
+            </motion.div>
+            <h2 className="text-2xl font-bold text-[#FAF6EF] mb-2">{convName}</h2>
+            <p className="text-[#C9A227] flex items-center justify-center gap-2">
+              {callState === "active" ? (
+                <>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  Appel en cours · {formatDuration(callDuration)}
+                </>
+              ) : (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Appel en cours...
+                </>
+              )}
+            </p>
+            {callState === "outgoing" && (
+              <p className="text-xs text-[#FAF6EF]/50 mt-2">
+                En attente que l'autre participant rejoigne l'appel...
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* PIP vidéo locale (si appel vidéo ET caméra activée) */}
+      {isVideoCall && localVideoEnabled && (
+        <div className="absolute top-4 right-4 w-32 h-24 sm:w-48 sm:h-32 rounded-xl overflow-hidden border-2 border-[#C9A227] bg-black shadow-xl">
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+            style={{ transform: "scaleX(-1)" }}
+          />
+          <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 rounded text-[9px] text-white">
+            Vous
+          </div>
+        </div>
+      )}
+
+      {/* Boutons de contrôle */}
+      <div className="flex items-center justify-center gap-3 sm:gap-4">
+        <button
+          onClick={onToggleMute}
+          className={cn(
+            "p-3.5 sm:p-4 rounded-full transition-colors",
+            localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-white/10 text-white hover:bg-white/20"
+          )}
+          title={localAudioMuted ? "Activer le micro" : "Couper le micro"}
+        >
+          {localAudioMuted ? <MicOff className="w-5 h-5 sm:w-6 sm:h-6" /> : <Mic className="w-5 h-5 sm:w-6 sm:h-6" />}
+        </button>
+
+        {isVideoCall && (
+          <button
+            onClick={onToggleCamera}
+            className={cn(
+              "p-3.5 sm:p-4 rounded-full transition-colors",
+              localVideoEnabled ? "bg-white/10 text-white hover:bg-white/20" : "bg-red-500 text-white hover:bg-red-600"
+            )}
+            title={localVideoEnabled ? "Couper la caméra" : "Activer la caméra"}
+          >
+            <Video className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        )}
+
+        <button
+          onClick={onToggleSpeaker}
+          className={cn(
+            "p-3.5 sm:p-4 rounded-full transition-colors",
+            speakerEnabled ? "bg-white/10 text-white hover:bg-white/20" : "bg-stone-600 text-white hover:bg-stone-700"
+          )}
+          title={speakerEnabled ? "Couper le haut-parleur" : "Activer le haut-parleur"}
+        >
+          {speakerEnabled ? <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" /> : <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" />}
+        </button>
+
+        <button
+          onClick={onHangup}
+          className="p-3.5 sm:p-4 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg"
+          title="Raccrocher"
+        >
+          <PhoneOff className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+      </div>
+    </div>
+  );
+}
+

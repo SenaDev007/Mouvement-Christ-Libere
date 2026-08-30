@@ -33,7 +33,7 @@ export async function DELETE(
     // 🔒 Vérifier que l'utilisateur est l'auteur du message (ou modérateur)
     const message = await db.message.findUnique({
       where: { id: messageId },
-      select: { userId: true },
+      select: { userId: true, channelId: true, content: true },
     });
     if (!message) {
       return NextResponse.json({ error: "Message introuvable" }, { status: 404 });
@@ -51,6 +51,31 @@ export async function DELETE(
       where: { id: messageId },
       data: { isDeleted: true, content: forEveryone ? "🗑️ Message supprimé" : "" },
     });
+
+    // ⭐ V2.3 — Audit log : tracer la suppression du message.
+    // On stocke un extrait du contenu original (max 200 chars) pour
+    // permettre aux modérateurs de voir ce qui a été supprimé.
+    try {
+      await db.auditLog.create({
+        data: {
+          action: "MESSAGE_DELETE",
+          userId,
+          targetId: messageId,
+          channelId: message.channelId,
+          metadata: {
+            forEveryone,
+            isAuthor,
+            moderatorAction: !isAuthor,
+            originalContentPreview:
+              (message.content || "").substring(0, 200) || null,
+          },
+        },
+      });
+    } catch (e) {
+      // Ne pas casser la suppression si l'audit log échoue
+      console.error("[audit-log/delete] Error:", e);
+    }
+
     return NextResponse.json({ success: true, id: updated.id, isDeleted: true });
   } catch (error) {
     console.error("[yeshua-connect/delete] Error:", error);

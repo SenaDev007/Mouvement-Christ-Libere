@@ -34,7 +34,7 @@ export async function PUT(
     // 🔒 Vérifier que l'utilisateur est l'auteur du message (ou modérateur)
     const message = await db.message.findUnique({
       where: { id: messageId },
-      select: { userId: true },
+      select: { userId: true, channelId: true, content: true },
     });
     if (!message) {
       return NextResponse.json({ error: "Message introuvable" }, { status: 404 });
@@ -53,6 +53,30 @@ export async function PUT(
       data: { content, isEdited: true },
       include: { user: { select: { id: true, name: true, role: true } } },
     });
+
+    // ⭐ V2.3 — Audit log : tracer l'édition du message.
+    // On stocke un extrait de l'ancien et du nouveau contenu (max 200 chars).
+    try {
+      await db.auditLog.create({
+        data: {
+          action: "MESSAGE_EDIT",
+          userId,
+          targetId: messageId,
+          channelId: message.channelId,
+          metadata: {
+            isAuthor,
+            moderatorAction: !isAuthor,
+            oldContentPreview:
+              (message.content || "").substring(0, 200) || null,
+            newContentPreview:
+              (content || "").substring(0, 200) || null,
+          },
+        },
+      });
+    } catch (e) {
+      console.error("[audit-log/edit] Error:", e);
+    }
+
     return NextResponse.json({
       id: updated.id,
       content: updated.content,

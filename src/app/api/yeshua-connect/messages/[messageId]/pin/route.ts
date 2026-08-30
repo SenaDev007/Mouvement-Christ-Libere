@@ -77,6 +77,24 @@ export async function POST(
       },
     });
 
+    // ⭐ V2.3 — Audit log : tracer l'épinglage / désépinglage du message.
+    try {
+      await db.auditLog.create({
+        data: {
+          action: newPinnedState ? "MESSAGE_PIN" : "MESSAGE_UNPIN",
+          userId,
+          targetId: messageId,
+          channelId: message.channelId,
+          metadata: {
+            isPinned: newPinnedState,
+            pinnedAt: updated.pinnedAt?.toISOString() ?? null,
+          },
+        },
+      });
+    } catch (e) {
+      console.error("[audit-log/pin] Error:", e);
+    }
+
     return NextResponse.json({
       success: true,
       messageId: updated.id,

@@ -78,6 +78,27 @@ export async function POST(req: Request) {
       data: { channelId: channel.id, userId, role: "ADMIN" },
     });
 
+    // ⭐ V2.3 — Audit log : tracer la création du canal.
+    try {
+      await db.auditLog.create({
+        data: {
+          action: "CHANNEL_CREATE",
+          userId,
+          targetId: channel.id,
+          channelId: channel.id,
+          metadata: {
+            name,
+            description: description ?? null,
+            type,
+            communityId,
+            isEncrypted,
+          },
+        },
+      });
+    } catch (e) {
+      console.error("[audit-log/channel-create] Error:", e);
+    }
+
     return NextResponse.json(channel);
   } catch (error) {
     console.error("[yeshua-connect/channels POST] Error:", error);

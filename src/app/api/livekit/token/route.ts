@@ -3,24 +3,38 @@ import { AccessToken } from "livekit-server-sdk";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { auth as nextAuth } from "@/auth";
 
 /**
  * POST /api/livekit/token
  *
- * Génère un token LiveKit pour qu'un serviteur (Pam, Pasteur Kongo) diffuse un live
- * ou qu'un visiteur regarde le live sur le site public.
+ * Génère un token LiveKit pour qu'un serviteur (Pam, Pasteur Kongo) diffuse un live,
+ * qu'un visiteur regarde le live sur le site public, OU qu'un utilisateur authentifié
+ * Yeshua Connect initie/rejoigne un appel audio/vidéo ou un canal vocal persistant.
  *
- * Body: { roomName, role: "publisher" | "subscriber", participantName? }
+ * Body: { roomName, role: "publisher" | "subscriber", participantName?, liveId? }
  *
- * - publisher : permissions canPublish (pour le serviteur qui diffuse)
+ * - publisher : permissions canPublish (pour le serviteur qui diffuse, ou l'appelant Yeshua)
  * - subscriber : permissions canSubscribe uniquement (pour les visiteurs)
  *
- * Pour les publishers : vérifie que l'utilisateur est authentifié admin (cookie admin_session).
+ * Authentification publisher :
+ *   1) Admin session (cookie admin_session) — pour les lives studio
+ *   2) NextAuth session — pour les appels Yeshua Connect quand roomName commence
+ *      par "yeshua-call-" ou "yeshua-voice-". Ce namespacing empêche un utilisateur
+ *      Yeshua de publier dans une room de live studio.
+ *
  * Pour les subscribers : pas d'auth requise (le live est public).
  */
 
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
 const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
+
+/** Préfixes de rooms réservés aux appels / canaux vocaux Yeshua Connect. */
+const YESHUA_ROOM_PREFIXES = ["yeshua-call-", "yeshua-voice-"];
+
+function isYeshuaRoom(roomName: string): boolean {
+  return YESHUA_ROOM_PREFIXES.some((p) => roomName.startsWith(p));
+}
 
 interface TokenRequestBody {
   roomName?: string;
@@ -41,51 +55,73 @@ export async function POST(req: NextRequest) {
     let identity: string;
     let name: string;
     const isPublisher = role === "publisher";
+    const yeshuaRoom = isYeshuaRoom(roomName);
 
     if (isPublisher) {
-      // Vérifier l'authentification admin (cookie admin_session)
+      // ─── Publisher : deux chemins d'authentification possibles ───────
+      // 1) Admin session (cookie admin_session) — pour les lives studio
+      // 2) NextAuth session — pour les appels Yeshua Connect (room namespaced)
       const cookieStore = await cookies();
       const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+      const adminSessionValid =
+        !!sessionToken && verifySessionToken(sessionToken);
 
-      if (!sessionToken || !verifySessionToken(sessionToken)) {
-        return NextResponse.json(
-          { error: "Authentification admin requise pour diffuser un live" },
-          { status: 401 }
-        );
-      }
-
-      // Décoder le userId et le rôle depuis le token
-      try {
-        const parts = sessionToken.split(".");
-        const data = JSON.parse(Buffer.from(parts[0], "base64url").toString());
-        const userParts = data.user.split(":");
-        if (userParts.length < 3 || userParts[0] !== "admin") {
+      if (adminSessionValid) {
+        // Admin authentifié (serviteur / studio live)
+        try {
+          const parts = sessionToken!.split(".");
+          const data = JSON.parse(
+            Buffer.from(parts[0], "base64url").toString(),
+          );
+          const userParts = data.user.split(":");
+          if (userParts.length < 3 || userParts[0] !== "admin") {
+            return NextResponse.json(
+              { error: "Token de session invalide" },
+              { status: 401 },
+            );
+          }
+          identity = userParts[1];
+          name = participantName || "Serviteur";
+        } catch {
           return NextResponse.json(
-            { error: "Token de session invalide" },
-            { status: 401 }
+            { error: "Session invalide" },
+            { status: 401 },
           );
         }
-        identity = userParts[1];
-        name = participantName || "Serviteur";
-      } catch {
-        return NextResponse.json(
-          { error: "Session invalide" },
-          { status: 401 }
-        );
-      }
 
-      // Vérifier que le live existe et appartient bien à ce serviteur
-      if (liveId) {
-        const live = await db.liveStream.findUnique({
-          where: { id: liveId },
-          select: { id: true, status: true, livekitRoomName: true },
-        });
-        if (!live) {
+        // Vérifier que le live existe (uniquement si liveId fourni)
+        if (liveId) {
+          const live = await db.liveStream.findUnique({
+            where: { id: liveId },
+            select: { id: true, status: true, livekitRoomName: true },
+          });
+          if (!live) {
+            return NextResponse.json(
+              { error: "Live introuvable" },
+              { status: 404 },
+            );
+          }
+        }
+      } else if (yeshuaRoom) {
+        // NextAuth session pour les appels Yeshua Connect
+        const session = await nextAuth();
+        if (!session?.user?.id) {
           return NextResponse.json(
-            { error: "Live introuvable" },
-            { status: 404 }
+            { error: "Authentification requise pour l'appel" },
+            { status: 401 },
           );
         }
+        identity = session.user.id;
+        name = participantName || session.user.name || "Membre";
+      } else {
+        // Pas d'authentification valide pour un publisher hors Yeshua
+        return NextResponse.json(
+          {
+            error:
+              "Authentification admin ou NextAuth requise pour publier (room non-Yeshua)",
+          },
+          { status: 401 },
+        );
       }
     } else {
       // Subscriber : identité anonyme
@@ -108,7 +144,10 @@ export async function POST(req: NextRequest) {
     });
 
     const token = await at.toJwt();
-    const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
+    const livekitUrl =
+      process.env.NEXT_PUBLIC_LIVEKIT_URL ||
+      process.env.LIVEKIT_URL ||
+      "wss://christ-libere.livekit.cloud";
 
     return NextResponse.json({
       token,
@@ -121,3 +160,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Erreur LiveKit" }, { status: 500 });
   }
 }
+
