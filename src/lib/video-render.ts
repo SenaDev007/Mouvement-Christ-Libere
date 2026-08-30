@@ -153,7 +153,7 @@ export interface Segment {
 export interface RenderProject {
   videoId: string;
   segments: Segment[]; // dans l'ordre de la timeline
-  overlays: (TextOverlay | ImageOverlay)[];
+  overlays: (TextOverlay | ImageOverlay | StickerOverlay)[];
   subtitles?: SubtitleConfig;
   transitions?: TransitionConfig[]; // entre segments
   colorAdjust?: ColorAdjust;
@@ -164,7 +164,57 @@ export interface RenderProject {
   export: ExportConfig;
   thumbnailUrl?: string;
   title?: string;
+  // ─── Sprint 5+ ───
+  stabilisation?: StabilisationConfig;
+  chromaKey?: ChromaKeyConfig;
+  backgroundRemoval?: BackgroundRemovalConfig;
+  filters?: VideoFilter;
 }
+
+// ─── Types Sprint 5+ ───
+
+export interface StickerOverlay {
+  id: string;
+  type: "sticker";
+  emoji: string;
+  x: number;
+  y: number;
+  size: number;
+  rotation: number;
+  opacity: number;
+  startTime?: number;
+  endTime?: number;
+  animation?: "none" | "bounce" | "pulse" | "rotate" | "shake";
+}
+
+export interface Keyframe {
+  time: number;
+  value: number;
+  easing?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
+}
+
+export interface StabilisationConfig {
+  enabled: boolean;
+  shakiness: number; // 1-10
+  smoothing: number; // 0-1
+}
+
+export interface ChromaKeyConfig {
+  enabled: boolean;
+  color: string; // hex
+  similarity: number; // 0.01-1.0
+  blend: number; // 0-1
+}
+
+export interface BackgroundRemovalConfig {
+  enabled: boolean;
+  method: "mediapipe" | "tensorflow" | "canvas";
+  threshold: number;
+}
+
+export type VideoFilter =
+  | "none" | "vintage" | "noir" | "sepia"
+  | "cool" | "warm" | "dramatic" | "fade" | "vivid";
 
 // ─── Types internes ───
 
@@ -328,8 +378,49 @@ function getDefaultFont(): string {
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     "/System/Library/Fonts/Helvetica.ttc",
   ];
-  // Retourner le premier — le runtime vérifiera l'existence
   return candidates[0];
+}
+
+function getEmojiFont(): string {
+  // Font avec support emoji — Noto Color Emoji si disponible, sinon fallback
+  const candidates = [
+    "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",
+    "/usr/share/fonts/truetype/noto/NotoEmoji.ttf",
+    "/usr/share/fonts/truetype/noto-color-emoji/NotoColorEmoji.ttf",
+    "/System/Library/Fonts/Apple Color Emoji.ttc",
+  ];
+  return candidates[0];
+}
+
+function buildVideoFilterPreset(filter: VideoFilter): string {
+  switch (filter) {
+    case "vintage":
+      // Sépia + vignette + légère désaturation
+      return "eq=contrast=1.1:saturation=0.7:gamma=0.9,curves=r='0/0 0.5/0.4 1/0.8':g='0/0 0.5/0.45 1/0.85':b='0/0.1 0.5/0.5 1/1'";
+    case "noir":
+      // Noir & blanc avec contraste élevé
+      return "format=gray,eq=contrast=1.3:brightness=-0.05";
+    case "sepia":
+      // Sépia classique
+      return "colorchannelmixer=0.393:0.769:0.189:0:0.349:0.686:0.168:0:0.272:0.534:0.131:0";
+    case "cool":
+      // Tons froids (bleu/cyan)
+      return "colortemperature=4000,eq=saturation=1.1";
+    case "warm":
+      // Tons chauds (orange/jaune)
+      return "colortemperature=8000,eq=saturation=1.15:brightness=0.03";
+    case "dramatic":
+      // Contraste élevé + saturation réduite + vignette
+      return "eq=contrast=1.5:saturation=0.8:brightness=-0.05,vignette=PI/5";
+    case "fade":
+      // Couleurs délavées (vintage fade)
+      return "eq=contrast=0.85:saturation=0.6:brightness=0.1";
+    case "vivid":
+      // Couleurs vives + contraste
+      return "eq=contrast=1.2:saturation=1.5:brightness=0.02";
+    default:
+      return "";
+  }
 }
 
 function buildColorFilter(adj: ColorAdjust): string {
@@ -543,6 +634,27 @@ export async function buildRenderPlan(
       vf.push(...buildTransformFilter(project.transform, targetWidth, targetHeight));
     }
 
+    // --- Stabilisation (deshake) ---
+    if (project.stabilisation?.enabled) {
+      vf.push(`deshake=blockx=${targetWidth / 8}:blocky=${targetHeight / 8}:shakiness=${project.stabilisation.shakiness}`);
+    }
+
+    // --- Chroma key (green screen) ---
+    if (project.chromaKey?.enabled) {
+      const hex = project.chromaKey.color.replace("#", "");
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      vf.push(`chromakey=0x${hex}:${project.chromaKey.similarity.toFixed(2)}:${project.chromaKey.blend.toFixed(2)}`);
+      // dummy reference to avoid unused var warnings
+      void r; void g; void b;
+    }
+
+    // --- Filtres vidéo (presets) ---
+    if (project.filters && project.filters !== "none") {
+      vf.push(buildVideoFilterPreset(project.filters));
+    }
+
     // --- Color adjust ---
     if (project.colorAdjust) {
       vf.push(buildColorFilter(project.colorAdjust));
@@ -552,7 +664,6 @@ export async function buildRenderPlan(
     if (project.speed) {
       const speedFilters = buildSpeedFilter(project.speed);
       vf.push(speedFilters.video);
-      // L'audio speed sera géré via atempo dans les filtres audio
     }
 
     // --- Overlays texte ---
@@ -572,6 +683,23 @@ export async function buildRenderPlan(
         if (t.bold) {
           drawtext += `:box=1:boxcolor=${t.bgColor || "black@0.5"}:boxborderw=5`;
         }
+        drawtext += `:enable='between(t,${start},${end})'`;
+
+        vf.push(drawtext);
+      } else if (overlay.type === "sticker") {
+        // --- Stickers emoji (via drawtext avec emoji Unicode) ---
+        const s = overlay as StickerOverlay;
+        const px = Math.round((s.x / 100) * targetWidth);
+        const py = Math.round((s.y / 100) * targetHeight);
+        const start = s.startTime || 0;
+        const end = s.endTime || -1;
+
+        let drawtext = `drawtext=fontfile='${escapeFontFile(getEmojiFont())}'`;
+        drawtext += `:text='${escapeDrawtext(s.emoji)}'`;
+        drawtext += `:x=${px}:y=${py}`;
+        drawtext += `:fontsize=${s.size}`;
+        drawtext += `:fontcolor=white`;
+        drawtext += `:alpha=${s.opacity}`;
         drawtext += `:enable='between(t,${start},${end})'`;
 
         vf.push(drawtext);

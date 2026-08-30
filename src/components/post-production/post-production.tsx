@@ -8,16 +8,21 @@ import {
   Layers, Video as VideoIcon, Volume2, Music, Mic, Palette,
   Zap, Crop, RotateCw, FlipHorizontal, FlipVertical,
   Subtitles, Wand2, Undo2, Redo2, Save, Eye, RefreshCw,
+  Smile, Sparkles, Cloud, Users, Keyboard, Sticker as StickerIcon,
+  Wind, Shield, Eraser, CheckCircle2,
 } from "lucide-react";
 import type {
   Overlay, TextOverlay, ImageOverlay, Segment, RenderProject,
   ColorAdjust, SpeedConfig, TransformConfig, AudioTrack, ExportConfig,
-  SubtitleConfig, TransitionConfig,
+  SubtitleConfig, TransitionConfig, StickerOverlay, VideoFilter,
+  StabilisationConfig, ChromaKeyConfig,
 } from "./types";
 import {
   DEFAULT_COLOR_ADJUST, DEFAULT_SPEED, DEFAULT_TRANSFORM, DEFAULT_EXPORT,
   DEFAULT_SUBTITLE_STYLE, ASPECT_RATIOS, RESOLUTIONS, TRANSITION_TYPES,
+  EMOJI_CATEGORIES, VIDEO_FILTERS, SOUND_EFFECTS, KEYBOARD_SHORTCUTS,
 } from "./types";
+import { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
 
 interface PostProductionProps {
   videoId: string;
@@ -26,7 +31,7 @@ interface PostProductionProps {
   servantName: string;
 }
 
-type TabType = "trim" | "text" | "image" | "subtitles" | "transitions" | "color" | "speed" | "transform" | "audio" | "export";
+type TabType = "trim" | "text" | "image" | "stickers" | "subtitles" | "transitions" | "color" | "speed" | "transform" | "filters" | "advanced" | "audio" | "sfx" | "export";
 
 interface TimelineClip {
   id: string;
@@ -123,6 +128,16 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const [timeline, setTimeline] = useState<TimelineClip[]>([
     { id: "main", type: "main", label: "Replay principal", duration: 0, color: "#2A0E3D" },
   ]);
+
+  // ─── Sprint 5+ — nouveaux états ───
+  const [videoFilter, setVideoFilter] = useState<VideoFilter>("none");
+  const [stabilisation, setStabilisation] = useState<StabilisationConfig>({ enabled: false, shakiness: 5, smoothing: 0.5 });
+  const [chromaKey, setChromaKey] = useState<ChromaKeyConfig>({ enabled: false, color: "#00FF00", similarity: 0.3, blend: 0.1 });
+  const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [collaborators, setCollaborators] = useState<{ id: string; name: string; color: string }[]>([]);
+  const [projectSaved, setProjectSaved] = useState(false);
+  const [emojiCategory, setEmojiCategory] = useState(0);
 
   // ─── Undo/Redo ───
   const [history, setHistory] = useState<PostProductionState[]>([]);
@@ -234,6 +249,32 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     video.currentTime = time;
     setCurrentTime(time);
   };
+
+  const handleSeekBy = (delta: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    const newTime = Math.max(0, Math.min(video.duration || 0, video.currentTime + delta));
+    handleSeek(newTime);
+  };
+
+  // ─── Raccourcis clavier ───
+  useKeyboardShortcuts({
+    onPlayPause: togglePlay,
+    onSeek: handleSeek,
+    onSeekBy: handleSeekBy,
+    onSetTrimStart: () => setTrimStart(currentTime),
+    onSetTrimEnd: () => setTrimEnd(currentTime),
+    onDeleteSelected: () => {
+      if (selectedOverlayId) deleteOverlay(selectedOverlayId);
+    },
+    onUndo: undo,
+    onRedo: redo,
+    onSaveProject: () => handleSaveProject(),
+    onExport: () => handleExport(),
+    onSwitchTab: (tab) => setActiveTab(tab as TabType),
+    currentTime,
+    totalDuration,
+  });
 
   // ─── Upload vidéo source ───
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -386,6 +427,94 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // ─── Ajouter sticker emoji ───
+  const addSticker = (emoji: string) => {
+    const newSticker: StickerOverlay = {
+      id: `sticker-${Date.now()}`,
+      type: "sticker",
+      emoji,
+      x: 50,
+      y: 50,
+      size: 80,
+      rotation: 0,
+      opacity: 1,
+      animation: "none",
+    };
+    setOverlays([...overlays, newSticker]);
+    setSelectedOverlayId(newSticker.id);
+    pushHistory();
+  };
+
+  // ─── Ajouter effet sonore ───
+  const addSoundEffect = (sfx: typeof SOUND_EFFECTS[0]) => {
+    const newTrack: AudioTrack = {
+      id: `sfx-${Date.now()}`,
+      url: sfx.url,
+      volume: 0.5,
+      name: sfx.name,
+      fadeIn: 0.1,
+      fadeOut: 0.3,
+    };
+    setAudioTracks([...audioTracks, newTrack]);
+    pushHistory();
+  };
+
+  // ─── Sauvegarder le projet (cloud sync) ───
+  const handleSaveProject = async () => {
+    setProjectSaved(true);
+    try {
+      const projectState = {
+        videoId,
+        timeline,
+        overlays,
+        subtitles,
+        transitions,
+        colorAdjust,
+        speed,
+        transform,
+        audioTracks,
+        mainVolume,
+        exportConfig,
+        thumbnailUrl: thumbnail,
+        videoFilter,
+        stabilisation,
+        chromaKey,
+      };
+      // Sauvegarder en localStorage (cloud sync basique)
+      localStorage.setItem(`post-prod-project-${videoId}`, JSON.stringify(projectState));
+      // Aussi en DB via API (best-effort)
+      await apiFetch(`/api/videos/${videoId}/project`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(projectState),
+      }).catch(() => {});
+    } catch {}
+    setTimeout(() => setProjectSaved(false), 2000);
+  };
+
+  // ─── Charger le projet ───
+  const loadProject = useCallback(async () => {
+    try {
+      const saved = localStorage.getItem(`post-prod-project-${videoId}`);
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.timeline) setTimeline(data.timeline);
+        if (data.overlays) setOverlays(data.overlays);
+        if (data.subtitles) setSubtitles(data.subtitles);
+        if (data.colorAdjust) setColorAdjust(data.colorAdjust);
+        if (data.speed) setSpeed(data.speed);
+        if (data.exportConfig) setExportConfig(data.exportConfig);
+        if (data.videoFilter) setVideoFilter(data.videoFilter);
+        if (data.stabilisation) setStabilisation(data.stabilisation);
+        if (data.chromaKey) setChromaKey(data.chromaKey);
+      }
+    } catch {}
+  }, [videoId]);
+
+  useEffect(() => {
+    loadProject();
+  }, [loadProject]);
+
   // ─── Modifier un overlay ───
   const updateOverlay = (id: string, updates: Partial<Overlay>) => {
     setOverlays(overlays.map((o) => o.id === id ? { ...o, ...updates } as Overlay : o));
@@ -393,6 +522,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
   const deleteOverlay = (id: string) => {
     setOverlays(overlays.filter((o) => o.id !== id));
+    if (selectedOverlayId === id) setSelectedOverlayId(null);
     pushHistory();
   };
 
@@ -556,6 +686,10 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         export: exportConfig,
         thumbnailUrl: thumbnail || undefined,
         title,
+        // Sprint 5+
+        filters: videoFilter !== "none" ? videoFilter : undefined,
+        stabilisation: stabilisation.enabled ? stabilisation : undefined,
+        chromaKey: chromaKey.enabled ? chromaKey : undefined,
       };
 
       const res = await apiFetch(`/api/videos/${videoId}/render`, {
@@ -600,15 +734,19 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   };
 
   const TABS: { id: TabType; label: string; icon: typeof Scissors }[] = [
-    { id: "trim", label: "Découpage", icon: Scissors },
+    { id: "trim", label: "Couper", icon: Scissors },
     { id: "text", label: "Texte", icon: Type },
     { id: "image", label: "Images", icon: ImageIcon },
+    { id: "stickers", label: "Stickers", icon: Smile },
     { id: "subtitles", label: "Sous-titres", icon: Subtitles },
     { id: "transitions", label: "Transitions", icon: Film },
     { id: "color", label: "Couleur", icon: Palette },
+    { id: "filters", label: "Filtres", icon: Sparkles },
     { id: "speed", label: "Vitesse", icon: Zap },
     { id: "transform", label: "Transform", icon: Crop },
+    { id: "advanced", label: "Avancé", icon: Wind },
     { id: "audio", label: "Audio", icon: Volume2 },
+    { id: "sfx", label: "SFX", icon: Music },
     { id: "export", label: "Export", icon: Download },
   ];
 
@@ -647,6 +785,18 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               className="px-3 py-2 rounded-lg hover:bg-[#2A0E3D]/5 text-xs font-bold flex items-center gap-1.5 transition-colors">
               <Wand2 className="w-3.5 h-3.5" />Templates
             </button>
+            {/* Save project */}
+            <button onClick={handleSaveProject}
+              className="px-3 py-2 rounded-lg hover:bg-[#2A0E3D]/5 text-xs font-bold flex items-center gap-1.5 transition-colors"
+              title="Ctrl+S">
+              {projectSaved ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> : <Save className="w-3.5 h-3.5" />}
+              {projectSaved ? "Sauvegardé" : "Sauver"}
+            </button>
+            {/* Keyboard shortcuts */}
+            <button onClick={() => setShowShortcuts(!showShortcuts)}
+              className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors" title="Raccourcis clavier">
+              <Keyboard className="w-4 h-4" />
+            </button>
             {/* Export */}
             <button onClick={handleExport} disabled={exporting}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 shadow-md">
@@ -655,6 +805,21 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </button>
           </div>
         </div>
+
+        {/* Keyboard shortcuts dropdown */}
+        {showShortcuts && (
+          <div className="absolute top-full right-6 mt-1 bg-white rounded-xl shadow-2xl border border-[#8A8378]/15 p-3 w-80 z-40 max-h-96 overflow-y-auto">
+            <p className="text-xs font-bold text-[#8A8378] uppercase tracking-wider px-2 py-1 mb-1">Raccourcis clavier</p>
+            {KEYBOARD_SHORTCUTS.map((sc, i) => (
+              <div key={i} className="flex items-center justify-between px-2 py-1 hover:bg-[#2A0E3D]/5 rounded">
+                <span className="text-xs text-[#1E0F2B]">{sc.description}</span>
+                <kbd className="text-[10px] font-bold px-1.5 py-0.5 bg-[#2A0E3D]/10 rounded">
+                  {sc.ctrl ? "⌘+" : ""}{sc.shift ? "⇧+" : ""}{sc.key === " " ? "Space" : sc.key}
+                </kbd>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Templates dropdown */}
         {showTemplates && (
@@ -743,6 +908,26 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                         transform: `translate(-50%, -50%) scale(${img.scale})`,
                         opacity: img.opacity,
                       }} />
+                  );
+                })}
+
+                {/* Overlays preview (sticker emoji) */}
+                {overlays.filter((o) => o.type === "sticker").map((overlay) => {
+                  const s = overlay as StickerOverlay;
+                  const isActive = (!s.startTime || s.startTime <= currentTime) && (!s.endTime || s.endTime >= currentTime);
+                  if (!isActive) return null;
+                  return (
+                    <div key={s.id}
+                      className="absolute pointer-events-none select-none"
+                      style={{
+                        left: `${s.x}%`, top: `${s.y}%`,
+                        transform: `translate(-50%, -50%) rotate(${s.rotation}deg)`,
+                        fontSize: `${s.size}px`,
+                        opacity: s.opacity,
+                        lineHeight: 1,
+                      }}>
+                      {s.emoji}
+                    </div>
                   );
                 })}
 
@@ -1023,6 +1208,67 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </Panel>
           )}
 
+          {/* ─── Panel: Stickers ─── */}
+          {activeTab === "stickers" && (
+            <Panel title="Stickers & Emoji">
+              <div className="space-y-3">
+                {/* Catégories */}
+                <div className="flex gap-1 flex-wrap">
+                  {EMOJI_CATEGORIES.map((cat, i) => (
+                    <button key={cat.name} onClick={() => setEmojiCategory(i)}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${emojiCategory === i ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+                {/* Grille d'emojis */}
+                <div className="grid grid-cols-8 gap-1 max-h-[300px] overflow-y-auto">
+                  {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji, i) => (
+                    <button key={i} onClick={() => addSticker(emoji)}
+                      className="aspect-square flex items-center justify-center text-xl hover:bg-[#2A0E3D]/5 rounded-lg transition-colors">
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+                {/* Stickers actifs */}
+                {overlays.filter((o) => o.type === "sticker").length > 0 && (
+                  <div className="space-y-2 border-t border-[#8A8378]/15 pt-3">
+                    <p className="text-[10px] text-[#8A8378] uppercase font-bold">Stickers actifs</p>
+                    {overlays.filter((o) => o.type === "sticker").map((overlay) => {
+                      const s = overlay as StickerOverlay;
+                      return (
+                        <div key={s.id} className="bg-[#2A0E3D]/5 rounded-lg p-2 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">{s.emoji}</span>
+                            <button onClick={() => deleteOverlay(s.id)} className="ml-auto p-1 rounded hover:bg-red-600/20 text-red-500"><Trash2 className="w-3 h-3" /></button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] text-[#8A8378]">X: {Math.round(s.x)}%</label>
+                              <input type="range" min="0" max="100" value={s.x} onChange={(e) => updateOverlay(s.id, { x: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-[#8A8378]">Y: {Math.round(s.y)}%</label>
+                              <input type="range" min="0" max="100" value={s.y} onChange={(e) => updateOverlay(s.id, { y: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-[#8A8378]">Taille: {s.size}px</label>
+                            <input type="range" min="20" max="200" value={s.size} onChange={(e) => updateOverlay(s.id, { size: parseInt(e.target.value) })} className="w-full accent-[#C9A227]" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-[#8A8378]">Rotation: {s.rotation}°</label>
+                            <input type="range" min="0" max="360" value={s.rotation} onChange={(e) => updateOverlay(s.id, { rotation: parseInt(e.target.value) })} className="w-full accent-[#C9A227]" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </Panel>
+          )}
+
           {/* ─── Panel: Sous-titres ─── */}
           {activeTab === "subtitles" && (
             <Panel title="Sous-titres">
@@ -1153,6 +1399,104 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </Panel>
           )}
 
+          {/* ─── Panel: Filtres ─── */}
+          {activeTab === "filters" && (
+            <Panel title="Filtres vidéo">
+              <div className="grid grid-cols-3 gap-2">
+                {VIDEO_FILTERS.map((f) => (
+                  <button key={f.value} onClick={() => { setVideoFilter(f.value); pushHistory(); }}
+                    className={`flex flex-col items-center gap-1 py-3 rounded-lg transition-colors ${videoFilter === f.value ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                    <span className="text-2xl">{f.icon}</span>
+                    <span className="text-[10px] font-bold">{f.label}</span>
+                  </button>
+                ))}
+              </div>
+              {videoFilter !== "none" && (
+                <button onClick={() => { setVideoFilter("none"); pushHistory(); }}
+                  className="w-full mt-3 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-xs font-bold hover:bg-[#2A0E3D]/10 transition-colors">
+                  Retirer le filtre
+                </button>
+              )}
+            </Panel>
+          )}
+
+          {/* ─── Panel: Avancé (stabilisation + chroma key) ─── */}
+          {activeTab === "advanced" && (
+            <Panel title="Effets avancés">
+              <div className="space-y-4">
+                {/* Stabilisation */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold flex items-center gap-1"><Wind className="w-3.5 h-3.5" />Stabilisation</span>
+                    <button onClick={() => setStabilisation({ ...stabilisation, enabled: !stabilisation.enabled })}
+                      className={`w-9 h-5 rounded-full transition-colors ${stabilisation.enabled ? "bg-[#C9A227]" : "bg-[#8A8378]/30"}`}>
+                      <span className={`block w-4 h-4 rounded-full bg-white transition-transform ${stabilisation.enabled ? "translate-x-4" : "translate-x-0.5"}`} />
+                    </button>
+                  </div>
+                  {stabilisation.enabled && (
+                    <>
+                      <div>
+                        <label className="text-[10px] text-[#8A8378]">Tremblement: {stabilisation.shakiness}/10</label>
+                        <input type="range" min="1" max="10" value={stabilisation.shakiness}
+                          onChange={(e) => setStabilisation({ ...stabilisation, shakiness: parseInt(e.target.value) })}
+                          className="w-full accent-[#C9A227]" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-[#8A8378]">Lissage: {Math.round(stabilisation.smoothing * 100)}%</label>
+                        <input type="range" min="0" max="1" step="0.1" value={stabilisation.smoothing}
+                          onChange={(e) => setStabilisation({ ...stabilisation, smoothing: parseFloat(e.target.value) })}
+                          className="w-full accent-[#C9A227]" />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="border-t border-[#8A8378]/15" />
+
+                {/* Chroma key */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold flex items-center gap-1"><Eraser className="w-3.5 h-3.5" />Chroma Key (fond vert)</span>
+                    <button onClick={() => setChromaKey({ ...chromaKey, enabled: !chromaKey.enabled })}
+                      className={`w-9 h-5 rounded-full transition-colors ${chromaKey.enabled ? "bg-[#C9A227]" : "bg-[#8A8378]/30"}`}>
+                      <span className={`block w-4 h-4 rounded-full bg-white transition-transform ${chromaKey.enabled ? "translate-x-4" : "translate-x-0.5"}`} />
+                    </button>
+                  </div>
+                  {chromaKey.enabled && (
+                    <>
+                      <div>
+                        <label className="text-[10px] text-[#8A8378]">Couleur de fond</label>
+                        <input type="color" value={chromaKey.color}
+                          onChange={(e) => setChromaKey({ ...chromaKey, color: e.target.value })}
+                          className="w-full h-7 rounded" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-[#8A8378]">Similarité: {chromaKey.similarity.toFixed(2)}</label>
+                        <input type="range" min="0.01" max="1" step="0.01" value={chromaKey.similarity}
+                          onChange={(e) => setChromaKey({ ...chromaKey, similarity: parseFloat(e.target.value) })}
+                          className="w-full accent-[#C9A227]" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-[#8A8378]">Fusion: {chromaKey.blend.toFixed(2)}</label>
+                        <input type="range" min="0" max="1" step="0.05" value={chromaKey.blend}
+                          onChange={(e) => setChromaKey({ ...chromaKey, blend: parseFloat(e.target.value) })}
+                          className="w-full accent-[#C9A227]" />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="border-t border-[#8A8378]/15" />
+
+                {/* Background removal IA — bientôt disponible */}
+                <div className="space-y-2 opacity-50">
+                  <span className="text-xs font-bold flex items-center gap-1"><Shield className="w-3.5 h-3.5" />Suppression de fond IA</span>
+                  <p className="text-[10px] text-[#8A8378] italic">Bientôt disponible — nécessite MediaPipe Selfie Segmentation</p>
+                </div>
+              </div>
+            </Panel>
+          )}
+
           {/* ─── Panel: Vitesse ─── */}
           {activeTab === "speed" && (
             <Panel title="Vitesse de lecture">
@@ -1270,6 +1614,30 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     ))}
                   </div>
                 )}
+              </div>
+            </Panel>
+          )}
+
+          {/* ─── Panel: Effets sonores ─── */}
+          {activeTab === "sfx" && (
+            <Panel title="Bibliothèque d'effets sonores">
+              <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                {(["transition", "impact", "nature", "ui", "crowd", "music"] as const).map((cat) => (
+                  <div key={cat}>
+                    <p className="text-[10px] text-[#8A8378] uppercase font-bold mb-1">{cat}</p>
+                    <div className="space-y-1">
+                      {SOUND_EFFECTS.filter((s) => s.category === cat).map((sfx) => (
+                        <button key={sfx.id} onClick={() => addSoundEffect(sfx)}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors text-left">
+                          <span className="text-lg">{sfx.icon}</span>
+                          <span className="text-xs font-bold flex-1 truncate">{sfx.name}</span>
+                          <span className="text-[10px] text-[#8A8378]">{sfx.duration}s</span>
+                          <Plus className="w-3 h-3 text-[#C9A227]" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </Panel>
           )}
