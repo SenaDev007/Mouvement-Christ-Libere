@@ -227,31 +227,8 @@ export function LiveStudioClient({
         setError("Attention: l'API start a échoué, mais le studio continue.");
       }
 
-      // ─── 2. Démarrer les TIMERS immédiatement (ne dépend pas de LiveKit) ───
-      // ATTENTION (B5) : isLive ne devient true qu'APRÈS la connexion LiveKit réussie (voir plus bas).
-      // Si LiveKit échoue, les timers sont nettoyés et isLive reste false.
+      // ─── 2. Connexion à LiveKit (CRITIQUE — tout dépend de ça) ───
       setInfo("Connexion à LiveKit en cours...");
-      const startTime = Date.now();
-      durationTimerRef.current = setInterval(() => {
-        setStreamDuration(Math.floor((Date.now() - startTime) / 1000));
-      }, 1000);
-
-      statsTimerRef.current = setInterval(() => {
-        setBitrate(2000 + Math.floor(Math.random() * 200));
-        setLatency(Math.floor(Math.random() * 2) + 1);
-      }, 3000);
-
-      const fetchViewers = async () => {
-        try {
-          const res = await apiFetch(`/api/live/${liveId}/viewers`);
-          const data = await res.json();
-          setViewerCount(data.count || 0);
-        } catch {}
-      };
-      fetchViewers();
-      viewerPollRef.current = setInterval(fetchViewers, 5000);
-
-      // ─── 3. Se connecter à LiveKit (CRITIQUE — les viewers ont besoin de ça) ───
       try {
         const tokenRes = await apiFetch("/api/livekit/token", {
           method: "POST",
@@ -275,27 +252,11 @@ export function LiveStudioClient({
           setInfo("Connecté à LiveKit — publication du flux...");
           roomConnected = true;
 
-          // ─── (B5) LiveKit connecté → on peut ENFIN annoncer le live ───
-          // isLive ne passe à true qu'ici, APRÈS la connexion LiveKit réussie.
-          // Si on était arrivé ici sans connexion, les viewers auraient vu un écran noir.
-          setIsLive(true);
-          setStatus("LIVE");
-          setInfo("Vous êtes en direct !");
-
           if (localStreamRef.current) {
             const audioTrack = localStreamRef.current.getAudioTracks()[0];
 
-            // (C5) NE PAS recréer un stream de canvas ici.
-            // Le MediaOverlay gère overlayStreamRef via son callback onCanvasStream.
-            // Recréer un deuxième captureStream() ici causait un double flux
-            // (overlay + canvas brut) et des conflits de tracks.
-            // Si overlayStreamRef.current est null, on log un warning et on
-            // publie la caméra brute en fallback (voir plus bas).
             if (!overlayStreamRef.current) {
-              console.warn(
-                "[studio] overlayStreamRef.current est null — le flux composite (canvas) n'est pas disponible. " +
-                "Le fallback caméra brute sera publié. Vérifiez que le MediaOverlay est monté et a appelé onCanvasStream."
-              );
+              console.warn("[studio] overlayStreamRef null — fallback caméra brute");
             }
 
             // Publier le canvas composite
@@ -325,8 +286,61 @@ export function LiveStudioClient({
             if (audioTrack) await room.localParticipant.publishTrack(audioTrack, { source: Track.Source.Microphone });
           }
 
+          // ─── LiveKit connecté + track publié → MAINTENANT on peut démarrer ───
+          setIsLive(true);
+          setStatus("LIVE");
+          setInfo("Vous êtes en direct !");
+
+          // Démarrer les timers APRÈS connexion LiveKit
+          const startTime = Date.now();
+          durationTimerRef.current = setInterval(() => {
+            setStreamDuration(Math.floor((Date.now() - startTime) / 1000));
+          }, 1000);
+
+          statsTimerRef.current = setInterval(() => {
+            setBitrate(2000 + Math.floor(Math.random() * 200));
+            setLatency(Math.floor(Math.random() * 2) + 1);
+          }, 3000);
+
+          const fetchViewers = async () => {
+            try {
+              const res = await apiFetch(`/api/live/${liveId}/viewers`);
+              const data = await res.json();
+              setViewerCount(data.count || 0);
+            } catch {}
+          };
+          fetchViewers();
+          viewerPollRef.current = setInterval(fetchViewers, 5000);
+
+          // Démarrer le MediaRecorder APRÈS connexion LiveKit
+          const recordStream = overlayStreamRef.current || localStreamRef.current;
+          if (recordStream && typeof MediaRecorder !== "undefined") {
+            try {
+              const combinedStream = new MediaStream();
+              recordStream.getVideoTracks().forEach((t) => combinedStream.addTrack(t));
+              if (localStreamRef.current) {
+                localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
+              }
+              const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+                ? "video/webm;codecs=vp9,opus"
+                : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+                ? "video/webm;codecs=vp8,opus"
+                : "video/webm";
+              const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
+              recordedChunksRef.current = [];
+              recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+              };
+              recorder.start(1000);
+              mediaRecorderRef.current = recorder;
+              setIsRecording(true);
+              console.log("[studio] Enregistrement démarré");
+            } catch (err) {
+              console.error("[studio] MediaRecorder failed:", err);
+            }
+          }
+
           // ─── Démarrer le multistreaming RTMP APRÈS publication du track ───
-          // L'egress nécessite que la room ait un participant qui publie
           if (multistream.enabled) {
             try {
               setInfo("Démarrage du multistreaming RTMP...");
@@ -359,12 +373,8 @@ export function LiveStudioClient({
         console.error("[studio] LiveKit connection failed:", errMsg);
         setError(`Connexion LiveKit échouée: ${errMsg}. Les viewers ne pourront pas voir le flux.`);
         setInfo("⚠ LiveKit indisponible — les viewers voient un écran noir.");
-        // ─── (B5) LiveKit a échoué : on NE MET PAS isLive=true ───
-        // Nettoyer les timers démarrés plus haut (un compteur sans flux est inutile).
-        if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
-        if (statsTimerRef.current) { clearInterval(statsTimerRef.current); statsTimerRef.current = null; }
-        if (viewerPollRef.current) { clearInterval(viewerPollRef.current); viewerPollRef.current = null; }
-        // Annuler aussi le statut LIVE côté DB pour cohérence
+        // LiveKit a échoué : ne pas démarrer timers/recorder/egress
+        // Annuler le statut LIVE côté DB
         try {
           await apiFetch("/api/live/stop", {
             method: "POST",
@@ -374,34 +384,6 @@ export function LiveStudioClient({
         } catch {}
       }
 
-      // ─── 4. Démarrer l'enregistrement du canvas (MediaRecorder) ───
-      // Ne dépend pas de LiveKit — enregistre le canvas localement pour le replay
-      const recordStream = overlayStreamRef.current || localStreamRef.current;
-      if (recordStream && typeof MediaRecorder !== "undefined") {
-        try {
-          const combinedStream = new MediaStream();
-          recordStream.getVideoTracks().forEach((t) => combinedStream.addTrack(t));
-          if (localStreamRef.current) {
-            localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
-          }
-          const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-            ? "video/webm;codecs=vp9,opus"
-            : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-            ? "video/webm;codecs=vp8,opus"
-            : "video/webm";
-          const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
-          recordedChunksRef.current = [];
-          recorder.ondataavailable = (e) => {
-            if (e.data.size > 0) recordedChunksRef.current.push(e.data);
-          };
-          recorder.start(1000);
-          mediaRecorderRef.current = recorder;
-          setIsRecording(true);
-          console.log("[studio] Enregistrement démarré");
-        } catch (err) {
-          console.error("[studio] MediaRecorder failed:", err);
-        }
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
