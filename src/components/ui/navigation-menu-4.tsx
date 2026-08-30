@@ -189,7 +189,7 @@ export function ContextualNav() {
           </Popover>
 
           {/* Logo Christ Libère */}
-          <Link href="/" className="flex items-center gap-2 group/logo">
+          <Link href="/" className="flex items-center gap-1 group/logo">
             <Image
               src="/logo-christ-libere.png"
               alt="Christ Libère"
@@ -199,11 +199,11 @@ export function ContextualNav() {
               priority
             />
             <span
-              className="text-xl md:text-2xl font-bold"
+              className="text-xl md:text-2xl font-bold whitespace-nowrap"
               style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
             >
               <span style={{ color: "#C9A227" }}>Christ</span>
-              <span style={{ color: "#FAF6EF" }}>&nbsp;&nbsp;Libère</span>
+              <span style={{ color: "#FAF6EF" }} className="ml-0.5">Libère</span>
             </span>
           </Link>
 
@@ -394,13 +394,6 @@ export function ContextualNav() {
               </Button>
             </>
           )}
-          <div className="w-px h-5 bg-[#C9A227]/20 hidden sm:block" />
-          <Button asChild size="sm" className="bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] text-sm">
-            <Link href="/communaute">
-              Rejoindre
-              <ChevronRight className="w-3.5 h-3.5 ml-1" />
-            </Link>
-          </Button>
         </div>
       </div>
     </header>

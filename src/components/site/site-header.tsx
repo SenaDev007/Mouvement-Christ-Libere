@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useServant, type ServantId } from "./servant-context";
 import { cn } from "@/lib/utils";
-import { Menu, X, ChevronRight, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 
 // Groupes de navigation avec sous-menus
 const NAV_GROUPS = [
@@ -116,8 +116,8 @@ export function SiteHeader() {
       {/* Navigation principale */}
       <div className="container mx-auto max-w-7xl px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo — espacement réduit */}
-          <Link href="/" className="flex items-center gap-1.5 group" onClick={() => handleSwitch("commun")}>
+          {/* Logo — espacement serré */}
+          <Link href="/" className="flex items-center gap-1 group" onClick={() => handleSwitch("commun")}>
             <Image
               src="/logo-christ-libere.png"
               alt="Christ Libère"
@@ -133,7 +133,7 @@ export function SiteHeader() {
               )}
             >
               <span style={{ color: "#C9A227" }}>Christ</span>
-              <span className="ml-1">Libère</span>
+              <span className="ml-0.5">Libère</span>
             </span>
           </Link>
 
@@ -192,13 +192,7 @@ export function SiteHeader() {
 
           {/* CTA + burger */}
           <div className="flex items-center gap-3">
-            <Link
-              href="/communaute"
-              className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded text-sm font-semibold transition-all whitespace-nowrap bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
-            >
-              Rejoindre
-              <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-            </Link>
+            {/* Bouton "Rejoindre" supprimé — la communauté est accessible via le menu */}
             <button
               className={cn("lg:hidden p-2 rounded", scrolled ? "text-[#FAF6EF]" : "text-[#1E0F2B]")}
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -230,14 +224,6 @@ export function SiteHeader() {
                 ))}
               </div>
             ))}
-            <Link
-              href="/communaute"
-              className="mt-3 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold whitespace-nowrap"
-              onClick={() => setMobileOpen(false)}
-            >
-              Rejoindre la communauté
-              <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-            </Link>
           </nav>
         </div>
       )}

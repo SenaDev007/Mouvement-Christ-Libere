@@ -1009,44 +1009,113 @@ export function LiveStudioClient({
         </div>
       </div>
 
-      {/* Stop modal */}
+      {/* Stop modal — design personnalisé façon studio */}
       {showStopModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowStopModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl border border-[#8A8378]/15 max-w-md w-full overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
-            <div className="px-6 py-5">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-red-600/10 flex items-center justify-center flex-shrink-0">
-                  <Square className="w-5 h-5 text-red-500" fill="currentColor" />
+          <div className="absolute inset-0 bg-[#1A0826]/80 backdrop-blur-md" onClick={() => !loading && setShowStopModal(false)} />
+
+          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl shadow-2xl border border-[#C9A227]/20">
+            {/* Bandeau dégradé */}
+            <div className="relative h-32 bg-gradient-to-br from-[#2A0E3D] via-[#3D1A54] to-[#1A0826] overflow-hidden">
+              {/* Halo doré */}
+              <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-[#C9A227]/20 blur-3xl" />
+              <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-red-600/10 blur-3xl" />
+
+              {/* Icône stop pulsante */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-red-600/30 animate-ping" />
+                  <div className="relative w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-xl">
+                    <Square className="w-7 h-7 text-white" fill="currentColor" />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold text-[#1E0F2B]">Terminer le live ?</h2>
-                  <p className="text-sm text-[#1E0F2B]/50 mt-1">Votre diffusion en direct sera arrêtée. Le replay sera automatiquement archivé et disponible sur la page vidéos. Cette action est irréversible.</p>
-                </div>
-                <button onClick={() => setShowStopModal(false)} className="p-1 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B]/40 transition-colors"><X className="w-4 h-4" /></button>
               </div>
+
+              {/* Bouton fermer */}
+              {!loading && (
+                <button
+                  onClick={() => setShowStopModal(false)}
+                  className="absolute top-4 right-4 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
+                  aria-label="Fermer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
-            {isLive && (
-              <div className="px-6 pb-4">
-                <div className="flex gap-4 bg-[#2A0E3D]/5 rounded-xl p-3">
-                  <div className="flex-1 text-center">
-                    <div className="text-lg font-bold text-[#1E0F2B]">{formatDuration(streamDuration)}</div>
-                    <div className="text-[10px] uppercase text-[#1E0F2B]/40">Durée</div>
+
+            {/* Corps */}
+            <div className="bg-[#FAF6EF] px-7 py-6">
+              {/* Titre */}
+              <div className="text-center mb-5">
+                <h2 className="text-xl font-bold text-[#1E0F2B]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                  Terminer la diffusion ?
+                </h2>
+                <p className="text-sm text-[#1E0F2B]/60 mt-2 leading-relaxed">
+                  Votre live sera arrêté et archivé en replay automatiquement.
+                  <br />
+                  <span className="text-[#8A8378] text-xs">Cette action est irréversible.</span>
+                </p>
+              </div>
+
+              {/* Stats du live */}
+              {isLive && (
+                <div className="grid grid-cols-3 gap-2 mb-5">
+                  <div className="bg-white rounded-xl p-3 text-center border border-[#8A8378]/10">
+                    <Clock className="w-4 h-4 text-[#C9A227] mx-auto mb-1" />
+                    <div className="text-base font-bold text-[#1E0F2B]">{formatDuration(streamDuration)}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Durée</div>
                   </div>
-                  <div className="flex-1 text-center">
-                    <div className="text-lg font-bold text-[#1E0F2B]">{viewerCount}</div>
-                    <div className="text-[10px] uppercase text-[#1E0F2B]/40">Spectateurs</div>
+                  <div className="bg-white rounded-xl p-3 text-center border border-[#8A8378]/10">
+                    <Users className="w-4 h-4 text-[#C9A227] mx-auto mb-1" />
+                    <div className="text-base font-bold text-[#1E0F2B]">{viewerCount}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Spectateurs</div>
+                  </div>
+                  <div className="bg-white rounded-xl p-3 text-center border border-[#8A8378]/10">
+                    <Radio className="w-4 h-4 text-[#C9A227] mx-auto mb-1" />
+                    <div className="text-base font-bold text-[#1E0F2B]">{isRecording ? "OUI" : "—"}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Enregistrement</div>
                   </div>
                 </div>
+              )}
+
+              {/* Avertissement */}
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/15 mb-5">
+                <AlertCircle className="w-4 h-4 text-[#C9A227] flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">
+                  Le replay sera généré et publié sur la page Vidéos.
+                  {multistream.youtube
+                    ? " Une copie YouTube sera aussi disponible comme source de secours."
+                    : ""}
+                </p>
               </div>
-            )}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#8A8378]/15">
-              <button onClick={() => setShowStopModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#1E0F2B]/50 hover:text-[#1E0F2B] transition-colors">Continuer le live</button>
-              <button onClick={confirmStopLive} disabled={loading}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 text-[#1E0F2B] font-bold text-sm hover:bg-red-700 transition-colors disabled:opacity-40">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" fill="currentColor" />}Terminer
-              </button>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowStopModal(false)}
+                  disabled={loading}
+                  className="flex-1 px-5 py-3 rounded-xl text-sm font-bold text-[#1E0F2B]/60 hover:text-[#1E0F2B] hover:bg-[#2A0E3D]/5 transition-colors disabled:opacity-40"
+                >
+                  Continuer le live
+                </button>
+                <button
+                  onClick={confirmStopLive}
+                  disabled={loading}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 transition-colors disabled:opacity-40 shadow-lg"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Arrêt en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Square className="w-4 h-4" fill="currentColor" />
+                      Terminer
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
