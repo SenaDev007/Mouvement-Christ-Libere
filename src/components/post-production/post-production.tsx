@@ -23,6 +23,9 @@ import {
   EMOJI_CATEGORIES, VIDEO_FILTERS, SOUND_EFFECTS, KEYBOARD_SHORTCUTS,
 } from "./types";
 import { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
+import { BgRemovalProcessor } from "./bg-removal-processor";
+import { useCollaboration } from "./use-collaboration";
+import { CollaborationPanel, CollaboratorCursors } from "./collaboration-panel";
 
 interface PostProductionProps {
   videoId: string;
@@ -138,6 +141,13 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const [collaborators, setCollaborators] = useState<{ id: string; name: string; color: string }[]>([]);
   const [projectSaved, setProjectSaved] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState(0);
+  const [collabEnabled, setCollabEnabled] = useState(false);
+  const [showCollabPanel, setShowCollabPanel] = useState(false);
+  const [collabUserName] = useState(() => {
+    // Générer un nom d'éditeur ou récupérer depuis localStorage
+    const saved = typeof window !== "undefined" ? localStorage.getItem("collab-username") : null;
+    return saved || `Éditeur-${Math.floor(Math.random() * 1000)}`;
+  });
 
   // ─── Undo/Redo ───
   const [history, setHistory] = useState<PostProductionState[]>([]);
@@ -275,6 +285,57 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     currentTime,
     totalDuration,
   });
+
+  // ─── Collaboration temps réel ───
+  const {
+    collaborators: collabUsers,
+    isConnected: collabConnected,
+    sendCursor: collabSendCursor,
+    sendStateUpdate: collabSendState,
+    sendChat: collabSendChat,
+    chatMessages: collabMessages,
+  } = useCollaboration({
+    videoId,
+    userName: collabUserName,
+    enabled: collabEnabled,
+    onStateUpdate: (state) => {
+      // Quand un autre utilisateur modifie le projet, on applique son état
+      const data = state as {
+        overlays?: Overlay[];
+        colorAdjust?: ColorAdjust;
+        speed?: SpeedConfig;
+        exportConfig?: ExportConfig;
+      };
+      if (data.overlays) setOverlays(data.overlays);
+      if (data.colorAdjust) setColorAdjust(data.colorAdjust);
+      if (data.speed) setSpeed(data.speed);
+      if (data.exportConfig) setExportConfig(data.exportConfig);
+    },
+  });
+
+  // Broadcast les changements d'état aux collaborateurs (debounce)
+  const collabDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const broadcastState = useCallback(() => {
+    if (!collabEnabled) return;
+    if (collabDebounceRef.current) clearTimeout(collabDebounceRef.current);
+    collabDebounceRef.current = setTimeout(() => {
+      collabSendState({
+        overlays,
+        colorAdjust,
+        speed,
+        exportConfig,
+      });
+    }, 500);
+  }, [collabEnabled, collabSendState, overlays, colorAdjust, speed, exportConfig]);
+
+  // Track souris pour les curseurs partagés
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!collabEnabled) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    collabSendCursor(x, y);
+  }, [collabEnabled, collabSendCursor]);
 
   // ─── Upload vidéo source ───
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -797,6 +858,18 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors" title="Raccourcis clavier">
               <Keyboard className="w-4 h-4" />
             </button>
+            {/* Collaboration */}
+            <button onClick={() => { setCollabEnabled(!collabEnabled); setShowCollabPanel(!collabEnabled); }}
+              className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${collabEnabled ? "bg-green-600 text-white" : "hover:bg-[#2A0E3D]/5"}`}
+              title="Collaboration temps réel">
+              <Users className="w-3.5 h-3.5" />
+              {collabEnabled ? (
+                <span className="flex items-center gap-1">
+                  {collabUsers.length}
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
+                </span>
+              ) : "Collab"}
+            </button>
             {/* Export */}
             <button onClick={handleExport} disabled={exporting}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 shadow-md">
@@ -863,7 +936,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         {/* ─── Colonne gauche : Preview + Timeline ─── */}
         <div className="space-y-3">
           {/* Preview */}
-          <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
+          <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl"
+            onMouseMove={handleMouseMove}>
             {currentVideoUrl ? (
               <>
                 <video ref={videoRef} src={currentVideoUrl} className="w-full h-full object-contain"
@@ -1488,11 +1562,12 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
                 <div className="border-t border-[#8A8378]/15" />
 
-                {/* Background removal IA — bientôt disponible */}
-                <div className="space-y-2 opacity-50">
-                  <span className="text-xs font-bold flex items-center gap-1"><Shield className="w-3.5 h-3.5" />Suppression de fond IA</span>
-                  <p className="text-[10px] text-[#8A8378] italic">Bientôt disponible — nécessite MediaPipe Selfie Segmentation</p>
-                </div>
+                {/* Background removal IA — MediaPipe Selfie Segmentation */}
+                <BgRemovalProcessor
+                  videoRef={videoRef}
+                  videoId={videoId}
+                  onProcessed={(url) => setCurrentVideoUrl(url)}
+                />
               </div>
             </Panel>
           )}
@@ -1723,6 +1798,22 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           )}
         </div>
       </div>
+
+      {/* ─── Collaboration temps réel ─── */}
+      {collabEnabled && showCollabPanel && (
+        <CollaborationPanel
+          collaborators={collabUsers}
+          isConnected={collabConnected}
+          chatMessages={collabMessages}
+          onSendChat={collabSendChat}
+          onClose={() => setShowCollabPanel(false)}
+        />
+      )}
+
+      {/* Curseurs des collaborateurs sur le preview */}
+      {collabEnabled && (
+        <CollaboratorCursors collaborators={collabUsers} />
+      )}
     </div>
   );
 }
