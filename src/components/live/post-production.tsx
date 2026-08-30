@@ -138,6 +138,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const [exportError, setExportError] = useState("");
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const videoUploadRef = useRef<HTMLInputElement>(null);
 
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,22 +148,53 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
       setUploadError("Veuillez sélectionner un fichier vidéo (MP4, WebM, etc.)");
       return;
     }
-    if (file.size > 4 * 1024 * 1024) {
-      setUploadError(`Fichier trop volumineux (${Math.round(file.size / 1024 / 1024)}MB — max 4MB sans B2)`);
-      return;
-    }
+
+    const fileSizeMB = Math.round(file.size / 1024 / 1024);
     setUploadingVideo(true);
     setUploadError("");
+    setUploadProgress(0);
+
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await apiFetch(`/api/videos/${videoId}/upload`, { method: "POST", body: formData });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Erreur upload");
-      }
-      const data = await res.json();
-      setCurrentVideoUrl(data.videoUrl);
+      // Utiliser XMLHttpRequest pour suivre la progression de l'upload
+      const result = await new Promise<{ videoUrl: string; storage: string }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append("file", file);
+
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(percent);
+          }
+        });
+
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              resolve(data);
+            } catch {
+              reject(new Error("Réponse invalide du serveur"));
+            }
+          } else {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              reject(new Error(data.error || `HTTP ${xhr.status}`));
+            } catch {
+              reject(new Error(`HTTP ${xhr.status}`));
+            }
+          }
+        });
+
+        xhr.addEventListener("error", () => reject(new Error("Erreur réseau lors de l'upload")));
+        xhr.addEventListener("abort", () => reject(new Error("Upload annulé")));
+
+        xhr.open("POST", `/api/videos/${videoId}/upload`);
+        xhr.send(formData);
+      });
+
+      setCurrentVideoUrl(result.videoUrl);
+      setUploadProgress(100);
       setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Erreur");
@@ -264,34 +296,31 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               </div>
             ) : uploadingVideo ? (
               <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
-                <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
-                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Upload en cours...</p>
-                <p className="text-xs text-[#FAF6EF]/50">Veuillez patienter pendant l'upload du replay</p>
+                <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-4 animate-spin" />
+                <p className="text-sm font-bold text-[#FAF6EF] mb-2">Upload en cours... {uploadProgress}%</p>
+                {/* Barre de progression */}
+                <div className="w-full max-w-xs bg-white/10 rounded-full h-3 overflow-hidden mb-2">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#C9A227] to-[#DDBE55] rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-[#FAF6EF]/50">Ne fermez pas cette page</p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
-                {uploadingVideo ? (
-                  <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
-                ) : (
-                  <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
-                )}
-                <p className="text-sm font-bold text-[#FAF6EF] mb-1">
-                  {uploadingVideo ? "Upload en cours..." : "Aucune vidéo source"}
-                </p>
+                <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
+                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Aucune vidéo source</p>
                 <p className="text-xs text-[#FAF6EF]/50 max-w-sm mb-4">
-                  {uploadingVideo
-                    ? "Veuillez patienter pendant l'upload du replay..."
-                    : "Uploadez le replay enregistré (format MP4 ou WebM, max 4MB)"}
+                  Uploadez le replay enregistré (MP4, WebM — aucune limite de taille)
                 </p>
-                {!uploadingVideo && (
-                  <button
-                    onClick={() => videoUploadRef.current?.click()}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Uploader le replay
-                  </button>
-                )}
+                <button
+                  onClick={() => videoUploadRef.current?.click()}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  Uploader le replay
+                </button>
                 {uploadError && (
                   <p className="text-xs text-red-400 mt-3 max-w-sm">{uploadError}</p>
                 )}
