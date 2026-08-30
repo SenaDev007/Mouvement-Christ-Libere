@@ -245,6 +245,13 @@ export function LiveStudioClient({
           body: JSON.stringify({ liveId }),
         });
         if (!startRes.ok) { const data = await startRes.json(); throw new Error(data.error || "Erreur démarrage"); }
+
+        // Tier C : si un broadcast YouTube a été pré-créé, l'afficher
+        const startData = await startRes.json().catch(() => ({}));
+        if (startData.youtubeBroadcast?.url) {
+          setInfo(`✓ Broadcast YouTube pré-créé: ${startData.youtubeBroadcast.url}`);
+          console.log("[studio] Broadcast YouTube pré-créé:", startData.youtubeBroadcast);
+        }
       } catch (err) {
         // Si l'API start échoue, on continue quand même — le live peut fonctionner sans DB
         console.error("[studio] /api/live/start failed (continuing anyway):", err);

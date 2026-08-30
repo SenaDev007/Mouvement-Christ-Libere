@@ -57,7 +57,38 @@ export async function POST(req: NextRequest) {
     // Générer le nom de la room LiveKit si pas déjà fait
     const roomName = live.livekitRoomName || `live-${live.id}`;
 
-    // Mettre à jour le live : statut LIVE + startedAt + roomName
+    // ─── Tier C : Pré-créer le broadcast YouTube si streamToYoutube ───
+    // On crée le broadcast AVANT le démarrage du live pour connaître le
+    // video ID à l'avance. L'URL YouTube est stockée dans LiveStream.youtubeUrl
+    // immédiatement → le replay sera disponible instantanément à la fin du live
+    // sans lookup post-live (économie d'API + latence zéro).
+    let youtubeBroadcastInfo: { videoId: string; url: string; ingestAddress?: string } | null = null;
+    if (live.streamToYoutube && !live.youtubeUrl) {
+      try {
+        const { createBroadcast, isYouTubeOAuthConfigured } = await import("@/lib/youtube");
+        if (isYouTubeOAuthConfigured()) {
+          console.log("[live/start] Pré-création du broadcast YouTube...");
+          const broadcast = await createBroadcast(
+            live.title,
+            live.scheduledAt,
+            live.description
+          );
+          if (broadcast) {
+            youtubeBroadcastInfo = {
+              videoId: broadcast.videoId,
+              url: broadcast.url,
+              ingestAddress: broadcast.ingestAddress,
+            };
+            console.log(`[live/start] Broadcast YouTube pré-créé: ${broadcast.url}`);
+          }
+        }
+      } catch (ytError) {
+        console.error("[live/start] Erreur pré-création broadcast YouTube:", ytError);
+        // Ne pas faire échouer le démarrage — fallback Tier B au stop
+      }
+    }
+
+    // Mettre à jour le live : statut LIVE + startedAt + roomName + youtubeUrl (Tier C)
     // (YT-pause) Réinitialiser l'état de pause au cas où le live aurait été
     // arrêté puis redémarré sans passage par /stop (rare mais possible).
     await db.liveStream.update({
@@ -68,6 +99,8 @@ export async function POST(req: NextRequest) {
         livekitRoomName: roomName,
         isPaused: false,
         pausedAt: null,
+        // Tier C : si un broadcast a été pré-créé, on stocke l'URL YouTube
+        ...(youtubeBroadcastInfo ? { youtubeUrl: youtubeBroadcastInfo.url } : {}),
       },
     });
 
@@ -97,6 +130,8 @@ export async function POST(req: NextRequest) {
         enabled: live.multistreamEnabled,
         destinations: egressIds,
       },
+      // Tier C : info du broadcast YouTube pré-créé
+      youtubeBroadcast: youtubeBroadcastInfo,
     });
   } catch (error) {
     console.error("[live/start] Error:", error);

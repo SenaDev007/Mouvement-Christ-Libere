@@ -99,6 +99,27 @@ export async function POST(req: NextRequest) {
     // stockage — le free tier R2 est 10GB).
     let youtubeReplayUrl = live.youtubeUrl;
 
+    // ─── Tier C : Transitionner le broadcast vers "complete" si pré-créé ───
+    // Si le broadcast a été pré-créé au démarrage (Tier C), youtubeUrl est déjà
+    // connu. On appelle transitionBroadcastToComplete pour dire à YouTube de
+    // finaliser la vidéo → le replay devient public immédiatement.
+    if (live.streamToYoutube && youtubeReplayUrl) {
+      try {
+        const { transitionBroadcastToComplete, isYouTubeOAuthConfigured, extractYoutubeId } = await import("@/lib/youtube");
+        if (isYouTubeOAuthConfigured()) {
+          const broadcastId = extractYoutubeId(youtubeReplayUrl);
+          if (broadcastId) {
+            console.log(`[live/stop] Transition broadcast ${broadcastId} → complete (Tier C)`);
+            await transitionBroadcastToComplete(broadcastId);
+          }
+        }
+      } catch (ytError) {
+        console.error("[live/stop] Erreur transition broadcast:", ytError);
+        // Ne pas faire échouer le stop — YouTube fait auto-transition avec enableAutoStop
+      }
+    }
+
+    // ─── Tier B fallback : si pas d'URL YouTube connue, la récupérer ───
     if (!recordingUrl && live.streamToYoutube && !youtubeReplayUrl) {
       // YouTube met 30s à 5min pour publier le replay après la fin du RTMP.
       // On tente une récupération — si elle échoue, le replay aura videoUrl=null
@@ -106,7 +127,7 @@ export async function POST(req: NextRequest) {
       try {
         const { resolveYoutubeReplayUrl, isYouTubeOAuthConfigured } = await import("@/lib/youtube");
         if (isYouTubeOAuthConfigured() && live.startedAt) {
-          console.log("[live/stop] Tentative de récupération auto YouTube replay...");
+          console.log("[live/stop] Tentative de récupération auto YouTube replay (Tier B)...");
           const ytResult = await resolveYoutubeReplayUrl(
             live.startedAt,
             live.youtubeUrl,

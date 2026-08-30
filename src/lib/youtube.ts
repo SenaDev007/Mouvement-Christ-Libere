@@ -246,3 +246,211 @@ export async function resolveYoutubeReplayUrl(
 
   return null;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TIER C — Broadcast pré-créé
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Au lieu de chercher l'ID vidéo APRÈS la fin du live (Tier B), le Tier C
+// crée le broadcast YouTube AVANT que le live démarre. L'ID vidéo est donc
+// connu à l'avance et stocké dans LiveStream.youtubeUrl.
+//
+// Workflow Tier C :
+//  1. /api/live/start → createBroadcast(title, scheduledAt)
+//     → YouTube crée un broadcast "upcoming" avec un video ID
+//     → On stocke l'URL dans LiveStream.youtubeUrl immédiatement
+//  2. Le studio se connecte à LiveKit + démarre l'egress RTMP vers YouTube
+//     → YouTube détecte le flux RTMP et fait transition "testing" → "live"
+//  3. /api/live/stop → transitionBroadcastToComplete(videoId)
+//     → YouTube fait transition "live" → "complete"
+//     → YouTube convertit automatiquement le broadcast en vidéo publique
+//  4. Le replay est immédiatement disponible à LiveStream.youtubeUrl
+//     → Aucun lookup post-live nécessaire
+//
+// Coût API : ~3 unités par live (insert + bind + transition)
+// vs Tier B : 1-100 unités par live (list ou search)
+//
+// Prérequis : OAuth configuré (YOUTUBE_CLIENT_ID/SECRET/REFRESH_TOKEN)
+
+/**
+ * Crée un broadcast YouTube à l'avance (avant le démarrage du live).
+ *
+ * Étapes :
+ *  1. liveBroadcasts.insert → crée le broadcast avec un video ID
+ *  2. liveStreams.insert → crée un stream RTMP de liaison
+ *  3. liveBroadcasts.bind → lie le stream au broadcast
+ *
+ * @param title Titre du live (deviendra le titre de la vidéo YouTube)
+ * @param scheduledAt Date de début prévue
+ * @param description Description (optionnelle)
+ * @returns { videoId, url, streamId, streamName } ou null si échec
+ */
+export async function createBroadcast(
+  title: string,
+  scheduledAt: Date,
+  description?: string
+): Promise<{
+  videoId: string;
+  url: string;
+  streamId: string;
+  streamName: string;
+  ingestAddress: string;
+} | null> {
+  if (!isYouTubeOAuthConfigured()) {
+    console.warn("[youtube] OAuth non configuré — impossible de créer le broadcast");
+    return null;
+  }
+
+  try {
+    const auth = getYouTubeOAuthClient();
+    const youtube = google.youtube({ version: "v3", auth });
+
+    // ─── 1. Créer le broadcast ───
+    const broadcastResponse = await youtube.liveBroadcasts.insert({
+      part: ["snippet,status,contentDetails"],
+      requestBody: {
+        snippet: {
+          title,
+          description: description || `Live du ${scheduledAt.toLocaleDateString("fr-FR")}`,
+          scheduledStartTime: scheduledAt.toISOString(),
+        },
+        status: {
+          privacyStatus: "public",
+          selfDeclaredMadeForKids: false,
+        },
+        contentDetails: {
+          enableAutoStart: true,  // YouTube démarre le broadcast quand le flux RTMP arrive
+          enableAutoStop: true,   // YouTube arrête le broadcast quand le flux RTMP s'arrête
+          recordFromStart: true,
+          enableDvr: true,        // Active le DVR (replay immédiat)
+          monitorStream: {
+            enableMonitorStream: false, // Pas de stream de monitoring (délai inutile)
+          },
+        },
+      },
+    });
+
+    const broadcastId = broadcastResponse.data.id;
+    if (!broadcastId) {
+      console.error("[youtube] Broadcast créé sans ID");
+      return null;
+    }
+
+    console.log(`[youtube] Broadcast créé: ${broadcastId} (${title})`);
+
+    // ─── 2. Créer le stream RTMP de liaison ───
+    const streamName = `live-${broadcastId}-${Date.now()}`;
+    const streamResponse = await youtube.liveStreams.insert({
+      part: ["snippet,cdn,contentDetails"],
+      requestBody: {
+        snippet: {
+          title: streamName,
+        },
+        cdn: {
+          ingestionType: "rtmp",
+          resolution: "variable",
+          frameRate: "30fps",
+        },
+        contentDetails: {
+          isReusable: false, // Stream unique pour ce live
+        },
+      },
+    });
+
+    const streamId = streamResponse.data.id;
+    if (!streamId) {
+      console.error("[youtube] Stream créé sans ID");
+      return null;
+    }
+
+    const ingestAddress = streamResponse.data.cdn?.ingestionInfo?.ingestionAddress || "";
+    const streamKey = streamResponse.data.cdn?.ingestionInfo?.streamName || "";
+
+    console.log(`[youtube] Stream créé: ${streamId} (ingestion: ${ingestAddress})`);
+
+    // ─── 3. Lier le stream au broadcast ───
+    await youtube.liveBroadcasts.bind({
+      id: broadcastId,
+      part: ["id,contentDetails"],
+      streamId: streamId,
+    });
+
+    console.log(`[youtube] Stream ${streamId} lié au broadcast ${broadcastId}`);
+
+    return {
+      videoId: broadcastId,
+      url: getYoutubeVideoUrl(broadcastId),
+      streamId,
+      streamName,
+      ingestAddress: `${ingestAddress}/${streamKey}`,
+    };
+  } catch (error) {
+    console.error("[youtube] Erreur createBroadcast:", error);
+    return null;
+  }
+}
+
+/**
+ * Transitionne un broadcast vers l'état "complete" (fin du live).
+ *
+ * YouTube convertit alors automatiquement le broadcast en vidéo publique.
+ * Le replay est immédiatement disponible à l'URL stockée.
+ *
+ * @param broadcastId L'ID du broadcast (= video ID)
+ */
+export async function transitionBroadcastToComplete(
+  broadcastId: string
+): Promise<boolean> {
+  if (!isYouTubeOAuthConfigured()) {
+    return false;
+  }
+
+  try {
+    const auth = getYouTubeOAuthClient();
+    const youtube = google.youtube({ version: "v3", auth });
+
+    await youtube.liveBroadcasts.transition({
+      id: broadcastId,
+      broadcastStatus: "complete",
+      part: ["id,status"],
+    });
+
+    console.log(`[youtube] Broadcast ${broadcastId} → complete`);
+    return true;
+  } catch (error) {
+    console.error("[youtube] Erreur transitionBroadcastToComplete:", error);
+    return false;
+  }
+}
+
+/**
+ * Transitionne un broadcast vers l'état "testing" (démarrage du live).
+ *
+ * Note : avec enableAutoStart=true, YouTube fait cette transition
+ * automatiquement quand le flux RTMP arrive. Cette fonction n'est donc
+ * utile que si enableAutoStart=false.
+ */
+export async function transitionBroadcastToTesting(
+  broadcastId: string
+): Promise<boolean> {
+  if (!isYouTubeOAuthConfigured()) {
+    return false;
+  }
+
+  try {
+    const auth = getYouTubeOAuthClient();
+    const youtube = google.youtube({ version: "v3", auth });
+
+    await youtube.liveBroadcasts.transition({
+      id: broadcastId,
+      broadcastStatus: "testing",
+      part: ["id,status"],
+    });
+
+    console.log(`[youtube] Broadcast ${broadcastId} → testing`);
+    return true;
+  } catch (error) {
+    console.error("[youtube] Erreur transitionBroadcastToTesting:", error);
+    return false;
+  }
+}
