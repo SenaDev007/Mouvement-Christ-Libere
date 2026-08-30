@@ -107,19 +107,18 @@ export function ContextualNav() {
   const { data: session, status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const isFullScreenPage = pathname?.startsWith("/yeshua-connect");
+  const isFullScreenPage = false; // /yeshua-connect utilise la navbar principale (pas de mode plein écran)
   const isAuthenticated = status === "authenticated" && session?.user;
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/" });
   };
 
-  // Sur /yeshua-connect, la navbar est en haut fixe (pas en bas flottante)
+  // Navbar fixe en haut sur toutes les pages (y compris /yeshua-connect)
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 border-b border-[#C9A227]/20 bg-[#2A0E3D]/95 backdrop-blur-lg",
-        isFullScreenPage && "hidden"
+        "fixed top-0 left-0 right-0 z-50 border-b border-[#C9A227]/20 bg-[#2A0E3D]/95 backdrop-blur-lg"
       )}
     >
       <div className="flex h-16 md:h-20 items-center justify-between gap-4 px-4 md:px-6 max-w-7xl mx-auto">
