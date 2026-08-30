@@ -46,6 +46,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [connectionError, setConnectionError] = useState("");
   const [showDescription, setShowDescription] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [viewerPaused, setViewerPaused] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [saved, setSaved] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
@@ -177,10 +178,9 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     return () => clearInterval(interval);
   }, [isLive, live.id]);
 
-  // Durée du live (affichée côté viewer)
+  // Durée du live (affichée côté viewer) — s'arrête en pause
   useEffect(() => {
-    // (C6) Utiliser startedAt fraîche (state local) au lieu de la prop SSR.
-    if (!isLive || !liveStartedAt) return;
+    if (!isLive || !liveStartedAt || viewerPaused) return;
     const update = () => {
       const elapsed = Math.floor((Date.now() - new Date(liveStartedAt).getTime()) / 1000);
       const h = Math.floor(elapsed / 3600);
@@ -191,7 +191,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [isLive, liveStartedAt]);
+  }, [isLive, liveStartedAt, viewerPaused]);
 
   // ═══════════════════════════════════════════════════════════════════
   // (C1) Effet 1 : Enregistrement viewer en DB (POST /viewers)
@@ -273,7 +273,6 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         room.on(RoomEvent.TrackSubscribed, (track) => {
           if (track.kind === Track.Kind.Video && videoRef.current) {
             track.attach(videoRef.current);
-            // Forcer le play (muted autoplay devrait marcher)
             videoRef.current.muted = true;
             videoRef.current.play().catch((err) => {
               console.warn("[viewer] Video play failed:", err);
@@ -282,11 +281,21 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
             const audioEl = document.createElement("audio");
             audioEl.autoplay = true;
             track.attach(audioEl);
-            // (H1) Safari/iOS nécessitent que l'élément <audio> soit attaché
-            // au DOM pour pouvoir être lu (même en autoplay).
             document.body.appendChild(audioEl);
             attachedAudioEls.push(audioEl);
             audioEl.play().catch(() => {});
+          }
+        });
+
+        // Écouter les messages DataChannel (pause/play du studio)
+        room.on(RoomEvent.DataReceived, (_payload, _participant, _kind, topic) => {
+          if (!cancelled && topic === "live-control") {
+            try {
+              const decoder = new TextDecoder();
+              const msg = JSON.parse(decoder.decode(_payload));
+              if (msg.action === "pause") setViewerPaused(true);
+              else if (msg.action === "resume") setViewerPaused(false);
+            } catch {}
           }
         });
 
@@ -526,13 +535,40 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               )}
 
               {/* Réactions */}
-              {/* Durée du live (overlay) */}
-              {isLive && hasJoined && liveDuration && (
+              {/* Durée du live (overlay) — masqué en pause */}
+              {isLive && hasJoined && liveDuration && !viewerPaused && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-red-600 text-white text-xs font-bold">
                     <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                     EN DIRECT · {liveDuration}
                   </span>
+                </div>
+              )}
+
+              {/* Badge PAUSE côté viewer */}
+              {isLive && hasJoined && viewerPaused && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#C9A227] text-[#1E0F2B] text-xs font-bold">
+                    <span className="w-2 h-2 rounded-full bg-[#1E0F2B]" />
+                    PAUSE · {liveDuration}
+                  </span>
+                </div>
+              )}
+
+              {/* Miniature en fond pendant la pause */}
+              {isLive && hasJoined && viewerPaused && live.thumbnailUrl && (
+                <div className="absolute inset-0 z-10 pointer-events-none">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={live.thumbnailUrl} alt={live.title} className="w-full h-full object-cover opacity-30" />
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-full bg-[#C9A227]/20 flex items-center justify-center mx-auto mb-3">
+                        <svg className="w-8 h-8 text-[#C9A227]" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+                      </div>
+                      <p className="text-lg font-bold text-[#C9A227]">Diffusion en pause</p>
+                      <p className="text-xs text-white/50 mt-1">Le diffuseur reprendra bientôt</p>
+                    </div>
+                  </div>
                 </div>
               )}
 

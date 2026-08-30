@@ -134,12 +134,24 @@ export function LiveStudioClient({
     if (newPaused) {
       if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
     } else {
-      // Reprendre le minuteur depuis le temps écoulé actuel
       const elapsed = streamDuration;
       const resumeTime = Date.now() - elapsed * 1000;
       durationTimerRef.current = setInterval(() => {
         setStreamDuration(Math.floor((Date.now() - resumeTime) / 1000));
       }, 1000);
+    }
+    // Notifier les viewers via DataChannel LiveKit
+    if (roomRef.current) {
+      try {
+        const msg = JSON.stringify({ action: newPaused ? "pause" : "resume" });
+        const encoder = new TextEncoder();
+        roomRef.current.localParticipant.publishData(encoder.encode(msg), {
+          reliable: true,
+          topic: "live-control",
+        });
+      } catch (err) {
+        console.error("[studio] Failed to send pause/resume signal:", err);
+      }
     }
   };
 
@@ -578,10 +590,10 @@ export function LiveStudioClient({
             {/* Vidéo source — invisible mais ACTIVE (opacity:0.01 empêche Chrome de geler les frames) */}
             {/* Le canvas est au-dessus (zIndex:1) et masque visuellement la vidéo (zIndex:0) */}
             <video ref={videoRef} autoPlay muted playsInline
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-contain"
               style={{ opacity: 0.01, pointerEvents: "none", zIndex: 0 }} />
             <canvas ref={canvasRef} width={1280} height={720}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-contain"
               style={{ zIndex: 1 }} />
 
             {!cameraOn && cameraReady && !screenSharing && !isPaused && (
