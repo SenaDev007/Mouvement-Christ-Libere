@@ -7,16 +7,24 @@ import { uploadToR2, generateKey, isR2Configured } from "@/lib/r2";
 /**
  * POST /api/videos/[id]/upload
  *
- * Téléverse un fichier vidéo (FormData, champ "file") et met à jour
- * Video.videoUrl en base.
+ * Deux modes d'upload :
  *
- * Stockage : Cloudflare R2 (pas de limite de taille côté serveur).
- * L'upload se fait via XMLHttpRequest côté client pour suivre la progression.
+ * 1. COMMIT (JSON) — après un upload direct vers R2 via URL pré-signée :
+ *    Body: { r2Url: "https://..." }
+ *    → Persiste simplement l'URL R2 en base. Ne reçoit PAS le fichier
+ *      (il est déjà sur R2). C'est le chemin recommandé pour les gros
+ *      fichiers car il bypass le body de la fonction Vercel.
  *
- * Réponse : { success: true, videoUrl: string, storage: "r2" }
+ * 2. FORMDATA (legacy / fallback) — le fichier transite par le body :
+ *    Body: FormData avec champ "file"
+ *    → Upload le fichier vers R2 côté serveur (ou base64 si R2 absent).
+ *      Limité par le maxDuration (300 s) et la taille du body Vercel.
+ *      Rétro-compatibilité pour le cas où R2 n'est pas configuré.
+ *
+ * Réponse : { success: true, videoUrl: string, storage: "r2" | "base64" | "commit" }
  */
 export const runtime = "nodejs";
-export const maxDuration = 300; // 5 minutes max pour les gros fichiers
+export const maxDuration = 300; // 5 minutes max pour les gros fichiers (mode FormData uniquement)
 
 export async function POST(
   req: NextRequest,
@@ -36,6 +44,26 @@ export async function POST(
       return NextResponse.json({ error: "Vidéo introuvable" }, { status: 404 });
     }
 
+    // ─── Mode 1 : COMMIT après upload direct R2 ───
+    // Le content-type est JSON → le fichier a déjà été uploadé via presigned PUT
+    // et on reçoit juste l'URL publique à persister.
+    const contentType = req.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      const r2Url = body.r2Url;
+      if (!r2Url || typeof r2Url !== "string") {
+        return NextResponse.json(
+          { error: "Champ 'r2Url' manquant dans le body JSON" },
+          { status: 400 }
+        );
+      }
+
+      await db.video.update({ where: { id }, data: { videoUrl: r2Url } });
+      console.log(`[videos/upload] Commit — Vidéo ${id} → ${r2Url}`);
+      return NextResponse.json({ success: true, videoUrl: r2Url, storage: "commit" });
+    }
+
+    // ─── Mode 2 : FormData (legacy / fallback sans R2) ───
     const formData = await req.formData();
     const file = formData.get("file");
     if (!file || !(file instanceof File)) {
