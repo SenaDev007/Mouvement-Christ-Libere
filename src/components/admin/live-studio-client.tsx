@@ -51,6 +51,8 @@ export function LiveStudioClient({
   const [activeTab, setActiveTab] = useState<"chat" | "stats" | "health">("chat");
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [showStopModal, setShowStopModal] = useState(false);
+  const [youtubeReplayUrl, setYoutubeReplayUrl] = useState("");
+  const [fetchingYoutubeReplay, setFetchingYoutubeReplay] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showControls, setShowControls] = useState(true);
@@ -413,7 +415,40 @@ export function LiveStudioClient({
     }
   };
 
+  // ─── Récupérer l'URL YouTube du replay (auto ou manuel) ───
+  const handleFetchYoutubeReplay = async () => {
+    setFetchingYoutubeReplay(true);
+    try {
+      const res = await apiFetch(`/api/live/${liveId}/youtube-replay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(youtubeReplayUrl ? { youtubeUrl: youtubeReplayUrl } : {}),
+      });
+      const data = await res.json();
+      if (res.ok && data.youtubeUrl) {
+        setYoutubeReplayUrl(data.youtubeUrl);
+        setInfo(`✓ URL YouTube récupérée: ${data.source === "manual" ? "saisie manuelle" : data.source === "oauth" ? "API YouTube" : "recherche"}`);
+      } else {
+        setError(data.error || "Impossible de récupérer l'URL YouTube");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setFetchingYoutubeReplay(false);
+    }
+  };
+
   const confirmStopLive = async () => {
+    // ─── Si l'admin a collé une URL YouTube, la persister avant le stop ───
+    if (youtubeReplayUrl.trim()) {
+      try {
+        await apiFetch(`/api/live/${liveId}/youtube-replay`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ youtubeUrl: youtubeReplayUrl.trim() }),
+        });
+      } catch {}
+    }
     setShowStopModal(false);
     setLoading(true);
     setError("");
@@ -1079,7 +1114,7 @@ export function LiveStudioClient({
               )}
 
               {/* Avertissement */}
-              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/15 mb-5">
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/15 mb-4">
                 <AlertCircle className="w-4 h-4 text-[#C9A227] flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">
                   Le replay sera généré et publié sur la page Vidéos.
@@ -1088,6 +1123,38 @@ export function LiveStudioClient({
                     : ""}
                 </p>
               </div>
+
+              {/* URL YouTube du replay (si multistream YouTube) */}
+              {multistream.youtube && (
+                <div className="mb-4 px-3 py-3 rounded-xl bg-[#2A0E3D]/5 border border-[#8A8378]/15">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Youtube className="w-3.5 h-3.5 text-red-600" />
+                    <span className="text-xs font-bold text-[#1E0F2B]">URL YouTube du replay</span>
+                    <span className="text-[10px] text-[#8A8378]">(optionnel — économise le stockage R2)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={youtubeReplayUrl}
+                      onChange={(e) => setYoutubeReplayUrl(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className="flex-1 px-2.5 py-2 rounded-lg border border-[#8A8378]/20 bg-white text-xs focus:outline-none focus:border-[#C9A227]"
+                    />
+                    <button
+                      onClick={handleFetchYoutubeReplay}
+                      disabled={fetchingYoutubeReplay}
+                      className="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors disabled:opacity-40 whitespace-nowrap flex items-center gap-1"
+                    >
+                      {fetchingYoutubeReplay ? <Loader2 className="w-3 h-3 animate-spin" /> : <Youtube className="w-3 h-3" />}
+                      Auto
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-[#8A8378] mt-1.5 leading-relaxed">
+                    Collez l'URL YouTube ou cliquez "Auto" pour la récupérer via l'API.
+                    Si vide, le replay utilisera l'enregistrement R2 (si disponible).
+                  </p>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex items-center gap-3">

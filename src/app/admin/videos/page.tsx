@@ -8,11 +8,39 @@ export default async function AdminVideosPage() {
     db.video.findMany({
       orderBy: { createdAt: "desc" },
       include: { servant: true },
+      // Sécurité : ne pas sélectionner projectState (champ Json qui peut
+      // contenir des valeurs non sérialisables via RSC) ni les data URLs
+      // base64 géantes qui peuvent faire crasher la sérialisation.
     }),
     db.servant.findMany({
       orderBy: { code: "asc" },
     }),
   ]);
 
-  return <VideosTabsClient videos={videos} servants={servants} />;
+  // Mapper vers un format léger et sûrement sérialisable (RSC-safe).
+  // On enlève projectState (Json) et on remplace les data URLs trop grandes
+  // par null pour éviter de faire exploser le payload RSC.
+  const safeVideos = videos.map((v) => {
+    const isDataUrlThumb = v.thumbnailUrl?.startsWith("data:");
+    const isDataUrlVideo = v.videoUrl?.startsWith("data:");
+    return {
+      id: v.id,
+      servantId: v.servantId,
+      title: v.title,
+      description: v.description,
+      duration: v.duration,
+      thumbnailUrl: isDataUrlThumb ? null : v.thumbnailUrl,
+      videoUrl: isDataUrlVideo && (v.videoUrl!.length > 100000) ? null : v.videoUrl,
+      hlsUrl: v.hlsUrl,
+      views: v.views,
+      isLive: v.isLive,
+      publishedAt: v.publishedAt,
+      createdAt: v.createdAt,
+      updatedAt: v.updatedAt,
+      projectState: null, // explicitement null (RSC-safe, pas de Prisma.JsonNull)
+      servant: v.servant,
+    };
+  });
+
+  return <VideosTabsClient videos={safeVideos} servants={servants} />;
 }

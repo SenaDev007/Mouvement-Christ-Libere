@@ -92,7 +92,45 @@ export async function POST(req: NextRequest) {
 
     // ─── Toujours archiver le replay en tant que vidéo ───
     // Même sans recordingUrl, on crée l'entrée pour qu'elle apparaisse dans le module vidéo
-    const replayUrl = recordingUrl || live.youtubeUrl || null;
+    //
+    // (YouTube-replay) Si pas de recordingUrl (R2) ET que le live était streamé vers
+    // YouTube, on tente de récupérer automatiquement l'URL YouTube du replay via
+    // l'API YouTube Data. Cela évite de stocker le replay sur R2 (économie de
+    // stockage — le free tier R2 est 10GB).
+    let youtubeReplayUrl = live.youtubeUrl;
+
+    if (!recordingUrl && live.streamToYoutube && !youtubeReplayUrl) {
+      // YouTube met 30s à 5min pour publier le replay après la fin du RTMP.
+      // On tente une récupération — si elle échoue, le replay aura videoUrl=null
+      // et l'admin pourra le récupérer manuellement via /api/live/[id]/youtube-replay.
+      try {
+        const { resolveYoutubeReplayUrl, isYouTubeOAuthConfigured } = await import("@/lib/youtube");
+        if (isYouTubeOAuthConfigured() && live.startedAt) {
+          console.log("[live/stop] Tentative de récupération auto YouTube replay...");
+          const ytResult = await resolveYoutubeReplayUrl(
+            live.startedAt,
+            live.youtubeUrl,
+            live.title
+          );
+          if (ytResult) {
+            youtubeReplayUrl = ytResult.url;
+            // Persister l'URL YouTube pour les futurs appels
+            await db.liveStream.update({
+              where: { id: liveId },
+              data: { youtubeUrl: ytResult.url },
+            });
+            console.log(`[live/stop] YouTube replay récupéré: ${ytResult.url} (source: ${ytResult.source})`);
+          } else {
+            console.log("[live/stop] YouTube replay non trouvé — l'admin peut le récupérer manuellement");
+          }
+        }
+      } catch (ytError) {
+        console.error("[live/stop] Erreur récupération YouTube replay:", ytError);
+        // Ne pas faire échouer le stop pour autant
+      }
+    }
+
+    const replayUrl = recordingUrl || youtubeReplayUrl || null;
     const liveDate = new Date(live.startedAt || live.scheduledAt);
     const dateStr = liveDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
