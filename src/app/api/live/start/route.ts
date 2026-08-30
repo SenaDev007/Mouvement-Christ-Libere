@@ -58,12 +58,16 @@ export async function POST(req: NextRequest) {
     const roomName = live.livekitRoomName || `live-${live.id}`;
 
     // Mettre à jour le live : statut LIVE + startedAt + roomName
+    // (YT-pause) Réinitialiser l'état de pause au cas où le live aurait été
+    // arrêté puis redémarré sans passage par /stop (rare mais possible).
     await db.liveStream.update({
       where: { id: liveId },
       data: {
         status: "LIVE",
         startedAt: new Date(),
         livekitRoomName: roomName,
+        isPaused: false,
+        pausedAt: null,
       },
     });
 

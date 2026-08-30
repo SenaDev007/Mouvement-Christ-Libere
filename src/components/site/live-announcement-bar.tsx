@@ -145,6 +145,7 @@ export function LiveAnnouncementBar() {
         {/* Bouton d'action */}
         <Link
           href={linkHref}
+          prefetch={false}
           className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all hover:scale-105"
           style={{
             backgroundColor: isLive ? "#ffffff" : "#1E0F2B",

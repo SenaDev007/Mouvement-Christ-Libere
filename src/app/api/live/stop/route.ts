@@ -77,12 +77,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Mettre à jour le live : statut ENDED + endedAt
+    // (YT-pause) Réinitialiser isPaused/pausedAt pour éviter qu'un viewer
+    // arrivant sur la page après l'arrêt ne voie un écran "en pause".
     await db.liveStream.update({
       where: { id: liveId },
       data: {
         status: "ENDED",
         endedAt: new Date(),
         recordingUrl: recordingUrl || null,
+        isPaused: false,
+        pausedAt: null,
       },
     });
 

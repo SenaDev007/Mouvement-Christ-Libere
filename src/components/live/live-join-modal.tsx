@@ -47,12 +47,24 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
       localStorage.setItem("live-session-id", sessionId);
     }
 
+    let cancelled = false;
+    // (perf) Si /api/live-members/me met plus de 3 s, on abandonne et on
+    // affiche directement le formulaire d'inscription. Sans ça, l'utilisateur
+    // qui clique sur "Rejoindre le live" voit un spinner infini si le serveur
+    // est saturé. 3 s est assez pour une DB saine, assez court pour ne pas
+    // frustrer l'utilisateur.
+    const fallbackTimer = setTimeout(() => {
+      if (!cancelled) {
+        setChecking(false);
+      }
+    }, 3000);
+
     const checkMember = async () => {
       setChecking(true);
       try {
         const res = await apiFetch(`/api/live-members/me?sessionId=${sessionId}`);
         const data = await res.json();
-        if (data.member) {
+        if (!cancelled && data.member) {
           setExistingMember(data.member);
           setFirstName(data.member.firstName);
           setLastName(data.member.lastName || "");
@@ -60,11 +72,22 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
           setCity(data.member.city || "");
           setContact(data.member.contact || "");
         }
-      } catch {}
-      setChecking(false);
+      } catch {
+        // Erreur ou timeout → on reste sur le formulaire d'inscription.
+      } finally {
+        if (!cancelled) {
+          clearTimeout(fallbackTimer);
+          setChecking(false);
+        }
+      }
     };
 
     checkMember();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(fallbackTimer);
+    };
   }, [open]);
 
   // Quick join — juste le prénom

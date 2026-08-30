@@ -140,7 +140,7 @@ export function LiveStudioClient({
         setStreamDuration(Math.floor((Date.now() - resumeTime) / 1000));
       }, 1000);
     }
-    // Notifier les viewers via DataChannel LiveKit
+    // Notifier les viewers via DataChannel LiveKit (viewers LiveKit uniquement)
     if (roomRef.current) {
       try {
         const msg = JSON.stringify({ action: newPaused ? "pause" : "resume" });
@@ -153,6 +153,16 @@ export function LiveStudioClient({
         console.error("[studio] Failed to send pause/resume signal:", err);
       }
     }
+    // (YT-pause) Persister l'état de pause en base pour les viewers YouTube
+    // (qui ne reçoivent pas le DataChannel LiveKit). Best-effort : on ne
+    // bloque pas l'UI si l'API échoue — le signal LiveKit a déjà été envoyé.
+    apiFetch(`/api/live/${liveId}/pause`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paused: newPaused }),
+    }).catch((err) => {
+      console.error("[studio] Failed to persist pause state for YouTube viewers:", err);
+    });
   };
 
   // ─── Mode encodeur externe (OBS) ───

@@ -93,6 +93,7 @@ export function UpcomingLiveFloat() {
   return (
     <Link
       href={`/live/${live.id}`}
+      prefetch={false}
       className="absolute top-4 right-4 z-30 group hidden sm:block"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

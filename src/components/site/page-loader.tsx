@@ -1,17 +1,52 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/**
+ * PageLoader — barre de progression fine en haut de l'écran.
+ *
+ * AVANT : overlay plein écran z-[9999] qui masquait toute la page pendant
+ * un setTimeout hardcoded de 5 secondes à chaque changement de pathname.
+ * Conséquence : quand l'utilisateur cliquait sur "Rejoindre le live",
+ * il voyait un écran violet pendant 5 s — perçu comme "ça ne répond pas".
+ *
+ * MAINTENANT : une simple barre dorée de 2 px en haut, qui apparaît
+ * immédiatement à chaque navigation et disparaît dès que la nouvelle
+ * page a fini de se rendre (au pire ~800 ms, assez court pour ne pas
+ * bloquer l'utilisateur).
+ *
+ * Comportement :
+ *  - Au montage initial : pas de barre (évite le flash au premier load)
+ *  - À chaque changement de pathname : barre visible
+ *  - Se retire après 800 ms (correspond à la durée typique d'une navigation
+ *    App Router côté client) ou dès qu'un nouveau changement arrive
+ */
 export function PageLoader() {
   const pathname = usePathname();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const isFirstLoadRef = useRef(true);
+  const prevPathRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // Ne pas déclencher la barre au tout premier rendu (la page est en cours
+    // de chargement côté navigateur, ce n'est pas une navigation utilisateur).
+    if (isFirstLoadRef.current) {
+      isFirstLoadRef.current = false;
+      prevPathRef.current = pathname;
+      return;
+    }
+    // Ne pas déclencher si le pathname n'a pas réellement changé
+    // (effet qui se ré-exécute pour une autre raison).
+    if (prevPathRef.current === pathname) return;
+    prevPathRef.current = pathname;
+
     setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 5000);
+    // Durée courte : la navigation App Router est généralement < 500 ms.
+    // On garde une marge pour les cas où la SSR est un peu lente, mais
+    // sans bloquer l'UI — la barre est juste un indicateur visuel en haut.
+    const timer = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(timer);
   }, [pathname]);
 
@@ -21,86 +56,17 @@ export function PageLoader() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.8 } }}
-          transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A0826]"
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed top-0 left-0 right-0 z-[9999] h-0.5 bg-[#C9A227] origin-left"
+          style={{ boxShadow: "0 0 8px rgba(201, 162, 39, 0.6)" }}
         >
-          {/* Image de fond : les deux serviteurs */}
-          <div className="absolute inset-0 z-0">
-            <img
-              src="/pam-kongo-hero.webp"
-              alt=""
-              className="w-full h-full opacity-20"
-              style={{ objectFit: "cover", objectPosition: "center center" }}
-            />
-            <div className="absolute inset-0 bg-[#1A0826]/70" />
-          </div>
-
-          {/* Conteneur centré (logo + texte + barre) */}
-          <div className="relative z-10 flex flex-col items-center justify-center gap-6 px-4">
-            {/* Logo pulsatif */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{
-                scale: [1, 1.1, 1],
-                opacity: [0.8, 1, 0.8],
-              }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="relative"
-            >
-              {/* Halo doré derrière le logo */}
-              <motion.div
-                animate={{
-                  scale: [1, 1.3, 1],
-                  opacity: [0.3, 0.6, 0.3],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute -inset-4 rounded-full bg-[#C9A227]/20 blur-2xl"
-              />
-              <Image
-                src="/logo-christ-libere.png"
-                alt="Christ Libère"
-                width={80}
-                height={80}
-                className="relative w-16 h-16 md:w-20 md:h-20 object-contain"
-                priority
-              />
-            </motion.div>
-
-            {/* Texte "Christ Libère" */}
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-lg font-bold"
-            >
-              <span style={{ color: "#C9A227" }}>Christ</span>
-              <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
-            </motion.p>
-
-            {/* Barre de progression qui se remplit en 5 secondes */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="w-48 h-1 bg-[#FAF6EF]/10 rounded-full overflow-hidden"
-            >
-              <motion.div
-                initial={{ width: "0%" }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 5, ease: "easeInOut" }}
-                className="h-full bg-[#C9A227] rounded-full"
-              />
-            </motion.div>
-          </div>
+          <motion.div
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="h-full bg-gradient-to-r from-[#C9A227] via-[#DDBE55] to-[#C9A227]"
+          />
         </motion.div>
       )}
     </AnimatePresence>

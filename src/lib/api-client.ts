@@ -27,7 +27,16 @@ function shouldUseBackend(): boolean {
 /**
  * Wrapper fetch qui utilise les APIs Next.js locales par défaut.
  * Si NEXT_PUBLIC_USE_BACKEND=true, redirige vers Railway.
+ *
+ * TIMEOUT : tous les appels (locaux ET backend) ont un timeout de 8 s via
+ * AbortController. Sans ça, un appel lent (serverless saturé, Prisma qui
+ * attend un pool de connexion, etc.) peut rester pendouillé jusqu'au
+ * timeout navigateur par défaut (~300 s sur Chrome) — l'utilisateur voit
+ * un spinner infini. 8 s est assez large pour une DB Postgres saine, et
+ * assez court pour que l'UI puisse afficher une erreur ou un fallback.
  */
+const LOCAL_FETCH_TIMEOUT_MS = 8000;
+
 export async function apiFetch(
   path: string,
   options: RequestInit = {},
@@ -45,10 +54,35 @@ export async function apiFetch(
   // Ne PAS ajouter credentials:include ni X-Admin-Token pour les appels locaux
   // (les APIs Next.js utilisent le cookie admin_session automatiquement via same-origin)
   if (!shouldUseBackend()) {
-    return fetch(path, {
-      ...options,
-      headers,
-    });
+    // (perf) Timeout local — empêche un spinner infini côté UI si la
+    // serverless function est saturée ou si la DB met trop de temps à répondre.
+    // Si un caller passe déjà son propre `signal`, on respecte ce signal
+    // (les deux AbortControllers sont combinés).
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), LOCAL_FETCH_TIMEOUT_MS);
+    // Si le caller a passé un signal externe, le propager vers notre controller
+    const externalSignal = options.signal;
+    if (externalSignal) {
+      if (externalSignal.aborted) controller.abort();
+      else externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
+    }
+    try {
+      const response = await fetch(path, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      // Si c'est notre timeout qui a déclenché l'abort, on lève une erreur
+      // explicite pour que l'UI puisse afficher un message clair.
+      if (controller.signal.aborted && (!externalSignal || !externalSignal.aborted)) {
+        throw new DOMException(`apiFetch timeout (${LOCAL_FETCH_TIMEOUT_MS}ms): ${path}`, "TimeoutError");
+      }
+      throw err;
+    }
   }
 
   // Backend Railway activé : ajouter credentials + X-Admin-Token pour cross-origin

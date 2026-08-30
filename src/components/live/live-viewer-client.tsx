@@ -47,6 +47,9 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [showDescription, setShowDescription] = useState(false);
   const [liked, setLiked] = useState(false);
   const [viewerPaused, setViewerPaused] = useState(false);
+  // (YT-pause) pausedAt côté viewer — quand le live est en pause, on gèle la
+  // minuterie sur (pausedAt - startedAt) au lieu de continuer à compter.
+  const [livePausedAt, setLivePausedAt] = useState<string | null>(null);
   const [likeCount, setLikeCount] = useState(0);
   const [saved, setSaved] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
@@ -138,11 +141,18 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   }, [live.status, live.scheduledAt]);
 
   // Polling statut
+  // (YT-pause) Pour les lives YouTube, on continue à poller même après le
+  // démarrage du live, pour récupérer l'état de pause (isPaused / pausedAt)
+  // côté serveur — les viewers YouTube ne reçoivent pas le DataChannel LiveKit.
+  // Pour les lives LiveKit purs, on arrête de poller une fois qu'on a startedAt
+  // (le signal de pause arrive via DataChannel, pas besoin de polling).
   useEffect(() => {
-    // Poller tant que le live n'a pas démarré (SCHEDULED),
-    // ou si le live est en cours mais qu'on n'a pas encore startedAt
-    // (récupération après transition SCHEDULED → LIVE).
-    if (live.status !== "SCHEDULED" && !(isLive && !liveStartedAt)) return;
+    const isYoutubeLive = !!live.youtubeUrl;
+    // Poller tant que :
+    //  - le live est SCHEDULED (attente du démarrage), OU
+    //  - le live est LIVE mais startedAt n'est pas encore connu, OU
+    //  - le live est LIVE via YouTube (besoin de l'état de pause)
+    if (live.status !== "SCHEDULED" && !(isLive && !liveStartedAt) && !(isLive && isYoutubeLive)) return;
     const checkStatus = async () => {
       try {
         const res = await apiFetch("/api/live/next");
@@ -155,13 +165,22 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
           if (data.live.startedAt) {
             setLiveStartedAt(data.live.startedAt);
           }
+          // (YT-pause) Sync pause state depuis l'API (pour les viewers YouTube)
+          if (isYoutubeLive) {
+            const paused = !!data.live.isPaused;
+            setViewerPaused(paused);
+            setLivePausedAt(data.live.pausedAt || null);
+          }
         }
       } catch {}
     };
     checkStatus();
-    const interval = setInterval(checkStatus, 30000);
+    // (YT-pause) Polling plus fréquent pour les lives YouTube (3s) pour que
+    // la transition pause→reprise soit rapide côté viewer. 30s sinon.
+    const intervalMs = isLive && isYoutubeLive ? 3000 : 30000;
+    const interval = setInterval(checkStatus, intervalMs);
     return () => clearInterval(interval);
-  }, [live.status, live.id, isLive, liveStartedAt]);
+  }, [live.status, live.id, live.youtubeUrl, isLive, liveStartedAt]);
 
   // Compteur viewers réel depuis l'API
   useEffect(() => {
@@ -179,8 +198,24 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   }, [isLive, live.id]);
 
   // Durée du live (affichée côté viewer) — s'arrête en pause
+  // (YT-pause) Pour les viewers YouTube, on gèle la minuterie sur
+  // (pausedAt - startedAt) pendant la pause, plutôt que de juste cacher
+  // l'overlay. Ainsi le badge PAUSE affiche une durée figée cohérente
+  // avec ce que voit le studio.
   useEffect(() => {
-    if (!isLive || !liveStartedAt || viewerPaused) return;
+    if (!isLive || !liveStartedAt) return;
+    // Si en pause ET qu'on a un pausedAt côté serveur → afficher la durée
+    // figée (pausedAt - startedAt) et ne pas faire tourner le setInterval.
+    if (viewerPaused && livePausedAt) {
+      const elapsed = Math.floor((new Date(livePausedAt).getTime() - new Date(liveStartedAt).getTime()) / 1000);
+      const h = Math.floor(elapsed / 3600);
+      const m = Math.floor((elapsed % 3600) / 60);
+      const s = elapsed % 60;
+      setLiveDuration(h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}` : `${m}:${s.toString().padStart(2, "0")}`);
+      return;
+    }
+    // Si en pause sans pausedAt (cas LiveKit DataChannel) → geler
+    if (viewerPaused) return;
     const update = () => {
       const elapsed = Math.floor((Date.now() - new Date(liveStartedAt).getTime()) / 1000);
       const h = Math.floor(elapsed / 3600);
@@ -191,7 +226,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [isLive, liveStartedAt, viewerPaused]);
+  }, [isLive, liveStartedAt, viewerPaused, livePausedAt]);
 
   // ═══════════════════════════════════════════════════════════════════
   // (C1) Effet 1 : Enregistrement viewer en DB (POST /viewers)
@@ -453,7 +488,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
           <div className="space-y-3">
             {/* Conteneur vidéo */}
             <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
-              {isLive && live.youtubeUrl && hasJoined && (
+              {isLive && live.youtubeUrl && hasJoined && !viewerPaused && (
                 <iframe src={getYouTubeEmbedUrl(live.youtubeUrl)} className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
               )}

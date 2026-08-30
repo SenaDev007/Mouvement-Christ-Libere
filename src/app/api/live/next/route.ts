@@ -35,6 +35,11 @@ export async function GET() {
         servantPortraitUrl: nextLive.servant.portraitUrl,
         youtubeUrl: nextLive.youtubeUrl,
         thumbnailUrl: nextLive.thumbnailUrl,
+        // (YT-pause) État de pause persisté en base pour les viewers YouTube
+        // (qui ne reçoivent pas le DataChannel LiveKit). Permet au viewer de
+        // geler la minuterie et d'afficher la miniature pendant la pause.
+        isPaused: nextLive.isPaused,
+        pausedAt: nextLive.pausedAt ? nextLive.pausedAt.toISOString() : null,
       },
     });
   } catch (error) {
