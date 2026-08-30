@@ -228,9 +228,9 @@ export function LiveStudioClient({
       }
 
       // ─── 2. Démarrer les TIMERS immédiatement (ne dépend pas de LiveKit) ───
-      setIsLive(true);
-      setStatus("LIVE");
-      setInfo("Vous êtes en direct !");
+      // ATTENTION (B5) : isLive ne devient true qu'APRÈS la connexion LiveKit réussie (voir plus bas).
+      // Si LiveKit échoue, les timers sont nettoyés et isLive reste false.
+      setInfo("Connexion à LiveKit en cours...");
       const startTime = Date.now();
       durationTimerRef.current = setInterval(() => {
         setStreamDuration(Math.floor((Date.now() - startTime) / 1000));
@@ -275,16 +275,27 @@ export function LiveStudioClient({
           setInfo("Connecté à LiveKit — publication du flux...");
           roomConnected = true;
 
+          // ─── (B5) LiveKit connecté → on peut ENFIN annoncer le live ───
+          // isLive ne passe à true qu'ici, APRÈS la connexion LiveKit réussie.
+          // Si on était arrivé ici sans connexion, les viewers auraient vu un écran noir.
+          setIsLive(true);
+          setStatus("LIVE");
+          setInfo("Vous êtes en direct !");
+
           if (localStreamRef.current) {
             const audioTrack = localStreamRef.current.getAudioTracks()[0];
 
-            // S'assurer que le canvas stream existe
-            if (!overlayStreamRef.current && canvasRef.current) {
-              try {
-                overlayStreamRef.current = canvasRef.current.captureStream(30);
-              } catch (err) {
-                console.error("[studio] captureStream failed:", err);
-              }
+            // (C5) NE PAS recréer un stream de canvas ici.
+            // Le MediaOverlay gère overlayStreamRef via son callback onCanvasStream.
+            // Recréer un deuxième captureStream() ici causait un double flux
+            // (overlay + canvas brut) et des conflits de tracks.
+            // Si overlayStreamRef.current est null, on log un warning et on
+            // publie la caméra brute en fallback (voir plus bas).
+            if (!overlayStreamRef.current) {
+              console.warn(
+                "[studio] overlayStreamRef.current est null — le flux composite (canvas) n'est pas disponible. " +
+                "Le fallback caméra brute sera publié. Vérifiez que le MediaOverlay est monté et a appelé onCanvasStream."
+              );
             }
 
             // Publier le canvas composite
@@ -348,6 +359,19 @@ export function LiveStudioClient({
         console.error("[studio] LiveKit connection failed:", errMsg);
         setError(`Connexion LiveKit échouée: ${errMsg}. Les viewers ne pourront pas voir le flux.`);
         setInfo("⚠ LiveKit indisponible — les viewers voient un écran noir.");
+        // ─── (B5) LiveKit a échoué : on NE MET PAS isLive=true ───
+        // Nettoyer les timers démarrés plus haut (un compteur sans flux est inutile).
+        if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
+        if (statsTimerRef.current) { clearInterval(statsTimerRef.current); statsTimerRef.current = null; }
+        if (viewerPollRef.current) { clearInterval(viewerPollRef.current); viewerPollRef.current = null; }
+        // Annuler aussi le statut LIVE côté DB pour cohérence
+        try {
+          await apiFetch("/api/live/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ liveId, recordingUrl: null }),
+          });
+        } catch {}
       }
 
       // ─── 4. Démarrer l'enregistrement du canvas (MediaRecorder) ───
@@ -569,12 +593,14 @@ export function LiveStudioClient({
             onMouseMove={showControlsTemporarily}
             onMouseLeave={() => isLive && setShowControls(false)}
           >
-            {/* Vidéo source — cachée mais active (le canvas dessine les frames) */}
+            {/* Vidéo source — invisible mais ACTIVE (opacity:0.01 empêche Chrome de geler les frames) */}
+            {/* Le canvas est au-dessus (zIndex:1) et masque visuellement la vidéo (zIndex:0) */}
             <video ref={videoRef} autoPlay muted playsInline
-              className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
-              style={{ width: "1px", height: "1px", top: 0, left: 0 }} />
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ opacity: 0.01, pointerEvents: "none", zIndex: 0 }} />
             <canvas ref={canvasRef} width={1280} height={720}
-              className="absolute inset-0 w-full h-full object-cover" />
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ zIndex: 1 }} />
 
             {!cameraOn && cameraReady && !screenSharing && !isPaused && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/80 pointer-events-none">

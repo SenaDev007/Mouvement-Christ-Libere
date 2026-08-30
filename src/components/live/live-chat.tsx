@@ -150,7 +150,9 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
     try {
       const since = lastTimestampRef.current;
       const url = since ? `/api/live/${liveId}/chat?since=${encodeURIComponent(since)}` : `/api/live/${liveId}/chat`;
-      const res = await fetch(url);
+      // (H6) Utiliser apiFetch au lieu de fetch brut pour bénéficier du
+      // fallback backend Railway et des credentials cross-origin.
+      const res = await apiFetch(url);
       if (!res.ok) return;
       const data = await res.json();
       if (data.messages && data.messages.length > 0) {

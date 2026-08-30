@@ -2,13 +2,36 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { IngressClient, IngressInput } from "livekit-server-sdk";
 
 /**
  * GET /api/live/[id]/ingress
  *
  * Retourne les informations RTMP pour un encodeur externe (OBS).
  * Nécessite une authentification admin.
+ *
+ * FIX C3 : on crée désormais un vrai Ingress LiveKit (RTMP_INPUT) côté serveur
+ *          au lieu de fabriquer une URL `rtmp://{host}/{roomName}` qui n'était
+ *          pas validée par LiveKit et ne fonctionnait pas. On retourne
+ *          `info.url` + `info.streamKey` fournis par LiveKit.
  */
+
+const LIVEKIT_URL =
+  process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
+const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
+const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
+
+/**
+ * Convertit l'URL WebSocket/HTTP LiveKit en URL HTTP(S) attendue par
+ * IngressClient (qui attend `https://<project>.livekit.cloud`).
+ */
+function livekitHttpUrl(): string {
+  const url = LIVEKIT_URL.trim();
+  if (url.startsWith("wss://")) return `https://${url.slice("wss://".length)}`;
+  if (url.startsWith("ws://")) return `http://${url.slice("ws://".length)}`;
+  return url;
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -29,40 +52,50 @@ export async function GET(
       return NextResponse.json({ error: "Live introuvable" }, { status: 404 });
     }
 
-    const roomName = (live as Record<string, unknown>).livekitRoomName as string || `live-${id}`;
-    const livekitUrl = process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
+    const roomName =
+      (live as Record<string, unknown>).livekitRoomName as string | undefined || `live-${id}`;
 
-    // RTMP URL for OBS — LiveKit accepte les connexions RTMP
-    // Format: rtmp://{host}/{roomName}
-    const rtmpHost = livekitUrl
-      .replace("wss://", "")
-      .replace("ws://", "")
-      .replace("https://", "")
-      .replace("http://", "");
-    const rtmpUrl = `rtmp://${rtmpHost}/${roomName}`;
+    // FIX C3 : créer un véritable Ingress RTMP via le SDK LiveKit.
+    // - IngressClient existe dans livekit-server-sdk (v2.18+).
+    // - IngressInput.RTMP_INPUT est ré-exporté depuis `livekit-server-sdk`.
+    // - `participantIdentity` est obligatoire selon CreateIngressOptions.
+    const ingressClient = new IngressClient(
+      livekitHttpUrl(),
+      LIVEKIT_API_KEY,
+      LIVEKIT_API_SECRET
+    );
 
-    // Stream key — basée sur le liveId (sera validée par LiveKit)
-    const streamKey = `live-${id}`;
+    const info = await ingressClient.createIngress(IngressInput.RTMP_INPUT, {
+      name: `live-${id}`,
+      roomName,
+      participantIdentity: `obs-${id}`,
+      participantName: `OBS Studio (live ${id})`,
+      // RTMP nécessite le transcoding (re-encodage) côté LiveKit.
+      enableTranscoding: true,
+    });
 
     return NextResponse.json({
       roomName,
-      rtmpUrl,
-      streamKey,
-      livekitUrl,
+      rtmpUrl: info.url,
+      streamKey: info.streamKey,
+      ingressId: info.ingressId,
+      livekitUrl: LIVEKIT_URL,
       obsInstructions: [
         "1. Ouvrez OBS Studio",
         "2. Paramètres → Stream",
         "3. Type de service: Personnalisé",
-        `4. URL du serveur: ${rtmpUrl}`,
-        `5. Clé de stream: ${streamKey}`,
-        "6. Cliquez 'Démarrer le streaming' dans OBS",
+        `4. URL du serveur: ${info.url}`,
+        `5. Clé de stream: ${info.streamKey}`,
+        "6. Cliquez 'Démarrer le Streaming' dans OBS",
         "7. Revenez ici et cliquez 'Go Live' — le studio recevra votre flux OBS",
       ],
     });
   } catch (error) {
     console.error("[ingress] Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Erreur" },
+      {
+        error: error instanceof Error ? error.message : "Erreur",
+      },
       { status: 500 }
     );
   }

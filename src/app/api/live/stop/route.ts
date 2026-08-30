@@ -57,14 +57,23 @@ export async function POST(req: NextRequest) {
     // Calculer la durée du live
     const now = new Date();
     let durationStr = "";
-    if (live.startedAt) {
-      const durationMs = now.getTime() - new Date(live.startedAt).getTime();
+    // (C7) Si startedAt est null (par ex. /api/live/start a échoué), estimer
+    // la durée avec scheduledAt comme point de départ. Si aucune estimation
+    // n'est possible ou si la durée calculée est négative, mettre "0:00" au
+    // lieu de laisser une chaîne vide.
+    const startForDuration = live.startedAt || live.scheduledAt;
+    if (startForDuration) {
+      const durationMs = now.getTime() - new Date(startForDuration).getTime();
       if (durationMs > 0) {
         const h = Math.floor(durationMs / 3600000);
         const m = Math.floor((durationMs % 3600000) / 60000);
         const s = Math.floor((durationMs % 60000) / 1000);
         durationStr = h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}` : `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+      } else {
+        durationStr = "0:00";
       }
+    } else {
+      durationStr = "0:00";
     }
 
     // Mettre à jour le live : statut ENDED + endedAt

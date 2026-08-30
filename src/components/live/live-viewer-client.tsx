@@ -54,9 +54,19 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [memberId, setMemberId] = useState<string | null>(null);
   const [viewerFirstName, setViewerFirstName] = useState<string>("");
   const [checkingMember, setCheckingMember] = useState(true);
+  // (C6) startedAt fraîche récupérée via le poll /api/live/next.
+  // La prop SSR live.startedAt est stale dès que le live démarre après le
+  // rendu initial (elle reste null si la page a été chargée en SCHEDULED).
+  const [liveStartedAt, setLiveStartedAt] = useState<string | null>(live.startedAt);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
+  // (C1) Refs pour éviter les reconnexions LiveKit inutiles
+  const hasConnectedRef = useRef(false);
+  const viewerFirstNameRef = useRef(viewerFirstName);
+  useEffect(() => {
+    viewerFirstNameRef.current = viewerFirstName;
+  }, [viewerFirstName]);
 
   // ─── Auto-join pour utilisateurs NextAuth connectés ───
   useEffect(() => {
@@ -128,19 +138,29 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
   // Polling statut
   useEffect(() => {
-    if (live.status !== "SCHEDULED") return;
+    // Poller tant que le live n'a pas démarré (SCHEDULED),
+    // ou si le live est en cours mais qu'on n'a pas encore startedAt
+    // (récupération après transition SCHEDULED → LIVE).
+    if (live.status !== "SCHEDULED" && !(isLive && !liveStartedAt)) return;
     const checkStatus = async () => {
       try {
         const res = await apiFetch("/api/live/next");
         const data = await res.json();
-        if (data.live?.id === live.id && data.live.status === "LIVE") {
-          setIsLive(true);
+        if (data.live?.id === live.id) {
+          if (data.live.status === "LIVE") {
+            setIsLive(true);
+          }
+          // (C6) Récupérer startedAt fraîche depuis l'API
+          if (data.live.startedAt) {
+            setLiveStartedAt(data.live.startedAt);
+          }
         }
       } catch {}
     };
+    checkStatus();
     const interval = setInterval(checkStatus, 30000);
     return () => clearInterval(interval);
-  }, [live.status, live.id]);
+  }, [live.status, live.id, isLive, liveStartedAt]);
 
   // Compteur viewers réel depuis l'API
   useEffect(() => {
@@ -159,9 +179,10 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
   // Durée du live (affichée côté viewer)
   useEffect(() => {
-    if (!isLive || !live.startedAt) return;
+    // (C6) Utiliser startedAt fraîche (state local) au lieu de la prop SSR.
+    if (!isLive || !liveStartedAt) return;
     const update = () => {
-      const elapsed = Math.floor((Date.now() - new Date(live.startedAt).getTime()) / 1000);
+      const elapsed = Math.floor((Date.now() - new Date(liveStartedAt).getTime()) / 1000);
       const h = Math.floor(elapsed / 3600);
       const m = Math.floor((elapsed % 3600) / 60);
       const s = elapsed % 60;
@@ -170,12 +191,53 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [isLive, live.startedAt]);
+  }, [isLive, liveStartedAt]);
 
-  // Connexion LiveKit subscriber
+  // ═══════════════════════════════════════════════════════════════════
+  // (C1) Effet 1 : Enregistrement viewer en DB (POST /viewers)
+  // Séparé de la connexion LiveKit pour éviter les reconnexions quand
+  // memberId/viewerFirstName changent après le join.
+  // ═══════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (!isLive || !hasJoined || !memberId) return;
+
+    // Enregistrer la présence du viewer côté serveur
+    apiFetch(`/api/live/${live.id}/viewers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId }),
+    }).catch(() => {});
+
+    // Déconnexion à la fermeture de la page (sendBeacon)
+    const handleBeforeUnload = () => {
+      navigator.sendBeacon(`/api/live/${live.id}/viewers?memberId=${memberId}`, "");
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      // Marquer comme inactif (leave)
+      apiFetch(`/api/live/${live.id}/viewers?memberId=${memberId}`, { method: "DELETE" }).catch(() => {});
+    };
+  }, [isLive, hasJoined, memberId, live.id]);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // (C1) Effet 2 : Connexion LiveKit subscriber — deps MINIMALES
+  // [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined]
+  // memberId et viewerFirstName sont retirés des deps (lus via refs)
+  // pour éviter déconnexion/reconnexion rapide → track détaché.
+  // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (!isLive || !live.livekitRoomName || live.youtubeUrl) return;
     if (!hasJoined) return; // Ne se connecte que si le viewer a rejoint
+    // (C1) Éviter les reconnexions inutiles si l'effet se ré-exécute
+    if (hasConnectedRef.current) return;
+    hasConnectedRef.current = true;
+
+    let cancelled = false;
+    // (H1) Éléments <audio> attachés au DOM (Safari/iOS exige qu'ils soient
+    // dans le document pour pouvoir les jouer). Nettoyés au unmount/déconnexion.
+    const attachedAudioEls: HTMLAudioElement[] = [];
 
     const connectToRoom = async () => {
       setConnecting(true);
@@ -184,7 +246,11 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         const tokenRes = await apiFetch("/api/livekit/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomName: live.livekitRoomName, role: "subscriber", participantName: viewerFirstName || "Visiteur" }),
+          body: JSON.stringify({
+            roomName: live.livekitRoomName,
+            role: "subscriber",
+            participantName: viewerFirstNameRef.current || "Visiteur",
+          }),
         });
         if (!tokenRes.ok) {
           const data = await tokenRes.json();
@@ -194,6 +260,14 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
         const room = new Room({ adaptiveStream: true, dynacast: true });
         roomRef.current = room;
+
+        // (C1) Afficher "Connexion perdue" si la room se déconnecte
+        room.on(RoomEvent.Disconnected, () => {
+          if (!cancelled) {
+            setConnectionError("Connexion perdue — tentative de reconnexion...");
+          }
+        });
+
         await room.connect(url, token);
 
         room.on(RoomEvent.TrackSubscribed, (track) => {
@@ -206,8 +280,29 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
             });
           } else if (track.kind === Track.Kind.Audio) {
             const audioEl = document.createElement("audio");
+            audioEl.autoplay = true;
             track.attach(audioEl);
+            // (H1) Safari/iOS nécessitent que l'élément <audio> soit attaché
+            // au DOM pour pouvoir être lu (même en autoplay).
+            document.body.appendChild(audioEl);
+            attachedAudioEls.push(audioEl);
             audioEl.play().catch(() => {});
+          }
+        });
+
+        // (H1) Nettoyer l'élément audio quand le track est désabonné
+        room.on(RoomEvent.TrackUnsubscribed, (track) => {
+          if (track.kind !== Track.Kind.Audio) return;
+          for (let i = attachedAudioEls.length - 1; i >= 0; i--) {
+            const el = attachedAudioEls[i];
+            try {
+              track.detach(el);
+            } catch {}
+            try {
+              el.pause();
+            } catch {}
+            el.remove();
+            attachedAudioEls.splice(i, 1);
           }
         });
 
@@ -219,47 +314,50 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               videoRef.current.play().catch(() => {});
             } else if (pub.track && pub.track.kind === Track.Kind.Audio) {
               const audioEl = document.createElement("audio");
+              audioEl.autoplay = true;
               pub.track.attach(audioEl);
+              // (H1) Attacher au DOM pour Safari/iOS
+              document.body.appendChild(audioEl);
+              attachedAudioEls.push(audioEl);
               audioEl.play().catch(() => {});
             }
           });
         });
 
-        setConnecting(false);
+        if (!cancelled) {
+          setConnecting(false);
+          setConnectionError(""); // Effacer l'éventuel message "Connexion perdue"
+        }
       } catch (err) {
-        setConnectionError(err instanceof Error ? err.message : "Erreur de connexion");
-        setConnecting(false);
+        if (!cancelled) {
+          setConnectionError(err instanceof Error ? err.message : "Erreur de connexion");
+          setConnecting(false);
+          // Autoriser une nouvelle tentative si l'effet se ré-exécute
+          hasConnectedRef.current = false;
+        }
       }
     };
 
     connectToRoom();
 
-    // Rejoindre le live (enregistrer la session viewer en DB)
-    if (memberId) {
-      apiFetch(`/api/live/${live.id}/viewers`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId }),
-      }).catch(() => {});
-    }
-
-    // Déconnexion à la fermeture de la page
-    const handleBeforeUnload = () => {
-      if (memberId) {
-        navigator.sendBeacon(`/api/live/${live.id}/viewers?memberId=${memberId}`, "");
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
     return () => {
-      if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      // Marquer comme inactif
-      if (memberId) {
-        apiFetch(`/api/live/${live.id}/viewers?memberId=${memberId}`, { method: "DELETE" }).catch(() => {});
+      cancelled = true;
+      // (H1) Retirer tous les éléments <audio> du DOM au nettoyage
+      for (const el of attachedAudioEls) {
+        try {
+          el.pause();
+        } catch {}
+        el.remove();
       }
+      attachedAudioEls.length = 0;
+      if (roomRef.current) {
+        roomRef.current.disconnect();
+        roomRef.current = null;
+      }
+      // Réinitialiser pour permettre une reconnexion future si l'effet re-démarre
+      hasConnectedRef.current = false;
     };
-  }, [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined, memberId, live.id, viewerFirstName]);
+  }, [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined]);
 
   const accentColor = live.servantCode === "pam" ? "#C9A227" : "#8C5FA8";
   const getYouTubeEmbedUrl = (url: string) => {

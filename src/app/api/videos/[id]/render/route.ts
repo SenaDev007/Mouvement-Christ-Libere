@@ -6,6 +6,7 @@ import fs from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { uploadToR2, generateKey, isR2Configured } from "@/lib/r2";
 
 const execAsync = promisify(exec);
 
@@ -15,6 +16,11 @@ const execAsync = promisify(exec);
  * Concatène intro + replay + outro avec FFmpeg.
  * Trim le replay (début/fin).
  * Sauvegarde le résultat final.
+ *
+ * FIX H8 : le fichier final produit par FFmpeg est uploadé vers Cloudflare R2
+ *          (via uploadToR2) au lieu d'être copié dans `public/rendered-videos/`
+ *          qui est read-only sur Vercel (EROFS). L'URL R2 est ensuite stockée
+ *          dans `Video.videoUrl`.
  *
  * Body: {
  *   trimStart?: number,     // secondes
@@ -47,6 +53,19 @@ export async function POST(
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
+    // FIX H8 : le rendu final doit être uploadé vers R2. Sans R2 configuré,
+    // on ne peut pas écrire dans public/ (read-only sur Vercel) ni stocker un
+    // gros fichier en base64. On échoue tôt avec un message clair.
+    if (!isR2Configured()) {
+      return NextResponse.json(
+        {
+          error:
+            "Cloudflare R2 n'est pas configuré. Le rendu post-production nécessite R2 (variables R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME).",
+        },
+        { status: 500 }
+      );
+    }
+
     const { id } = await params;
     const body = await req.json();
     const { trimStart, trimEnd, introUrl, outroUrl, thumbnailUrl, title } = body;
@@ -61,7 +80,8 @@ export async function POST(
     }
 
     const ffmpegPath = getFfmpegPath();
-    const tmpDir = path.join(process.cwd(), "tmp", `render-${id}`);
+    // /tmp est le SEUL répertoire inscriptible sur Vercel serverless.
+    const tmpDir = path.join("/tmp", `render-${id}-${Date.now()}`);
     await fs.mkdir(tmpDir, { recursive: true });
 
     const steps: string[] = [];
@@ -80,7 +100,6 @@ export async function POST(
       await fs.writeFile(mainFile, Buffer.from(base64, "base64"));
       steps.push("Décodage vidéo principale (base64)");
     } else {
-      // Pas de vidéo source
       return NextResponse.json({ error: "Aucune vidéo source à éditer" }, { status: 400 });
     }
 
@@ -139,14 +158,13 @@ export async function POST(
       steps.push(`Concaténation de ${filesToConcat.length} segments`);
     }
 
-    // ─── 5. Sauvegarder le résultat ───
-    // En production, on uploaderait vers Vercel Blob / Backblaze B2
-    // Pour l'instant, on stocke localement
-    const outputDir = path.join(process.cwd(), "public", "rendered-videos");
-    await fs.mkdir(outputDir, { recursive: true });
-    const outputFile = path.join(outputDir, `video-${id}.mp4`);
-    await fs.copyFile(finalFile, outputFile);
-    const outputUrl = `/rendered-videos/video-${id}.mp4`;
+    // ─── 5. FIX H8 : uploader le fichier final vers R2 ───
+    // Au lieu de `fs.copyFile(finalFile, public/rendered-videos/...)` qui
+    // déclenche EROFS sur Vercel, on lit le buffer final et on l'envoie sur R2.
+    const finalBuffer = await fs.readFile(finalFile);
+    const r2Key = generateKey("rendered-videos", `video-${id}`, "mp4");
+    const outputUrl = await uploadToR2(r2Key, finalBuffer, "video/mp4");
+    steps.push(`Upload R2 (${Math.round(finalBuffer.length / 1024 / 1024)}MB)`);
 
     // ─── 6. Mettre à jour la vidéo en DB ───
     await db.video.update({
@@ -166,6 +184,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       videoUrl: outputUrl,
+      storage: "r2",
       steps,
       message: `Rendu terminé: ${steps.length} étapes effectuées`,
     });
