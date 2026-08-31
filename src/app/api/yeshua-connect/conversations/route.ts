@@ -128,7 +128,8 @@ export async function GET(_req: NextRequest) {
         type: convType,
         name: ch.name,
         description: ch.description ?? undefined,
-        avatarUrl: undefined,
+        // ⭐ V2.5 — Photo du canal (uploadée depuis le back-office)
+        avatarUrl: ch.avatarUrl ?? undefined,
         createdBy: ch.members[0]?.userId ?? "",
         createdAt: ch.createdAt.toISOString(),
         updatedAt: ch.updatedAt.toISOString(),

@@ -8,7 +8,7 @@
  * Pas de "read receipts" — remplacé par "Bénédiction" (✋) et "Amen" (🙏).
  */
 
-export type MessageType = "TEXT" | "AUDIO" | "IMAGE" | "VIDEO" | "FILE" | "VERSE" | "ANNOUNCEMENT" | "GIF";
+export type MessageType = "TEXT" | "AUDIO" | "IMAGE" | "VIDEO" | "FILE" | "VERSE" | "ANNOUNCEMENT" | "GIF" | "POLL" | "SCHEDULED";
 export type ConversationType = "DIRECT" | "GROUP" | "CHANNEL" | "PASTORS" | "VOICE";
 export type AnnouncementPriority = "INFO" | "NORMAL" | "IMPORTANT" | "URGENT";
 export type AnnouncementTarget = "ALL" | "PASTORS" | "DISCIPLES" | "NEW_BELIEVERS" | "INTERCESSION";
@@ -52,6 +52,8 @@ export interface ChatMessage {
   senderId: string;
   senderName: string;
   senderRole: string;
+  /** ⭐ V2.5 — Avatar de l'expéditeur (bulles de groupe) */
+  senderAvatarUrl?: string;
   type: MessageType;
   content?: string;
   attachmentUrl?: string;
@@ -63,9 +65,27 @@ export interface ChatMessage {
   replyTo?: { senderName: string; content: string };
   verseRef?: string;
   verseText?: string;
+  /** ⭐ V2.5 — Sondage attaché (messages type POLL) */
+  poll?: ChatPoll;
   reactions: MessageReaction[];
   createdAt: string;
   editedAt?: string;
+}
+
+/** ⭐ V2.5 — Sondage (comme WhatsApp/Telegram) attaché à un message POLL. */
+export interface ChatPoll {
+  id: string;
+  question: string;
+  isMulti: boolean;
+  expiresAt?: string;
+  options: ChatPollOption[];
+}
+
+export interface ChatPollOption {
+  id: string;
+  label: string;
+  order: number;
+  votes: { userId: string }[];
 }
 
 export interface MessageReaction {

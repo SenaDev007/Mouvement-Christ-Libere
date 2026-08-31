@@ -45,6 +45,12 @@ export function YoutubeSetupClient({
   const [oauthStarting, setOauthStarting] = useState(false);
   const [oauthError, setOauthError] = useState("");
   const [queryError, setQueryError] = useState("");
+  // ⭐ V2.5 — Mode « post-configuration » : quand l'OAuth est configuré, les
+  // étapes d'installation (1 à 4) et les encarts d'aide sont repliés. La page
+  // reste utile en permanence : test des replays, statut des tiers, et
+  // régénération du refresh token (il expire tous les 7 jours si l'app Google
+  // est restée en mode Testing — d'où l'intérêt de ne PAS supprimer la page).
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -185,7 +191,40 @@ export function YoutubeSetupClient({
           </div>
         </div>
 
-        {/* ⚠️ Encart : erreur « Accès bloqué » 403 access_denied */}
+        {/* ⭐ V2.5 — MODE POST-CONFIGURATION : quand tout est en place, la page
+            reste volontairement (elle sert aux tests et à la régénération du
+            token) mais le guide d'installation est replié. */}
+        {oauthConfigured && (
+          <div className="rounded-2xl p-5 mb-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-bold text-green-900 mb-1">Configuration terminée — rien à refaire ✓</p>
+                <p className="text-xs text-green-800 leading-relaxed mb-3">
+                  Les 4 variables sont en place et le système fonctionne sans intervention.
+                  Cette page reste utile en permanence pour :
+                </p>
+                <ul className="text-xs text-green-800 space-y-1 mb-3">
+                  <li>• <strong>Tester</strong> la récupération des replays (section Test ci-dessous) ;</li>
+                  <li>• <strong>Régénérer le refresh token</strong> si besoin : en mode « Testing » chez Google,
+                    il expire tous les 7 jours (relancez le flux via « Reconfigurer »). Si l'app est
+                    passée « In production », le token est permanent ;</li>
+                  <li>• <strong>Diagnostiquer</strong> un problème (statut des 3 tiers, erreur 403, liens Google).</li>
+                </ul>
+                <button
+                  onClick={() => setShowSetupGuide(!showSetupGuide)}
+                  className="text-xs font-bold text-green-700 hover:text-green-900 underline cursor-pointer"
+                >
+                  {showSetupGuide ? "Masquer le guide de configuration" : "Reconfigurer / régénérer le token →"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ⚠️ Encart : erreur « Accès bloqué » 403 access_denied — replié en
+            mode post-configuration (visible tant que le guide est déplié) */}
+        {(showSetupGuide || !oauthConfigured) && (
         <div className="rounded-2xl p-5 mb-6 bg-red-50 border-2 border-red-200">
           <div className="flex items-start gap-3">
             <ShieldAlert className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
@@ -225,8 +264,11 @@ export function YoutubeSetupClient({
             </div>
           </div>
         </div>
+        )}
 
-        {/* Encart : écran de consentement Google (politique + conditions) */}
+        {/* Encart : écran de consentement Google (politique + conditions) —
+            replié en mode post-configuration */}
+        {(showSetupGuide || !oauthConfigured) && (
         <div className="rounded-2xl p-5 mb-6 bg-white border-2 border-[#C9A227]/30">
           <div className="flex items-start gap-3">
             <FileText className="w-6 h-6 text-[#C9A227] flex-shrink-0 mt-0.5" />
@@ -261,6 +303,7 @@ export function YoutubeSetupClient({
             </div>
           </div>
         </div>
+        )}
 
         {/* Erreur renvoyée par la route start (GET) */}
         {queryError && (
@@ -274,6 +317,10 @@ export function YoutubeSetupClient({
             </div>
           </div>
         )}
+
+        {/* ⭐ V2.5 — Étapes d'installation 1 à 4 : repliées en mode
+            post-configuration (l'app est déjà en place, rien à refaire) */}
+        {(showSetupGuide || !oauthConfigured) && (<>
 
         {/* Étape 1 : Google Cloud Console */}
         <Section
@@ -521,6 +568,8 @@ export function YoutubeSetupClient({
             </p>
           </div>
         </Section>
+
+        </>)}
 
         {/* Étape 5 : Test */}
         <Section

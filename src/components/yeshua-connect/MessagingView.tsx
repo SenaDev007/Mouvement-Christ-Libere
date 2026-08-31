@@ -51,7 +51,7 @@ import {
   MoreVertical, Bell, BellOff, Megaphone, Pin, Edit2, Trash2,
   Forward, Check, X, ArrowLeft, Globe, Settings, UserPlus,
   Calendar, BarChart3, Phone, Video, Smile, FileText, Image as ImageIcon,
-  StopCircle, Play, Pause, Sparkles, ChevronRight, AlertCircle,
+  StopCircle, Play, Pause, Sparkles, AlertCircle,
   MessageCircle, AtSign, ChevronUp, Copy, UploadCloud,
   ScrollText, PhoneOff, MicOff, VolumeX, Download, Film,
 } from "lucide-react";
@@ -60,7 +60,7 @@ import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant } from "liv
 import { cn } from "@/lib/utils";
 import {
   QUICK_REACTIONS,
-  type ChatConversation, type ChatMessage,
+  type ChatConversation, type ChatMessage, type ChatPoll,
 } from "@/lib/yeshua-connect/types";
 import { getYeshuaWatermarkStyle } from "./YeshuaWatermark";
 import { api } from "@/lib/api-client";
@@ -290,8 +290,9 @@ export function MessagingView() {
   const [showNotifPrefs, setShowNotifPrefs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showForwardModal, setShowForwardModal] = useState<string | null>(null);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [showPollModal, setShowPollModal] = useState(false);
+  // (⭐ V2.5) showScheduleModal / showPollModal supprimés : les formulaires
+  // vivent désormais dans les panneaux du modal « Joindre » (attachPanel).
+  const [scheduleContent, setScheduleContent] = useState("");
   // (S5) State pour poll et scheduled message
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
@@ -377,6 +378,10 @@ export function MessagingView() {
   const [gifQuery, setGifQuery] = useState("");
   const [gifResults, setGifResults] = useState<Array<{ id: string; url: string; preview: string; width?: number; height?: number }>>([]);
   const [gifLoading, setGifLoading] = useState(false);
+  // ⭐ V2.5 — Modal « Joindre » unifié façon WhatsApp : un seul bouton trombone
+  // qui ouvre un modal regroupant Document, Image, GIF, Sondage et Programmé.
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [attachPanel, setAttachPanel] = useState<"menu" | "gif" | "poll" | "schedule">("menu");
   const gifSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ⭐ V2.3 — Audit Log (modération)
@@ -1782,20 +1787,11 @@ export function MessagingView() {
           </div>
         </div>
 
-        {/* Community link */}
-        <Link
-          href="/communaute"
-          className="flex items-center gap-3 px-4 py-3 border-b border-stone-100 hover:bg-[#C9A227]/5 transition-colors group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-[#C9A227]/15 border border-[#C9A227]/30 flex items-center justify-center">
-            <Users2 className="w-5 h-5 text-[#C9A227]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-[#1E0F2B]">Communauté</p>
-            <p className="text-xs text-stone-500 truncate">Canaux, groupes et membres</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-[#C9A227]" />
-        </Link>
+        {/* (⭐ V2.5) Lien « Communauté » retiré de la sidebar : cette page
+            n'est qu'une vitrine d'information qui renvoie elle-même vers
+            Yeshua Connect — y être redirigé depuis ici était un cycle.
+            La liste ci-dessous (Canaux / Groupes / Direct / Vocaux)
+            remplace ce bouton. */}
 
         {/* Conversation list */}
         <div className="flex-1 overflow-y-auto">
@@ -2039,6 +2035,15 @@ export function MessagingView() {
               {activeMessages.map((msg, i) => {
                 const isMine = msg.senderId === currentUserId;
                 const showDateSep = i === 0 || formatDateSeparator(activeMessages[i - 1].createdAt) !== formatDateSeparator(msg.createdAt);
+                // ⭐ V2.5 — Avatar affiché uniquement au PREMIER message d'une
+                // série consécutive du même expéditeur (comme WhatsApp) :
+                // évite la répétition d'avatars identiques empilés.
+                const prevMsg = activeMessages[i - 1];
+                const showSenderAvatar =
+                  !isMine &&
+                  (i === 0 ||
+                    prevMsg.senderId !== msg.senderId ||
+                    formatDateSeparator(prevMsg.createdAt) !== formatDateSeparator(msg.createdAt));
                 // ⭐ V2.1 — Détection d'URLs dans le contenu texte pour LinkEmbed
                 const messageUrls = msg.type === "TEXT" && msg.content ? extractUrls(msg.content) : [];
                 // ⭐ V2.1 — Compter les réponses dans le thread (client-side)
@@ -2048,17 +2053,39 @@ export function MessagingView() {
                 return (
                   <div key={msg.id}>
                     {showDateSep && (
-                      <div className="flex items-center justify-center my-4">
-                        <span className="px-3 py-1 bg-stone-100 rounded-full text-[10px] font-bold text-stone-500 uppercase tracking-wider">
-                          {formatDateSeparator(msg.createdAt)}
-                        </span>
+                      <div className="flex items-center justify-center my-5">
+                        <div className="flex items-center gap-2 w-full max-w-[520px] mx-auto">
+                          <div className="flex-1 h-px bg-stone-200" />
+                          <span className="px-3.5 py-1.5 bg-white border border-stone-200 rounded-full text-[10px] font-bold text-stone-500 uppercase tracking-wider shadow-sm">
+                            {formatDateSeparator(msg.createdAt)}
+                          </span>
+                          <div className="flex-1 h-px bg-stone-200" />
+                        </div>
                       </div>
                     )}
                     <div className={cn("group relative flex flex-col", isMine ? "items-end" : "items-start")}>
-                      <div className={cn("group relative flex", isMine ? "justify-end" : "justify-start")}>
+                      <div className={cn("group relative flex items-end gap-2", isMine ? "justify-end" : "justify-start")}>
+                        {/* ⭐ V2.5 — Avatar de l'expéditeur dans les canaux/groupes
+                            (bulles professionnelles façon WhatsApp : avatar rond
+                            pour les messages des AUTRES) */}
+                        {!isMine && (activeConv?.type === "GROUP" || activeConv?.type === "PASTORS" || activeConv?.type === "CHANNEL") && showSenderAvatar && (
+                          <div className="w-8 h-8 rounded-full flex-shrink-0 mb-4 overflow-hidden border border-stone-200">
+                            {msg.senderAvatarUrl ? (
+                              <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className={cn("w-full h-full flex items-center justify-center text-white text-[10px] font-bold", getAvatarColor(msg.senderName))}>
+                                {getInitials(msg.senderName)}
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <div className={cn(
+                          // ⭐ V2.5 — Bulles avec « queue » façon messagerie pro :
+                          // coin inférieur côté expéditeur légèrement effilé
                           "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm",
-                          isMine ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-white border border-stone-200 text-[#1E0F2B]"
+                          isMine
+                            ? "bg-[#C9A227] text-[#1E0F2B] rounded-br-md"
+                            : "bg-white border border-stone-200 text-[#1E0F2B] rounded-bl-md"
                         )}>
                           {/* Reply quote */}
                           {msg.replyTo && (
@@ -2080,7 +2107,23 @@ export function MessagingView() {
                             </p>
                           )}
                           {/* Content */}
-                          {msg.type === "VERSE" && msg.verseRef ? (
+                          {msg.type === "POLL" && msg.poll ? (
+                            <PollMessage
+                              poll={msg.poll}
+                              currentUserId={currentUserId}
+                              onVoted={(updated) => {
+                                // Mise à jour optimiste du sondage dans les messages
+                                if (activeConvId) {
+                                  setMessages(prev => ({
+                                    ...prev,
+                                    [activeConvId]: (prev[activeConvId] || []).map(m =>
+                                      m.id === msg.id ? { ...m, poll: updated } : m
+                                    ),
+                                  }));
+                                }
+                              }}
+                            />
+                          ) : msg.type === "VERSE" && msg.verseRef ? (
                             <div className={cn(
                               "px-3 py-2 rounded-xl border-l-4 my-1",
                               isMine ? "bg-[#1E0F2B]/10 border-[#1E0F2B]" : "bg-[#C9A227]/5 border-[#C9A227]"
@@ -2131,14 +2174,19 @@ export function MessagingView() {
                           </div>
                           {/* Reactions */}
                           {msg.reactions.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
+                            <div className="flex flex-wrap gap-1 mt-1.5">
                               {msg.reactions.reduce((acc, r) => {
                                 const ex = acc.find(e => e.emoji === r.emoji);
                                 if (ex) ex.count++; else acc.push({ emoji: r.emoji, count: 1 });
                                 return acc;
                               }, [] as { emoji: string; count: number }[]).map(r => (
-                                <span key={r.emoji} className="px-1.5 py-0.5 rounded-full bg-[#1E0F2B]/10 text-xs">
-                                  {r.emoji} {r.count > 1 && r.count}
+                                <span key={r.emoji} className={cn(
+                                  "px-1.5 py-0.5 rounded-full text-xs border transition-colors",
+                                  isMine
+                                    ? "bg-[#1E0F2B]/10 border-[#1E0F2B]/15"
+                                    : "bg-stone-50 border-stone-200"
+                                )}>
+                                  {r.emoji} {r.count > 1 && <span className="text-[10px] font-bold">{r.count}</span>}
                                 </span>
                               ))}
                             </div>
@@ -2292,11 +2340,19 @@ export function MessagingView() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Joindre un fichier">
+                {/* ⭐ V2.5 — Bouton « Joindre » unique (façon WhatsApp) :
+                    ouvre le modal regroupant Document, Image, GIF, Sondage
+                    et Programmé. Remplace les 5 boutons séparés
+                    (trombone, image, GIF, sondage, calendrier). */}
+                <button
+                  onClick={() => { setAttachOpen(true); setAttachPanel("menu"); }}
+                  className={cn(
+                    "p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors cursor-pointer",
+                    attachOpen && "bg-[#C9A227]/10 text-[#C9A227]"
+                  )}
+                  title="Joindre — document, image, GIF, sondage, message programmé"
+                >
                   <Paperclip className="w-4 h-4" />
-                </button>
-                <button onClick={() => imageInputRef.current?.click()} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Image">
-                  <ImageIcon className="w-4 h-4" />
                 </button>
                 {/* ⭐ V2.2 — Emoji Picker (Popover shadcn/ui) */}
                 <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
@@ -2321,40 +2377,8 @@ export function MessagingView() {
                     <EmojiPicker onEmojiSelect={(emoji) => { handleEmojiSelect(emoji); }} />
                   </PopoverContent>
                 </Popover>
-                {/* ⭐ V2.3 — GIF Picker (Giphy API publique) */}
-                <Popover open={showGifPicker} onOpenChange={(o) => {
-                  setShowGifPicker(o);
-                  // (S5) Charger les GIFs trending à l'ouverture
-                  if (o && gifResults.length === 0) loadTrendingGifs();
-                  if (!o) { setGifQuery(""); setGifResults([]); }
-                }}>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className={cn(
-                        "p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors",
-                        showGifPicker && "bg-[#C9A227]/10 text-[#C9A227]"
-                      )}
-                      title="GIF"
-                    >
-                      <span className="text-[10px] font-bold tracking-wider">GIF</span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="start"
-                    side="top"
-                    sideOffset={8}
-                    className="w-80 p-0 border-stone-200"
-                  >
-                    <GifPicker
-                      query={gifQuery}
-                      results={gifResults}
-                      loading={gifLoading}
-                      onSearch={searchGifs}
-                      onSelect={(url, name) => sendGif(url, name)}
-                    />
-                  </PopoverContent>
-                </Popover>
+                {/* (⭐ V2.5) Le popover GIF a été déplacé dans le modal « Joindre »
+                    (panneau GIF) — plus de bouton GIF séparé dans la barre. */}
                 {/* ⭐ V2.1 — Wrap textarea + popovers (SlashCommands + Mention autocomplete) */}
                 <div className="relative flex-1">
                   {/* SlashCommands popover : visible quand l'input commence par "/" */}
@@ -2419,12 +2443,9 @@ export function MessagingView() {
                     disabled={sending}
                   />
                 </div>
-                <button onClick={() => setShowPollModal(true)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Sondage">
-                  <BarChart3 className="w-4 h-4" />
-                </button>
-                <button onClick={() => setShowScheduleModal(true)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Programmer">
-                  <Calendar className="w-4 h-4" />
-                </button>
+                {/* (⭐ V2.5) Boutons Sondage et Programmé déplacés dans le modal
+                    « Joindre » (trombone) — la barre reste épurée : trombone,
+                    emojis, champ de saisie, micro/envoi. */}
                 {inputText.trim() ? (
                   <button onClick={handleSend} disabled={sending}
                     className="p-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] disabled:opacity-30 transition-colors">
@@ -2581,124 +2602,284 @@ export function MessagingView() {
         </Modal>
       )}
 
-      {/* Schedule Modal */}
-      {/* (S5) Scheduled Message Modal — fonctionnel */}
-      {showScheduleModal && (
-        <Modal onClose={() => setShowScheduleModal(false)} title="Programmer le message">
-          <div className="space-y-3">
-            <textarea
-              value={scheduleContent}
-              onChange={(e) => setScheduleContent(e.target.value)}
-              placeholder="Votre message..."
-              className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
-              rows={3}
-            />
-            <input
-              type="datetime-local"
-              value={scheduleAt}
-              onChange={(e) => setScheduleAt(e.target.value)}
-              className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none"
-            />
-            <button
-              onClick={async () => {
-                if (!activeConvId || !scheduleContent.trim() || !scheduleAt) return;
-                setSubmittingSchedule(true);
-                try {
-                  const res = await fetch(api.url("/api/yeshua-connect/scheduled-messages"), {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ channelId: activeConvId, content: scheduleContent, scheduledAt: scheduleAt }),
-                  });
-                  if (res.ok) {
-                    setShowScheduleModal(false);
-                    setScheduleContent("");
-                    setScheduleAt("");
-                  } else {
-                    alert("Échec de la programmation");
-                  }
-                } catch (e) {
-                  alert("Erreur réseau");
-                } finally {
-                  setSubmittingSchedule(false);
-                }
-              }}
-              disabled={!scheduleContent.trim() || !scheduleAt || submittingSchedule}
-              className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-40"
-            >
-              {submittingSchedule ? "Programmation..." : "Programmer l'envoi"}
-            </button>
-          </div>
-        </Modal>
-      )}
+      {/* ⭐ V2.5 — MODAL « JOINDRE » UNIFIÉ (façon WhatsApp) ─────────────────
+          Un seul point d'entrée (bouton trombone) qui regroupe :
+            • Document  → input fichier caché
+            • Image     → input image caché
+            • GIF       → panneau Giphy intégré
+            • Sondage   → formulaire de création intégré
+            • Programmé → formulaire de message programmé intégré */}
+      {attachOpen && (
+        <Modal
+          onClose={() => { setAttachOpen(false); setAttachPanel("menu"); }}
+          title={
+            attachPanel === "gif" ? "Envoyer un GIF" :
+            attachPanel === "poll" ? "Créer un sondage" :
+            attachPanel === "schedule" ? "Programmer un message" :
+            "Joindre"
+          }
+        >
+          {/* ── Panneau MENU (grille de tuiles, comme WhatsApp) ─────────── */}
+          {attachPanel === "menu" && (
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                {
+                  key: "document",
+                  label: "Document",
+                  desc: "PDF, texte…",
+                  icon: <FileText className="w-6 h-6" />,
+                  color: "#5B7052",
+                  onClick: () => { setAttachOpen(false); fileInputRef.current?.click(); },
+                },
+                {
+                  key: "image",
+                  label: "Image",
+                  desc: "Galerie / photo",
+                  icon: <ImageIcon className="w-6 h-6" />,
+                  color: "#8C5FA8",
+                  onClick: () => { setAttachOpen(false); imageInputRef.current?.click(); },
+                },
+                {
+                  key: "gif",
+                  label: "GIF",
+                  desc: "Giphy",
+                  icon: <Film className="w-6 h-6" />,
+                  color: "#C9A227",
+                  onClick: () => {
+                    setAttachPanel("gif");
+                    if (gifResults.length === 0) loadTrendingGifs();
+                  },
+                },
+                {
+                  key: "poll",
+                  label: "Sondage",
+                  desc: "Vote communautaire",
+                  icon: <BarChart3 className="w-6 h-6" />,
+                  color: "#A3821C",
+                  onClick: () => setAttachPanel("poll"),
+                },
+                {
+                  key: "schedule",
+                  label: "Programmé",
+                  desc: "Envoi différé",
+                  icon: <Calendar className="w-6 h-6" />,
+                  color: "#5B21B6",
+                  onClick: () => setAttachPanel("schedule"),
+                },
+                {
+                  key: "verse",
+                  label: "Verset",
+                  desc: "Partager la Bible",
+                  icon: <BookOpen className="w-6 h-6" />,
+                  color: "#2A0E3D",
+                  onClick: () => {
+                    setAttachOpen(false);
+                    setInputText("/verset ");
+                    messageInputRef.current?.focus();
+                  },
+                },
+              ].map((tile) => (
+                <button
+                  key={tile.key}
+                  onClick={tile.onClick}
+                  className="flex flex-col items-center gap-1.5 p-4 rounded-2xl border border-stone-200 hover:border-[#C9A227]/50 hover:bg-[#C9A227]/5 transition-all cursor-pointer group"
+                >
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105"
+                    style={{ background: `${tile.color}12`, color: tile.color }}
+                  >
+                    {tile.icon}
+                  </div>
+                  <span className="text-xs font-bold text-[#1E0F2B]">{tile.label}</span>
+                  <span className="text-[10px] text-stone-400">{tile.desc}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
-      {/* (S5) Poll Modal — fonctionnel */}
-      {showPollModal && (
-        <Modal onClose={() => setShowPollModal(false)} title="Créer un sondage">
-          <div className="space-y-3">
-            <input
-              value={pollQuestion}
-              onChange={(e) => setPollQuestion(e.target.value)}
-              placeholder="Question..."
-              className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none"
-            />
-            {pollOptions.map((opt, i) => (
-              <input
-                key={i}
-                value={opt}
-                onChange={(e) => {
-                  const newOpts = [...pollOptions];
-                  newOpts[i] = e.target.value;
-                  setPollOptions(newOpts);
+          {/* ── Panneau GIF (recherche Giphy intégrée) ───────────────────── */}
+          {attachPanel === "gif" && (
+            <div className="-mx-6 -mt-2">
+              <div className="px-1 pb-2">
+                <button
+                  onClick={() => setAttachPanel("menu")}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#C9A227] transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Retour
+                </button>
+              </div>
+              <GifPicker
+                query={gifQuery}
+                results={gifResults}
+                loading={gifLoading}
+                onSearch={searchGifs}
+                onSelect={(url, name) => {
+                  sendGif(url, name);
+                  setAttachOpen(false);
+                  setAttachPanel("menu");
                 }}
-                placeholder={`Option ${i + 1}`}
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none"
               />
-            ))}
-            {pollOptions.length < 6 && (
+            </div>
+          )}
+
+          {/* ── Panneau SONDAGE (comme WhatsApp/Telegram) ─────────────────── */}
+          {attachPanel === "poll" && (
+            <div className="space-y-3">
               <button
-                onClick={() => setPollOptions([...pollOptions, ""])}
-                className="text-xs text-[#C9A227] font-bold hover:underline"
+                onClick={() => setAttachPanel("menu")}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#C9A227] transition-colors cursor-pointer"
               >
-                + Ajouter une option
+                <ArrowLeft className="w-3.5 h-3.5" /> Retour
               </button>
-            )}
-            <label className="flex items-center gap-2 text-sm text-stone-600">
-              <input type="checkbox" checked={pollMulti} onChange={(e) => setPollMulti(e.target.checked)} className="accent-[#C9A227]" />
-              Choix multiple
-            </label>
-            <button
-              onClick={async () => {
-                if (!activeConvId || !pollQuestion.trim()) return;
-                const validOptions = pollOptions.filter(o => o.trim());
-                if (validOptions.length < 2) { alert("Au moins 2 options requises"); return; }
-                setSubmittingPoll(true);
-                try {
-                  const res = await fetch(api.url("/api/yeshua-connect/polls"), {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ channelId: activeConvId, question: pollQuestion, options: validOptions, isMulti: pollMulti }),
-                  });
-                  if (res.ok) {
-                    setShowPollModal(false);
-                    setPollQuestion("");
-                    setPollOptions(["", ""]);
-                    setPollMulti(false);
-                    if (activeConvId) loadMessages(activeConvId);
-                  } else {
-                    alert("Échec de la création du sondage");
+              <div className="px-3 py-2 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/20 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+                <p className="text-[11px] text-[#1E0F2B]/70">
+                  Le sondage apparaîtra comme un message votable — cliquez une option pour voter.
+                </p>
+              </div>
+              <input
+                value={pollQuestion}
+                onChange={(e) => setPollQuestion(e.target.value)}
+                placeholder="Posez votre question..."
+                maxLength={200}
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
+              />
+              {pollOptions.map((opt, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-stone-100 text-[10px] font-bold text-stone-500 flex-shrink-0">
+                    {String.fromCharCode(65 + i)}
+                  </div>
+                  <input
+                    value={opt}
+                    onChange={(e) => {
+                      const newOpts = [...pollOptions];
+                      newOpts[i] = e.target.value;
+                      setPollOptions(newOpts);
+                    }}
+                    placeholder={`Option ${i + 1}`}
+                    maxLength={100}
+                    className="flex-1 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
+                  />
+                  {pollOptions.length > 2 && (
+                    <button
+                      onClick={() => setPollOptions(pollOptions.filter((_, idx) => idx !== i))}
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-stone-400 hover:text-red-500 transition-colors flex-shrink-0 cursor-pointer"
+                      title="Retirer cette option"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {pollOptions.length < 6 && (
+                <button
+                  onClick={() => setPollOptions([...pollOptions, ""])}
+                  className="text-xs text-[#C9A227] font-bold hover:underline cursor-pointer"
+                >
+                  + Ajouter une option
+                </button>
+              )}
+              <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer">
+                <input type="checkbox" checked={pollMulti} onChange={(e) => setPollMulti(e.target.checked)} className="w-4 h-4 accent-[#C9A227] cursor-pointer" />
+                Autoriser plusieurs réponses
+              </label>
+              <button
+                onClick={async () => {
+                  if (!activeConvId || !pollQuestion.trim()) return;
+                  const validOptions = pollOptions.filter(o => o.trim());
+                  if (validOptions.length < 2) { alert("Au moins 2 options requises"); return; }
+                  setSubmittingPoll(true);
+                  try {
+                    const res = await fetch(api.url("/api/yeshua-connect/polls"), {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ channelId: activeConvId, question: pollQuestion, options: validOptions, isMulti: pollMulti }),
+                    });
+                    if (res.ok) {
+                      setAttachOpen(false);
+                      setAttachPanel("menu");
+                      setPollQuestion("");
+                      setPollOptions(["", ""]);
+                      setPollMulti(false);
+                      if (activeConvId) loadMessages(activeConvId);
+                    } else {
+                      const err = await res.json().catch(() => ({}));
+                      alert(err.error || "Échec de la création du sondage");
+                    }
+                  } catch (e) {
+                    alert("Erreur réseau");
+                  } finally {
+                    setSubmittingPoll(false);
                   }
-                } catch (e) {
-                  alert("Erreur réseau");
-                } finally {
-                  setSubmittingPoll(false);
-                }
-              }}
-              disabled={!pollQuestion.trim() || submittingPoll}
-              className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-40"
-            >
-              {submittingPoll ? "Création..." : "Créer le sondage"}
-            </button>
-          </div>
+                }}
+                disabled={!pollQuestion.trim() || submittingPoll}
+                className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-40 transition-colors cursor-pointer"
+              >
+                {submittingPoll ? "Création..." : "Créer le sondage"}
+              </button>
+            </div>
+          )}
+
+          {/* ── Panneau PROGRAMMÉ (message différé) ────────────────────── */}
+          {attachPanel === "schedule" && (
+            <div className="space-y-3">
+              <button
+                onClick={() => setAttachPanel("menu")}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#C9A227] transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Retour
+              </button>
+              <div className="px-3 py-2 rounded-xl bg-[#5B21B6]/5 border border-[#5B21B6]/20 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#5B21B6] flex-shrink-0" />
+                <p className="text-[11px] text-[#1E0F2B]/70">
+                  Le message sera envoyé automatiquement à la date choisie.
+                </p>
+              </div>
+              <textarea
+                value={scheduleContent}
+                onChange={(e) => setScheduleContent(e.target.value)}
+                placeholder="Votre message..."
+                rows={3}
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
+              />
+              <input
+                type="datetime-local"
+                value={scheduleAt}
+                onChange={(e) => setScheduleAt(e.target.value)}
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
+              />
+              <button
+                onClick={async () => {
+                  if (!activeConvId || !scheduleContent.trim() || !scheduleAt) return;
+                  setSubmittingSchedule(true);
+                  try {
+                    const res = await fetch(api.url("/api/yeshua-connect/scheduled-messages"), {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ channelId: activeConvId, content: scheduleContent, scheduledAt: scheduleAt }),
+                    });
+                    if (res.ok) {
+                      setAttachOpen(false);
+                      setAttachPanel("menu");
+                      setScheduleContent("");
+                      setScheduleAt("");
+                    } else {
+                      const err = await res.json().catch(() => ({}));
+                      alert(err.error || "Échec de la programmation");
+                    }
+                  } catch (e) {
+                    alert("Erreur réseau");
+                  } finally {
+                    setSubmittingSchedule(false);
+                  }
+                }}
+                disabled={!scheduleContent.trim() || !scheduleAt || submittingSchedule}
+                className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-40 transition-colors cursor-pointer"
+              >
+                {submittingSchedule ? "Programmation..." : "Programmer l'envoi"}
+              </button>
+            </div>
+          )}
         </Modal>
       )}
 
@@ -2908,11 +3089,19 @@ function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversa
         const isMuted = mutedConversations.has(conv.id);
         return (
           <button key={conv.id} onClick={() => onSelect(conv.id)}
-            className={cn("w-full p-3 flex items-start gap-3 hover:bg-stone-50 transition-all text-left border-b border-stone-50", isActive && "bg-[#C9A227]/5")}>
+            // ⭐ V2.5 — cursor-pointer : curseur « main » au survol des
+            // canaux / groupes (cercles de pasteurs, nouveaux croyants…)
+            className={cn("w-full p-3 flex items-start gap-3 hover:bg-stone-50 transition-all text-left border-b border-stone-50 cursor-pointer group", isActive && "bg-[#C9A227]/5")}>
             <div className="relative flex-shrink-0">
-              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm", getAvatarColor(conv.name))}>
-                {getInitials(conv.name)}
-              </div>
+              {conv.avatarUrl ? (
+                // ⭐ V2.5 — Photo du canal (uploadée depuis le back-office)
+                <img src={conv.avatarUrl} alt={conv.name}
+                  className="w-10 h-10 rounded-xl object-cover border border-stone-200" />
+              ) : (
+                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm", getAvatarColor(conv.name))}>
+                  {getInitials(conv.name)}
+                </div>
+              )}
               {conv.isEncrypted && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#C9A227] rounded-full flex items-center justify-center"><Lock className="w-2 h-2 text-[#1E0F2B]" /></div>}
             </div>
             <div className="flex-1 min-w-0">
@@ -2955,6 +3144,135 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
         </div>
         {children}
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V2.5 — POLL MESSAGE (rendu votable façon WhatsApp/Telegram)
+// ═══════════════════════════════════════════════════════════════════════
+
+function PollMessage({
+  poll,
+  currentUserId,
+  onVoted,
+}: {
+  poll: ChatPoll;
+  currentUserId: string;
+  onVoted: (messagePoll: ChatPoll) => void;
+}) {
+  const [voting, setVoting] = useState(false);
+  const [error, setError] = useState("");
+
+  const totalVotes = poll.options.reduce((sum, o) => sum + o.votes.length, 0);
+  const myVotes = new Set(
+    poll.options.flatMap((o) => o.votes.filter((v) => v.userId === currentUserId).map(() => o.id))
+  );
+
+  const handleVote = async (optionId: string) => {
+    if (voting) return;
+    setVoting(true);
+    setError("");
+    try {
+      const res = await fetch(api.url(`/api/yeshua-connect/polls/${poll.id}/vote`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ optionId }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Échec du vote");
+      }
+      const data = await res.json();
+      if (data.poll) {
+        // Reformater le poll mis à jour au même format que les messages
+        onVoted({
+          id: data.poll.id,
+          question: data.poll.question,
+          isMulti: data.poll.isMulti,
+          expiresAt: data.poll.expiresAt ?? undefined,
+          options: (data.poll.options || [])
+            .slice()
+            .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
+            .map((o: { id: string; label: string; order: number; votes: { userId: string }[] }) => ({
+              id: o.id,
+              label: o.label,
+              order: o.order,
+              votes: (o.votes || []).map((v: { userId: string }) => ({ userId: v.userId })),
+            })),
+        });
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erreur réseau");
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  return (
+    <div className="w-full min-w-[240px] max-w-[320px]">
+      {/* En-tête du sondage */}
+      <div className="flex items-center gap-2 mb-2">
+        <BarChart3 className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
+        <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+          Sondage {poll.isMulti ? "· choix multiple" : ""}
+        </span>
+      </div>
+      <p className="text-sm font-bold text-[#1E0F2B] mb-3">{poll.question}</p>
+
+      {/* Options avec barres de progression */}
+      <div className="space-y-1.5">
+        {poll.options.map((o) => {
+          const votes = o.votes.length;
+          const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+          const myVote = myVotes.has(o.id);
+          return (
+            <button
+              key={o.id}
+              onClick={() => handleVote(o.id)}
+              disabled={voting}
+              className={cn(
+                "relative w-full text-left px-3 py-2 rounded-lg border transition-all overflow-hidden group cursor-pointer disabled:opacity-60",
+                myVote
+                  ? "border-[#C9A227]/60 bg-[#C9A227]/5"
+                  : "border-stone-200 hover:border-[#C9A227]/40 bg-white"
+              )}
+              title={myVote ? "Votre vote (cliquez pour changer)" : "Voter pour cette option"}
+            >
+              {/* Barre de fond proportionnelle au résultat */}
+              <div
+                className={cn(
+                  "absolute inset-y-0 left-0 transition-all duration-500",
+                  myVote ? "bg-[#C9A227]/15" : "bg-stone-100"
+                )}
+                style={{ width: `${pct}%` }}
+              />
+              <div className="relative flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-[#1E0F2B] truncate flex items-center gap-1.5">
+                  {myVote && <Check className="w-3 h-3 text-[#C9A227] flex-shrink-0" />}
+                  {o.label}
+                </span>
+                <span className="text-[10px] font-bold text-stone-500 flex-shrink-0">
+                  {votes > 0 && `${pct}% · ${votes}`}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Résultat global */}
+      <div className="flex items-center justify-between mt-2.5">
+        <span className="text-[10px] text-stone-400">
+          {totalVotes === 0
+            ? "Aucun vote — cliquez une option"
+            : `${totalVotes} vote${totalVotes > 1 ? "s" : ""}`}
+        </span>
+        <span className="text-[10px] text-stone-400 italic">
+          {poll.isMulti ? "Plusieurs réponses possibles" : "Une seule réponse"}
+        </span>
+      </div>
+      {error && <p className="text-[10px] text-red-500 mt-1">{error}</p>}
     </div>
   );
 }

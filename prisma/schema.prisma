@@ -363,6 +363,9 @@ model Channel {
   communityId  String
   name         String
   description  String?
+  // ⭐ V2.5 — Photo du canal/groupe (data URL compressée ≤ 80KB ou URL R2),
+  // modifiable depuis le back-office, affichée dans Yeshua Connect.
+  avatarUrl    String?
   type         ChannelType
   isEncrypted  Boolean      @default(false)
   isRestricted Boolean      @default(false)

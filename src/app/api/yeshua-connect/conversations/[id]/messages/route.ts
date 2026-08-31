@@ -81,6 +81,8 @@ export async function GET(
         take: -limit, // ← négatif = avant le curseur (vers le passé)
         include: {
           user: { select: { id: true, name: true, avatarUrl: true, role: true } },
+          // ⭐ V2.5 — Sondages : inclure le poll + options + votes
+          poll: { include: { options: { include: { votes: true } } } },
           reactions: {
             select: { emoji: true, userId: true, createdAt: true },
             orderBy: { createdAt: "asc" },
@@ -96,6 +98,8 @@ export async function GET(
         take: limit,
         include: {
           user: { select: { id: true, name: true, avatarUrl: true, role: true } },
+          // ⭐ V2.5 — Sondages : inclure le poll + options + votes
+          poll: { include: { options: { include: { votes: true } } } },
           reactions: {
             select: { emoji: true, userId: true, createdAt: true },
             orderBy: { createdAt: "asc" },
@@ -137,6 +141,8 @@ export async function GET(
       senderId: m.userId,
       senderName: m.user.name ?? "Membre",
       senderRole: m.user.role,
+      // ⭐ V2.5 — Avatar de l'expéditeur (bulles de groupe)
+      senderAvatarUrl: (m.user as { avatarUrl?: string | null }).avatarUrl ?? undefined,
       type: m.type,
       content: m.content,
       attachmentUrl: m.attachmentUrl ?? undefined,
@@ -163,6 +169,24 @@ export async function GET(
       isPinned: m.isPinned,
       pinnedAt: m.pinnedAt?.toISOString() ?? undefined,
       pinnedBy: m.pinnedBy ?? undefined,
+      // ⭐ V2.5 — Sondage (pour les messages type POLL)
+      poll: m.poll
+        ? {
+            id: m.poll.id,
+            question: m.poll.question,
+            isMulti: m.poll.isMulti,
+            expiresAt: m.poll.expiresAt?.toISOString() ?? undefined,
+            options: m.poll.options
+              .slice()
+              .sort((a, b) => a.order - b.order)
+              .map((o) => ({
+                id: o.id,
+                label: o.label,
+                order: o.order,
+                votes: o.votes.map((v) => ({ userId: v.userId })),
+              })),
+          }
+        : undefined,
       createdAt: m.createdAt.toISOString(),
       editedAt: m.isEdited ? m.updatedAt.toISOString() : undefined,
       editedHistory: m.editedHistory ?? undefined,
@@ -276,6 +300,8 @@ export async function POST(
       senderId: message.userId,
       senderName: message.user.name ?? "Membre",
       senderRole: message.user.role,
+      // ⭐ V2.5 — Avatar de l'expéditeur (bulles de groupe)
+      senderAvatarUrl: (message.user as { avatarUrl?: string | null }).avatarUrl ?? undefined,
       type: message.type,
       content: message.content,
       attachmentUrl: message.attachmentUrl ?? undefined,

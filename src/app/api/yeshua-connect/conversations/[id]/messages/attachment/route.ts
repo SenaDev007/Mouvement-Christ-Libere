@@ -14,10 +14,15 @@ const R2_PREFIX = "yeshua-connect/attachments";
  * Upload a file/image/audio attachment and create a message.
  * Body: FormData { file, type }  ← userId vient de la session.
  *
- * Stratégie de stockage :
- *   - Si R2 est configuré (variables R2_* présentes) : upload vers Cloudflare R2
- *     via `uploadToR2` (URL publique CDN/r2.dev retournée).
- *   - Sinon (dev local sans R2) : fallback filesystem dans /public/uploads/yeshua-connect/.
+ * Stratégie de stockage (⭐ V2.5 — corrigée pour Vercel serverless) :
+ *   1. Si R2 est configuré : upload vers Cloudflare R2 (URL publique CDN).
+ *   2. Sinon, si le fichier est petit (≤ 1,2 Mo) : stockage en data URL
+ *      directement en base (PostgreSQL TEXT) — fonctionne SANS aucune
+ *      configuration, y compris sur Vercel. L'ancien fallback filesystem
+ *      écrivait dans /public qui est en LECTURE SEULE sur Vercel, ce qui
+ *      provoquait l'erreur « Erreur d'upload » sur les messages vocaux.
+ *   3. Sinon (fichier volumineux sans R2) : erreur explicite invitant à
+ *      configurer R2 (page /admin/r2-test du back-office).
  *
  * - 🔒 Authentification NextAuth requise.
  * - 🔒 L'utilisateur doit être membre du canal.
@@ -60,16 +65,19 @@ export async function POST(
       return NextResponse.json({ error: "file requis" }, { status: 400 });
     }
 
-    // ─── Lecture du fichier en buffer (commun R2 + filesystem) ────────
+    // ─── Lecture du fichier en buffer (commun R2 + data URL) ──────────
     const buffer = Buffer.from(await file.arrayBuffer());
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const ext = safeName.split(".").pop()?.toLowerCase() || "bin";
+
+    // ⭐ V2.5 — Taille maximale pour le stockage intégré en base (data URL)
+    const INLINE_MAX_BYTES = 1.2 * 1024 * 1024; // 1,2 Mo
 
     let attachmentUrl: string;
     let attachmentSize: number | undefined = file.size;
 
     if (isR2Configured()) {
-      // ─── Production / Staging : upload vers Cloudflare R2 ──────────
+      // ─── Production avec R2 : upload vers Cloudflare R2 ────────────
       // Clé unique sous yeshua-connect/attachments/{conversationId}/{timestamp}-{rand}.{ext}
       const key = generateKey(
         `${R2_PREFIX}/${id}`,
@@ -83,13 +91,36 @@ export async function POST(
           file.type || "application/octet-stream",
         );
       } catch (r2Err) {
-        console.error("[yeshua-connect/attachment] R2 upload failed, fallback filesystem:", r2Err);
-        // Fallback filesystem si R2 échoue à l'exécution (credentials invalides, etc.)
-        attachmentUrl = await saveToFilesystem(buffer, safeName);
+        console.error("[yeshua-connect/attachment] R2 upload failed:", r2Err);
+        // ⭐ V2.5 — Fallback data URL (plus d'écriture filesystem : /public
+        // est en lecture seule sur Vercel et causait « Erreur d'upload »).
+        if (buffer.length <= INLINE_MAX_BYTES) {
+          attachmentUrl = bufferToDataUrl(buffer, file.type);
+        } else {
+          return NextResponse.json(
+            {
+              error:
+                "Fichier trop volumineux pour le stockage intégré (max 1,2 Mo). " +
+                "Configurez Cloudflare R2 (back-office → Système → Stockage R2) pour autoriser les fichiers volumineux.",
+            },
+            { status: 507 }
+          );
+        }
       }
+    } else if (buffer.length <= INLINE_MAX_BYTES) {
+      // ⭐ V2.5 — Pas de R2 (dev local ou Vercel sans variables R2_*) :
+      // stockage en data URL en base — fiable partout, y compris serverless.
+      attachmentUrl = bufferToDataUrl(buffer, file.type);
     } else {
-      // ─── Dev local : stockage filesystem (pas de R2 configuré) ──────
-      attachmentUrl = await saveToFilesystem(buffer, safeName);
+      // Fichier volumineux sans R2 : erreur explicite et actionnable
+      return NextResponse.json(
+        {
+          error:
+            "Fichier trop volumineux pour le stockage intégré (max 1,2 Mo). " +
+            "Configurez Cloudflare R2 (back-office → Système → Stockage R2) pour autoriser les fichiers volumineux.",
+        },
+        { status: 507 }
+      );
     }
 
     const message = await db.message.create({
@@ -130,20 +161,18 @@ export async function POST(
 }
 
 /**
- * Fallback filesystem — stocke le fichier dans /public/uploads/yeshua-connect/
- * et retourne une URL relative servie par Next.js.
- *
- * Utilisé uniquement en dev local quand R2 n'est pas configuré, ou en
- * fallback si l'upload R2 échoue à l'exécution.
+ * ⭐ V2.5 — Convertit un buffer en data URL (base64) pour stockage direct
+ * en base PostgreSQL (TEXT). Fiable sur Vercel (pas d'écriture disque),
+ * en dev local, et partout ailleurs. Limite d'usage : fichiers ≤ 1,2 Mo
+ * (vocaux courts, images, GIFs légers, petits documents).
  */
-async function saveToFilesystem(buffer: Buffer, safeName: string): Promise<string> {
-  const uploadDir = "/public/uploads/yeshua-connect";
-  const fs = await import("fs/promises");
-  const path = await import("path");
-  const fullDir = path.join(process.cwd(), uploadDir);
-  await fs.mkdir(fullDir, { recursive: true });
-  const fileName = `${Date.now()}-${safeName}`;
-  const filePath = path.join(fullDir, fileName);
-  await fs.writeFile(filePath, buffer);
-  return `/uploads/yeshua-connect/${fileName}`;
+function bufferToDataUrl(buffer: Buffer, mime: string | null): string {
+  const safeMime = mime && /^\w+[\/.+-]?\w*([\/.+]\w+)*$/.test(mime) ? mime : "application/octet-stream";
+  return `data:${safeMime};base64,${buffer.toString("base64")}`;
 }
+
+// (⭐ V2.5) L'ancien fallback `saveToFilesystem` a été supprimé : écrire dans
+// /public est impossible sur Vercel (filesystem en lecture seule) — c'était
+// la cause de l'erreur « Erreur d'upload » sur les messages vocaux. Le
+// stockage intégré passe désormais par des data URLs en base (voir
+// bufferToDataUrl ci-dessus), et les fichiers volumineux passent par R2.
