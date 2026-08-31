@@ -84,7 +84,7 @@ export async function POST(
     // Vérifier que le live existe et est en direct
     const live = await db.liveStream.findUnique({
       where: { id },
-      select: { id: true, status: true },
+      select: { id: true, status: true, youtubeUrl: true },
     });
     if (!live) {
       return NextResponse.json({ error: "Live introuvable" }, { status: 404 });
@@ -96,7 +96,7 @@ export async function POST(
       return NextResponse.json({ error: "Message vide" }, { status: 400 });
     }
 
-    // Créer le message
+    // Créer le message en DB Christ Libère
     const message = await db.liveChatMessage.create({
       data: {
         liveId: id,
@@ -106,6 +106,29 @@ export async function POST(
         emoji: emoji || null,
       },
     });
+
+    // (S5) Sync vers YouTube Live Chat si le live est sur YouTube
+    // Best-effort : on ne bloque pas si YouTube échoue.
+    if (live.youtubeUrl && live.status === "LIVE") {
+      try {
+        const { getLiveChatId, sendToYouTubeLiveChat, sendReactionToYouTube } = await import("@/lib/youtube-live-chat");
+        const videoId = live.youtubeUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)?.[1];
+        if (videoId) {
+          const liveChatId = await getLiveChatId(videoId);
+          if (liveChatId) {
+            if (type === "reaction" && emoji) {
+              await sendReactionToYouTube(liveChatId, emoji, userName);
+            } else {
+              // Préfixer avec le nom pour le contexte YouTube
+              const ytMessage = `${userName}: ${trimmedContent}`;
+              await sendToYouTubeLiveChat(liveChatId, ytMessage);
+            }
+          }
+        }
+      } catch (ytError) {
+        console.error("[chat] YouTube sync error:", ytError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
