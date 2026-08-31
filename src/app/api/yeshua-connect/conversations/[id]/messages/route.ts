@@ -43,15 +43,35 @@ export async function GET(
     const beforeMessageId = url.searchParams.get("before");
 
     // 🔒 Vérifier que l'utilisateur est membre du canal (sauf rôles privilégiés)
+    // ⭐ V2.9 — AUTO-JOIN paresseux : les canaux PUBLICS (non RESTRICTED)
+    // sont visibles par tous dans la liste — si l'utilisateur n'est pas
+    // encore membre (utilisateur existant créé avant le backfill V2.9, ou
+    // inscription manuelle), on l'inscrit AUTOMATIQUEMENT au premier accès.
+    // Avant : 403 « Vous n'êtes pas membre » → « je ne vois pas les messages
+    // de Pam » alors que le canal s'affichait dans la sidebar.
     if (!PRIVILEGED_ROLES.has(userRole || "")) {
       const membership = await db.channelMember.findUnique({
         where: { channelId_userId: { channelId: id, userId } },
       });
       if (!membership) {
-        return NextResponse.json(
-          { error: "Vous n'êtes pas membre de ce canal" },
-          { status: 403 },
-        );
+        const channelInfo = await db.channel.findUnique({
+          where: { id },
+          select: { isRestricted: true, type: true },
+        });
+        if (channelInfo && !channelInfo.isRestricted && channelInfo.type !== "RESTRICTED") {
+          await db.channelMember
+            .create({ data: { channelId: id, userId, role: "MEMBER" } })
+            .catch(() => {
+              // course concurrentielle (double-clic / double-requête) :
+              // la 2e création échoue sur l'unique — c'est OK, on continue.
+            });
+          console.log(`[messages GET] Auto-join : ${userId} → canal ${id}`);
+        } else {
+          return NextResponse.json(
+            { error: "Vous n'êtes pas membre de ce canal" },
+            { status: 403 },
+          );
+        }
       }
     }
 
@@ -256,15 +276,26 @@ export async function POST(
     }
 
     // 🔒 Vérifier que l'utilisateur est membre du canal (sauf rôles privilégiés)
+    // ⭐ V2.9 — Même auto-join paresseux côté envoi (cohérent avec le GET).
     if (!PRIVILEGED_ROLES.has(userRole || "")) {
       const membership = await db.channelMember.findUnique({
         where: { channelId_userId: { channelId: id, userId } },
       });
       if (!membership) {
-        return NextResponse.json(
-          { error: "Vous n'êtes pas membre de ce canal" },
-          { status: 403 },
-        );
+        const channelInfo = await db.channel.findUnique({
+          where: { id },
+          select: { isRestricted: true, type: true },
+        });
+        if (channelInfo && !channelInfo.isRestricted && channelInfo.type !== "RESTRICTED") {
+          await db.channelMember
+            .create({ data: { channelId: id, userId, role: "MEMBER" } })
+            .catch(() => {});
+        } else {
+          return NextResponse.json(
+            { error: "Vous n'êtes pas membre de ce canal" },
+            { status: 403 },
+          );
+        }
       }
     }
 

@@ -30,28 +30,69 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Live introuvable" }, { status: 404 });
     }
 
-    // Arrêter les egress RTMP (best effort) — utiliser EgressClient
+    // ─── ⭐ V2.9 — FERMETURE FORCÉE DE LA DIFFUSION (cause racine du
+    //     « YouTube continuait de streamer après l'arrêt dans le
+    //     back-office » : seul l'egress était arrêté "best effort", mais
+    //     le studio restait publié et les viewers restaient connectés →
+    //     la room LiveKit restait vivante → l'egress RTMP reprenait /
+    //     continuait. On coupe maintenant TOUT, côté serveur :
+    //     1. éjection de TOUS les participants (studio + viewers) ;
+    //     2. suppression de la room (ferme aussi les egress actifs) ;
+    //     3. arrêt explicite de tous les egress RTMP de la room. ───
+    const teardownResults: string[] = [];
     try {
-      const { EgressClient } = await import("livekit-server-sdk");
-      const egressClient = new EgressClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+      const { RoomServiceClient, EgressClient } = await import("livekit-server-sdk");
+      const roomService = new RoomServiceClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
 
       if (live.livekitRoomName) {
+        // 1. Éjecter tous les participants (leur client reçoit Disconnected)
         try {
+          const participants = await roomService.listParticipants(live.livekitRoomName);
+          for (const p of participants) {
+            try {
+              await roomService.removeParticipant(live.livekitRoomName, p.identity);
+            } catch { /* déjà parti */ }
+          }
+          if (participants.length > 0) {
+            teardownResults.push(`${participants.length} participant(s) éjecté(s)`);
+            console.log(`[live/stop] ${participants.length} participant(s) éjecté(s) de ${live.livekitRoomName}`);
+          }
+        } catch (err) {
+          console.error("[live/stop] listParticipants impossible:", err);
+        }
+
+        // 2. Arrêter les egress RTMP (explicit, best effort)
+        try {
+          const egressClient = new EgressClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
           const egresses = await egressClient.listEgress({ roomName: live.livekitRoomName });
+          let stopped = 0;
           for (const egress of egresses) {
             try {
               await egressClient.stopEgress(egress.egressId);
+              stopped++;
               console.log(`[live/stop] Stopped egress ${egress.egressId}`);
             } catch (err) {
               console.error(`[live/stop] Failed to stop egress ${egress.egressId}:`, err);
             }
           }
+          if (stopped > 0) teardownResults.push(`${stopped} egress RTMP arrêté(s)`);
         } catch (err) {
           console.error("[live/stop] Failed to list/stop egresses:", err);
         }
+
+        // 3. Supprimer la room → tous les flux coupés, YouTube voit
+        //    l'ingest RTMP disparaître et termine la diffusion.
+        try {
+          await roomService.deleteRoom(live.livekitRoomName);
+          teardownResults.push("room fermée");
+          console.log(`[live/stop] Room ${live.livekitRoomName} supprimée`);
+        } catch (err) {
+          // Room déjà fermée (webhook room_finished) → normal
+          console.warn(`[live/stop] deleteRoom (déjà fermée ?):`, err instanceof Error ? err.message : err);
+        }
       }
     } catch (e) {
-      console.error("[live/stop] EgressClient not available:", e);
+      console.error("[live/stop] LiveKit SDK indisponible:", e);
     }
 
     // Calculer la durée du live
@@ -211,6 +252,9 @@ export async function POST(req: NextRequest) {
       liveId,
       status: "ENDED",
       archived: true,
+      // ⭐ V2.9 — Détail de la fermeture force (participants éjectés,
+      // egress arrêtés, room supprimée) pour l'affichage studio.
+      teardown: teardownResults,
     });
   } catch (error) {
     console.error("[live/stop] Error:", error);

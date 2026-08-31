@@ -356,6 +356,8 @@ export function MediaOverlay({
       canvas.width = 1280;
       canvas.height = 720;
     }
+    // ⭐ V2.9 — Rendu des overlays plus net (qualité haute au redimensionnement)
+    try { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high"; } catch {}
 
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);

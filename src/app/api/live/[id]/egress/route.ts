@@ -176,10 +176,24 @@ export async function POST(
       }
       try {
         const streamOutput = new StreamOutput({ urls: [dest.url] });
+        // ⭐ V2.9 — QUALITÉ DE DIFFUSION (overlay flou sur YouTube/viewer) :
+        // avant, AUCUNE option d'encodage → défauts LiveKit (bitrate bas,
+        // 720p « soft »). On force H.264 4,5 Mbps + Opus 128 kbps @ 30 fps
+        // → texte des overlays net, image nettement plus claire.
+        const { EncodingOptions } = await import("livekit-server-sdk");
+        const encoding = new EncodingOptions({
+          audioCodec: "opus",
+          audioBitrate: 128_000,
+          videoCodec: "h264",
+          videoBitrate: 4_500_000,
+          framerate: 30,
+          width: 1280,
+          height: 720,
+        });
         const egressInfo = await egressClient.startRoomCompositeEgress(
           roomName,
           streamOutput,
-          "speaker",
+          { layout: "speaker", encodingOptions: encoding },
         );
         const egressId = egressInfo.egressId || null;
         results.push({ name: dest.name, egressId });

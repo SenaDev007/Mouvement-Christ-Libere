@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Send, MessageCircle, Users, X, ChevronDown, Pin, Heart,
-  Crown, Info, MoreVertical, Shield,
+  Crown, Info, MoreVertical, Shield, Loader2,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -76,6 +76,11 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
   const [xpPoints, setXpPoints] = useState(0);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [slowMode, setSlowMode] = useState(false);
+  // ⭐ V2.9 — État de connexion du polling chat : si le serveur ne répond
+  // plus (serverless saturé, réseau…), on l'affiche honnêtement au lieu
+  // de laisser croire que « le chat ne marche pas » sans explication.
+  const [chatConnection, setChatConnection] = useState<"ok" | "reconnecting">("ok");
+  const pollFailuresRef = useRef(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -153,7 +158,13 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
       // (H6) Utiliser apiFetch au lieu de fetch brut pour bénéficier du
       // fallback backend Railway et des credentials cross-origin.
       const res = await apiFetch(url);
-      if (!res.ok) return;
+      if (!res.ok) {
+        pollFailuresRef.current += 1;
+        if (pollFailuresRef.current >= 3) setChatConnection("reconnecting");
+        return;
+      }
+      pollFailuresRef.current = 0;
+      setChatConnection("ok");
       const data = await res.json();
       if (data.messages && data.messages.length > 0) {
         // Déduplication par ID
@@ -179,7 +190,10 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
           }
         }
       }
-    } catch {}
+    } catch {
+      pollFailuresRef.current += 1;
+      if (pollFailuresRef.current >= 3) setChatConnection("reconnecting");
+    }
   }, [liveId]);
 
   useEffect(() => {
@@ -295,7 +309,18 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
     <div className="flex flex-col h-full bg-[#FAF6EF] rounded-xl overflow-hidden border border-[#8A8378]/15">
       {/* ═══ Header avec dropdown Top Chat + XP + options ═══ */}
       <div className="px-4 py-3 border-b border-[#8A8378]/15 flex items-center justify-between flex-shrink-0 relative">
-        <div className="relative">
+        <div className="relative flex items-center gap-1.5">
+          {/* ⭐ V2.9 — Indicateur d'état du chat (transparence des échecs de
+              polling : « Reconnexion… » au lieu d'un silence incompréhensible). */}
+          {chatConnection === "reconnecting" ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600" title="Le serveur chat ne répond pas — reconnexion automatique en cours">
+              <Loader2 className="w-3 h-3 animate-spin" />Reconnexion…
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600" title="Chat connecté — messages rafraîchis toutes les 2 s">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />En direct
+            </span>
+          )}
           <button
             onClick={() => setShowModeDropdown(!showModeDropdown)}
             className="flex items-center gap-1.5 text-sm font-bold text-[#1E0F2B] hover:text-[#1E0F2B]/80 transition-colors"

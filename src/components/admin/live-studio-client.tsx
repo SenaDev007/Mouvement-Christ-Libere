@@ -6,7 +6,7 @@ import { Room, RoomEvent, Track } from "livekit-client";
 import {
   Video, VideoOff, Mic, MicOff, Radio, Square, Loader2,
   Users, Clock, AlertCircle, CheckCircle2, Settings,
-  Monitor, MonitorOff, Wifi, Activity,
+  Monitor, MonitorOff, Wifi, Activity, Heart,
   Youtube, Facebook, Music2, Instagram,
   ChevronDown, ChevronUp, Eye, MessageCircle, BarChart3,
   X, Pause, Play, Maximize2, Cast, Copy,
@@ -52,8 +52,17 @@ export function LiveStudioClient({
   const [cameraReady, setCameraReady] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
   const [streamDuration, setStreamDuration] = useState(0);
-  const [bitrate, setBitrate] = useState(0);
-  const [latency, setLatency] = useState(0);
+  // ⭐ V2.9 — Les anciens états `bitrate`/`latence` (valeurs ALÉATOIRES,
+  // jamais mesurées) ont été supprimés : les HUD affichent désormais les
+  // vraies métriques (spectateurs, messages, likes) du poll /stats.
+  // ⭐ V2.9 — Stats TEMPS RÉEL (fini les bitrates/latence aléatoires) :
+  // le studio poll /api/live/[id]/stats toutes les 5 s pendant le direct.
+  const [chatMessageCount, setChatMessageCount] = useState(0);
+  const [reactionCount, setReactionCount] = useState(0);
+  const [likesTotal, setLikesTotal] = useState(0);
+  const [youtubeStats, setYoutubeStats] = useState<{ viewCount: number; likeCount: number; commentCount: number } | null>(null);
+  const [youtubeConfigured, setYoutubeConfigured] = useState(true);
+  const statsPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [activeTab, setActiveTab] = useState<"chat" | "stats" | "health">("chat");
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [showStopModal, setShowStopModal] = useState(false);
@@ -111,6 +120,8 @@ export function LiveStudioClient({
       if (durationTimerRef.current) clearInterval(durationTimerRef.current);
       if (statsTimerRef.current) clearInterval(statsTimerRef.current);
       if (viewerPollRef.current) clearInterval(viewerPollRef.current);
+      // ⭐ V2.9 — Poll de stats temps réel
+      if (statsPollRef.current) clearInterval(statsPollRef.current);
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     };
   }, [initCamera]);
@@ -337,20 +348,25 @@ export function LiveStudioClient({
             setStreamDuration(Math.floor((Date.now() - startTime) / 1000));
           }, 1000);
 
-          statsTimerRef.current = setInterval(() => {
-            setBitrate(2000 + Math.floor(Math.random() * 200));
-            setLatency(Math.floor(Math.random() * 2) + 1);
-          }, 3000);
-
-          const fetchViewers = async () => {
+          // ⭐ V2.9 — Stats RÉELLES : plus de bitrate/latence aléatoires —
+          // on interroge /stats (viewers, chat, likes, YouTube) toutes
+          // les 5 s. (Remplace AUSSI l'ancien poll /viewers séparé.)
+          if (statsPollRef.current) clearInterval(statsPollRef.current);
+          const pollStats = async () => {
             try {
-              const res = await apiFetch(`/api/live/${liveId}/viewers`);
+              const res = await apiFetch(`/api/live/${liveId}/stats`);
+              if (!res.ok) return;
               const data = await res.json();
-              setViewerCount(data.count || 0);
+              setViewerCount(data.viewerCount || 0);
+              setChatMessageCount(data.chatMessageCount || 0);
+              setReactionCount(data.reactionCount || 0);
+              setLikesTotal(data.likesTotal || 0);
+              setYoutubeStats(data.youtube || null);
+              setYoutubeConfigured(!!data.youtubeConfigured);
             } catch {}
           };
-          fetchViewers();
-          viewerPollRef.current = setInterval(fetchViewers, 5000);
+          pollStats();
+          statsPollRef.current = setInterval(pollStats, 5000);
 
           // Démarrer le MediaRecorder APRÈS connexion LiveKit
           const recordStream = overlayStreamRef.current || localStreamRef.current;
@@ -524,22 +540,24 @@ export function LiveStudioClient({
         }
       }
 
-      // 4. Timers annexes (stats + viewers) comme pendant un goLive normal
-      if (statsTimerRef.current) clearInterval(statsTimerRef.current);
-      statsTimerRef.current = setInterval(() => {
-        setBitrate(2000 + Math.floor(Math.random() * 200));
-        setLatency(Math.floor(Math.random() * 2) + 1);
-      }, 3000);
-      const fetchViewers = async () => {
+      // 4. ⭐ V2.9 — Stats RÉELLES (reconnexion) : même poll /stats que
+      // goLive — plus de valeurs aléatoires.
+      if (statsPollRef.current) clearInterval(statsPollRef.current);
+      const pollStatsReconnect = async () => {
         try {
-          const res = await apiFetch(`/api/live/${liveId}/viewers`);
+          const res = await apiFetch(`/api/live/${liveId}/stats`);
+          if (!res.ok) return;
           const data = await res.json();
-          setViewerCount(data.count || 0);
+          setViewerCount(data.viewerCount || 0);
+          setChatMessageCount(data.chatMessageCount || 0);
+          setReactionCount(data.reactionCount || 0);
+          setLikesTotal(data.likesTotal || 0);
+          setYoutubeStats(data.youtube || null);
+          setYoutubeConfigured(!!data.youtubeConfigured);
         } catch {}
       };
-      fetchViewers();
-      if (viewerPollRef.current) clearInterval(viewerPollRef.current);
-      viewerPollRef.current = setInterval(fetchViewers, 5000);
+      pollStatsReconnect();
+      statsPollRef.current = setInterval(pollStatsReconnect, 5000);
 
       // 5. Redémarrer l'enregistrement local (replay de la session courante)
       const recordStream = overlayStreamRef.current || localStreamRef.current;
@@ -764,6 +782,8 @@ export function LiveStudioClient({
       if (durationTimerRef.current) clearInterval(durationTimerRef.current);
       if (statsTimerRef.current) clearInterval(statsTimerRef.current);
       if (viewerPollRef.current) clearInterval(viewerPollRef.current);
+      // ⭐ V2.9 — Poll de stats temps réel
+      if (statsPollRef.current) clearInterval(statsPollRef.current);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -906,8 +926,10 @@ export function LiveStudioClient({
               {isLive && (
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2A0E3D]/80 text-white text-xs font-bold backdrop-blur-sm"><Clock className="w-3 h-3" />{formatDuration(streamDuration)}</span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2A0E3D]/80 text-white text-xs font-bold backdrop-blur-sm"><Wifi className="w-3 h-3" />{bitrate} kbps</span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2A0E3D]/80 text-white text-xs font-bold backdrop-blur-sm"><Eye className="w-3 h-3" />{viewerCount}</span>
+                  {/* ⭐ V2.9 — Vraies métriques dans le HUD (fini le bitrate
+                      aléatoire) : spectateurs + messages de chat. */}
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2A0E3D]/80 text-white text-xs font-bold backdrop-blur-sm"><Eye className="w-3 h-3" />{viewerCount} <span className="font-normal opacity-70">spec.</span></span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2A0E3D]/80 text-white text-xs font-bold backdrop-blur-sm"><MessageCircle className="w-3 h-3" />{chatMessageCount}</span>
                 </div>
               )}
             </div>
@@ -1109,11 +1131,11 @@ export function LiveStudioClient({
                 {isLive && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 text-[#1E0F2B] text-xs font-bold"><Radio className="w-3 h-3" />{formatDuration(streamDuration)}</span>
                 )}
-                {isLive && bitrate > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#2A0E3D]/5 text-[#1E0F2B]/60 text-xs font-bold"><Wifi className="w-3 h-3" />{bitrate} kbps</span>
+                {isLive && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#2A0E3D]/5 text-[#1E0F2B]/60 text-xs font-bold"><Eye className="w-3 h-3" />{viewerCount} spectateurs</span>
                 )}
                 {isLive && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#2A0E3D]/5 text-[#1E0F2B]/60 text-xs font-bold"><Activity className="w-3 h-3" />{latency}s</span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#2A0E3D]/5 text-[#1E0F2B]/60 text-xs font-bold"><Heart className="w-3 h-3" />{likesTotal}</span>
                 )}
               </div>
             </div>
@@ -1130,7 +1152,7 @@ export function LiveStudioClient({
               <div className="px-4 pb-4 space-y-3 border-t border-[#8A8378]/15">
                 <div className="flex items-center justify-between pt-3"><span className="text-xs text-[#1E0F2B]/50">Qualité vidéo</span><span className="text-xs font-bold text-[#1E0F2B]">720p · H.264</span></div>
                 <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Qualité audio</span><span className="text-xs font-bold text-[#1E0F2B]">Opus · Stéréo</span></div>
-                <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Latence</span><span className="text-xs font-bold text-[#1E0F2B]">{isLive ? `${latency}s (ultra-basse)` : "—"}</span></div>
+                <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Spectateurs</span><span className="text-xs font-bold text-[#1E0F2B]">{isLive ? String(viewerCount) : "—"}</span></div>
                 <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Room LiveKit</span><span className="text-xs font-mono text-[#1E0F2B]/40 truncate max-w-[200px]">{roomName}</span></div>
                 <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Mode</span><span className="text-xs font-bold text-[#1E0F2B]">{isPaused ? "En pause" : isLive ? "Diffusion active" : "En attente"}</span></div>
               </div>
@@ -1170,10 +1192,18 @@ export function LiveStudioClient({
 
           {activeTab === "stats" && (
             <div className="bg-white rounded-xl p-4 space-y-4 border border-[#8A8378]/15">
-              <h3 className="text-xs uppercase tracking-wider font-bold text-[#1E0F2B]/40">Statistiques en direct</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs uppercase tracking-wider font-bold text-[#1E0F2B]/40">Statistiques en direct</h3>
+                {/* ⭐ V2.9 — Indicateur de fraîcheur : les stats sont réellement
+                    rafraîchies toutes les 5 s pendant la diffusion. */}
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  {isLive ? "Temps réel · 5 s" : "En pause"}
+                </span>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#2A0E3D]/5 rounded-lg p-3">
-                  <div className="flex items-center gap-1 text-[10px] text-[#1E0F2B]/40 uppercase mb-1"><Eye className="w-3 h-3" />Viewers</div>
+                  <div className="flex items-center gap-1 text-[10px] text-[#1E0F2B]/40 uppercase mb-1"><Eye className="w-3 h-3" />Spectateurs (site)</div>
                   <div className="text-2xl font-bold text-[#1E0F2B]">{isLive ? viewerCount : "—"}</div>
                 </div>
                 <div className="bg-[#2A0E3D]/5 rounded-lg p-3">
@@ -1181,14 +1211,53 @@ export function LiveStudioClient({
                   <div className="text-2xl font-bold text-[#1E0F2B]">{isLive ? formatDuration(streamDuration) : "—"}</div>
                 </div>
                 <div className="bg-[#2A0E3D]/5 rounded-lg p-3">
-                  <div className="flex items-center gap-1 text-[10px] text-[#1E0F2B]/40 uppercase mb-1"><Wifi className="w-3 h-3" />Bitrate</div>
-                  <div className="text-2xl font-bold text-[#1E0F2B]">{isLive ? bitrate : "—"}<span className="text-xs text-[#1E0F2B]/40 ml-1">kbps</span></div>
+                  <div className="flex items-center gap-1 text-[10px] text-[#1E0F2B]/40 uppercase mb-1"><MessageCircle className="w-3 h-3" />Messages chat</div>
+                  <div className="text-2xl font-bold text-[#1E0F2B]">{isLive ? chatMessageCount : "—"}</div>
                 </div>
                 <div className="bg-[#2A0E3D]/5 rounded-lg p-3">
-                  <div className="flex items-center gap-1 text-[10px] text-[#1E0F2B]/40 uppercase mb-1"><Activity className="w-3 h-3" />Latence</div>
-                  <div className="text-2xl font-bold text-[#1E0F2B]">{isLive ? latency : "—"}<span className="text-xs text-[#1E0F2B]/40 ml-1">s</span></div>
+                  <div className="flex items-center gap-1 text-[10px] text-[#1E0F2B]/40 uppercase mb-1"><Heart className="w-3 h-3" />J&apos;aime (site)</div>
+                  <div className="text-2xl font-bold text-[#1E0F2B]">{isLive ? likesTotal : "—"}</div>
                 </div>
               </div>
+
+              {/* ⭐ V2.9 — Stats YouTube RÉELLES (si OAuth configuré) : vues et
+                  likes du direct YouTube, rafraîchis toutes les 5 s —
+                  avant : toujours zéro (aucun appel n'existait côté studio). */}
+              <div className="pt-3 border-t border-[#8A8378]/15">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] text-[#1E0F2B]/40 uppercase tracking-wider flex items-center gap-1.5">
+                    <Youtube className="w-3.5 h-3.5 text-[#FF0000]" />YouTube
+                  </p>
+                  {!youtubeConfigured && (
+                    <span className="text-[9px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                      OAuth YouTube non configuré
+                    </span>
+                  )}
+                </div>
+                {youtubeStats ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-[#FF0000]/5 rounded-lg p-2.5 text-center">
+                      <div className="flex items-center justify-center gap-1 text-[10px] text-[#1E0F2B]/40 uppercase mb-0.5"><Eye className="w-3 h-3" />Vues</div>
+                      <div className="text-xl font-bold text-[#1E0F2B]">{youtubeStats.viewCount.toLocaleString("fr-FR")}</div>
+                    </div>
+                    <div className="bg-[#FF0000]/5 rounded-lg p-2.5 text-center">
+                      <div className="flex items-center justify-center gap-1 text-[10px] text-[#1E0F2B]/40 uppercase mb-0.5"><Heart className="w-3 h-3" />J&apos;aime</div>
+                      <div className="text-xl font-bold text-[#1E0F2B]">{youtubeStats.likeCount.toLocaleString("fr-FR")}</div>
+                    </div>
+                    <div className="bg-[#FF0000]/5 rounded-lg p-2.5 text-center">
+                      <div className="flex items-center justify-center gap-1 text-[10px] text-[#1E0F2B]/40 uppercase mb-0.5"><MessageCircle className="w-3 h-3" />Comm.</div>
+                      <div className="text-xl font-bold text-[#1E0F2B]">{youtubeStats.commentCount.toLocaleString("fr-FR")}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-[#1E0F2B]/40 italic">
+                    {youtubeConfigured
+                      ? "Aucune donnée YouTube (URL manquante ou direct non démarré côté YouTube)."
+                      : "Configurez YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET / YOUTUBE_REFRESH_TOKEN sur Vercel pour les stats YouTube en direct."}
+                  </p>
+                )}
+              </div>
+
               {isLive && (
                 <div className="pt-3 border-t border-[#8A8378]/15">
                   <p className="text-[10px] text-[#1E0F2B]/40 uppercase tracking-wider mb-2">État</p>

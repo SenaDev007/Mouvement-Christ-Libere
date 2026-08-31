@@ -338,6 +338,13 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   }, [collabEnabled, collabSendCursor]);
 
   // ─── Upload vidéo source ───
+  // ⭐ V2.9 — UPLOAD PAR BLOCS (fix HTTP 413) :
+  // Vercel limite le body des requêtes à ~4,5 Mo → l'ancien fallback
+  // FormData envoyait TOUT le fichier d'un coup et échouait en 413 après
+  // avoir atteint 100 % de progression. On découpe maintenant le fichier
+  // en blocs de 3,5 Mo, envoyés un par un, puis on demande l'assemblage
+  // côté serveur (POST /chunk/complete) — aucune limite de taille Vercel.
+  // L'upload direct R2 (presign) reste prioritaire quand il est configuré.
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -346,12 +353,20 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
       return;
     }
     const fileSizeMB = Math.round(file.size / 1024 / 1024);
+    const MAX_VIDEO_MB = 150;
+    if (fileSizeMB > MAX_VIDEO_MB) {
+      setUploadError(
+        `Vidéo trop volumineuse (${fileSizeMB} Mo). La limite est de ${MAX_VIDEO_MB} Mo — compressez la vidéo (ex. 720p) et réessayez.`,
+      );
+      return;
+    }
     setUploadingVideo(true);
     setUploadError("");
     setUploadProgress(0);
     setUploadStage("Demande d'URL d'upload...");
 
     try {
+      // ─── Chemin 1 : R2 pré-signé (si configuré) — bypass total du serveur ───
       const presignRes = await apiFetch(`/api/videos/${videoId}/presign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -397,47 +412,76 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           setTimeout(() => window.location.reload(), 1500);
           return;
         } catch (putError) {
-          // (S5) Si le PUT vers R2 échoue (CORS non configuré, réseau, etc.),
-          // on retombe sur l'upload FormData via le serveur (limité à 4.5 MB
-          // sur Vercel Hobby, mais au moins ça marche en attendant que le
-          // CORS soit propagé).
-          console.warn("[post-production] Upload R2 direct échoué, fallback FormData:", putError);
-          setUploadStage("Upload via serveur (fallback)...");
+          // PUT R2 échoué (CORS…) → basculer sur l'upload par blocs.
+          console.warn("[post-production] Upload R2 direct échoué, bascule blocs:", putError);
           setUploadProgress(0);
-          // Continuer vers le fallback FormData ci-dessous
         }
       }
 
-      // Fallback FormData (R2 non configuré OU PUT direct échoué)
-      const fallbackData = presignRes.ok ? {} : await presignRes.json().catch(() => ({}));
-      if (fallbackData.r2NotConfigured || true) {
-        setUploadStage(`Upload via serveur (${fileSizeMB} MB)...`);
-        const result = await new Promise<{ videoUrl: string }>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          const formData = new FormData();
-          formData.append("file", file);
-          xhr.upload.addEventListener("progress", (ev) => {
-            if (ev.lengthComputable) setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
-          });
-          xhr.addEventListener("load", () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try { resolve(JSON.parse(xhr.responseText)); }
-              catch { reject(new Error("Réponse invalide")); }
-            } else {
-              try { reject(new Error(JSON.parse(xhr.responseText).error || `HTTP ${xhr.status}`)); }
-              catch { reject(new Error(`HTTP ${xhr.status}`)); }
+      // ─── Chemin 2 (⭐ V2.9) : UPLOAD PAR BLOCS via le serveur ───
+      // Chaque bloc ≤ 3,5 Mo passe sous la limite Vercel (~4,5 Mo) ;
+      // plus AUCUN envoi FormData du fichier complet (cause du 413).
+      const CHUNK_SIZE = 3.5 * 1024 * 1024;
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      setUploadStage(`Upload par blocs (${fileSizeMB} Mo · ${totalChunks} blocs)...`);
+
+      const failedChunks: number[] = [];
+      for (let index = 0; index < totalChunks; index++) {
+        const start = index * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const blob = file.slice(start, end);
+        let attempt = 0;
+        // 3 tentatives par bloc (réseau instable mobile).
+        while (true) {
+          try {
+            const res = await fetch(`/api/videos/${videoId}/chunk?index=${index}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/octet-stream" },
+              body: blob,
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || `HTTP ${res.status}`);
             }
-          });
-          xhr.addEventListener("error", () => reject(new Error("Erreur réseau")));
-          xhr.open("POST", `/api/videos/${videoId}/upload`);
-          xhr.send(formData);
-        });
-        setCurrentVideoUrl(result.videoUrl);
-        setUploadProgress(100);
-        setTimeout(() => window.location.reload(), 1500);
-        return;
+            break;
+          } catch (chunkErr) {
+            attempt += 1;
+            if (attempt >= 3) {
+              failedChunks.push(index);
+              console.error(`[post-production] Bloc ${index} échoué après 3 tentatives:`, chunkErr);
+              break;
+            }
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+          }
+        }
+        setUploadProgress(Math.round(((index + 1) / totalChunks) * 95));
+        setUploadStage(`Upload par blocs (${index + 1}/${totalChunks})...`);
       }
-      throw new Error(fallbackData.error || "Impossible de générer l'URL d'upload");
+
+      if (failedChunks.length > 0) {
+        throw new Error(
+          `Échec de l'upload des blocs ${failedChunks.join(", ")} après plusieurs tentatives. Vérifiez votre connexion et réessayez.`,
+        );
+      }
+
+      // ─── Assemblage côté serveur ───
+      setUploadStage("Assemblage du fichier...");
+      setUploadProgress(96);
+      const completeRes = await apiFetch(`/api/videos/${videoId}/chunk/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mime: file.type || "video/mp4", size: file.size }),
+      });
+      if (!completeRes.ok) {
+        const data = await completeRes.json().catch(() => ({}));
+        throw new Error(data.error || "Erreur lors de l'assemblage");
+      }
+      const result = await completeRes.json();
+      setCurrentVideoUrl(result.videoUrl);
+      setUploadProgress(100);
+      setUploadStage("Terminé ✓");
+      setTimeout(() => window.location.reload(), 1500);
+      return;
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Erreur");
     } finally {

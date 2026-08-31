@@ -85,6 +85,36 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // ⭐ V2.9 — Inscription automatique aux canaux PUBLICS de la communauté
+    // (annonces officielles, intercession, canal vocal…). Avant : un nouvel
+    // inscrit voyait les canaux dans la sidebar mais recevait 403 en ouvrant
+    // les messages (aucun ChannelMember créé) — « je ne vois pas les messages ».
+    // L'auto-join paresseux (route messages V2.9) couvre aussi ce cas, mais
+    // l'inscription directe rend le compte immédiatement complet (compte de
+    // membres juste, unread actifs dès le départ).
+    try {
+      const publicChannels = await db.channel.findMany({
+        where: { isRestricted: false, type: { not: "RESTRICTED" } },
+        select: { id: true },
+      });
+      if (publicChannels.length > 0) {
+        await db.channelMember.createMany({
+          data: publicChannels.map((ch) => ({
+            channelId: ch.id,
+            userId: user.id,
+            role: "MEMBER" as const,
+          })),
+          skipDuplicates: true,
+        });
+        console.log(
+          `[auth/register] Nouveau membre inscrit à ${publicChannels.length} canal(aux) public(s)`
+        );
+      }
+    } catch (chError) {
+      // Non bloquant : l'auto-join paresseux (messages route V2.9) rattrape.
+      console.error("[auth/register] Auto-enrollment canaux impossible :", chError);
+    }
+
     return NextResponse.json({
       success: true,
       userId: user.id,

@@ -56,8 +56,10 @@ import {
   StopCircle, Play, Pause, Sparkles, AlertCircle,
   MessageCircle, AtSign, ChevronUp, ChevronRight, Copy, UploadCloud,
   ScrollText, PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
+  Radio, Camera,
 } from "lucide-react";
-import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant } from "livekit-client";
+import Link from "next/link";
+import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant, RemoteAudioTrack } from "livekit-client";
 import { cn } from "@/lib/utils";
 import { BibleWorkspace } from "@/components/bible/BibleWorkspace";
 import {
@@ -65,6 +67,7 @@ import {
   type ChatConversation, type ChatMessage, type ChatPoll,
 } from "@/lib/yeshua-connect/types";
 import { getYeshuaWatermarkStyle } from "./YeshuaWatermark";
+import { ProfileSettingsModal } from "./ProfileSettingsModal";
 import { api } from "@/lib/api-client";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import { emitSocket, onSocket, offSocket } from "@/lib/chat/socket-client";
@@ -605,6 +608,114 @@ export function MessagingView() {
     if (activeConvId) loadMessages(activeConvId);
   }, [activeConvId, loadMessages]);
 
+  // ═════════════════════════════════════════════════════════════════════
+  //  ⭐ V2.9 — TEMPS RÉEL SANS SOCKET.IO : POLLING DE SECOURS
+  //  Contexte : le client Socket.io vise le backend Express (Railway) qui
+  //  n'est PAS déployé → en production la connexion échoue en boucle
+  //  (« Synchro temps réel désactivée ») et SEUL l'expéditeur voyait ses
+  //  messages (maj optimiste). Les autres membres ne voyaient RIEN tant
+  //  qu'ils ne rechargeaient pas la page.
+  //  Solution : quand le socket n'est pas connecté, on interroge le serveur
+  //  directement — messages de la conversation active toutes les 3 s,
+  //  conversations + présence toutes les 10 s. Dès qu'un backend temps réel
+  //  sera déployé (NEXT_PUBLIC_API_URL), le socket reprend la priorité et
+  //  le polling s'éteint tout seul.
+  // ═════════════════════════════════════════════════════════════════════
+  const [pollingHealthy, setPollingHealthy] = useState(true);
+  const pollSigRef = useRef<string>("");
+
+  // 1) Messages de la conversation active — fusion intelligente :
+  //    upsert par id (réactions/épinglage/éditions rafraîchis), messages
+  //    disparus de la fenêtre récente = supprimés → retirés.
+  const pollActiveMessages = useCallback(async (convId: string) => {
+    try {
+      const res = await fetch(api.url(`/api/yeshua-connect/conversations/${convId}/messages?limit=25`), { cache: "no-store" });
+      if (!res.ok) { setPollingHealthy(false); return; }
+      const data: ChatMessage[] = await res.json();
+      setPollingHealthy(true);
+      // Signature courte : si rien n'a changé, on ne déclenche PAS de
+      // re-render (le scroll ne saute pas toutes les 3 s).
+      const sig = data.map(m => `${m.id}:${m.isPinned ? 1 : 0}:${m.reactions?.length || 0}:${m.editedAt ? 1 : 0}:${m.content?.length || 0}`).join("|");
+      if (sig === pollSigRef.current) return;
+      pollSigRef.current = sig;
+
+      const visible = data.filter(m => !hiddenForMeRef.current.has(m.id));
+      const pinnedIds = new Set(data.filter(m => m.isPinned).map(m => m.id));
+
+      setMessages(prev => {
+        const old = prev[convId] || [];
+        if (old.length === 0) {
+          return { ...prev, [convId]: visible };
+        }
+        const freshIds = new Set(visible.map(m => m.id));
+        const oldestFreshAt = visible.length > 0
+          ? new Date(visible[0].createdAt).getTime()
+          : Number.POSITIVE_INFINITY;
+        // On garde : (a) les anciens messages antérieurs à la fenêtre pollée
+        // (chargés via pagination), (b) on remplace/joint les versions
+        // fraîches. Un message absent de la fenêtre alors qu'il devrait y
+        // être (plus récent que le plus ancien pollé) = supprimé → retiré.
+        const kept = old.filter(m => {
+          if (freshIds.has(m.id)) return false; // remplacé par la version fraîche
+          return new Date(m.createdAt).getTime() < oldestFreshAt;
+        });
+        const merged = [...kept, ...visible];
+        return { ...prev, [convId]: merged };
+      });
+
+      // Rafraîchir les épinglés (bannière) sans écraser les épingles locales
+      // en cours d'interaction — on fusionne avec l'état existant.
+      setPinnedMessages(prev => {
+        const next = new Set(prev);
+        for (const id of pinnedIds) next.add(id);
+        for (const id of Array.from(prev)) {
+          const stillThere = data.find(m => m.id === id);
+          if (stillThere && !stillThere.isPinned) next.delete(id);
+        }
+        return next;
+      });
+    } catch {
+      setPollingHealthy(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    pollSigRef.current = ""; // reset par conversation
+  }, [activeConvId]);
+
+  useEffect(() => {
+    if (!activeConvId) return;
+    if (socketConnected) return; // le socket s'en occupe (backend déployé)
+    const interval = setInterval(() => {
+      pollActiveMessages(activeConvId);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [activeConvId, socketConnected, pollActiveMessages]);
+
+  // 2) Conversations + présence toutes les 10 s : unread, aperçus,
+  //    « N en ligne », photos, membres — le GET met aussi à jour
+  //    User.lastSeenAt côté serveur (heartbeat de présence).
+  useEffect(() => {
+    if (socketConnected) return;
+    const interval = setInterval(() => {
+      loadConversationsRef.current?.();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [socketConnected]);
+
+  // 3) Membres du canal actif toutes les 12 s (compteur de membres vivant,
+  //    photos, rôles — « 3 membres mais 1 seul affiché » réparé).
+  useEffect(() => {
+    if (!activeConvId) return;
+    const interval = setInterval(() => {
+      fetch(api.url(`/api/yeshua-connect/conversations/${activeConvId}/members`), { cache: "no-store" })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (Array.isArray(data)) setChannelMembers(data); })
+        .catch(() => {});
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [activeConvId]);
+
   // ⭐ V2.1 — Charger les membres du canal actif (pour l'autocomplétion @mention)
   useEffect(() => {
     if (!activeConvId) {
@@ -650,9 +761,23 @@ export function MessagingView() {
     return () => { cancelled = true; };
   }, [activeConvId, loadingMsgs]);
 
+  // ⭐ V2.9 — Auto-scroll INTELLIGENT : on ne saute en bas que si
+  // l'utilisateur y était déjà (ou au changement de conversation). Avant,
+  // chaque mise à jour de state — y compris le polling de secours toutes
+  // les 3 s — ramenait de force en bas de la conversation : impossible de
+  // lire l'historique pendant que d'autres écrivent.
+  const isNearBottomRef = useRef(true);
   useEffect(() => {
+    if (activeConvId) isNearBottomRef.current = true; // nouveau canal → coller en bas
+  }, [activeConvId]);
+  useEffect(() => {
+    if (!isNearBottomRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeConvId]);
+  const handleMessagesScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  }, []);
 
   // ═════════════════════════════════════════════════════════════════════
   //  SOCKET.IO — Join/leave conversation rooms + incoming events
@@ -1680,6 +1805,84 @@ export function MessagingView() {
   //     reste "ouvert" côté serveur (room LiveKit persistante), mais
   //     l'utilisateur se déconnecte.
 
+  // ═════════════════════════════════════════════════════════════════════
+  //  ⭐ V2.9 — CANAL VOCAL : SON + PARTICIPANTS + AUTO-REJOIN
+  //  Problèmes corrigés :
+  //   • « On n'entend pas le son des uns des autres » → AUCUN élément
+  //     <audio> n'était attaché aux tracks micro distants (l'appel 1-1
+  //     marchait car CallOverlay attache le sien). On crée maintenant un
+  //     <audio autoPlay> caché par participant distant + room.startAudio()
+  //     (politique autoplay des navigateurs).
+  //   • « Le nombre de membres ne se met pas à jour » → objets
+  //     RemoteParticipant MUTABLES : sans événement TrackMuted/
+  //     ActiveSpeakersChanged, React ne re-rendait jamais → états figés.
+  //   • « Un refresh me déconnecte » → persistance du canal rejoint dans
+  //     localStorage + AUTO-REJOIN au chargement.
+  // ═════════════════════════════════════════════════════════════════════
+  const remoteAudioContainerRef = useRef<HTMLDivElement | null>(null);
+  const remoteAudioElsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const [audioPlaybackBlocked, setAudioPlaybackBlocked] = useState(false);
+  const [activeSpeakerIds, setActiveSpeakerIds] = useState<Set<string>>(new Set());
+  const [voiceReconnecting, setVoiceReconnecting] = useState(false);
+  const [activeLive, setActiveLive] = useState<{
+    id: string;
+    title: string;
+    servantName?: string;
+    servantPortraitUrl?: string | null;
+    startedAt?: string | null;
+  } | null>(null);
+  const joinVoiceChannelRef = useRef<(() => Promise<void>) | null>(null);
+
+  /** Crée (ou récupère) l'élément <audio> caché d'un participant distant. */
+  const ensureRemoteAudioEl = useCallback((identity: string): HTMLAudioElement | null => {
+    if (typeof document === "undefined") return null;
+    let el = remoteAudioElsRef.current.get(identity);
+    if (!el) {
+      el = document.createElement("audio");
+      el.autoplay = true;
+      // Safari/iOS exige des attributs pour l'autoplay de médias distants.
+      try { el.setAttribute("playsinline", "true"); } catch {}
+      const container = remoteAudioContainerRef.current;
+      if (!container) return null; // pas encore rendu — réessayé au prochain event
+      container.appendChild(el);
+      remoteAudioElsRef.current.set(identity, el);
+    }
+    return el;
+  }, []);
+
+  /** Attache le track micro distant à son <audio> (et débloque le son). */
+  const attachRemoteAudio = useCallback((identity: string, track: RemoteAudioTrack) => {
+    const el = ensureRemoteAudioEl(identity);
+    if (!el) return;
+    try { track.attach(el); } catch {}
+    // Si le navigateur a bloqué l'autoplay → flag UI « Activer le son ».
+    if (el.paused) {
+      el.play().then(() => setAudioPlaybackBlocked(false)).catch(() => setAudioPlaybackBlocked(true));
+    }
+  }, [ensureRemoteAudioEl]);
+
+  /** Retire les <audio> d'un participant parti. */
+  const removeRemoteAudio = useCallback((identity: string) => {
+    const el = remoteAudioElsRef.current.get(identity);
+    if (el) {
+      try { el.pause(); el.remove(); } catch {}
+      remoteAudioElsRef.current.delete(identity);
+    }
+  }, []);
+
+  /** ⭐ V2.9 — Bouton « Activer le son » (autoplay bloqué) : geste utilisateur. */
+  const unlockAudioPlayback = useCallback(async () => {
+    const room = livekitRoomRef.current;
+    try {
+      if (room) await room.startAudio();
+      for (const el of remoteAudioElsRef.current.values()) {
+        el.muted = speakerEnabled;
+        await el.play().catch(() => {});
+      }
+      setAudioPlaybackBlocked(false);
+    } catch {}
+  }, [speakerEnabled]);
+
   /** Nettoie toutes les ressources LiveKit (room + tracks + stream local). */
   const cleanupLiveKit = useCallback(() => {
     if (localAudioTrackRef.current) {
@@ -1694,6 +1897,11 @@ export function MessagingView() {
       localStreamRef.current.getTracks().forEach((t) => { try { t.stop(); } catch {} });
       localStreamRef.current = null;
     }
+    // ⭐ V2.9 — Retirer TOUS les <audio> distants (sinon le son d'anciens
+    // participants continue en fond après la déconnexion !).
+    for (const [identity] of Array.from(remoteAudioElsRef.current.entries())) {
+      removeRemoteAudio(identity);
+    }
     if (livekitRoomRef.current) {
       try {
         livekitRoomRef.current.disconnect(true);
@@ -1701,10 +1909,12 @@ export function MessagingView() {
       livekitRoomRef.current = null;
     }
     setRemoteParticipants([]);
+    setActiveSpeakerIds(new Set());
+    setAudioPlaybackBlocked(false);
     setLocalAudioMuted(false);
     setLocalVideoEnabled(false);
     setCallError(null);
-  }, []);
+  }, [removeRemoteAudio]);
 
   /** Active/désactive le micro local sur la Room LiveKit active. */
   const toggleMute = useCallback(async () => {
@@ -1718,6 +1928,17 @@ export function MessagingView() {
       console.error("[livekit] toggleMute failed:", e);
     }
   }, [localAudioMuted]);
+
+  /** ⭐ V2.9 — Haut-parleur VRAIMENT fonctionnel : avant, le bouton ne
+   *  changeait qu'un booléen décoratif (aucun effet sur le son). On coupe
+   *  désormais physiquement les <audio> distants. */
+  const toggleSpeaker = useCallback(() => {
+    const next = !speakerEnabled;
+    setSpeakerEnabled(next);
+    for (const el of remoteAudioElsRef.current.values()) {
+      el.muted = !next;
+    }
+  }, [speakerEnabled]);
 
   /** Active/désactive la caméra locale (utile en appel vidéo). */
   const toggleCamera = useCallback(async () => {
@@ -1888,17 +2109,62 @@ export function MessagingView() {
       const room = new Room({ adaptiveStream: true, dynacast: true });
       livekitRoomRef.current = room;
 
-      room.on(RoomEvent.TrackSubscribed, () => {
+      // ─── ⭐ V2.9 — SON : attachement des tracks micro distants ───────
+      // La cause racine du « on ne s'entend pas » : aucun <audio> n'était
+      // jamais attaché. On attache sur TrackSubscribed (audio) + on re-scanne
+      // les publications déjà présentes (participants connectés AVANT nous).
+      room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+        if (track.kind === Track.Kind.Audio && track instanceof RemoteAudioTrack) {
+          attachRemoteAudio(participant.identity, track);
+        }
         setRemoteParticipants(Array.from(room.remoteParticipants.values()));
       });
-      room.on(RoomEvent.TrackUnsubscribed, () => {
+      room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+        if (track.kind === Track.Kind.Audio) removeRemoteAudio(participant.identity);
         setRemoteParticipants(Array.from(room.remoteParticipants.values()));
       });
       room.on(RoomEvent.ParticipantConnected, () => {
         setRemoteParticipants(Array.from(room.remoteParticipants.values()));
       });
-      room.on(RoomEvent.ParticipantDisconnected, () => {
+      room.on(RoomEvent.ParticipantDisconnected, (participant) => {
+        removeRemoteAudio(participant.identity);
         setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+      // ─── ⭐ V2.9 — Événements d'ÉTAT : les objets RemoteParticipant sont
+      // mutables → sans ces événements, « Micro coupé », photos et compteurs
+      // restaient FIGÉS (React ne re-rendait jamais). Chaque event déclenche
+      // un setRemoteParticipants avec un NOUVEAU tableau → re-render avec
+      // les valeurs fraîches (p.isMicrophoneEnabled etc.).
+      room.on(RoomEvent.TrackMuted, () => {
+        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+      room.on(RoomEvent.TrackUnmuted, () => {
+        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+      room.on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
+        setActiveSpeakerIds(new Set(speakers.map((s) => s.identity)));
+      });
+      room.on(RoomEvent.Reconnecting, () => setVoiceReconnecting(true));
+      room.on(RoomEvent.Reconnected, () => {
+        setVoiceReconnecting(false);
+        // Re-scanne les publications (les tracks peuvent avoir été re-créées).
+        for (const p of room.remoteParticipants.values()) {
+          const pub = p.getTrackPublication(Track.Source.Microphone);
+          if (pub?.track instanceof RemoteAudioTrack && pub.isSubscribed) {
+            attachRemoteAudio(p.identity, pub.track);
+          }
+        }
+        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      });
+      room.on(RoomEvent.Disconnected, () => {
+        // Déconnexion réseau / serveur → l'UI repasse en mode « Rejoindre »
+        // (l'utilisateur reste sur le canal, il peut re-cliquer).
+        setRemoteParticipants([]);
+        setVoiceChannelConnected(false);
+      });
+      // Autoplay bloqué par le navigateur → bouton « Activer le son ».
+      room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
+        setAudioPlaybackBlocked(!room.canPlaybackAudio);
       });
       // ⭐ V2.7 — L'admin a basculé le mode du canal : TOUT LE MONDE voit le
       // changement instantanément (métadonnées room poussées par le serveur).
@@ -1907,7 +2173,24 @@ export function MessagingView() {
       });
 
       await room.connect(url, token);
+
+      // ⭐ V2.9 — Débloque la lecture audio distante (politique autoplay) :
+      // sans startAudio(), Chrome/Safari peuvent refuser de jouer les <audio>.
+      try {
+        await room.startAudio();
+        setAudioPlaybackBlocked(!room.canPlaybackAudio);
+      } catch { /* Safari ancien — le bouton « Activer le son » prend le relais */ }
+
       await room.localParticipant.setMicrophoneEnabled(true);
+
+      // ⭐ V2.9 — Participants DÉJÀ connectés avant nous : leurs tracks
+      // existent déjà (aucun TrackSubscribed ne sera émis pour eux).
+      for (const p of room.remoteParticipants.values()) {
+        const pub = p.getTrackPublication(Track.Source.Microphone);
+        if (pub?.track instanceof RemoteAudioTrack && pub.isSubscribed) {
+          attachRemoteAudio(p.identity, pub.track);
+        }
+      }
 
       // ⭐ V2.7 — Mode initial : la caméra ne s'allume QUE si l'admin a activé
       // le mode vidéo pour ce canal (mode WhatsApp). En mode audio : audio seul.
@@ -1930,13 +2213,24 @@ export function MessagingView() {
       setLocalAudioMuted(false);
       setRemoteParticipants(Array.from(room.remoteParticipants.values()));
       setVoiceChannelConnected(true);
+      setVoiceReconnecting(false);
+      // ⭐ V2.9 — AUTO-REJOIN : mémorise le canal rejoint → un refresh de la
+      // page relance la connexion automatiquement (l'utilisateur ne « quitte »
+      // le direct QUE s'il clique « Quitter » — like Telegram/WhatsApp).
+      if (currentUserId) {
+        try { localStorage.setItem(`yc-voice-${currentUserId}`, activeConvId); } catch {}
+      }
     } catch (e) {
       console.error("[livekit] joinVoiceChannel failed:", e);
       setCallError(e instanceof Error ? e.message : "Échec de la connexion au canal vocal");
       cleanupLiveKit();
       setVoiceChannelConnected(false);
+      // Auto-rejoin raté (token/micro refusé) → ne pas retenter en boucle.
+      if (currentUserId) {
+        try { localStorage.removeItem(`yc-voice-${currentUserId}`); } catch {}
+      }
     }
-  }, [activeConvId, cleanupLiveKit, currentUserName, currentUserAvatar, applyVoiceMetadata]);
+  }, [activeConvId, cleanupLiveKit, currentUserName, currentUserAvatar, applyVoiceMetadata, attachRemoteAudio, removeRemoteAudio, currentUserId]);
 
   /**
    * ⭐ V2.7 — Bascule le mode du canal vocal (RÉSERVÉ AUX ADMINISTRATEURS).
@@ -1984,11 +2278,50 @@ export function MessagingView() {
 
   /** Quitte le canal vocal (disconnect — le canal reste persistant côté serveur). */
   const leaveVoiceChannel = useCallback(() => {
+    // ⭐ V2.9 — Quitter EXPLICITEMENT (bouton « Quitter ») efface l'auto-rejoin :
+    // un refresh ne relancera PAS la connexion — comportement Telegram/WhatsApp.
+    if (currentUserId) {
+      try { localStorage.removeItem(`yc-voice-${currentUserId}`); } catch {}
+    }
     cleanupLiveKit();
     setVoiceChannelConnected(false);
     // ⭐ V2.7 — Réinitialisation du mode local (rechargé au prochain join)
     setVoiceVideoMode(false);
-  }, [cleanupLiveKit]);
+  }, [cleanupLiveKit, currentUserId]);
+
+  // ⭐ V2.9 — AUTO-REJOIN après un refresh : si l'utilisateur était dans le
+  // canal vocal (localStorage) et qu'il n'a PAS cliqué « Quitter », on
+  // reconnecte automatiquement dès que la conversation est chargée.
+  // (L'EFFET lui-même est placé après la déclaration d'activeConv, cf. plus bas.)
+  const voiceRejoinTriedRef = useRef(false);
+  useEffect(() => { joinVoiceChannelRef.current = joinVoiceChannel; }, [joinVoiceChannel]);
+
+  // ⭐ V2.9 — DIRECT EN COURS : indicateur visible (bouton vert clignotant +
+  // photo du diffuseur) dans les canaux vocaux + badge sur la ligne du canal.
+  // Corrige « on ne remarque pas qu'un direct est en cours » + « quand il n'y
+  // a rien, on doit pouvoir lancer un live ».
+  useEffect(() => {
+    let cancelled = false;
+    const check = () => {
+      fetch(api.url("/api/live/active"), { cache: "no-store" })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => {
+          if (cancelled) return;
+          const lv = data?.live ?? null;
+          setActiveLive(lv ? {
+            id: lv.id,
+            title: lv.title,
+            servantName: lv.servantName,
+            servantPortraitUrl: lv.servantPortraitUrl,
+            startedAt: lv.startedAt ?? null,
+          } : null);
+        })
+        .catch(() => {});
+    };
+    check();
+    const interval = setInterval(check, 10000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
 
   // ⭐ V2.3 — Cleanup LiveKit au unmount du composant (évite les fuites de
   // tracks microphone/caméra si l'utilisateur quitte la page pendant un appel).
@@ -2162,6 +2495,40 @@ export function MessagingView() {
 
   const activeConv = conversations.find(c => c.id === activeConvId);
 
+  // ⭐ V2.9 — AUTO-REJOIN (effet placé ICI car il dépend d'activeConv) :
+  // localStorage yc-voice-<userId> mémorise le canal rejoint ; un refresh de
+  // page reconnexionne automatiquement — on ne « quitte » le direct qu'en
+  // cliquant « Quitter » (comportement Telegram/WhatsApp demandé).
+  useEffect(() => {
+    if (voiceRejoinTriedRef.current || voiceChannelConnected) return;
+    if (!currentUserId || !activeConvId) return;
+    if (activeConv?.type !== "VOICE") return;
+    let stored: string | null = null;
+    try { stored = localStorage.getItem(`yc-voice-${currentUserId}`); } catch {}
+    if (!stored || stored !== activeConvId) return;
+    voiceRejoinTriedRef.current = true; // une seule tentative par chargement
+    joinVoiceChannelRef.current?.();
+  }, [currentUserId, activeConvId, activeConv?.type, voiceChannelConnected]);
+
+  // ⭐ V2.9 — Convergence du mode audio/vidéo par POLLING (10 s) : si le push
+  // LiveKit (RoomMetadataChanged) a échoué côté serveur, les clients
+  // connectés convergent quand même vers Channel.videoMode en base.
+  // Corrige « lorsqu'on veut switcher vers audio, ça ne marche pas ».
+  useEffect(() => {
+    if (!activeConvId || activeConv?.type !== "VOICE" || !voiceChannelConnected) return;
+    const interval = setInterval(() => {
+      fetch(api.url(`/api/yeshua-connect/conversations/${activeConvId}/voice-mode`), { cache: "no-store" })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => {
+          if (data && typeof data.videoMode === "boolean") {
+            applyVoiceMetadata(JSON.stringify({ videoMode: data.videoMode }));
+          }
+        })
+        .catch(() => {});
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [activeConvId, activeConv?.type, voiceChannelConnected, applyVoiceMetadata]);
+
   // ⭐ V2.7 — Mode du canal vocal (audio/vidéo, décidé par l'admin) : chargé
   // dès la SÉLECTION du canal (avant même de rejoindre) pour afficher le bon
   // libellé (« Rejoindre le canal vidéo/vocal ») et l'état du bandeau.
@@ -2233,7 +2600,15 @@ export function MessagingView() {
   const canViewAuditLog = AUDIT_PRIVILEGED_ROLES.has(currentUserRole || "");
 
   return (
-    <div className="flex h-[calc(100vh-0px)] bg-[#FAF6EF] overflow-hidden">
+    // ⭐ V2.9 — HAUTEUR MOBILE RÉPARÉE : la layout du site réserve 4rem (64px,
+    // mobile) / 5rem (80px, desktop) pour la navbar fixe. Avant, 100vh pur →
+    // le composer passait SOUS l'écran sur mobile (« zone de texte figée,
+    // trop restreinte »). dvh = viewport dynamique (barres d'adresse iOS).
+    <div className="flex h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)] bg-[#FAF6EF] overflow-hidden">
+      {/* ⭐ V2.9 — Conteneur INVISIBLE des <audio> distants du canal vocal.
+          Les éléments sont créés imperativement (attachRemoteAudio) — c'est
+          CE qui manquait : sans eux, on ne s'entendait pas. */}
+      <div ref={remoteAudioContainerRef} aria-hidden className="absolute w-0 h-0 overflow-hidden pointer-events-none" />
       {/* Hidden file inputs */}
       <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect}
         accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z" />
@@ -2253,6 +2628,25 @@ export function MessagingView() {
               <span className="truncate">Yeshua Connect</span>
             </h2>
             <div className="flex items-center gap-1">
+              {/* ⭐ V2.9 — MA PHOTO cliquable dans le header de la sidebar :
+                  ouvre directement l'éditeur de profil (photo, nom, tel…).
+                  Avant, aucun accès visible aux paramètres du compte. */}
+              <button
+                onClick={() => setShowProfile(true)}
+                className="relative w-8 h-8 rounded-full overflow-hidden border border-[#C9A227]/50 hover:border-[#C9A227] transition-colors flex-shrink-0"
+                title="Mon profil — modifier ma photo et mes informations"
+              >
+                {currentUserAvatar ? (
+                  <img src={currentUserAvatar} alt={currentUserName} className="w-full h-full object-cover" />
+                ) : (
+                  <span className={cn("w-full h-full flex items-center justify-center text-white text-[10px] font-bold", getAvatarColor(currentUserName))}>
+                    {getInitials(currentUserName)}
+                  </span>
+                )}
+                <span className="absolute inset-0 bg-[#C9A227]/0 hover:bg-[#C9A227]/20 transition-colors flex items-center justify-center">
+                  <Camera className="w-3.5 h-3.5 text-white opacity-0 hover:opacity-100 drop-shadow" />
+                </span>
+              </button>
               {/* More menu */}
               <div className="relative">
                 <button
@@ -2357,7 +2751,8 @@ export function MessagingView() {
               {/* ⭐ V2.3 — Canaux vocaux persistants */}
               {voiceConvs.length > 0 && (
                 <ConvSection title="Canaux vocaux" icon={<Volume2 className="w-3 h-3" />} convs={voiceConvs}
-                  activeConvId={activeConvId} onSelect={setActiveConvId} mutedConversations={mutedConversations} />
+                  activeConvId={activeConvId} onSelect={setActiveConvId} mutedConversations={mutedConversations}
+                  liveBadge={activeLive ? { title: activeLive.title, portraitUrl: activeLive.servantPortraitUrl } : null} />
               )}
             </>
           )}
@@ -2397,7 +2792,7 @@ export function MessagingView() {
         </AnimatePresence>
         {/* Chat header */}
         {activeConv ? (
-          <div className="p-3 border-b border-[#C9A227]/15 bg-white/95 backdrop-blur-sm flex items-center justify-between">
+          <div className="p-3 border-b border-[#C9A227]/15 bg-white/95 backdrop-blur-sm flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-3 min-w-0">
               <button onClick={() => setActiveConvId(null)} className="lg:hidden p-1 text-[#8A8378]">
                 <ArrowLeft className="w-4 h-4" />
@@ -2415,8 +2810,8 @@ export function MessagingView() {
                     {getInitials(headerDisplayName || activeConv.name)}
                   </div>
                 )}
-                {socketConnected && (
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" title="Connecté en temps réel" />
+                {(socketConnected || pollingHealthy) && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" title="Temps réel actif" />
                 )}
               </div>
               <div className="min-w-0">
@@ -2435,11 +2830,26 @@ export function MessagingView() {
                     return onlineCount > 0 ? ` · ${onlineCount} en ligne` : "";
                   })()}
                   {mutedConversations.has(activeConv.id) && <> · <BellOff className="w-3 h-3 text-[#8A8378] inline" /> Muet</>}
-                  {!socketConnected && " · Synchro temps réel désactivée"}
+                  {/* ⭐ V2.9 — Indicateur de synchro honnête : le temps réel
+                      fonctionne (socket OU polling de secours) → badge vert.
+                      En cas d'échec réseau → « Reconnexion… » en ambre. */}
+                  {(socketConnected || pollingHealthy) ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Temps réel actif
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600">
+                      <Loader2 className="w-3 h-3 animate-spin" />Reconnexion…
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            {/* ⭐ V2.9 — Header RESPONSIVE mobile : la rangée d'actions passe
+                à la ligne si besoin et les boutons secondaires (galerie,
+                audit, recherche, muet) sont masqués sur très petits écrans —
+                « les éléments en haut ne sont pas responsives » corrigé. */}
+            <div className="flex items-center gap-1 flex-wrap justify-end">
               {/* ⭐ V2.3 — Appels audio/vidéo réels via LiveKit.
                   Masqués pour les canaux vocaux (qui utilisent leur propre UI "Rejoindre"). */}
               {activeConv.type !== "VOICE" && (
@@ -2465,7 +2875,7 @@ export function MessagingView() {
               {/* ⭐ V2.3 — Galerie médias du canal */}
               <button
                 onClick={openGallery}
-                className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
+                className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 hidden sm:block"
                 title="Galerie médias"
               >
                 <ImageIcon className="w-4 h-4" />
@@ -2474,13 +2884,13 @@ export function MessagingView() {
               {canViewAuditLog && (
                 <button
                   onClick={openAuditLog}
-                  className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
+                  className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 hidden md:block"
                   title="Audit log (modération)"
                 >
                   <ScrollText className="w-4 h-4" />
                 </button>
               )}
-              <button onClick={() => setShowConvSearch(!showConvSearch)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Rechercher">
+              <button onClick={() => setShowConvSearch(!showConvSearch)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 hidden sm:block" title="Rechercher">
                 <Search className="w-4 h-4" />
               </button>
               <button
@@ -2490,7 +2900,7 @@ export function MessagingView() {
               >
                 <BookOpen className="w-4 h-4" />
               </button>
-              <button onClick={() => handleMute(activeConv.id)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Muet">
+              <button onClick={() => handleMute(activeConv.id)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 hidden sm:block" title="Muet">
                 {mutedConversations.has(activeConv.id) ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
               </button>
             </div>
@@ -2605,14 +3015,19 @@ export function MessagingView() {
             onLeave={leaveVoiceChannel}
             onToggleMute={toggleMute}
             onToggleCamera={toggleCamera}
-            onToggleSpeaker={() => setSpeakerEnabled((s) => !s)}
+            onToggleSpeaker={toggleSpeaker}
             onSwitchMode={switchVoiceMode}
             room={livekitRoomRef.current}
             channelMembers={channelMembers}
+            activeLive={activeLive}
+            activeSpeakerIds={activeSpeakerIds}
+            audioPlaybackBlocked={audioPlaybackBlocked}
+            onUnlockAudio={unlockAudioPlayback}
+            voiceReconnecting={voiceReconnecting}
           />
           ) : (
         /* Messages (uniquement pour les canaux non-VOICE) */
-        <div ref={messagesScrollRef} className="flex-1 overflow-y-auto px-4 py-4">
+        <div ref={messagesScrollRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto px-4 py-4">
           {loadingMsgs ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
@@ -3322,20 +3737,23 @@ export function MessagingView() {
         </Modal>
       )}
 
-      {/* Profile Modal */}
+      {/* ⭐ V2.9 — Profile Modal RÉEL : avant, ce modal était une coquille
+          vide (« Membre / Disciple » + un bouton « Modifier le profil » qui
+          ne faisait RIEN). L'utilisateur peut maintenant modifier sa photo,
+          son nom, son téléphone, son pays, sa ville et sa bio directement
+          depuis Yeshua Connect (PUT /api/user/profile). */}
       {showProfile && (
-        <Modal onClose={() => setShowProfile(false)} title="Mon profil">
-          <div className="text-center py-4">
-            <div className={cn("w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold", getAvatarColor("Vous"))}>
-              {getInitials("Vous")}
-            </div>
-            <p className="font-bold text-[#1E0F2B]">Membre</p>
-            <p className="text-sm text-stone-500">Disciple</p>
-            <button className="mt-4 px-4 py-2 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-semibold hover:bg-[#DDBE55]">
-              Modifier le profil
-            </button>
-          </div>
-        </Modal>
+        <ProfileSettingsModal
+          currentUserId={currentUserId}
+          currentUserRole={currentUserRole}
+          onClose={() => setShowProfile(false)}
+          onSaved={(avatarUrl) => {
+            setCurrentUserAvatar(avatarUrl);
+            // Rafraîchir les conversations : les autres membres verront la
+            // nouvelle photo via le polling/refresh.
+            loadConversationsRef.current?.();
+          }}
+        />
       )}
 
       {/* Forward Modal */}
@@ -3854,7 +4272,7 @@ export function MessagingView() {
           room={livekitRoomRef.current}
           onToggleMute={toggleMute}
           onToggleCamera={toggleCamera}
-          onToggleSpeaker={() => setSpeakerEnabled((s) => !s)}
+          onToggleSpeaker={toggleSpeaker}
           onHangup={endCall}
         />
       )}
@@ -3888,14 +4306,27 @@ function formatConvTime(iso?: string): string {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 
-function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversations }: {
+function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversations, liveBadge }: {
   title: string; icon: React.ReactNode; convs: ChatConversation[];
   activeConvId: string | null; onSelect: (id: string) => void; mutedConversations: Set<string>;
+  /** ⭐ V2.9 — Badge « EN DIRECT » vert clignotant (canaux vocaux). */
+  liveBadge?: { title: string; portraitUrl?: string | null } | null;
 }) {
   return (
     <>
       <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
         {icon} {title}
+        {/* ⭐ V2.9 — Indicateur DIRECT EN COURS sur la section des canaux
+            vocaux : pastille verte qui clignote + photo du diffuseur. */}
+        {liveBadge && (
+          <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 text-[9px] font-black uppercase tracking-wide">
+            <span className="relative flex w-1.5 h-1.5">
+              <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+              <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            </span>
+            <Radio className="w-2.5 h-2.5" />Direct
+          </span>
+        )}
       </div>
       {convs.map(conv => {
         const isActive = conv.id === activeConvId;
@@ -4998,7 +5429,13 @@ function VoiceAvatar({
   muted?: boolean;
 }) {
   return (
-    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+    <div
+      className={cn(
+        "relative flex-shrink-0 rounded-full transition-shadow",
+        speaking && "ring-2 ring-[#C9A227] ring-offset-1 ring-offset-white",
+      )}
+      style={{ width: size, height: size }}
+    >
       {avatarUrl ? (
         <img
           src={avatarUrl}
@@ -5017,10 +5454,13 @@ function VoiceAvatar({
           {getInitials(name)}
         </div>
       )}
+      {/* ⭐ V2.9 — Point de présence dynamique : vert = micro actif et
+          connecté ; neutre = micro coupé (l'état se met à jour en direct
+          grâce aux événements TrackMuted/TrackUnmuted). */}
       <span
         className={cn(
           "absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-white",
-          muted ? "w-2.5 h-2.5 bg-[#8A8378]" : "w-2.5 h-2.5 bg-green-500",
+          speaking ? "w-3.5 h-3.5 bg-[#C9A227]" : muted ? "w-2.5 h-2.5 bg-[#8A8378]" : "w-2.5 h-2.5 bg-green-500",
         )}
       />
     </div>
@@ -5117,6 +5557,11 @@ function VoiceChannelView({
   onSwitchMode,
   room,
   channelMembers,
+  activeLive,
+  activeSpeakerIds,
+  audioPlaybackBlocked,
+  onUnlockAudio,
+  voiceReconnecting,
 }: {
   conv: ChatConversation;
   connected: boolean;
@@ -5139,6 +5584,17 @@ function VoiceChannelView({
   onSwitchMode: (mode: "audio" | "video") => void;
   room: Room | null;
   channelMembers: Array<{ userId: string; name: string; role?: string; avatarUrl?: string }>;
+  activeLive?: {
+    id: string;
+    title: string;
+    servantName?: string;
+    servantPortraitUrl?: string | null;
+    startedAt?: string | null;
+  } | null;
+  activeSpeakerIds?: Set<string>;
+  audioPlaybackBlocked?: boolean;
+  onUnlockAudio?: () => void;
+  voiceReconnecting?: boolean;
 }) {
   // L'admin du site OU l'admin du canal peut basculer le mode audio ↔ vidéo.
   const myChannelRole = channelMembers.find(m => m.userId === currentUserId)?.role;
@@ -5209,6 +5665,69 @@ function VoiceChannelView({
         )}
       </div>
 
+      {/* ─── ⭐ V2.9 — DIRECT EN COURS : bandeau vert clignotant + photo du
+          diffuseur (demande explicite : « le bouton soit en vert avec l'icône
+          diffusion qui clignote, avec la photo de celui qui a lancé le direct »). */}
+      {activeLive && (
+        <Link
+          href={`/live/${activeLive.id}`}
+          className="mx-4 mt-3 flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-emerald-600/95 to-emerald-500/95 text-white shadow-lg hover:from-emerald-500 hover:to-emerald-400 transition-all group"
+        >
+          <span className="relative flex-shrink-0">
+            {activeLive.servantPortraitUrl ? (
+              <img
+                src={activeLive.servantPortraitUrl}
+                alt={activeLive.servantName || "Diffuseur"}
+                className="w-11 h-11 rounded-full object-cover border-2 border-white/90"
+              />
+            ) : (
+              <span className="w-11 h-11 rounded-full bg-white/20 border-2 border-white/60 flex items-center justify-center">
+                <Users2 className="w-5 h-5" />
+              </span>
+            )}
+            <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white flex items-center justify-center">
+              <Radio className="w-2.5 h-2.5 text-emerald-600 animate-pulse" />
+            </span>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/25 text-[10px] font-black tracking-wider uppercase">
+                <Radio className="w-3 h-3 animate-pulse" />En direct
+              </span>
+            </span>
+            <span className="block text-sm font-bold truncate mt-0.5">{activeLive.title}</span>
+            <span className="block text-[11px] text-white/80 truncate">
+              {activeLive.servantName ? `par ${activeLive.servantName} · ` : ""}Cliquez pour regarder
+            </span>
+          </span>
+          <ChevronRight className="w-5 h-5 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
+        </Link>
+      )}
+
+      {/* ─── ⭐ V2.9 — Son bloqué par le navigateur (autoplay) : bouton de
+          déblocage explicite, comme Google Meet. */}
+      {connected && audioPlaybackBlocked && (
+        <button
+          onClick={onUnlockAudio}
+          className="mx-4 mt-3 flex items-center gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-300 text-xs font-bold text-amber-800 hover:bg-amber-100 transition-colors"
+        >
+          <VolumeX className="w-5 h-5 flex-shrink-0" />
+          <span className="text-left flex-1">
+            Le son est coupé par votre navigateur
+            <span className="block text-[10px] font-medium text-amber-700">Cliquez ici pour entendre les autres participants</span>
+          </span>
+          <Volume2 className="w-4 h-4 flex-shrink-0" />
+        </button>
+      )}
+
+      {/* ─── ⭐ V2.9 — Reconnexion réseau en cours (transparence). */}
+      {connected && voiceReconnecting && (
+        <div className="mx-4 mt-3 p-2.5 rounded-xl bg-[#2A0E3D]/5 border border-[#C9A227]/30 text-xs text-[#1E0F2B] flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin text-[#C9A227] flex-shrink-0" />
+          Reconnexion au canal en cours…
+        </div>
+      )}
+
       {/* ─── Erreur éventuelle ─────────────────────────────────────────── */}
       {error && (
         <div className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
@@ -5243,10 +5762,26 @@ function VoiceChannelView({
               {videoMode ? <Video className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
               {videoMode ? "Rejoindre le canal vidéo" : "Rejoindre le canal vocal"}
             </button>
+            {/* ⭐ V2.9 — « Lancer un direct » : quand AUCUN direct n'est en
+                cours, les administrateurs peuvent lancer une diffusion depuis
+                le canal (studio complet) — demande explicite de l'utilisateur. */}
+            {canSwitchMode && !activeLive && (
+              <Link
+                href="/admin/lives"
+                className="w-full mt-2 py-2.5 border-2 border-emerald-600 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-50 flex items-center justify-center gap-2 transition-colors"
+              >
+                <Radio className="w-4 h-4" />
+                Lancer un direct
+              </Link>
+            )}
             <p className="text-[10px] text-[#8A8378] mt-3">
               {videoMode
                 ? "Votre caméra et votre micro seront activés en rejoignant."
                 : "Seul votre micro sera activé en rejoignant."}
+              {/* ⭐ V2.9 — Info auto-rejoin : un refresh ne vous déconnecte plus. */}
+              <span className="block mt-1 text-[#8A8378]/70">
+                Vous resterez connecté(e) même si la page se recharge — « Quitter » pour sortir.
+              </span>
             </p>
           </div>
         </div>
@@ -5346,6 +5881,7 @@ function VoiceChannelView({
                     avatarUrl={currentUserAvatar}
                     size={44}
                     muted={localAudioMuted}
+                    speaking={activeSpeakerIds?.has(room?.localParticipant.identity || "")}
                   />
                   <div className="flex-1 text-left min-w-0">
                     <p className="text-sm font-semibold text-[#1E0F2B] truncate">
@@ -5370,6 +5906,7 @@ function VoiceChannelView({
                         avatarUrl={participantAvatarUrl(p, channelMembers)}
                         size={44}
                         muted={!p.isMicrophoneEnabled}
+                        speaking={activeSpeakerIds?.has(p.identity)}
                       />
                       <div className="flex-1 text-left min-w-0">
                         <p

@@ -100,6 +100,89 @@ export function ensureVoiceVideoColumns(): Promise<void> {
 let messageTypeEnumOk = false;
 let inflightMessageEnum: Promise<void> | null = null;
 
+// ⭐ V2.9 — colonnes/tables de la V2.9 (présence + chunks vidéo)
+let v29Ok = false;
+let inflightV29: Promise<void> | null = null;
+
+/**
+ * ⭐ V2.9 — S'assure que le schéma supporte :
+ *  - `User.lastSeenAt`      : présence Yeshua Connect (heartbeat sans Socket.io)
+ *  - `LiveViewer.lastSeenAt`: fraîcheur des viewers de live (comptage 90 s)
+ *  - `VideoChunk` / `VideoBlob` : upload vidéo par blocs (limite 4,5 Mo Vercel)
+ *
+ * Idempotent + mémoïsé + concurrentiel comme les helpers précédents.
+ */
+export function ensureV29Schema(): Promise<void> {
+  if (v29Ok) return Promise.resolve();
+  if (!inflightV29) {
+    inflightV29 = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "lastSeenAt" TIMESTAMPTZ'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "LiveViewer" ADD COLUMN IF NOT EXISTS "lastSeenAt" TIMESTAMPTZ DEFAULT now()'
+      );
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "VideoChunk" (
+          "id" TEXT NOT NULL,
+          "videoId" TEXT NOT NULL,
+          "idx" INTEGER NOT NULL,
+          "data" BYTEA NOT NULL,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "VideoChunk_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE UNIQUE INDEX IF NOT EXISTS "VideoChunk_videoId_idx_key" ON "VideoChunk"("videoId", "idx")'
+      );
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "VideoBlob" (
+          "videoId" TEXT NOT NULL,
+          "data" BYTEA NOT NULL,
+          "mime" TEXT NOT NULL DEFAULT 'video/mp4',
+          "size" INTEGER NOT NULL,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "VideoBlob_pkey" PRIMARY KEY ("videoId")
+        )`
+      );
+      // FK vers Video (CASCADE) — ajoutée après coup si absente.
+      await db.$executeRawUnsafe(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'VideoChunk_videoId_fkey'
+          ) THEN
+            ALTER TABLE "VideoChunk"
+              ADD CONSTRAINT "VideoChunk_videoId_fkey"
+              FOREIGN KEY ("videoId") REFERENCES "Video"("id") ON DELETE CASCADE;
+          END IF;
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'VideoBlob_videoId_fkey'
+          ) THEN
+            ALTER TABLE "VideoBlob"
+              ADD CONSTRAINT "VideoBlob_videoId_fkey"
+              FOREIGN KEY ("videoId") REFERENCES "Video"("id") ON DELETE CASCADE;
+          END IF;
+        END $$;
+      `);
+    })()
+      .then(() => {
+        v29Ok = true;
+        console.log("[ensure-schema] V2.9 : User.lastSeenAt + LiveViewer.lastSeenAt + VideoChunk/VideoBlob vérifiées/créées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] DDL V2.9 impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightV29 = null;
+      });
+  }
+  return inflightV29;
+}
+
 /**
  * ⭐ V2.8 — S'assure que l'enum `MessageType` contient les valeurs utilisées
  * par le frontend : VERSE (versets bibliques partagés depuis la Bible),

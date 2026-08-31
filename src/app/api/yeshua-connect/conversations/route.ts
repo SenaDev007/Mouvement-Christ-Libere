@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureChannelAvatarUrl, ensureVoiceVideoColumns } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureVoiceVideoColumns, ensureV29Schema } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir les canaux RESTRICTED (pasteurs / modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -50,6 +50,20 @@ export async function GET(_req: NextRequest) {
     // ⭐ V2.7 — Auto-réparation colonne videoMode (le findMany renvoie toutes
     // les colonnes scalaires → sans ceci, 500 si la base n'est pas migrée)
     await ensureVoiceVideoColumns();
+    // ⭐ V2.9 — Présence (User.lastSeenAt) : sans Socket.io déployé, le
+    // « N en ligne » et les badges de présence reposent sur cette colonne.
+    await ensureV29Schema();
+    // ⭐ V2.9 — Marquer l'utilisateur comme EN LIGNE (ce GET est appelé au
+    // chargement, au focus et par le polling de secours toutes les ~10 s →
+    // il sert aussi de heartbeat de présence, en plus du POST /presence).
+    const now = new Date();
+    const PRESENCE_WINDOW_MS = 90_000; // 90 s
+    await db.user.update({
+      where: { id: userId },
+      data: { lastSeenAt: now },
+    }).catch(() => {
+      // colonne absente (instance froide avant ensure) — non bloquant
+    });
 
     // Charger les canaux + membres + dernier message en une seule requête
     const channels = await db.channel.findMany({
@@ -61,7 +75,7 @@ export async function GET(_req: NextRequest) {
       include: {
         members: {
           include: {
-            user: { select: { id: true, name: true, avatarUrl: true, role: true } },
+            user: { select: { id: true, name: true, avatarUrl: true, role: true, lastSeenAt: true } },
           },
         },
         messages: {
@@ -155,7 +169,12 @@ export async function GET(_req: NextRequest) {
           name: m.user.name ?? "Membre",
           avatarUrl: m.user.avatarUrl ?? undefined,
           roleLabel: m.role,
-          online: false, // TODO: intégrer présence via Socket.io (V2.1)
+          // ⭐ V2.9 — Présence RÉELLE (fini le `online: false` figé) :
+          // User.lastSeenAt < 90 s = en ligne. Le client la rafraîchit via
+          // le heartbeat /presence + ce GET. Sans Socket.io, c'est la
+          // source de vérité des « N en ligne ».
+          online: !!(m.user as { lastSeenAt?: Date | null }).lastSeenAt
+            && (now.getTime() - new Date((m.user as { lastSeenAt?: Date | null }).lastSeenAt!).getTime()) < PRESENCE_WINDOW_MS,
         })),
         isEncrypted: ch.isEncrypted,
         // ⭐ V2.1 — unreadCount calculé depuis lastReadAt sur ChannelMember

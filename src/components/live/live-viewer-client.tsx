@@ -41,6 +41,10 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const { data: session, status } = useSession();
   const [countdown, setCountdown] = useState("");
   const [isLive, setIsLive] = useState(live.status === "LIVE");
+  // ⭐ V2.9 — Le direct vient d'être arrêté pendant qu'on le regardait :
+  // l'écran « coupe » (écran de fin + déconnexion), plutôt que de rester
+  // sur un lecteur figé « en attente ».
+  const [liveEnded, setLiveEnded] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [waitingForStream, setWaitingForStream] = useState(false);
   const [streamReceived, setStreamReceived] = useState(false);
@@ -149,13 +153,19 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   // côté serveur — les viewers YouTube ne reçoivent pas le DataChannel LiveKit.
   // Pour les lives LiveKit purs, on arrête de poller une fois qu'on a startedAt
   // (le signal de pause arrive via DataChannel, pas besoin de polling).
+  // ⭐ V2.9 — ARRÊT DU DIRECT : on poll TOUJOURS pendant le direct (10 s).
+  // Quand le statut passe à ENDED (stop depuis le back-office, quick-action
+  // ou webhook), l'écran du viewer COUPE : « Direct terminé » + déconnexion
+  // de la room LiveKit — « lorsque le direct est arrêté, l'écran de tout le
+  // monde doit couper ».
   useEffect(() => {
     const isYoutubeLive = !!live.youtubeUrl;
     // Poller tant que :
     //  - le live est SCHEDULED (attente du démarrage), OU
     //  - le live est LIVE mais startedAt n'est pas encore connu, OU
-    //  - le live est LIVE via YouTube (besoin de l'état de pause)
-    if (live.status !== "SCHEDULED" && !(isLive && !liveStartedAt) && !(isLive && isYoutubeLive)) return;
+    //  - le live est LIVE via YouTube (pause), OU
+    //  - ⭐ V2.9 : le live est LIVE, point final (détection d'arrêt).
+    if (live.status !== "SCHEDULED" && !(isLive && !liveStartedAt) && !isLive) return;
     const checkStatus = async () => {
       try {
         const res = await apiFetch("/api/live/next");
@@ -163,6 +173,17 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         if (data.live?.id === live.id) {
           if (data.live.status === "LIVE") {
             setIsLive(true);
+          }
+          // ⭐ V2.9 — Le direct vient d'être ARRÊTÉ côté back-office :
+          // couper l'écran du viewer.
+          else if (data.live.status === "ENDED" || data.live.status === "CANCELLED") {
+            if (isLive) {
+              setLiveEnded(true);
+              setIsLive(false);
+              // Déconnecter la room LiveKit (arrête la lecture/les pistes).
+              try { roomRef.current?.disconnect(); roomRef.current = null; } catch {}
+            }
+            return;
           }
           // (C6) Récupérer startedAt fraîche depuis l'API
           if (data.live.startedAt) {
@@ -174,13 +195,18 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
             setViewerPaused(paused);
             setLivePausedAt(data.live.pausedAt || null);
           }
+        } else if (data.live?.id && data.live.id !== live.id && isLive) {
+          // Un AUTRE live est passé devant (le nôtre est terminé/enterré)
+          setLiveEnded(true);
+          setIsLive(false);
+          try { roomRef.current?.disconnect(); roomRef.current = null; } catch {}
         }
       } catch {}
     };
     checkStatus();
-    // (YT-pause) Polling plus fréquent pour les lives YouTube (3s) pour que
-    // la transition pause→reprise soit rapide côté viewer. 30s sinon.
-    const intervalMs = isLive && isYoutubeLive ? 3000 : 30000;
+    // ⭐ V2.9 : 10 s pendant le direct (arrêt détecté en < 10 s), 3 s pour
+    // les lives YouTube (pause), 30 s en attente de démarrage.
+    const intervalMs = isLive ? (isYoutubeLive ? 3000 : 10000) : 30000;
     const interval = setInterval(checkStatus, intervalMs);
     return () => clearInterval(interval);
   }, [live.status, live.id, live.youtubeUrl, isLive, liveStartedAt]);
@@ -235,27 +261,41 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   // (C1) Effet 1 : Enregistrement viewer en DB (POST /viewers)
   // Séparé de la connexion LiveKit pour éviter les reconnexions quand
   // memberId/viewerFirstName changent après le join.
+  // ⭐ V2.9 :
+  //   - HEARTBEAT toutes les 25 s (le compteur GET ne compte que les
+  //     sessions vues il y a < 90 s — corrige « nombre de spectateurs
+  //     toujours à zéro / pas mis à jour ») ;
+  //   - sendBeacon corrigé (?leave=1, corps vide toléré par la route —
+  //     avant, req.json() sur corps vide → 500 → départ jamais enregistré) ;
+  //   - les utilisateurs connectés envoient leur User.id : la route le
+  //     résout automatiquement en LiveMember (V2.9).
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (!isLive || !hasJoined || !memberId) return;
 
     // Enregistrer la présence du viewer côté serveur
-    apiFetch(`/api/live/${live.id}/viewers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ memberId }),
-    }).catch(() => {});
+    const postPresence = () => {
+      apiFetch(`/api/live/${live.id}/viewers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      }).catch(() => {});
+    };
+    postPresence();
+    // ⭐ V2.9 — Heartbeat de présence (25 s < fenêtre serveur de 90 s)
+    const heartbeat = setInterval(postPresence, 25000);
 
     // Déconnexion à la fermeture de la page (sendBeacon)
     const handleBeforeUnload = () => {
-      navigator.sendBeacon(`/api/live/${live.id}/viewers?memberId=${memberId}`, "");
+      navigator.sendBeacon(`/api/live/${live.id}/viewers?memberId=${encodeURIComponent(memberId)}&leave=1`, "");
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
+      clearInterval(heartbeat);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       // Marquer comme inactif (leave)
-      apiFetch(`/api/live/${live.id}/viewers?memberId=${memberId}`, { method: "DELETE" }).catch(() => {});
+      apiFetch(`/api/live/${live.id}/viewers?memberId=${encodeURIComponent(memberId)}`, { method: "DELETE" }).catch(() => {});
     };
   }, [isLive, hasJoined, memberId, live.id]);
 
@@ -513,6 +553,31 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
           <div className="space-y-3">
             {/* Conteneur vidéo */}
             <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
+              {/* ⭐ V2.9 — ÉCRAN « DIRECT TERMINÉ » : quand le diffuseur arrête
+                  depuis le back-office, l'écran de CHAQUE viewer coupe
+                  (demande explicite) — plus de lecteur figé indéfiniment. */}
+              {liveEnded && (
+                <div className="absolute inset-0 z-40 flex items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826]">
+                  <div className="text-center text-[#FAF6EF] p-8 relative z-10">
+                    <div className="w-16 h-16 rounded-full bg-[#8A8378]/20 border-2 border-[#8A8378]/40 flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle2 className="w-8 h-8 text-[#C9A227]" />
+                    </div>
+                    <p className="text-lg font-bold mb-1">Direct terminé</p>
+                    <p className="text-sm text-[#FAF6EF]/60 mb-5 max-w-xs mx-auto">
+                      Merci d&apos;avoir rejoint ce direct avec nous. Le replay
+                      sera publié prochainement sur la page Vidéos.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <Link href="/videos" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-xs hover:bg-[#DDBE55] transition-colors">
+                        Voir les rediffusions
+                      </Link>
+                      <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#FAF6EF]/30 text-[#FAF6EF] font-medium text-xs hover:bg-white/10 transition-colors">
+                        Retour à l&apos;accueil
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
               {isLive && live.youtubeUrl && hasJoined && !viewerPaused && (
                 <iframe src={getYouTubeEmbedUrl(live.youtubeUrl)} className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />

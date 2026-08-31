@@ -29,6 +29,10 @@ model User {
   city          String?
   // ⭐ V2.7 — « Informations complètes » du profil membre/viewer
   phone         String?
+  // ⭐ V2.9 — Présence (heartbeat du client → « N en ligne » dans Yeshua
+  // Connect, sans Socket.io : la valeur est rafraîchie toutes les ~25 s par
+  // POST /api/yeshua-connect/presence et lue par les conversations).
+  lastSeenAt    DateTime?
   isVerified    Boolean   @default(false)
   isMinor       Boolean   @default(false)
   acceptedTerms DateTime
@@ -198,11 +202,45 @@ model Video {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // ⭐ V2.9 — Upload chunked (contourne la limite 4,5 Mo de Vercel) :
+  // chunks temporaires + blob assemblé servi par /api/videos/:id/stream.
+  uploadChunks VideoChunk[]
+  uploadBlob   VideoBlob?
+
   servant     Servant  @relation(fields: [servantId], references: [id])
 
   @@index([servantId])
   @@index([isLive])
   @@index([publishedAt])
+}
+
+// ⭐ V2.9 — Morceaux d'upload vidéo (transfert par blocs ≤ 3,5 Mo).
+// Chaque POST /api/videos/:id/chunk?index=N écrit un morceau ;
+// POST /api/videos/:id/chunk/complete les assemble dans VideoBlob puis
+// purge cette table. Vérrou de concurrence : le champ data peut être
+// volumineux, on ne le sélectionne JAMAIS dans les listes.
+model VideoChunk {
+  id      String  @id @default(cuid())
+  videoId String
+  idx     Int
+  data    Bytes
+  createdAt DateTime @default(now())
+
+  video   Video   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, idx])
+}
+
+// ⭐ V2.9 — Blob vidéo assemblé, servi en streaming (avec Range HTTP)
+// par /api/videos/:id/stream — Video.videoUrl pointe vers cette route.
+model VideoBlob {
+  videoId  String   @id
+  data     Bytes
+  mime     String   @default("video/mp4")
+  size     Int
+  createdAt DateTime @default(now())
+
+  video    Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
 }
 
 model LiveStream {
@@ -302,6 +340,10 @@ model LiveViewer {
   isActive    Boolean  @default(true)
   joinedAt    DateTime @default(now())
   leftAt      DateTime?
+  // ⭐ V2.9 — Fraîcheur de présence : heartbeat du viewer (toutes les ~25 s).
+  // Le compteur GET ne compte que les sessions vues il y a < 90 s → un
+  // onglet fermé sans beacon de départ n'influe plus indéfiniment.
+  lastSeenAt  DateTime @default(now())
 
   live        LiveStream  @relation(fields: [liveId], references: [id], onDelete: Cascade)
   member      LiveMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
