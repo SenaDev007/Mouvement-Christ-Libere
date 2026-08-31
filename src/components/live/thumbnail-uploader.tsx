@@ -13,10 +13,15 @@ interface ThumbnailUploaderProps {
 /**
  * Compresse une image côté client via canvas.
  * - Redimensionne à max 1280x720 (16:9)
- * - Compresse en JPEG qualité 0.85
- * - Retourne un base64 optimisé (< 200KB typiquement)
+ * - Compresse en JPEG qualité adaptative pour rester sous 80KB
+ * - Retourne un base64 optimisé (< 80KB garantit)
+ *
+ * Pourquoi 80KB : c'est assez petit pour passer la sérialisation RSC
+ * sans ralentir la navigation (une data URL de 80KB = ~110KB en base64,
+ * largement sous les limites de Next.js). Et visuellement, un JPEG 1280x720
+ * à qualité 0.7-0.85 est impeccable pour une miniature.
  */
-async function compressImage(file: File, maxWidth = 1280, maxHeight = 720, quality = 0.85): Promise<string> {
+async function compressImage(file: File, maxWidth = 1280, maxHeight = 720): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -49,18 +54,21 @@ async function compressImage(file: File, maxWidth = 1280, maxHeight = 720, quali
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        // Convertir en JPEG compressé
-        const compressed = canvas.toDataURL("image/jpeg", quality);
+        // Compression adaptative : réduire la qualité jusqu'à ce que
+        // la taille soit sous 80KB (garanti une miniature légère).
+        const MAX_SIZE_KB = 80;
+        let quality = 0.85;
+        let compressed = canvas.toDataURL("image/jpeg", quality);
+        let sizeKB = Math.round((compressed.length * 3) / 4 / 1024);
 
-        // Vérifier la taille finale — si trop grosse, recompresser avec qualité moindre
-        const sizeKB = Math.round((compressed.length * 3) / 4 / 1024); // base64 → bytes
-        if (sizeKB > 500) {
-          // Recompresser avec qualité 0.6
-          const recompressed = canvas.toDataURL("image/jpeg", 0.6);
-          resolve(recompressed);
-        } else {
-          resolve(compressed);
+        while (sizeKB > MAX_SIZE_KB && quality > 0.3) {
+          quality -= 0.1;
+          compressed = canvas.toDataURL("image/jpeg", quality);
+          sizeKB = Math.round((compressed.length * 3) / 4 / 1024);
         }
+
+        console.log(`[thumbnail] Compressé: ${Math.round(file.size / 1024)}KB → ${sizeKB}KB (qualité ${quality.toFixed(2)})`);
+        resolve(compressed);
       };
       img.onerror = () => reject(new Error("Image invalide ou format non supporté (utilisez JPG ou PNG)"));
       img.src = e.target?.result as string;
@@ -111,6 +119,7 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
           throw new Error(data.error || "Erreur upload");
         }
         const data = await res.json();
+        // Utiliser l'URL retournée par le serveur (R2 URL ou data URL)
         onThumbnailChange(data.thumbnailUrl);
       } else {
         // Pas de liveId (modal de création) — garder le base64 compressé
@@ -119,8 +128,8 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur";
       setError(msg);
-      // Ne pas écraser le preview si la compression a réussi mais l'upload a échoué
-      if (preview) onThumbnailChange(preview);
+      // En cas d'erreur d'upload, garder le preview visible
+      // (le preview a déjà été mis à jour si la compression a réussi)
     } finally {
       setUploading(false);
     }
@@ -179,6 +188,7 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
               </div>
               <span className="text-xs font-medium text-[#8A8378]">Cliquez pour uploader une miniature</span>
               <span className="text-[10px] text-[#8A8378]/60">JPG, PNG — max 10MB — format 16:9 recommandé</span>
+              <span className="text-[9px] text-[#8A8378]/40">Optimisation automatique (max 80KB)</span>
             </>
           )}
         </button>

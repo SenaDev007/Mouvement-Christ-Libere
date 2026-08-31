@@ -20,13 +20,13 @@ export default async function LivePage({
     notFound();
   }
 
-  // (S5) Sécurité RSC : les data URLs base64 géantes (miniatures uploadées
-  // via thumbnail-uploader) font jusqu'à 332KB et explosent la sérialisation
-  // RSC → la navigation vers /live/[id] prend 1-2 minutes.
-  // On les exclut côté SSR. Le Client Component les récupère via polling
-  // /api/live/next (qui contient déjà thumbnailUrl) ou /api/live/active.
+  // (S5) Sécurité RSC : les data URLs base64 géantes (> 150KB) explosent
+  // la sérialisation RSC. Les miniatures sont maintenant compressées à
+  // < 50KB par sharp côté serveur, donc on n'exclut que les grosses.
   const safeThumbnailUrl =
-    live.thumbnailUrl && !live.thumbnailUrl.startsWith("data:")
+    live.thumbnailUrl &&
+    (!live.thumbnailUrl.startsWith("data:") ||
+      live.thumbnailUrl.length < 150000)
       ? live.thumbnailUrl
       : null;
 

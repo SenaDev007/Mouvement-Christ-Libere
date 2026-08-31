@@ -31,10 +31,11 @@ export async function GET() {
         tiktokUrl: activeLive.tiktokUrl,
         livekitRoomName: activeLive.livekitRoomName,
         viewerCount: activeLive.viewerCount,
-        // (S5) Exclure les data URLs base64 géantes (332KB) qui ralentissent
-        // la sérialisation JSON et la navigation.
+        // (S5) Les miniatures data URL < 150KB sont autorisées (compressées par sharp)
         thumbnailUrl:
-          activeLive.thumbnailUrl && !activeLive.thumbnailUrl.startsWith("data:")
+          activeLive.thumbnailUrl &&
+          (!activeLive.thumbnailUrl.startsWith("data:") ||
+            activeLive.thumbnailUrl.length < 150000)
             ? activeLive.thumbnailUrl
             : null,
       },

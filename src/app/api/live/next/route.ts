@@ -34,11 +34,13 @@ export async function GET() {
         servantCode: nextLive.servant.code,
         servantPortraitUrl: nextLive.servant.portraitUrl,
         youtubeUrl: nextLive.youtubeUrl,
-        // (S5) Exclure les data URLs base64 géantes (332KB) qui ralentissent
-        // la sérialisation JSON. Les miniatures data URL sont récupérées
-        // individuellement par le viewer via un appel dédié si nécessaire.
+        // (S5) Les miniatures data URL sont maintenant compressées à < 50KB
+        // par sharp côté serveur, donc sûres pour la sérialisation RSC.
+        // On n'exclut que les data URLs géantes (> 150KB, sécurité).
         thumbnailUrl:
-          nextLive.thumbnailUrl && !nextLive.thumbnailUrl.startsWith("data:")
+          nextLive.thumbnailUrl &&
+          (!nextLive.thumbnailUrl.startsWith("data:") ||
+            nextLive.thumbnailUrl.length < 150000)
             ? nextLive.thumbnailUrl
             : null,
         // (YT-pause) État de pause persisté en base pour les viewers YouTube
