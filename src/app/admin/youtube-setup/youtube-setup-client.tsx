@@ -5,7 +5,7 @@ import { apiFetch } from "@/lib/api-client";
 import {
   Youtube, CheckCircle2, AlertCircle, Copy, Loader2, RefreshCw,
   ExternalLink, Terminal, Settings, Video, ChevronRight, Globe, KeyRound,
-  Eye, EyeOff,
+  Eye, EyeOff, ShieldAlert, UserRoundPlus, FileText,
 } from "lucide-react";
 
 interface YoutubeSetupClientProps {
@@ -139,6 +139,8 @@ export function YoutubeSetupClient({
   };
 
   const inAppRedirectUri = `${origin || "https://mouvement-christ-libere.vercel.app"}/api/youtube/oauth/callback`;
+  const privacyPolicyUrl = `${origin || "https://mouvement-christ-libere.vercel.app"}/confidentialite`;
+  const termsUrl = `${origin || "https://mouvement-christ-libere.vercel.app"}/conditions`;
 
   return (
     <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
@@ -180,6 +182,83 @@ export function YoutubeSetupClient({
                 </div>
               </>
             )}
+          </div>
+        </div>
+
+        {/* ⚠️ Encart : erreur « Accès bloqué » 403 access_denied */}
+        <div className="rounded-2xl p-5 mb-6 bg-red-50 border-2 border-red-200">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-bold text-red-800 mb-1">
+                Google affiche « Accès bloqué — Erreur 403 : access_denied » ?
+              </p>
+              <p className="text-xs text-red-700 leading-relaxed mb-3">
+                Message type : <em>« le site n&apos;a pas terminé la procédure de validation de
+                Google. L&apos;appli est en cours de test et seuls les testeurs approuvés par le
+                développeur y ont accès »</em>. C&apos;est le comportement <strong>normal</strong>{" "}
+                d&apos;une application en mode <strong>Testing</strong> : votre compte Google
+                n&apos;est pas encore déclaré comme testeur. Ajoutez-le en 30 secondes :
+              </p>
+              <ol className="space-y-1.5 text-xs text-red-800 mb-3">
+                <li>
+                  1. Ouvrez{" "}
+                  <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" rel="noopener noreferrer"
+                    className="text-red-900 font-bold underline hover:text-red-700 inline-flex items-center gap-0.5">
+                    OAuth consent screen <ExternalLink className="w-3 h-3" />
+                  </a>{" "}
+                  (Google Cloud Console → APIs &amp; Services)
+                </li>
+                <li>2. Section <strong>Test users</strong> → bouton <strong>+ ADD USERS</strong></li>
+                <li>
+                  3. Ajoutez <strong>le compte Google propriétaire de la chaîne YouTube</strong>
+                  (celui avec lequel vous autorisez le flux) puis <strong>Save</strong>
+                </li>
+                <li>4. Relancez le flux à l&apos;étape 2 — l&apos;écran de consentement s&apos;affiche maintenant</li>
+              </ol>
+              <p className="text-[11px] text-red-600 bg-red-100/60 rounded-lg px-3 py-2">
+                💡 En mode Testing, le refresh token expire après <strong>7 jours</strong>.
+                Pour un usage permanent, passez l&apos;app en <strong>In production</strong>
+                (bouton « Publish app » sur le même écran) : l&apos;avertissement « app non vérifiée »
+                reste contournable via <em>Avancé → Continuer</em>, et le token devient durable.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Encart : écran de consentement Google (politique + conditions) */}
+        <div className="rounded-2xl p-5 mb-6 bg-white border-2 border-[#C9A227]/30">
+          <div className="flex items-start gap-3">
+            <FileText className="w-6 h-6 text-[#C9A227] flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-bold text-[#1E0F2B] mb-1">
+                Écran de consentement Google — liens légaux à déclarer
+              </p>
+              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed mb-3">
+                Google exige une <strong>politique de confidentialité</strong> (et recommande des
+                conditions d&apos;utilisation) pour valider l&apos;écran de consentement. Les deux
+                pages sont désormais publiées sur le site — déclarez ces URLs dans{" "}
+                <strong>OAuth consent screen → App information</strong> :
+              </p>
+              <div className="space-y-2">
+                {[
+                  { label: "Privacy Policy URL", value: privacyPolicyUrl, key: "privacy" },
+                  { label: "Terms of Service URL", value: termsUrl, key: "terms" },
+                ].map((l) => (
+                  <div key={l.key} className="px-3 py-2 rounded-lg bg-[#C9A227]/5 border border-[#C9A227]/20">
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs font-bold break-all flex-1">{l.value}</code>
+                      <button onClick={() => copyToClipboard(l.value, l.key)}
+                        className="p-1 rounded hover:bg-[#2A0E3D]/10 text-[#8A8378] flex-shrink-0">
+                        <Copy className="w-3 h-3" />
+                      </button>
+                      {copied === l.key && <span className="text-[10px] text-green-600">Copié !</span>}
+                    </div>
+                    <p className="text-[10px] text-[#8A8378] mt-1">→ champ « {l.label} »</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -362,6 +441,11 @@ export function YoutubeSetupClient({
 
           <div className="mt-4 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-xs text-[#1E0F2B]/70 leading-relaxed">
             <p className="font-bold text-[#1E0F2B] mb-1">Écrans Google à prévoir :</p>
+            <p className="mb-1 text-red-700">
+              <strong>0.</strong> « Accès bloqué / 403 access_denied » → votre email n&apos;est pas
+              dans <strong>Test users</strong> (voir encart rouge ci-dessus, section{" "}
+              <UserRoundPlus className="w-3 h-3 inline" /> <em>Test users</em>).
+            </p>
             <p>1. « Google n&apos;a pas validé cette application » → <strong>Avancé</strong> → <strong>Continuer vers Christ Libère (non sécurisé)</strong> — normal en mode Testing.</p>
             <p>2. Cochez les autorisations YouTube → <strong>Continuer</strong>.</p>
             <p>3. Le site affiche les <strong>4 variables</strong> prêtes à copier (retour automatique sur ce domaine).</p>

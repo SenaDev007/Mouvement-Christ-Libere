@@ -20,6 +20,7 @@ import {
   ExternalLink,
   ShieldAlert,
   Cloud,
+  Youtube,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -67,6 +68,7 @@ const NAV_SECTIONS = [
   {
     title: "Système",
     items: [
+      { label: "YouTube Setup", href: "/admin/youtube-setup", icon: Youtube },
       { label: "Stockage R2", href: "/admin/r2-test", icon: Cloud },
     ],
   },
