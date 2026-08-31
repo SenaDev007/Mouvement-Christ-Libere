@@ -166,7 +166,14 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
           setMessages((prev) => [...prev, ...newMessages].slice(-300));
           lastTimestampRef.current = newMessages[newMessages.length - 1].createdAt;
           if (isAtBottomRef.current) {
-            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+            // (S5) Utiliser scrollTop au lieu de scrollIntoView pour éviter
+            // que le scroll ne se propage à la page entière (quand le chat
+            // est dans une page scrollable, scrollIntoView déplace toute la
+            // page vers le bas, pas juste le conteneur du chat).
+            setTimeout(() => {
+              const container = messagesContainerRef.current;
+              if (container) container.scrollTop = container.scrollHeight;
+            }, 100);
           } else {
             setShowScrollDown(true);
           }
@@ -206,7 +213,9 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // (S5) scrollTop au lieu de scrollIntoView pour éviter le scroll de la page
+    const container = messagesContainerRef.current;
+    if (container) container.scrollTop = container.scrollHeight;
     isAtBottomRef.current = true;
     setShowScrollDown(false);
   };

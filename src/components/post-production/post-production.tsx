@@ -9,7 +9,7 @@ import {
   Zap, Crop, RotateCw, FlipHorizontal, FlipVertical,
   Subtitles, Wand2, Undo2, Redo2, Save, Eye, RefreshCw,
   Smile, Sparkles, Cloud, Users, Keyboard, Sticker as StickerIcon,
-  Wind, Shield, Eraser, CheckCircle2,
+  Wind, Shield, Eraser, CheckCircle2, Youtube,
 } from "lucide-react";
 import type {
   Overlay, TextOverlay, ImageOverlay, Segment, RenderProject,
@@ -805,6 +805,17 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
+  // Détecter si l'URL est YouTube → besoin d'un iframe au lieu de <video>
+  const isYoutubeVideo = (url: string | null): boolean => {
+    if (!url) return false;
+    return url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)[A-Za-z0-9_-]{11}/) !== null;
+  };
+  const getYoutubeEmbedUrl = (url: string): string => {
+    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return match ? `https://www.youtube.com/embed/${match[1]}?enablejsapi=1&modestbranding=1&rel=0` : url;
+  };
+  const youtubeMode = isYoutubeVideo(currentVideoUrl);
+
   const TABS: { id: TabType; label: string; icon: typeof Scissors }[] = [
     { id: "trim", label: "Couper", icon: Scissors },
     { id: "text", label: "Texte", icon: Type },
@@ -951,12 +962,24 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             onMouseMove={handleMouseMove}>
             {currentVideoUrl ? (
               <>
-                <video ref={videoRef} src={currentVideoUrl} className="w-full h-full object-contain"
-                  onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                  onEnded={() => setIsPlaying(false)} />
+                {youtubeMode ? (
+                  /* YouTube : iframe au lieu de <video> car les URL YouTube
+                     ne sont pas lisibles dans un <video> HTML5. */
+                  <iframe
+                    src={getYoutubeEmbedUrl(currentVideoUrl)}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video ref={videoRef} src={currentVideoUrl} className="w-full h-full object-contain"
+                    onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                    onEnded={() => setIsPlaying(false)} />
+                )}
 
-                {/* Overlays preview (texte) */}
-                {overlays.filter((o) => o.type === "text").map((overlay) => {
+                {/* Overlays preview (texte) — masqués en mode YouTube car
+                    on ne peut pas superposer du contenu sur un iframe YouTube */}
+                {!youtubeMode && overlays.filter((o) => o.type === "text").map((overlay) => {
                   const t = overlay as TextOverlay;
                   const isActive = (!t.startTime || t.startTime <= currentTime) && (!t.endTime || t.endTime >= currentTime);
                   if (!isActive) return null;
@@ -980,8 +1003,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   );
                 })}
 
-                {/* Overlays preview (image) */}
-                {overlays.filter((o) => o.type === "image").map((overlay) => {
+                {/* Overlays preview (image) — masqués en mode YouTube */}
+                {!youtubeMode && overlays.filter((o) => o.type === "image").map((overlay) => {
                   const img = overlay as ImageOverlay;
                   const isActive = (!img.startTime || img.startTime <= currentTime) && (!img.endTime || img.endTime >= currentTime);
                   if (!isActive) return null;
@@ -996,8 +1019,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   );
                 })}
 
-                {/* Overlays preview (sticker emoji) */}
-                {overlays.filter((o) => o.type === "sticker").map((overlay) => {
+                {/* Overlays preview (sticker emoji) — masqués en mode YouTube */}
+                {!youtubeMode && overlays.filter((o) => o.type === "sticker").map((overlay) => {
                   const s = overlay as StickerOverlay;
                   const isActive = (!s.startTime || s.startTime <= currentTime) && (!s.endTime || s.endTime >= currentTime);
                   if (!isActive) return null;
@@ -1016,12 +1039,33 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   );
                 })}
 
-                {/* Crop overlay preview */}
-                {transform.crop && (
+                {/* Crop overlay preview — masqué en mode YouTube */}
+                {!youtubeMode && transform.crop && (
                   <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute bg-black/50" style={{
                       left: 0, top: 0, width: "100%", height: `${(transform.crop.y / (videoRef.current?.videoHeight || 1080)) * 100}%`,
                     }} />
+                  </div>
+                )}
+
+                {/* Bannière mode YouTube — explique qu'il faut uploader
+                    le fichier source pour éditer (trim, overlays, etc.) */}
+                {youtubeMode && (
+                  <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#2A0E3D]/90 backdrop-blur-sm px-4 py-2 border-t border-[#C9A227]/30">
+                    <div className="flex items-center gap-2">
+                      <Youtube className="w-4 h-4 text-red-500 flex-shrink-0" />
+                      <p className="text-[11px] text-[#FAF6EF]/80 flex-1 leading-tight">
+                        Vidéo YouTube en lecture. Pour éditer (découper, texte, filtres),
+                        uploadez le fichier source ci-dessous.
+                      </p>
+                      <button
+                        onClick={() => videoUploadRef.current?.click()}
+                        className="flex-shrink-0 px-2.5 py-1 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold hover:bg-[#DDBE55] transition-colors flex items-center gap-1"
+                      >
+                        <Upload className="w-3 h-3" />
+                        Uploader
+                      </button>
+                    </div>
                   </div>
                 )}
               </>
@@ -1053,7 +1097,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             )}
           </div>
 
-          {/* Controls */}
+          {/* Controls — masqués en mode YouTube (l'iframe a ses propres contrôles) */}
+          {!youtubeMode && (
           <div className="flex items-center justify-center gap-3 bg-white rounded-xl p-3 border border-[#8A8378]/15">
             <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors" disabled={!currentVideoUrl}>
               <SkipBack className="w-5 h-5" />
@@ -1066,6 +1111,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </button>
             <span className="text-xs text-[#8A8378] ml-2">{formatTime(currentTime)} / {formatTime(totalDuration)}</span>
           </div>
+          )}
 
           {/* Timeline */}
           <div className="bg-white rounded-xl p-4 border border-[#8A8378]/15">
