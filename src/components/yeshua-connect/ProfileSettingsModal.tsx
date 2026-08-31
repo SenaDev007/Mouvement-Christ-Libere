@@ -135,6 +135,12 @@ export function ProfileSettingsModal({
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 2000);
       onSaved?.(avatarUrl);
+      // ⭐ V3.0 — Diffuse la mise à jour à toute l'application (navbar,
+      // vues Yeshua Connect…) pour que la nouvelle photo/nom apparaisse
+      // immédiatement partout, sans rechargement de page.
+      try {
+        window.dispatchEvent(new Event("profile-updated"));
+      } catch { /* SSR / vieux navigateurs — ignorer */ }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Échec de la sauvegarde");
     } finally {

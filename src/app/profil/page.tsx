@@ -104,7 +104,7 @@ export default function ProfilPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await fetch(api.url("/api/user/profile"), {
+      const res = await fetch(api.url("/api/user/profile"), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -113,8 +113,13 @@ export default function ProfilPage() {
           dndEnabled,
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSavedMsg(true);
       setTimeout(() => setSavedMsg(false), 2500);
+      // ⭐ V3.0 — Notifie l'application (navbar, Yeshua Connect) que le
+      // profil vient de changer : la photo et le nom s'y mettent à jour
+      // immédiatement, sans recharger la page.
+      try { window.dispatchEvent(new Event("profile-updated")); } catch { /* ignore */ }
     } catch (e) {
       console.error("save:", e);
     } finally {

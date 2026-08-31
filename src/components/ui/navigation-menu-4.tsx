@@ -12,6 +12,8 @@ import {
   LogOut,
   LogIn,
   UserPlus,
+  Settings,
+  User as UserIcon,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,6 +21,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api-client";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -30,7 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Navigation links — contextualisés pour Christ Libère
 const navigationLinks = [
@@ -98,6 +101,48 @@ export function ContextualNav() {
   const { data: session, status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  // ⭐ V3.0 — Profil FRAIS (photo + nom) chargé depuis la base via
+  // /api/user/profile. La session NextAuth (JWT 30 jours) fige
+  // session.user.image au moment de la connexion : si l'utilisateur
+  // change sa photo ensuite (page /profil ou modal Yeshua Connect), la
+  // navbar continuait d'afficher un placeholder avec initiale.
+  // On recharge : au montage, au focus de la fenêtre, et sur l'événement
+  // global « profile-updated » (émis après chaque sauvegarde de profil).
+  const [freshProfile, setFreshProfile] = useState<{
+    name?: string | null;
+    avatarUrl?: string | null;
+  } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const loadFreshProfile = useCallback(() => {
+    if (status !== "authenticated") return;
+    fetch(api.url("/api/user/profile"), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && typeof data === "object") setFreshProfile(data);
+      })
+      .catch(() => {});
+  }, [status]);
+
+  useEffect(() => {
+    loadFreshProfile();
+    const onFocus = () => loadFreshProfile();
+    const onProfileUpdated = () => loadFreshProfile();
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("profile-updated", onProfileUpdated);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("profile-updated", onProfileUpdated);
+    };
+  }, [loadFreshProfile]);
+
+  // ⭐ V3.0 — Détection mobile (masque le libellé à côté de l'avatar).
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   // ⭐ V2.6.1 — Menu déroulant desktop ouvert (label du menu parent).
   // Chaque sous-menu s'ancre sous SON bouton (plus de viewport partagé
   // qui centrait tous les panneaux au même endroit).
@@ -159,6 +204,16 @@ export function ContextualNav() {
   const handleLogout = () => {
     signOut({ callbackUrl: "/" });
   };
+
+  // ⭐ V3.0 — Photo + nom ACTUELS : profil frais de la base en priorité,
+  // sinon session (valeur figée à la connexion). ⚠️ <img> natif et NON
+  // next/image : l'avatar est stocké en data URL (JPEG base64), que
+  // next/image ne sait pas optimiser — d'où la photo qui ne s'affichait
+  // JAMAIS dans la navbar, même juste après connexion.
+  const displayName =
+    freshProfile?.name || session?.user?.name || "Mon compte";
+  const displayAvatar =
+    freshProfile?.avatarUrl || session?.user?.image || null;
 
   // Navbar fixe en haut sur toutes les pages (y compris /yeshua-connect)
   return (
@@ -376,41 +431,77 @@ export function ContextualNav() {
           {isAuthenticated ? (
             /* ═══ Utilisateur connecté — avatar + menu déroulant ═══ */
             <div className="relative">
-              <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-[#FAF6EF]/10 transition-colors"
-              >
-                {session.user.image ? (
-                  <Image
-                    src={session.user.image}
-                    alt={session.user.name || "User"}
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-[#C9A227] flex items-center justify-center text-[#1E0F2B] font-bold text-sm">
-                    {(session.user.name || session.user.email || "U").charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <span className="hidden sm:inline text-sm font-medium text-[#FAF6EF] max-w-[100px] truncate">
-                  {session.user.name || "Mon compte"}
-                </span>
-              </button>
+              <div className="flex items-center gap-1">
+                {/* ⭐ V3.0 — Accès DIRECT aux paramètres (engrenage) :
+                    visible pour TOUT membre connecté, avant même d'ouvrir
+                    le menu — le profil/photo se modifie en 1 geste. */}
+                <Link
+                  href="/profil"
+                  aria-label="Paramètres de mon compte"
+                  title="Modifier ma photo et mes informations"
+                  className="p-2 rounded-lg text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#FAF6EF]/10 transition-colors"
+                >
+                  <Settings className="w-4.5 h-4.5" />
+                </Link>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-[#FAF6EF]/10 transition-colors"
+                >
+                  {displayAvatar ? (
+                    <img
+                      src={displayAvatar}
+                      alt={displayName}
+                      className="w-8 h-8 rounded-full object-cover ring-1 ring-[#C9A227]/40"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-[#C9A227] flex items-center justify-center text-[#1E0F2B] font-bold text-sm">
+                      {(displayName || session?.user?.email || "U")
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+                  )}
+                  {!isMobile && (
+                    <span className="hidden sm:inline text-sm font-medium text-[#FAF6EF] max-w-[100px] truncate">
+                      {displayName}
+                    </span>
+                  )}
+                </button>
+              </div>
 
               {/* Menu déroulant utilisateur */}
               {userMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                  <div className="absolute top-full right-0 mt-2 z-50 bg-white rounded-xl shadow-2xl border border-[#8A8378]/15 py-2 min-w-[200px]">
-                    <div className="px-4 py-2 border-b border-[#8A8378]/10">
-                      <p className="text-sm font-bold text-[#1E0F2B] truncate">
-                        {session.user.name || "Utilisateur"}
-                      </p>
-                      {session.user.email && (
-                        <p className="text-xs text-[#8A8378] truncate">{session.user.email}</p>
+                  <div className="absolute top-full right-0 mt-2 z-50 bg-white rounded-xl shadow-2xl border border-[#8A8378]/15 py-2 min-w-[230px]">
+                    <div className="px-4 py-2 border-b border-[#8A8378]/10 flex items-center gap-3">
+                      {displayAvatar ? (
+                        <img src={displayAvatar} alt={displayName} className="w-10 h-10 rounded-full object-cover ring-1 ring-[#C9A227]/40 flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-[#C9A227] flex items-center justify-center text-[#1E0F2B] font-bold flex-shrink-0">
+                          {(displayName || "U").charAt(0).toUpperCase()}
+                        </div>
                       )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-[#1E0F2B] truncate">
+                          {displayName}
+                        </p>
+                        {session?.user?.email && (
+                          <p className="text-xs text-[#8A8378] truncate">{session?.user?.email}</p>
+                        )}
+                      </div>
                     </div>
+                    {/* ⭐ V3.0 — MON PROFIL & PARAMÈTRES : entrée principale
+                        (photo, nom, téléphone, pays, ville, bio). Avant, la
+                        page /profil existait mais n'était liée NULLE PART :
+                        aucun membre ne pouvait modifier ses informations. */}
+                    <Link
+                      href="/profil"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 hover:text-[#A3821C] transition-colors"
+                    >
+                      <UserIcon className="w-4 h-4 text-[#C9A227]" />
+                      Mon profil & paramètres
+                    </Link>
                     <Link
                       href="/yeshua-connect"
                       onClick={() => setUserMenuOpen(false)}

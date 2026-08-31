@@ -56,7 +56,7 @@ import {
   StopCircle, Play, Pause, Sparkles, AlertCircle,
   MessageCircle, AtSign, ChevronUp, ChevronRight, Copy, UploadCloud,
   ScrollText, PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
-  Radio, Camera,
+  Radio, Camera, PanelLeftOpen, PanelLeftClose,
 } from "lucide-react";
 import Link from "next/link";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant, RemoteAudioTrack } from "livekit-client";
@@ -333,6 +333,18 @@ export function MessagingView() {
   const [showNotifPrefs, setShowNotifPrefs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showForwardModal, setShowForwardModal] = useState<string | null>(null);
+  // ⭐ V3.0 — SIDEBAR MOBILE REPLIABLE (façon Telegram/Discord) :
+  // sur mobile (<lg), la barre latérale se replie en RAIL D'ICÔNES
+  // (avatars des conversations, 68px) pour laisser toute la place à
+  // l'interface de chat. Le bouton « déplier » l'étend en overlay
+  // complet (noms + aperçus + recherche) ; sélectionner une conversation
+  // la replie automatiquement. Sur desktop (lg+) : sidebar fixe w-80
+  // comme avant, le rail est masqué.
+  const [mobileSidebarExpanded, setMobileSidebarExpanded] = useState(false);
+  // ⭐ V3.0 — Auto-sélection mobile : dès que les conversations arrivent,
+  // on ouvre la première pour que le chat soit VISIBLE immédiatement
+  // (sinon : écran vide « Sélectionnez une conversation » sous le rail).
+  const autoSelectedConvRef = useRef(false);
   // ⭐ V2.6 — Bible intégrée : s'ouvre DANS Yeshua Connect (plein écran),
   // plus aucune redirection vers la page /bible.
   const [showBible, setShowBible] = useState(false);
@@ -501,6 +513,42 @@ export function MessagingView() {
     return () => { cancelled = true; };
   }, [session?.user?.id]);
 
+  // ⭐ V3.0 — (a) Photo de profil rafraîchie quand le profil change
+  // n'importe où dans l'app (modal Yeshua Connect, page /profil) :
+  // la navbar ET la sidebar du chat restent synchronisées.
+  useEffect(() => {
+    const onProfileUpdated = () => {
+      fetch(api.url("/api/user/profile"), { cache: "no-store" })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => {
+          if (data?.avatarUrl) setCurrentUserAvatar(data.avatarUrl);
+          else if (data && data.avatarUrl === null) setCurrentUserAvatar(undefined);
+        })
+        .catch(() => {});
+    };
+    window.addEventListener("profile-updated", onProfileUpdated);
+    return () => window.removeEventListener("profile-updated", onProfileUpdated);
+  }, []);
+
+  // ⭐ V3.0 — (b) Sélection auto de la 1ère conversation sur mobile si les
+  // conversations sont arrivées APRÈS le premier load (rare) — le premier
+  // auto-select se fait dans loadConversations (cf. ci-dessus).
+  useEffect(() => {
+    if (autoSelectedConvRef.current) return;
+    if (loadingConvs || conversations.length === 0) return;
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setActiveConvId(prev => prev ?? conversations[0].id);
+      autoSelectedConvRef.current = true;
+    }
+  }, [loadingConvs, conversations]);
+
+  // ⭐ V3.0 — (c) Sélection d'une conversation : sur mobile, on replie
+  // l'overlay de la sidebar pour revenir au chat.
+  const handleSelectConversation = useCallback((id: string) => {
+    setActiveConvId(id);
+    setMobileSidebarExpanded(false);
+  }, []);
+
   // ⭐ V2.8 — Messages « supprimés pour moi » : rechargés depuis le
   // localStorage au montage (persistés entre les sessions / rechargements).
   useEffect(() => {
@@ -563,10 +611,11 @@ export function MessagingView() {
       const data: ChatConversation[] = await res.json();
       setConversations(data);
       if (data.length > 0 && !activeConvId) {
-        // (S5) Ne pas auto-sélectionner sur mobile — laisser la sidebar visible
-        if (typeof window !== "undefined" && window.innerWidth >= 1024) {
-          setActiveConvId(data[0].id);
-        }
+        // ⭐ V3.0 — Auto-sélection sur TOUS les écrans (mobile inclus) :
+        // sur mobile la sidebar est un rail d'icônes — sans sélection, le
+        // chat resterait vide derrière. Avant, le mobile était exclu pour
+        // laisser la sidebar plein écran (design V2.9, obsolète).
+        setActiveConvId(data[0].id);
       }
     } catch (e) {
       console.error("loadConversations:", e);
@@ -2604,7 +2653,8 @@ export function MessagingView() {
     // mobile) / 5rem (80px, desktop) pour la navbar fixe. Avant, 100vh pur →
     // le composer passait SOUS l'écran sur mobile (« zone de texte figée,
     // trop restreinte »). dvh = viewport dynamique (barres d'adresse iOS).
-    <div className="flex h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)] bg-[#FAF6EF] overflow-hidden">
+    // ⭐ V3.0 — `relative` : ancre l'overlay mobile de la sidebar dépliée.
+    <div className="relative flex h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)] bg-[#FAF6EF] overflow-hidden">
       {/* ⭐ V2.9 — Conteneur INVISIBLE des <audio> distants du canal vocal.
           Les éléments sont créés imperativement (attachRemoteAudio) — c'est
           CE qui manquait : sans eux, on ne s'entendait pas. */}
@@ -2615,18 +2665,133 @@ export function MessagingView() {
       <input ref={imageInputRef} type="file" className="hidden" onChange={handleFileSelect}
         accept="image/*" />
 
+      {/* ═════ ⭐ V3.0 — RAIL MOBILE (icônes seules, <lg) ════════════════
+          La barre latérale se REPLIE en rail d'icônes pour que l'interface
+          de chat reste visible à côté (demande utilisateur : « ça doit se
+          replier pour qu'on voie uniquement les icônes et on peut déplier
+          et voir le texte »). Chaque avatar = une conversation ; badge
+          non-lus + pastille DIRECT verte pour les canaux vocaux en live.
+          Masqué sur desktop (lg+) où la sidebar complète reste fixe. */}
+      <div className="lg:hidden w-[68px] flex-shrink-0 border-r border-stone-200 bg-white flex flex-col select-none">
+        {/* Déplier → sidebar complète (noms + aperçus + recherche) */}
+        <button
+          onClick={() => setMobileSidebarExpanded(true)}
+          className="w-full h-12 flex items-center justify-center text-[#1E0F2B]/70 hover:bg-[#FAF6EF] active:bg-[#C9A227]/15 transition-colors"
+          title="Déplier la liste des conversations"
+          aria-label="Déplier la liste des conversations"
+        >
+          <PanelLeftOpen className="w-5 h-5" />
+        </button>
+        {/* Mon profil (photo) — ouvre l'éditeur de profil */}
+        <button
+          onClick={() => setShowProfile(true)}
+          className="relative mx-auto w-11 h-11 rounded-full overflow-hidden border border-[#C9A227]/50 hover:border-[#C9A227] transition-colors flex-shrink-0 mb-1"
+          title="Mon profil — modifier ma photo et mes informations"
+          aria-label="Mon profil"
+        >
+          {currentUserAvatar ? (
+            <img src={currentUserAvatar} alt={currentUserName} className="w-full h-full object-cover" />
+          ) : (
+            <span className={cn("w-full h-full flex items-center justify-center text-white text-xs font-bold", getAvatarColor(currentUserName))}>
+              {getInitials(currentUserName)}
+            </span>
+          )}
+        </button>
+        <div className="mx-auto w-8 border-t border-stone-200 mb-1" />
+        {/* Avatars des conversations (scroll vertical) */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden py-1 flex flex-col items-center gap-1.5">
+          {(loadingConvs || conversations.length === 0) && (
+            <div className="w-11 h-11 rounded-full bg-[#FAF6EF] animate-pulse flex items-center justify-center">
+              <Loader2 className="w-4 h-4 text-[#C9A227] animate-spin" />
+            </div>
+          )}
+          {[...channelConvs, ...groupConvs, ...directConvs, ...voiceConvs].map(conv => {
+            const isActive = conv.id === activeConvId;
+            const voiceLive = conv.type === "VOICE" && activeLive;
+            return (
+              <button
+                key={conv.id}
+                onClick={() => handleSelectConversation(conv.id)}
+                className={cn(
+                  "relative w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all",
+                  isActive
+                    ? "ring-2 ring-[#C9A227] ring-offset-2 ring-offset-white"
+                    : "hover:opacity-80 active:scale-95"
+                )}
+                title={conv.name}
+                aria-label={conv.name}
+              >
+                {conv.avatarUrl ? (
+                  <img src={conv.avatarUrl} alt={conv.name} className="w-11 h-11 rounded-full object-cover border border-[#C9A227]/25" />
+                ) : (
+                  <div className={cn("w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-[13px] shadow-sm", getAvatarColor(conv.name))}>
+                    {getInitials(conv.name)}
+                  </div>
+                )}
+                {/* Badge non-lus */}
+                {conv.unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full text-[10px] font-bold bg-[#C9A227] text-[#1E0F2B] border-2 border-white shadow-sm">
+                    {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
+                  </span>
+                )}
+                {/* ⭐ V3.0 — Pastille DIRECT verte clignotante (canal vocal en live) */}
+                {voiceLive && (
+                  <span className="absolute -bottom-0.5 -right-0.5 relative flex w-3.5 h-3.5">
+                    <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                    <span className="relative inline-flex w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
+                  </span>
+                )}
+                {conv.isEncrypted && !voiceLive && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-white rounded-full flex items-center justify-center border border-[#C9A227]/40">
+                    <Lock className="w-2.5 h-2.5 text-[#C9A227]" />
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ⭐ V3.0 — Backdrop : ferme la sidebar mobile dépliée au clic dehors */}
+      {mobileSidebarExpanded && (
+        <div
+          className="lg:hidden absolute inset-0 z-30 bg-[#1A0826]/40 backdrop-blur-[2px]"
+          onClick={() => setMobileSidebarExpanded(false)}
+          aria-hidden
+        />
+      )}
+
       {/* ═════ SIDEBAR — Conversations ═════ */}
+      {/* ⭐ V3.0 — Desktop (lg+) : sidebar fixe w-80 comme avant. Mobile :
+          REPLIÉE par défaut (le rail d'icônes la remplace) ; DÉPLIÉE →
+          overlay par-dessus le chat (z-40, depuis le bord droit du rail).
+          ⚠️ Toutes les classes de l'état déplié sont préfixées max-lg: —
+          sinon `hidden` (base) battrait `flex` et l'overlay casserait le
+          layout desktop. */}
       <div className={cn(
-        "w-80 border-r border-stone-200 flex flex-col flex-shrink-0 bg-white",
-        activeConvId ? "hidden lg:flex" : "flex"
+        "border-r border-stone-200 bg-white flex-col flex-shrink-0",
+        "hidden lg:flex lg:w-80",
+        mobileSidebarExpanded &&
+          "max-lg:flex max-lg:absolute max-lg:inset-y-0 max-lg:left-[68px] max-lg:right-0 max-lg:z-40 max-lg:max-w-[340px] max-lg:shadow-2xl max-lg:shadow-[#1A0826]/30"
       )}>
         {/* Header */}
         <div className="p-3 border-b border-stone-100 bg-[#2A0E3D]">
           <div className="flex items-center justify-between gap-2 mb-2">
-            <h2 className="text-sm font-bold text-[#FAF6EF] flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-[#C9A227]" />
-              <span className="truncate">Yeshua Connect</span>
-            </h2>
+            <div className="flex items-center gap-1.5 min-w-0">
+              {/* ⭐ V3.0 — Replier (mobile uniquement, quand dépliée) */}
+              <button
+                onClick={() => setMobileSidebarExpanded(false)}
+                className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-[#FAF6EF]/70 transition-colors flex-shrink-0"
+                title="Replier — revenir aux icônes"
+                aria-label="Replier la barre latérale"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+              <h2 className="text-sm font-bold text-[#FAF6EF] flex items-center gap-1.5 min-w-0">
+                <Sparkles className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+                <span className="truncate">Yeshua Connect</span>
+              </h2>
+            </div>
             <div className="flex items-center gap-1">
               {/* ⭐ V2.9 — MA PHOTO cliquable dans le header de la sidebar :
                   ouvre directement l'éditeur de profil (photo, nom, tel…).
@@ -2736,22 +2901,22 @@ export function MessagingView() {
               {/* Channels (broadcast) */}
               {channelConvs.length > 0 && (
                 <ConvSection title="Canaux" icon={<Megaphone className="w-3 h-3" />} convs={channelConvs}
-                  activeConvId={activeConvId} onSelect={setActiveConvId} mutedConversations={mutedConversations} />
+                  activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations} />
               )}
               {/* Groups */}
               {groupConvs.length > 0 && (
                 <ConvSection title="Groupes" icon={<Users className="w-3 h-3" />} convs={groupConvs}
-                  activeConvId={activeConvId} onSelect={setActiveConvId} mutedConversations={mutedConversations} />
+                  activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations} />
               )}
               {/* Direct */}
               {directConvs.length > 0 && (
                 <ConvSection title="Direct" icon={<MessageSquare className="w-3 h-3" />} convs={directConvs}
-                  activeConvId={activeConvId} onSelect={setActiveConvId} mutedConversations={mutedConversations} />
+                  activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations} />
               )}
               {/* ⭐ V2.3 — Canaux vocaux persistants */}
               {voiceConvs.length > 0 && (
                 <ConvSection title="Canaux vocaux" icon={<Volume2 className="w-3 h-3" />} convs={voiceConvs}
-                  activeConvId={activeConvId} onSelect={setActiveConvId} mutedConversations={mutedConversations}
+                  activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations}
                   liveBadge={activeLive ? { title: activeLive.title, portraitUrl: activeLive.servantPortraitUrl } : null} />
               )}
             </>
@@ -2794,8 +2959,17 @@ export function MessagingView() {
         {activeConv ? (
           <div className="p-3 border-b border-[#C9A227]/15 bg-white/95 backdrop-blur-sm flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-3 min-w-0">
-              <button onClick={() => setActiveConvId(null)} className="lg:hidden p-1 text-[#8A8378]">
-                <ArrowLeft className="w-4 h-4" />
+              {/* ⭐ V3.0 — Retour mobile : DÉPLIE la sidebar (liste complète)
+                  au lieu de vider le chat. Le rail d'icônes reste visible,
+                  l'utilisateur retrouve la liste des conversations et son
+                  contenu au même endroit quand il replie. */}
+              <button
+                onClick={() => setMobileSidebarExpanded(true)}
+                className="lg:hidden p-1.5 -ml-1 rounded-lg hover:bg-stone-100 text-[#8A8378]"
+                aria-label="Voir toutes les conversations"
+                title="Voir toutes les conversations"
+              >
+                <ArrowLeft className="w-5 h-5" />
               </button>
               {/* ⭐ V2.8 — Vraie photo dans le header : interlocuteur (DIRECT)
                   ou photo du canal (GROUP/CHANNEL) — plus d'initiales figées.
@@ -3381,8 +3555,10 @@ export function MessagingView() {
         )}
 
         {/* Input bar — masqué pour les canaux VOICE (pas de texte, seulement audio) */}
+        {/* ⭐ V3.0 — Padding mobile resserré (p-2) pour offrir plus de hauteur
+            utile à la zone de saisie ; desktop inchangé (p-3). */}
         {activeConv && activeConv.type !== "VOICE" && (
-          <div className="p-3 border-t border-[#C9A227]/15 bg-white">
+          <div className="p-2 md:p-3 border-t border-[#C9A227]/15 bg-white">
             {/* ⭐ V2.8 — COMPOSER DE PIÈCES JOINTES (façon WhatsApp) :
                 aperçu des fichiers EN ATTENTE (collage Ctrl+V, « Joindre »,
                 drag & drop) avec suppression individuelle + envoi explicite.
@@ -3481,20 +3657,23 @@ export function MessagingView() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 md:gap-2">
                 {/* ⭐ V2.5 — Bouton « Joindre » unique (façon WhatsApp) :
                     ouvre le modal regroupant Document, Image, GIF, Sondage
                     et Programmé. Remplace les 5 boutons séparés
                     (trombone, image, GIF, sondage, calendrier). */}
+                {/* ⭐ V3.0 — Cible tactile 40×40 sur mobile (accessibilité
+                    Android/iOS) ; 36×36 sur desktop comme avant. */}
                 <button
                   onClick={() => { setAttachOpen(true); setAttachPanel("menu"); }}
                   className={cn(
-                    "p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors cursor-pointer",
+                    "h-10 w-10 md:h-9 md:w-9 flex items-center justify-center rounded-lg hover:bg-stone-100 text-stone-500 transition-colors cursor-pointer flex-shrink-0",
                     attachOpen && "bg-[#C9A227]/10 text-[#C9A227]"
                   )}
                   title="Joindre — document, image, GIF, sondage, message programmé"
+                  aria-label="Joindre un fichier"
                 >
-                  <Paperclip className="w-4 h-4" />
+                  <Paperclip className="w-4.5 h-4.5 md:w-4 md:h-4" />
                 </button>
                 {/* ⭐ V2.2 — Emoji Picker (Popover shadcn/ui) */}
                 <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
@@ -3502,12 +3681,13 @@ export function MessagingView() {
                     <button
                       type="button"
                       className={cn(
-                        "p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors",
+                        "h-10 w-10 md:h-9 md:w-9 flex items-center justify-center rounded-lg hover:bg-stone-100 text-stone-500 transition-colors flex-shrink-0",
                         showEmojiPicker && "bg-[#C9A227]/10 text-[#C9A227]"
                       )}
                       title="Emojis"
+                      aria-label="Choisir un emoji"
                     >
-                      <Smile className="w-4 h-4" />
+                      <Smile className="w-4.5 h-4.5 md:w-4 md:h-4" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent
@@ -3579,9 +3759,17 @@ export function MessagingView() {
                         handleSend();
                       }
                     }}
-                    placeholder="Écrivez votre message... (tapez / pour les commandes, @ pour mentionner, Ctrl+V pour coller une image)"
+                    placeholder="Écrivez votre message…"
                     rows={1}
-                    className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20 resize-none"
+                    // ⭐ V3.0 — ZONE DE TEXTE MOBILE AGRANDIE (demande
+                    // utilisateur : « la zone de texte est trop petite ») :
+                    //   • min-h-[46px] → hauteur de base généreuse au doigt
+                    //   • text-base (16px) sur mobile → iOS Safari ne zoome
+                    //     PAS à la focus (toute police < 16px déclenche le zoom)
+                    //   • py-3 → rembourrage vertical confortable
+                    //   • Desktop : py-2.5 / text-sm / hauteur auto (inchangé)
+                    className="w-full px-4 py-3 md:py-2.5 min-h-[46px] md:min-h-[40px] bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20 resize-none"
+                    title="Tapez / pour les commandes, @ pour mentionner, Ctrl+V pour coller une image"
                     disabled={sending}
                   />
                 </div>
@@ -3590,13 +3778,14 @@ export function MessagingView() {
                     emojis, champ de saisie, micro/envoi. */}
                 {(inputText.trim() || pendingFiles.length > 0) ? (
                   <button onClick={handleSend} disabled={sending || uploadingFiles}
-                    className="p-2.5 rounded-xl bg-[#8C5FA8] text-[#FAF6EF] hover:bg-[#7B4FA0] disabled:opacity-30 transition-colors flex-shrink-0"
-                    title={pendingFiles.length > 0 ? "Envoyer les pièces jointes (+ légende)" : "Envoyer"}>
-                    {(sending || uploadingFiles) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    className="h-10 w-10 md:h-9 md:w-9 p-0 flex items-center justify-center rounded-xl bg-[#8C5FA8] text-[#FAF6EF] hover:bg-[#7B4FA0] disabled:opacity-30 transition-colors flex-shrink-0"
+                    title={pendingFiles.length > 0 ? "Envoyer les pièces jointes (+ légende)" : "Envoyer"}
+                    aria-label="Envoyer">
+                    {(sending || uploadingFiles) ? <Loader2 className="w-4.5 h-4.5 md:w-4 md:h-4 animate-spin" /> : <Send className="w-4.5 h-4.5 md:w-4 md:h-4" />}
                   </button>
                 ) : (
-                  <button onClick={startRecording} className="p-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors flex-shrink-0" title="Message vocal">
-                    <Mic className="w-4 h-4" />
+                  <button onClick={startRecording} className="h-10 w-10 md:h-9 md:w-9 p-0 flex items-center justify-center rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors flex-shrink-0" title="Message vocal" aria-label="Enregistrer un message vocal">
+                    <Mic className="w-4.5 h-4.5 md:w-4 md:h-4" />
                   </button>
                 )}
               </div>
