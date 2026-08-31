@@ -97,6 +97,75 @@ export function ensureVoiceVideoColumns(): Promise<void> {
   return inflightVoice;
 }
 
+let callSignalOk = false;
+let inflightCallSignal: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.1 — S'assure que la table `CallSignal` (signalisation des appels
+ * audio/vidéo Yeshua Connect) existe.
+ *
+ * Avant la V3.1, l'appelant rejoignait une room LiveKit `yeshua-call-<convId>`
+ * et entendait sa propre sonnerie (ringback) — mais RIEN n'alertait les
+ * destinataires : aucun appel entrant ne s'affichait nulle part (PC ni
+ * smartphone), donc « ça sonne mais l'appel ne vient pas ».
+ *
+ * `CallSignal` est une table « volante » (lignes de courte durée) écrite en
+ * SQL brut (le client Prisma ne la connaît pas — pas besoin de migration) :
+ *   - POST /api/yeshua-connect/calls/signal { action: "start" | "accept" |
+ *     "decline" | "end" } crée/met à jour un signal ;
+ *   - GET  ?incoming=1 (polling 3 s) permet à CHAQUE membre de découvrir
+ *     l'appel qui sonne pour lui (photo du canal, nom de l'appelant…) ;
+ *   - GET  ?callId=x (polling 2 s) permet à l'appelant de suivre le statut
+ *     (accepté / refusé / manqué / terminé).
+ *
+ * Idempotent + mémoïsé + concurrentiel comme les helpers précédents.
+ */
+export function ensureCallSignalTable(): Promise<void> {
+  if (callSignalOk) return Promise.resolve();
+  if (!inflightCallSignal) {
+    inflightCallSignal = (async () => {
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "CallSignal" (
+          "id" TEXT NOT NULL,
+          "conversationId" TEXT NOT NULL,
+          "initiatorId" TEXT NOT NULL,
+          "type" TEXT NOT NULL DEFAULT 'audio',
+          "status" TEXT NOT NULL DEFAULT 'ringing',
+          "acceptedAt" TIMESTAMPTZ,
+          "endedAt" TIMESTAMPTZ,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "CallSignal_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "CallSignal_conversationId_idx" ON "CallSignal"("conversationId")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "CallSignal_status_idx" ON "CallSignal"("status")'
+      );
+      // ⭐ V3.1 — Les journaux d'appel (« Appel manqué », « Appel terminé ·
+      // 3 min ») sont des messages type CALL_LOG insérés côté serveur.
+      await db.$executeRawUnsafe(
+        `ALTER TYPE "MessageType" ADD VALUE IF NOT EXISTS 'CALL_LOG'`
+      );
+    })()
+      .then(() => {
+        callSignalOk = true;
+        console.log("[ensure-schema] V3.1 : table CallSignal + enum CALL_LOG vérifiés/créés ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] DDL CallSignal impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightCallSignal = null;
+      });
+  }
+  return inflightCallSignal;
+}
+
 let messageTypeEnumOk = false;
 let inflightMessageEnum: Promise<void> | null = null;
 
@@ -211,10 +280,14 @@ export function ensureMessageTypeEnum(): Promise<void> {
       await db.$executeRawUnsafe(
         `ALTER TYPE "MessageType" ADD VALUE IF NOT EXISTS 'GIF'`
       );
+      // ⭐ V3.1 — Journaux d'appel (appel manqué / terminé + durée) dans le chat.
+      await db.$executeRawUnsafe(
+        `ALTER TYPE "MessageType" ADD VALUE IF NOT EXISTS 'CALL_LOG'`
+      );
     })()
       .then(() => {
         messageTypeEnumOk = true;
-        console.log("[ensure-schema] Enum MessageType : valeurs VERSE/ANNOUNCEMENT/GIF vérifiées/ajoutées ✓");
+        console.log("[ensure-schema] Enum MessageType : valeurs VERSE/ANNOUNCEMENT/GIF/CALL_LOG vérifiées/ajoutées ✓");
       })
       .catch((e: unknown) => {
         console.error(

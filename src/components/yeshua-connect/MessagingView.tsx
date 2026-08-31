@@ -58,7 +58,6 @@ import {
   ScrollText, PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
   Radio, Camera, PanelLeftOpen, PanelLeftClose,
 } from "lucide-react";
-import Link from "next/link";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant, RemoteAudioTrack } from "livekit-client";
 import { cn } from "@/lib/utils";
 import { BibleWorkspace } from "@/components/bible/BibleWorkspace";
@@ -123,6 +122,85 @@ function getAvatarColor(name: string): string {
 
 function getInitials(name: string): string {
   return name.split(" ").map(p => p[0]).join("").substring(0, 2).toUpperCase();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V3.1 — COULEURS PROFESSIONNELLES PAR UTILISATEUR (bulles de chat)
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Demande explicite : « Il faut varier les couleurs de façon PROFESSION-
+// NELLE en fonction de chaque utilisateur — il faut qu'il y ait des
+// variantes de couleurs ENTRE les autres utilisateurs. »
+//
+//   - MES messages       : violet maison #8C5FA8 ( reconnaissance instantanée )
+//   - messages des AUTRES : une couleur STABLE par utilisateur (hash djb2 de
+//     son ID) prise dans une palette harmonisée avec la charte (or #C9A227,
+//     violet #8C5FA8, encre #2A0E3D) — comme Slack/Discord : on reconnaît
+//     qui parle d'un coup d'œil, et la couleur ne change JAMAIS entre les
+//     écrans (hash sur l'ID, pas sur le nom ni la position).
+//
+// `light: true` → texte clair (#FAF6EF) sur bulle foncée → styles internes
+// « purple » (citations, réactions…). `light: false` → texte encre → « gold ».
+interface BubbleStyle { bg: string; text: string; light: boolean }
+const BUBBLE_MINE: BubbleStyle = { bg: "#8C5FA8", text: "#FAF6EF", light: true };
+const BUBBLE_PALETTE: BubbleStyle[] = [
+  { bg: "#C9A227", text: "#1E0F2B", light: false }, // Or (maison)
+  { bg: "#2E6E9E", text: "#FAF6EF", light: true },  // Bleu océan
+  { bg: "#0F766E", text: "#FAF6EF", light: true },  // Sarcelle
+  { bg: "#B5502F", text: "#FAF6EF", light: true },  // Terracotta
+  { bg: "#9C4A74", text: "#FAF6EF", light: true },  // Prune
+  { bg: "#5B7052", text: "#FAF6EF", light: true },  // Sauge
+  { bg: "#3E5C76", text: "#FAF6EF", light: true },  // Bleu acier
+  { bg: "#8C6D1F", text: "#FAF6EF", light: true },  // Bronze
+];
+/** Hash djb2 — stable et bien réparti même sur des IDs courts. */
+function hashUserId(id: string): number {
+  let h = 5381;
+  for (let i = 0; i < id.length; i++) h = ((h << 5) + h + id.charCodeAt(i)) >>> 0;
+  return h;
+}
+/** Couleur de bulle d'un AUTRE utilisateur (stable pour tous les écrans). */
+function senderBubbleStyle(senderId: string): BubbleStyle {
+  return BUBBLE_PALETTE[hashUserId(senderId) % BUBBLE_PALETTE.length];
+}
+
+// ─── Helper: V3.1 — direct intra-canal (métadonnées room LiveKit) ────
+// { videoMode, direct, directBy, directByAvatar, directAt, updatedAt }
+function parseRoomMetadataDirect(metadata: string | undefined): { direct: boolean; by?: string; byAvatar?: string } | null {
+  if (!metadata) return null;
+  try {
+    const parsed = JSON.parse(metadata);
+    if (typeof parsed?.direct !== "boolean") return null;
+    return {
+      direct: parsed.direct,
+      by: typeof parsed.directBy === "string" ? parsed.directBy : undefined,
+      byAvatar: typeof parsed.directByAvatar === "string" && parsed.directByAvatar ? parsed.directByAvatar : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ─── Helper: V3.1 — durée d'appel lisible (« 3 min 12 s ») ────────────
+function formatCallDurationFr(sec: number): string {
+  if (sec < 60) return `${sec} s`;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m < 60) return s > 0 ? `${m} min ${s} s` : `${m} min`;
+  return `${Math.floor(m / 60)} h ${m % 60} min`;
+}
+
+/** ⭐ V3.1 — Infos d'un appel entrant qui sonne (polling /calls/signal). */
+interface IncomingCallInfo {
+  callId: string;
+  conversationId: string;
+  convName: string;
+  convAvatarUrl?: string;
+  convType: string;
+  callType: "audio" | "video";
+  initiatorId: string;
+  initiatorName: string;
+  initiatorAvatarUrl?: string;
 }
 
 // ─── Helper: V2.7 — métadonnées de room LiveKit ───────────────────────
@@ -409,10 +487,33 @@ export function MessagingView() {
   // ─── State: typing indicator (debounce local pour emit typing:stop) ──
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ─── State: calls (UI only — WebRTC V2) ──────────────────────────────
+  // ─── State: calls (LiveKit + signalisation V3.1) ─────────────────────
   const [callState, setCallState] = useState<"idle" | "outgoing" | "incoming" | "active">("idle");
   // ⭐ V2.3 — Type d'appel (audio vs vidéo) pour l'overlay LiveKit
   const [callType, setCallType] = useState<"audio" | "video">("audio");
+  // ⭐ V3.1 — SIGNALISATION DES APPELS (corrige « ça sonne mais l'appel ne
+  // vient pas chez les autres ») :
+  //   incomingCall      → l'appel qui sonne POUR MOI (polling 3 s) ;
+  //   activeCallSignalId→ le signal de l'appel que J'AI lancé ou accepté ;
+  //   callEndStatus     → issue distante (declined/missed/ended/cancelled)
+  //                       affichée 2 s avant la fermeture de l'overlay.
+  const [incomingCall, setIncomingCall] = useState<IncomingCallInfo | null>(null);
+  const [activeCallSignalId, setActiveCallSignalId] = useState<string | null>(null);
+  const [callEndStatus, setCallEndStatus] = useState<"declined" | "missed" | "ended" | "cancelled" | null>(null);
+  // ⭐ V3.1 — Nom + photo de la conversation appelée (l'overlay affiche la
+  // VRAIE photo du canal — avant : toujours des initiales).
+  const [callConvInfo, setCallConvInfo] = useState<{ name: string; avatarUrl?: string } | null>(null);
+  // Refs miroirs (les callbacks LiveKit/polling lisent les valeurs fraîches
+  // sans re-créer les listeners).
+  const activeCallSignalIdRef = useRef<string | null>(null);
+  useEffect(() => { activeCallSignalIdRef.current = activeCallSignalId; }, [activeCallSignalId]);
+  const callStateRef = useRef<"idle" | "outgoing" | "incoming" | "active">("idle");
+  useEffect(() => { callStateRef.current = callState; }, [callState]);
+  const endedByMeRef = useRef(false);
+  const callEndingRef = useRef(false);
+  const teardownCallRef = useRef<() => void>(() => {});
+  // Appels de groupe refusés par MOI (ne plus me faire sonner).
+  const declinedCallIdsRef = useRef<Set<string>>(new Set());
 
   // ─── State: SlashCommands + Mentions + Threads (V2.1) ─────────────────
   // SlashCommands : ouvert quand l'input commence par "/"
@@ -1873,13 +1974,19 @@ export function MessagingView() {
   const [audioPlaybackBlocked, setAudioPlaybackBlocked] = useState(false);
   const [activeSpeakerIds, setActiveSpeakerIds] = useState<Set<string>>(new Set());
   const [voiceReconnecting, setVoiceReconnecting] = useState(false);
-  const [activeLive, setActiveLive] = useState<{
-    id: string;
-    title: string;
-    servantName?: string;
-    servantPortraitUrl?: string | null;
-    startedAt?: string | null;
-  } | null>(null);
+  // ⭐ V3.1 — DIRECT INTRA-CANAL (remplace l'indicateur « module Live » des
+  // canaux vocaux) : « ce direct, c'est un direct AU SEIN DU CANAL et non
+  // un direct live dans le module live » — clarification explicite de
+  // l'utilisateur. Deux sources de vérité complémentaires :
+  //   - voiceDirectInfo : les métadonnées de la room LiveKit (instantané
+  //     pour les participants connectés — RoomMetadataChanged) ;
+  //   - channelDirects  : polling GET /api/yeshua-connect/direct (10 s —
+  //     badges de la sidebar + panneau des NON-connectés).
+  const [voiceDirectInfo, setVoiceDirectInfo] = useState<{ active: boolean; by?: string; byAvatar?: string } | null>(null);
+  const [channelDirects, setChannelDirects] = useState<Record<string, { by: string; byAvatar?: string }>>({});
+  const [directSwitching, setDirectSwitching] = useState(false);
+  const voiceChannelConnectedRef = useRef(false);
+  useEffect(() => { voiceChannelConnectedRef.current = voiceChannelConnected; }, [voiceChannelConnected]);
   const joinVoiceChannelRef = useRef<(() => Promise<void>) | null>(null);
 
   /** Crée (ou récupère) l'élément <audio> caché d'un participant distant. */
@@ -2003,100 +2110,242 @@ export function MessagingView() {
   }, [localVideoEnabled]);
 
   /**
-   * Démarre un appel audio ou vidéo via LiveKit.
-   * - roomName = `yeshua-call-<conversationId>` (namespacing pour autorisation
-   *   côté /api/livekit/token).
-   * - Publie automatiquement le micro (toujours) et la caméra (si vidéo).
-   * - Affiche l'overlay plein écran via setCallState("outgoing").
+   * ⭐ V3.1 — Rejoint la room LiveKit d'un appel `yeshua-call-<convId>`.
+   * Factored depuis startCall : le MÊME code sert à l'APPELANT (start) et au
+   * DESTINATAIRE (accept) — publie micro (toujours) + caméra (si vidéo).
+   */
+  const joinCallRoom = useCallback(async (conversationId: string, type: "audio" | "video") => {
+    const roomName = `yeshua-call-${conversationId}`;
+    const tokenRes = await fetch(api.url("/api/livekit/token"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        roomName,
+        role: "publisher",
+        participantName: currentUserName,
+      }),
+    });
+    if (!tokenRes.ok) {
+      const err = await tokenRes.json().catch(() => ({}));
+      throw new Error(err.error || `Token LiveKit: HTTP ${tokenRes.status}`);
+    }
+    const { token, url } = await tokenRes.json();
+
+    const room = new Room({
+      adaptiveStream: true,
+      dynacast: true,
+      videoCaptureDefaults: { resolution: { width: 1280, height: 720 } },
+    });
+    livekitRoomRef.current = room;
+
+    // ─── Listeners : participants distants ───────────────────────────
+    // TrackSubscribed = un participant distant publie un track audio/vidéo.
+    // ParticipantConnected / Disconnected = mise à jour de la liste.
+    room.on(RoomEvent.TrackSubscribed, () => {
+      const remotes = Array.from(room.remoteParticipants.values());
+      setRemoteParticipants(remotes);
+      setCallState("active");
+    });
+    room.on(RoomEvent.TrackUnsubscribed, () => {
+      const remotes = Array.from(room.remoteParticipants.values());
+      setRemoteParticipants(remotes);
+    });
+    room.on(RoomEvent.ParticipantConnected, () => {
+      setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+    });
+    room.on(RoomEvent.ParticipantDisconnected, () => {
+      setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+    });
+    room.on(RoomEvent.Disconnected, () => {
+      // Déconnexion réseau/serveur → retour à l'état repos SEULEMENT si on
+      // n'est pas en train d'afficher une issue (refusé/manqué/terminé).
+      if (!callEndingRef.current) {
+        setCallState("idle");
+        setRemoteParticipants([]);
+      }
+    });
+    room.on(RoomEvent.ConnectionQualityChanged, () => {
+      setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+    });
+
+    await room.connect(url, token);
+
+    // ─── Publier tracks locaux ────────────────────────────────────────
+    // setMicrophoneEnabled / setCameraEnabled utilisent en interne
+    // getUserMedia et publient le track sur la Room — pas besoin de gérer
+    // nous-mêmes le MediaStream local.
+    await room.localParticipant.setMicrophoneEnabled(true);
+    setLocalAudioMuted(false);
+
+    if (type === "video") {
+      await room.localParticipant.setCameraEnabled(true);
+      setLocalVideoEnabled(true);
+    } else {
+      await room.localParticipant.setCameraEnabled(false);
+      setLocalVideoEnabled(false);
+    }
+  }, [currentUserName]);
+
+  /**
+   * ⭐ V3.1 — Démarre un appel audio ou vidéo.
+   * 1. POST /api/yeshua-connect/calls/signal { action: "start" } → crée le
+   *    signal « ringing » — c'est CE signal (polling 3 s) qui fait SONNER
+   *    l'appel chez TOUS les membres de la conversation (avant : rien ne
+   *    prévenait les destinataires, l'appel « ne venait » jamais).
+   * 2. Rejoint la room LiveKit + publie micro/caméra.
+   * 3. Overlay plein écran « outgoing » avec sonnerie (ringback).
    */
   const startCall = useCallback(async (type: "audio" | "video") => {
     if (!activeConvId) return;
+    const conv = conversations.find(c => c.id === activeConvId);
     setCallType(type);
     setCallError(null);
+    setCallEndStatus(null);
+    endedByMeRef.current = false;
+    callEndingRef.current = false;
+    setCallConvInfo({ name: conv?.name || "Conversation", avatarUrl: conv?.avatarUrl });
     // (S5) Afficher l'overlay IMMÉDIATEMENT pour feedback instantané
     // avant même que le token LiveKit soit récupéré.
     setCallState("outgoing");
     cleanupLiveKit();
     try {
-      const roomName = `yeshua-call-${activeConvId}`;
-      const tokenRes = await fetch(api.url("/api/livekit/token"), {
+      const signalRes = await fetch(api.url("/api/yeshua-connect/calls/signal"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomName,
-          role: "publisher",
-          participantName: currentUserName,
-        }),
+        body: JSON.stringify({ action: "start", conversationId: activeConvId, type }),
       });
-      if (!tokenRes.ok) {
-        const err = await tokenRes.json().catch(() => ({}));
-        throw new Error(err.error || `Token LiveKit: HTTP ${tokenRes.status}`);
+      if (!signalRes.ok) {
+        const err = await signalRes.json().catch(() => ({}));
+        throw new Error(err.error || `Signal d'appel: HTTP ${signalRes.status}`);
       }
-      const { token, url } = await tokenRes.json();
+      const { callId } = await signalRes.json();
+      setActiveCallSignalId(callId ?? null);
 
-      const room = new Room({
-        adaptiveStream: true,
-        dynacast: true,
-        videoCaptureDefaults: { resolution: { width: 1280, height: 720 } },
-      });
-      livekitRoomRef.current = room;
-
-      // ─── Listeners : participants distants ───────────────────────────
-      // TrackSubscribed = un participant distant publie un track audio/vidéo.
-      // ParticipantConnected / Disconnected = mise à jour de la liste.
-      room.on(RoomEvent.TrackSubscribed, () => {
-        const remotes = Array.from(room.remoteParticipants.values());
-        setRemoteParticipants(remotes);
-        setCallState("active");
-      });
-      room.on(RoomEvent.TrackUnsubscribed, () => {
-        const remotes = Array.from(room.remoteParticipants.values());
-        setRemoteParticipants(remotes);
-      });
-      room.on(RoomEvent.ParticipantConnected, () => {
-        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
-      });
-      room.on(RoomEvent.ParticipantDisconnected, () => {
-        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
-      });
-      room.on(RoomEvent.Disconnected, () => {
-        setCallState("idle");
-        setRemoteParticipants([]);
-      });
-      room.on(RoomEvent.ConnectionQualityChanged, () => {
-        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
-      });
-
-      await room.connect(url, token);
-
-      // ─── Publier tracks locaux ────────────────────────────────────────
-      // setMicrophoneEnabled / setCameraEnabled utilisent en interne
-      // getUserMedia et publient le track sur la Room — pas besoin de gérer
-      // nous-mêmes le MediaStream local.
-      await room.localParticipant.setMicrophoneEnabled(true);
-      setLocalAudioMuted(false);
-
-      if (type === "video") {
-        await room.localParticipant.setCameraEnabled(true);
-        setLocalVideoEnabled(true);
-      } else {
-        await room.localParticipant.setCameraEnabled(false);
-        setLocalVideoEnabled(false);
-      }
+      await joinCallRoom(activeConvId, type);
       // (S5) callState est déjà "outgoing" depuis le début de startCall
     } catch (e) {
       console.error("[livekit] startCall failed:", e);
       setCallError(e instanceof Error ? e.message : "Échec de l'appel");
       cleanupLiveKit();
       setCallState("idle");
+      setActiveCallSignalId(null);
     }
-  }, [activeConvId, cleanupLiveKit, currentUserName]);
+  }, [activeConvId, conversations, cleanupLiveKit, joinCallRoom]);
 
-  /** Raccroche l'appel en cours (disconnect + cleanup). */
-  const endCall = useCallback(() => {
+  /** ⭐ V3.1 — Fermeture LOCALE de l'overlay d'appel (sans signal). */
+  const teardownCall = useCallback(() => {
     cleanupLiveKit();
     setCallState("idle");
+    setIncomingCall(null);
+    setActiveCallSignalId(null);
+    setCallEndStatus(null);
+    setCallConvInfo(null);
+    endedByMeRef.current = false;
+    callEndingRef.current = false;
   }, [cleanupLiveKit]);
+  useEffect(() => { teardownCallRef.current = teardownCall; }, [teardownCall]);
+
+  /**
+   * ⭐ V3.1 — Raccroche (bouton rouge) : informe le serveur (journal d'appel
+   * « terminé/annulé » + durée + propagation à l'autre partie via son
+   * polling) PUIS ferme l'overlay.
+   */
+  const hangupCall = useCallback(() => {
+    const id = activeCallSignalIdRef.current;
+    if (id && !endedByMeRef.current) {
+      endedByMeRef.current = true;
+      fetch(api.url("/api/yeshua-connect/calls/signal"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "end", callId: id }),
+      }).catch(() => { /* best-effort : le sweep serveur rattrape */ });
+    }
+    teardownCall();
+  }, [teardownCall]);
+
+  /**
+   * ⭐ V3.1 — DECROCHE l'appel entrant : POST accept (arrête la sonnerie
+   * pour tout le monde, acceptedAt = début de la durée) + rejoint la room
+   * LiveKit. La conversation est sélectionnée pour que le journal d'appel
+   * (« Appel terminé · X min ») s'affiche sous nos yeux à la fin.
+   */
+  const acceptIncomingCall = useCallback(async () => {
+    const info = incomingCall;
+    if (!info) return;
+    setIncomingCall(null);
+    setCallType(info.callType);
+    setCallError(null);
+    setCallEndStatus(null);
+    endedByMeRef.current = false;
+    callEndingRef.current = false;
+    setCallConvInfo({ name: info.convName, avatarUrl: info.convAvatarUrl });
+    setActiveConvId(info.conversationId);
+    setCallState("active"); // durée = depuis le décrochage (acceptedAt)
+    cleanupLiveKit();
+    try {
+      await fetch(api.url("/api/yeshua-connect/calls/signal"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "accept", callId: info.callId }),
+      }).catch(() => {});
+      setActiveCallSignalId(info.callId);
+      await joinCallRoom(info.conversationId, info.callType);
+    } catch (e) {
+      console.error("[livekit] acceptIncomingCall failed:", e);
+      setCallError(e instanceof Error ? e.message : "Impossible de rejoindre l'appel");
+      cleanupLiveKit();
+      setCallState("idle");
+      setActiveCallSignalId(null);
+    }
+  }, [incomingCall, cleanupLiveKit, joinCallRoom]);
+
+  /**
+   * ⭐ V3.1 — REFUSE l'appel entrant : en DIRECT, termine l'appel (l'appelant
+   * voit « Appel refusé ») ; en canal/groupe, l'appel continue de sonner
+   * pour les autres membres (comme WhatsApp) — on l'ignore juste localement.
+   */
+  const declineIncomingCall = useCallback(() => {
+    const info = incomingCall;
+    if (!info) return;
+    declinedCallIdsRef.current.add(info.callId);
+    setIncomingCall(null);
+    fetch(api.url("/api/yeshua-connect/calls/signal"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "decline", callId: info.callId }),
+    }).catch(() => {});
+  }, [incomingCall]);
+
+  // ⭐ V3.1 — POLLING DE STATUT (2 s) : reflète à distance refusé / manqué /
+  // terminé pendant un appel (l'autre a raccroché) et fait passer l'overlay
+  // « outgoing » → « active » dès que le signal est accepté (même si les
+  // tracks LiveKit mettent une seconde à arriver).
+  useEffect(() => {
+    if (!session?.user?.id || !activeCallSignalId) return;
+    if (callState !== "outgoing" && callState !== "active") return;
+    const callId = activeCallSignalId;
+    const iv = setInterval(async () => {
+      if (callEndingRef.current) return;
+      try {
+        const res = await fetch(api.url(`/api/yeshua-connect/calls/signal?callId=${callId}`), { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const status = data?.status;
+        if (status === "accepted" && callStateRef.current === "outgoing") {
+          setCallState("active");
+          return;
+        }
+        if (status === "declined" || status === "missed" || status === "cancelled" || status === "ended") {
+          callEndingRef.current = true;
+          setCallEndStatus(status);
+          // Le journal d'appel a déjà été écrit par l'autre partie — on
+          // affiche l'issue 2 s puis on ferme l'overlay localement.
+          setTimeout(() => { teardownCallRef.current(); }, 2000);
+        }
+      } catch { /* réseau — nouvelle tentative dans 2 s */ }
+    }, 2000);
+    return () => clearInterval(iv);
+  }, [session?.user?.id, activeCallSignalId, callState]);
 
   /**
    * ⭐ V2.7 — Applique les métadonnées de room reçues (RoomMetadataChanged) :
@@ -2104,22 +2353,34 @@ export function MessagingView() {
    * Quand l'admin active le mode vidéo → chaque participant connecté active
    * sa caméra ; quand il repasse en audio → chaque caméra se coupe.
    * Exactement le comportement WhatsApp demandé : le switch est collectif.
+   * ⭐ V3.1 — Les métadonnées portent AUSSI le DIRECT INTRA-CANAL
+   * { direct, directBy, directByAvatar } : chaque participant connecté voit
+   * instantanément le bandeau vert clignotant (photo du diffuseur) quand
+   * l'admin lance « Lancer un direct » DANS le canal (plus aucune
+   * redirection vers le module Live).
    */
   const applyVoiceMetadata = useCallback((metadata: string | undefined) => {
     const videoMode = parseRoomMetadataVideoMode(metadata);
-    if (videoMode === undefined) return; // métadonnées absentes/illisibles → pas de changement
-    setVoiceVideoMode(videoMode);
-    const room = livekitRoomRef.current;
-    if (!room) return;
-    (async () => {
-      try {
-        await room.localParticipant.setCameraEnabled(videoMode);
-        setLocalVideoEnabled(videoMode);
-      } catch {
-        // Caméra indisponible (mode vidéo demandé) → on reste en audio
-        if (videoMode) setLocalVideoEnabled(false);
+    if (videoMode !== undefined) {
+      setVoiceVideoMode(videoMode);
+      const room = livekitRoomRef.current;
+      if (room) {
+        (async () => {
+          try {
+            await room.localParticipant.setCameraEnabled(videoMode);
+            setLocalVideoEnabled(videoMode);
+          } catch {
+            // Caméra indisponible (mode vidéo demandé) → on reste en audio
+            if (videoMode) setLocalVideoEnabled(false);
+          }
+        })();
       }
-    })();
+    }
+    // ⭐ V3.1 — Direct intra-canal (temp réel pour les connectés).
+    const direct = parseRoomMetadataDirect(metadata);
+    if (direct) {
+      setVoiceDirectInfo({ active: direct.direct, by: direct.by, byAvatar: direct.byAvatar });
+    }
   }, []);
 
   /**
@@ -2210,6 +2471,9 @@ export function MessagingView() {
         // (l'utilisateur reste sur le canal, il peut re-cliquer).
         setRemoteParticipants([]);
         setVoiceChannelConnected(false);
+        // ⭐ V3.1 — le direct intra-canal survit à notre déconnexion (room
+        // persistante) : on ne réinitialise PAS voiceDirectInfo ici, le
+        // polling /direct (10 s) garde le bandeau à jour.
       });
       // Autoplay bloqué par le navigateur → bouton « Activer le son ».
       room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
@@ -2244,7 +2508,7 @@ export function MessagingView() {
       // ⭐ V2.7 — Mode initial : la caméra ne s'allume QUE si l'admin a activé
       // le mode vidéo pour ce canal (mode WhatsApp). En mode audio : audio seul.
       const effectiveVideoMode =
-        initialVideoMode === true || parseRoomMetadataVideoMode(room.metadata);
+        initialVideoMode === true || parseRoomMetadataVideoMode(room.metadata) || false;
       setVoiceVideoMode(effectiveVideoMode);
       if (effectiveVideoMode) {
         try {
@@ -2263,6 +2527,10 @@ export function MessagingView() {
       setRemoteParticipants(Array.from(room.remoteParticipants.values()));
       setVoiceChannelConnected(true);
       setVoiceReconnecting(false);
+      // ⭐ V3.1 — DIRECT INTRA-CANAL : lit l'état initial depuis les
+      // métadonnées de la room (un direct peut être lancé AVANT notre join).
+      const initialDirect = parseRoomMetadataDirect(room.metadata);
+      setVoiceDirectInfo(initialDirect ? { active: initialDirect.direct, by: initialDirect.by, byAvatar: initialDirect.byAvatar } : null);
       // ⭐ V2.9 — AUTO-REJOIN : mémorise le canal rejoint → un refresh de la
       // page relance la connexion automatiquement (l'utilisateur ne « quitte »
       // le direct QUE s'il clique « Quitter » — like Telegram/WhatsApp).
@@ -2325,6 +2593,70 @@ export function MessagingView() {
     }
   }, [activeConvId, voiceModeSwitching]);
 
+  // ═════════════════════════════════════════════════════════════════════
+  //  ⭐ V3.1 — DIRECT INTRA-CANAL (admin) : « Lancer un direct » depuis le
+  //  canal vocal lance une diffusion DANS le canal (métadonnées de la room
+  //  LiveKit) — PLUS AUCUNE redirection vers /admin/lives (module Live).
+  //  - start : bandeau vert clignotant + photo du diffuseur pour tous les
+  //    connectés (RoomMetadataChanged), badge DIRECT sidebar (polling),
+  //    puis on REJOINT automatiquement le canal pour diffuser.
+  //  - stop  : la diffusion s'arrête pour tout le monde (restent connectés).
+  // ═════════════════════════════════════════════════════════════════════
+  const startChannelDirect = useCallback(async () => {
+    if (!activeConvId || directSwitching) return;
+    setDirectSwitching(true);
+    setCallError(null);
+    try {
+      const res = await fetch(api.url("/api/yeshua-connect/direct"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId: activeConvId, action: "start" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      // Feedback immédiat (le RoomMetadataChanged officialise ensuite).
+      setVoiceDirectInfo({ active: true, by: currentUserName, byAvatar: currentUserAvatar });
+      setChannelDirects(prev => ({ ...prev, [activeConvId]: { by: currentUserName, byAvatar: currentUserAvatar } }));
+      showToast("Direct lancé dans le canal — vous diffusez", "success");
+      // On n'était pas connecté ? On rejoint le canal pour diffuser.
+      if (!voiceChannelConnectedRef.current && joinVoiceChannelRef.current) {
+        await joinVoiceChannelRef.current();
+      }
+    } catch (e) {
+      console.error("[direct] start failed:", e);
+      setCallError(e instanceof Error ? e.message : "Impossible de lancer le direct");
+      showToast("Impossible de lancer le direct", "error");
+    } finally {
+      setDirectSwitching(false);
+    }
+  }, [activeConvId, directSwitching, currentUserName, currentUserAvatar]);
+
+  const stopChannelDirect = useCallback(async () => {
+    if (!activeConvId || directSwitching) return;
+    setDirectSwitching(true);
+    try {
+      const res = await fetch(api.url("/api/yeshua-connect/direct"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId: activeConvId, action: "stop" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setVoiceDirectInfo(null);
+      setChannelDirects(prev => {
+        const next = { ...prev };
+        delete next[activeConvId];
+        return next;
+      });
+      showToast("Direct arrêté", "success");
+    } catch (e) {
+      console.error("[direct] stop failed:", e);
+      showToast("Impossible d'arrêter le direct", "error");
+    } finally {
+      setDirectSwitching(false);
+    }
+  }, [activeConvId, directSwitching]);
+
   /** Quitte le canal vocal (disconnect — le canal reste persistant côté serveur). */
   const leaveVoiceChannel = useCallback(() => {
     // ⭐ V2.9 — Quitter EXPLICITEMENT (bouton « Quitter ») efface l'auto-rejoin :
@@ -2336,6 +2668,9 @@ export function MessagingView() {
     setVoiceChannelConnected(false);
     // ⭐ V2.7 — Réinitialisation du mode local (rechargé au prochain join)
     setVoiceVideoMode(false);
+    // ⭐ V3.1 — l'état local du direct est relâché (le polling /direct
+    // rafraîchit le bandeau si le direct continue sans nous).
+    setVoiceDirectInfo(null);
   }, [cleanupLiveKit, currentUserId]);
 
   // ⭐ V2.9 — AUTO-REJOIN après un refresh : si l'utilisateur était dans le
@@ -2345,25 +2680,24 @@ export function MessagingView() {
   const voiceRejoinTriedRef = useRef(false);
   useEffect(() => { joinVoiceChannelRef.current = joinVoiceChannel; }, [joinVoiceChannel]);
 
-  // ⭐ V2.9 — DIRECT EN COURS : indicateur visible (bouton vert clignotant +
-  // photo du diffuseur) dans les canaux vocaux + badge sur la ligne du canal.
-  // Corrige « on ne remarque pas qu'un direct est en cours » + « quand il n'y
-  // a rien, on doit pouvoir lancer un live ».
+  // ⭐ V3.1 — DIRECTS INTRA-CANAL EN COURS : polling GET /api/yeshua-connect/
+  // direct (10 s) → { channelId → { by, byAvatar } }. Alimente :
+  //   - la pastille DIRECT verte de la sidebar (ligne du canal vocal) ;
+  //   - le bandeau « Rejoindre le direct » du panneau pour les NON-connectés.
+  // Les participants CONNECTÉS, eux, reçoivent le changement INSTANTANÉMENT
+  // via RoomMetadataChanged (voiceDirectInfo) — cf. applyVoiceMetadata.
   useEffect(() => {
     let cancelled = false;
     const check = () => {
-      fetch(api.url("/api/live/active"), { cache: "no-store" })
+      fetch(api.url("/api/yeshua-connect/direct"), { cache: "no-store" })
         .then(r => (r.ok ? r.json() : null))
         .then(data => {
-          if (cancelled) return;
-          const lv = data?.live ?? null;
-          setActiveLive(lv ? {
-            id: lv.id,
-            title: lv.title,
-            servantName: lv.servantName,
-            servantPortraitUrl: lv.servantPortraitUrl,
-            startedAt: lv.startedAt ?? null,
-          } : null);
+          if (cancelled || !data?.directs) return;
+          const map: Record<string, { by: string; byAvatar?: string }> = {};
+          for (const d of data.directs as Array<{ channelId: string; by: string; byAvatar?: string }>) {
+            map[d.channelId] = { by: d.by, byAvatar: d.byAvatar };
+          }
+          setChannelDirects(map);
         })
         .catch(() => {});
     };
@@ -2371,6 +2705,43 @@ export function MessagingView() {
     const interval = setInterval(check, 10000);
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
+
+  // ⭐ V3.1 — APPELS ENTRANTS : polling 3 s (le temps réel sans Socket.io
+  // repose déjà sur du polling — V2.9). Corrige « ça sonne chez l'appelant
+  // mais l'appel ne vient PAS au niveau de l'utilisateur, ni PC ni mobile ».
+  // On ne sonne que si l'on est LIBRE (pas d'appel en cours de mon côté).
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    if (callState !== "idle" || incomingCall) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const res = await fetch(api.url("/api/yeshua-connect/calls/signal?incoming=1"), { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        const list: IncomingCallInfo[] = Array.isArray(data?.incoming) ? data.incoming : [];
+        const first = list.find(c => !declinedCallIdsRef.current.has(c.callId));
+        if (first) {
+          setIncomingCall(first);
+          // Notification navigateur si la page est en arrière-plan
+          // (téléphone dans la poche : l'appel « vient » quand même).
+          try {
+            if (typeof document !== "undefined" && document.hidden &&
+                typeof Notification !== "undefined" && Notification.permission === "granted") {
+              new Notification(`${first.initiatorName} vous appelle`, {
+                body: `${first.callType === "video" ? "Appel vidéo" : "Appel audio"} · ${first.convName}`,
+                tag: `yc-call-${first.callId}`,
+              });
+            }
+          } catch { /* notification best-effort */ }
+        }
+      } catch { /* réseau — prochaine tentative dans 3 s */ }
+    };
+    tick();
+    const interval = setInterval(tick, 3000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [session?.user?.id, callState, incomingCall]);
 
   // ⭐ V2.3 — Cleanup LiveKit au unmount du composant (évite les fuites de
   // tracks microphone/caméra si l'utilisateur quitte la page pendant un appel).
@@ -2645,6 +3016,26 @@ export function MessagingView() {
   // ⭐ V2.3 — Canaux vocaux persistants (ChannelType.VOICE mappé vers "VOICE")
   const voiceConvs = filteredConversations.filter(c => c.type === "VOICE");
 
+  // ⭐ V3.1 — Badge « section Canaux vocaux » : direct INTRA-CANAL en cours
+  // (n'importe quel canal vocal). Remplace l'ancien badge du module Live.
+  const voiceLiveBadge = (() => {
+    const entry = Object.entries(channelDirects).find(([channelId]) => voiceConvs.some(v => v.id === channelId));
+    if (!entry) return null;
+    return { title: `Direct en cours · ${entry[1].by}`, portraitUrl: entry[1].byAvatar ?? null };
+  })();
+
+  // ⭐ V3.1 — Direct intra-canal ACTIF pour la conversation vocale ouverte :
+  // priorité aux métadonnées de room (instantané, participants connectés),
+  // repli sur le polling /direct (10 s).
+  const activeChannelDirect = (() => {
+    if (voiceDirectInfo?.active) {
+      return { by: voiceDirectInfo.by || "Membre", byAvatar: voiceDirectInfo.byAvatar, isMe: voiceDirectInfo.by === currentUserName };
+    }
+    const polled = activeConv?.type === "VOICE" ? channelDirects[activeConv.id] : undefined;
+    if (polled) return { by: polled.by, byAvatar: polled.byAvatar, isMe: polled.by === currentUserName };
+    return null;
+  })();
+
   // ⭐ V2.3 — Rôle courant privilégié ? (pour afficher le bouton Audit Log)
   const canViewAuditLog = AUDIT_PRIVILEGED_ROLES.has(currentUserRole || "");
 
@@ -2707,7 +3098,9 @@ export function MessagingView() {
           )}
           {[...channelConvs, ...groupConvs, ...directConvs, ...voiceConvs].map(conv => {
             const isActive = conv.id === activeConvId;
-            const voiceLive = conv.type === "VOICE" && activeLive;
+            // ⭐ V3.1 — pastille DIRECT = direct INTRA-CANAL (métadonnées
+            // de la room du canal), PLUS le module Live.
+            const voiceLive = conv.type === "VOICE" && !!channelDirects[conv.id];
             return (
               <button
                 key={conv.id}
@@ -2917,7 +3310,7 @@ export function MessagingView() {
               {voiceConvs.length > 0 && (
                 <ConvSection title="Canaux vocaux" icon={<Volume2 className="w-3 h-3" />} convs={voiceConvs}
                   activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations}
-                  liveBadge={activeLive ? { title: activeLive.title, portraitUrl: activeLive.servantPortraitUrl } : null} />
+                  liveBadge={voiceLiveBadge} />
               )}
             </>
           )}
@@ -3169,7 +3562,9 @@ export function MessagingView() {
             L'utilisateur peut rejoindre/quitter le canal vocal à tout moment.
             Le canal reste "ouvert" côté serveur (room LiveKit persistante).
             ⭐ V2.7 — mode audio/vidéo basculable par l'ADMIN (façon WhatsApp,
-            propagation temps réel) + photos réelles des participants. */}
+            propagation temps réel) + photos réelles des participants.
+            ⭐ V3.1 — DIRECT INTRA-CANAL (pas le module Live) : bandeau vert
+            + bouton « Lancer/Arrêter le direct » dans le canal lui-même. */}
         {activeConv?.type === "VOICE" ? (
           <VoiceChannelView
             conv={activeConv}
@@ -3193,7 +3588,10 @@ export function MessagingView() {
             onSwitchMode={switchVoiceMode}
             room={livekitRoomRef.current}
             channelMembers={channelMembers}
-            activeLive={activeLive}
+            channelDirect={activeChannelDirect}
+            directSwitching={directSwitching}
+            onStartDirect={startChannelDirect}
+            onStopDirect={stopChannelDirect}
             activeSpeakerIds={activeSpeakerIds}
             audioPlaybackBlocked={audioPlaybackBlocked}
             onUnlockAudio={unlockAudioPlayback}
@@ -3243,17 +3641,49 @@ export function MessagingView() {
               {activeMessages.map((msg, i) => {
                 const isMine = msg.senderId === currentUserId;
                 const showDateSep = i === 0 || formatDateSeparator(activeMessages[i - 1].createdAt) !== formatDateSeparator(msg.createdAt);
-                // ⭐ V2.8 — PALETTE OR / VIOLET / NOIR (fini le gris) :
-                //   - bulle VIOLETTE pour MOI et pour les ADMIN/SUPER_ADMIN
-                //     (« le message envoyé par l'admin… couleur violette ») ;
-                //   - bulle OR + texte noir pour les AUTRES membres
-                //     (« la couleur or et le noir… on arrive à bien voir »).
-                const isAdminSender = msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN";
-                const usePurpleBubble = isMine || isAdminSender;
+                // ⭐ V3.1 — COULEURS PROFESSIONNELLES PAR UTILISATEUR :
+                //   - MES messages        → violet maison #8C5FA8 (identité) ;
+                //   - les AUTRES membres  → une couleur STABLE par utilisateur
+                //     (hash djb2 de son ID dans une palette harmonisée — or,
+                //     bleu océan, sarcelle, terracotta, prune, sauge, acier,
+                //     bronze). Fini le violet/or binaire : chacun garde SA
+                //     couleur sur tous les écrans (demande explicite : « il
+                //     faut des variantes de couleurs entre les autres
+                //     utilisateurs, de façon professionnelle »).
+                // (Badge ★ admin : affiché via msg.senderRole directement.)
+                const bubble: BubbleStyle = isMine ? BUBBLE_MINE : senderBubbleStyle(msg.senderId);
+                // Styles internes (citations, réactions, horodatage…) :
+                // bulle foncée → texte clair (« purple ») ; or → texte encre
+                // (« gold ») — exactement les deux traitements existants.
+                const usePurpleBubble = bubble.light;
                 // ⭐ V2.1 — Détection d'URLs dans le contenu texte pour LinkEmbed
                 const messageUrls = msg.type === "TEXT" && msg.content ? extractUrls(msg.content) : [];
                 // ⭐ V2.1 — Compter les réponses dans le thread (client-side)
                 const threadReplyCount = threads.filter(t => t.parentId === msg.id).length;
+
+                // ⭐ V3.1 — JOURNAL D'APPEL : « Appel manqué » / « Appel
+                // terminé · 3 min 12 s » façon WhatsApp — pastille centrée.
+                if (msg.type === "CALL_LOG") {
+                  return (
+                    <div key={msg.id} id={`msg-${msg.id}`} className="scroll-mt-24">
+                      {showDateSep && (
+                        <div className="flex items-center justify-center my-5">
+                          <div className="flex items-center gap-2 w-full max-w-[520px] mx-auto">
+                            <div className="flex-1 h-px bg-[#C9A227]/25" />
+                            <span className="px-3.5 py-1.5 bg-white border border-[#C9A227]/30 rounded-full text-[10px] font-bold text-[#8A8378] uppercase tracking-wider shadow-sm">
+                              {formatDateSeparator(msg.createdAt)}
+                            </span>
+                            <div className="flex-1 h-px bg-[#C9A227]/25" />
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-center py-2 my-1">
+                        <CallLogMessage msg={msg} />
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={msg.id} id={`msg-${msg.id}`} className="scroll-mt-24">
                     {showDateSep && (
@@ -3282,16 +3712,20 @@ export function MessagingView() {
                           {msg.senderAvatarUrl ? (
                             <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
                           ) : (
-                            <div className={cn("w-full h-full flex items-center justify-center text-white text-[10px] font-bold", getAvatarColor(msg.senderName))}>
+                            // ⭐ V3.1 — initiales dans la couleur de bulle de
+                            // l'expéditeur (cohérence pro avatar ↔ bulle).
+                            <div className="w-full h-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: bubble.bg }}>
                               {getInitials(msg.senderName)}
                             </div>
                           )}
                         </div>
                       )}
                       <div className={cn("relative flex flex-col min-w-0 max-w-[min(82%,640px)]", isMine ? "items-end" : "items-start")}>
-                        {/* Nom de l'expéditeur — au-dessus de la bulle, chaque message */}
+                        {/* Nom de l'expéditeur — au-dessus de la bulle, chaque message.
+                            ⭐ V3.1 : couleur = la couleur « signature » de
+                            l'expéditeur (comme Slack/Discord). */}
                         {!isMine && (
-                          <p className={cn("text-[11px] font-bold mb-0.5 ml-1 leading-tight", usePurpleBubble ? "text-[#8C5FA8]" : "text-[#2A0E3D]")}>
+                          <p className="text-[11px] font-bold mb-0.5 ml-1 leading-tight" style={{ color: bubble.bg }}>
                             {msg.senderName}
                             {(msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN") && (
                               <span className="ml-1 text-[#A3821C]">★</span>
@@ -3300,14 +3734,14 @@ export function MessagingView() {
                         )}
                         <div
                           onClick={() => setShowActionsFor(prev => prev === msg.id ? null : msg.id)}
+                          style={{ backgroundColor: bubble.bg, color: bubble.text }}
                           className={cn(
-                            // ⭐ V2.8 — Bulle violette (moi + admin) / or (autres),
+                            // ⭐ V3.1 — Bulle à la couleur de l'expéditeur
+                            // (violet = moi ; palette stable pour les autres),
                             // queue effilée côté expéditeur, texte adapté.
                             // Clic sur la bulle = afficher/masquer les actions (mobile).
                             "w-fit rounded-2xl px-3.5 py-2 shadow-sm cursor-pointer",
-                            usePurpleBubble
-                              ? "bg-[#8C5FA8] text-[#FAF6EF] rounded-br-md"
-                              : "bg-[#C9A227] text-[#1E0F2B] rounded-bl-md"
+                            isMine ? "rounded-br-md" : "rounded-bl-md"
                           )}>
                           {/* Reply quote — ⭐ V2.8 : couleurs adaptées à la bulle */}
                           {msg.replyTo && (
@@ -4446,12 +4880,16 @@ export function MessagingView() {
           - Pendant "outgoing" : en attente de l'autre participant.
           - Pendant "active" : participant distant connecté.
           - Vidéo locale (PIP) + vidéo distante (grand écran) si appel vidéo.
-          - Boutons : mute micro, toggle caméra (si vidéo), speaker, raccrocher. */}
-      {callState !== "idle" && activeConv && (
+          - Boutons : mute micro, toggle caméra (si vidéo), speaker, raccrocher.
+          ⭐ V3.1 — photo de la conversation (VRAIE photo du canal, plus
+          d'initiales) + issue distante (refusé / manqué / terminé). */}
+      {callState !== "idle" && (callConvInfo || activeConv) && (
         <CallOverlay
           callState={callState}
           callType={callType}
-          convName={activeConv.name}
+          convName={callConvInfo?.name || activeConv?.name || "Conversation"}
+          convAvatarUrl={callConvInfo?.avatarUrl || activeConv?.avatarUrl}
+          endStatus={callEndStatus}
           currentUserName={currentUserName}
           remoteParticipants={remoteParticipants}
           localAudioMuted={localAudioMuted}
@@ -4462,7 +4900,18 @@ export function MessagingView() {
           onToggleMute={toggleMute}
           onToggleCamera={toggleCamera}
           onToggleSpeaker={toggleSpeaker}
-          onHangup={endCall}
+          onHangup={hangupCall}
+        />
+      )}
+
+      {/* ⭐ V3.1 — APPEL ENTRANT (signalisation /calls/signal) : plein écran
+          au-dessus de tout, photo du canal + nom de l'appelant, SONNERIE
+          (WebAudio) + vibration (mobile) + Accepter / Refuser. */}
+      {incomingCall && callState === "idle" && (
+        <IncomingCallOverlay
+          info={incomingCall}
+          onAccept={acceptIncomingCall}
+          onDecline={declineIncomingCall}
         />
       )}
     </div>
@@ -5746,7 +6195,10 @@ function VoiceChannelView({
   onSwitchMode,
   room,
   channelMembers,
-  activeLive,
+  channelDirect,
+  directSwitching,
+  onStartDirect,
+  onStopDirect,
   activeSpeakerIds,
   audioPlaybackBlocked,
   onUnlockAudio,
@@ -5773,13 +6225,11 @@ function VoiceChannelView({
   onSwitchMode: (mode: "audio" | "video") => void;
   room: Room | null;
   channelMembers: Array<{ userId: string; name: string; role?: string; avatarUrl?: string }>;
-  activeLive?: {
-    id: string;
-    title: string;
-    servantName?: string;
-    servantPortraitUrl?: string | null;
-    startedAt?: string | null;
-  } | null;
+  /** ⭐ V3.1 — Direct INTRA-CANAL en cours (null si aucun). */
+  channelDirect?: { by: string; byAvatar?: string; isMe: boolean } | null;
+  directSwitching?: boolean;
+  onStartDirect?: () => void;
+  onStopDirect?: () => void;
   activeSpeakerIds?: Set<string>;
   audioPlaybackBlocked?: boolean;
   onUnlockAudio?: () => void;
@@ -5854,19 +6304,20 @@ function VoiceChannelView({
         )}
       </div>
 
-      {/* ─── ⭐ V2.9 — DIRECT EN COURS : bandeau vert clignotant + photo du
-          diffuseur (demande explicite : « le bouton soit en vert avec l'icône
-          diffusion qui clignote, avec la photo de celui qui a lancé le direct »). */}
-      {activeLive && (
-        <Link
-          href={`/live/${activeLive.id}`}
-          className="mx-4 mt-3 flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-emerald-600/95 to-emerald-500/95 text-white shadow-lg hover:from-emerald-500 hover:to-emerald-400 transition-all group"
-        >
+      {/* ─── ⭐ V3.1 — DIRECT INTRA-CANAL EN COURS : bandeau vert clignotant
+          + photo du diffuseur (demande explicite V2.9 : « le bouton soit en
+          vert avec l'icône diffusion qui clignote, avec la photo de celui
+          qui a lancé le direct ») — MAIS le direct vit DANS le canal
+          (demande V3.1 : « c'est un direct au sein du canal et non un
+          direct live dans le module live ») : aucun lien /live/..., on
+          REJOINT le canal pour écouter/diffuser. */}
+      {channelDirect && (
+        <div className="mx-4 mt-3 flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-emerald-600/95 to-emerald-500/95 text-white shadow-lg">
           <span className="relative flex-shrink-0">
-            {activeLive.servantPortraitUrl ? (
+            {channelDirect.byAvatar ? (
               <img
-                src={activeLive.servantPortraitUrl}
-                alt={activeLive.servantName || "Diffuseur"}
+                src={channelDirect.byAvatar}
+                alt={channelDirect.by}
                 className="w-11 h-11 rounded-full object-cover border-2 border-white/90"
               />
             ) : (
@@ -5881,16 +6332,41 @@ function VoiceChannelView({
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/25 text-[10px] font-black tracking-wider uppercase">
-                <Radio className="w-3 h-3 animate-pulse" />En direct
+                <Radio className="w-3 h-3 animate-pulse" />Direct du canal
               </span>
             </span>
-            <span className="block text-sm font-bold truncate mt-0.5">{activeLive.title}</span>
+            <span className="block text-sm font-bold truncate mt-0.5">
+              {channelDirect.isMe ? "Vous êtes en direct" : `Diffusion de ${channelDirect.by}`}
+            </span>
             <span className="block text-[11px] text-white/80 truncate">
-              {activeLive.servantName ? `par ${activeLive.servantName} · ` : ""}Cliquez pour regarder
+              {channelDirect.isMe
+                ? "Votre audio/vidéo est diffusé aux membres du canal"
+                : connected ? "Vous écoutez la diffusion du canal" : "Rejoignez le canal pour écouter"}
             </span>
           </span>
-          <ChevronRight className="w-5 h-5 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
-        </Link>
+          {/* Actions : Rejoindre (si pas connecté) / Arrêter (admin) */}
+          <span className="flex items-center gap-2 flex-shrink-0">
+            {!connected && (
+              <button
+                onClick={onJoin}
+                className="px-3.5 py-2 rounded-lg bg-white text-emerald-700 text-xs font-bold hover:bg-emerald-50 transition-colors shadow-sm"
+              >
+                Rejoindre
+              </button>
+            )}
+            {canSwitchMode && onStopDirect && (
+              <button
+                onClick={onStopDirect}
+                disabled={directSwitching}
+                className="px-3.5 py-2 rounded-lg bg-black/25 border border-white/40 text-white text-xs font-bold hover:bg-black/35 transition-colors disabled:opacity-60 flex items-center gap-1.5"
+                title="Arrêter la diffusion du canal"
+              >
+                {directSwitching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <StopCircle className="w-3.5 h-3.5" />}
+                Arrêter
+              </button>
+            )}
+          </span>
+        </div>
       )}
 
       {/* ─── ⭐ V2.9 — Son bloqué par le navigateur (autoplay) : bouton de
@@ -5951,17 +6427,19 @@ function VoiceChannelView({
               {videoMode ? <Video className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
               {videoMode ? "Rejoindre le canal vidéo" : "Rejoindre le canal vocal"}
             </button>
-            {/* ⭐ V2.9 — « Lancer un direct » : quand AUCUN direct n'est en
-                cours, les administrateurs peuvent lancer une diffusion depuis
-                le canal (studio complet) — demande explicite de l'utilisateur. */}
-            {canSwitchMode && !activeLive && (
-              <Link
-                href="/admin/lives"
-                className="w-full mt-2 py-2.5 border-2 border-emerald-600 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-50 flex items-center justify-center gap-2 transition-colors"
+            {/* ⭐ V3.1 — « Lancer un direct » DANS LE CANAL (plus aucune
+                redirection vers /admin/lives — le module Live est une autre
+                chose) : l'admin démarre une diffusion intra-canal et
+                rejoint automatiquement le canal pour diffuser. */}
+            {canSwitchMode && onStartDirect && !channelDirect && (
+              <button
+                onClick={onStartDirect}
+                disabled={directSwitching}
+                className="w-full mt-2 py-2.5 border-2 border-emerald-600 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-50 flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
               >
-                <Radio className="w-4 h-4" />
-                Lancer un direct
-              </Link>
+                {directSwitching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
+                Lancer un direct dans le canal
+              </button>
             )}
             <p className="text-[10px] text-[#8A8378] mt-3">
               {videoMode
@@ -6243,6 +6721,8 @@ function CallOverlay({
   callState,
   callType,
   convName,
+  convAvatarUrl,
+  endStatus,
   currentUserName,
   remoteParticipants,
   localAudioMuted,
@@ -6258,6 +6738,10 @@ function CallOverlay({
   callState: "outgoing" | "incoming" | "active";
   callType: "audio" | "video";
   convName: string;
+  /** ⭐ V3.1 — photo de la conversation appelée (photo du canal, pas d'initiales). */
+  convAvatarUrl?: string;
+  /** ⭐ V3.1 — issue distante : declined/missed/cancelled/ended (affichée 2 s). */
+  endStatus?: "declined" | "missed" | "ended" | "cancelled" | null;
   currentUserName: string;
   remoteParticipants: RemoteParticipant[];
   localAudioMuted: boolean;
@@ -6278,11 +6762,12 @@ function CallOverlay({
 
   // (S5) Sonnerie professionnelle pendant l'appel sortant
   // Joue en boucle tant que callState === "outgoing", s'arrête dès que
-  // callState devient "active" (le correspondant a décroché).
+  // callState devient "active" (le correspondant a décroché) OU qu'une
+  // issue arrive (refusé / manqué — ⭐ V3.1).
   useEffect(() => {
     const el = ringtoneRef.current;
     if (!el) return;
-    if (callState === "outgoing") {
+    if (callState === "outgoing" && !endStatus) {
       el.loop = true;
       el.volume = 0.5;
       el.play().catch(() => {}); // ignore autoplay-blocked
@@ -6291,7 +6776,7 @@ function CallOverlay({
       el.currentTime = 0;
     }
     return () => { el.pause(); el.currentTime = 0; };
-  }, [callState]);
+  }, [callState, endStatus]);
 
   // ⭐ Compteur de durée d'appel (démarre quand callState === "active")
   useEffect(() => {
@@ -6384,30 +6869,51 @@ function CallOverlay({
             className="max-w-full max-h-full rounded-2xl object-contain"
           />
         ) : (
-          /* Appel audio OU en attente : avatar centré */
+          /* Appel audio OU en attente : avatar centré — ⭐ V3.1 : la VRAIE
+             photo de la conversation (photo du canal) remplace les
+             initiales (fix : « au lieu de la photo de profil du canal, ce
+             sont les initiales qui sont affichées »). */
           <div className="text-center">
             <motion.div
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className={cn("w-32 h-32 rounded-full mx-auto mb-5 flex items-center justify-center text-white text-5xl font-bold", getAvatarColor(convName))}
+              className={cn("w-32 h-32 rounded-full mx-auto mb-5 overflow-hidden flex items-center justify-center text-white text-5xl font-bold", !convAvatarUrl && getAvatarColor(convName))}
             >
-              {getInitials(convName)}
+              {convAvatarUrl ? (
+                <img src={convAvatarUrl} alt={convName} className="w-full h-full object-cover" />
+              ) : (
+                getInitials(convName)
+              )}
             </motion.div>
             <h2 className="text-2xl font-bold text-[#FAF6EF] mb-2">{convName}</h2>
-            <p className="text-[#C9A227] flex items-center justify-center gap-2">
-              {callState === "active" ? (
-                <>
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  Appel en cours · {formatDuration(callDuration)}
-                </>
-              ) : (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Appel en cours...
-                </>
-              )}
-            </p>
-            {callState === "outgoing" && (
+            {/* ⭐ V3.1 — Issue distante (refusé / manqué / terminé /
+                annulé) : affichée en grand AVANT la fermeture de l'overlay. */}
+            {endStatus ? (
+              <p className={cn(
+                "flex items-center justify-center gap-2 text-lg font-bold",
+                endStatus === "ended" ? "text-green-400" : "text-red-400"
+              )}>
+                {endStatus === "declined" && (<><PhoneOff className="w-5 h-5" />Appel refusé</>)}
+                {endStatus === "missed" && (<><PhoneOff className="w-5 h-5" />Pas de réponse</>)}
+                {endStatus === "cancelled" && (<><PhoneOff className="w-5 h-5" />Appel annulé</>)}
+                {endStatus === "ended" && (<><Check className="w-5 h-5" />Appel terminé · {formatDuration(callDuration)}</>)}
+              </p>
+            ) : (
+              <p className="text-[#C9A227] flex items-center justify-center gap-2">
+                {callState === "active" ? (
+                  <>
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    Appel en cours · {formatDuration(callDuration)}
+                  </>
+                ) : (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Appel en cours...
+                  </>
+                )}
+              </p>
+            )}
+            {callState === "outgoing" && !endStatus && (
               <p className="text-xs text-[#FAF6EF]/50 mt-2">
                 En attente que l'autre participant rejoigne l'appel...
               </p>
@@ -6478,6 +6984,217 @@ function CallOverlay({
           <PhoneOff className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V3.1 — INCOMING CALL OVERLAY (appel entrant qui sonne)
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Plein écran (z-70, AU-DESSUS de l'overlay d'appel) quand un membre me
+// appelle. Corrige LE bug central : « ça sonne chez l'appelant mais
+// l'appel ne vient pas au niveau de l'utilisateur, ni PC ni smartphone ».
+//  - PHOTO de la conversation (photo du canal « annonce officielle »…),
+//    sinon photo de l'appelant, sinon initiales colorées ;
+//  - SONNERIE synthétisée en WebAudio (bi-bip façon téléphone, boucle 2 s)
+//    + VIBRATION sur mobile — si l'autoplay est bloqué, un appui n'importe
+//    où sur l'écran relance le son ;
+//  - Boutons Accepter (vert) / Refuser (rouge) façon WhatsApp.
+function IncomingCallOverlay({
+  info,
+  onAccept,
+  onDecline,
+}: {
+  info: IncomingCallInfo;
+  onAccept: () => void;
+  onDecline: () => void;
+}) {
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const [accepting, setAccepting] = useState(false);
+
+  // ─── Sonnerie WebAudio (bi-bip toutes les 2 s) + vibration mobile ────
+  useEffect(() => {
+    let cancelled = false;
+    let pattern: ReturnType<typeof setInterval> | null = null;
+    let vib: ReturnType<typeof setInterval> | null = null;
+
+    const AC: typeof AudioContext | undefined =
+      typeof window !== "undefined"
+        ? (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
+        : undefined;
+    if (AC) {
+      try {
+        const ctx = new AC();
+        audioCtxRef.current = ctx;
+        const playBurst = () => {
+          if (cancelled) return;
+          try {
+            const t0 = ctx.currentTime;
+            [0, 0.45].forEach((offset) => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = "sine";
+              osc.frequency.value = offset === 0 ? 880 : 660;
+              gain.gain.setValueAtTime(0.001, t0 + offset);
+              gain.gain.exponentialRampToValueAtTime(0.25, t0 + offset + 0.03);
+              gain.gain.exponentialRampToValueAtTime(0.001, t0 + offset + 0.38);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(t0 + offset);
+              osc.stop(t0 + offset + 0.4);
+            });
+          } catch { /* contexte fermé */ }
+        };
+        ctx.resume().then(() => { if (!cancelled) playBurst(); }).catch(() => { /* autoplay bloqué → tap pour activer */ });
+        pattern = setInterval(playBurst, 2000);
+      } catch { /* WebAudio indisponible → sonnerie visuelle */ }
+    }
+    // Vibration mobile (400 ms toutes les 2 s) — Android/Chrome.
+    try {
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.(400);
+        vib = setInterval(() => { try { navigator.vibrate?.(400); } catch {} }, 2000);
+      }
+    } catch { /* vibration non supportée */ }
+
+    return () => {
+      cancelled = true;
+      if (pattern) clearInterval(pattern);
+      if (vib) clearInterval(vib);
+      try { navigator.vibrate?.(0); } catch {}
+      try { audioCtxRef.current?.close(); } catch {}
+    };
+  }, []);
+
+  // Un appui n'importe où relance l'AudioContext (autoplay bloqué).
+  const resumeRingtone = () => {
+    try { audioCtxRef.current?.resume().catch(() => {}); } catch {}
+  };
+
+  const photo = info.convAvatarUrl || info.initiatorAvatarUrl;
+  const isVideo = info.callType === "video";
+
+  return (
+    <div
+      onPointerDown={resumeRingtone}
+      className="fixed inset-0 z-[70] bg-[#2A0E3D]/97 backdrop-blur-sm flex flex-col items-center justify-between p-6 sm:p-10"
+    >
+      {/* ─── Appelant ─────────────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full text-center">
+        <motion.div
+          animate={{ scale: [1, 1.06, 1] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+          className={cn("w-28 h-28 sm:w-36 sm:h-36 rounded-full mx-auto mb-6 overflow-hidden flex items-center justify-center text-white text-4xl font-bold shadow-2xl", !photo && getAvatarColor(info.convName))}
+        >
+          {photo ? (
+            <img src={photo} alt={info.convName} className="w-full h-full object-cover" />
+          ) : (
+            getInitials(info.convName)
+          )}
+        </motion.div>
+        <p className="text-xs font-bold uppercase tracking-widest text-[#C9A227] mb-1.5 flex items-center gap-1.5">
+          {isVideo ? <Video className="w-3.5 h-3.5" /> : <Phone className="w-3.5 h-3.5" />}
+          {isVideo ? "Appel vidéo entrant" : "Appel audio entrant"}
+        </p>
+        <h2 className="text-2xl sm:text-3xl font-bold text-[#FAF6EF]">{info.convName}</h2>
+        {info.convName !== info.initiatorName && (
+          <p className="text-sm text-[#FAF6EF]/70 mt-1.5">
+            {info.initiatorName} vous appelle
+            {info.convType === "DIRECT" ? "" : " depuis ce canal"}
+          </p>
+        )}
+        {/* Barre « sonnerie » animée (retour visuel même sans son). */}
+        <div className="flex items-end gap-1.5 h-6 mt-6" aria-hidden>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <motion.span
+              key={i}
+              animate={{ scaleY: [0.3, 1, 0.3] }}
+              transition={{ duration: 1, repeat: Infinity, delay: i * 0.12, ease: "easeInOut" }}
+              className="w-1.5 h-full origin-bottom rounded-full bg-[#C9A227]"
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* ─── Boutons Accepter / Refuser ───────────────────────────────── */}
+      <div className="flex items-center justify-center gap-10 sm:gap-16 pb-4">
+        <div className="flex flex-col items-center gap-2">
+          <motion.button
+            animate={{ scale: [1, 1.08, 1] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            onClick={onDecline}
+            disabled={accepting}
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-500 text-white shadow-xl flex items-center justify-center hover:bg-red-600 transition-colors disabled:opacity-50"
+            title="Refuser"
+          >
+            <PhoneOff className="w-7 h-7 sm:w-8 sm:h-8" />
+          </motion.button>
+          <span className="text-xs font-semibold text-[#FAF6EF]/70">Refuser</span>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <motion.button
+            animate={{ boxShadow: ["0 0 0 0 rgba(16,185,129,0.5)", "0 0 0 16px rgba(16,185,129,0)", "0 0 0 0 rgba(16,185,129,0)"] }}
+            transition={{ duration: 1.6, repeat: Infinity }}
+            onClick={() => { setAccepting(true); onAccept(); }}
+            disabled={accepting}
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-500 text-white shadow-xl flex items-center justify-center hover:bg-emerald-600 transition-colors disabled:opacity-60"
+            title="Accepter"
+          >
+            {accepting ? <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 animate-spin" /> : (isVideo ? <Video className="w-7 h-7 sm:w-8 sm:h-8" /> : <Phone className="w-7 h-7 sm:w-8 sm:h-8" />)}
+          </motion.button>
+          <span className="text-xs font-semibold text-[#FAF6EF]/70">Accepter</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V3.1 — CALL LOG MESSAGE (journal d'appel dans le chat)
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Demande explicite : « lorsqu'il y a un appel vidéo ou appel simple
+// manqué, il faut que ça s'affiche dans le chat qu'il y a eu appel manqué
+// ou un appel qui est passé et qui a duré tel nombre de minutes ».
+// Pastille centrée façon WhatsApp :
+//   - 🔴 Appel manqué      (personne n'a décroché en 45 s)
+//   - 🟠 Appel refusé      (en conversation directe)
+//   - ⚪ Appel annulé      (l'appelant a raccroché avant)
+//   - 🟢 Appel terminé · 3 min 12 s (durée réelle)
+// Données structurées dans msg.verseRef (JSON écrit côté serveur) avec
+// repli sur le texte lisible msg.content.
+function CallLogMessage({ msg }: { msg: ChatMessage }) {
+  let meta: { callType?: string; status?: string; durationSec?: number; byName?: string } = {};
+  try {
+    meta = msg.verseRef ? JSON.parse(msg.verseRef) : {};
+  } catch { /* meta illisible → repli content */ }
+  const status = meta.status || "ended";
+  const isVideo = meta.callType === "video";
+  const CallIcon = isVideo ? Video : Phone;
+  const by = meta.byName || msg.senderName;
+
+  const config = (() => {
+    switch (status) {
+      case "missed": return { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", icon: PhoneOff, label: "Appel manqué" };
+      case "declined": return { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-800", icon: PhoneOff, label: "Appel refusé" };
+      case "cancelled": return { bg: "bg-stone-100", border: "border-stone-200", text: "text-stone-600", icon: PhoneOff, label: "Appel annulé" };
+      default: return { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", icon: CallIcon, label: `Appel terminé${typeof meta.durationSec === "number" ? ` · ${formatCallDurationFr(meta.durationSec)}` : ""}` };
+    }
+  })();
+  const Icon = config.icon;
+
+  return (
+    <div className={cn(
+      "inline-flex items-center gap-2.5 px-4 py-2 rounded-full border shadow-sm max-w-full",
+      config.bg, config.border, config.text
+    )} title={msg.content}>
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      <span className="text-xs font-bold truncate">
+        {config.label}
+        <span className="font-medium opacity-70"> · {by}</span>
+      </span>
+      <span className="text-[10px] opacity-60 flex-shrink-0">{formatTime(msg.createdAt)}</span>
     </div>
   );
 }
