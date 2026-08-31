@@ -42,6 +42,8 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [countdown, setCountdown] = useState("");
   const [isLive, setIsLive] = useState(live.status === "LIVE");
   const [connecting, setConnecting] = useState(false);
+  const [waitingForStream, setWaitingForStream] = useState(false);
+  const [streamReceived, setStreamReceived] = useState(false);
   const [liveDuration, setLiveDuration] = useState("");
   const [connectionError, setConnectionError] = useState("");
   const [showDescription, setShowDescription] = useState(false);
@@ -57,6 +59,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
+  const streamReceivedRef = useRef(false);
 
   // ─── Auto-join pour utilisateurs NextAuth connectés ───
   useEffect(() => {
@@ -177,9 +180,14 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     if (!isLive || !live.livekitRoomName || live.youtubeUrl) return;
     if (!hasJoined) return; // Ne se connecte que si le viewer a rejoint
 
+    let cancelled = false;
+    streamReceivedRef.current = false;
+
     const connectToRoom = async () => {
       setConnecting(true);
       setConnectionError("");
+      setStreamReceived(false);
+      setWaitingForStream(false);
       try {
         const tokenRes = await apiFetch("/api/livekit/token", {
           method: "POST",
@@ -196,8 +204,22 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         roomRef.current = room;
         await room.connect(url, token);
 
+        // (S5) Démarrer le timer d'attente : si aucun track reçu après 4s,
+        // afficher l'overlay "En attente du diffuseur". Le studio peut avoir
+        // démarré le live côté API sans être encore connecté à LiveKit, ou
+        // le flux RTMP vers YouTube n'est pas encore actif.
+        const waitTimer = setTimeout(() => {
+          if (!cancelled && !streamReceivedRef.current) {
+            setWaitingForStream(true);
+          }
+        }, 4000);
+
         room.on(RoomEvent.TrackSubscribed, (track) => {
           if (track.kind === Track.Kind.Video && videoRef.current) {
+            streamReceivedRef.current = true;
+            setStreamReceived(true);
+            setWaitingForStream(false);
+            clearTimeout(waitTimer);
             track.attach(videoRef.current);
             // Forcer le play (muted autoplay devrait marcher)
             videoRef.current.muted = true;
@@ -214,6 +236,10 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         room.remoteParticipants.forEach((participant) => {
           participant.getTrackPublications().forEach((pub) => {
             if (pub.track && pub.track.kind === Track.Kind.Video && videoRef.current) {
+              streamReceivedRef.current = true;
+              setStreamReceived(true);
+              setWaitingForStream(false);
+              clearTimeout(waitTimer);
               pub.track.attach(videoRef.current);
               videoRef.current.muted = true;
               videoRef.current.play().catch(() => {});
@@ -359,6 +385,44 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                   connectionError={connectionError}
                   onRetry={() => window.location.reload()}
                 />
+              )}
+
+              {/* (S5) Overlay "En attente du diffuseur" — quand connecté à LiveKit
+                  mais qu'aucun track vidéo n'est reçu (le studio n'est pas encore
+                  connecté, ou le flux RTMP vers YouTube n'est pas encore actif). */}
+              {isLive && !live.youtubeUrl && hasJoined && waitingForStream && !streamReceived && !connecting && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#1A0826]">
+                  {/* Miniature en fond si disponible */}
+                  {live.thumbnailUrl && (
+                    <img
+                      src={live.thumbnailUrl}
+                      alt={live.title}
+                      className="absolute inset-0 w-full h-full object-cover opacity-20"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#1A0826]/60 to-[#1A0826]" />
+                  <div className="relative z-10 text-center px-6">
+                    <div className="relative inline-flex mb-5">
+                      {/* Halo pulsé */}
+                      <div className="absolute inset-0 rounded-full bg-[#C9A227]/20 animate-ping" />
+                      <div className="relative w-16 h-16 rounded-full bg-[#C9A227]/10 border-2 border-[#C9A227]/30 flex items-center justify-center">
+                        <Radio className="w-7 h-7 text-[#C9A227] animate-pulse" />
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-bold text-[#FAF6EF] mb-2">
+                      En attente du diffuseur
+                    </h3>
+                    <p className="text-sm text-[#FAF6EF]/60 max-w-xs mx-auto leading-relaxed">
+                      Le live va commencer dans un instant. La vidéo apparaîtra
+                      automatiquement dès que le flux sera actif.
+                    </p>
+                    <div className="mt-4 flex items-center justify-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227] animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227] animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227] animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* Écran "Rejoindre le live" si pas encore inscrit */}
