@@ -57,29 +57,101 @@ export async function POST(req: NextRequest) {
     // Calculer la durée du live
     const now = new Date();
     let durationStr = "";
-    if (live.startedAt) {
-      const durationMs = now.getTime() - new Date(live.startedAt).getTime();
+    // (C7) Si startedAt est null (par ex. /api/live/start a échoué), estimer
+    // la durée avec scheduledAt comme point de départ. Si aucune estimation
+    // n'est possible ou si la durée calculée est négative, mettre "0:00" au
+    // lieu de laisser une chaîne vide.
+    const startForDuration = live.startedAt || live.scheduledAt;
+    if (startForDuration) {
+      const durationMs = now.getTime() - new Date(startForDuration).getTime();
       if (durationMs > 0) {
         const h = Math.floor(durationMs / 3600000);
         const m = Math.floor((durationMs % 3600000) / 60000);
         const s = Math.floor((durationMs % 60000) / 1000);
         durationStr = h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}` : `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+      } else {
+        durationStr = "0:00";
       }
+    } else {
+      durationStr = "0:00";
     }
 
     // Mettre à jour le live : statut ENDED + endedAt
+    // (YT-pause) Réinitialiser isPaused/pausedAt pour éviter qu'un viewer
+    // arrivant sur la page après l'arrêt ne voie un écran "en pause".
     await db.liveStream.update({
       where: { id: liveId },
       data: {
         status: "ENDED",
         endedAt: new Date(),
         recordingUrl: recordingUrl || null,
+        isPaused: false,
+        pausedAt: null,
       },
     });
 
     // ─── Toujours archiver le replay en tant que vidéo ───
     // Même sans recordingUrl, on crée l'entrée pour qu'elle apparaisse dans le module vidéo
-    const replayUrl = recordingUrl || live.youtubeUrl || null;
+    //
+    // (YouTube-replay) Si pas de recordingUrl (R2) ET que le live était streamé vers
+    // YouTube, on tente de récupérer automatiquement l'URL YouTube du replay via
+    // l'API YouTube Data. Cela évite de stocker le replay sur R2 (économie de
+    // stockage — le free tier R2 est 10GB).
+    let youtubeReplayUrl = live.youtubeUrl;
+
+    // ─── Tier C : Transitionner le broadcast vers "complete" si pré-créé ───
+    // Si le broadcast a été pré-créé au démarrage (Tier C), youtubeUrl est déjà
+    // connu. On appelle transitionBroadcastToComplete pour dire à YouTube de
+    // finaliser la vidéo → le replay devient public immédiatement.
+    if (live.streamToYoutube && youtubeReplayUrl) {
+      try {
+        const { transitionBroadcastToComplete, isYouTubeOAuthConfigured, extractYoutubeId } = await import("@/lib/youtube");
+        if (isYouTubeOAuthConfigured()) {
+          const broadcastId = extractYoutubeId(youtubeReplayUrl);
+          if (broadcastId) {
+            console.log(`[live/stop] Transition broadcast ${broadcastId} → complete (Tier C)`);
+            await transitionBroadcastToComplete(broadcastId);
+          }
+        }
+      } catch (ytError) {
+        console.error("[live/stop] Erreur transition broadcast:", ytError);
+        // Ne pas faire échouer le stop — YouTube fait auto-transition avec enableAutoStop
+      }
+    }
+
+    // ─── Tier B fallback : si pas d'URL YouTube connue, la récupérer ───
+    if (!recordingUrl && live.streamToYoutube && !youtubeReplayUrl) {
+      // YouTube met 30s à 5min pour publier le replay après la fin du RTMP.
+      // On tente une récupération — si elle échoue, le replay aura videoUrl=null
+      // et l'admin pourra le récupérer manuellement via /api/live/[id]/youtube-replay.
+      try {
+        const { resolveYoutubeReplayUrl, isYouTubeOAuthConfigured } = await import("@/lib/youtube");
+        if (isYouTubeOAuthConfigured() && live.startedAt) {
+          console.log("[live/stop] Tentative de récupération auto YouTube replay (Tier B)...");
+          const ytResult = await resolveYoutubeReplayUrl(
+            live.startedAt,
+            live.youtubeUrl,
+            live.title
+          );
+          if (ytResult) {
+            youtubeReplayUrl = ytResult.url;
+            // Persister l'URL YouTube pour les futurs appels
+            await db.liveStream.update({
+              where: { id: liveId },
+              data: { youtubeUrl: ytResult.url },
+            });
+            console.log(`[live/stop] YouTube replay récupéré: ${ytResult.url} (source: ${ytResult.source})`);
+          } else {
+            console.log("[live/stop] YouTube replay non trouvé — l'admin peut le récupérer manuellement");
+          }
+        }
+      } catch (ytError) {
+        console.error("[live/stop] Erreur récupération YouTube replay:", ytError);
+        // Ne pas faire échouer le stop pour autant
+      }
+    }
+
+    const replayUrl = recordingUrl || youtubeReplayUrl || null;
     const liveDate = new Date(live.startedAt || live.scheduledAt);
     const dateStr = liveDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 

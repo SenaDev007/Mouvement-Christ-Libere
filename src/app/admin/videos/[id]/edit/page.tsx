@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
-import { PostProduction } from "@/components/live/post-production";
+import { PostProduction } from "@/components/post-production/post-production";
 
 export const dynamic = "force-dynamic";
 

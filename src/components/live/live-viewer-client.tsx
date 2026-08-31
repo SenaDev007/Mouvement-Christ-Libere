@@ -48,6 +48,10 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [connectionError, setConnectionError] = useState("");
   const [showDescription, setShowDescription] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [viewerPaused, setViewerPaused] = useState(false);
+  // (YT-pause) pausedAt côté viewer — quand le live est en pause, on gèle la
+  // minuterie sur (pausedAt - startedAt) au lieu de continuer à compter.
+  const [livePausedAt, setLivePausedAt] = useState<string | null>(null);
   const [likeCount, setLikeCount] = useState(0);
   const [saved, setSaved] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
@@ -56,10 +60,20 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [memberId, setMemberId] = useState<string | null>(null);
   const [viewerFirstName, setViewerFirstName] = useState<string>("");
   const [checkingMember, setCheckingMember] = useState(true);
+  // (C6) startedAt fraîche récupérée via le poll /api/live/next.
+  // La prop SSR live.startedAt est stale dès que le live démarre après le
+  // rendu initial (elle reste null si la page a été chargée en SCHEDULED).
+  const [liveStartedAt, setLiveStartedAt] = useState<string | null>(live.startedAt);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const roomRef = useRef<Room | null>(null);
   const streamReceivedRef = useRef(false);
+  // (C1) Refs pour éviter les reconnexions LiveKit inutiles
+  const hasConnectedRef = useRef(false);
+  const viewerFirstNameRef = useRef(viewerFirstName);
+  useEffect(() => {
+    viewerFirstNameRef.current = viewerFirstName;
+  }, [viewerFirstName]);
 
   // ─── Auto-join pour utilisateurs NextAuth connectés ───
   useEffect(() => {
@@ -130,20 +144,46 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   }, [live.status, live.scheduledAt]);
 
   // Polling statut
+  // (YT-pause) Pour les lives YouTube, on continue à poller même après le
+  // démarrage du live, pour récupérer l'état de pause (isPaused / pausedAt)
+  // côté serveur — les viewers YouTube ne reçoivent pas le DataChannel LiveKit.
+  // Pour les lives LiveKit purs, on arrête de poller une fois qu'on a startedAt
+  // (le signal de pause arrive via DataChannel, pas besoin de polling).
   useEffect(() => {
-    if (live.status !== "SCHEDULED") return;
+    const isYoutubeLive = !!live.youtubeUrl;
+    // Poller tant que :
+    //  - le live est SCHEDULED (attente du démarrage), OU
+    //  - le live est LIVE mais startedAt n'est pas encore connu, OU
+    //  - le live est LIVE via YouTube (besoin de l'état de pause)
+    if (live.status !== "SCHEDULED" && !(isLive && !liveStartedAt) && !(isLive && isYoutubeLive)) return;
     const checkStatus = async () => {
       try {
         const res = await apiFetch("/api/live/next");
         const data = await res.json();
-        if (data.live?.id === live.id && data.live.status === "LIVE") {
-          setIsLive(true);
+        if (data.live?.id === live.id) {
+          if (data.live.status === "LIVE") {
+            setIsLive(true);
+          }
+          // (C6) Récupérer startedAt fraîche depuis l'API
+          if (data.live.startedAt) {
+            setLiveStartedAt(data.live.startedAt);
+          }
+          // (YT-pause) Sync pause state depuis l'API (pour les viewers YouTube)
+          if (isYoutubeLive) {
+            const paused = !!data.live.isPaused;
+            setViewerPaused(paused);
+            setLivePausedAt(data.live.pausedAt || null);
+          }
         }
       } catch {}
     };
-    const interval = setInterval(checkStatus, 30000);
+    checkStatus();
+    // (YT-pause) Polling plus fréquent pour les lives YouTube (3s) pour que
+    // la transition pause→reprise soit rapide côté viewer. 30s sinon.
+    const intervalMs = isLive && isYoutubeLive ? 3000 : 30000;
+    const interval = setInterval(checkStatus, intervalMs);
     return () => clearInterval(interval);
-  }, [live.status, live.id]);
+  }, [live.status, live.id, live.youtubeUrl, isLive, liveStartedAt]);
 
   // Compteur viewers réel depuis l'API
   useEffect(() => {
@@ -160,11 +200,27 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     return () => clearInterval(interval);
   }, [isLive, live.id]);
 
-  // Durée du live (affichée côté viewer)
+  // Durée du live (affichée côté viewer) — s'arrête en pause
+  // (YT-pause) Pour les viewers YouTube, on gèle la minuterie sur
+  // (pausedAt - startedAt) pendant la pause, plutôt que de juste cacher
+  // l'overlay. Ainsi le badge PAUSE affiche une durée figée cohérente
+  // avec ce que voit le studio.
   useEffect(() => {
-    if (!isLive || !live.startedAt) return;
+    if (!isLive || !liveStartedAt) return;
+    // Si en pause ET qu'on a un pausedAt côté serveur → afficher la durée
+    // figée (pausedAt - startedAt) et ne pas faire tourner le setInterval.
+    if (viewerPaused && livePausedAt) {
+      const elapsed = Math.floor((new Date(livePausedAt).getTime() - new Date(liveStartedAt).getTime()) / 1000);
+      const h = Math.floor(elapsed / 3600);
+      const m = Math.floor((elapsed % 3600) / 60);
+      const s = elapsed % 60;
+      setLiveDuration(h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}` : `${m}:${s.toString().padStart(2, "0")}`);
+      return;
+    }
+    // Si en pause sans pausedAt (cas LiveKit DataChannel) → geler
+    if (viewerPaused) return;
     const update = () => {
-      const elapsed = Math.floor((Date.now() - new Date(live.startedAt).getTime()) / 1000);
+      const elapsed = Math.floor((Date.now() - new Date(liveStartedAt).getTime()) / 1000);
       const h = Math.floor(elapsed / 3600);
       const m = Math.floor((elapsed % 3600) / 60);
       const s = elapsed % 60;
@@ -173,12 +229,53 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [isLive, live.startedAt]);
+  }, [isLive, liveStartedAt, viewerPaused, livePausedAt]);
 
-  // Connexion LiveKit subscriber
+  // ═══════════════════════════════════════════════════════════════════
+  // (C1) Effet 1 : Enregistrement viewer en DB (POST /viewers)
+  // Séparé de la connexion LiveKit pour éviter les reconnexions quand
+  // memberId/viewerFirstName changent après le join.
+  // ═══════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (!isLive || !hasJoined || !memberId) return;
+
+    // Enregistrer la présence du viewer côté serveur
+    apiFetch(`/api/live/${live.id}/viewers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId }),
+    }).catch(() => {});
+
+    // Déconnexion à la fermeture de la page (sendBeacon)
+    const handleBeforeUnload = () => {
+      navigator.sendBeacon(`/api/live/${live.id}/viewers?memberId=${memberId}`, "");
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      // Marquer comme inactif (leave)
+      apiFetch(`/api/live/${live.id}/viewers?memberId=${memberId}`, { method: "DELETE" }).catch(() => {});
+    };
+  }, [isLive, hasJoined, memberId, live.id]);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // (C1) Effet 2 : Connexion LiveKit subscriber — deps MINIMALES
+  // [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined]
+  // memberId et viewerFirstName sont retirés des deps (lus via refs)
+  // pour éviter déconnexion/reconnexion rapide → track détaché.
+  // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (!isLive || !live.livekitRoomName || live.youtubeUrl) return;
     if (!hasJoined) return; // Ne se connecte que si le viewer a rejoint
+    // (C1) Éviter les reconnexions inutiles si l'effet se ré-exécute
+    if (hasConnectedRef.current) return;
+    hasConnectedRef.current = true;
+
+    let cancelled = false;
+    // (H1) Éléments <audio> attachés au DOM (Safari/iOS exige qu'ils soient
+    // dans le document pour pouvoir les jouer). Nettoyés au unmount/déconnexion.
+    const attachedAudioEls: HTMLAudioElement[] = [];
 
     let cancelled = false;
     streamReceivedRef.current = false;
@@ -192,7 +289,11 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         const tokenRes = await apiFetch("/api/livekit/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomName: live.livekitRoomName, role: "subscriber", participantName: viewerFirstName || "Visiteur" }),
+          body: JSON.stringify({
+            roomName: live.livekitRoomName,
+            role: "subscriber",
+            participantName: viewerFirstNameRef.current || "Visiteur",
+          }),
         });
         if (!tokenRes.ok) {
           const data = await tokenRes.json();
@@ -202,6 +303,14 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
         const room = new Room({ adaptiveStream: true, dynacast: true });
         roomRef.current = room;
+
+        // (C1) Afficher "Connexion perdue" si la room se déconnecte
+        room.on(RoomEvent.Disconnected, () => {
+          if (!cancelled) {
+            setConnectionError("Connexion perdue — tentative de reconnexion...");
+          }
+        });
+
         await room.connect(url, token);
 
         // (S5) Démarrer le timer d'attente : si aucun track reçu après 4s,
@@ -221,15 +330,45 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
             setWaitingForStream(false);
             clearTimeout(waitTimer);
             track.attach(videoRef.current);
-            // Forcer le play (muted autoplay devrait marcher)
             videoRef.current.muted = true;
             videoRef.current.play().catch((err) => {
               console.warn("[viewer] Video play failed:", err);
             });
           } else if (track.kind === Track.Kind.Audio) {
             const audioEl = document.createElement("audio");
+            audioEl.autoplay = true;
             track.attach(audioEl);
+            document.body.appendChild(audioEl);
+            attachedAudioEls.push(audioEl);
             audioEl.play().catch(() => {});
+          }
+        });
+
+        // Écouter les messages DataChannel (pause/play du studio)
+        room.on(RoomEvent.DataReceived, (_payload, _participant, _kind, topic) => {
+          if (!cancelled && topic === "live-control") {
+            try {
+              const decoder = new TextDecoder();
+              const msg = JSON.parse(decoder.decode(_payload));
+              if (msg.action === "pause") setViewerPaused(true);
+              else if (msg.action === "resume") setViewerPaused(false);
+            } catch {}
+          }
+        });
+
+        // (H1) Nettoyer l'élément audio quand le track est désabonné
+        room.on(RoomEvent.TrackUnsubscribed, (track) => {
+          if (track.kind !== Track.Kind.Audio) return;
+          for (let i = attachedAudioEls.length - 1; i >= 0; i--) {
+            const el = attachedAudioEls[i];
+            try {
+              track.detach(el);
+            } catch {}
+            try {
+              el.pause();
+            } catch {}
+            el.remove();
+            attachedAudioEls.splice(i, 1);
           }
         });
 
@@ -245,47 +384,50 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               videoRef.current.play().catch(() => {});
             } else if (pub.track && pub.track.kind === Track.Kind.Audio) {
               const audioEl = document.createElement("audio");
+              audioEl.autoplay = true;
               pub.track.attach(audioEl);
+              // (H1) Attacher au DOM pour Safari/iOS
+              document.body.appendChild(audioEl);
+              attachedAudioEls.push(audioEl);
               audioEl.play().catch(() => {});
             }
           });
         });
 
-        setConnecting(false);
+        if (!cancelled) {
+          setConnecting(false);
+          setConnectionError(""); // Effacer l'éventuel message "Connexion perdue"
+        }
       } catch (err) {
-        setConnectionError(err instanceof Error ? err.message : "Erreur de connexion");
-        setConnecting(false);
+        if (!cancelled) {
+          setConnectionError(err instanceof Error ? err.message : "Erreur de connexion");
+          setConnecting(false);
+          // Autoriser une nouvelle tentative si l'effet se ré-exécute
+          hasConnectedRef.current = false;
+        }
       }
     };
 
     connectToRoom();
 
-    // Rejoindre le live (enregistrer la session viewer en DB)
-    if (memberId) {
-      apiFetch(`/api/live/${live.id}/viewers`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId }),
-      }).catch(() => {});
-    }
-
-    // Déconnexion à la fermeture de la page
-    const handleBeforeUnload = () => {
-      if (memberId) {
-        navigator.sendBeacon(`/api/live/${live.id}/viewers?memberId=${memberId}`, "");
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
     return () => {
-      if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      // Marquer comme inactif
-      if (memberId) {
-        apiFetch(`/api/live/${live.id}/viewers?memberId=${memberId}`, { method: "DELETE" }).catch(() => {});
+      cancelled = true;
+      // (H1) Retirer tous les éléments <audio> du DOM au nettoyage
+      for (const el of attachedAudioEls) {
+        try {
+          el.pause();
+        } catch {}
+        el.remove();
       }
+      attachedAudioEls.length = 0;
+      if (roomRef.current) {
+        roomRef.current.disconnect();
+        roomRef.current = null;
+      }
+      // Réinitialiser pour permettre une reconnexion future si l'effet re-démarre
+      hasConnectedRef.current = false;
     };
-  }, [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined, memberId, live.id, viewerFirstName]);
+  }, [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined]);
 
   const accentColor = live.servantCode === "pam" ? "#C9A227" : "#8C5FA8";
   const getYouTubeEmbedUrl = (url: string) => {
@@ -372,7 +514,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
           <div className="space-y-3">
             {/* Conteneur vidéo */}
             <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
-              {isLive && live.youtubeUrl && hasJoined && (
+              {isLive && live.youtubeUrl && hasJoined && !viewerPaused && (
                 <iframe src={getYouTubeEmbedUrl(live.youtubeUrl)} className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
               )}
@@ -492,13 +634,40 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               )}
 
               {/* Réactions */}
-              {/* Durée du live (overlay) */}
-              {isLive && hasJoined && liveDuration && (
+              {/* Durée du live (overlay) — masqué en pause */}
+              {isLive && hasJoined && liveDuration && !viewerPaused && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-red-600 text-white text-xs font-bold">
                     <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                     EN DIRECT · {liveDuration}
                   </span>
+                </div>
+              )}
+
+              {/* Badge PAUSE côté viewer */}
+              {isLive && hasJoined && viewerPaused && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#C9A227] text-[#1E0F2B] text-xs font-bold">
+                    <span className="w-2 h-2 rounded-full bg-[#1E0F2B]" />
+                    PAUSE · {liveDuration}
+                  </span>
+                </div>
+              )}
+
+              {/* Miniature en fond pendant la pause */}
+              {isLive && hasJoined && viewerPaused && live.thumbnailUrl && (
+                <div className="absolute inset-0 z-10 pointer-events-none">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={live.thumbnailUrl} alt={live.title} className="w-full h-full object-cover opacity-30" />
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-full bg-[#C9A227]/20 flex items-center justify-center mx-auto mb-3">
+                        <svg className="w-8 h-8 text-[#C9A227]" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+                      </div>
+                      <p className="text-lg font-bold text-[#C9A227]">Diffusion en pause</p>
+                      <p className="text-xs text-white/50 mt-1">Le diffuseur reprendra bientôt</p>
+                    </div>
+                  </div>
                 </div>
               )}
 

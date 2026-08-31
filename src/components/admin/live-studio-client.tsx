@@ -51,6 +51,8 @@ export function LiveStudioClient({
   const [activeTab, setActiveTab] = useState<"chat" | "stats" | "health">("chat");
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [showStopModal, setShowStopModal] = useState(false);
+  const [youtubeReplayUrl, setYoutubeReplayUrl] = useState("");
+  const [fetchingYoutubeReplay, setFetchingYoutubeReplay] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showControls, setShowControls] = useState(true);
@@ -134,13 +136,35 @@ export function LiveStudioClient({
     if (newPaused) {
       if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
     } else {
-      // Reprendre le minuteur depuis le temps écoulé actuel
       const elapsed = streamDuration;
       const resumeTime = Date.now() - elapsed * 1000;
       durationTimerRef.current = setInterval(() => {
         setStreamDuration(Math.floor((Date.now() - resumeTime) / 1000));
       }, 1000);
     }
+    // Notifier les viewers via DataChannel LiveKit (viewers LiveKit uniquement)
+    if (roomRef.current) {
+      try {
+        const msg = JSON.stringify({ action: newPaused ? "pause" : "resume" });
+        const encoder = new TextEncoder();
+        roomRef.current.localParticipant.publishData(encoder.encode(msg), {
+          reliable: true,
+          topic: "live-control",
+        });
+      } catch (err) {
+        console.error("[studio] Failed to send pause/resume signal:", err);
+      }
+    }
+    // (YT-pause) Persister l'état de pause en base pour les viewers YouTube
+    // (qui ne reçoivent pas le DataChannel LiveKit). Best-effort : on ne
+    // bloque pas l'UI si l'API échoue — le signal LiveKit a déjà été envoyé.
+    apiFetch(`/api/live/${liveId}/pause`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paused: newPaused }),
+    }).catch((err) => {
+      console.error("[studio] Failed to persist pause state for YouTube viewers:", err);
+    });
   };
 
   // ─── Mode encodeur externe (OBS) ───
@@ -221,37 +245,21 @@ export function LiveStudioClient({
           body: JSON.stringify({ liveId }),
         });
         if (!startRes.ok) { const data = await startRes.json(); throw new Error(data.error || "Erreur démarrage"); }
+
+        // Tier C : si un broadcast YouTube a été pré-créé, l'afficher
+        const startData = await startRes.json().catch(() => ({}));
+        if (startData.youtubeBroadcast?.url) {
+          setInfo(`✓ Broadcast YouTube pré-créé: ${startData.youtubeBroadcast.url}`);
+          console.log("[studio] Broadcast YouTube pré-créé:", startData.youtubeBroadcast);
+        }
       } catch (err) {
         // Si l'API start échoue, on continue quand même — le live peut fonctionner sans DB
         console.error("[studio] /api/live/start failed (continuing anyway):", err);
         setError("Attention: l'API start a échoué, mais le studio continue.");
       }
 
-      // ─── 2. Démarrer les TIMERS immédiatement (ne dépend pas de LiveKit) ───
-      setIsLive(true);
-      setStatus("LIVE");
-      setInfo("Vous êtes en direct !");
-      const startTime = Date.now();
-      durationTimerRef.current = setInterval(() => {
-        setStreamDuration(Math.floor((Date.now() - startTime) / 1000));
-      }, 1000);
-
-      statsTimerRef.current = setInterval(() => {
-        setBitrate(2000 + Math.floor(Math.random() * 200));
-        setLatency(Math.floor(Math.random() * 2) + 1);
-      }, 3000);
-
-      const fetchViewers = async () => {
-        try {
-          const res = await apiFetch(`/api/live/${liveId}/viewers`);
-          const data = await res.json();
-          setViewerCount(data.count || 0);
-        } catch {}
-      };
-      fetchViewers();
-      viewerPollRef.current = setInterval(fetchViewers, 5000);
-
-      // ─── 3. Se connecter à LiveKit (CRITIQUE — les viewers ont besoin de ça) ───
+      // ─── 2. Connexion à LiveKit (CRITIQUE — tout dépend de ça) ───
+      setInfo("Connexion à LiveKit en cours...");
       try {
         const tokenRes = await apiFetch("/api/livekit/token", {
           method: "POST",
@@ -278,13 +286,8 @@ export function LiveStudioClient({
           if (localStreamRef.current) {
             const audioTrack = localStreamRef.current.getAudioTracks()[0];
 
-            // S'assurer que le canvas stream existe
-            if (!overlayStreamRef.current && canvasRef.current) {
-              try {
-                overlayStreamRef.current = canvasRef.current.captureStream(30);
-              } catch (err) {
-                console.error("[studio] captureStream failed:", err);
-              }
+            if (!overlayStreamRef.current) {
+              console.warn("[studio] overlayStreamRef null — fallback caméra brute");
             }
 
             // Publier le canvas composite
@@ -314,8 +317,61 @@ export function LiveStudioClient({
             if (audioTrack) await room.localParticipant.publishTrack(audioTrack, { source: Track.Source.Microphone });
           }
 
+          // ─── LiveKit connecté + track publié → MAINTENANT on peut démarrer ───
+          setIsLive(true);
+          setStatus("LIVE");
+          setInfo("Vous êtes en direct !");
+
+          // Démarrer les timers APRÈS connexion LiveKit
+          const startTime = Date.now();
+          durationTimerRef.current = setInterval(() => {
+            setStreamDuration(Math.floor((Date.now() - startTime) / 1000));
+          }, 1000);
+
+          statsTimerRef.current = setInterval(() => {
+            setBitrate(2000 + Math.floor(Math.random() * 200));
+            setLatency(Math.floor(Math.random() * 2) + 1);
+          }, 3000);
+
+          const fetchViewers = async () => {
+            try {
+              const res = await apiFetch(`/api/live/${liveId}/viewers`);
+              const data = await res.json();
+              setViewerCount(data.count || 0);
+            } catch {}
+          };
+          fetchViewers();
+          viewerPollRef.current = setInterval(fetchViewers, 5000);
+
+          // Démarrer le MediaRecorder APRÈS connexion LiveKit
+          const recordStream = overlayStreamRef.current || localStreamRef.current;
+          if (recordStream && typeof MediaRecorder !== "undefined") {
+            try {
+              const combinedStream = new MediaStream();
+              recordStream.getVideoTracks().forEach((t) => combinedStream.addTrack(t));
+              if (localStreamRef.current) {
+                localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
+              }
+              const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+                ? "video/webm;codecs=vp9,opus"
+                : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+                ? "video/webm;codecs=vp8,opus"
+                : "video/webm";
+              const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
+              recordedChunksRef.current = [];
+              recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+              };
+              recorder.start(1000);
+              mediaRecorderRef.current = recorder;
+              setIsRecording(true);
+              console.log("[studio] Enregistrement démarré");
+            } catch (err) {
+              console.error("[studio] MediaRecorder failed:", err);
+            }
+          }
+
           // ─── Démarrer le multistreaming RTMP APRÈS publication du track ───
-          // L'egress nécessite que la room ait un participant qui publie
           if (multistream.enabled) {
             try {
               setInfo("Démarrage du multistreaming RTMP...");
@@ -348,36 +404,17 @@ export function LiveStudioClient({
         console.error("[studio] LiveKit connection failed:", errMsg);
         setError(`Connexion LiveKit échouée: ${errMsg}. Les viewers ne pourront pas voir le flux.`);
         setInfo("⚠ LiveKit indisponible — les viewers voient un écran noir.");
+        // LiveKit a échoué : ne pas démarrer timers/recorder/egress
+        // Annuler le statut LIVE côté DB
+        try {
+          await apiFetch("/api/live/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ liveId, recordingUrl: null }),
+          });
+        } catch {}
       }
 
-      // ─── 4. Démarrer l'enregistrement du canvas (MediaRecorder) ───
-      // Ne dépend pas de LiveKit — enregistre le canvas localement pour le replay
-      const recordStream = overlayStreamRef.current || localStreamRef.current;
-      if (recordStream && typeof MediaRecorder !== "undefined") {
-        try {
-          const combinedStream = new MediaStream();
-          recordStream.getVideoTracks().forEach((t) => combinedStream.addTrack(t));
-          if (localStreamRef.current) {
-            localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
-          }
-          const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-            ? "video/webm;codecs=vp9,opus"
-            : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-            ? "video/webm;codecs=vp8,opus"
-            : "video/webm";
-          const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
-          recordedChunksRef.current = [];
-          recorder.ondataavailable = (e) => {
-            if (e.data.size > 0) recordedChunksRef.current.push(e.data);
-          };
-          recorder.start(1000);
-          mediaRecorderRef.current = recorder;
-          setIsRecording(true);
-          console.log("[studio] Enregistrement démarré");
-        } catch (err) {
-          console.error("[studio] MediaRecorder failed:", err);
-        }
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -385,7 +422,40 @@ export function LiveStudioClient({
     }
   };
 
+  // ─── Récupérer l'URL YouTube du replay (auto ou manuel) ───
+  const handleFetchYoutubeReplay = async () => {
+    setFetchingYoutubeReplay(true);
+    try {
+      const res = await apiFetch(`/api/live/${liveId}/youtube-replay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(youtubeReplayUrl ? { youtubeUrl: youtubeReplayUrl } : {}),
+      });
+      const data = await res.json();
+      if (res.ok && data.youtubeUrl) {
+        setYoutubeReplayUrl(data.youtubeUrl);
+        setInfo(`✓ URL YouTube récupérée: ${data.source === "manual" ? "saisie manuelle" : data.source === "oauth" ? "API YouTube" : "recherche"}`);
+      } else {
+        setError(data.error || "Impossible de récupérer l'URL YouTube");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setFetchingYoutubeReplay(false);
+    }
+  };
+
   const confirmStopLive = async () => {
+    // ─── Si l'admin a collé une URL YouTube, la persister avant le stop ───
+    if (youtubeReplayUrl.trim()) {
+      try {
+        await apiFetch(`/api/live/${liveId}/youtube-replay`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ youtubeUrl: youtubeReplayUrl.trim() }),
+        });
+      } catch {}
+    }
     setShowStopModal(false);
     setLoading(true);
     setError("");
@@ -569,12 +639,14 @@ export function LiveStudioClient({
             onMouseMove={showControlsTemporarily}
             onMouseLeave={() => isLive && setShowControls(false)}
           >
-            {/* Vidéo source — cachée mais active (le canvas dessine les frames) */}
+            {/* Vidéo source — invisible mais ACTIVE (opacity:0.01 empêche Chrome de geler les frames) */}
+            {/* Le canvas est au-dessus (zIndex:1) et masque visuellement la vidéo (zIndex:0) */}
             <video ref={videoRef} autoPlay muted playsInline
-              className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
-              style={{ width: "1px", height: "1px", top: 0, left: 0 }} />
+              className="absolute inset-0 w-full h-full object-contain"
+              style={{ opacity: 0.01, pointerEvents: "none", zIndex: 0 }} />
             <canvas ref={canvasRef} width={1280} height={720}
-              className="absolute inset-0 w-full h-full object-cover" />
+              className="absolute inset-0 w-full h-full object-contain"
+              style={{ zIndex: 1 }} />
 
             {!cameraOn && cameraReady && !screenSharing && !isPaused && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/80 pointer-events-none">
@@ -979,44 +1051,145 @@ export function LiveStudioClient({
         </div>
       </div>
 
-      {/* Stop modal */}
+      {/* Stop modal — design personnalisé façon studio */}
       {showStopModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowStopModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl border border-[#8A8378]/15 max-w-md w-full overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
-            <div className="px-6 py-5">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-red-600/10 flex items-center justify-center flex-shrink-0">
-                  <Square className="w-5 h-5 text-red-500" fill="currentColor" />
+          <div className="absolute inset-0 bg-[#1A0826]/80 backdrop-blur-md" onClick={() => !loading && setShowStopModal(false)} />
+
+          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl shadow-2xl border border-[#C9A227]/20">
+            {/* Bandeau dégradé */}
+            <div className="relative h-32 bg-gradient-to-br from-[#2A0E3D] via-[#3D1A54] to-[#1A0826] overflow-hidden">
+              {/* Halo doré */}
+              <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-[#C9A227]/20 blur-3xl" />
+              <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-red-600/10 blur-3xl" />
+
+              {/* Icône stop pulsante */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-red-600/30 animate-ping" />
+                  <div className="relative w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-xl">
+                    <Square className="w-7 h-7 text-white" fill="currentColor" />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold text-[#1E0F2B]">Terminer le live ?</h2>
-                  <p className="text-sm text-[#1E0F2B]/50 mt-1">Votre diffusion en direct sera arrêtée. Le replay sera automatiquement archivé et disponible sur la page vidéos. Cette action est irréversible.</p>
-                </div>
-                <button onClick={() => setShowStopModal(false)} className="p-1 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B]/40 transition-colors"><X className="w-4 h-4" /></button>
               </div>
+
+              {/* Bouton fermer */}
+              {!loading && (
+                <button
+                  onClick={() => setShowStopModal(false)}
+                  className="absolute top-4 right-4 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
+                  aria-label="Fermer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
-            {isLive && (
-              <div className="px-6 pb-4">
-                <div className="flex gap-4 bg-[#2A0E3D]/5 rounded-xl p-3">
-                  <div className="flex-1 text-center">
-                    <div className="text-lg font-bold text-[#1E0F2B]">{formatDuration(streamDuration)}</div>
-                    <div className="text-[10px] uppercase text-[#1E0F2B]/40">Durée</div>
+
+            {/* Corps */}
+            <div className="bg-[#FAF6EF] px-7 py-6">
+              {/* Titre */}
+              <div className="text-center mb-5">
+                <h2 className="text-xl font-bold text-[#1E0F2B]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                  Terminer la diffusion ?
+                </h2>
+                <p className="text-sm text-[#1E0F2B]/60 mt-2 leading-relaxed">
+                  Votre live sera arrêté et archivé en replay automatiquement.
+                  <br />
+                  <span className="text-[#8A8378] text-xs">Cette action est irréversible.</span>
+                </p>
+              </div>
+
+              {/* Stats du live */}
+              {isLive && (
+                <div className="grid grid-cols-3 gap-2 mb-5">
+                  <div className="bg-white rounded-xl p-3 text-center border border-[#8A8378]/10">
+                    <Clock className="w-4 h-4 text-[#C9A227] mx-auto mb-1" />
+                    <div className="text-base font-bold text-[#1E0F2B]">{formatDuration(streamDuration)}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Durée</div>
                   </div>
-                  <div className="flex-1 text-center">
-                    <div className="text-lg font-bold text-[#1E0F2B]">{viewerCount}</div>
-                    <div className="text-[10px] uppercase text-[#1E0F2B]/40">Spectateurs</div>
+                  <div className="bg-white rounded-xl p-3 text-center border border-[#8A8378]/10">
+                    <Users className="w-4 h-4 text-[#C9A227] mx-auto mb-1" />
+                    <div className="text-base font-bold text-[#1E0F2B]">{viewerCount}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Spectateurs</div>
+                  </div>
+                  <div className="bg-white rounded-xl p-3 text-center border border-[#8A8378]/10">
+                    <Radio className="w-4 h-4 text-[#C9A227] mx-auto mb-1" />
+                    <div className="text-base font-bold text-[#1E0F2B]">{isRecording ? "OUI" : "—"}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Enregistrement</div>
                   </div>
                 </div>
+              )}
+
+              {/* Avertissement */}
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/15 mb-4">
+                <AlertCircle className="w-4 h-4 text-[#C9A227] flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">
+                  Le replay sera généré et publié sur la page Vidéos.
+                  {multistream.youtube
+                    ? " Une copie YouTube sera aussi disponible comme source de secours."
+                    : ""}
+                </p>
               </div>
-            )}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#8A8378]/15">
-              <button onClick={() => setShowStopModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#1E0F2B]/50 hover:text-[#1E0F2B] transition-colors">Continuer le live</button>
-              <button onClick={confirmStopLive} disabled={loading}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 text-[#1E0F2B] font-bold text-sm hover:bg-red-700 transition-colors disabled:opacity-40">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" fill="currentColor" />}Terminer
-              </button>
+
+              {/* URL YouTube du replay (si multistream YouTube) */}
+              {multistream.youtube && (
+                <div className="mb-4 px-3 py-3 rounded-xl bg-[#2A0E3D]/5 border border-[#8A8378]/15">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Youtube className="w-3.5 h-3.5 text-red-600" />
+                    <span className="text-xs font-bold text-[#1E0F2B]">URL YouTube du replay</span>
+                    <span className="text-[10px] text-[#8A8378]">(optionnel — économise le stockage R2)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={youtubeReplayUrl}
+                      onChange={(e) => setYoutubeReplayUrl(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className="flex-1 px-2.5 py-2 rounded-lg border border-[#8A8378]/20 bg-white text-xs focus:outline-none focus:border-[#C9A227]"
+                    />
+                    <button
+                      onClick={handleFetchYoutubeReplay}
+                      disabled={fetchingYoutubeReplay}
+                      className="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors disabled:opacity-40 whitespace-nowrap flex items-center gap-1"
+                    >
+                      {fetchingYoutubeReplay ? <Loader2 className="w-3 h-3 animate-spin" /> : <Youtube className="w-3 h-3" />}
+                      Auto
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-[#8A8378] mt-1.5 leading-relaxed">
+                    Collez l'URL YouTube ou cliquez "Auto" pour la récupérer via l'API.
+                    Si vide, le replay utilisera l'enregistrement R2 (si disponible).
+                  </p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowStopModal(false)}
+                  disabled={loading}
+                  className="flex-1 px-5 py-3 rounded-xl text-sm font-bold text-[#1E0F2B]/60 hover:text-[#1E0F2B] hover:bg-[#2A0E3D]/5 transition-colors disabled:opacity-40"
+                >
+                  Continuer le live
+                </button>
+                <button
+                  onClick={confirmStopLive}
+                  disabled={loading}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 transition-colors disabled:opacity-40 shadow-lg"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Arrêt en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Square className="w-4 h-4" fill="currentColor" />
+                      Terminer
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

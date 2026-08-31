@@ -189,6 +189,10 @@ model Video {
   views       Int      @default(0)
   isLive      Boolean  @default(false)
   publishedAt DateTime?
+  // ─── Post-production cloud sync ───
+  // Stocke l'état complet du projet (timeline, overlays, filtres, etc.)
+  // en JSON pour permettre la sauvegarde/chargement et le partage.
+  projectState Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -224,6 +228,12 @@ model LiveStream {
   recordingUrl      String?
   viewerCount       Int      @default(0)
   thumbnailUrl      String?
+  // ─── Pause live ( YouTube viewers ne reçoivent pas le DataChannel LiveKit ) ───
+  // isPaused = true pendant que le studio met le live en pause.
+  // pausedAt permet aux viewers YouTube de geler la minuterie côté client
+  // (calculée = pausedAt - startedAt).
+  isPaused          Boolean  @default(false)
+  pausedAt          DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

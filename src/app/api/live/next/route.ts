@@ -25,12 +25,21 @@ export async function GET() {
         title: nextLive.title,
         description: nextLive.description,
         scheduledAt: nextLive.scheduledAt.toISOString(),
+        // (C6) Exposer startedAt pour que le viewer puisse recalculer la durée
+        // côté client sans dépendre de la prop SSR (qui devient stale une fois
+        // que le live démarre après le rendu initial de la page).
+        startedAt: nextLive.startedAt ? nextLive.startedAt.toISOString() : null,
         status: nextLive.status,
         servantName: nextLive.servant.shortName,
         servantCode: nextLive.servant.code,
         servantPortraitUrl: nextLive.servant.portraitUrl,
         youtubeUrl: nextLive.youtubeUrl,
         thumbnailUrl: nextLive.thumbnailUrl,
+        // (YT-pause) État de pause persisté en base pour les viewers YouTube
+        // (qui ne reçoivent pas le DataChannel LiveKit). Permet au viewer de
+        // geler la minuterie et d'afficher la miniature pendant la pause.
+        isPaused: nextLive.isPaused,
+        pausedAt: nextLive.pausedAt ? nextLive.pausedAt.toISOString() : null,
       },
     });
   } catch (error) {

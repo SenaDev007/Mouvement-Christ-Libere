@@ -138,6 +138,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const [exportError, setExportError] = useState("");
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState("");
   const videoUploadRef = useRef<HTMLInputElement>(null);
 
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,27 +149,109 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
       setUploadError("Veuillez sélectionner un fichier vidéo (MP4, WebM, etc.)");
       return;
     }
-    if (file.size > 4 * 1024 * 1024) {
-      setUploadError(`Fichier trop volumineux (${Math.round(file.size / 1024 / 1024)}MB — max 4MB sans B2)`);
-      return;
-    }
+
+    const fileSizeMB = Math.round(file.size / 1024 / 1024);
     setUploadingVideo(true);
     setUploadError("");
+    setUploadProgress(0);
+    setUploadStage("Demande d'URL d'upload...");
+
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await apiFetch(`/api/videos/${videoId}/upload`, { method: "POST", body: formData });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Erreur upload");
+      // ─── Étape 1 : Demander une URL pré-signée pour upload direct vers R2 ───
+      // Le fichier ne transite PAS par le body Vercel → pas de limite de taille,
+      // pas de timeout de fonction. Le navigateur uploade directement vers R2.
+      const presignRes = await apiFetch(`/api/videos/${videoId}/presign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentType: file.type, filename: file.name }),
+      });
+
+      if (presignRes.ok) {
+        const { uploadUrl, publicUrl } = await presignRes.json();
+        setUploadStage(`Upload direct vers R2 (${fileSizeMB} MB)...`);
+
+        // ─── Étape 2 : Upload direct vers R2 via XMLHttpRequest ───
+        // XHR (pas fetch) car seul XHR expose xhr.upload.onprogress pour
+        // suivre la progression réelle de l'upload.
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.upload.addEventListener("progress", (ev) => {
+            if (ev.lengthComputable) {
+              const percent = Math.round((ev.loaded / ev.total) * 100);
+              setUploadProgress(percent);
+            }
+          });
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) resolve();
+            else reject(new Error(`Upload R2 échoué: HTTP ${xhr.status}`));
+          });
+          xhr.addEventListener("error", () => reject(new Error("Erreur réseau lors de l'upload vers R2")));
+          xhr.addEventListener("abort", () => reject(new Error("Upload annulé")));
+          xhr.open("PUT", uploadUrl);
+          xhr.setRequestHeader("Content-Type", file.type);
+          xhr.send(file);
+        });
+
+        // ─── Étape 3 : Commit — persister l'URL R2 en base ───
+        setUploadStage("Finalisation...");
+        setUploadProgress(100);
+        const commitRes = await apiFetch(`/api/videos/${videoId}/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ r2Url: publicUrl }),
+        });
+        if (!commitRes.ok) {
+          const data = await commitRes.json().catch(() => ({}));
+          throw new Error(data.error || "Erreur lors de la finalisation");
+        }
+        const result = await commitRes.json();
+        setCurrentVideoUrl(result.videoUrl);
+        setTimeout(() => window.location.reload(), 1500);
+        return;
       }
-      const data = await res.json();
-      setCurrentVideoUrl(data.videoUrl);
-      setTimeout(() => window.location.reload(), 1500);
+
+      // ─── Fallback : R2 non configuré → FormData classique (limite 4 MB) ───
+      // Ce chemin ne devrait être utilisé qu'en dev sans R2.
+      const fallbackData = await presignRes.json().catch(() => ({}));
+      if (fallbackData.r2NotConfigured) {
+        setUploadStage(`Upload via serveur (${fileSizeMB} MB)...`);
+        const result = await new Promise<{ videoUrl: string; storage: string }>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          const formData = new FormData();
+          formData.append("file", file);
+          xhr.upload.addEventListener("progress", (ev) => {
+            if (ev.lengthComputable) {
+              const percent = Math.round((ev.loaded / ev.total) * 100);
+              setUploadProgress(percent);
+            }
+          });
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try { resolve(JSON.parse(xhr.responseText)); }
+              catch { reject(new Error("Réponse invalide du serveur")); }
+            } else {
+              try { reject(new Error(JSON.parse(xhr.responseText).error || `HTTP ${xhr.status}`)); }
+              catch { reject(new Error(`HTTP ${xhr.status}`)); }
+            }
+          });
+          xhr.addEventListener("error", () => reject(new Error("Erreur réseau")));
+          xhr.addEventListener("abort", () => reject(new Error("Upload annulé")));
+          xhr.open("POST", `/api/videos/${videoId}/upload`);
+          xhr.send(formData);
+        });
+        setCurrentVideoUrl(result.videoUrl);
+        setUploadProgress(100);
+        setTimeout(() => window.location.reload(), 1500);
+        return;
+      }
+
+      // presign a échoué pour une autre raison
+      throw new Error(fallbackData.error || "Impossible de générer l'URL d'upload");
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Erreur");
     } finally {
       setUploadingVideo(false);
+      setUploadStage("");
       if (videoUploadRef.current) videoUploadRef.current.value = "";
     }
   };
@@ -264,34 +348,33 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               </div>
             ) : uploadingVideo ? (
               <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
-                <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
-                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Upload en cours...</p>
-                <p className="text-xs text-[#FAF6EF]/50">Veuillez patienter pendant l'upload du replay</p>
+                <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-4 animate-spin" />
+                <p className="text-sm font-bold text-[#FAF6EF] mb-2">
+                  {uploadStage || "Upload en cours..."} {uploadProgress}%
+                </p>
+                {/* Barre de progression */}
+                <div className="w-full max-w-xs bg-white/10 rounded-full h-3 overflow-hidden mb-2">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#C9A227] to-[#DDBE55] rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-[#FAF6EF]/50">Ne fermez pas cette page</p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
-                {uploadingVideo ? (
-                  <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
-                ) : (
-                  <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
-                )}
-                <p className="text-sm font-bold text-[#FAF6EF] mb-1">
-                  {uploadingVideo ? "Upload en cours..." : "Aucune vidéo source"}
-                </p>
+                <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
+                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Aucune vidéo source</p>
                 <p className="text-xs text-[#FAF6EF]/50 max-w-sm mb-4">
-                  {uploadingVideo
-                    ? "Veuillez patienter pendant l'upload du replay..."
-                    : "Uploadez le replay enregistré (format MP4 ou WebM, max 4MB)"}
+                  Uploadez le replay enregistré (MP4, WebM — aucune limite de taille)
                 </p>
-                {!uploadingVideo && (
-                  <button
-                    onClick={() => videoUploadRef.current?.click()}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Uploader le replay
-                  </button>
-                )}
+                <button
+                  onClick={() => videoUploadRef.current?.click()}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  Uploader le replay
+                </button>
                 {uploadError && (
                   <p className="text-xs text-red-400 mt-3 max-w-sm">{uploadError}</p>
                 )}

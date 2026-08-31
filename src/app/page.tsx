@@ -9,8 +9,17 @@ import {
   ChevronRight, Sparkles, BookOpen, FileText, Video, Users,
   Calendar, MessageSquare, Heart, ArrowRight,
 } from "lucide-react";
-import { AutoRefresh } from "@/components/site/auto-refresh";
 import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
+
+// NOTE: <AutoRefresh> était monté ici toutes les 30 s et déclenchait un
+// router.refresh() au mount + toutes les 30 s. Sur la landing page (client
+// component sans données serveur), c'était purement destructif : chaque
+// refresh envoyait une requête RSC qui entrait en compétition avec la
+// navigation de l'utilisateur quand il cliquait sur "Rejoindre le live" →
+// latence perçue de plusieurs secondes, voire timeouts sous charge.
+// Les composants enfants (UpcomingLiveFloat, LiveAnnouncementBar) pollent
+// déjà /api/live/upcoming eux-mêmes, donc le refresh serveur était
+// complétement redondant.
 
 const VERSES = [
   "Et Hénoch marcha avec Dieu", "Genèse 5:24",
@@ -66,7 +75,6 @@ export default function Home() {
   }, []);
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
-      <AutoRefresh intervalMs={30000} />
       {/* ═════ HERO ═════ */}
       <section className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
         {/* Carte flottante du prochain live — en haut du hero */}

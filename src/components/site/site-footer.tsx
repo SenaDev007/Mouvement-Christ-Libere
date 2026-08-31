@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const FOOTER_LINKS = {
   discover: {
@@ -49,8 +50,18 @@ export function SiteFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
           {/* Colonne baseline */}
           <div className="md:col-span-1">
-            <div className="font-serif text-2xl font-semibold text-[#FAF6EF] mb-2">
-              Christ Libère
+            <div className="flex items-center gap-1 mb-2">
+              <Image
+                src="/logo-christ-libere.png"
+                alt="Christ Libère"
+                width={28}
+                height={28}
+                className="w-7 h-7 object-contain"
+              />
+              <span className="font-serif text-2xl font-semibold whitespace-nowrap">
+                <span style={{ color: "#C9A227" }}>Christ</span>
+                <span className="ml-0.5 text-[#FAF6EF]">Libère</span>
+              </span>
             </div>
             <p className="text-sm text-[#FAF6EF]/70 leading-relaxed mb-4">
               Témoignages, enseignements et vie de communauté au service du

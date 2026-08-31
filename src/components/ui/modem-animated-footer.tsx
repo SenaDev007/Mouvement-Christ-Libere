@@ -48,7 +48,7 @@ export const Footer = ({
             <div className="w-full flex flex-col items-center">
               <div className="space-y-2 flex flex-col items-center flex-1">
                 {/* Logo + nom — sans frame, sans halo */}
-                <div className="flex items-center gap-2 group/logo">
+                <div className="flex items-center gap-1 group/logo">
                   <Image
                     src="/logo-christ-libere.png"
                     alt="Christ Libère"
@@ -58,11 +58,11 @@ export const Footer = ({
                     priority
                   />
                   <span
-                    className="text-2xl md:text-4xl font-bold"
+                    className="text-2xl md:text-4xl font-bold whitespace-nowrap"
                     style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
                   >
                     <span style={{ color: "#C9A227" }}>Christ</span>
-                    <span style={{ color: "#FAF6EF" }}>&nbsp;&nbsp;Libère</span>
+                    <span style={{ color: "#FAF6EF" }} className="ml-0.5">Libère</span>
                   </span>
                 </div>
                 <p className="text-[#FAF6EF]/60 font-medium text-center w-full max-w-sm sm:w-96 px-4 sm:px-0 text-sm">

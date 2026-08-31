@@ -107,19 +107,18 @@ export function ContextualNav() {
   const { data: session, status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const isFullScreenPage = pathname?.startsWith("/yeshua-connect");
+  const isFullScreenPage = false; // /yeshua-connect utilise la navbar principale (pas de mode plein écran)
   const isAuthenticated = status === "authenticated" && session?.user;
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/" });
   };
 
-  // Sur /yeshua-connect, la navbar est en haut fixe (pas en bas flottante)
+  // Navbar fixe en haut sur toutes les pages (y compris /yeshua-connect)
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 border-b border-[#C9A227]/20 bg-[#2A0E3D]/95 backdrop-blur-lg",
-        isFullScreenPage && "hidden"
+        "fixed top-0 left-0 right-0 z-50 border-b border-[#C9A227]/20 bg-[#2A0E3D]/95 backdrop-blur-lg"
       )}
     >
       <div className="flex h-16 md:h-20 items-center justify-between gap-4 px-4 md:px-6 max-w-7xl mx-auto">
@@ -189,7 +188,7 @@ export function ContextualNav() {
           </Popover>
 
           {/* Logo Christ Libère */}
-          <Link href="/" className="flex items-center gap-2 group/logo">
+          <Link href="/" className="flex items-center gap-1 group/logo">
             <Image
               src="/logo-christ-libere.png"
               alt="Christ Libère"
@@ -199,11 +198,11 @@ export function ContextualNav() {
               priority
             />
             <span
-              className="text-xl md:text-2xl font-bold"
+              className="text-xl md:text-2xl font-bold whitespace-nowrap"
               style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
             >
               <span style={{ color: "#C9A227" }}>Christ</span>
-              <span style={{ color: "#FAF6EF" }}>&nbsp;&nbsp;Libère</span>
+              <span style={{ color: "#FAF6EF" }} className="ml-0.5">Libère</span>
             </span>
           </Link>
 
@@ -394,13 +393,6 @@ export function ContextualNav() {
               </Button>
             </>
           )}
-          <div className="w-px h-5 bg-[#C9A227]/20 hidden sm:block" />
-          <Button asChild size="sm" className="bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] text-sm">
-            <Link href="/communaute">
-              Rejoindre
-              <ChevronRight className="w-3.5 h-3.5 ml-1" />
-            </Link>
-          </Button>
         </div>
       </div>
     </header>
