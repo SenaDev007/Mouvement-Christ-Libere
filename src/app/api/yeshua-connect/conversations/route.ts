@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { ensureChannelAvatarUrl } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir les canaux RESTRICTED (pasteurs / modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -41,6 +42,11 @@ export async function GET(_req: NextRequest) {
     const userId = session.user.id;
     const userRole = session.user.role;
     const canSeeRestricted = PRIVILEGED_ROLES.has(userRole || "");
+
+    // ⭐ V2.6.1 — Auto-réparation : si `db:push` n'a pas été lancé en prod,
+    // la colonne avatarUrl (V2.5) manque et tout le findMany échoue (500
+    // → Yeshua Connect s'affiche vide). Idempotent + mémoïsé par instance.
+    await ensureChannelAvatarUrl();
 
     // Charger les canaux + membres + dernier message en une seule requête
     const channels = await db.channel.findMany({

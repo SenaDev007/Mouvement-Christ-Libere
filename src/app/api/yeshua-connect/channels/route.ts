@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { ensureChannelAvatarUrl } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir tous les canaux (y compris RESTRICTED). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -21,6 +22,9 @@ export async function GET() {
     }
     const userRole = session.user.role;
     const canSeeRestricted = PRIVILEGED_ROLES.has(userRole || "");
+
+    // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl (cf. ensure-schema.ts)
+    await ensureChannelAvatarUrl();
 
     const channels = await db.channel.findMany({
       where: canSeeRestricted
@@ -55,6 +59,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
     const userId = session.user.id;
+
+    // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl (cf. ensure-schema.ts)
+    await ensureChannelAvatarUrl();
 
     const { name, description, type = "TEXT", communityId, isEncrypted = false } =
       await req.json();

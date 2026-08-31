@@ -2,19 +2,14 @@
 
 import {
   Sparkles,
-  User,
   FileText,
   BookOpen,
-  Video,
   Calendar,
   Globe,
-  Users,
   MessageSquare,
-  Mail,
-  ChevronRight,
+  ChevronDown,
   Menu,
   LogOut,
-  UserCircle,
   LogIn,
   UserPlus,
 } from "lucide-react";
@@ -26,19 +21,16 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
-  NavigationMenuViewport,
 } from "@/components/ui/navigation-menu";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Navigation links — contextualisés pour Christ Libère
 const navigationLinks = [
@@ -87,7 +79,6 @@ const navigationLinks = [
     type: "simple",
     items: [
       { href: "/yeshua-connect", label: "Yeshua Connect — Chat" },
-      { href: "/communaute", label: "Canaux & Groupes" },
       { href: "/contribuer", label: "Contribuer (Don/Dîme)" },
       { href: "/contact", label: "Contact" },
     ],
@@ -107,8 +98,63 @@ export function ContextualNav() {
   const { data: session, status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  // ⭐ V2.6.1 — Menu déroulant desktop ouvert (label du menu parent).
+  // Chaque sous-menu s'ancre sous SON bouton (plus de viewport partagé
+  // qui centrait tous les panneaux au même endroit).
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const desktopNavRef = useRef<HTMLElement | null>(null);
+  const hoverCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFullScreenPage = false; // /yeshua-connect utilise la navbar principale (pas de mode plein écran)
   const isAuthenticated = status === "authenticated" && session?.user;
+
+  // Ouvre au survol (avec annulation du retard de fermeture)
+  const hoverOpen = (label: string) => {
+    if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
+    setOpenMenu(label);
+  };
+  // Fermeture différée (~140 ms) : évite le clignotement quand la souris
+  // traverse l'espace entre le bouton et son panneau.
+  const hoverClose = () => {
+    if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
+    hoverCloseTimer.current = setTimeout(() => setOpenMenu(null), 140);
+  };
+
+  // Échap / clic extérieur / changement de route → fermer le sous-menu
+  useEffect(() => {
+    if (!openMenu) return;
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      if (
+        desktopNavRef.current &&
+        !desktopNavRef.current.contains(e.target as Node)
+      ) {
+        setOpenMenu(null);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenu(null);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [openMenu]);
+
+  // Navigation → fermer systématiquement (desktop ET mobile)
+  useEffect(() => {
+    setOpenMenu(null);
+    setUserMenuOpen(false);
+  }, [pathname]);
+
+  // Nettoyage du timer au démontage
+  useEffect(() => {
+    return () => {
+      if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
+    };
+  }, []);
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/" });
@@ -206,88 +252,123 @@ export function ContextualNav() {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="max-md:hidden ml-4">
-            <NavigationMenu>
-              <NavigationMenuList>
-                {navigationLinks.map((link, index) => (
-                  <NavigationMenuItem key={index}>
-                    {link.submenu ? (
-                      <>
-                        <NavigationMenuTrigger className="text-[#FAF6EF]/70 hover:text-[#C9A227] bg-transparent px-2 py-1.5 text-sm font-medium data-[state=open]:text-[#C9A227]">
-                          {link.label}
-                        </NavigationMenuTrigger>
-                        <NavigationMenuContent>
-                          <ul
-                            className={cn(
-                              "grid gap-3 p-4 bg-[#2A0E3D] border border-[#C9A227]/30 rounded-lg",
-                              link.type === "description"
-                                ? "w-[400px] md:w-[500px] md:grid-cols-1"
-                                : "w-[280px] md:grid-cols-2"
-                            )}
-                          >
-                            {link.items.map((item, itemIndex) => (
-                              <li key={itemIndex}>
-                                <NavigationMenuLink asChild>
-                                  <Link
-                                    href={item.href}
-                                    className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-[#C9A227]/10 hover:text-[#C9A227] focus:bg-[#C9A227]/10 focus:text-[#C9A227]"
-                                  >
-                                    {/* Icon type */}
-                                    {link.type === "icon" && "icon" in item && (
-                                      <div className="flex items-center gap-2">
-                                        {iconMap[item.icon as string] &&
-                                          (() => {
-                                            const Icon = iconMap[item.icon as string];
-                                            return <Icon size={16} className="text-[#C9A227] opacity-80" />;
-                                          })()}
-                                        <div className="text-sm font-medium leading-none text-[#FAF6EF]">
-                                          {item.label}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* Description type */}
-                                    {link.type === "description" && "description" in item && (
-                                      <>
-                                        <div className="text-sm font-medium leading-none text-[#FAF6EF]">
-                                          {item.label}
-                                        </div>
-                                        <p className="line-clamp-2 text-xs leading-snug text-[#FAF6EF]/50">
-                                          {item.description}
-                                        </p>
-                                      </>
-                                    )}
-
-                                    {/* Simple type */}
-                                    {link.type === "simple" && (
-                                      <div className="text-sm font-medium leading-none text-[#FAF6EF]">
-                                        {item.label}
-                                      </div>
-                                    )}
-                                  </Link>
-                                </NavigationMenuLink>
-                              </li>
-                            ))}
-                          </ul>
-                        </NavigationMenuContent>
-                      </>
-                    ) : (
-                      <NavigationMenuLink asChild>
-                        <Link
-                          href={link.href}
-                          className="text-[#FAF6EF]/70 hover:text-[#C9A227] py-1.5 px-2 text-sm font-medium"
-                        >
-                          {link.label}
-                        </Link>
-                      </NavigationMenuLink>
+          {/* Desktop Navigation — ⭐ V2.6.1 : chaque sous-menu s'ancre
+              sous SON propre bouton (les libellés tiennent sur UNE ligne,
+              plus de grille 2 colonnes qui les coupait en deux). */}
+          <nav
+            ref={desktopNavRef}
+            aria-label="Navigation principale"
+            className="max-md:hidden ml-4 flex items-center gap-0.5"
+          >
+            {navigationLinks.map((link, index) =>
+              link.submenu ? (
+                <div
+                  key={link.label}
+                  className="relative"
+                  onMouseEnter={() => hoverOpen(link.label)}
+                  onMouseLeave={hoverClose}
+                >
+                  {/* Bouton parent */}
+                  <button
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={openMenu === link.label}
+                    onClick={() =>
+                      setOpenMenu(
+                        openMenu === link.label ? null : link.label
+                      )
+                    }
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-[#C9A227]/40",
+                      openMenu === link.label
+                        ? "text-[#C9A227] bg-[#C9A227]/10"
+                        : "text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#C9A227]/10"
                     )}
-                  </NavigationMenuItem>
-                ))}
-              </NavigationMenuList>
-              <NavigationMenuViewport />
-            </NavigationMenu>
-          </div>
+                  >
+                    {link.label}
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={cn(
+                        "w-3 h-3 transition-transform duration-200",
+                        openMenu === link.label && "rotate-180"
+                      )}
+                    />
+                  </button>
+
+                  {/* Panneau ancré sous CE bouton (⭐ V2.6.1) */}
+                  {openMenu === link.label && (
+                    <div
+                      role="menu"
+                      aria-label={link.label}
+                      onMouseEnter={() => hoverOpen(link.label)}
+                      onMouseLeave={hoverClose}
+                      className={cn(
+                        "absolute top-full pt-1.5 z-50 min-w-max",
+                        // Dernier menu (Communauté) : ancré à droite pour
+                        // ne jamais déborder de l'écran.
+                        index === navigationLinks.length - 1
+                          ? "right-0"
+                          : "left-0"
+                      )}
+                    >
+                      <ul
+                        className={cn(
+                          "bg-[#2A0E3D]/95 backdrop-blur-md border border-[#C9A227]/30 rounded-xl shadow-2xl shadow-black/50 py-1.5",
+                          link.type === "description" ? "w-[380px]" : "min-w-[220px]"
+                        )}
+                      >
+                        {link.items.map((item) => (
+                          <li key={item.href} role="none">
+                            <Link
+                              href={item.href}
+                              role="menuitem"
+                              onClick={() => setOpenMenu(null)}
+                              className="flex items-start gap-2.5 mx-1 px-3 py-2 rounded-lg text-[#FAF6EF]/85 hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors outline-none focus-visible:bg-[#C9A227]/10 focus-visible:text-[#C9A227] whitespace-nowrap"
+                            >
+                              {/* Icône (type icon) */}
+                              {link.type === "icon" && "icon" in item &&
+                                iconMap[item.icon as string] &&
+                                (() => {
+                                  const Icon = iconMap[item.icon as string];
+                                  return (
+                                    <Icon
+                                      size={16}
+                                      className="text-[#C9A227] opacity-80 shrink-0 mt-0.5"
+                                    />
+                                  );
+                                })()}
+                              <span className="min-w-0">
+                                {/* ⭐ Libellé TOUJOURS sur une seule ligne */}
+                                <span className="block text-sm font-medium leading-5 whitespace-nowrap">
+                                  {item.label}
+                                </span>
+                                {/* Description (type description) — texte
+                                    secondaire, peut se plier sur 2 lignes */}
+                                {link.type === "description" &&
+                                  "description" in item && (
+                                    <span className="block text-xs leading-snug text-[#FAF6EF]/50 mt-0.5 whitespace-normal line-clamp-2">
+                                      {item.description}
+                                    </span>
+                                  )}
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  key={link.label}
+                  href={link.href!}
+                  className="px-2 py-1.5 rounded-md text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors whitespace-nowrap"
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
+          </nav>
         </div>
 
         {/* Right side — Auth + CTA */}

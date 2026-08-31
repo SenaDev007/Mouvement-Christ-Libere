@@ -271,6 +271,10 @@ export function MessagingView() {
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({});
   const [loadingConvs, setLoadingConvs] = useState(true);
+  // ⭐ V2.6.1 — Code HTTP en échec du chargement des conversations
+  // (500 = serveur/DB, 401 = session expirée). Permet d'afficher une
+  // vraie bannière d'erreur au lieu du mensonge « Aucune conversation ».
+  const [convError, setConvError] = useState<number | null>(null);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -426,7 +430,12 @@ export function MessagingView() {
   const loadConversations = useCallback(async () => {
     try {
       const res = await fetch(api.url("/api/yeshua-connect/conversations"), { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        // ⭐ V2.6.1 — Mémoriser le code d'erreur pour la bannière sidebar
+        setConvError(res.status);
+        throw new Error(`HTTP ${res.status}`);
+      }
+      setConvError(null);
       const data: ChatConversation[] = await res.json();
       setConversations(data);
       if (data.length > 0 && !activeConvId) {
@@ -1830,6 +1839,26 @@ export function MessagingView() {
           {loadingConvs ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+            </div>
+          ) : convError !== null && conversations.length === 0 ? (
+            /* ⭐ V2.6.1 — État d'erreur explicite : le serveur a répondu
+               4xx/5xx. Distinct de l'état « vide » (base sans canaux). */
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <AlertCircle className="w-10 h-10 text-amber-500 mb-2" />
+              <p className="text-sm font-medium text-stone-700">
+                Impossible de charger les conversations
+              </p>
+              <p className="text-xs text-stone-500 mt-1">
+                {convError === 401
+                  ? "Session expirée — rechargez la page pour vous reconnecter."
+                  : `Erreur serveur (${convError}). Réessayez dans un instant.`}
+              </p>
+              <button
+                onClick={() => { setConvError(null); setLoadingConvs(true); loadConversations(); }}
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-xs font-medium hover:bg-[#3A1E4D] transition-colors"
+              >
+                <Loader2 className="w-3 h-3" /> Réessayer
+              </button>
             </div>
           ) : filteredConversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">

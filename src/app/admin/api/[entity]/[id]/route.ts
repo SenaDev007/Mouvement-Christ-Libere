@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { ensureChannelAvatarUrl } from "@/lib/ensure-schema";
 
 const ENTITY_MAP = {
   servants: "servant",
@@ -40,6 +41,8 @@ export async function GET(
   }
 
   try {
+    // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl (cf. ensure-schema.ts)
+    if (entity === "channels") await ensureChannelAvatarUrl();
     const delegate = getDelegate(entity as EntityName);
     const item = await delegate.findUnique({ where: { id } });
     if (!item) {
@@ -63,6 +66,8 @@ export async function PATCH(
 
   try {
     const body = await request.json();
+    // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl (cf. ensure-schema.ts)
+    if (entity === "channels") await ensureChannelAvatarUrl();
     const delegate = getDelegate(entity as EntityName);
     const updated = await delegate.update({ where: { id }, data: body });
     return NextResponse.json({ item: updated });

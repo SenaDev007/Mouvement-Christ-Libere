@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { ensureChannelAvatarUrl } from "@/lib/ensure-schema";
 
 // Force runtime Node.js (pas edge) pour Prisma
 export const runtime = "nodejs";
@@ -45,6 +46,10 @@ export async function GET(
   }
 
   try {
+    // ⭐ V2.6.1 — Le back-office Canaux sélectionne toutes les colonnes :
+    // si la colonne avatarUrl (V2.5) manque en prod, la page échoue (500).
+    if (entity === "channels") await ensureChannelAvatarUrl();
+
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get("limit") || "50");
     const offset = parseInt(url.searchParams.get("offset") || "0");
@@ -79,6 +84,8 @@ export async function POST(
 
   try {
     const body = await request.json();
+    // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl avant création (cf. ensure-schema.ts)
+    if (entity === "channels") await ensureChannelAvatarUrl();
     const delegate = getDelegate(entity as EntityName);
     const created = await delegate.create({ data: body });
     return NextResponse.json({ item: created }, { status: 201 });
