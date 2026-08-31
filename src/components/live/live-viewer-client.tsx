@@ -277,7 +277,6 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     // dans le document pour pouvoir les jouer). Nettoyés au unmount/déconnexion.
     const attachedAudioEls: HTMLAudioElement[] = [];
 
-    let cancelled = false;
     streamReceivedRef.current = false;
 
     const connectToRoom = async () => {
