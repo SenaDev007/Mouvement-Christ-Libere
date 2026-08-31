@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListBucketsCommand, PutBucketCorsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -54,6 +54,44 @@ function getClient(): S3Client {
 export function isR2Configured(): boolean {
   const cfg = getConfig();
   return !!(cfg.accountId && cfg.accessKeyId && cfg.secretAccessKey && cfg.bucket);
+}
+
+/**
+ * Configure les règles CORS sur le bucket R2 pour autoriser les uploads
+ * directs depuis le navigateur (presigned PUT).
+ *
+ * Sans cette configuration, les uploads presigned PUT depuis le navigateur
+ * échouent avec "Failed to fetch" (erreur CORS bloquée par le navigateur).
+ *
+ * Cette fonction est idempotente — elle peut être appelée à chaque démarrage.
+ * Elle ne fait rien si R2 n'est pas configuré.
+ */
+export async function ensureR2CorsConfig(): Promise<void> {
+  if (!isR2Configured()) return;
+  try {
+    const client = getClient();
+    const cfg = getConfig();
+    const corsRules = {
+      CORSRules: [
+        {
+          AllowedOrigins: ["*"],
+          AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
+          AllowedHeaders: ["*"],
+          ExposeHeaders: ["ETag", "x-amz-request-id"],
+          MaxAgeSeconds: 3600,
+        },
+      ],
+    };
+    await client.send(
+      new PutBucketCorsCommand({
+        Bucket: cfg.bucket,
+        CORSConfiguration: corsRules,
+      })
+    );
+    console.log("[r2] CORS configuration applied successfully");
+  } catch (error) {
+    console.error("[r2] Failed to apply CORS configuration:", error);
+  }
 }
 
 /**

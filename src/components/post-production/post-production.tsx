@@ -362,44 +362,55 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         const { uploadUrl, publicUrl } = await presignRes.json();
         setUploadStage(`Upload direct vers R2 (${fileSizeMB} MB)...`);
 
-        await new Promise<void>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.upload.addEventListener("progress", (ev) => {
-            if (ev.lengthComputable) {
-              setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
-            }
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.upload.addEventListener("progress", (ev) => {
+              if (ev.lengthComputable) {
+                setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
+              }
+            });
+            xhr.addEventListener("load", () => {
+              if (xhr.status >= 200 && xhr.status < 300) resolve();
+              else reject(new Error(`Upload R2 échoué: HTTP ${xhr.status}`));
+            });
+            xhr.addEventListener("error", () => reject(new Error("Erreur réseau CORS")));
+            xhr.addEventListener("abort", () => reject(new Error("Upload annulé")));
+            xhr.open("PUT", uploadUrl);
+            xhr.setRequestHeader("Content-Type", file.type);
+            xhr.send(file);
           });
-          xhr.addEventListener("load", () => {
-            if (xhr.status >= 200 && xhr.status < 300) resolve();
-            else reject(new Error(`Upload R2 échoué: HTTP ${xhr.status}`));
-          });
-          xhr.addEventListener("error", () => reject(new Error("Erreur réseau")));
-          xhr.addEventListener("abort", () => reject(new Error("Upload annulé")));
-          xhr.open("PUT", uploadUrl);
-          xhr.setRequestHeader("Content-Type", file.type);
-          xhr.send(file);
-        });
 
-        setUploadStage("Finalisation...");
-        setUploadProgress(100);
-        const commitRes = await apiFetch(`/api/videos/${videoId}/upload`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ r2Url: publicUrl }),
-        });
-        if (!commitRes.ok) {
-          const data = await commitRes.json().catch(() => ({}));
-          throw new Error(data.error || "Erreur lors de la finalisation");
+          setUploadStage("Finalisation...");
+          setUploadProgress(100);
+          const commitRes = await apiFetch(`/api/videos/${videoId}/upload`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ r2Url: publicUrl }),
+          });
+          if (!commitRes.ok) {
+            const data = await commitRes.json().catch(() => ({}));
+            throw new Error(data.error || "Erreur lors de la finalisation");
+          }
+          const result = await commitRes.json();
+          setCurrentVideoUrl(result.videoUrl);
+          setTimeout(() => window.location.reload(), 1500);
+          return;
+        } catch (putError) {
+          // (S5) Si le PUT vers R2 échoue (CORS non configuré, réseau, etc.),
+          // on retombe sur l'upload FormData via le serveur (limité à 4.5 MB
+          // sur Vercel Hobby, mais au moins ça marche en attendant que le
+          // CORS soit propagé).
+          console.warn("[post-production] Upload R2 direct échoué, fallback FormData:", putError);
+          setUploadStage("Upload via serveur (fallback)...");
+          setUploadProgress(0);
+          // Continuer vers le fallback FormData ci-dessous
         }
-        const result = await commitRes.json();
-        setCurrentVideoUrl(result.videoUrl);
-        setTimeout(() => window.location.reload(), 1500);
-        return;
       }
 
-      // Fallback FormData
-      const fallbackData = await presignRes.json().catch(() => ({}));
-      if (fallbackData.r2NotConfigured) {
+      // Fallback FormData (R2 non configuré OU PUT direct échoué)
+      const fallbackData = presignRes.ok ? {} : await presignRes.json().catch(() => ({}));
+      if (fallbackData.r2NotConfigured || true) {
         setUploadStage(`Upload via serveur (${fileSizeMB} MB)...`);
         const result = await new Promise<{ videoUrl: string }>((resolve, reject) => {
           const xhr = new XMLHttpRequest();

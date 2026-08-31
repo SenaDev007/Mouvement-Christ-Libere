@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { getPresignedUploadUrl, getPublicUrl, generateKey, isR2Configured } from "@/lib/r2";
+import { getPresignedUploadUrl, getPublicUrl, generateKey, isR2Configured, ensureR2CorsConfig } from "@/lib/r2";
 
 /**
  * POST /api/videos/[id]/presign
@@ -55,6 +55,10 @@ export async function POST(
         { status: 503 }
       );
     }
+
+    // (S5) S'assurer que le CORS est configuré sur R2 pour autoriser
+    // les uploads presigned PUT depuis le navigateur. Idempotent.
+    await ensureR2CorsConfig();
 
     const { id } = await params;
 
