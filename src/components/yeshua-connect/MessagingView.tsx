@@ -31,7 +31,9 @@
  *   ✅ Calls (UI d'appel — WebRTC V2, pour l'instant juste le bouton)
  *   ✅ E2E encryption badge (canaux restreints)
  *   ✅ Accès à la communauté (lien sidebar)
- *   ✅ Accès à la Bible (lien sidebar + partage de verset)
+ *   ✅ Accès à la Bible — ⭐ V2.6 : Bible INTÉGRÉE au chat (plein écran
+ *      par-dessus la conversation, plus de redirection vers /bible) +
+ *      partage de verset en message VERSE depuis la Bible elle-même
  *   ── ⭐ V2.2 — Final features ─────────────────────────────────────────
  *   ✅ Drag & Drop de fichiers (multiple) sur la zone de messages
  *   ✅ Paste d'image depuis le presse-papiers (Ctrl+V dans le textarea)
@@ -55,9 +57,9 @@ import {
   MessageCircle, AtSign, ChevronUp, Copy, UploadCloud,
   ScrollText, PhoneOff, MicOff, VolumeX, Download, Film,
 } from "lucide-react";
-import Link from "next/link";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant } from "livekit-client";
 import { cn } from "@/lib/utils";
+import { BibleWorkspace } from "@/components/bible/BibleWorkspace";
 import {
   QUICK_REACTIONS,
   type ChatConversation, type ChatMessage, type ChatPoll,
@@ -290,9 +292,11 @@ export function MessagingView() {
   const [showNotifPrefs, setShowNotifPrefs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showForwardModal, setShowForwardModal] = useState<string | null>(null);
+  // ⭐ V2.6 — Bible intégrée : s'ouvre DANS Yeshua Connect (plein écran),
+  // plus aucune redirection vers la page /bible.
+  const [showBible, setShowBible] = useState(false);
   // (⭐ V2.5) showScheduleModal / showPollModal supprimés : les formulaires
   // vivent désormais dans les panneaux du modal « Joindre » (attachPanel).
-  const [scheduleContent, setScheduleContent] = useState("");
   // (S5) State pour poll et scheduled message
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
@@ -719,6 +723,34 @@ export function MessagingView() {
       setSending(false);
     }
   }, [activeConvId, currentUserId, socketSendMessage]);
+
+  // ⭐ V2.6 — Partager un verset depuis la Bible intégrée : l'envoie
+  // comme message VERSE (rendu spécial bulle dorée) dans la conversation
+  // active. Format identique à la commande /bible (content = référence,
+  // verseText = texte complet).
+  const handleShareVerse = useCallback(async (verse: { reference: string; text: string }) => {
+    if (!verse.reference || !verse.text || !activeConvId) return;
+    try {
+      await postMessage({
+        content: verse.reference,
+        type: "VERSE",
+        verseRef: verse.reference,
+        verseText: verse.text,
+      });
+    } catch (e) {
+      console.error("handleShareVerse:", e);
+    }
+  }, [activeConvId, postMessage]);
+
+  // ⭐ V2.6 — Fermer la Bible intégrée avec la touche Échap
+  useEffect(() => {
+    if (!showBible) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowBible(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showBible]);
 
   // ⭐ V2.1 — Handle a slash command (called from SlashCommands onCommand
   // callback). Exécute la commande et agit selon le résultat :
@@ -1937,9 +1969,13 @@ export function MessagingView() {
               <button onClick={() => setShowConvSearch(!showConvSearch)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Rechercher">
                 <Search className="w-4 h-4" />
               </button>
-              <Link href="/bible" className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Bible">
+              <button
+                onClick={() => setShowBible(true)}
+                className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors"
+                title="Ouvrir la Bible dans le chat"
+              >
                 <BookOpen className="w-4 h-4" />
-              </Link>
+              </button>
               <button onClick={() => handleMute(activeConv.id)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Muet">
                 {mutedConversations.has(activeConv.id) ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
               </button>
@@ -2602,6 +2638,41 @@ export function MessagingView() {
         </Modal>
       )}
 
+      {/* ⭐ V2.6 — BIBLE INTÉGRÉE ─────────────────────────────────────────────
+          S'ouvre PLEIN ÉCRAN par-dessus la conversation (plus de redirection
+          vers /bible). L'utilisateur lit, cherche, compare — puis partage un
+          verset directement dans la conversation active via l'icône d'envoi
+          qui apparaît au survol de chaque verset. Fermeture : X, Échap ou
+          clic sur le fond. */}
+      <AnimatePresence>
+        {showBible && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowBible(false);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 12 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="absolute inset-1.5 sm:inset-3 md:inset-6 lg:inset-8 rounded-2xl overflow-hidden shadow-2xl border border-[#C9A227]/40"
+            >
+              <BibleWorkspace
+                variant="embedded"
+                onClose={() => setShowBible(false)}
+                onShareVerse={handleShareVerse}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ⭐ V2.5 — MODAL « JOINDRE » UNIFIÉ (façon WhatsApp) ─────────────────
           Un seul point d'entrée (bouton trombone) qui regroupe :
             • Document  → input fichier caché
@@ -2673,9 +2744,12 @@ export function MessagingView() {
                   icon: <BookOpen className="w-6 h-6" />,
                   color: "#2A0E3D",
                   onClick: () => {
+                    // ⭐ V2.6 — Ouvre la Bible INTÉGRÉE : l'utilisateur
+                    // choisit son verset puis clique sur l'icône d'envoi
+                    // du verset pour le partager dans la conversation.
                     setAttachOpen(false);
-                    setInputText("/verset ");
-                    messageInputRef.current?.focus();
+                    setAttachPanel("menu");
+                    setShowBible(true);
                   },
                 },
               ].map((tile) => (
