@@ -292,6 +292,14 @@ export function MessagingView() {
   const [showForwardModal, setShowForwardModal] = useState<string | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showPollModal, setShowPollModal] = useState(false);
+  // (S5) State pour poll et scheduled message
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  const [pollMulti, setPollMulti] = useState(false);
+  const [scheduleContent, setScheduleContent] = useState("");
+  const [scheduleAt, setScheduleAt] = useState("");
+  const [submittingPoll, setSubmittingPoll] = useState(false);
+  const [submittingSchedule, setSubmittingSchedule] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<Set<string>>(new Set());
   const [mutedConversations, setMutedConversations] = useState<Set<string>>(new Set());
   const [dndEnabled, setDndEnabled] = useState(false);
@@ -413,7 +421,10 @@ export function MessagingView() {
       const data: ChatConversation[] = await res.json();
       setConversations(data);
       if (data.length > 0 && !activeConvId) {
-        setActiveConvId(data[0].id);
+        // (S5) Ne pas auto-sélectionner sur mobile — laisser la sidebar visible
+        if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+          setActiveConvId(data[0].id);
+        }
       }
     } catch (e) {
       console.error("loadConversations:", e);
@@ -937,27 +948,34 @@ export function MessagingView() {
   //  VOICE RECORDING
   // ═════════════════════════════════════════════════════════════════════
 
+  // (S5) Détection du format audio supporté (Safari utilise mp4, pas webm)
+  function getSupportedAudioMime(): string {
+    if (typeof MediaRecorder === "undefined") return "audio/webm";
+    const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+    for (const c of candidates) {
+      if (MediaRecorder.isTypeSupported(c)) return c;
+    }
+    return "audio/webm";
+  }
+
+  const recordedBlobUrlRef = useRef<string | null>(null);
+  const [sendingVoice, setSendingVoice] = useState(false);
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const mime = getSupportedAudioMime();
+      const recorder = new MediaRecorder(stream, { mimeType: mime });
       audioChunksRef.current = [];
       recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
       recorder.onstop = async () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        // Upload as attachment
-        if (activeConvId && blob.size > 0) {
-          const formData = new FormData();
-          formData.append("file", blob, `voice-${Date.now()}.webm`);
-          formData.append("userId", "current");
-          formData.append("type", "AUDIO");
-          try {
-            const res = await fetch(api.url(`/api/yeshua-connect/conversations/${activeConvId}/messages/attachment`), {
-              method: "POST",
-              body: formData,
-            });
-            if (res.ok) loadMessages(activeConvId);
-          } catch (e) { console.error("voice upload:", e); }
+        const ext = mime.includes("mp4") ? "m4a" : mime.includes("ogg") ? "ogg" : "webm";
+        const blob = new Blob(audioChunksRef.current, { type: mime });
+        if (blob.size > 0) {
+          // (S5) Passer en mode "preview" au lieu d'uploader immédiatement
+          const url = URL.createObjectURL(blob);
+          recordedBlobUrlRef.current = url;
+          setRecordingState("preview");
         }
         stream.getTracks().forEach(t => t.stop());
       };
@@ -977,9 +995,51 @@ export function MessagingView() {
   const stopRecording = () => {
     if (mediaRecorderRef.current && recordingState === "recording") {
       mediaRecorderRef.current.stop();
-      setRecordingState("idle");
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
     }
+  };
+
+  // (S5) Envoyer le vocal après preview
+  const sendRecording = async () => {
+    if (!recordedBlobUrlRef.current || !activeConvId) return;
+    setSendingVoice(true);
+    try {
+      const res = await fetch(recordedBlobUrlRef.current);
+      const blob = await res.blob();
+      const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
+      const formData = new FormData();
+      formData.append("file", blob, `voice-${Date.now()}.${ext}`);
+      formData.append("type", "AUDIO");
+      const uploadRes = await fetch(api.url(`/api/yeshua-connect/conversations/${activeConvId}/messages/attachment`), {
+        method: "POST",
+        body: formData,
+      });
+      if (uploadRes.ok) {
+        loadMessages(activeConvId);
+      } else {
+        const err = await uploadRes.json().catch(() => ({}));
+        alert(`Échec de l'envoi: ${err.error || uploadRes.statusText}`);
+      }
+    } catch (e) {
+      console.error("voice upload:", e);
+      alert("Échec de l'envoi du message vocal");
+    } finally {
+      setSendingVoice(false);
+      if (recordedBlobUrlRef.current) {
+        URL.revokeObjectURL(recordedBlobUrlRef.current);
+        recordedBlobUrlRef.current = null;
+      }
+      setRecordingState("idle");
+    }
+  };
+
+  // (S5) Annuler le vocal (rejeter l'enregistrement)
+  const discardRecording = () => {
+    if (recordedBlobUrlRef.current) {
+      URL.revokeObjectURL(recordedBlobUrlRef.current);
+      recordedBlobUrlRef.current = null;
+    }
+    setRecordingState("idle");
   };
 
   // ═════════════════════════════════════════════════════════════════════
@@ -1318,7 +1378,9 @@ export function MessagingView() {
     if (!activeConvId) return;
     setCallType(type);
     setCallError(null);
-    // Nettoyer une éventuelle précédente room avant d'en démarrer une nouvelle
+    // (S5) Afficher l'overlay IMMÉDIATEMENT pour feedback instantané
+    // avant même que le token LiveKit soit récupéré.
+    setCallState("outgoing");
     cleanupLiveKit();
     try {
       const roomName = `yeshua-call-${activeConvId}`;
@@ -1386,8 +1448,7 @@ export function MessagingView() {
         await room.localParticipant.setCameraEnabled(false);
         setLocalVideoEnabled(false);
       }
-
-      setCallState("outgoing");
+      // (S5) callState est déjà "outgoing" depuis le début de startCall
     } catch (e) {
       console.error("[livekit] startCall failed:", e);
       setCallError(e instanceof Error ? e.message : "Échec de l'appel");
@@ -1521,11 +1582,35 @@ export function MessagingView() {
 
   const GIPHY_PUBLIC_KEY = "dc6zaTOxFJmzC";
 
+  // (S5) Charger les GIFs populaires (trending) au lieu d'afficher une liste vide
+  const loadTrendingGifs = useCallback(async () => {
+    setGifLoading(true);
+    try {
+      const url = `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_PUBLIC_KEY}&limit=24&rating=g`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const data = await res.json();
+      const results = (data.data || []).map((g: any) => ({
+        id: g.id as string,
+        url: g.images?.original?.url as string,
+        preview: g.images?.fixed_height_small?.url || g.images?.downsized?.url || g.images?.original?.url,
+        width: g.images?.original?.width ? parseInt(g.images.original.width, 10) : undefined,
+        height: g.images?.original?.height ? parseInt(g.images.original.height, 10) : undefined,
+      }));
+      setGifResults(results);
+    } catch (e) {
+      console.error("loadTrendingGifs:", e);
+    } finally {
+      setGifLoading(false);
+    }
+  }, []);
+
   const searchGifs = useCallback(async (q: string) => {
     setGifQuery(q);
     if (gifSearchTimeoutRef.current) clearTimeout(gifSearchTimeoutRef.current);
     if (!q.trim()) {
-      setGifResults([]);
+      // (S5) Recharger les trending quand la recherche est vidée
+      loadTrendingGifs();
       return;
     }
     // Debounce 400ms pour éviter de saturer l'API à chaque frappe
@@ -1641,7 +1726,7 @@ export function MessagingView() {
       {/* ═════ SIDEBAR — Conversations ═════ */}
       <div className={cn(
         "w-80 border-r border-stone-200 flex flex-col flex-shrink-0 bg-white",
-        activeConvId ? "hidden md:flex" : "flex"
+        activeConvId ? "hidden lg:flex" : "flex"
       )}>
         {/* Header */}
         <div className="p-3 border-b border-stone-100 bg-[#2A0E3D]">
@@ -1786,7 +1871,7 @@ export function MessagingView() {
         {activeConv ? (
           <div className="p-3 border-b border-stone-100 bg-white flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button onClick={() => setActiveConvId(null)} className="md:hidden p-1 text-stone-500">
+              <button onClick={() => setActiveConvId(null)} className="lg:hidden p-1 text-stone-500">
                 <ArrowLeft className="w-4 h-4" />
               </button>
               <div className={cn("relative w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm", getAvatarColor(activeConv.name))}>
@@ -1808,7 +1893,7 @@ export function MessagingView() {
                     return onlineCount > 0 ? ` · ${onlineCount} en ligne` : "";
                   })()}
                   {mutedConversations.has(activeConv.id) && " · 🔕 Muet"}
-                  {!socketConnected && " · ⚠ Hors-ligne"}
+                  {!socketConnected && " · Synchro temps réel désactivée"}
                 </p>
               </div>
             </div>
@@ -2184,6 +2269,27 @@ export function MessagingView() {
                   <StopCircle className="w-4 h-4" />
                 </button>
               </div>
+            ) : recordingState === "preview" ? (
+              /* (S5) Preview du vocal avec lecture + envoi/annulation */
+              <div className="flex items-center gap-2 w-full">
+                <audio src={recordedBlobUrlRef.current || undefined} controls className="flex-1 h-10" style={{ maxWidth: "100%" }} />
+                <button
+                  onClick={sendRecording}
+                  disabled={sendingVoice}
+                  className="p-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40 flex-shrink-0"
+                  title="Envoyer le vocal"
+                >
+                  {sendingVoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={discardRecording}
+                  disabled={sendingVoice}
+                  className="p-2.5 rounded-xl bg-stone-200 text-stone-700 hover:bg-stone-300 transition-colors disabled:opacity-40 flex-shrink-0"
+                  title="Annuler et refaire"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             ) : (
               <div className="flex items-center gap-2">
                 <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Joindre un fichier">
@@ -2218,6 +2324,8 @@ export function MessagingView() {
                 {/* ⭐ V2.3 — GIF Picker (Giphy API publique) */}
                 <Popover open={showGifPicker} onOpenChange={(o) => {
                   setShowGifPicker(o);
+                  // (S5) Charger les GIFs trending à l'ouverture
+                  if (o && gifResults.length === 0) loadTrendingGifs();
                   if (!o) { setGifQuery(""); setGifResults([]); }
                 }}>
                   <PopoverTrigger asChild>
@@ -2474,32 +2582,121 @@ export function MessagingView() {
       )}
 
       {/* Schedule Modal */}
+      {/* (S5) Scheduled Message Modal — fonctionnel */}
       {showScheduleModal && (
         <Modal onClose={() => setShowScheduleModal(false)} title="Programmer le message">
           <div className="space-y-3">
             <textarea
+              value={scheduleContent}
+              onChange={(e) => setScheduleContent(e.target.value)}
               placeholder="Votre message..."
               className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
               rows={3}
             />
-            <input type="datetime-local" className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" />
-            <button onClick={() => setShowScheduleModal(false)} className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55]">
-              Programmer l'envoi
+            <input
+              type="datetime-local"
+              value={scheduleAt}
+              onChange={(e) => setScheduleAt(e.target.value)}
+              className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none"
+            />
+            <button
+              onClick={async () => {
+                if (!activeConvId || !scheduleContent.trim() || !scheduleAt) return;
+                setSubmittingSchedule(true);
+                try {
+                  const res = await fetch(api.url("/api/yeshua-connect/scheduled-messages"), {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ channelId: activeConvId, content: scheduleContent, scheduledAt: scheduleAt }),
+                  });
+                  if (res.ok) {
+                    setShowScheduleModal(false);
+                    setScheduleContent("");
+                    setScheduleAt("");
+                  } else {
+                    alert("Échec de la programmation");
+                  }
+                } catch (e) {
+                  alert("Erreur réseau");
+                } finally {
+                  setSubmittingSchedule(false);
+                }
+              }}
+              disabled={!scheduleContent.trim() || !scheduleAt || submittingSchedule}
+              className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-40"
+            >
+              {submittingSchedule ? "Programmation..." : "Programmer l'envoi"}
             </button>
           </div>
         </Modal>
       )}
 
-      {/* Poll Modal */}
+      {/* (S5) Poll Modal — fonctionnel */}
       {showPollModal && (
         <Modal onClose={() => setShowPollModal(false)} title="Créer un sondage">
           <div className="space-y-3">
-            <input placeholder="Question..." className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" />
-            <input placeholder="Option 1" className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" />
-            <input placeholder="Option 2" className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" />
-            <input placeholder="Option 3 (optionnel)" className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" />
-            <button onClick={() => setShowPollModal(false)} className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55]">
-              Créer le sondage
+            <input
+              value={pollQuestion}
+              onChange={(e) => setPollQuestion(e.target.value)}
+              placeholder="Question..."
+              className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none"
+            />
+            {pollOptions.map((opt, i) => (
+              <input
+                key={i}
+                value={opt}
+                onChange={(e) => {
+                  const newOpts = [...pollOptions];
+                  newOpts[i] = e.target.value;
+                  setPollOptions(newOpts);
+                }}
+                placeholder={`Option ${i + 1}`}
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none"
+              />
+            ))}
+            {pollOptions.length < 6 && (
+              <button
+                onClick={() => setPollOptions([...pollOptions, ""])}
+                className="text-xs text-[#C9A227] font-bold hover:underline"
+              >
+                + Ajouter une option
+              </button>
+            )}
+            <label className="flex items-center gap-2 text-sm text-stone-600">
+              <input type="checkbox" checked={pollMulti} onChange={(e) => setPollMulti(e.target.checked)} className="accent-[#C9A227]" />
+              Choix multiple
+            </label>
+            <button
+              onClick={async () => {
+                if (!activeConvId || !pollQuestion.trim()) return;
+                const validOptions = pollOptions.filter(o => o.trim());
+                if (validOptions.length < 2) { alert("Au moins 2 options requises"); return; }
+                setSubmittingPoll(true);
+                try {
+                  const res = await fetch(api.url("/api/yeshua-connect/polls"), {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ channelId: activeConvId, question: pollQuestion, options: validOptions, isMulti: pollMulti }),
+                  });
+                  if (res.ok) {
+                    setShowPollModal(false);
+                    setPollQuestion("");
+                    setPollOptions(["", ""]);
+                    setPollMulti(false);
+                    if (activeConvId) loadMessages(activeConvId);
+                  } else {
+                    alert("Échec de la création du sondage");
+                  }
+                } catch (e) {
+                  alert("Erreur réseau");
+                } finally {
+                  setSubmittingPoll(false);
+                }
+              }}
+              disabled={!pollQuestion.trim() || submittingPoll}
+              className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-40"
+            >
+              {submittingPoll ? "Création..." : "Créer le sondage"}
             </button>
           </div>
         </Modal>
@@ -3757,7 +3954,25 @@ function CallOverlay({
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const ringtoneRef = useRef<HTMLAudioElement>(null);
   const [callDuration, setCallDuration] = useState(0);
+
+  // (S5) Sonnerie professionnelle pendant l'appel sortant
+  // Joue en boucle tant que callState === "outgoing", s'arrête dès que
+  // callState devient "active" (le correspondant a décroché).
+  useEffect(() => {
+    const el = ringtoneRef.current;
+    if (!el) return;
+    if (callState === "outgoing") {
+      el.loop = true;
+      el.volume = 0.5;
+      el.play().catch(() => {}); // ignore autoplay-blocked
+    } else {
+      el.pause();
+      el.currentTime = 0;
+    }
+    return () => { el.pause(); el.currentTime = 0; };
+  }, [callState]);
 
   // ⭐ Compteur de durée d'appel (démarre quand callState === "active")
   useEffect(() => {
@@ -3825,9 +4040,11 @@ function CallOverlay({
   const isVideoCall = callType === "video";
 
   return (
-    <div className="fixed inset-0 bg-[#2A0E3D] z-[60] flex flex-col items-center justify-between p-6">
+    <div className="fixed inset-0 bg-[#2A0E3D] z-[60] flex flex-col items-center justify-between p-3 sm:p-6">
       {/* Audio element caché pour le rendu audio distant */}
       <audio ref={remoteAudioRef} autoPlay className="hidden" />
+      {/* (S5) Sonnerie professionnelle d'appel sortant */}
+      <audio ref={ringtoneRef} src="/sounds/ringback.wav" preload="auto" className="hidden" />
 
       {/* Erreur éventuelle */}
       {error && (

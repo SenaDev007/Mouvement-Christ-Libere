@@ -374,6 +374,7 @@ model Channel {
   community    Community    @relation(fields: [communityId], references: [id], onDelete: Cascade)
   messages     Message[]
   members      ChannelMember[]
+  scheduledMessages ScheduledMessage[]
 
   @@index([communityId])
   @@index([type])
@@ -441,6 +442,7 @@ model Message {
   channel    Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   reactions  MessageReaction[]
+  poll       Poll?
 
   @@index([channelId, createdAt])
   @@index([userId])
@@ -454,6 +456,61 @@ enum MessageType {
   VIDEO
   FILE
   POLL
+  SCHEDULED
+}
+
+// ⭐ V2.4 — Sondages (polls) dans Yeshua Connect
+model Poll {
+  id          String   @id @default(cuid())
+  messageId   String   @unique
+  question    String
+  isMulti     Boolean  @default(false)
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  options     PollOption[]
+}
+
+model PollOption {
+  id          String   @id @default(cuid())
+  pollId      String
+  label       String
+  order       Int      @default(0)
+  poll        Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes       PollVote[]
+  @@index([pollId])
+}
+
+model PollVote {
+  id          String   @id @default(cuid())
+  pollOptionId String
+  userId      String
+  createdAt   DateTime @default(now())
+  option      PollOption @relation(fields: [pollOptionId], references: [id], onDelete: Cascade)
+  @@unique([pollOptionId, userId])
+  @@index([pollOptionId, userId])
+}
+
+// ⭐ V2.4 — Messages programmés
+model ScheduledMessage {
+  id          String    @id @default(cuid())
+  channelId   String
+  userId      String
+  content     String    @db.Text
+  scheduledAt DateTime
+  status      ScheduledMessageStatus @default(PENDING)
+  sentMessageId String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  channel     Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  @@index([scheduledAt, status])
+}
+
+enum ScheduledMessageStatus {
+  PENDING
+  SENT
+  CANCELLED
+  FAILED
 }
 
 // ⭐ V2.1 — Réactions emoji persistées sur les messages

@@ -99,6 +99,11 @@ export async function POST(
         content: file.name,
         type: type as any,
         attachmentUrl,
+        // (S5) Persister les métadonnées du fichier pour qu'elles survivent
+        // au rechargement de la page (avant, seul attachmentUrl était sauvé).
+        attachmentName: file.name,
+        attachmentSize,
+        attachmentMime: file.type || "application/octet-stream",
       },
       include: { user: { select: { id: true, name: true, role: true } } },
     });
@@ -112,8 +117,9 @@ export async function POST(
       type: message.type,
       content: message.content,
       attachmentUrl: message.attachmentUrl,
-      attachmentName: file.name,
-      attachmentSize,
+      attachmentName: message.attachmentName ?? file.name,
+      attachmentSize: message.attachmentSize ?? attachmentSize,
+      attachmentMime: message.attachmentMime ?? file.type,
       reactions: [],
       createdAt: message.createdAt.toISOString(),
     });
