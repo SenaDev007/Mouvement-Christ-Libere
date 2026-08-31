@@ -40,6 +40,12 @@ export default async function LiveStudioPage({
       servantPortraitUrl={live.servant.portraitUrl}
       thumbnailUrl={live.thumbnailUrl}
       status={live.status}
+      // ⭐ V2.6.2 — Restaurer l'état de pause et la durée réelle quand on
+      // revient dans le studio d'un live DÉJÀ en cours : avant, le studio
+      // repartait en « lecture » tout seul avec une durée remise à zéro.
+      initialIsPaused={live.isPaused}
+      initialStartedAt={live.startedAt ? live.startedAt.toISOString() : null}
+      initialPausedAt={live.pausedAt ? live.pausedAt.toISOString() : null}
       multistream={{
         enabled: live.multistreamEnabled,
         youtube: live.streamToYoutube,

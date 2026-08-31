@@ -44,7 +44,7 @@
  * ============================================================================
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -1844,11 +1844,11 @@ export function MessagingView() {
             /* ⭐ V2.6.1 — État d'erreur explicite : le serveur a répondu
                4xx/5xx. Distinct de l'état « vide » (base sans canaux). */
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-              <AlertCircle className="w-10 h-10 text-amber-500 mb-2" />
-              <p className="text-sm font-medium text-stone-700">
+              <AlertCircle className="w-10 h-10 text-[#C9A227] mb-2" />
+              <p className="text-sm font-semibold text-[#1E0F2B]">
                 Impossible de charger les conversations
               </p>
-              <p className="text-xs text-stone-500 mt-1">
+              <p className="text-xs text-[#8A8378] mt-1">
                 {convError === 401
                   ? "Session expirée — rechargez la page pour vous reconnecter."
                   : `Erreur serveur (${convError}). Réessayez dans un instant.`}
@@ -1861,10 +1861,10 @@ export function MessagingView() {
               </button>
             </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <MessageSquare className="w-12 h-12 text-stone-300 mb-2" />
-              <p className="text-sm font-medium text-stone-700">Aucune conversation</p>
-              <p className="text-xs text-stone-500 mt-1">Les canaux de la communauté apparaîtront ici</p>
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <MessageSquare className="w-12 h-12 text-[#C9A227]/40 mb-3" />
+              <p className="text-sm font-semibold text-[#1E0F2B]">Aucune conversation</p>
+              <p className="text-xs text-[#8A8378] mt-1">Les canaux de la communauté apparaîtront ici</p>
             </div>
           ) : (
             <>
@@ -1896,7 +1896,7 @@ export function MessagingView() {
       {/* ═════ CHAT ZONE ═════ */}
       <div
         className="relative flex-1 flex flex-col bg-stone-50/30"
-        style={getYeshuaWatermarkStyle({ opacity: 0.05 })}
+        style={getYeshuaWatermarkStyle({ opacity: 0.1 })}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -1926,12 +1926,12 @@ export function MessagingView() {
         </AnimatePresence>
         {/* Chat header */}
         {activeConv ? (
-          <div className="p-3 border-b border-stone-100 bg-white flex items-center justify-between">
+          <div className="p-3 border-b border-[#C9A227]/15 bg-white/95 backdrop-blur-sm flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button onClick={() => setActiveConvId(null)} className="lg:hidden p-1 text-stone-500">
+              <button onClick={() => setActiveConvId(null)} className="lg:hidden p-1 text-[#8A8378]">
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <div className={cn("relative w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm", getAvatarColor(activeConv.name))}>
+              <div className={cn("relative w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm", getAvatarColor(activeConv.name))}>
                 {getInitials(activeConv.name)}
                 {socketConnected && (
                   <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" title="Connecté en temps réel" />
@@ -1942,14 +1942,17 @@ export function MessagingView() {
                   {activeConv.name}
                   {activeConv.isEncrypted && <Lock className="w-3 h-3 text-[#C9A227]" />}
                 </h3>
-                <p className="text-xs text-stone-400">
-                  {activeConv.isEncrypted && "🔒 Chiffré E2E · "}
+                {/* ⭐ V2.6.2 — Ligne d'info thématée (icônes lucide au lieu des
+                    emojis, ton chaud #8A8378 au lieu du gris stone) */}
+                <p className="text-xs text-[#8A8378] flex items-center gap-1 flex-wrap">
+                  {activeConv.isEncrypted && <><Lock className="w-3 h-3 text-[#C9A227]" /> Chiffré E2E ·</>}
+                  <Users2 className="w-3 h-3 text-[#C9A227]/70" />
                   {activeConv.participants.length} membres
                   {(() => {
                     const onlineCount = activeConv.participants.filter(p => p.online).length;
                     return onlineCount > 0 ? ` · ${onlineCount} en ligne` : "";
                   })()}
-                  {mutedConversations.has(activeConv.id) && " · 🔕 Muet"}
+                  {mutedConversations.has(activeConv.id) && <> · <BellOff className="w-3 h-3 text-[#8A8378] inline" /> Muet</>}
                   {!socketConnected && " · Synchro temps réel désactivée"}
                 </p>
               </div>
@@ -2060,7 +2063,7 @@ export function MessagingView() {
             onToggleSpeaker={() => setSpeakerEnabled((s) => !s)}
             channelMembers={channelMembers}
           />
-        ) : (
+          ) : (
         /* Messages (uniquement pour les canaux non-VOICE) */
         <div ref={messagesScrollRef} className="flex-1 overflow-y-auto px-4 py-4">
           {loadingMsgs ? (
@@ -2069,12 +2072,14 @@ export function MessagingView() {
             </div>
           ) : activeMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <MessageSquare className="w-12 h-12 text-stone-300 mb-2" />
-              <p className="text-sm text-stone-500">Aucun message dans ce canal</p>
-              <p className="text-xs text-stone-400 mt-1">Soyez le premier à écrire !</p>
+              <MessageSquare className="w-12 h-12 text-[#C9A227]/40 mb-3" />
+              <p className="text-sm font-semibold text-[#1E0F2B]">Aucun message dans ce canal</p>
+              <p className="text-xs text-[#8A8378] mt-1">Soyez le premier à écrire !</p>
             </div>
           ) : (
-            <div className="space-y-2 max-w-3xl mx-auto">
+            /* ⭐ V2.6.2 — Colonne de messages élargie (max-w-4xl) : supprime la
+               grande bande vide à droite des bulles sur grands écrans. */
+            <div className="space-y-2 w-full max-w-4xl mx-auto">
               {/* ⭐ V2.1 — Load More (pagination cursor) */}
               {hasMoreMessages && (
                 <div className="flex justify-center py-2">
@@ -2120,11 +2125,11 @@ export function MessagingView() {
                     {showDateSep && (
                       <div className="flex items-center justify-center my-5">
                         <div className="flex items-center gap-2 w-full max-w-[520px] mx-auto">
-                          <div className="flex-1 h-px bg-stone-200" />
-                          <span className="px-3.5 py-1.5 bg-white border border-stone-200 rounded-full text-[10px] font-bold text-stone-500 uppercase tracking-wider shadow-sm">
+                          <div className="flex-1 h-px bg-[#C9A227]/25" />
+                          <span className="px-3.5 py-1.5 bg-white border border-[#C9A227]/30 rounded-full text-[10px] font-bold text-[#8A8378] uppercase tracking-wider shadow-sm">
                             {formatDateSeparator(msg.createdAt)}
                           </span>
-                          <div className="flex-1 h-px bg-stone-200" />
+                          <div className="flex-1 h-px bg-[#C9A227]/25" />
                         </div>
                       </div>
                     )}
@@ -2202,7 +2207,7 @@ export function MessagingView() {
                               <a href={msg.attachmentUrl} download={msg.attachmentName}
                                 className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover/img:opacity-100 transition-opacity"
                                 title="Télécharger">
-                                <FileText className="w-3.5 h-3.5" />
+                                <Download className="w-3.5 h-3.5" />
                               </a>
                             </div>
                           ) : msg.type === "VIDEO" && msg.attachmentUrl ? (
@@ -2217,9 +2222,9 @@ export function MessagingView() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-semibold text-[#1E0F2B] truncate">{msg.attachmentName || "Fichier"}</p>
-                                <p className="text-[10px] text-stone-400">{formatFileSize(msg.attachmentSize)}</p>
+                                <p className="text-[10px] text-[#8A8378]">{formatFileSize(msg.attachmentSize)}</p>
                               </div>
-                              <FileText className="w-4 h-4 text-stone-400 flex-shrink-0" />
+                              <Download className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
                             </a>
                           ) : (
                             // ⭐ V2.1 — Rendu du contenu texte avec mentions surlignées
@@ -3178,13 +3183,35 @@ export function MessagingView() {
 //  SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════
 
+/**
+ * ⭐ V2.6.2 — Heure du dernier message façon WhatsApp/Telegram :
+ * aujourd'hui → HH:MM · hier → « Hier » · < 7 jours → jour abrégé · sinon → jj/mm/aa
+ */
+function formatConvTime(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const day = Math.floor(d.getTime() / 86400000);
+  const today = Math.floor(startOfToday / 86400000);
+  if (day === today) {
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  }
+  if (day === today - 1) return "Hier";
+  if (today - day < 7) {
+    return d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "");
+  }
+  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" });
+}
+
 function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversations }: {
   title: string; icon: React.ReactNode; convs: ChatConversation[];
   activeConvId: string | null; onSelect: (id: string) => void; mutedConversations: Set<string>;
 }) {
   return (
     <>
-      <div className="px-3 py-1.5 bg-stone-100 text-[10px] font-bold text-stone-500 uppercase tracking-wider sticky top-0 z-10 flex items-center gap-1.5">
+      <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
         {icon} {title}
       </div>
       {convs.map(conv => {
@@ -3192,42 +3219,62 @@ function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversa
         const isMuted = mutedConversations.has(conv.id);
         return (
           <button key={conv.id} onClick={() => onSelect(conv.id)}
-            // ⭐ V2.5 — cursor-pointer : curseur « main » au survol des
-            // canaux / groupes (cercles de pasteurs, nouveaux croyants…)
-            className={cn("w-full p-3 flex items-start gap-3 hover:bg-stone-50 transition-all text-left border-b border-stone-50 cursor-pointer group", isActive && "bg-[#C9A227]/5")}>
+            // ⭐ V2.6.2 — Rangée façon WhatsApp/Telegram : deux lignes
+            // (nom + heure en haut, aperçu + badges en bas), avatar rond
+            // centré verticalement, couleurs chaudes de la charte (fini le
+            // gris stone qui ne mariait pas avec le thème).
+            className={cn(
+              "w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors cursor-pointer group border-l-[3px]",
+              isActive
+                ? "bg-[#FAF6EF] border-[#C9A227]"
+                : "border-transparent hover:bg-[#FAF6EF]/70"
+            )}>
             <div className="relative flex-shrink-0">
               {conv.avatarUrl ? (
                 // ⭐ V2.5 — Photo du canal (uploadée depuis le back-office)
                 <img src={conv.avatarUrl} alt={conv.name}
-                  className="w-10 h-10 rounded-xl object-cover border border-stone-200" />
+                  className="w-11 h-11 rounded-full object-cover border border-[#C9A227]/25" />
               ) : (
-                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm", getAvatarColor(conv.name))}>
+                <div className={cn("w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm", getAvatarColor(conv.name))}>
                   {getInitials(conv.name)}
                 </div>
               )}
-              {conv.isEncrypted && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#C9A227] rounded-full flex items-center justify-center"><Lock className="w-2 h-2 text-[#1E0F2B]" /></div>}
+              {conv.isEncrypted && (
+                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-white rounded-full flex items-center justify-center border border-[#C9A227]/40">
+                  <Lock className="w-2.5 h-2.5 text-[#C9A227]" />
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-[#1E0F2B] truncate">{conv.name}</p>
-                <div className="flex items-center gap-1">
-                  {isMuted && <BellOff className="w-3 h-3 text-stone-400" />}
-                  {/* ⭐ V2.1 — Badge unread rouge (au lieu de gold) — unreadCount vient
-                      de l'API (calculé depuis ChannelMember.lastReadAt) et est
-                      incrémenté en temps réel via Socket.io. */}
+              {/* Ligne 1 : nom + heure du dernier message (façon WhatsApp) */}
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-[15px] font-semibold text-[#1E0F2B] truncate leading-tight">{conv.name}</p>
+                <span className={cn(
+                  "text-[11px] leading-none flex-shrink-0 font-medium",
+                  conv.unreadCount > 0 ? "text-[#C9A227] font-bold" : "text-[#8A8378]"
+                )}>
+                  {formatConvTime(conv.lastMessageAt)}
+                </span>
+              </div>
+              {/* Ligne 2 : aperçu + badges alignés en bas */}
+              <div className="flex items-center justify-between gap-2 mt-1">
+                <p className="text-[13px] text-[#8A8378] truncate leading-snug flex items-center gap-1 min-w-0">
+                  {conv.type === "CHANNEL" && <Hash className="w-3 h-3 text-[#C9A227]/70 flex-shrink-0" />}
+                  {conv.type === "GROUP" && <Users className="w-3 h-3 text-[#C9A227]/70 flex-shrink-0" />}
+                  {conv.type === "PASTORS" && <Users className="w-3 h-3 text-[#5B21B6] flex-shrink-0" />}
+                  <span className="truncate">{conv.lastMessagePreview || conv.description || "Aucun message"}</span>
+                </p>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {conv.isEncrypted && <span className="text-[9px] text-[#C9A227] font-bold bg-[#C9A227]/10 rounded px-1 py-px">E2E</span>}
+                  {isMuted && <BellOff className="w-3.5 h-3.5 text-[#8A8378]" />}
+                  {/* ⭐ V2.1 — Badge unread (calculé depuis lastReadAt, incrémenté
+                      en temps réel via Socket.io) */}
                   {conv.unreadCount > 0 && (
-                    <span className="px-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold bg-red-500 text-white">
+                    <span className="px-1.5 min-w-[20px] h-[20px] flex items-center justify-center rounded-full text-[10px] font-bold bg-[#C9A227] text-[#1E0F2B] shadow-sm">
                       {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
                     </span>
                   )}
                 </div>
-              </div>
-              <p className="text-xs text-stone-500 mt-0.5 truncate">{conv.lastMessagePreview || conv.description || ""}</p>
-              <div className="flex items-center gap-1 mt-1">
-                {conv.type === "CHANNEL" && <Hash className="w-3 h-3 text-stone-400" />}
-                {conv.type === "GROUP" && <Users className="w-3 h-3 text-stone-400" />}
-                {conv.type === "PASTORS" && <Users className="w-3 h-3 text-[#5B21B6]" />}
-                {conv.isEncrypted && <span className="text-[10px] text-[#C9A227] font-semibold">E2E</span>}
               </div>
             </div>
           </button>
@@ -3386,6 +3433,20 @@ function AudioPlayer({ src, duration, attachmentName }: { src: string; duration?
   const [audioDuration, setAudioDuration] = useState(duration || 0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // ⭐ V2.6.2 — Waveform déterministe façon WhatsApp/Telegram : hauteurs
+  // pseudo-aléatoires mais STABLES (seed = longueur du src), colorées en
+  // or jusqu'à la position de lecture, en ivoire chaud au-delà.
+  const bars = useMemo(() => {
+    let seed = 0;
+    for (let i = 0; i < src.length; i++) seed = (seed * 31 + src.charCodeAt(i)) % 997;
+    const heights: number[] = [];
+    for (let i = 0; i < 28; i++) {
+      seed = (seed * 137 + 61) % 997;
+      heights.push(0.3 + (seed / 997) * 0.7);
+    }
+    return heights;
+  }, [src]);
+
   const togglePlay = () => {
     if (!audioRef.current) return;
     if (playing) { audioRef.current.pause(); } else { audioRef.current.play(); }
@@ -3414,9 +3475,13 @@ function AudioPlayer({ src, duration, attachmentName }: { src: string; duration?
   };
 
   const progress = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
+  const playedBars = Math.round((progress / 100) * bars.length);
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1.5 min-w-[220px]">
+    // ⭐ V2.6.2 — Bulle audio professionnelle façon messageries pro :
+    // bouton lecture rond + waveform cliquable + durée + VRAIE icône
+    // de téléchargement (Download, remplace l'icône « document » FileText).
+    <div className="flex items-center gap-3 py-1.5 pl-1 pr-1.5 min-w-[260px]">
       <audio
         ref={audioRef}
         src={src}
@@ -3424,20 +3489,41 @@ function AudioPlayer({ src, duration, attachmentName }: { src: string; duration?
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleTimeUpdate}
       />
-      <button onClick={togglePlay} className="p-2 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] flex-shrink-0">
-        {playing ? <Pause className="w-4 h-4 text-[#1E0F2B]" /> : <Play className="w-4 h-4 text-[#1E0F2B]" />}
+      <button onClick={togglePlay}
+        aria-label={playing ? "Mettre en pause" : "Lire le message vocal"}
+        className="w-9 h-9 rounded-full bg-[#2A0E3D] hover:bg-[#3A1E4D] flex items-center justify-center flex-shrink-0 transition-colors shadow-sm">
+        {playing ? <Pause className="w-4 h-4 text-[#C9A227]" fill="currentColor" /> : <Play className="w-4 h-4 text-[#C9A227] fill-current" />}
       </button>
-      <div className="flex-1 flex flex-col gap-0.5">
-        <div className="h-1.5 bg-[#1E0F2B]/10 rounded-full cursor-pointer" onClick={handleSeek}>
-          <div className="h-full bg-[#C9A227] rounded-full transition-all" style={{ width: `${progress}%` }} />
+      <div className="flex-1 flex flex-col gap-1 min-w-0">
+        <div
+          className="flex items-center gap-[2px] h-8 cursor-pointer"
+          onClick={handleSeek}
+          title="Cliquer pour avancer dans l'audio"
+        >
+          {bars.map((h, i) => (
+            <div
+              key={i}
+              className={cn(
+                "flex-1 rounded-full transition-colors",
+                i < playedBars ? "bg-[#C9A227]" : "bg-[#8A8378]/30"
+              )}
+              style={{ height: `${Math.round(h * 100)}%` }}
+            />
+          ))}
         </div>
-        <div className="flex items-center justify-between text-[10px] text-stone-500">
+        <div className="flex items-center justify-between text-[11px] text-[#8A8378] tabular-nums px-0.5">
           <span>{formatSec(currentTime)}</span>
+          {attachmentName && (
+            <span className="truncate max-w-[120px] text-[10px] opacity-70">{attachmentName}</span>
+          )}
           <span>{formatSec(audioDuration)}</span>
         </div>
       </div>
-      <a href={src} download={attachmentName || "audio.webm"} className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400" title="Télécharger">
-        <FileText className="w-3.5 h-3.5" />
+      <a href={src} download={attachmentName || "audio.webm"}
+        aria-label="Télécharger l'audio"
+        className="w-8 h-8 rounded-full hover:bg-[#2A0E3D]/10 flex items-center justify-center text-[#C9A227] flex-shrink-0 transition-colors"
+        title="Télécharger">
+        <Download className="w-4 h-4" />
       </a>
     </div>
   );

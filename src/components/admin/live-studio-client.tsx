@@ -24,6 +24,10 @@ interface LiveStudioClientProps {
   servantPortraitUrl?: string | null;
   thumbnailUrl?: string | null;
   status: string;
+  // ⭐ V2.6.2 — État persisté du live (restauration à la reconnexion)
+  initialIsPaused?: boolean;
+  initialStartedAt?: string | null;
+  initialPausedAt?: string | null;
   multistream: {
     enabled: boolean;
     youtube: boolean;
@@ -34,7 +38,9 @@ interface LiveStudioClientProps {
 }
 
 export function LiveStudioClient({
-  liveId, roomName, title, servantName, servantPortraitUrl, thumbnailUrl, status: initialStatus, multistream,
+  liveId, roomName, title, servantName, servantPortraitUrl, thumbnailUrl,
+  status: initialStatus, multistream,
+  initialIsPaused = false, initialStartedAt = null, initialPausedAt = null,
 }: LiveStudioClientProps) {
   const [status, setStatus] = useState(initialStatus);
   const [isLive, setIsLive] = useState(initialStatus === "LIVE");
@@ -54,11 +60,14 @@ export function LiveStudioClient({
   const [youtubeReplayUrl, setYoutubeReplayUrl] = useState("");
   const [fetchingYoutubeReplay, setFetchingYoutubeReplay] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(initialIsPaused);
   const [showControls, setShowControls] = useState(true);
   const [sourceMode, setSourceMode] = useState<"webcam" | "encoder">("webcam");
   const [ingressInfo, setIngressInfo] = useState<{ rtmpUrl: string; streamKey: string; obsInstructions: string[] } | null>(null);
   const [copiedField, setCopiedField] = useState("");
+  // ⭐ V2.6.2 — Reconnexion auto d'un live déjà en cours (studio refermé puis rouvert)
+  const [reconnecting, setReconnecting] = useState(false);
+  const reconnectAttemptedRef = useRef(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -421,6 +430,197 @@ export function LiveStudioClient({
       setLoading(false);
     }
   };
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  ⭐ V2.6.2 — RECONNEXION AUTOMATIQUE D'UN LIVE DÉJÀ EN COURS
+  // ═══════════════════════════════════════════════════════════════════
+  // Scénario corrigé : l'admin met le live en pause, SORT du module, puis
+  // REVIENT. Avant : le studio affichait « en lecture » avec des tracks
+  // locaux non publiés (room déconnectée) et une durée repartie de zéro.
+  // Maintenant : on se RECONNECTE à la room LiveKit, on republie les tracks
+  // (en respectant l'état de pause persisté), on restaure la durée réelle
+  // depuis startedAt et on réutilise l'egress RTMP existant (zéro doublon).
+  // ═══════════════════════════════════════════════════════════════════
+  const reconnectLive = useCallback(async () => {
+    if (roomRef.current) return; // déjà connecté
+    setReconnecting(true);
+    setInfo("Reconnexion à la diffusion en cours...");
+    try {
+      // 1. Token LiveKit (role publisher) — PAS d'appel à /api/live/start
+      //    (le live est déjà LIVE en base ; re-démarrer remettrait startedAt
+      //    à zéro, d'où l'ancien bug « ça reprend à zéro »).
+      const tokenRes = await apiFetch("/api/livekit/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomName, role: "publisher", participantName: servantName, liveId }),
+      });
+      if (!tokenRes.ok) {
+        const tokenErr = await tokenRes.json().catch(() => ({}));
+        throw new Error(tokenErr.error || `Token LiveKit: HTTP ${tokenRes.status}`);
+      }
+      const { token, url } = await tokenRes.json();
+
+      const room = new Room({
+        adaptiveStream: true,
+        dynacast: true,
+        videoCaptureDefaults: { resolution: { width: 1280, height: 720 } },
+        publishDefaults: { videoCodec: "h264" },
+      });
+      roomRef.current = room;
+      await room.connect(url, token);
+
+      // 2. Republier les tracks locaux (caméra/micro — ou canvas si overlay actif)
+      //    en RESPECTANT l'état de pause : tracks désactivés si isPaused.
+      const applyPauseToTracks = () => {
+        if (localStreamRef.current) {
+          const videoTrack = localStreamRef.current.getVideoTracks()[0];
+          const audioTrack = localStreamRef.current.getAudioTracks()[0];
+          if (videoTrack) videoTrack.enabled = !isPaused && cameraOn;
+          if (audioTrack) audioTrack.enabled = !isPaused && micOn;
+        }
+      };
+      applyPauseToTracks();
+
+      if (localStreamRef.current) {
+        const audioTrack = localStreamRef.current.getAudioTracks()[0];
+        let videoPublished = false;
+        if (overlayStreamRef.current) {
+          const canvasVideoTrack = overlayStreamRef.current.getVideoTracks()[0];
+          if (canvasVideoTrack) {
+            try {
+              await room.localParticipant.publishTrack(canvasVideoTrack, {
+                source: Track.Source.Camera,
+                name: "composite",
+              });
+              videoPublished = true;
+            } catch (err) {
+              console.error("[studio/reconnect] Failed to publish canvas track:", err);
+            }
+          }
+        }
+        if (!videoPublished) {
+          const videoTrack = localStreamRef.current.getVideoTracks()[0];
+          if (videoTrack) {
+            await room.localParticipant.publishTrack(videoTrack, { source: Track.Source.Camera });
+          }
+        }
+        if (audioTrack) await room.localParticipant.publishTrack(audioTrack, { source: Track.Source.Microphone });
+      }
+
+      // 3. Restaurer la durée RÉELLE depuis la base (startedAt) :
+      //    - en pause → minuterie gelée à (pausedAt - startedAt)
+      //    - sinon    → minuterie live (now - startedAt)
+      if (initialStartedAt) {
+        const started = new Date(initialStartedAt).getTime();
+        if (isPaused && initialPausedAt) {
+          setStreamDuration(Math.max(0, Math.floor((new Date(initialPausedAt).getTime() - started) / 1000)));
+        } else if (!isPaused) {
+          setStreamDuration(Math.max(0, Math.floor((Date.now() - started) / 1000)));
+          if (durationTimerRef.current) clearInterval(durationTimerRef.current);
+          const anchor = started;
+          durationTimerRef.current = setInterval(() => {
+            setStreamDuration(Math.max(0, Math.floor((Date.now() - anchor) / 1000)));
+          }, 1000);
+        }
+      }
+
+      // 4. Timers annexes (stats + viewers) comme pendant un goLive normal
+      if (statsTimerRef.current) clearInterval(statsTimerRef.current);
+      statsTimerRef.current = setInterval(() => {
+        setBitrate(2000 + Math.floor(Math.random() * 200));
+        setLatency(Math.floor(Math.random() * 2) + 1);
+      }, 3000);
+      const fetchViewers = async () => {
+        try {
+          const res = await apiFetch(`/api/live/${liveId}/viewers`);
+          const data = await res.json();
+          setViewerCount(data.count || 0);
+        } catch {}
+      };
+      fetchViewers();
+      if (viewerPollRef.current) clearInterval(viewerPollRef.current);
+      viewerPollRef.current = setInterval(fetchViewers, 5000);
+
+      // 5. Redémarrer l'enregistrement local (replay de la session courante)
+      const recordStream = overlayStreamRef.current || localStreamRef.current;
+      if (recordStream && typeof MediaRecorder !== "undefined" && !mediaRecorderRef.current) {
+        try {
+          const combinedStream = new MediaStream();
+          recordStream.getVideoTracks().forEach((t) => combinedStream.addTrack(t));
+          if (localStreamRef.current) {
+            localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
+          }
+          const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+            ? "video/webm;codecs=vp9,opus"
+            : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+            ? "video/webm;codecs=vp8,opus"
+            : "video/webm";
+          const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
+          recordedChunksRef.current = [];
+          recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+          };
+          recorder.start(1000);
+          mediaRecorderRef.current = recorder;
+          setIsRecording(true);
+        } catch (err) {
+          console.error("[studio/reconnect] MediaRecorder failed:", err);
+        }
+      }
+
+      // 6. Egress RTMP : la route est idempotente (V2.6.2) — elle RÉUTILISE
+      //    l'egress actif pour cette room au lieu d'en démarrer un doublon.
+      if (multistream.enabled) {
+        try {
+          const egressRes = await apiFetch(`/api/live/${liveId}/egress`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+          const egressData = await egressRes.json().catch(() => ({}));
+          if (egressRes.ok && egressData.totalStarted > 0) {
+            const reused = (egressData.results || []).some((r: { reused?: boolean }) => r.reused);
+            setInfo(
+              isPaused
+                ? `✓ Reconnecté — diffusion en pause${reused ? " (egress réutilisé)" : ""}`
+                : `✓ Reconnecté à la diffusion${reused ? " (egress réutilisé)" : ""}`
+            );
+          } else {
+            const failed = (egressData.results || [])
+              .filter((r: { egressId: string | null }) => !r.egressId)
+              .map((r: { name: string; error?: string }) => `${r.name}: ${r.error || "échec"}`)
+              .join(", ");
+            if (failed) setInfo(`⚠ Multistreaming: ${failed}`);
+          }
+        } catch (err) {
+          console.error("[studio/reconnect] Egress failed:", err);
+        }
+      } else {
+        setInfo(isPaused ? "Reconnecté — diffusion en pause" : "Reconnecté à la diffusion");
+      }
+    } catch (err) {
+      console.error("[studio/reconnect] Failed:", err);
+      setError(
+        `Reconnexion impossible : ${err instanceof Error ? err.message : "erreur"}. ` +
+        "Le live continue côté YouTube avec la dernière image publiée."
+      );
+    } finally {
+      setReconnecting(false);
+    }
+  }, [liveId, roomName, servantName, multistream.enabled, isPaused, cameraOn, micOn, initialStartedAt, initialPausedAt]);
+
+  // Déclencher la reconnexion une seule fois, quand on arrive sur un live
+  // déjà LIVE ET que la caméra est prête (les tracks existent avant publish).
+  useEffect(() => {
+    if (
+      initialStatus === "LIVE" &&
+      cameraReady &&
+      !reconnectAttemptedRef.current &&
+      !roomRef.current
+    ) {
+      reconnectAttemptedRef.current = true;
+      reconnectLive();
+    }
+  }, [cameraReady, initialStatus, reconnectLive]);
 
   // ─── Récupérer l'URL YouTube du replay (auto ou manuel) ───
   const handleFetchYoutubeReplay = async () => {
@@ -867,10 +1067,16 @@ export function LiveStudioClient({
               ) : null}
             </div>
 
+            {reconnecting && (
+              <div className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#8B6914] text-sm">
+                <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                <span>Reconnexion à la diffusion en cours… (l'état de pause et la durée réelle sont restaurés)</span>
+              </div>
+            )}
             {error && (
-              <div className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600/10 border border-red-600/20 text-red-400 text-sm">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" /><span>{error}</span>
-                <button onClick={() => setError("")} className="ml-auto p-0.5 rounded hover:bg-red-600/20"><X className="w-3.5 h-3.5" /></button>
+              <div className="mt-3 flex items-start gap-2 px-4 py-2.5 rounded-lg bg-red-600/10 border border-red-600/20 text-red-400 text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" /><span className="min-w-0">{error}</span>
+                <button onClick={() => setError("")} className="ml-auto p-0.5 rounded hover:bg-red-600/20 flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
               </div>
             )}
             {info && !error && (
