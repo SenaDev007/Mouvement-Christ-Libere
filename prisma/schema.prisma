@@ -466,6 +466,9 @@ enum MessageType {
   FILE
   POLL
   SCHEDULED
+  VERSE
+  ANNOUNCEMENT
+  GIF
 }
 
 // ⭐ V2.4 — Sondages (polls) dans Yeshua Connect

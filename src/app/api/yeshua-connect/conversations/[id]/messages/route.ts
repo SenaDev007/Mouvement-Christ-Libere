@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { ensureMessageTypeEnum } from "@/lib/ensure-schema";
 
 /** Rôles pouvant modérer (et donc lire) tous les canaux même sans y être membre. */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -224,6 +225,12 @@ export async function POST(
     }
     const userId = session.user.id;
     const userRole = session.user.role;
+
+    // ⭐ V2.8 — Auto-réparation de l'enum MessageType : la valeur VERSE
+    // (versets partagés depuis la Bible intégrée) manque dans la base si
+    // `db:push` n'a pas été relancé depuis la V2.6 — sans ceci, l'envoi
+    // d'un verset échoue en 500 (PrismaClientValidationError).
+    await ensureMessageTypeEnum();
 
     const { id } = await params;
     const body = await req.json();

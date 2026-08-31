@@ -73,6 +73,10 @@ export interface ChatMessage {
   reactions: MessageReaction[];
   createdAt: string;
   editedAt?: string;
+  /** ⭐ V2.8 — Message épinglé (persisté en base, hydraté au chargement) */
+  isPinned?: boolean;
+  pinnedAt?: string;
+  pinnedBy?: string;
 }
 
 /** ⭐ V2.5 — Sondage (comme WhatsApp/Telegram) attaché à un message POLL. */

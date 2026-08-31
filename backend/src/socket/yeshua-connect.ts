@@ -98,6 +98,12 @@ export function initSocketServer(httpServer: HttpServer) {
       socket.to(`conv:${data.conversationId}`).emit("message:deleted", data);
     });
 
+    // ⭐ V2.8 — Épinglage / désépinglage diffusé à toute la conversation
+    // (la bannière « messages épinglés » se met à jour chez tout le monde).
+    socket.on("message:pinned", (data: { conversationId: string; messageId: string; isPinned: boolean }) => {
+      socket.to(`conv:${data.conversationId}`).emit("message:pinned", data);
+    });
+
     // ═══ TYPING ═══
     socket.on("typing:start", ({ conversationId }: { conversationId: string }) => {
       socket.to(`conv:${conversationId}`).emit("typing:start", { conversationId, userId });

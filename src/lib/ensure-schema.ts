@@ -96,3 +96,52 @@ export function ensureVoiceVideoColumns(): Promise<void> {
   }
   return inflightVoice;
 }
+
+let messageTypeEnumOk = false;
+let inflightMessageEnum: Promise<void> | null = null;
+
+/**
+ * ⭐ V2.8 — S'assure que l'enum `MessageType` contient les valeurs utilisées
+ * par le frontend : VERSE (versets bibliques partagés depuis la Bible),
+ * ANNOUNCEMENT et GIF.
+ *
+ * Contexte : le type TypeScript `MessageType` (src/lib/yeshua-connect/types)
+ * inclut ces valeurs depuis la V2.6, mais l'enum PostgreSQL ne les a jamais
+ * eues → l'envoi d'un verset depuis la Bible intégrée échouait en 500
+ * (« Invalid value for argument type. Expected MessageType ») — c'est la
+ * cause profonde du « bouton envoyer ne marche pas » sur les versets.
+ *
+ * `ALTER TYPE ... ADD VALUE IF NOT EXISTS` est idempotent (PG ≥ 9.6) et
+ * n'altère pas les données existantes. ⚠️ PostgreSQL interdit ce DDL dans
+ * une transaction — on l'exécute hors transaction via $executeRawUnsafe.
+ */
+export function ensureMessageTypeEnum(): Promise<void> {
+  if (messageTypeEnumOk) return Promise.resolve();
+  if (!inflightMessageEnum) {
+    inflightMessageEnum = (async () => {
+      await db.$executeRawUnsafe(
+        `ALTER TYPE "MessageType" ADD VALUE IF NOT EXISTS 'VERSE'`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TYPE "MessageType" ADD VALUE IF NOT EXISTS 'ANNOUNCEMENT'`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TYPE "MessageType" ADD VALUE IF NOT EXISTS 'GIF'`
+      );
+    })()
+      .then(() => {
+        messageTypeEnumOk = true;
+        console.log("[ensure-schema] Enum MessageType : valeurs VERSE/ANNOUNCEMENT/GIF vérifiées/ajoutées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TYPE MessageType impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightMessageEnum = null;
+      });
+  }
+  return inflightMessageEnum;
+}

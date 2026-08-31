@@ -54,8 +54,8 @@ import {
   Forward, Check, X, ArrowLeft, Globe, Settings, UserPlus,
   Calendar, BarChart3, Phone, Video, Smile, FileText, Image as ImageIcon,
   StopCircle, Play, Pause, Sparkles, AlertCircle,
-  MessageCircle, AtSign, ChevronUp, Copy, UploadCloud,
-  ScrollText, PhoneOff, MicOff, VolumeX, Download, Film, VideoOff,
+  MessageCircle, AtSign, ChevronUp, ChevronRight, Copy, UploadCloud,
+  ScrollText, PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
 } from "lucide-react";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant } from "livekit-client";
 import { cn } from "@/lib/utils";
@@ -67,6 +67,7 @@ import {
 import { getYeshuaWatermarkStyle } from "./YeshuaWatermark";
 import { api } from "@/lib/api-client";
 import { useChatSocket } from "@/hooks/use-chat-socket";
+import { emitSocket, onSocket, offSocket } from "@/lib/chat/socket-client";
 import { SlashCommands, executeCommand, type SendMessagePayload } from "./SlashCommands";
 import { MessageThreads, type ThreadMessage } from "./MessageThreads";
 import { LinkEmbed, extractUrls } from "./LinkEmbed";
@@ -346,6 +347,39 @@ export function MessagingView() {
   const [mutedConversations, setMutedConversations] = useState<Set<string>>(new Set());
   const [dndEnabled, setDndEnabled] = useState(false);
 
+  // ─── ⭐ V2.8 — Suppression / épinglage / pièces jointes / toasts ──────
+  // Menu de suppression façon WhatsApp : « Supprimer pour moi » vs
+  // « Supprimer pour tous » (popover au clic sur la corbeille).
+  const [deleteMenuFor, setDeleteMenuFor] = useState<string | null>(null);
+  // ⭐ V2.8 — Menu « ⋮ » par message (Modifier / Épingler / Transférer /
+  // Supprimer) + affichage de la barre d'actions au tap (mobile).
+  const [showMsgMenu, setShowMsgMenu] = useState<string | null>(null);
+  const [showActionsFor, setShowActionsFor] = useState<string | null>(null);
+  // Liste déroulante des messages épinglés (bannière du haut).
+  const [pinnedListOpen, setPinnedListOpen] = useState(false);
+  // Messages masqués « pour moi » (persistés en localStorage, par user).
+  const [hiddenForMe, setHiddenForMe] = useState<Set<string>>(new Set());
+  const hiddenForMeRef = useRef<Set<string>>(new Set());
+  useEffect(() => { hiddenForMeRef.current = hiddenForMe; }, [hiddenForMe]);
+  // Pièces jointes EN ATTENTE (aperçu avant envoi, façon WhatsApp) :
+  // le collage (Ctrl+V) et la sélection via « Joindre » ne partent PLUS
+  // directement — l'utilisateur voit un aperçu + peut annuler / ajouter
+  // une légende avant d'envoyer.
+  const [pendingFiles, setPendingFiles] = useState<Array<{
+    id: string; file: File; previewUrl?: string; kind: "image" | "doc";
+  }>>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  // Toast de retour (partage de verset Bible, erreurs d'envoi…).
+  const [toastMsg, setToastMsg] = useState<{ text: string; kind: "success" | "error" } | null>(null);
+
+  /** Affiche un toast temporaire (disparaît après 2,8 s). */
+  const showToast = useCallback((text: string, kind: "success" | "error" = "success") => {
+    setToastMsg({ text, kind });
+    if ((toastTimerRef as any).current) clearTimeout((toastTimerRef as any).current);
+    (toastTimerRef as any).current = setTimeout(() => setToastMsg(null), 2800);
+  }, []);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // ─── State: voice recording ──────────────────────────────────────────
   const [recordingState, setRecordingState] = useState<"idle" | "recording" | "preview">("idle");
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -399,11 +433,9 @@ export function MessagingView() {
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const dragCounterRef = useRef(0);
 
-  // Paste d'image : preview temporaire (object URL) pendant l'upload.
-  // Chaque entrée contient { url, name } — l'URL est révoquée après upload.
-  const [pastedImagePreviews, setPastedImagePreviews] = useState<
-    Array<{ url: string; name: string }>
-  >([]);
+  // Paste d'image : remplacé en V2.8 par le composer « pendingFiles » —
+  // les images collées passent par un aperçu AVANT envoi (plus d'upload
+  // automatique). Voir addPendingFiles / sendPendingFiles.
 
   // Emoji Picker : visible/non-visible (popover shadcn).
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -466,6 +498,44 @@ export function MessagingView() {
     return () => { cancelled = true; };
   }, [session?.user?.id]);
 
+  // ⭐ V2.8 — Messages « supprimés pour moi » : rechargés depuis le
+  // localStorage au montage (persistés entre les sessions / rechargements).
+  useEffect(() => {
+    if (!currentUserId || typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(`yc-hidden-${currentUserId}`);
+      if (raw) {
+        const ids: string[] = JSON.parse(raw);
+        if (Array.isArray(ids) && ids.length > 0) {
+          const set = new Set(ids);
+          setHiddenForMe(set);
+          hiddenForMeRef.current = set;
+        }
+      }
+    } catch { /* localStorage corrompu — ignorer */ }
+  }, [currentUserId]);
+
+  // ⭐ V2.8 — Quand la fenêtre reprend le focus : rafraîchir la photo de
+  // profil courante + les conversations. Corrige « la photo change dans la
+  // sidebar mais pas dans Yeshua Connect » après un changement de photo
+  // depuis /profil sans recharger la page.
+  const loadConversationsRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    const onFocus = () => {
+      if (!session?.user?.id) return;
+      fetch(api.url("/api/user/profile"), { cache: "no-store" })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => {
+          if (data?.avatarUrl) setCurrentUserAvatar(data.avatarUrl);
+          else if (data && data.avatarUrl === null) setCurrentUserAvatar(undefined);
+        })
+        .catch(() => {});
+      loadConversationsRef.current?.();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [session?.user?.id]);
+
   // ⭐ V2.2 — Refs "live" vers conversations + mutedConversations pour
   // accéder aux valeurs à jour dans le callback Socket.io sans re-souscrire
   // à chaque render. Évite une closure stale dans `onNewMessage`.
@@ -503,6 +573,9 @@ export function MessagingView() {
   }, [activeConvId]);
 
   useEffect(() => { loadConversations(); }, [loadConversations]);
+  // ⭐ V2.8 — Réf « live » vers loadConversations (utilisé par le refresh
+  // au focus fenêtre, cf. effet ci-dessus).
+  useEffect(() => { loadConversationsRef.current = loadConversations; }, [loadConversations]);
 
   const loadMessages = useCallback(async (convId: string) => {
     setLoadingMsgs(true);
@@ -511,7 +584,12 @@ export function MessagingView() {
       const res = await fetch(api.url(`/api/yeshua-connect/conversations/${convId}/messages?limit=50`), { cache: "no-store" });
       if (!res.ok) throw new Error("Failed");
       const data: ChatMessage[] = await res.json();
-      setMessages(prev => ({ ...prev, [convId]: data }));
+      // ⭐ V2.8 — Hydrater les messages épinglés (persistés en base) : la
+      // bannière « épinglé » survit désormais au rechargement de la page.
+      setPinnedMessages(new Set(data.filter(m => m.isPinned).map(m => m.id)));
+      // ⭐ V2.8 — Filtrer les messages « supprimés pour moi » (localStorage).
+      const visible = data.filter(m => !hiddenForMeRef.current.has(m.id));
+      setMessages(prev => ({ ...prev, [convId]: visible }));
       // Si on a reçu exactement `limit` messages, il y en a probablement
       // d'autres plus anciens à charger via "Load more".
       setHasMoreMessages(data.length >= 50);
@@ -678,20 +756,48 @@ export function MessagingView() {
       const convId: string | undefined = data?.conversationId;
       const messageId: string | undefined = data?.messageId ?? data?.id;
       if (!convId || !messageId) return;
+      // ⭐ V2.8 — Suppression IMMÉDIATE de la liste locale (l'ancien
+      // comportement « marquait » le message, ce qui laissait les sondages
+      // et les images affichés — seul un rechargement les faisait
+      // disparaître). Le message part désormais dès la suppression.
+      setMessages(prev => ({
+        ...prev,
+        [convId]: (prev[convId] || []).filter(m => m.id !== messageId),
+      }));
+      setPinnedMessages(prev => {
+        if (!prev.has(messageId)) return prev;
+        const next = new Set(prev);
+        next.delete(messageId);
+        return next;
+      });
+    });
+
+    // ⭐ V2.8 — Épinglage / désépinglage diffusé en temps réel (un autre
+    // membre épingle → la bannière s'actualise chez tout le monde).
+    const onPinnedHandler = (data: any) => {
+      const convId: string | undefined = data?.conversationId;
+      const messageId: string | undefined = data?.messageId ?? data?.id;
+      if (!convId || !messageId) return;
+      const isPinned: boolean = !!data?.isPinned;
+      setPinnedMessages(prev => {
+        const next = new Set(prev);
+        if (isPinned) next.add(messageId); else next.delete(messageId);
+        return next;
+      });
       setMessages(prev => ({
         ...prev,
         [convId]: (prev[convId] || []).map(m =>
-          m.id === messageId
-            ? { ...m, content: "🗑️ Message supprimé", isDeleted: true as any }
-            : m
+          m.id === messageId ? { ...m, isPinned } : m
         ),
       }));
-    });
+    };
+    onSocket("message:pinned", onPinnedHandler);
 
     return () => {
       offNew?.();
       offEdited?.();
       offDeleted?.();
+      offSocket("message:pinned", onPinnedHandler);
     };
   }, [onNewMessage, onMessageEdited, onMessageDeleted, currentUserId, activeConvId]);
 
@@ -788,8 +894,16 @@ export function MessagingView() {
   // comme message VERSE (rendu spécial bulle dorée) dans la conversation
   // active. Format identique à la commande /bible (content = référence,
   // verseText = texte complet).
+  // ⭐ V2.8 — Retour visuel explicite : avant, l'envoi échouait EN SILENCE
+  // (aucune conversation active sur mobile) ou passait inaperçu (la Bible
+  // couvre tout l'écran). Désormais un toast confirme l'envoi — ou invite
+  // à sélectionner une conversation d'abord.
   const handleShareVerse = useCallback(async (verse: { reference: string; text: string }) => {
-    if (!verse.reference || !verse.text || !activeConvId) return;
+    if (!verse.reference || !verse.text) return;
+    if (!activeConvId) {
+      showToast("Ouvrez d'abord une conversation pour partager un verset", "error");
+      return;
+    }
     try {
       await postMessage({
         content: verse.reference,
@@ -797,10 +911,12 @@ export function MessagingView() {
         verseRef: verse.reference,
         verseText: verse.text,
       });
+      showToast(`Verset ${verse.reference} partagé dans la conversation`);
     } catch (e) {
       console.error("handleShareVerse:", e);
+      showToast("Impossible de partager le verset", "error");
     }
-  }, [activeConvId, postMessage]);
+  }, [activeConvId, postMessage, showToast]);
 
   // ⭐ V2.6 — Fermer la Bible intégrée avec la touche Échap
   useEffect(() => {
@@ -856,6 +972,20 @@ export function MessagingView() {
 
   const handleSend = async () => {
     const content = inputText.trim();
+
+    // ⭐ V2.8 — Pièces jointes en attente : le bouton Envoyer envoie les
+    // fichiers + le texte du champ comme légende (comportement WhatsApp).
+    if (pendingFiles.length > 0 && !editingMsg) {
+      if (!activeConvId) return;
+      setSending(true);
+      try {
+        await sendPendingFiles(content);
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
+
     if (!content || !activeConvId) return;
 
     // ⭐ V2.1 — Slash commands : si l'input commence par "/" ET fait plus
@@ -977,6 +1107,7 @@ export function MessagingView() {
       ),
     }));
     setShowReactions(null);
+    setShowActionsFor(null);
     // API call (fire-and-forget)
     try {
       await fetch(api.url(`/api/yeshua-connect/messages/${msgId}/react`), {
@@ -994,17 +1125,56 @@ export function MessagingView() {
     messageInputRef.current?.focus();
   };
 
-  const handleDelete = async (msgId: string, forEveryone: boolean = false) => {
+  // ⭐ V2.8 — Suppression façon WhatsApp : deux options dans un popover
+  // (au clic sur la corbeille) — « Supprimer pour moi » (masquage local
+  // persisté) et « Supprimer pour tous » (soft-delete en base + broadcast
+  // temps réel). Dans les deux cas le message disparaît IMMÉDIATEMENT,
+  // y compris les sondages et les images (l'ancien code « marquait » le
+  // message sans changer le rendu des pièces jointes).
+  const handleDelete = async (msgId: string, forEveryone: boolean) => {
     if (!activeConvId) return;
-    try {
-      await fetch(api.url(`/api/yeshua-connect/messages/${msgId}/delete?forEveryone=${forEveryone}`), { method: "DELETE" });
+    setDeleteMenuFor(null);
+    if (forEveryone) {
+      try {
+        const res = await fetch(api.url(`/api/yeshua-connect/messages/${msgId}/delete?forEveryone=true`), { method: "DELETE" });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          showToast(err?.error || "Impossible de supprimer ce message", "error");
+          return;
+        }
+        setMessages(prev => ({
+          ...prev,
+          [activeConvId]: (prev[activeConvId] || []).filter(m => m.id !== msgId),
+        }));
+        setPinnedMessages(prev => {
+          if (!prev.has(msgId)) return prev;
+          const next = new Set(prev);
+          next.delete(msgId);
+          return next;
+        });
+        // Diffuser la suppression aux autres membres de la conversation
+        emitSocket("message:deleted", { conversationId: activeConvId, messageId: msgId });
+      } catch (e) {
+        console.error("delete:", e);
+        showToast("Erreur de suppression", "error");
+      }
+    } else {
+      // « Supprimer pour moi » : masquage local uniquement (persisté en
+      // localStorage par utilisateur — survit aux rechargements).
+      const next = new Set(hiddenForMe);
+      next.add(msgId);
+      setHiddenForMe(next);
+      hiddenForMeRef.current = next;
+      try {
+        const key = `yc-hidden-${currentUserId}`;
+        const existing: string[] = JSON.parse(window.localStorage.getItem(key) || "[]");
+        window.localStorage.setItem(key, JSON.stringify(Array.from(new Set([...existing, msgId]))));
+      } catch { /* localStorage indisponible — on continue */ }
       setMessages(prev => ({
         ...prev,
-        [activeConvId]: (prev[activeConvId] || []).map(m =>
-          m.id === msgId ? { ...m, content: "🗑️ Message supprimé", isDeleted: true } : m
-        ),
+        [activeConvId]: (prev[activeConvId] || []).filter(m => m.id !== msgId),
       }));
-    } catch (e) { console.error("delete:", e); }
+    }
   };
 
   const handleForward = async (targetChannelId: string) => {
@@ -1023,13 +1193,36 @@ export function MessagingView() {
     } catch (e) { console.error("forward:", e); }
   };
 
-  const handlePin = (msgId: string) => {
-    setPinnedMessages(prev => {
-      const next = new Set(prev);
-      if (next.has(msgId)) next.delete(msgId);
-      else next.add(msgId);
-      return next;
-    });
+  // ⭐ V2.8 — Épinglage PERSISTÉ : appel de l'API /pin (toggle en base,
+  // isPinned + pinnedAt + pinnedBy) + broadcast temps réel aux autres
+  // membres. La bannière survit désormais au rechargement de la page.
+  const handlePin = async (msgId: string) => {
+    if (!activeConvId) return;
+    try {
+      const res = await fetch(api.url(`/api/yeshua-connect/messages/${msgId}/pin`), { method: "POST" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err?.error || "Impossible d'épingler ce message", "error");
+        return;
+      }
+      const data = await res.json();
+      const isPinned: boolean = !!data.isPinned;
+      setPinnedMessages(prev => {
+        const next = new Set(prev);
+        if (isPinned) next.add(msgId); else next.delete(msgId);
+        return next;
+      });
+      setMessages(prev => ({
+        ...prev,
+        [activeConvId]: (prev[activeConvId] || []).map(m =>
+          m.id === msgId ? { ...m, isPinned } : m
+        ),
+      }));
+      emitSocket("message:pinned", { conversationId: activeConvId, messageId: msgId, isPinned });
+    } catch (e) {
+      console.error("pin:", e);
+      showToast("Erreur d'épinglage", "error");
+    }
   };
 
   const handleMute = (convId: string) => {
@@ -1144,14 +1337,12 @@ export function MessagingView() {
   // ═════════════════════════════════════════════════════════════════════
 
   // ⭐ V2.2 — Helper unifié qui uploade UN fichier vers l'API attachment.
-  // Réutilisé par :
-  //   - handleFileSelect (input <input type="file">)
-  //   - handleDrop (drag & drop de fichiers multiples)
-  //   - handlePaste (collage d'image depuis le presse-papiers)
-  // Détecte automatiquement le type (IMAGE / AUDIO / VIDEO / FILE) à partir
-  // du MIME type — l'ancien code ne gérait que IMAGE vs FILE.
+  // ⭐ V2.8 — Désormais appelé UNIQUEMENT au moment où l'utilisateur
+  // confirme l'envoi (bouton Envoyer du composer) : plus d'upload
+  // automatique au collage / à la sélection — l'utilisateur voit un aperçu
+  // et peut annuler avant l'envoi (comportement WhatsApp).
   const uploadSingleFile = useCallback(async (file: File) => {
-    if (!activeConvId) return;
+    if (!activeConvId) return false;
     const formData = new FormData();
     formData.append("file", file);
     formData.append("userId", "current");
@@ -1169,15 +1360,88 @@ export function MessagingView() {
         method: "POST",
         body: formData,
       });
-      if (res.ok) loadMessages(activeConvId);
+      if (res.ok) {
+        loadMessages(activeConvId);
+        return true;
+      }
+      const err = await res.json().catch(() => ({}));
+      showToast(err?.error || `Échec de l'envoi de ${file.name || "la pièce jointe"}`, "error");
+      return false;
     } catch (e) {
       console.error("file upload:", e);
+      showToast("Échec de l'envoi de la pièce jointe", "error");
+      return false;
     }
-  }, [activeConvId, loadMessages]);
+  }, [activeConvId, loadMessages, showToast]);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await uploadSingleFile(file);
+  // ⭐ V2.8 — Ajouter des fichiers à la file d'attente (aperçu avant envoi).
+  // Utilisé par : sélection « Joindre » (document/image), drag & drop, et
+  // collage d'image (Ctrl+V). Aucun upload ne part d'ici — l'envoi se fait
+  // via sendPendingFiles() au clic sur le bouton Envoyer.
+  const addPendingFiles = useCallback((files: File[]) => {
+    if (files.length === 0) return;
+    setPendingFiles(prev => [
+      ...prev,
+      ...files.map(file => {
+        const mime = file.type || "";
+        const isImage = mime.startsWith("image/");
+        return {
+          id: `pf-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          file,
+          kind: (isImage ? "image" : "doc") as "image" | "doc",
+          previewUrl: isImage ? URL.createObjectURL(file) : undefined,
+        };
+      }),
+    ]);
+  }, []);
+
+  // ⭐ V2.8 — Retirer un fichier de la file d'attente (bouton × sur l'aperçu).
+  const removePendingFile = useCallback((id: string) => {
+    setPendingFiles(prev => {
+      const item = prev.find(p => p.id === id);
+      if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      return prev.filter(p => p.id !== id);
+    });
+  }, []);
+
+  // ⭐ V2.8 — Envoyer les fichiers en attente (upload séquentiel) + une
+  // éventuelle légende (le texte du champ de saisie) envoyée AVANT les
+  // fichiers, comme la légende d'une image WhatsApp.
+  const sendPendingFiles = useCallback(async (caption?: string) => {
+    if (!activeConvId || pendingFiles.length === 0) return true;
+    setUploadingFiles(true);
+    try {
+      // 1. Légende (message texte) — envoyée d'abord si non vide
+      const trimmedCaption = caption?.trim();
+      if (trimmedCaption) {
+        try {
+          await postMessage({ content: trimmedCaption, type: "TEXT" });
+        } catch (e) {
+          console.error("caption send:", e);
+        }
+      }
+      // 2. Fichiers, un par un (uploads séquentiels)
+      let allOk = true;
+      for (const pf of pendingFiles) {
+        const ok = await uploadSingleFile(pf.file);
+        if (!ok) allOk = false;
+        if (pf.previewUrl) URL.revokeObjectURL(pf.previewUrl);
+      }
+      if (allOk) {
+        setPendingFiles([]);
+        if (trimmedCaption) setInputText("");
+      }
+      return allOk;
+    } finally {
+      setUploadingFiles(false);
+    }
+  }, [activeConvId, pendingFiles, postMessage, uploadSingleFile]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    // ⭐ V2.8 — Plus d'envoi immédiat : les fichiers passent par le composer
+    // d'aperçu (l'utilisateur ajoute une légende, annule ou envoie).
+    addPendingFiles(files);
     e.target.value = ""; // reset
   };
 
@@ -1213,27 +1477,34 @@ export function MessagingView() {
     }
   }, []);
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     dragCounterRef.current = 0;
     setIsDraggingFile(false);
     const files = e.dataTransfer?.files;
     if (!files || files.length === 0) return;
-    // Upload séquentiel (évite de saturer le serveur avec N uploads parallèles)
-    for (let i = 0; i < files.length; i++) {
-      await uploadSingleFile(files[i]);
-    }
-  }, [uploadSingleFile]);
+    // ⭐ V2.8 — Les fichiers déposés passent par le composer d'aperçu
+    // (plus d'upload direct) : l'utilisateur peut annuler ou ajouter une
+    // légende avant l'envoi.
+    addPendingFiles(Array.from(files));
+  }, [addPendingFiles]);
 
   // ═════════════════════════════════════════════════════════════════════
   //  ⭐ V2.2 — PASTE D'IMAGE DEPUIS LE PRESSE-PAPIERS
   // ═════════════════════════════════════════════════════════════════════
 
-  // Détecte les images dans le clipboard (e.clipboardData.items) et les
-  // upload automatiquement. Affiche un preview temporaire (object URL)
-  // pendant l'upload, qui disparaît une fois terminé.
-  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
+  // ⭐ V2.8 — PASTE : PLUS D'ENVOI AUTOMATIQUE.
+  // Avant : coller une image (Ctrl+V) l'uploadait immédiatement dans la
+  // conversation — l'utilisateur n'avait aucun contrôle (« ça envoie
+  // directement, ça n'attend pas qu'on puisse envoyer »). Désormais :
+  //   - collage d'IMAGE → ajout à la file d'attente (aperçu au-dessus du
+  //     champ de saisie, avec boutons Envoyer / Annuler / retirer chaque
+  //     image) — comportement WhatsApp ;
+  //   - collage de TEXTE → comportement par défaut du navigateur (le texte
+  //     est inséré dans le champ, l'envoi reste un geste explicite : bouton
+  //     Envoyer ou Entrée).
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
     const imageFiles: File[] = [];
@@ -1246,24 +1517,8 @@ export function MessagingView() {
     }
     if (imageFiles.length === 0) return; // Laisse le paste texte par défaut
     e.preventDefault(); // Empêche le paste de l'image comme data URL textuelle
-
-    for (const file of imageFiles) {
-      const previewUrl = URL.createObjectURL(file);
-      const name = file.name || `pasted-${Date.now()}.png`;
-      setPastedImagePreviews(prev => [...prev, { url: previewUrl, name }]);
-      try {
-        await uploadSingleFile(file);
-      } catch (err) {
-        console.error("paste upload:", err);
-      } finally {
-        setPastedImagePreviews(prev => {
-          const next = prev.filter(p => p.url !== previewUrl);
-          URL.revokeObjectURL(previewUrl);
-          return next;
-        });
-      }
-    }
-  }, [uploadSingleFile]);
+    addPendingFiles(imageFiles);
+  }, [addPendingFiles]);
 
   // ═════════════════════════════════════════════════════════════════════
   //  ⭐ V2.2 — EMOJI PICKER (insertion à la position du curseur)
@@ -1305,6 +1560,19 @@ export function MessagingView() {
   // ═════════════════════════════════════════════════════════════════════
   //  TYPING INDICATOR + @MENTIONS — emit typing + detect mention query
   // ═════════════════════════════════════════════════════════════════════
+
+  // ⭐ V2.8 — AUTO-GRANDISSEMENT du champ de saisie : la hauteur suit le
+  // contenu (de 1 ligne jusqu'à ~6 lignes / 160 px), puis scroll interne.
+  // Corrige « quand le texte devient long, on n'arrive pas à voir tout ce
+  // qui a été écrit précédemment ».
+  useEffect(() => {
+    const el = messageInputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const newHeight = Math.min(el.scrollHeight, 160);
+    el.style.height = `${newHeight}px`;
+    el.style.overflowY = el.scrollHeight > 160 ? "auto" : "hidden";
+  }, [inputText]);
 
   // ⭐ V2.1 — Détecter une query "@xxx" à la position du caret. On cherche
   // le dernier "@" non-espacé avant le caret et on extrait le texte qui le
@@ -1916,6 +2184,44 @@ export function MessagingView() {
     ? conversations.filter(c => c.name.toLowerCase().includes(convSearchQuery.toLowerCase()))
     : conversations;
 
+  // ⭐ V2.8 — Avatar + nom affichés dans le HEADER du chat (façon WhatsApp) :
+  //   - conversation DIRECT  → photo + prénom de l'INTERLOCUTEUR (et plus
+  //     des initiales figées) → un changement de photo de profil se voit
+  //     immédiatement dans le header ;
+  //   - canal / groupe       → photo du canal (avatarUrl) si elle existe,
+  //     sinon initiales.
+  const headerInterlocutor = activeConv?.type === "DIRECT"
+    ? activeConv.participants.find(p => p.userId !== currentUserId) ?? activeConv.participants[0]
+    : undefined;
+  const headerAvatarUrl = headerInterlocutor?.avatarUrl || (activeConv && activeConv.type !== "DIRECT" ? activeConv.avatarUrl : undefined);
+  const headerDisplayName = headerInterlocutor?.name || activeConv?.name;
+
+  // ⭐ V2.8 — Messages épinglés de la conversation active (objets complets,
+  // pour l'aperçu dans la bannière). Triés : le plus récemment épinglé en
+  // premier (pinnedAt desc).
+  const pinnedPreviewMessages = useMemo(
+    () => activeMessages
+      .filter(m => pinnedMessages.has(m.id) || m.isPinned)
+      .sort((a, b) => (b.pinnedAt || b.createdAt).localeCompare(a.pinnedAt || a.createdAt)),
+    [activeMessages, pinnedMessages],
+  );
+
+  // ⭐ V2.8 — Est-ce que le rôle courant permet de supprimer n'importe quel
+  // message (modération) ? Sinon, uniquement les messages de l'auteur.
+  const canDeleteAny = AUDIT_PRIVILEGED_ROLES.has(currentUserRole || "");
+
+  // ⭐ V2.8 — Résumé lisible d'un message (pour l'aperçu des épinglés) :
+  // texte, verset, son, image, sondage…
+  const summarizeMessage = (m: ChatMessage): string => {
+    if (m.type === "VERSE" && m.verseRef) return `${m.verseRef} — ${(m.verseText || "").substring(0, 90)}`;
+    if (m.type === "POLL" && m.poll) return `📊 ${m.poll.question}`;
+    if (m.type === "IMAGE") return "📷 Photo";
+    if (m.type === "VIDEO") return "🎬 Vidéo";
+    if (m.type === "AUDIO") return "🎤 Message vocal";
+    if (m.type === "FILE") return `📎 ${m.attachmentName || "Fichier"}`;
+    return (m.content || "").substring(0, 90);
+  };
+
   // Group conversations by type
   const channelConvs = filteredConversations.filter(c => c.type === "CHANNEL");
   const groupConvs = filteredConversations.filter(c => c.type === "GROUP" || c.type === "PASTORS");
@@ -2092,20 +2398,31 @@ export function MessagingView() {
         {/* Chat header */}
         {activeConv ? (
           <div className="p-3 border-b border-[#C9A227]/15 bg-white/95 backdrop-blur-sm flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <button onClick={() => setActiveConvId(null)} className="lg:hidden p-1 text-[#8A8378]">
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <div className={cn("relative w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm", getAvatarColor(activeConv.name))}>
-                {getInitials(activeConv.name)}
+              {/* ⭐ V2.8 — Vraie photo dans le header : interlocuteur (DIRECT)
+                  ou photo du canal (GROUP/CHANNEL) — plus d'initiales figées.
+                  Un changement de photo de profil se répercute ici dès que
+                  les conversations sont rafraîchies (au focus de la fenêtre). */}
+              <div className="relative w-10 h-10 rounded-full flex-shrink-0">
+                {headerAvatarUrl ? (
+                  <img src={headerAvatarUrl} alt={headerDisplayName || activeConv.name}
+                    className="w-10 h-10 rounded-full object-cover border border-[#C9A227]/30" />
+                ) : (
+                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm", getAvatarColor(activeConv.name))}>
+                    {getInitials(headerDisplayName || activeConv.name)}
+                  </div>
+                )}
                 {socketConnected && (
                   <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" title="Connecté en temps réel" />
                 )}
               </div>
-              <div>
-                <h3 className="font-bold text-[#1E0F2B] text-sm flex items-center gap-1.5">
-                  {activeConv.name}
-                  {activeConv.isEncrypted && <Lock className="w-3 h-3 text-[#C9A227]" />}
+              <div className="min-w-0">
+                <h3 className="font-bold text-[#1E0F2B] text-sm flex items-center gap-1.5 truncate">
+                  {headerDisplayName || activeConv.name}
+                  {activeConv.isEncrypted && <Lock className="w-3 h-3 text-[#C9A227] flex-shrink-0" />}
                 </h3>
                 {/* ⭐ V2.6.2 — Ligne d'info thématée (icônes lucide au lieu des
                     emojis, ton chaud #8A8378 au lieu du gris stone) */}
@@ -2199,13 +2516,67 @@ export function MessagingView() {
           </div>
         )}
 
-        {/* Pinned messages banner */}
-        {pinnedMessages.size > 0 && activeConv && (
-          <div className="px-4 py-2 bg-[#C9A227]/5 border-b border-[#C9A227]/20 flex items-center gap-2">
-            <Pin className="w-3.5 h-3.5 text-[#C9A227]" />
-            <span className="text-xs font-medium text-[#1E0F2B]">
-              {pinnedMessages.size} message{pinnedMessages.size > 1 ? "s" : ""} épinglé{pinnedMessages.size > 1 ? "s" : ""}
-            </span>
+        {/* ⭐ V2.8 — BANNIÈRE DES MESSAGES ÉPINGLÉS (persistés en base) :
+            aperçu du dernier message épinglé (expéditeur + extrait),
+            compteur si plusieurs, liste déroulante pour tous les voir,
+            désépinglage direct. Clic sur un aperçu → scroll vers le message. */}
+        {pinnedPreviewMessages.length > 0 && activeConv && activeConv.type !== "VOICE" && (
+          <div className="relative bg-[#2A0E3D]/[0.04] border-b border-[#C9A227]/25">
+            <button
+              onClick={() => setPinnedListOpen(o => !o)}
+              className="w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-[#C9A227]/5 transition-colors"
+              title="Voir les messages épinglés"
+            >
+              <span className="w-7 h-7 rounded-lg bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
+                <Pin className="w-3.5 h-3.5 text-[#A3821C]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[11px] font-bold text-[#A3821C] leading-tight">
+                  {pinnedPreviewMessages.length > 1
+                    ? `${pinnedPreviewMessages.length} messages épinglés`
+                    : "Message épinglé"}
+                </span>
+                {/* Aperçu du message le plus récemment épinglé */}
+                <span className="block text-xs text-[#1E0F2B]/80 truncate leading-snug">
+                  <span className="font-semibold">{pinnedPreviewMessages[0].senderName}</span>
+                  {" · "}
+                  <span className="opacity-80">{summarizeMessage(pinnedPreviewMessages[0])}</span>
+                </span>
+              </span>
+              <ChevronRight className={cn("w-4 h-4 text-[#8A8378] flex-shrink-0 transition-transform", pinnedListOpen && "rotate-90")} />
+            </button>
+            {/* Liste déroulante de tous les messages épinglés */}
+            {pinnedListOpen && (
+              <div className="absolute left-0 right-0 top-full z-30 bg-white border border-[#C9A227]/25 border-t-0 rounded-b-xl shadow-xl max-h-72 overflow-y-auto">
+                {pinnedPreviewMessages.map(pm => (
+                  <div key={pm.id} className="px-4 py-2.5 flex items-start gap-3 hover:bg-[#FAF6EF] border-b border-[#8A8378]/10 last:border-b-0">
+                    <Pin className="w-3 h-3 text-[#A3821C] mt-1 flex-shrink-0" />
+                    <button
+                      className="min-w-0 flex-1 text-left"
+                      onClick={() => {
+                        setPinnedListOpen(false);
+                        const el = document.getElementById(`msg-${pm.id}`);
+                        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }}
+                      title="Aller au message"
+                    >
+                      <p className="text-[11px] font-bold text-[#8C5FA8]">
+                        {pm.senderName}
+                        <span className="font-normal text-[#8A8378] ml-1.5">{formatTime(pm.createdAt)}</span>
+                      </p>
+                      <p className="text-xs text-[#1E0F2B]/85 line-clamp-2 leading-snug mt-0.5">{summarizeMessage(pm)}</p>
+                    </button>
+                    <button
+                      onClick={() => handlePin(pm.id)}
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-[#8A8378] hover:text-red-600 flex-shrink-0 transition-colors"
+                      title="Désépingler"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -2253,9 +2624,11 @@ export function MessagingView() {
               <p className="text-xs text-[#8A8378] mt-1">Soyez le premier à écrire !</p>
             </div>
           ) : (
-            /* ⭐ V2.6.2 — Colonne de messages élargie (max-w-4xl) : supprime la
-               grande bande vide à droite des bulles sur grands écrans. */
-            <div className="space-y-2 w-full max-w-4xl mx-auto">
+            /* ⭐ V2.8 — Colonne de messages PLEINE LARGEUR : la contrainte
+               « max-w-4xl mx-auto » laissait une grande bande vide à droite
+               sur grands écrans. Les bulles s'auto-limitent (max 82% / 640px)
+               et s'alignent aux bords, comme WhatsApp Web. */
+            <div className="space-y-1 w-full">
               {/* ⭐ V2.1 — Load More (pagination cursor) */}
               {hasMoreMessages && (
                 <div className="flex justify-center py-2">
@@ -2281,23 +2654,19 @@ export function MessagingView() {
               {activeMessages.map((msg, i) => {
                 const isMine = msg.senderId === currentUserId;
                 const showDateSep = i === 0 || formatDateSeparator(activeMessages[i - 1].createdAt) !== formatDateSeparator(msg.createdAt);
-                // ⭐ V2.5 — Avatar affiché uniquement au PREMIER message d'une
-                // série consécutive du même expéditeur (comme WhatsApp) :
-                // évite la répétition d'avatars identiques empilés.
-                const prevMsg = activeMessages[i - 1];
-                const showSenderAvatar =
-                  !isMine &&
-                  (i === 0 ||
-                    prevMsg.senderId !== msg.senderId ||
-                    formatDateSeparator(prevMsg.createdAt) !== formatDateSeparator(msg.createdAt));
+                // ⭐ V2.8 — PALETTE OR / VIOLET / NOIR (fini le gris) :
+                //   - bulle VIOLETTE pour MOI et pour les ADMIN/SUPER_ADMIN
+                //     (« le message envoyé par l'admin… couleur violette ») ;
+                //   - bulle OR + texte noir pour les AUTRES membres
+                //     (« la couleur or et le noir… on arrive à bien voir »).
+                const isAdminSender = msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN";
+                const usePurpleBubble = isMine || isAdminSender;
                 // ⭐ V2.1 — Détection d'URLs dans le contenu texte pour LinkEmbed
                 const messageUrls = msg.type === "TEXT" && msg.content ? extractUrls(msg.content) : [];
                 // ⭐ V2.1 — Compter les réponses dans le thread (client-side)
                 const threadReplyCount = threads.filter(t => t.parentId === msg.id).length;
-                // ⭐ V2.3 — Couleur du nom selon le rôle (msg.senderRole)
-                const senderColor = getRoleColor(msg.senderRole);
                 return (
-                  <div key={msg.id}>
+                  <div key={msg.id} id={`msg-${msg.id}`} className="scroll-mt-24">
                     {showDateSep && (
                       <div className="flex items-center justify-center my-5">
                         <div className="flex items-center gap-2 w-full max-w-[520px] mx-auto">
@@ -2309,54 +2678,67 @@ export function MessagingView() {
                         </div>
                       </div>
                     )}
-                    <div className={cn("group relative flex flex-col", isMine ? "items-end" : "items-start")}>
-                      <div className={cn("group relative flex items-end gap-2", isMine ? "justify-end" : "justify-start")}>
-                        {/* ⭐ V2.5 — Avatar de l'expéditeur dans les canaux/groupes
-                            (bulles professionnelles façon WhatsApp : avatar rond
-                            pour les messages des AUTRES) */}
-                        {!isMine && (activeConv?.type === "GROUP" || activeConv?.type === "PASTORS" || activeConv?.type === "CHANNEL") && showSenderAvatar && (
-                          <div className="w-8 h-8 rounded-full flex-shrink-0 mb-4 overflow-hidden border border-stone-200">
-                            {msg.senderAvatarUrl ? (
-                              <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className={cn("w-full h-full flex items-center justify-center text-white text-[10px] font-bold", getAvatarColor(msg.senderName))}>
-                                {getInitials(msg.senderName)}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        <div className={cn(
-                          // ⭐ V2.5 — Bulles avec « queue » façon messagerie pro :
-                          // coin inférieur côté expéditeur légèrement effilé
-                          "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm",
-                          isMine
-                            ? "bg-[#C9A227] text-[#1E0F2B] rounded-br-md"
-                            : "bg-white border border-stone-200 text-[#1E0F2B] rounded-bl-md"
-                        )}>
-                          {/* Reply quote */}
-                          {msg.replyTo && (
-                            <div className={cn(
-                              "mb-1.5 px-2 py-1 rounded-lg text-xs border-l-2",
-                              isMine ? "bg-[#1E0F2B]/10 border-[#1E0F2B]" : "bg-stone-50 border-[#C9A227]"
-                            )}>
-                              <p className="font-semibold opacity-70">{msg.replyTo.senderName}</p>
-                              <p className="opacity-60 truncate">{msg.replyTo.content}</p>
+                    {/* ⭐ V2.8 — Rangée du message, RESTRUCTURÉE :
+                        [avatar de l'expéditeur — sur CHAQUE message] [bulle]
+                        pour les autres ; [bulle] à droite pour moi. La bulle
+                        s'adapte à son contenu (w-fit, max 82% / 640px) — fini
+                        l'espace vide à droite et les empilements désalignés. */}
+                    <div className={cn("group relative flex items-end gap-2.5 w-full py-0.5", isMine ? "justify-end" : "justify-start")}>
+                      {/* ⭐ V2.8 — Avatar + nom de l'expéditeur sur CHAQUE
+                          message des autres (photo réelle si disponible),
+                          dans TOUS les types de conversation — y compris
+                          DIRECT — façon Facebook / WhatsApp / Telegram. */}
+                      {!isMine && (
+                        <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border border-[#C9A227]/25 shadow-sm">
+                          {msg.senderAvatarUrl ? (
+                            <img src={msg.senderAvatarUrl} alt={msg.senderName} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className={cn("w-full h-full flex items-center justify-center text-white text-[10px] font-bold", getAvatarColor(msg.senderName))}>
+                              {getInitials(msg.senderName)}
                             </div>
                           )}
-                          {/* Sender name (for groups) — ⭐ V2.3 : couleur selon le rôle */}
-                          {!isMine && (activeConv?.type === "GROUP" || activeConv?.type === "PASTORS" || activeConv?.type === "CHANNEL") && (
-                            <p
-                              className="text-xs font-bold mb-0.5"
-                              style={{ color: senderColor }}
-                            >
-                              {msg.senderName}
-                            </p>
+                        </div>
+                      )}
+                      <div className={cn("relative flex flex-col min-w-0 max-w-[min(82%,640px)]", isMine ? "items-end" : "items-start")}>
+                        {/* Nom de l'expéditeur — au-dessus de la bulle, chaque message */}
+                        {!isMine && (
+                          <p className={cn("text-[11px] font-bold mb-0.5 ml-1 leading-tight", usePurpleBubble ? "text-[#8C5FA8]" : "text-[#2A0E3D]")}>
+                            {msg.senderName}
+                            {(msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN") && (
+                              <span className="ml-1 text-[#A3821C]">★</span>
+                            )}
+                          </p>
+                        )}
+                        <div
+                          onClick={() => setShowActionsFor(prev => prev === msg.id ? null : msg.id)}
+                          className={cn(
+                            // ⭐ V2.8 — Bulle violette (moi + admin) / or (autres),
+                            // queue effilée côté expéditeur, texte adapté.
+                            // Clic sur la bulle = afficher/masquer les actions (mobile).
+                            "w-fit rounded-2xl px-3.5 py-2 shadow-sm cursor-pointer",
+                            usePurpleBubble
+                              ? "bg-[#8C5FA8] text-[#FAF6EF] rounded-br-md"
+                              : "bg-[#C9A227] text-[#1E0F2B] rounded-bl-md"
+                          )}>
+                          {/* Reply quote — ⭐ V2.8 : couleurs adaptées à la bulle */}
+                          {msg.replyTo && (
+                            <div className={cn(
+                              "mb-1.5 px-2 py-1 rounded-lg text-xs border-l-2 max-w-full",
+                              usePurpleBubble
+                                ? "bg-[#FAF6EF]/15 border-[#FAF6EF] text-[#FAF6EF]"
+                                : "bg-[#1E0F2B]/10 border-[#1E0F2B] text-[#1E0F2B]"
+                            )}>
+                              <p className="font-semibold opacity-90">{msg.replyTo.senderName}</p>
+                              <p className="opacity-75 truncate">{msg.replyTo.content}</p>
+                            </div>
                           )}
+                          {/* Sender name : affiché au-dessus de la bulle depuis V2.8 */}
                           {/* Content */}
                           {msg.type === "POLL" && msg.poll ? (
                             <PollMessage
                               poll={msg.poll}
                               currentUserId={currentUserId}
+                              variant={usePurpleBubble ? "purple" : "gold"}
                               onVoted={(updated) => {
                                 // Mise à jour optimiste du sondage dans les messages
                                 if (activeConvId) {
@@ -2371,11 +2753,13 @@ export function MessagingView() {
                             />
                           ) : msg.type === "VERSE" && msg.verseRef ? (
                             <div className={cn(
-                              "px-3 py-2 rounded-xl border-l-4 my-1",
-                              isMine ? "bg-[#1E0F2B]/10 border-[#1E0F2B]" : "bg-[#C9A227]/5 border-[#C9A227]"
+                              "px-3 py-2 rounded-xl border-l-4 my-1 max-w-full",
+                              usePurpleBubble
+                                ? "bg-[#FAF6EF]/12 border-[#FAF6EF]"
+                                : "bg-[#1E0F2B]/10 border-[#1E0F2B]"
                             )}>
-                              <p className="text-xs font-bold opacity-80">{msg.verseRef}</p>
-                              <p className="text-sm italic mt-0.5 whitespace-pre-wrap">{msg.verseText}</p>
+                              <p className="text-xs font-bold opacity-90">{msg.verseRef}</p>
+                              <p className="text-sm italic mt-0.5 whitespace-pre-wrap break-words">{msg.verseText}</p>
                             </div>
                           ) : msg.type === "IMAGE" && msg.attachmentUrl ? (
                             <div className="relative group/img">
@@ -2389,36 +2773,41 @@ export function MessagingView() {
                           ) : msg.type === "VIDEO" && msg.attachmentUrl ? (
                             <video src={msg.attachmentUrl} controls className="rounded-xl max-w-full max-h-64" />
                           ) : msg.type === "AUDIO" && msg.attachmentUrl ? (
-                            <AudioPlayer src={msg.attachmentUrl} duration={msg.duration} attachmentName={msg.attachmentName} />
+                            <AudioPlayer src={msg.attachmentUrl} duration={msg.duration} attachmentName={msg.attachmentName} variant={usePurpleBubble ? "purple" : "gold"} />
                           ) : msg.type === "FILE" && msg.attachmentUrl ? (
                             <a href={msg.attachmentUrl} download={msg.attachmentName}
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-stone-100 hover:bg-stone-200 transition-colors min-w-[200px]">
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors min-w-[200px]",
+                                usePurpleBubble
+                                  ? "bg-[#2A0E3D]/40 hover:bg-[#2A0E3D]/60"
+                                  : "bg-[#1E0F2B]/10 hover:bg-[#1E0F2B]/20"
+                              )}>
                               <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0", getFileIcon(msg.attachmentName).color)}>
                                 {getFileIcon(msg.attachmentName).icon}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-[#1E0F2B] truncate">{msg.attachmentName || "Fichier"}</p>
-                                <p className="text-[10px] text-[#8A8378]">{formatFileSize(msg.attachmentSize)}</p>
+                                <p className={cn("text-xs font-semibold truncate", usePurpleBubble ? "text-[#FAF6EF]" : "text-[#1E0F2B]")}>{msg.attachmentName || "Fichier"}</p>
+                                <p className={cn("text-[10px]", usePurpleBubble ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/70")}>{formatFileSize(msg.attachmentSize)}</p>
                               </div>
-                              <Download className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+                              <Download className={cn("w-4 h-4 flex-shrink-0", usePurpleBubble ? "text-[#FAF6EF]" : "text-[#1E0F2B]")} />
                             </a>
                           ) : (
                             // ⭐ V2.1 — Rendu du contenu texte avec mentions surlignées
                             // ⭐ V2.2 — + code blocks ```...``` + spoilers ||...||
                             <div className="text-sm whitespace-pre-wrap break-words">
-                              <RichMessageContent content={msg.content || ""} memberNames={channelMembers.map(m => m.name)} isMine={isMine} />
+                              <RichMessageContent content={msg.content || ""} memberNames={channelMembers.map(m => m.name)} isMine={isMine} variant={usePurpleBubble ? "purple" : "gold"} />
                             </div>
                           )}
-                          {/* Timestamp + edited */}
+                          {/* Timestamp + edited — ⭐ V2.8 : lisibles sur or ET violet */}
                           <div className={cn(
-                            "flex items-center gap-1 mt-0.5",
-                            isMine ? "justify-end text-[#1E0F2B]/50" : "justify-end text-stone-400"
+                            "flex items-center gap-1 mt-0.5 justify-end",
+                            usePurpleBubble ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/60"
                           )}>
                             {msg.editedAt && <span className="text-[9px] italic">modifié</span>}
                             {pinnedMessages.has(msg.id) && <Pin className="w-2.5 h-2.5" />}
                             <span className="text-[10px]">{formatTime(msg.createdAt)}</span>
                           </div>
-                          {/* Reactions */}
+                          {/* Reactions — ⭐ V2.8 : pastilles lisibles sur or/violet */}
                           {msg.reactions.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1.5">
                               {msg.reactions.reduce((acc, r) => {
@@ -2428,9 +2817,9 @@ export function MessagingView() {
                               }, [] as { emoji: string; count: number }[]).map(r => (
                                 <span key={r.emoji} className={cn(
                                   "px-1.5 py-0.5 rounded-full text-xs border transition-colors",
-                                  isMine
-                                    ? "bg-[#1E0F2B]/10 border-[#1E0F2B]/15"
-                                    : "bg-stone-50 border-stone-200"
+                                  usePurpleBubble
+                                    ? "bg-[#FAF6EF]/15 border-[#FAF6EF]/25 text-[#FAF6EF]"
+                                    : "bg-[#1E0F2B]/10 border-[#1E0F2B]/20 text-[#1E0F2B]"
                                 )}>
                                   {r.emoji} {r.count > 1 && <span className="text-[10px] font-bold">{r.count}</span>}
                                 </span>
@@ -2438,59 +2827,119 @@ export function MessagingView() {
                             </div>
                           )}
                         </div>
-                        {/* Quick reactions + actions (on hover) */}
+                        {/* ⭐ V2.8 — BARRE D'ACTIONS FLOTTANTE façon WhatsApp :
+                            réactions rapides + Répondre + Thread + menu « ⋮ »
+                            (Modifier / Épingler / Transférer / Supprimer).
+                            Visible au survol (desktop) ou au tap sur la bulle
+                            (mobile), ancrée au-dessus de la bulle. */}
                         <div className={cn(
-                          "absolute flex items-center gap-0.5 bg-white rounded-full shadow-lg border border-stone-200 px-1 py-0.5 transition-opacity",
-                          showReactions === msg.id ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-                          isMine ? "right-0 -top-8" : "left-0 -top-8"
+                          "absolute -top-2 z-20 -translate-y-full flex items-center gap-0.5 bg-white rounded-full shadow-lg border border-[#C9A227]/30 pl-1.5 pr-1 py-0.5 transition-opacity duration-150",
+                          (showActionsFor === msg.id || showMsgMenu === msg.id || deleteMenuFor === msg.id)
+                            ? "opacity-100"
+                            : "opacity-0 group-hover:opacity-100",
+                          isMine ? "right-0" : "left-0"
                         )}>
                           {QUICK_REACTIONS.map(emoji => (
-                            <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} className="text-sm hover:scale-125 transition-transform p-0.5">
+                            <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReaction(msg.id, emoji); }} className="text-sm hover:scale-125 transition-transform p-0.5" title={`Réagir ${emoji}`}>
                               {emoji}
                             </button>
                           ))}
-                          <div className="w-px h-4 bg-stone-200 mx-0.5" />
-                          <button onClick={() => setReplyTo(msg)} className="p-1 hover:bg-stone-100 rounded" title="Répondre">
-                            <Reply className="w-3 h-3 text-stone-500" />
+                          <div className="w-px h-4 bg-[#8A8378]/20 mx-0.5" />
+                          <button onClick={(e) => { e.stopPropagation(); setReplyTo(msg); }} className="p-1 hover:bg-[#C9A227]/10 rounded-full" title="Répondre">
+                            <Reply className="w-3.5 h-3.5 text-[#2A0E3D]" />
                           </button>
                           {/* ⭐ V2.1 — Bouton Thread (ouvre le panneau latéral) */}
                           <button
-                            onClick={() => handleOpenThread(msg)}
+                            onClick={(e) => { e.stopPropagation(); handleOpenThread(msg); }}
                             className={cn(
-                              "p-1 hover:bg-stone-100 rounded relative",
-                              threadParent?.id === msg.id ? "text-[#C9A227]" : "text-stone-500"
+                              "relative p-1 hover:bg-[#C9A227]/10 rounded-full",
+                              threadParent?.id === msg.id ? "text-[#C9A227]" : "text-[#2A0E3D]"
                             )}
                             title="Répondre dans un thread"
                           >
-                            <MessageCircle className="w-3 h-3" />
+                            <MessageCircle className="w-3.5 h-3.5" />
                             {threadReplyCount > 0 && (
-                              <span className="absolute -top-1 -right-1 px-1 min-w-[12px] h-3 flex items-center justify-center rounded-full bg-[#C9A227] text-[8px] font-bold text-[#1E0F2B]">
+                              <span className="absolute -top-0.5 -right-0.5 px-1 min-w-[12px] h-3 flex items-center justify-center rounded-full bg-[#C9A227] text-[8px] font-bold text-[#1E0F2B]">
                                 {threadReplyCount}
                               </span>
                             )}
                           </button>
-                          {isMine && <button onClick={() => handleEdit(msg)} className="p-1 hover:bg-stone-100 rounded" title="Modifier">
-                            <Edit2 className="w-3 h-3 text-stone-500" />
-                          </button>}
-                          <button onClick={() => handlePin(msg.id)} className="p-1 hover:bg-stone-100 rounded" title="Épingler">
-                            <Pin className={cn("w-3 h-3", pinnedMessages.has(msg.id) ? "text-[#C9A227]" : "text-stone-500")} />
+                          <button onClick={(e) => { e.stopPropagation(); setShowMsgMenu(prev => prev === msg.id ? null : msg.id); }} className="p-1 hover:bg-[#C9A227]/10 rounded-full" title="Plus d'actions">
+                            <MoreVertical className="w-3.5 h-3.5 text-[#2A0E3D]" />
                           </button>
-                          <button onClick={() => setShowForwardModal(msg.id)} className="p-1 hover:bg-stone-100 rounded" title="Transférer">
-                            <Forward className="w-3 h-3 text-stone-500" />
-                          </button>
-                          {isMine && <button onClick={() => handleDelete(msg.id, false)} className="p-1 hover:bg-stone-100 rounded" title="Supprimer">
-                            <Trash2 className="w-3 h-3 text-red-500" />
-                          </button>}
                         </div>
+
+                        {/* ⭐ V2.8 — MENU « ⋮ » : actions secondaires du message */}
+                        {showMsgMenu === msg.id && (
+                          <>
+                            <div className="fixed inset-0 z-20" onClick={() => setShowMsgMenu(null)} />
+                            <div className={cn(
+                              "absolute z-30 top-2 w-52 bg-white rounded-xl shadow-2xl border border-[#C9A227]/25 py-1.5 overflow-hidden",
+                              isMine ? "right-0" : "left-0"
+                            )}>
+                              <button onClick={() => { handleEdit(msg); setShowMsgMenu(null); setShowActionsFor(null); }}
+                                className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors">
+                                <Edit2 className="w-3.5 h-3.5 text-[#8C5FA8]" /> Modifier
+                              </button>
+                              <button onClick={() => { handlePin(msg.id); setShowMsgMenu(null); setShowActionsFor(null); }}
+                                className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors">
+                                <Pin className={cn("w-3.5 h-3.5", pinnedMessages.has(msg.id) ? "text-[#C9A227]" : "text-[#8C5FA8]")} />
+                                {pinnedMessages.has(msg.id) ? "Désépingler" : "Épingler"}
+                              </button>
+                              <button onClick={() => { setShowForwardModal(msg.id); setShowMsgMenu(null); setShowActionsFor(null); }}
+                                className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors">
+                                <Forward className="w-3.5 h-3.5 text-[#8C5FA8]" /> Transférer
+                              </button>
+                              {(isMine || canDeleteAny) && (
+                                <button onClick={() => { setDeleteMenuFor(msg.id); setShowMsgMenu(null); }}
+                                  className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-red-600 hover:bg-red-50 border-t border-[#8A8378]/10 mt-1 transition-colors">
+                                  <Trash2 className="w-3.5 h-3.5" /> Supprimer…
+                                </button>
+                              )}
+                            </div>
+                          </>
+                        )}
+
+                        {/* ⭐ V2.8 — POPOVER DE SUPPRESSION « pour moi / pour
+                            tous » (façon WhatsApp) — remplace la suppression
+                            directe. « Pour tous » = soft-delete en base +
+                            broadcast ; « Pour moi » = masquage local persisté. */}
+                        {deleteMenuFor === msg.id && (
+                          <>
+                            <div className="fixed inset-0 z-30" onClick={() => setDeleteMenuFor(null)} />
+                            <div className={cn(
+                              "absolute z-40 top-2 w-60 bg-white rounded-xl shadow-2xl border border-red-200 overflow-hidden",
+                              isMine ? "right-0" : "left-0"
+                            )}>
+                              <p className="px-4 pt-3 pb-1.5 text-xs font-bold text-[#1E0F2B]">Supprimer ce message ?</p>
+                              <button onClick={() => handleDelete(msg.id, false)}
+                                className="w-full px-4 py-2.5 text-left text-xs font-medium flex items-center gap-2.5 text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors">
+                                <EyeOff className="w-3.5 h-3.5 text-[#8A8378]" /> Supprimer pour moi
+                              </button>
+                              {(isMine || canDeleteAny) && (
+                                <button onClick={() => handleDelete(msg.id, true)}
+                                  className="w-full px-4 py-2.5 text-left text-xs font-medium flex items-center gap-2.5 text-red-600 hover:bg-red-50 transition-colors">
+                                  <Trash2 className="w-3.5 h-3.5" /> Supprimer pour tous
+                                </button>
+                              )}
+                              <button onClick={() => setDeleteMenuFor(null)}
+                                className="w-full px-4 py-2 text-left text-xs text-[#8A8378] hover:bg-[#FAF6EF] border-t border-[#8A8378]/10 transition-colors">
+                                Annuler
+                              </button>
+                            </div>
+                          </>
+                        )}
+
+                        {/* ⭐ V2.8 — LinkEmbed sous la bulle, aligné sur la
+                            colonne de la bulle (plus de décalage). */}
+                        {messageUrls.length > 0 && (
+                          <div className={cn("w-full mt-1", isMine ? "self-end" : "self-start")}>
+                            {messageUrls.slice(0, 3).map((url, idx) => (
+                              <LinkEmbed key={`${msg.id}-embed-${idx}`} url={url} />
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      {/* ⭐ V2.1 — LinkEmbed sous le message si URLs détectées */}
-                      {messageUrls.length > 0 && (
-                        <div className={cn("max-w-[75%] mt-1", isMine ? "self-end" : "self-start")}>
-                          {messageUrls.slice(0, 3).map((url, idx) => (
-                            <LinkEmbed key={`${msg.id}-embed-${idx}`} url={url} />
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
@@ -2498,14 +2947,14 @@ export function MessagingView() {
               {/* Typing indicator — alimenté par Socket.io (typing:start/stop) */}
               {typingLabel ? (
                 <div className="flex justify-start">
-                  <div className="bg-white border border-stone-200 rounded-2xl px-4 py-2 shadow-sm">
+                  <div className="bg-white border border-[#C9A227]/25 rounded-2xl rounded-bl-md px-4 py-2 shadow-sm">
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
-                        <span className="w-1.5 h-1.5 bg-stone-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="w-1.5 h-1.5 bg-stone-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="w-1.5 h-1.5 bg-stone-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                        <span className="w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                       </div>
-                      <span className="text-[11px] text-stone-500">{typingLabel}</span>
+                      <span className="text-[11px] text-[#1E0F2B]/80">{typingLabel}</span>
                     </div>
                   </div>
                 </div>
@@ -2518,22 +2967,54 @@ export function MessagingView() {
 
         {/* Input bar — masqué pour les canaux VOICE (pas de texte, seulement audio) */}
         {activeConv && activeConv.type !== "VOICE" && (
-          <div className="p-3 border-t border-stone-100 bg-white">
-            {/* ⭐ V2.2 — Paste preview : images en cours d'upload (paste clipboard) */}
-            {pastedImagePreviews.length > 0 && (
-              <div className="mb-2 flex gap-2 flex-wrap p-2 bg-stone-50 rounded-lg border border-stone-200">
-                {pastedImagePreviews.map((p, i) => (
-                  <div key={p.url + i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-stone-200 group">
-                    <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <Loader2 className="w-5 h-5 animate-spin text-white" />
+          <div className="p-3 border-t border-[#C9A227]/15 bg-white">
+            {/* ⭐ V2.8 — COMPOSER DE PIÈCES JOINTES (façon WhatsApp) :
+                aperçu des fichiers EN ATTENTE (collage Ctrl+V, « Joindre »,
+                drag & drop) avec suppression individuelle + envoi explicite.
+                Plus d'envoi automatique au collage — l'utilisateur garde le
+                contrôle (légende possible via le champ de saisie). */}
+            {pendingFiles.length > 0 && (
+              <div className="mb-2 p-2.5 bg-[#FAF6EF] rounded-xl border border-[#C9A227]/30">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] font-bold text-[#A3821C] uppercase tracking-wide">
+                    {pendingFiles.length} pièce{pendingFiles.length > 1 ? "s" : ""} jointe{pendingFiles.length > 1 ? "s" : ""} prête{pendingFiles.length > 1 ? "s" : ""}
+                  </p>
+                  <button
+                    onClick={() => { pendingFiles.forEach(p => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); }); setPendingFiles([]); }}
+                    disabled={uploadingFiles}
+                    className="text-[11px] font-semibold text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors disabled:opacity-40"
+                  >
+                    Tout annuler
+                  </button>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {pendingFiles.map(pf => (
+                    <div key={pf.id} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-[#C9A227]/40 bg-white shadow-sm">
+                      {pf.kind === "image" && pf.previewUrl ? (
+                        <img src={pf.previewUrl} alt={pf.file.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-1 px-2">
+                          {getFileIcon(pf.file.name).icon}
+                          <p className="text-[9px] text-[#1E0F2B] truncate w-full text-center font-semibold">{pf.file.name}</p>
+                          <p className="text-[8px] text-[#8A8378]">{formatFileSize(pf.file.size)}</p>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => removePendingFile(pf.id)}
+                        disabled={uploadingFiles}
+                        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-[#2A0E3D] text-[#FAF6EF] flex items-center justify-center shadow-md hover:bg-red-600 transition-colors disabled:opacity-40"
+                        title="Retirer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    <p className="absolute bottom-0 left-0 right-0 text-[9px] text-white bg-black/60 truncate px-1 py-0.5">
-                      {p.name}
-                    </p>
+                  ))}
+                </div>
+                {uploadingFiles && (
+                  <div className="flex items-center gap-2 mt-2 text-xs text-[#8C5FA8] font-medium">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Envoi en cours…
                   </div>
-                ))}
-                <p className="text-xs text-stone-500 self-center ml-1">Upload en cours…</p>
+                )}
               </div>
             )}
             {/* Reply / Edit banner */}
@@ -2692,13 +3173,14 @@ export function MessagingView() {
                 {/* (⭐ V2.5) Boutons Sondage et Programmé déplacés dans le modal
                     « Joindre » (trombone) — la barre reste épurée : trombone,
                     emojis, champ de saisie, micro/envoi. */}
-                {inputText.trim() ? (
-                  <button onClick={handleSend} disabled={sending}
-                    className="p-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] disabled:opacity-30 transition-colors">
-                    {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {(inputText.trim() || pendingFiles.length > 0) ? (
+                  <button onClick={handleSend} disabled={sending || uploadingFiles}
+                    className="p-2.5 rounded-xl bg-[#8C5FA8] text-[#FAF6EF] hover:bg-[#7B4FA0] disabled:opacity-30 transition-colors flex-shrink-0"
+                    title={pendingFiles.length > 0 ? "Envoyer les pièces jointes (+ légende)" : "Envoyer"}>
+                    {(sending || uploadingFiles) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </button>
                 ) : (
-                  <button onClick={startRecording} className="p-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors" title="Message vocal">
+                  <button onClick={startRecording} className="p-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors flex-shrink-0" title="Message vocal">
                     <Mic className="w-4 h-4" />
                   </button>
                 )}
@@ -2707,6 +3189,31 @@ export function MessagingView() {
           </div>
         )}
       </div>
+
+      {/* ⭐ V2.8 — TOAST DE RETOUR (partage de verset, erreurs d'envoi) :
+          confirme visuellement les actions silencieuses. */}
+      <AnimatePresence>
+        {toastMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className={cn(
+              "fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] px-5 py-3 rounded-xl shadow-2xl border flex items-center gap-2.5 max-w-[90vw]",
+              toastMsg.kind === "success"
+                ? "bg-[#2A0E3D] border-[#C9A227]/50 text-[#FAF6EF]"
+                : "bg-red-600 border-red-400/50 text-white"
+            )}
+            role="status"
+          >
+            {toastMsg.kind === "success"
+              ? <Check className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+              : <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+            <span className="text-sm font-medium">{toastMsg.text}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ⭐ V2.1 — MessageThreads (panneau latéral droit, client-side V1) */}
       <AnimatePresence>
@@ -3482,13 +3989,17 @@ function PollMessage({
   poll,
   currentUserId,
   onVoted,
+  variant = "gold",
 }: {
   poll: ChatPoll;
   currentUserId: string;
   onVoted: (messagePoll: ChatPoll) => void;
+  /** ⭐ V2.8 — Couleur de la bulle hôte : "purple" (moi/admin) ou "gold". */
+  variant?: "purple" | "gold";
 }) {
   const [voting, setVoting] = useState(false);
   const [error, setError] = useState("");
+  const purple = variant === "purple";
 
   const totalVotes = poll.options.reduce((sum, o) => sum + o.votes.length, 0);
   const myVotes = new Set(
@@ -3537,14 +4048,14 @@ function PollMessage({
 
   return (
     <div className="w-full min-w-[240px] max-w-[320px]">
-      {/* En-tête du sondage */}
+      {/* En-tête du sondage — ⭐ V2.8 : couleurs adaptées à la bulle */}
       <div className="flex items-center gap-2 mb-2">
-        <BarChart3 className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
-        <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+        <BarChart3 className={cn("w-3.5 h-3.5 flex-shrink-0", purple ? "text-[#FAF6EF]" : "text-[#1E0F2B]")} />
+        <span className={cn("text-[10px] font-bold uppercase tracking-wider", purple ? "text-[#FAF6EF]/80" : "text-[#1E0F2B]/70")}>
           Sondage {poll.isMulti ? "· choix multiple" : ""}
         </span>
       </div>
-      <p className="text-sm font-bold text-[#1E0F2B] mb-3">{poll.question}</p>
+      <p className={cn("text-sm font-bold mb-3", purple ? "text-[#FAF6EF]" : "text-[#1E0F2B]")}>{poll.question}</p>
 
       {/* Options avec barres de progression */}
       <div className="space-y-1.5">
@@ -3559,9 +4070,13 @@ function PollMessage({
               disabled={voting}
               className={cn(
                 "relative w-full text-left px-3 py-2 rounded-lg border transition-all overflow-hidden group cursor-pointer disabled:opacity-60",
-                myVote
-                  ? "border-[#C9A227]/60 bg-[#C9A227]/5"
-                  : "border-stone-200 hover:border-[#C9A227]/40 bg-white"
+                purple
+                  ? myVote
+                    ? "border-[#FAF6EF]/60 bg-[#FAF6EF]/10"
+                    : "border-[#FAF6EF]/25 hover:border-[#FAF6EF]/50 bg-[#FAF6EF]/[0.04]"
+                  : myVote
+                    ? "border-[#1E0F2B]/50 bg-[#1E0F2B]/[0.06]"
+                    : "border-[#1E0F2B]/25 hover:border-[#1E0F2B]/50 bg-[#1E0F2B]/[0.04]"
               )}
               title={myVote ? "Votre vote (cliquez pour changer)" : "Voter pour cette option"}
             >
@@ -3569,16 +4084,16 @@ function PollMessage({
               <div
                 className={cn(
                   "absolute inset-y-0 left-0 transition-all duration-500",
-                  myVote ? "bg-[#C9A227]/15" : "bg-stone-100"
+                  purple ? "bg-[#FAF6EF]/20" : "bg-[#1E0F2B]/15"
                 )}
                 style={{ width: `${pct}%` }}
               />
               <div className="relative flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-[#1E0F2B] truncate flex items-center gap-1.5">
-                  {myVote && <Check className="w-3 h-3 text-[#C9A227] flex-shrink-0" />}
+                <span className={cn("text-sm font-medium truncate flex items-center gap-1.5", purple ? "text-[#FAF6EF]" : "text-[#1E0F2B]")}>
+                  {myVote && <Check className={cn("w-3 h-3 flex-shrink-0", purple ? "text-[#FAF6EF]" : "text-[#1E0F2B]")} />}
                   {o.label}
                 </span>
-                <span className="text-[10px] font-bold text-stone-500 flex-shrink-0">
+                <span className={cn("text-[10px] font-bold flex-shrink-0", purple ? "text-[#FAF6EF]/80" : "text-[#1E0F2B]/70")}>
                   {votes > 0 && `${pct}% · ${votes}`}
                 </span>
               </div>
@@ -3589,25 +4104,26 @@ function PollMessage({
 
       {/* Résultat global */}
       <div className="flex items-center justify-between mt-2.5">
-        <span className="text-[10px] text-stone-400">
+        <span className={cn("text-[10px]", purple ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/60")}>
           {totalVotes === 0
             ? "Aucun vote — cliquez une option"
             : `${totalVotes} vote${totalVotes > 1 ? "s" : ""}`}
         </span>
-        <span className="text-[10px] text-stone-400 italic">
+        <span className={cn("text-[10px] italic", purple ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/60")}>
           {poll.isMulti ? "Plusieurs réponses possibles" : "Une seule réponse"}
         </span>
       </div>
-      {error && <p className="text-[10px] text-red-500 mt-1">{error}</p>}
+      {error && <p className="text-[10px] text-red-300 mt-1">{error}</p>}
     </div>
   );
 }
 
-function AudioPlayer({ src, duration, attachmentName }: { src: string; duration?: number; attachmentName?: string }) {
+function AudioPlayer({ src, duration, attachmentName, variant = "gold" }: { src: string; duration?: number; attachmentName?: string; variant?: "purple" | "gold" }) {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(duration || 0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const purple = variant === "purple";
 
   // ⭐ V2.6.2 — Waveform déterministe façon WhatsApp/Telegram : hauteurs
   // pseudo-aléatoires mais STABLES (seed = longueur du src), colorées en
@@ -3657,6 +4173,7 @@ function AudioPlayer({ src, duration, attachmentName }: { src: string; duration?
     // ⭐ V2.6.2 — Bulle audio professionnelle façon messageries pro :
     // bouton lecture rond + waveform cliquable + durée + VRAIE icône
     // de téléchargement (Download, remplace l'icône « document » FileText).
+    // ⭐ V2.8 — Couleurs adaptées à la bulle hôte (or ou violet).
     <div className="flex items-center gap-3 py-1.5 pl-1 pr-1.5 min-w-[260px]">
       <audio
         ref={audioRef}
@@ -3667,7 +4184,10 @@ function AudioPlayer({ src, duration, attachmentName }: { src: string; duration?
       />
       <button onClick={togglePlay}
         aria-label={playing ? "Mettre en pause" : "Lire le message vocal"}
-        className="w-9 h-9 rounded-full bg-[#2A0E3D] hover:bg-[#3A1E4D] flex items-center justify-center flex-shrink-0 transition-colors shadow-sm">
+        className={cn(
+          "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors shadow-sm",
+          purple ? "bg-[#2A0E3D] hover:bg-[#3A1E4D]" : "bg-[#1E0F2B] hover:bg-[#2A0E3D]"
+        )}>
         {playing ? <Pause className="w-4 h-4 text-[#C9A227]" fill="currentColor" /> : <Play className="w-4 h-4 text-[#C9A227] fill-current" />}
       </button>
       <div className="flex-1 flex flex-col gap-1 min-w-0">
@@ -3681,13 +4201,15 @@ function AudioPlayer({ src, duration, attachmentName }: { src: string; duration?
               key={i}
               className={cn(
                 "flex-1 rounded-full transition-colors",
-                i < playedBars ? "bg-[#C9A227]" : "bg-[#8A8378]/30"
+                i < playedBars
+                  ? "bg-[#C9A227]"
+                  : purple ? "bg-[#FAF6EF]/40" : "bg-[#1E0F2B]/25"
               )}
               style={{ height: `${Math.round(h * 100)}%` }}
             />
           ))}
         </div>
-        <div className="flex items-center justify-between text-[11px] text-[#8A8378] tabular-nums px-0.5">
+        <div className={cn("flex items-center justify-between text-[11px] tabular-nums px-0.5", purple ? "text-[#FAF6EF]/80" : "text-[#1E0F2B]/70")}>
           <span>{formatSec(currentTime)}</span>
           {attachmentName && (
             <span className="truncate max-w-[120px] text-[10px] opacity-70">{attachmentName}</span>
@@ -3697,7 +4219,10 @@ function AudioPlayer({ src, duration, attachmentName }: { src: string; duration?
       </div>
       <a href={src} download={attachmentName || "audio.webm"}
         aria-label="Télécharger l'audio"
-        className="w-8 h-8 rounded-full hover:bg-[#2A0E3D]/10 flex items-center justify-center text-[#C9A227] flex-shrink-0 transition-colors"
+        className={cn(
+          "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+          purple ? "hover:bg-[#FAF6EF]/20 text-[#FAF6EF]" : "hover:bg-[#1E0F2B]/10 text-[#1E0F2B]"
+        )}
         title="Télécharger">
         <Download className="w-4 h-4" />
       </a>
@@ -3907,10 +4432,13 @@ function MessageContentWithMentions({
   content,
   memberNames,
   isMine,
+  variant,
 }: {
   content: string;
   memberNames: string[];
   isMine: boolean;
+  /** ⭐ V2.8 — "purple" (moi/admin) ou "gold" (autres) : mentions lisibles */
+  variant?: "purple" | "gold";
 }) {
   // Si pas de membres ou pas de "@" dans le contenu, rendu direct
   if (memberNames.length === 0 || !content.includes("@")) {
@@ -3969,7 +4497,9 @@ function MessageContentWithMentions({
             key={i}
             className={cn(
               "font-semibold rounded px-0.5",
-              isMine ? "bg-[#1E0F2B]/20 text-[#1E0F2B]" : "bg-[#C9A227]/25 text-[#8B6914]"
+              variant === "purple"
+                ? "bg-[#FAF6EF]/25 text-[#FAF6EF]"
+                : "bg-[#1E0F2B]/15 text-[#1E0F2B]"
             )}
           >
             {seg.value}
@@ -4058,10 +4588,12 @@ function SpoilerText({
   text,
   memberNames,
   isMine,
+  variant,
 }: {
   text: string;
   memberNames: string[];
   isMine: boolean;
+  variant?: "purple" | "gold";
 }) {
   const [revealed, setRevealed] = useState(false);
   return (
@@ -4074,7 +4606,7 @@ function SpoilerText({
       className={cn(
         "inline rounded px-1 mx-0.5 transition-colors cursor-pointer select-none align-baseline",
         revealed
-          ? "bg-stone-300/60 text-inherit"
+          ? "bg-[#8A8378]/25 text-inherit"
           : "bg-[#1E0F2B] hover:bg-[#1E0F2B]/80"
       )}
       title={revealed ? "Cliquer pour masquer" : "Cliquer pour révéler le spoiler"}
@@ -4085,6 +4617,7 @@ function SpoilerText({
           content={text}
           memberNames={memberNames}
           isMine={isMine}
+          variant={variant}
         />
       </span>
       {!revealed && <span className="sr-only">(spoiler masqué — cliquer pour révéler)</span>}
@@ -4102,10 +4635,12 @@ function TextWithSpoilers({
   text,
   memberNames,
   isMine,
+  variant,
 }: {
   text: string;
   memberNames: string[];
   isMine: boolean;
+  variant?: "purple" | "gold";
 }) {
   if (!text) return null;
 
@@ -4127,6 +4662,7 @@ function TextWithSpoilers({
           content={before}
           memberNames={memberNames}
           isMine={isMine}
+          variant={variant}
         />
       );
     }
@@ -4137,6 +4673,7 @@ function TextWithSpoilers({
         text={match[1]}
         memberNames={memberNames}
         isMine={isMine}
+        variant={variant}
       />
     );
     lastIndex = match.index + match[0].length;
@@ -4149,6 +4686,7 @@ function TextWithSpoilers({
         content={text.substring(lastIndex)}
         memberNames={memberNames}
         isMine={isMine}
+        variant={variant}
       />
     );
   }
@@ -4174,16 +4712,18 @@ function RichMessageContent({
   content,
   memberNames,
   isMine,
+  variant,
 }: {
   content: string;
   memberNames: string[];
   isMine: boolean;
+  variant?: "purple" | "gold";
 }) {
   if (!content) return null;
 
   // Si pas de ``` dans le contenu, on court-circuite (parse juste les spoilers)
   if (!content.includes("```")) {
-    return <TextWithSpoilers text={content} memberNames={memberNames} isMine={isMine} />;
+    return <TextWithSpoilers text={content} memberNames={memberNames} isMine={isMine} variant={variant} />;
   }
 
   // Regex : ```optionnel-lang\n?contenu```
@@ -4206,6 +4746,7 @@ function RichMessageContent({
           text={before}
           memberNames={memberNames}
           isMine={isMine}
+          variant={variant}
         />
       );
     }
@@ -4223,6 +4764,7 @@ function RichMessageContent({
         text={content.substring(lastIndex)}
         memberNames={memberNames}
         isMine={isMine}
+        variant={variant}
       />
     );
   }

@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
-import { Pencil, Crown, Video, FileText, BookOpen, Radio, BookMarked, Radio as RadioIcon } from "lucide-react";
+import { Crown, Video, FileText, BookOpen, Radio, BookMarked, Radio as RadioIcon } from "lucide-react";
 import { NewServantButton } from "@/components/admin/create-buttons";
+import { ServantEditButton } from "@/components/admin/servant-edit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -96,13 +97,18 @@ export default async function AdminServantsPage() {
                       )}
                     </div>
                   </div>
-                  <Link
-                    href={`/admin/servants/${s.id}/edit`}
-                    className="p-2 rounded-lg hover:bg-white/60 text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
-                    aria-label="Modifier"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Link>
+                  <ServantEditButton
+                    servant={{
+                      id: s.id,
+                      code: s.code,
+                      fullName: s.fullName,
+                      shortName: s.shortName,
+                      role: s.role,
+                      bio: s.bio,
+                      portraitUrl: s.portraitUrl,
+                      isActive: s.isActive,
+                    }}
+                  />
                   <Link
                     href={`/admin/servants/${s.id}/stream-config`}
                     className="p-2 rounded-lg hover:bg-white/60 text-[#8A8378] hover:text-[#C9A227] transition-colors"

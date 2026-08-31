@@ -37,6 +37,7 @@ import {
   Share2,
   Send,
   Copy,
+  Check,
   Printer,
   Settings,
   List,
@@ -340,6 +341,16 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
   const [data, setData] = useState<ChapitreData | null>(null);
   const [loading, setLoading] = useState(false);
   const [versetSelectionne, setVersetSelectionne] = useState<number | null>(null);
+  // ⭐ V2.8 — SÉLECTION MULTI-VERSETS : cliquer les numéros de versets les
+  // (dé)sélectionne ; la sélection peut être copiée ou envoyée EN BLOC dans
+  // la conversation Yeshua Connect (référence compacte « Livre Ch:v1-v3,v7 »).
+  const [selectedVersets, setSelectedVersets] = useState<Set<number>>(new Set());
+  // ⭐ V2.8 — Feedback « Copié ! » (icône Check temporaire sur le bouton).
+  const [copiedVerse, setCopiedVerse] = useState<number | null>(null);
+  // ⭐ V2.8 — Feedback « Copié ! » pour la sélection entière.
+  const [copiedSelection, setCopiedSelection] = useState(false);
+  // ⭐ V2.8 — Confirmation visible après l'envoi d'un verset/sélection.
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [parallelVersion, setParallelVersion] = useState<string | null>(null);
   const [parallelData, setParallelData] = useState<ChapitreData | null>(null);
@@ -356,6 +367,9 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
     setLoading(true);
     setData(null);
     setVersetSelectionne(null);
+    // ⭐ V2.8 — Réinitialiser la sélection multi-versets au changement de chapitre
+    setSelectedVersets(new Set());
+    setShareFeedback(null);
     try {
       const res = await apiFetch(`/api/bible-v2/${version}/${livre}/${chapitre}`);
       if (res.ok) setData(await res.json());
@@ -423,10 +437,108 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
     setChapitre(1);
     setSidebarOpen(false);
   };
-
   const changeChapitre = (newChap: number) => {
     setChapitre(newChap);
     setSidebarOpen(false);
+  };
+
+  // ═════════════════════════════════════════════════════════════════════
+  // ⭐ V2.8 — SÉLECTION MULTI-VERSETS : helpers (copier / partager)
+  // ═════════════════════════════════════════════════════════════════════
+
+  /** Copie dans le presse-papiers avec fallback (contextes non sécurisés). */
+  const copyToClipboard = async (text: string): Promise<boolean> => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch { /* fallback ci-dessous */ }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+
+  /** Référence compacte d'une liste de versets : 3 → « 3 », [3,4,5] → « 3-5 », [3,5,9,10] → « 3,5,9-10 ». */
+  const formatVersetsRef = (nums: number[]): string => {
+    const sorted = [...nums].sort((a, b) => a - b);
+    if (sorted.length === 0) return "";
+    const parts: string[] = [];
+    let start = sorted[0];
+    let prev = sorted[0];
+    for (let i = 1; i <= sorted.length; i++) {
+      const cur = sorted[i];
+      if (cur !== prev + 1) {
+        parts.push(start === prev ? `${start}` : `${start}-${prev}`);
+        start = cur;
+      }
+      prev = cur;
+    }
+    return parts.join(",");
+  };
+
+  /** Texte complet de la sélection (un verset par ligne, préfixé par son numéro). */
+  const buildSelection = (): { reference: string; text: string } | null => {
+    if (!data || selectedVersets.size === 0) return null;
+    const nums = Array.from(selectedVersets).sort((a, b) => a - b);
+    const ref = `${data.livre} ${data.chapitre}:${formatVersetsRef(nums)}`;
+    const text = nums
+      .map((n) => {
+        const v = data.versets.find((x) => x.numero === n);
+        return v ? `${n}. ${v.texte}` : "";
+      })
+      .filter(Boolean)
+      .join("\n");
+    return { reference: ref, text };
+  };
+
+  /** Copier la sélection entière (feedback Check + libellé). */
+  const handleCopySelection = async () => {
+    const sel = buildSelection();
+    if (!sel) return;
+    const ok = await copyToClipboard(`${sel.reference}\n${sel.text}`);
+    if (ok) {
+      setCopiedSelection(true);
+      setTimeout(() => setCopiedSelection(false), 1800);
+    }
+  };
+
+  /** Copier UN verset (feedback Check sur son bouton). */
+  const handleCopyVerset = async (numero: number, texte: string) => {
+    if (!data) return;
+    const ok = await copyToClipboard(`${data.livre} ${data.chapitre}:${numero} — ${texte}`);
+    if (ok) {
+      setCopiedVerse(numero);
+      setTimeout(() => setCopiedVerse(null), 1800);
+    }
+  };
+
+  /** Envoyer la sélection dans la conversation (message VERSE groupé). */
+  const handleShareSelection = () => {
+    const sel = buildSelection();
+    if (!sel || !onShareVerse) return;
+    onShareVerse(sel);
+    setShareFeedback(`Verset ${sel.reference} envoyé dans la conversation`);
+    setTimeout(() => setShareFeedback(null), 2600);
+  };
+
+  /** Envoyer UN verset dans la conversation (bouton papier-volant). */
+  const handleShareVerset = (numero: number, texte: string) => {
+    if (!data || !onShareVerse) return;
+    const ref = `${data.livre} ${data.chapitre}:${numero}`;
+    onShareVerse({ reference: ref, text: texte });
+    setShareFeedback(`Verset ${ref} envoyé dans la conversation`);
+    setTimeout(() => setShareFeedback(null), 2600);
   };
 
   const livrePrecedent = () => {
@@ -614,7 +726,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
               ) : (
                 <div className="space-y-2" style={{ fontSize: `${fontSize}px` }}>
                   {data.versets.map((v) => {
-                    const isSelected = versetSelectionne === v.numero;
+                    const isSelected = selectedVersets.has(v.numero);
                     const parallelVerset = parallelData?.versets.find((pv) => pv.numero === v.numero);
                     return (
                       <div
@@ -626,16 +738,31 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                             : "hover:bg-[#2A0E3D]/3"
                         )}
                       >
-                        {/* Numéro de verset — cliquable */}
+                        {/* Numéro de verset — cliquable (sélection multi-versets) */}
                         <button
-                          onClick={() => setVersetSelectionne(isSelected ? null : v.numero)}
+                          onClick={() => {
+                            // ⭐ V2.8 — Toggle dans la sélection multi-versets.
+                            // Le verset « étudié » (sidebar droite) suit le
+                            // dernier verset cliqué.
+                            const next = new Set(selectedVersets);
+                            if (next.has(v.numero)) {
+                              next.delete(v.numero);
+                              if (versetSelectionne === v.numero) {
+                                setVersetSelectionne(next.size > 0 ? Math.max(...Array.from(next)) : null);
+                              }
+                            } else {
+                              next.add(v.numero);
+                              setVersetSelectionne(v.numero);
+                            }
+                            setSelectedVersets(next);
+                          }}
                           className="inline-flex items-center justify-center w-6 h-6 mr-1.5 align-top mt-1 rounded text-[10px] font-bold transition-colors flex-shrink-0"
                           style={{
                             backgroundColor: isSelected ? GOLD : "transparent",
                             color: isSelected ? IVORY : STONE,
                             border: `1px solid ${isSelected ? GOLD : `${STONE}30`}`,
                           }}
-                          title={`Verset ${v.numero} — cliquer pour les références croisées`}
+                          title={`Verset ${v.numero} — cliquer pour sélectionner (plusieurs versets possibles)`}
                         >
                           {v.numero}
                         </button>
@@ -645,30 +772,39 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                           {v.texte}
                         </span>
 
-                        {/* Actions au survol */}
+                        {/* Actions au survol — ⭐ V2.8 : boutons qui MARCHENT
+                            avec retour visuel (« Copié ! », envoi confirmé) */}
                         <div className="absolute top-1 right-1 opacity-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-white/90 backdrop-blur-sm rounded px-1 py-0.5 shadow-sm">
                           <button
-                            onClick={() => navigator.clipboard?.writeText(`${data.livre} ${data.chapitre}:${v.numero} — ${v.texte}`)}
-                            className="p-1 rounded hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#2A0E3D]"
-                            title="Copier"
+                            onClick={() => handleCopyVerset(v.numero, v.texte)}
+                            className={cn(
+                              "flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-bold transition-colors",
+                              copiedVerse === v.numero
+                                ? "bg-[#5B7052]/10 text-[#5B7052]"
+                                : "hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#2A0E3D]"
+                            )}
+                            title={copiedVerse === v.numero ? "Copié !" : "Copier ce verset"}
                           >
-                            <Copy className="w-3 h-3" />
+                            {copiedVerse === v.numero ? (
+                              <>
+                                <Check className="w-3 h-3" /> Copié !
+                              </>
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
                           </button>
                           {onShareVerse ? (
                             <button
-                              onClick={() =>
-                                onShareVerse({
-                                  reference: `${data.livre} ${data.chapitre}:${v.numero}`,
-                                  text: v.texte,
-                                })
-                              }
-                              className="p-1 rounded hover:bg-[#C9A227]/20 text-[#C9A227] hover:text-[#2A0E3D]"
-                              title="Partager dans la conversation"
+                              onClick={() => handleShareVerset(v.numero, v.texte)}
+                              className="flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-bold hover:bg-[#C9A227]/20 text-[#C9A227] hover:text-[#2A0E3D] transition-colors"
+                              title="Envoyer dans la conversation"
                             >
                               <Send className="w-3 h-3" />
+                              <span className="hidden sm:inline">Envoyer</span>
                             </button>
                           ) : (
                             <button
+                              onClick={() => handleCopyVerset(v.numero, v.texte)}
                               className="p-1 rounded hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#2A0E3D]"
                               title="Partager"
                             >
@@ -753,6 +889,66 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
         ) : (
           <div className="bg-white rounded-lg border border-[#8A8378]/15 py-32 text-center">
             <p className="text-[#8A8378] italic">Chargement...</p>
+          </div>
+        )}
+
+        {/* ⭐ V2.8 — BARRE DE SÉLECTION MULTI-VERSETS (sticky bas) :
+            apparaît dès qu'au moins un verset est sélectionné. Permet de
+            COPIER ou d'ENVOYER la sélection entière dans la conversation
+            Yeshua Connect, ou d'effacer la sélection. */}
+        {selectedVersets.size > 0 && data && (
+          <div className="sticky bottom-4 z-20 mt-4 pointer-events-none">
+            <div className="mx-auto max-w-xl bg-[#2A0E3D] text-[#FAF6EF] rounded-2xl shadow-2xl border border-[#C9A227]/50 px-4 py-3 flex items-center gap-3 pointer-events-auto">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-[#C9A227] flex-shrink-0">
+                <Check className="w-3.5 h-3.5" />
+                {selectedVersets.size} verset{selectedVersets.size > 1 ? "s" : ""}
+              </span>
+              <span className="text-xs truncate opacity-75 flex-1 min-w-0">
+                {data.livre} {data.chapitre}:{formatVersetsRef(Array.from(selectedVersets))}
+              </span>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  onClick={handleCopySelection}
+                  className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-bold transition-colors",
+                    copiedSelection
+                      ? "bg-[#5B7052] text-white"
+                      : "hover:bg-white/10 text-[#FAF6EF]"
+                  )}
+                  title={copiedSelection ? "Copié !" : "Copier la sélection"}
+                >
+                  {copiedSelection ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span className="hidden sm:inline">{copiedSelection ? "Copié !" : "Copier"}</span>
+                </button>
+                {onShareVerse && (
+                  <button
+                    onClick={handleShareSelection}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-xs font-bold hover:bg-[#DDBE55] transition-colors"
+                    title="Envoyer la sélection dans la conversation"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    Envoyer
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedVersets(new Set())}
+                  className="p-2 rounded-lg hover:bg-white/10 text-[#FAF6EF]/80 transition-colors"
+                  title="Effacer la sélection"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ⭐ V2.8 — Confirmation d'envoi (feedback visible) */}
+        {shareFeedback && (
+          <div className="sticky bottom-0 z-30 mt-2 pointer-events-none">
+            <div className="mx-auto max-w-md bg-[#5B7052] text-white rounded-xl shadow-xl px-4 py-2.5 flex items-center gap-2 pointer-events-auto">
+              <Check className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs font-semibold">{shareFeedback}</span>
+            </div>
           </div>
         )}
       </div>
