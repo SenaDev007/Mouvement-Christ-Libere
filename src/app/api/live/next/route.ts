@@ -34,7 +34,13 @@ export async function GET() {
         servantCode: nextLive.servant.code,
         servantPortraitUrl: nextLive.servant.portraitUrl,
         youtubeUrl: nextLive.youtubeUrl,
-        thumbnailUrl: nextLive.thumbnailUrl,
+        // (S5) Exclure les data URLs base64 géantes (332KB) qui ralentissent
+        // la sérialisation JSON. Les miniatures data URL sont récupérées
+        // individuellement par le viewer via un appel dédié si nécessaire.
+        thumbnailUrl:
+          nextLive.thumbnailUrl && !nextLive.thumbnailUrl.startsWith("data:")
+            ? nextLive.thumbnailUrl
+            : null,
         // (YT-pause) État de pause persisté en base pour les viewers YouTube
         // (qui ne reçoivent pas le DataChannel LiveKit). Permet au viewer de
         // geler la minuterie et d'afficher la miniature pendant la pause.

@@ -31,7 +31,12 @@ export async function GET() {
         tiktokUrl: activeLive.tiktokUrl,
         livekitRoomName: activeLive.livekitRoomName,
         viewerCount: activeLive.viewerCount,
-        thumbnailUrl: activeLive.thumbnailUrl,
+        // (S5) Exclure les data URLs base64 géantes (332KB) qui ralentissent
+        // la sérialisation JSON et la navigation.
+        thumbnailUrl:
+          activeLive.thumbnailUrl && !activeLive.thumbnailUrl.startsWith("data:")
+            ? activeLive.thumbnailUrl
+            : null,
       },
     });
   } catch (error) {

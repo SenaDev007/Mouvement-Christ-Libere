@@ -34,7 +34,13 @@ export async function GET() {
         status: l.status,
         servantName: l.servant.shortName,
         servantCode: l.servant.code,
-        thumbnailUrl: l.thumbnailUrl,
+        // (S5) Exclure les data URLs base64 géantes (332KB) qui ralentissent
+        // la sérialisation JSON. UpcomingLiveFloat n'affiche que les miniatures
+        // non-data-URL (les data URLs sont fallback sur le viewer individuel).
+        thumbnailUrl:
+          l.thumbnailUrl && !l.thumbnailUrl.startsWith("data:")
+            ? l.thumbnailUrl
+            : null,
         youtubeUrl: l.youtubeUrl,
       })),
     });
