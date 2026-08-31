@@ -17,6 +17,13 @@ export default async function YoutubeSetupPage() {
   // Vérifier si l'OAuth est déjà configuré (côté serveur)
   const oauthConfigured = isYouTubeOAuthConfigured();
 
+  // Les credentials OAuth sont-ils déjà définis sur Vercel ?
+  // (le refresh token, lui, s'obtient via le flux in-app)
+  const credentialsConfigured = !!(
+    process.env.YOUTUBE_CLIENT_ID &&
+    process.env.YOUTUBE_CLIENT_SECRET
+  );
+
   // Récupérer les lives récents pour le test
   const recentLives = await db.liveStream.findMany({
     where: { streamToYoutube: true },
@@ -35,6 +42,7 @@ export default async function YoutubeSetupPage() {
   return (
     <YoutubeSetupClient
       oauthConfigured={oauthConfigured}
+      credentialsConfigured={credentialsConfigured}
       recentLives={recentLives.map((l) => ({
         ...l,
         startedAt: l.startedAt?.toISOString() || null,

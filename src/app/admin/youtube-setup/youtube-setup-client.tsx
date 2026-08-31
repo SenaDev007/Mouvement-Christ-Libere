@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import {
   Youtube, CheckCircle2, AlertCircle, Copy, Loader2, RefreshCw,
-  ExternalLink, Terminal, Settings, Video, ChevronRight,
+  ExternalLink, Terminal, Settings, Video, ChevronRight, Globe, KeyRound,
+  Eye, EyeOff,
 } from "lucide-react";
 
 interface YoutubeSetupClientProps {
   oauthConfigured: boolean;
+  /** YOUTUBE_CLIENT_ID + YOUTUBE_CLIENT_SECRET déjà définis sur Vercel ? */
+  credentialsConfigured: boolean;
   recentLives: {
     id: string;
     title: string;
@@ -19,10 +22,40 @@ interface YoutubeSetupClientProps {
   }[];
 }
 
-export function YoutubeSetupClient({ oauthConfigured, recentLives }: YoutubeSetupClientProps) {
+const OAUTH_ERRORS: Record<string, string> = {
+  missing_credentials:
+    "YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET ne sont pas encore définis sur Vercel — utilisez le formulaire ci-dessous ou ajoutez-les sur Vercel.",
+};
+
+export function YoutubeSetupClient({
+  oauthConfigured,
+  credentialsConfigured,
+  recentLives,
+}: YoutubeSetupClientProps) {
   const [copied, setCopied] = useState("");
   const [testingLiveId, setTestingLiveId] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<Record<string, { success: boolean; message: string }>>({});
+
+  // ── État du flux in-app ────────────────────────────────────────────────
+  const [origin, setOrigin] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [showSecret, setShowSecret] = useState(false);
+  const [showManual, setShowManual] = useState(false);
+  const [oauthStarting, setOauthStarting] = useState(false);
+  const [oauthError, setOauthError] = useState("");
+  const [queryError, setQueryError] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("oauthError");
+    if (err) {
+      setQueryError(OAUTH_ERRORS[err] || `Le flux OAuth n'a pas pu démarrer (${err}).`);
+      // Nettoyer l'URL sans recharger la page
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard?.writeText(text);
@@ -30,6 +63,7 @@ export function YoutubeSetupClient({ oauthConfigured, recentLives }: YoutubeSetu
     setTimeout(() => setCopied(""), 2000);
   };
 
+  // ── Test Tier B (POST /api/live/[id]/youtube-replay) ─────────────────
   const testFetchReplay = async (liveId: string) => {
     setTestingLiveId(liveId);
     setTestResult({});
@@ -59,6 +93,52 @@ export function YoutubeSetupClient({ oauthConfigured, recentLives }: YoutubeSetu
       setTestingLiveId(null);
     }
   };
+
+  // ── Lancement du flux OAuth in-app ─────────────────────────────────────
+  const startInAppOAuth = async () => {
+    setOauthStarting(true);
+    setOauthError("");
+
+    // Validation locale des champs (seulement s'ils sont remplis)
+    const trimmedId = clientId.trim();
+    const trimmedSecret = clientSecret.trim();
+    if (trimmedId && !trimmedId.includes("apps.googleusercontent.com")) {
+      setOauthError("Client ID invalide — il doit se terminer par .apps.googleusercontent.com.");
+      setOauthStarting(false);
+      return;
+    }
+    if (trimmedSecret && trimmedSecret.length < 20) {
+      setOauthError("Client Secret invalide (trop court) — vérifiez le copier-coller.");
+      setOauthStarting(false);
+      return;
+    }
+
+    try {
+      // POST : les champs vides → le serveur utilise les env vars Vercel
+      const res = await apiFetch("/api/youtube/oauth/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId: trimmedId, clientSecret: trimmedSecret }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.authUrl) {
+        setOauthError(data.error || "Impossible de démarrer le flux OAuth.");
+        setOauthStarting(false);
+        return;
+      }
+
+      // Redirection vers l'écran de consentement Google
+      window.location.href = data.authUrl;
+    } catch (err) {
+      setOauthError(
+        err instanceof Error ? err.message : "Erreur réseau — impossible de démarrer le flux OAuth."
+      );
+      setOauthStarting(false);
+    }
+  };
+
+  const inAppRedirectUri = `${origin || "https://mouvement-christ-libere.vercel.app"}/api/youtube/oauth/callback`;
 
   return (
     <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
@@ -93,13 +173,28 @@ export function YoutubeSetupClient({ oauthConfigured, recentLives }: YoutubeSetu
                 <div>
                   <p className="font-bold text-amber-800">OAuth YouTube non configuré</p>
                   <p className="text-xs text-amber-700">
-                    Seul le Tier A (saisie manuelle) fonctionne actuellement. Suivez les étapes ci-dessous.
+                    {credentialsConfigured
+                      ? "Client ID et Secret déjà présents sur Vercel — il ne manque que le refresh token (étape 2)."
+                      : "Seul le Tier A (saisie manuelle) fonctionne actuellement. Suivez les étapes ci-dessous."}
                   </p>
                 </div>
               </>
             )}
           </div>
         </div>
+
+        {/* Erreur renvoyée par la route start (GET) */}
+        {queryError && (
+          <div className="rounded-2xl p-4 mb-6 bg-red-50 border border-red-200 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-red-800">{queryError}</p>
+              <button onClick={() => setQueryError("")} className="text-xs text-red-500 hover:underline mt-1">
+                Masquer
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Étape 1 : Google Cloud Console */}
         <Section
@@ -120,28 +215,167 @@ export function YoutubeSetupClient({ oauthConfigured, recentLives }: YoutubeSetu
             <li>Menu → <strong>APIs &amp; Services</strong> → <strong>Credentials</strong> → <strong>Create Credentials</strong> → <strong>OAuth 2.0 Client ID</strong></li>
             <li>Type : <strong>Web application</strong></li>
             <li>
-              Dans <strong>Authorized redirect URIs</strong>, ajoutez :
-              <div className="mt-1 flex items-center gap-2">
-                <code className="px-2 py-1 bg-[#2A0E3D]/5 rounded text-xs">http://localhost:3001/callback</code>
-                <button onClick={() => copyToClipboard("http://localhost:3001/callback", "redirect")}
-                  className="p-1 rounded hover:bg-[#2A0E3D]/10 text-[#8A8378]">
-                  <Copy className="w-3 h-3" />
-                </button>
-                {copied === "redirect" && <span className="text-[10px] text-green-600">Copié !</span>}
+              Dans <strong>Authorized redirect URIs</strong>, ajoutez <strong>les 2 URIs</strong> :
+              <div className="mt-2 space-y-2">
+                <div className="px-3 py-2 rounded-lg bg-[#C9A227]/5 border border-[#C9A227]/20">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
+                    <code className="text-xs font-bold break-all">{inAppRedirectUri}</code>
+                    <button onClick={() => copyToClipboard(inAppRedirectUri, "redirect-inapp")}
+                      className="ml-auto p-1 rounded hover:bg-[#2A0E3D]/10 text-[#8A8378] flex-shrink-0">
+                      <Copy className="w-3 h-3" />
+                    </button>
+                    {copied === "redirect-inapp" && <span className="text-[10px] text-green-600">Copié !</span>}
+                  </div>
+                  <p className="text-[10px] text-[#8A8378] mt-1">
+                    → <strong>requis pour la méthode recommandée (étape 2)</strong> — flux directement depuis le site
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-3.5 h-3.5 text-[#8A8378] flex-shrink-0" />
+                  <code className="px-2 py-1 bg-[#2A0E3D]/5 rounded text-xs">http://localhost:3001/callback</code>
+                  <button onClick={() => copyToClipboard("http://localhost:3001/callback", "redirect-local")}
+                    className="p-1 rounded hover:bg-[#2A0E3D]/10 text-[#8A8378]">
+                    <Copy className="w-3 h-3" />
+                  </button>
+                  {copied === "redirect-local" && <span className="text-[10px] text-green-600">Copié !</span>}
+                </div>
+                <p className="text-[10px] text-[#8A8378]">→ uniquement si vous utilisez le script local (étape 3)</p>
               </div>
             </li>
             <li>Notez votre <strong>Client ID</strong> et <strong>Client Secret</strong></li>
           </ol>
         </Section>
 
-        {/* Étape 2 : Script OAuth */}
+        {/* Étape 2 : In-app OAuth (recommandé) */}
         <Section
           number={2}
-          title="Générer le refresh token (script local)"
-          icon={Terminal}
+          title="Générer le refresh token — depuis le site (recommandé)"
+          icon={Globe}
         >
           <p className="text-sm text-[#1E0F2B]/80 mb-3">
-            Le script ouvre votre navigateur pour le consentement Google, puis affiche le refresh token.
+            Une seule opération, <strong>sans terminal ni Node.js local</strong> : vous cliquez,
+            vous autorisez le compte YouTube du ministère sur l'écran Google, et le site affiche
+            les variables à copier sur Vercel.
+          </p>
+
+          {/* Statut des credentials */}
+          <div className={`px-3 py-2 rounded-lg mb-4 flex items-center gap-2 ${credentialsConfigured ? "bg-green-50" : "bg-amber-50"}`}>
+            {credentialsConfigured ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <p className="text-xs text-green-800">
+                  Credentials détectés sur Vercel (YOUTUBE_CLIENT_ID / SECRET) — prêt à démarrer.
+                </p>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <p className="text-xs text-amber-800">
+                  Credentials absents de Vercel — collez-les ci-dessous, le flux fonctionnera quand même.
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Champs credentials (visibles si absents de Vercel, ou toggle) */}
+          {(showManual || !credentialsConfigured) && (
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="text-xs font-bold text-[#1E0F2B]/70 mb-1 flex items-center gap-1">
+                  <KeyRound className="w-3 h-3" /> Client ID (…apps.googleusercontent.com)
+                </label>
+                <input
+                  type="text"
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  placeholder="123456789-abcdef.apps.googleusercontent.com"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-white text-sm font-mono focus:outline-none focus:border-[#C9A227]"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#1E0F2B]/70 mb-1 flex items-center gap-1">
+                  <KeyRound className="w-3 h-3" /> Client Secret (GOCSPX-…)
+                </label>
+                <div className="relative">
+                  <input
+                    type={showSecret ? "text" : "password"}
+                    value={clientSecret}
+                    onChange={(e) => setClientSecret(e.target.value)}
+                    placeholder="GOCSPX-xxxxxxxxxxxxxxxxxxxx"
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="w-full px-3 py-2 pr-10 rounded-lg border border-[#8A8378]/25 bg-white text-sm font-mono focus:outline-none focus:border-[#C9A227]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSecret(!showSecret)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#8A8378] hover:text-[#1E0F2B]"
+                    aria-label={showSecret ? "Masquer le secret" : "Afficher le secret"}
+                  >
+                    {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#8A8378] mt-1">
+                  🔒 Chiffré côté serveur dans un cookie httpOnly à usage unique (10 min) — jamais affiché ni stocké en clair.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Erreur du POST */}
+          {oauthError && (
+            <div className="px-3 py-2 rounded-lg bg-red-50 text-red-700 text-xs mb-4 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>{oauthError}</span>
+            </div>
+          )}
+
+          {/* Bouton principal */}
+          <button
+            onClick={startInAppOAuth}
+            disabled={oauthStarting}
+            className="w-full px-4 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            {oauthStarting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Démarrage du flux…
+              </>
+            ) : (
+              <>
+                <Youtube className="w-4 h-4" /> Autoriser YouTube maintenant →
+              </>
+            )}
+          </button>
+
+          {/* Toggle credentials manuels quand env configurée */}
+          {credentialsConfigured && (
+            <button
+              onClick={() => setShowManual(!showManual)}
+              className="mt-3 text-xs text-[#8A8378] hover:text-[#1E0F2B] underline"
+            >
+              {showManual ? "Masquer les champs" : "Utiliser d'autres credentials…"}
+            </button>
+          )}
+
+          <div className="mt-4 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-xs text-[#1E0F2B]/70 leading-relaxed">
+            <p className="font-bold text-[#1E0F2B] mb-1">Écrans Google à prévoir :</p>
+            <p>1. « Google n&apos;a pas validé cette application » → <strong>Avancé</strong> → <strong>Continuer vers Christ Libère (non sécurisé)</strong> — normal en mode Testing.</p>
+            <p>2. Cochez les autorisations YouTube → <strong>Continuer</strong>.</p>
+            <p>3. Le site affiche les <strong>4 variables</strong> prêtes à copier (retour automatique sur ce domaine).</p>
+          </div>
+        </Section>
+
+        {/* Étape 3 : Script local (alternative) */}
+        <Section
+          number={3}
+          title="Alternative : script local (terminal)"
+          icon={Terminal}
+        >
+          <p className="text-xs text-[#8A8378] mb-3">
+            Si vous préférez générer le token depuis votre ordinateur (Node.js requis) — méthode historique.
           </p>
           <div className="bg-[#1A0826] rounded-xl p-4 font-mono text-xs text-[#C9A227] overflow-x-auto">
             <div className="text-[#FAF6EF]/40 mb-2"># Dans le terminal, à la racine du projet :</div>
@@ -160,15 +394,11 @@ export function YoutubeSetupClient({ oauthConfigured, recentLives }: YoutubeSetu
             </button>
             {copied === "cmd" && <span className="text-[10px] text-green-600">Copié !</span>}
           </div>
-          <p className="text-xs text-[#8A8378] mt-3 leading-relaxed">
-            Le navigateur s'ouvre → connectez-vous avec le compte YouTube du ministère → autorisez l'accès.
-            Le script affiche les 4 variables à copier.
-          </p>
         </Section>
 
-        {/* Étape 3 : Vercel env vars */}
+        {/* Étape 4 : Vercel env vars */}
         <Section
-          number={3}
+          number={4}
           title="Ajouter les variables sur Vercel"
           icon={ExternalLink}
         >
@@ -184,7 +414,7 @@ export function YoutubeSetupClient({ oauthConfigured, recentLives }: YoutubeSetu
             {[
               { key: "YOUTUBE_CLIENT_ID", desc: "OAuth 2.0 Client ID" },
               { key: "YOUTUBE_CLIENT_SECRET", desc: "OAuth 2.0 Client Secret" },
-              { key: "YOUTUBE_REFRESH_TOKEN", desc: "Généré par le script à l'étape 2" },
+              { key: "YOUTUBE_REFRESH_TOKEN", desc: "Généré à l'étape 2 (ou 3)" },
               { key: "YOUTUBE_CHANNEL_ID", desc: "ID de votre chaîne (UC...)" },
             ].map((v) => (
               <div key={v.key} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#2A0E3D]/5">
@@ -208,9 +438,9 @@ export function YoutubeSetupClient({ oauthConfigured, recentLives }: YoutubeSetu
           </div>
         </Section>
 
-        {/* Étape 4 : Test */}
+        {/* Étape 5 : Test */}
         <Section
-          number={4}
+          number={5}
           title="Tester la configuration"
           icon={Video}
         >
