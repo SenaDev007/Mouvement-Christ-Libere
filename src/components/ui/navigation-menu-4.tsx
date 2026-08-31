@@ -5,7 +5,6 @@ import {
   FileText,
   BookOpen,
   Calendar,
-  Globe,
   MessageSquare,
   ChevronDown,
   Menu,
@@ -72,8 +71,6 @@ const navigationLinks = [
     type: "simple",
     items: [
       { href: "/videos", label: "Vidéos & Lives" },
-      { href: "/disperses", label: "Dispersés d'Israël" },
-      { href: "/intercession", label: "Intercession" },
     ],
   },
   {
@@ -82,6 +79,10 @@ const navigationLinks = [
     type: "simple",
     items: [
       { href: "/yeshua-connect", label: "Yeshua Connect — Chat" },
+      // ⭐ V3.2 — Intercession et Dispersés d'Israël regroupés sous le bouton
+      // principal « Communauté » (demande explicite).
+      { href: "/intercession", label: "Intercession" },
+      { href: "/disperses", label: "Dispersés d'Israël" },
       { href: "/contribuer", label: "Contribuer (Don/Dîme)" },
       { href: "/contact", label: "Contact" },
     ],
@@ -510,14 +511,9 @@ export function ContextualNav() {
                       <MessageSquare className="w-4 h-4 text-[#8A8378]" />
                       Yeshua Connect
                     </Link>
-                    <Link
-                      href="/disperses"
-                      onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-[#1E0F2B] hover:bg-[#2A0E3D]/5 transition-colors"
-                    >
-                      <Globe className="w-4 h-4 text-[#8A8378]" />
-                      Carte des dispersés
-                    </Link>
+                    {/* ⭐ V3.2 — « Carte des dispersés » retirée du menu
+                        utilisateur : désormais sous le bouton principal
+                        « Communauté » (avec l'Intercession). */}
                     <div className="border-t border-[#8A8378]/10 mt-1 pt-1">
                       <button
                         onClick={handleLogout}

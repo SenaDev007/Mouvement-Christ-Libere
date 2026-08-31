@@ -179,7 +179,7 @@ export function AdminForm({
                     <input
                       ref={(el) => { photoFileRef.current[field.name] = el; }}
                       type="file"
-                      accept="image/jpeg,image/png,image/webp"
+                      accept="image/*"
                       onChange={(e) => handlePhotoChange(field.name, e.target.files?.[0])}
                       className="hidden"
                       id={`photo-${field.name}`}

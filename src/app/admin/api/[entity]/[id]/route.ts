@@ -19,6 +19,9 @@ const ENTITY_MAP = {
   channels: "channel",
   users: "user",
   contactrequests: "contactRequest",
+  // ⭐ V3.2 — Demandes d'intercession : gestion depuis le back-office
+  // (/admin/intercession) — statut, témoignage d'exaucement, suppression.
+  intercessionrequests: "intercessionRequest",
   donations: "donation",
   communities: "community",
   calendar: "liturgicalEvent",

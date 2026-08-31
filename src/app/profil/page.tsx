@@ -166,7 +166,7 @@ export default function ProfilPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               onChange={handlePhotoChange}
               className="hidden"
               id="profile-avatar-input"

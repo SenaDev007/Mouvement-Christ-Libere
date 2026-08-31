@@ -29,7 +29,6 @@ const NAV_GROUPS = [
     items: [
       { label: "Vidéos & Lives", href: "/videos" },
       { label: "Calendrier 364", href: "/calendrier-biblique" },
-      { label: "Dispersés", href: "/disperses" },
     ],
   },
   {
@@ -38,6 +37,8 @@ const NAV_GROUPS = [
       { label: "Canaux", href: "/communaute" },
       { label: "Yeshua Connect", href: "/yeshua-connect" },
       { label: "Intercession", href: "/intercession" },
+      // ⭐ V3.2 — Dispersés d'Israël regroupé sous « Communauté ».
+      { label: "Dispersés", href: "/disperses" },
     ],
   },
 ];

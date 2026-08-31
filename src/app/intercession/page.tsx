@@ -1,94 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Heart,
   Loader2,
   CheckCircle2,
   Flame,
-  Users,
-  Clock,
-  HandHeart,
-  Sparkles,
+  ShieldCheck,
+  Lock,
 } from "lucide-react";
 import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
-import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
-import { cn } from "@/lib/utils";
+import { QuoteBlock } from "@/components/premium/section-divider";
 import { api } from "@/lib/api-client";
 
-interface Demande {
-  id: string;
-  auteur: string;
-  sujet: string;
-  description: string;
-  categorie: string;
-  isUrgent: boolean;
-  statut: string;
-  prayCount: number;
-  createdAt: string;
-  temoignageExaucement: string | null;
-}
-
-const CATEGORIES = [
-  { id: "tous", label: "Toutes", icon: Heart },
-  { id: "sante", label: "Santé", icon: Heart },
-  { id: "famille", label: "Famille", icon: Users },
-  { id: "spiritual", label: "Spirituel", icon: Sparkles },
-  { id: "urgence", label: "Urgent", icon: Flame },
-  { id: "action_graces", label: "Actions de grâces", icon: CheckCircle2 },
-];
-
-const STATUT_LABELS: Record<string, { label: string; color: string }> = {
-  ouvert: { label: "Ouvert", color: "bg-[#8A8378]/15 text-[#8A8378]" },
-  en_priere: { label: "En prière", color: "bg-[#C9A227]/15 text-[#A3821C]" },
-  exauce: { label: "Exaucé", color: "bg-state-success/15 text-state-success" },
-  archive: { label: "Archivé", color: "bg-[#8A8378]/10 text-[#8A8378]/60" },
-};
+/**
+ * ⭐ V3.2 — Page d'intercession CONFIDENTIELLE (demande explicite) :
+ * les demandes de prière contiennent des informations personnelles (nom,
+ * sujet, description) → elles ne sont PLUS affichées publiquement.
+ * Le public ne voit que ce formulaire ; chaque demande arrive directement
+ * dans le back-office de l'administration (/admin/intercession), où
+ * l'équipe pastorale la prend en charge.
+ */
 
 export default function IntercessionPage() {
-  const [demandes, setDemandes] = useState<Demande[]>([]);
-  const [stats, setStats] = useState({ total: 0, enPriere: 0, exauces: 0, priersTotal: 0 });
-  const [loading, setLoading] = useState(true);
-  const [filtre, setFiltre] = useState("tous");
-  const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ auteur: "", sujet: "", description: "", categorie: "general", isUrgent: false });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  const fetchDemandes = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(api.url(`/api/intercession${filtre !== "tous" ? `?categorie=${filtre}` : ""}`));
-      if (res.ok) {
-        const data = await res.json();
-        setDemandes(data.demandes || []);
-        setStats(data.stats || {});
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchDemandes(); }, [filtre]);
-
-  const handlePrier = async (id: string) => {
-    try {
-      await fetch(api.url(`/api/intercession/${id}/prier`), { method: "POST" });
-      setDemandes((prev) =>
-        prev.map((d) =>
-          d.id === id ? { ...d, prayCount: d.prayCount + 1, statut: "en_priere" } : d
-        )
-      );
-      setStats((prev) => ({ ...prev, priersTotal: prev.priersTotal + 1 }));
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +41,6 @@ export default function IntercessionPage() {
       });
       if (res.ok) {
         setSubmitted(true);
-        fetchDemandes();
         setForm({ auteur: "", sujet: "", description: "", categorie: "general", isUrgent: false });
       }
     } catch (err) {
@@ -111,132 +50,39 @@ export default function IntercessionPage() {
     }
   };
 
-  const demandesFiltrees = filtre === "urgence"
-    ? demandes.filter((d) => d.isUrgent)
-    : demandes;
-
   return (
     <div>
       <PageHero
         imageSrc="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=1920&auto=format&fit=crop"
         kicker="Moteur spirituel de la communauté"
         title="Chaîne d'intercession"
-        subtitle="Le moteur spirituel de la communauté. Déposez vos demandes de prière, priez pour les autres, partageez les exaucements. Quand deux ou trois s'accordent, le Seigneur est au milieu."
+        subtitle="Déposez vos demandes de prière : elles arrivent directement et en toute confidentialité entre les mains de l'équipe pastorale, qui les porte devant le Seigneur. Quand deux ou trois s'accordent, le Seigneur est au milieu."
         primaryCta={{ label: "Déposer une demande", href: "#demander" }}
-        secondaryCta={{ label: "Prier pour d'autres", href: "#liste" }}
       />
 
-      {/* Stats */}
-      <section className="bg-[#FAF6EF] py-20 md:py-24">
-        <div className="container mx-auto max-w-7xl px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard icon={Heart} value={stats.total} label="Demandes actives" color="text-[#C9A227]" />
-            <StatCard icon={HandHeart} value={stats.enPriere} label="En prière" color="text-[#8C5FA8]" />
-            <StatCard icon={CheckCircle2} value={stats.exauces} label="Exaucées" color="text-state-success" />
-            <StatCard icon={Users} value={stats.priersTotal} label="Prières exprimées" color="text-[#2A0E3D]" />
+      {/* Bandeau confidentialité */}
+      <section className="bg-[#FAF6EF] py-14 md:py-16 border-b border-[#8A8378]/15">
+        <div className="container mx-auto max-w-3xl px-4">
+          <div className="card-gold-top p-6 md:p-8 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+            <span className="w-14 h-14 rounded-full bg-[#2A0E3D]/5 border border-[#C9A227]/30 flex items-center justify-center flex-shrink-0">
+              <Lock className="w-6 h-6 text-[#C9A227]" />
+            </span>
+            <div>
+              <h2 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-1.5 flex items-center gap-2 justify-center sm:justify-start">
+                Vos demandes restent confidentielles
+              </h2>
+              <p className="text-sm text-[#8A8378] leading-relaxed">
+                Chaque demande est transmise directement à l&apos;administration du site et à
+                l&apos;équipe pastorale, dans leur espace privé. Votre nom et votre sujet de prière
+                ne sont jamais affichés publiquement.
+              </p>
+            </div>
           </div>
         </div>
       </section>
-
-      {/* Filtres */}
-      <section id="liste" className="bg-[#FAF6EF] py-20 md:py-24 border-t border-[#8A8378]/15">
-        <div className="container mx-auto max-w-7xl px-4">
-          <div className="flex items-center gap-2 flex-wrap mb-6">
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setFiltre(cat.id)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold transition-all",
-                    filtre === cat.id
-                      ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                      : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
-                  )}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {cat.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Liste des demandes */}
-          {loading ? (
-            <div className="flex items-center justify-center py-20 md:py-24">
-              <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {demandesFiltrees.map((demande, i) => (
-                <motion.div
-                  key={demande.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: i * 0.05 }}
-                  className={cn(
-                    "card-gold-top p-5 flex flex-col",
-                    demande.isUrgent && "border-state-danger/40"
-                  )}
-                >
-                  {/* En-tête */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      {demande.isUrgent && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-state-danger text-[#FAF6EF] animate-pulse">
-                          <Flame className="w-2.5 h-2.5" />
-                          URGENT
-                        </span>
-                      )}
-                      <span className={cn(
-                        "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold",
-                        STATUT_LABELS[demande.statut]?.color || "bg-[#8A8378]/15 text-[#8A8378]"
-                      )}>
-                        {STATUT_LABELS[demande.statut]?.label || demande.statut}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-[#8A8378]">
-                      <Clock className="w-3 h-3 inline mr-0.5" />
-                      {new Date(demande.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-                    </span>
-                  </div>
-
-                  {/* Contenu */}
-                  <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-2">{demande.sujet}</h3>
-                  <p className="text-xs text-[#8A8378] mb-1">par {demande.auteur}</p>
-                  <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-4 flex-1">{demande.description}</p>
-
-                  {/* Témoignage d'exaucement */}
-                  {demande.temoignageExaucement && (
-                    <div className="p-3 bg-state-success/5 border border-state-success/20 rounded-full mb-4">
-                      <p className="text-xs font-semibold text-state-success mb-1">Témoignage d'exaucement</p>
-                      <p className="text-xs text-[#1E0F2B]/70 italic">« {demande.temoignageExaucement} »</p>
-                    </div>
-                  )}
-
-                  {/* Bouton prier */}
-                  <button
-                    onClick={() => handlePrier(demande.id)}
-                    className="w-full px-4 py-2.5 rounded-full bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 group"
-                  >
-                    <HandHeart className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                    Je prie pour cette demande
-                    <span className="ml-1 px-1.5 py-0.5 rounded bg-[#2A0E3D]/10 text-[#2A0E3D] text-[10px]">
-                      {demande.prayCount}
-                    </span>
-                  </button>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <SectionDivider variant="ornament" />
 
       {/* Formulaire de demande */}
-      <section id="demander" className="bg-[#FAF6EF] py-20 md:py-24 md:py-20">
+      <section id="demander" className="bg-[#FAF6EF] py-20 md:py-24">
         <div className="container mx-auto max-w-2xl px-4">
           {submitted ? (
             <motion.div
@@ -247,9 +93,11 @@ export default function IntercessionPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-state-success/15 border-2 border-state-success/40 mb-6">
                 <CheckCircle2 className="w-8 h-8 text-state-success" />
               </div>
-              <h3 className="font-serif text-2xl font-semibold text-[#1E0F2B] mb-3">Demande déposée</h3>
-              <p className="text-sm text-[#8A8378] mb-6">
-                Votre demande est maintenant visible par la communauté. Que le Seigneur vous bénisse.
+              <h3 className="font-serif text-2xl font-semibold text-[#1E0F2B] mb-3">Demande transmise</h3>
+              <p className="text-sm text-[#8A8378] mb-6 leading-relaxed">
+                Votre demande de prière est arrivée directement entre les mains de l&apos;équipe
+                pastorale, qui s&apos;en saisit sans délai. Que le Seigneur vous bénisse et vous
+                garde.
               </p>
               <button
                 onClick={() => setSubmitted(false)}
@@ -263,7 +111,7 @@ export default function IntercessionPage() {
               <div className="text-center mb-8">
                 <h2 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-3">Déposer une demande</h2>
                 <p className="text-sm text-[#8A8378]">
-                  Confiez votre fardeau à la communauté. « Portez les fardeaux les uns des autres, et vous accomplirez ainsi la loi de Christ. » (Galates 6:2)
+                  Confiez votre fardeau à l&apos;équipe pastorale. « Portez les fardeaux les uns des autres, et vous accomplirez ainsi la loi de Christ. » (Galates 6:2)
                 </p>
               </div>
 
@@ -291,7 +139,7 @@ export default function IntercessionPage() {
 
                 <div>
                   <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Description *</label>
-                  <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows={5} placeholder="Décrivez votre demande en détail..." maxLength={2000} className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-y font-serif" />
+                  <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows={5} placeholder="Décrivez votre demande en détail…" maxLength={2000} className="w-full px-4 py-3 rounded-3xl border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-y font-serif" />
                 </div>
 
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -303,8 +151,13 @@ export default function IntercessionPage() {
                 </label>
 
                 <button type="submit" disabled={submitting} className="w-full px-6 py-4 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50">
-                  {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Dépôt en cours...</> : <><Heart className="w-4 h-4" /> Déposer ma demande</>}
+                  {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Transmission en cours…</> : <><Heart className="w-4 h-4" /> Transmettre ma demande à l&apos;équipe pastorale</>}
                 </button>
+
+                <p className="text-[11px] text-[#8A8378] flex items-center justify-center gap-1.5 text-center">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
+                  Votre demande part directement dans l&apos;espace privé de l&apos;administration — rien n&apos;est publié.
+                </p>
               </form>
             </>
           )}
@@ -317,16 +170,6 @@ export default function IntercessionPage() {
           <QuoteBlock text="Si deux d'entre vous s'accordent sur la terre pour demander une chose quelconque, elle leur sera accordée par mon Père qui est dans les cieux." reference="Matthieu 18:19" variant="dark" />
         </div>
       </AuroraBackground>
-    </div>
-  );
-}
-
-function StatCard({ icon: Icon, value, label, color }: { icon: React.ComponentType<{ className?: string }>; value: number; label: string; color: string }) {
-  return (
-    <div className="card-gold-top p-5 text-center">
-      <Icon className={cn("w-6 h-6 mx-auto mb-2", color)} />
-      <div className="font-serif text-2xl font-semibold text-[#1E0F2B]">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-1">{label}</div>
     </div>
   );
 }

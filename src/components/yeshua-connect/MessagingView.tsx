@@ -55,7 +55,7 @@ import {
   Calendar, BarChart3, Phone, Video, Smile, FileText, Image as ImageIcon,
   StopCircle, Play, Pause, Sparkles, AlertCircle,
   MessageCircle, AtSign, ChevronUp, ChevronRight, Copy, UploadCloud,
-  ScrollText, PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
+  PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
   Radio, Camera, PanelLeftOpen, PanelLeftClose,
 } from "lucide-react";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant, RemoteAudioTrack } from "livekit-client";
@@ -574,9 +574,6 @@ export function MessagingView() {
   const gifSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ⭐ V2.3 — Audit Log (modération)
-  const [showAuditLog, setShowAuditLog] = useState(false);
-  const [auditEntries, setAuditEntries] = useState<any[]>([]);
-  const [auditLoading, setAuditLoading] = useState(false);
   // currentUserRole vient de la session NextAuth — utilisé pour conditionner
   // l'affichage du bouton "Audit Log" (réservé aux modérateurs et +).
   const currentUserRole = session?.user?.role;
@@ -2883,31 +2880,11 @@ export function MessagingView() {
   }, [activeConvId, socketSendMessage]);
 
   // ═════════════════════════════════════════════════════════════════════
-  //  ⭐ V2.3 — AUDIT LOG (modération)
+  //  ⭐ V3.2 — AUDIT LOG : interface RETIRÉE de Yeshua Connect (demande
+  //  explicite). Le journal reste enregistré côté serveur via l'API
+  //  /api/yeshua-connect/audit-log (disponible pour le back-office).
   // ═════════════════════════════════════════════════════════════════════
 
-  const loadAuditLog = useCallback(async () => {
-    if (!activeConvId) return;
-    setAuditLoading(true);
-    try {
-      const res = await fetch(
-        api.url(`/api/yeshua-connect/audit-log?channelId=${encodeURIComponent(activeConvId)}&limit=100`),
-        { cache: "no-store" },
-      );
-      if (!res.ok) return;
-      const data = await res.json();
-      setAuditEntries(data);
-    } catch (e) {
-      console.error("loadAuditLog:", e);
-    } finally {
-      setAuditLoading(false);
-    }
-  }, [activeConvId]);
-
-  const openAuditLog = useCallback(() => {
-    setShowAuditLog(true);
-    loadAuditLog();
-  }, [loadAuditLog]);
 
   // ═════════════════════════════════════════════════════════════════════
   //  RENDER
@@ -2950,9 +2927,9 @@ export function MessagingView() {
   }, [activeConvId, activeConv?.type, voiceChannelConnected, applyVoiceMetadata]);
 
   // ⭐ V2.7 — Mode du canal vocal (audio/vidéo, décidé par l'admin) : chargé
-  // dès la SÉLECTION du canal (avant même de rejoindre) pour afficher le bon
-  // libellé (« Rejoindre le canal vidéo/vocal ») et l'état du bandeau.
-  // (Placé APRÈS la déclaration d'activeConv — dépendance de l'effet.)
+  // dès la SÉLECTION du canal pour afficher l'icône/le libellé du mode et
+  // l'état du bandeau. (Placé APRÈS la déclaration d'activeConv — dépendance
+  // de l'effet.)
   useEffect(() => {
     if (!activeConvId || activeConv?.type !== "VOICE" || voiceChannelConnected) return;
     let cancelled = false;
@@ -3036,8 +3013,6 @@ export function MessagingView() {
     return null;
   })();
 
-  // ⭐ V2.3 — Rôle courant privilégié ? (pour afficher le bouton Audit Log)
-  const canViewAuditLog = AUDIT_PRIVILEGED_ROLES.has(currentUserRole || "");
 
   return (
     // ⭐ V2.9 — HAUTEUR MOBILE RÉPARÉE : la layout du site réserve 4rem (64px,
@@ -3418,7 +3393,7 @@ export function MessagingView() {
                 « les éléments en haut ne sont pas responsives » corrigé. */}
             <div className="flex items-center gap-1 flex-wrap justify-end">
               {/* ⭐ V2.3 — Appels audio/vidéo réels via LiveKit.
-                  Masqués pour les canaux vocaux (qui utilisent leur propre UI "Rejoindre"). */}
+                  Masqués pour les canaux vocaux (diffusion par direct). */}
               {activeConv.type !== "VOICE" && (
                 <>
                   <button
@@ -3447,16 +3422,11 @@ export function MessagingView() {
               >
                 <ImageIcon className="w-4 h-4" />
               </button>
-              {/* ⭐ V2.3 — Audit Log (réservé aux modérateurs et +) */}
-              {canViewAuditLog && (
-                <button
-                  onClick={openAuditLog}
-                  className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 hidden md:block"
-                  title="Audit log (modération)"
-                >
-                  <ScrollText className="w-4 h-4" />
-                </button>
-              )}
+              {/* ⭐ V3.2 — Bouton « Audit log (modération) » RETIRÉ de la barre
+                  du chat (demande explicite : « quelle est l'importance de
+                  modération ? mieux vaut l'enlever »). Le journal continue
+                  d'être ENREGISTRÉ côté serveur (API audit-log) — seules les
+                  entrées UI sont supprimées. */}
               <button onClick={() => setShowConvSearch(!showConvSearch)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 hidden sm:block" title="Rechercher">
                 <Search className="w-4 h-4" />
               </button>
@@ -4834,46 +4804,7 @@ export function MessagingView() {
         </div>
       )}
 
-      {/* ⭐ V2.3 — Audit Log Modal (modération) */}
-      {showAuditLog && activeConv && (
-        <Modal onClose={() => setShowAuditLog(false)} title={`Audit log · ${activeConv.name}`}>
-          {auditLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
-            </div>
-          ) : auditEntries.length === 0 ? (
-            <p className="text-center text-sm text-stone-400 py-8">
-              Aucune entrée d'audit pour ce canal.
-            </p>
-          ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {auditEntries.map((e: any) => (
-                <div key={e.id} className="p-2.5 bg-stone-50 rounded-lg border-l-2 border-[#C9A227]/40">
-                  <div className="flex items-center justify-between mb-1">
-                    <span
-                      className="text-xs font-bold"
-                      style={{ color: getRoleColor(e.user?.role) }}
-                    >
-                      {e.user?.name || "Utilisateur"}
-                    </span>
-                    <span className="text-[10px] text-stone-400">
-                      {new Date(e.createdAt).toLocaleString("fr-FR")}
-                    </span>
-                  </div>
-                  <p className="text-xs font-semibold text-[#1E0F2B]">
-                    {formatAuditAction(e.action)}
-                  </p>
-                  {e.metadata && (
-                    <pre className="text-[10px] text-stone-500 mt-1 whitespace-pre-wrap break-words font-mono bg-white/60 rounded p-1.5 max-h-24 overflow-y-auto">
-                      {formatAuditMetadata(e.metadata)}
-                    </pre>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </Modal>
-      )}
+      {/* ⭐ V3.2 — Modal Audit log RETIRÉ (avec le bouton de la barre du chat). */}
 
       {/* ⭐ V2.3 — APPELS AUDIO/VIDÉO RÉELS VIA LIVEKIT
           Overlay plein écran affiché quand callState !== "idle".
@@ -6401,7 +6332,7 @@ function VoiceChannelView({
         </div>
       )}
 
-      {/* ─── Corps : join OU participants ─────────────────────────────── */}
+      {/* ─── Corps : en attente d'un direct OU participants ──────────── */}
       {!connected ? (
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <div className="max-w-sm w-full">
@@ -6420,36 +6351,34 @@ function VoiceChannelView({
             <p className="text-xs text-[#8A8378] mb-6">
               Canal {videoMode ? "vidéo" : "vocal"} persistant · {conv.participants.length} membres au total
             </p>
-            <button
-              onClick={onJoin}
-              className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] flex items-center justify-center gap-2 transition-colors shadow-md"
-            >
-              {videoMode ? <Video className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-              {videoMode ? "Rejoindre le canal vidéo" : "Rejoindre le canal vocal"}
-            </button>
+            {/* ⭐ V3.2 — « Rejoindre le canal » SUPPRIMÉ (demande explicite) :
+                les appels vocaux/vidéo couvrent les conversations entre
+                membres, et le direct intra-canal couvre la diffusion. Les
+                membres rejoignent via le bandeau vert « Rejoindre » quand
+                un direct est en cours. */}
             {/* ⭐ V3.1 — « Lancer un direct » DANS LE CANAL (plus aucune
                 redirection vers /admin/lives — le module Live est une autre
                 chose) : l'admin démarre une diffusion intra-canal et
                 rejoint automatiquement le canal pour diffuser. */}
-            {canSwitchMode && onStartDirect && !channelDirect && (
+            {canSwitchMode && onStartDirect ? (
               <button
                 onClick={onStartDirect}
                 disabled={directSwitching}
-                className="w-full mt-2 py-2.5 border-2 border-emerald-600 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-50 flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-60"
               >
                 {directSwitching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
                 Lancer un direct dans le canal
               </button>
+            ) : (
+              <div className="p-4 rounded-xl bg-[#FAF6EF] border border-[#C9A227]/25 flex flex-col items-center gap-2">
+                <Radio className="w-5 h-5 text-[#8A8378]/60" />
+                <p className="text-xs font-semibold text-[#1E0F2B]">Aucun direct en cours</p>
+                <p className="text-[11px] text-[#8A8378] leading-relaxed">
+                  Vous pourrez écouter la diffusion du canal ici dès qu&apos;un direct sera lancé.
+                  Pour parler à un membre en privé, utilisez les appels (bouton téléphone du chat).
+                </p>
+              </div>
             )}
-            <p className="text-[10px] text-[#8A8378] mt-3">
-              {videoMode
-                ? "Votre caméra et votre micro seront activés en rejoignant."
-                : "Seul votre micro sera activé en rejoignant."}
-              {/* ⭐ V2.9 — Info auto-rejoin : un refresh ne vous déconnecte plus. */}
-              <span className="block mt-1 text-[#8A8378]/70">
-                Vous resterez connecté(e) même si la page se recharge — « Quitter » pour sortir.
-              </span>
-            </p>
           </div>
         </div>
       ) : videoMode ? (

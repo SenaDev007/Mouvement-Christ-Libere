@@ -158,7 +158,7 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/jpeg,image/png,image/webp"
+                      accept="image/*"
                       onChange={handlePhotoChange}
                       className="hidden"
                       id={`avatar-input-${userId}`}

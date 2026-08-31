@@ -61,7 +61,9 @@ const NAV_SECTIONS = [
     items: [
       { label: "Demandes de contact", href: "/admin/contact-requests", icon: Inbox },
       { label: "Dons", href: "/admin/donations", icon: Heart },
-      { label: "Intercession", href: "/intercession", icon: Heart },
+      // ⭐ V3.2 — Intercession : les demandes arrivent DIRECTEMENT ici
+      // (plus de redirection vers la page publique — confidentialité).
+      { label: "Intercession", href: "/admin/intercession", icon: Heart },
       { label: "Dead Man's Switch", href: "/admin/dead-mans-switch", icon: ShieldAlert },
     ],
   },

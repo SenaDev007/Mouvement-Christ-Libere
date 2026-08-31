@@ -142,7 +142,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
               {photoProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/*"
                 onChange={handlePhotoChange}
                 className="hidden"
                 aria-label="Changer la photo"

@@ -92,16 +92,17 @@ export function ProfileSettingsModal({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Veuillez choisir une image.");
-      return;
-    }
+    // ⭐ V3.2 — la validation du format (HEIC iPhone inclus, MIME vide,
+    // octets magiques) et la conversion se font dans compressAvatar.
+    setSaving(true); // réutilise l'état « traitement en cours » visuellement
+    setError(null);
     try {
       const compressed = await compressAvatar(file, 256);
       setAvatarUrl(compressed);
-      setError(null);
-    } catch {
-      setError("Compression de l'image impossible. Essayez une autre photo.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Photo illisible. Essayez une photo JPG ou PNG.");
+    } finally {
+      setSaving(false);
     }
   }, []);
 
