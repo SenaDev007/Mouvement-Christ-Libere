@@ -10,7 +10,16 @@ const FIELDS: FieldDef[] = [
   { name: "shortName", label: "Nom court", type: "text", required: true },
   { name: "role", label: "Rôle", type: "text", required: true },
   { name: "bio", label: "Biographie courte", type: "textarea", fullWidth: true },
-  { name: "portraitUrl", label: "URL portrait", type: "text" },
+  // ⭐ V2.7 — Photo du serviteur : upload compressé (≤ 60 KB) au lieu d'une
+  // URL texte. La photo est SYNCHRONISÉE vers le compte User correspondant
+  // (avatarUrl) pour l'affichage dans les canaux vocaux Yeshua Connect.
+  {
+    name: "portraitUrl",
+    label: "Photo du serviteur",
+    type: "photo",
+    fullWidth: true,
+    help: "Affichée sur le site public ET dans Yeshua Connect (canaux vocaux, chat)",
+  },
   { name: "isActive", label: "Serviteur actif", type: "checkbox", help: "Afficher ce serviteur sur le site public" },
 ];
 

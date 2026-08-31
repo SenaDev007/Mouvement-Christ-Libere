@@ -55,7 +55,7 @@ import {
   Calendar, BarChart3, Phone, Video, Smile, FileText, Image as ImageIcon,
   StopCircle, Play, Pause, Sparkles, AlertCircle,
   MessageCircle, AtSign, ChevronUp, Copy, UploadCloud,
-  ScrollText, PhoneOff, MicOff, VolumeX, Download, Film,
+  ScrollText, PhoneOff, MicOff, VolumeX, Download, Film, VideoOff,
 } from "lucide-react";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant } from "livekit-client";
 import { cn } from "@/lib/utils";
@@ -119,6 +119,36 @@ function getAvatarColor(name: string): string {
 
 function getInitials(name: string): string {
   return name.split(" ").map(p => p[0]).join("").substring(0, 2).toUpperCase();
+}
+
+// ─── Helper: V2.7 — métadonnées de room LiveKit ───────────────────────
+// Les canaux vocaux embarquent leur mode dans room.metadata (JSON poussé
+// par /api/yeshua-connect/conversations/[id]/voice-mode) :
+//   { "videoMode": true, "updatedAt": 1754…, "updatedBy": "channel-admin" }
+function parseRoomMetadataVideoMode(metadata: string | undefined): boolean | undefined {
+  if (!metadata) return undefined;
+  try {
+    const parsed = JSON.parse(metadata);
+    return typeof parsed?.videoMode === "boolean" ? parsed.videoMode : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// ─── Helper: V2.7 — photo d'un participant LiveKit ────────────────────
+// Priorité : métadonnées du token (JSON { avatarUrl }) → fallback liste des
+// membres du canal chargée côté client → undefined (initiales).
+function participantAvatarUrl(
+  p: RemoteParticipant,
+  channelMembers: Array<{ userId: string; avatarUrl?: string }>,
+): string | undefined {
+  try {
+    if (p.metadata) {
+      const meta = JSON.parse(p.metadata);
+      if (typeof meta?.avatarUrl === "string" && meta.avatarUrl) return meta.avatarUrl;
+    }
+  } catch { /* metadata non-JSON → fallback */ }
+  return channelMembers.find(m => m.userId === p.identity)?.avatarUrl;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -248,7 +278,10 @@ export function MessagingView() {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id || "current";
   const currentUserName = session?.user?.name || "Vous";
-
+  // ⭐ V2.7 — Photo de profil de l'utilisateur courant (affichée dans les
+  // canaux vocaux / grille vidéo). La session NextAuth ne transporte pas
+  // l'avatar → on le charge une fois via /api/user/profile.
+  const [currentUserAvatar, setCurrentUserAvatar] = useState<string | undefined>(undefined);
   // ═════════════════════════════════════════════════════════════════════
   //  SOCKET.IO — Real-time messaging, typing, presence
   // ═════════════════════════════════════════════════════════════════════
@@ -414,6 +447,24 @@ export function MessagingView() {
   const [remoteParticipants, setRemoteParticipants] = useState<RemoteParticipant[]>([]);
   const [callError, setCallError] = useState<string | null>(null);
   const [voiceChannelConnected, setVoiceChannelConnected] = useState(false);
+  // ⭐ V2.7 — BASCULE AUDIO ↔ VIDÉO DES CANAUX VOCAUX (façon WhatsApp) :
+  // mode décidé par l'ADMINISTRATEUR, propagé à TOUS les participants en
+  // temps réel via les métadonnées de la room LiveKit (RoomMetadataChanged).
+  const [voiceVideoMode, setVoiceVideoMode] = useState(false);
+  const [voiceModeSwitching, setVoiceModeSwitching] = useState(false);
+
+  // ⭐ V2.7 — Chargement de la photo de profil de l'utilisateur courant
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    let cancelled = false;
+    fetch(api.url("/api/user/profile"), { cache: "no-store" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!cancelled && data?.avatarUrl) setCurrentUserAvatar(data.avatarUrl);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [session?.user?.id]);
 
   // ⭐ V2.2 — Refs "live" vers conversations + mutedConversations pour
   // accéder aux valeurs à jour dans le callback Socket.io sans re-souscrire
@@ -1510,12 +1561,39 @@ export function MessagingView() {
   }, [cleanupLiveKit]);
 
   /**
+   * ⭐ V2.7 — Applique les métadonnées de room reçues (RoomMetadataChanged) :
+   * bascule le mode audio/vidéo du canal vocal POUR TOUT LE MONDE.
+   * Quand l'admin active le mode vidéo → chaque participant connecté active
+   * sa caméra ; quand il repasse en audio → chaque caméra se coupe.
+   * Exactement le comportement WhatsApp demandé : le switch est collectif.
+   */
+  const applyVoiceMetadata = useCallback((metadata: string | undefined) => {
+    const videoMode = parseRoomMetadataVideoMode(metadata);
+    if (videoMode === undefined) return; // métadonnées absentes/illisibles → pas de changement
+    setVoiceVideoMode(videoMode);
+    const room = livekitRoomRef.current;
+    if (!room) return;
+    (async () => {
+      try {
+        await room.localParticipant.setCameraEnabled(videoMode);
+        setLocalVideoEnabled(videoMode);
+      } catch {
+        // Caméra indisponible (mode vidéo demandé) → on reste en audio
+        if (videoMode) setLocalVideoEnabled(false);
+      }
+    })();
+  }, []);
+
+  /**
    * Rejoint un canal vocal persistant (ChannelType.VOICE).
    * - roomName = `yeshua-voice-<conversationId>` (persistante : reste active
    *   côté serveur même si plus aucun participant).
-   * - Audio seulement (pas de vidéo pour les canaux vocaux).
-   * - voiceChannelConnected = true → l'UI affiche la liste des participants
-   *   connectés + bouton "Quitter le canal".
+   * - ⭐ V2.7 : le mode du canal (audio OU vidéo, décidé par l'admin) est
+   *   servi par /api/livekit/token (`videoMode` lu en base) puis suivi en
+   *   temps réel via RoomMetadataChanged — si l'admin bascule pendant qu'on
+   *   est connecté, notre caméra s'active/se coupe automatiquement.
+   * - voiceChannelConnected = true → l'UI affiche les participants connectés
+   *   (avec leurs PHOTOS) + la grille vidéo en mode vidéo + bouton « Quitter ».
    */
   const joinVoiceChannel = useCallback(async () => {
     if (!activeConvId) return;
@@ -1530,13 +1608,14 @@ export function MessagingView() {
           roomName,
           role: "publisher",
           participantName: currentUserName,
+          avatarUrl: currentUserAvatar,
         }),
       });
       if (!tokenRes.ok) {
         const err = await tokenRes.json().catch(() => ({}));
         throw new Error(err.error || `Token LiveKit: HTTP ${tokenRes.status}`);
       }
-      const { token, url } = await tokenRes.json();
+      const { token, url, videoMode: initialVideoMode } = await tokenRes.json();
 
       const room = new Room({ adaptiveStream: true, dynacast: true });
       livekitRoomRef.current = room;
@@ -1553,12 +1632,34 @@ export function MessagingView() {
       room.on(RoomEvent.ParticipantDisconnected, () => {
         setRemoteParticipants(Array.from(room.remoteParticipants.values()));
       });
+      // ⭐ V2.7 — L'admin a basculé le mode du canal : TOUT LE MONDE voit le
+      // changement instantanément (métadonnées room poussées par le serveur).
+      room.on(RoomEvent.RoomMetadataChanged, (metadata) => {
+        applyVoiceMetadata(metadata);
+      });
 
       await room.connect(url, token);
       await room.localParticipant.setMicrophoneEnabled(true);
-      await room.localParticipant.setCameraEnabled(false);
+
+      // ⭐ V2.7 — Mode initial : la caméra ne s'allume QUE si l'admin a activé
+      // le mode vidéo pour ce canal (mode WhatsApp). En mode audio : audio seul.
+      const effectiveVideoMode =
+        initialVideoMode === true || parseRoomMetadataVideoMode(room.metadata);
+      setVoiceVideoMode(effectiveVideoMode);
+      if (effectiveVideoMode) {
+        try {
+          await room.localParticipant.setCameraEnabled(true);
+          setLocalVideoEnabled(true);
+        } catch {
+          // Pas de caméra disponible → on reste en audio (le micro marche)
+          setLocalVideoEnabled(false);
+        }
+      } else {
+        await room.localParticipant.setCameraEnabled(false);
+        setLocalVideoEnabled(false);
+      }
+
       setLocalAudioMuted(false);
-      setLocalVideoEnabled(false);
       setRemoteParticipants(Array.from(room.remoteParticipants.values()));
       setVoiceChannelConnected(true);
     } catch (e) {
@@ -1567,12 +1668,58 @@ export function MessagingView() {
       cleanupLiveKit();
       setVoiceChannelConnected(false);
     }
-  }, [activeConvId, cleanupLiveKit, currentUserName]);
+  }, [activeConvId, cleanupLiveKit, currentUserName, currentUserAvatar, applyVoiceMetadata]);
+
+  /**
+   * ⭐ V2.7 — Bascule le mode du canal vocal (RÉSERVÉ AUX ADMINISTRATEURS).
+   * POST /voice-mode → persiste Channel.videoMode + pousse les métadonnées
+   * de la room LiveKit → tous les participants connectés reçoivent
+   * RoomMetadataChanged et basculent en même temps (caméras incluses).
+   */
+  const switchVoiceMode = useCallback(async (mode: "audio" | "video") => {
+    if (!activeConvId || voiceModeSwitching) return;
+    setVoiceModeSwitching(true);
+    setCallError(null);
+    try {
+      const res = await fetch(
+        api.url(`/api/yeshua-connect/conversations/${activeConvId}/voice-mode`),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode }),
+        },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || `Bascule impossible (HTTP ${res.status})`);
+      }
+      // Retour immédiat (feedback admin) — la propagation temps réel vers
+      // notre propre room passe aussi par RoomMetadataChanged ; si le push
+      // LiveKit a échoué (livekitPushed: false), on applique localement.
+      if (!data.livekitPushed) {
+        setVoiceVideoMode(data.videoMode === true);
+        const room = livekitRoomRef.current;
+        if (room) {
+          try {
+            await room.localParticipant.setCameraEnabled(data.videoMode === true);
+            setLocalVideoEnabled(data.videoMode === true);
+          } catch { /* pas de caméra → audio */ }
+        }
+      }
+    } catch (e) {
+      console.error("[voice-mode] switch failed:", e);
+      setCallError(e instanceof Error ? e.message : "Échec de la bascule de mode");
+    } finally {
+      setVoiceModeSwitching(false);
+    }
+  }, [activeConvId, voiceModeSwitching]);
 
   /** Quitte le canal vocal (disconnect — le canal reste persistant côté serveur). */
   const leaveVoiceChannel = useCallback(() => {
     cleanupLiveKit();
     setVoiceChannelConnected(false);
+    // ⭐ V2.7 — Réinitialisation du mode local (rechargé au prochain join)
+    setVoiceVideoMode(false);
   }, [cleanupLiveKit]);
 
   // ⭐ V2.3 — Cleanup LiveKit au unmount du composant (évite les fuites de
@@ -1746,6 +1893,24 @@ export function MessagingView() {
   // ═════════════════════════════════════════════════════════════════════
 
   const activeConv = conversations.find(c => c.id === activeConvId);
+
+  // ⭐ V2.7 — Mode du canal vocal (audio/vidéo, décidé par l'admin) : chargé
+  // dès la SÉLECTION du canal (avant même de rejoindre) pour afficher le bon
+  // libellé (« Rejoindre le canal vidéo/vocal ») et l'état du bandeau.
+  // (Placé APRÈS la déclaration d'activeConv — dépendance de l'effet.)
+  useEffect(() => {
+    if (!activeConvId || activeConv?.type !== "VOICE" || voiceChannelConnected) return;
+    let cancelled = false;
+    fetch(api.url(`/api/yeshua-connect/conversations/${activeConvId}/voice-mode`), { cache: "no-store" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!cancelled && data && typeof data.videoMode === "boolean") {
+          setVoiceVideoMode(data.videoMode);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [activeConvId, activeConv?.type, voiceChannelConnected]);
   const activeMessages = activeConvId ? (messages[activeConvId] || []) : [];
   const filteredConversations = convSearchQuery
     ? conversations.filter(c => c.name.toLowerCase().includes(convSearchQuery.toLowerCase()))
@@ -2047,20 +2212,31 @@ export function MessagingView() {
         {/* ⭐ V2.3 — CANAL VOCAL PERSISTANT (VOICE)
             Remplace complètement la zone messages + input du chat.
             L'utilisateur peut rejoindre/quitter le canal vocal à tout moment.
-            Le canal reste "ouvert" côté serveur (room LiveKit persistante). */}
+            Le canal reste "ouvert" côté serveur (room LiveKit persistante).
+            ⭐ V2.7 — mode audio/vidéo basculable par l'ADMIN (façon WhatsApp,
+            propagation temps réel) + photos réelles des participants. */}
         {activeConv?.type === "VOICE" ? (
           <VoiceChannelView
             conv={activeConv}
             connected={voiceChannelConnected}
             remoteParticipants={remoteParticipants}
+            currentUserId={currentUserId}
             currentUserName={currentUserName}
+            currentUserAvatar={currentUserAvatar}
+            currentUserRole={currentUserRole}
             localAudioMuted={localAudioMuted}
+            localVideoEnabled={localVideoEnabled}
             speakerEnabled={speakerEnabled}
             error={callError}
+            videoMode={voiceVideoMode}
+            modeSwitching={voiceModeSwitching}
             onJoin={joinVoiceChannel}
             onLeave={leaveVoiceChannel}
             onToggleMute={toggleMute}
+            onToggleCamera={toggleCamera}
             onToggleSpeaker={() => setSpeakerEnabled((s) => !s)}
+            onSwitchMode={switchVoiceMode}
+            room={livekitRoomRef.current}
             channelMembers={channelMembers}
           />
           ) : (
@@ -4242,122 +4418,441 @@ function formatAuditMetadata(metadata: any): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-//  ⭐ V2.3 — VOICE CHANNEL VIEW (canal vocal persistant)
+//  ⭐ V2.7 — VOICE CHANNEL VIEW (canal vocal persistant, mode audio/vidéo)
 // ═══════════════════════════════════════════════════════════════════════
+//
+// Bascule « façon WhatsApp » (décidée par l'ADMINISTRATEUR) :
+//   - mode AUDIO  : liste des participants avec leurs PHOTOS réelles.
+//   - mode VIDÉO  : grille de tuiles vidéo (caméras de tous les participants
+//     actives) — tuile = vidéo + nom + statut micro + photo si caméra coupée.
+//   - Le switch est visible par TOUT LE MONDE en même temps (métadonnées
+//     de la room LiveKit propagées en temps réel par /voice-mode).
+//
+// Photos : métadonnées du token LiveKit (JSON { avatarUrl }) en priorité,
+// fallback sur la liste des membres du canal (User.avatarUrl en base).
+// Pam et Pasteur Kongo ont leurs VRAIES photos (synchronisées depuis
+// Servant.portraitUrl).
+
+/** Rôles autorisés à basculer le mode du canal vocal. */
+const VOICE_MODE_ADMIN_ROLES = new Set([
+  "SUPER_ADMIN",
+  "ADMIN",
+  "MODERATOR",
+  "ANIMATOR",
+]);
+
+/** Avatar rond avec photo réelle ou initiales colorées + point de présence. */
+function VoiceAvatar({
+  name,
+  avatarUrl,
+  size = 40,
+  speaking = false,
+  muted = false,
+}: {
+  name: string;
+  avatarUrl?: string;
+  size?: number;
+  speaking?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={name}
+          className="w-full h-full rounded-full object-cover border-2 border-white shadow-sm"
+        />
+      ) : (
+        <div
+          className={cn(
+            "w-full h-full rounded-full flex items-center justify-center text-white font-bold",
+            getAvatarColor(name),
+            speaking && "ring-2 ring-[#C9A227]",
+          )}
+          style={{ fontSize: size / 2.8 }}
+        >
+          {getInitials(name)}
+        </div>
+      )}
+      <span
+        className={cn(
+          "absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-white",
+          muted ? "w-2.5 h-2.5 bg-[#8A8378]" : "w-2.5 h-2.5 bg-green-500",
+        )}
+      />
+    </div>
+  );
+}
+
+/**
+ * Tuile vidéo d'un participant distant — attache le track caméra publié
+ * au <video> (re-attache à chaque changement de publication/état).
+ */
+function ParticipantVideoTile({
+  participant,
+  avatarUrl,
+}: {
+  participant: RemoteParticipant;
+  avatarUrl?: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasVideo, setHasVideo] = useState(false);
+  const name = participant.name || participant.identity || "?";
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    const pub = participant.getTrackPublication(Track.Source.Camera);
+    if (pub?.track && pub.isSubscribed) {
+      pub.track.attach(el);
+      setHasVideo(true);
+    } else {
+      setHasVideo(false);
+    }
+    return () => {
+      const currentPub = participant.getTrackPublication(Track.Source.Camera);
+      if (currentPub?.track) {
+        try { currentPub.track.detach(el); } catch {}
+      }
+    };
+  }, [participant, participant.isCameraEnabled]);
+
+  return (
+    <div className="relative bg-[#2A0E3D] rounded-2xl overflow-hidden aspect-video flex items-center justify-center group">
+      {/* Vidéo (si caméra active) */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        className={cn("w-full h-full object-cover", !hasVideo && "hidden")}
+        style={{ transform: "scaleX(-1)" }}
+      />
+      {/* Photo / initiales si caméra coupée */}
+      {!hasVideo && (
+        <div className="flex flex-col items-center gap-2 py-4">
+          <VoiceAvatar
+            name={name}
+            avatarUrl={avatarUrl}
+            size={64}
+            muted={!participant.isMicrophoneEnabled}
+          />
+          <span className="text-[10px] text-[#FAF6EF]/60">Caméra inactive</span>
+        </div>
+      )}
+      {/* Badge nom + micro */}
+      <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1 px-2 py-1 rounded-lg bg-black/55 backdrop-blur-sm">
+        <span className="text-[11px] font-semibold text-white truncate">{name}</span>
+        {participant.isMicrophoneEnabled ? (
+          <Mic className="w-3 h-3 text-[#C9A227] flex-shrink-0" />
+        ) : (
+          <MicOff className="w-3 h-3 text-red-400 flex-shrink-0" />
+        )}
+      </div>
+    </div>
+  );
+}
 
 function VoiceChannelView({
   conv,
   connected,
   remoteParticipants,
+  currentUserId,
   currentUserName,
+  currentUserAvatar,
+  currentUserRole,
   localAudioMuted,
+  localVideoEnabled,
   speakerEnabled,
   error,
+  videoMode,
+  modeSwitching,
   onJoin,
   onLeave,
   onToggleMute,
+  onToggleCamera,
   onToggleSpeaker,
+  onSwitchMode,
+  room,
   channelMembers,
 }: {
   conv: ChatConversation;
   connected: boolean;
   remoteParticipants: RemoteParticipant[];
+  currentUserId: string;
   currentUserName: string;
+  currentUserAvatar?: string;
+  currentUserRole?: string;
   localAudioMuted: boolean;
+  localVideoEnabled: boolean;
   speakerEnabled: boolean;
   error: string | null;
+  videoMode: boolean;
+  modeSwitching: boolean;
   onJoin: () => void;
   onLeave: () => void;
   onToggleMute: () => void;
+  onToggleCamera: () => void;
   onToggleSpeaker: () => void;
+  onSwitchMode: (mode: "audio" | "video") => void;
+  room: Room | null;
   channelMembers: Array<{ userId: string; name: string; role?: string; avatarUrl?: string }>;
 }) {
+  // L'admin du site OU l'admin du canal peut basculer le mode audio ↔ vidéo.
+  const myChannelRole = channelMembers.find(m => m.userId === currentUserId)?.role;
+  const canSwitchMode =
+    VOICE_MODE_ADMIN_ROLES.has(currentUserRole || "") ||
+    VOICE_MODE_ADMIN_ROLES.has(myChannelRole || "");
+
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#2A0E3D]/5 to-[#FAF6EF]/30">
-      <div className="max-w-md w-full text-center">
-        {/* Icône principale */}
-        <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-[#2A0E3D] flex items-center justify-center text-white">
-          <Volume2 className="w-10 h-10" />
-        </div>
-        <h3 className="text-lg font-bold text-[#1E0F2B] mb-1">{conv.name}</h3>
-        <p className="text-xs text-stone-500 mb-6">
-          Canal vocal persistant · {conv.participants.length} membres au total
-        </p>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{error}</span>
+    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#2A0E3D]/5 to-[#FAF6EF]/30">
+      {/* ─── Bandeau mode + bascule admin ─────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-[#C9A227]/20 bg-white/70 backdrop-blur-sm flex-wrap">
+        <div className="flex items-center gap-2 min-w-0">
+          {videoMode ? (
+            <Video className="w-4 h-4 text-[#8C5FA8] flex-shrink-0" />
+          ) : (
+            <Volume2 className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+          )}
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-[#1E0F2B] truncate">{conv.name}</h3>
+            <p className="text-[10px] text-[#8A8378]">
+              {videoMode ? "Mode vidéo · " : "Mode audio · "}
+              {conv.participants.length} membres
+            </p>
           </div>
-        )}
+        </div>
 
-        {!connected ? (
-          /* État déconnecté : bouton "Rejoindre" */
-          <button
-            onClick={onJoin}
-            className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] flex items-center justify-center gap-2 transition-colors"
-          >
-            <Volume2 className="w-5 h-5" />
-            🔊 Rejoindre le canal vocal
-          </button>
+        {/* Bascule réservée aux administrateurs (mode WhatsApp) */}
+        {canSwitchMode ? (
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center bg-[#FAF6EF] border border-[#8A8378]/25 rounded-full p-0.5">
+              <button
+                onClick={() => onSwitchMode("audio")}
+                disabled={modeSwitching || !videoMode}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all",
+                  !videoMode
+                    ? "bg-[#1E0F2B] text-[#FAF6EF] shadow"
+                    : "text-[#8A8378] hover:text-[#1E0F2B]",
+                )}
+                title="Tout le monde passera en audio"
+              >
+                <Volume2 className="w-3.5 h-3.5" />
+                Audio
+              </button>
+              <button
+                onClick={() => onSwitchMode("video")}
+                disabled={modeSwitching || videoMode}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all",
+                  videoMode
+                    ? "bg-[#8C5FA8] text-white shadow"
+                    : "text-[#8A8378] hover:text-[#1E0F2B]",
+                )}
+                title="Tout le monde passera en vidéo"
+              >
+                <Video className="w-3.5 h-3.5" />
+                Vidéo
+              </button>
+            </div>
+            {modeSwitching && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9A227]" />}
+          </div>
         ) : (
-          /* État connecté : infos + contrôles */
-          <div className="space-y-4">
-            {/* Participants connectés */}
-            <div className="bg-white rounded-2xl border border-stone-200 p-4">
-              <p className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-3">
+          /* Indicateur du mode courant pour les non-admins */
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/25 text-[11px] font-bold text-[#8A8378]">
+            {videoMode ? <Video className="w-3.5 h-3.5 text-[#8C5FA8]" /> : <Volume2 className="w-3.5 h-3.5 text-[#C9A227]" />}
+            {videoMode ? "Canal en vidéo" : "Canal en audio"}
+          </span>
+        )}
+      </div>
+
+      {/* ─── Erreur éventuelle ─────────────────────────────────────────── */}
+      {error && (
+        <div className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* ─── Corps : join OU participants ─────────────────────────────── */}
+      {!connected ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="max-w-sm w-full">
+            {conv.avatarUrl ? (
+              <img
+                src={conv.avatarUrl}
+                alt={conv.name}
+                className="w-20 h-20 mx-auto mb-4 rounded-2xl object-cover shadow-md"
+              />
+            ) : (
+              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-[#2A0E3D] flex items-center justify-center text-white">
+                {videoMode ? <Video className="w-10 h-10" /> : <Volume2 className="w-10 h-10" />}
+              </div>
+            )}
+            <h3 className="text-lg font-bold text-[#1E0F2B] mb-1">{conv.name}</h3>
+            <p className="text-xs text-[#8A8378] mb-6">
+              Canal {videoMode ? "vidéo" : "vocal"} persistant · {conv.participants.length} membres au total
+            </p>
+            <button
+              onClick={onJoin}
+              className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] flex items-center justify-center gap-2 transition-colors shadow-md"
+            >
+              {videoMode ? <Video className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              {videoMode ? "Rejoindre le canal vidéo" : "Rejoindre le canal vocal"}
+            </button>
+            <p className="text-[10px] text-[#8A8378] mt-3">
+              {videoMode
+                ? "Votre caméra et votre micro seront activés en rejoignant."
+                : "Seul votre micro sera activé en rejoignant."}
+            </p>
+          </div>
+        </div>
+      ) : videoMode ? (
+        /* ═══ MODE VIDÉO : grille de tuiles + controls ═══ */
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-5xl mx-auto w-full">
+              {/* Moi-même : tuile locale (miroir + label « Vous ») */}
+              <div className="relative bg-[#2A0E3D] rounded-2xl overflow-hidden aspect-video flex items-center justify-center">
+                <LocalVideoTile room={room} enabled={localVideoEnabled} avatarUrl={currentUserAvatar} name={currentUserName} />
+                <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1 px-2 py-1 rounded-lg bg-black/55 backdrop-blur-sm">
+                  <span className="text-[11px] font-semibold text-white truncate">
+                    {currentUserName} <span className="text-[#C9A227]">(vous)</span>
+                  </span>
+                  {localAudioMuted ? (
+                    <MicOff className="w-3 h-3 text-red-400 flex-shrink-0" />
+                  ) : (
+                    <Mic className="w-3 h-3 text-[#C9A227] flex-shrink-0" />
+                  )}
+                </div>
+              </div>
+              {/* Participants distants */}
+              {remoteParticipants.map((p) => (
+                <ParticipantVideoTile
+                  key={p.identity}
+                  participant={p}
+                  avatarUrl={participantAvatarUrl(p, channelMembers)}
+                />
+              ))}
+              {remoteParticipants.length === 0 && (
+                <div className="sm:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-[#8A8378]/25 rounded-2xl">
+                  <Users2 className="w-8 h-8 text-[#C9A227]/50 mb-2" />
+                  <p className="text-xs font-semibold text-[#1E0F2B]">Seul dans le canal</p>
+                  <p className="text-[11px] text-[#8A8378] mt-0.5">
+                    Les autres membres verront votre vidéo en rejoignant.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Contrôles vidéo */}
+          <div className="flex items-center justify-center gap-3 py-3 border-t border-[#C9A227]/20 bg-white/70 backdrop-blur-sm">
+            <button
+              onClick={onToggleMute}
+              className={cn(
+                "p-3 rounded-full transition-colors shadow-sm",
+                localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
+              )}
+              title={localAudioMuted ? "Activer le micro" : "Couper le micro"}
+            >
+              {localAudioMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={onToggleCamera}
+              className={cn(
+                "p-3 rounded-full transition-colors shadow-sm",
+                localVideoEnabled ? "bg-[#8C5FA8] text-white hover:bg-[#7A4E96]" : "bg-red-500 text-white hover:bg-red-600"
+              )}
+              title={localVideoEnabled ? "Couper ma caméra" : "Activer ma caméra"}
+            >
+              {localVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={onToggleSpeaker}
+              className={cn(
+                "p-3 rounded-full transition-colors shadow-sm",
+                speakerEnabled ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]" : "bg-[#8A8378] text-white hover:bg-[#757064]"
+              )}
+              title={speakerEnabled ? "Couper le haut-parleur" : "Activer le haut-parleur"}
+            >
+              {speakerEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={onLeave}
+              className="p-3 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm"
+              title="Quitter le canal"
+            >
+              <PhoneOff className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* ═══ MODE AUDIO : participants avec PHOTOS + contrôles ═══ */
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="max-w-md w-full mx-auto">
+            <div className="bg-white rounded-2xl border border-[#8A8378]/15 shadow-sm p-4">
+              <p className="text-xs font-bold text-[#8A8378] uppercase tracking-wider mb-3">
                 Participants connectés ({remoteParticipants.length + 1})
               </p>
               <div className="space-y-2">
                 {/* Moi-même (toujours connecté) */}
-                <div className="flex items-center gap-2 p-2 bg-[#C9A227]/5 rounded-lg">
-                  <div className="relative">
-                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold", getAvatarColor(currentUserName))}>
-                      {getInitials(currentUserName)}
-                    </div>
-                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-semibold text-[#1E0F2B]">
-                      {currentUserName} <span className="text-[10px] text-stone-400">(vous)</span>
+                <div className="flex items-center gap-3 p-2 bg-[#C9A227]/5 rounded-xl">
+                  <VoiceAvatar
+                    name={currentUserName}
+                    avatarUrl={currentUserAvatar}
+                    size={44}
+                    muted={localAudioMuted}
+                  />
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-semibold text-[#1E0F2B] truncate">
+                      {currentUserName} <span className="text-[10px] text-[#8A8378]">(vous)</span>
                     </p>
-                    <p className="text-[10px] text-stone-500">
-                      {localAudioMuted ? "🔇 Micro coupé" : "🎤 Micro actif"}
+                    <p className="text-[10px] text-[#8A8378]">
+                      {localAudioMuted ? "Micro coupé" : "Micro actif"}
                     </p>
                   </div>
+                  {localAudioMuted && <MicOff className="w-4 h-4 text-red-500 flex-shrink-0" />}
                 </div>
-                {/* Participants distants */}
+                {/* Participants distants — avec leurs VRAIES photos */}
                 {remoteParticipants.length === 0 ? (
-                  <p className="text-xs text-stone-400 text-center py-2">
-                    En attente d'autres participants...
+                  <p className="text-xs text-[#8A8378] text-center py-2">
+                    En attente d&apos;autres participants...
                   </p>
                 ) : (
                   remoteParticipants.map((p) => (
-                    <div key={p.identity} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg">
-                      <div className="relative">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold bg-[#5B7052]">
-                          {getInitials(p.name || p.identity || "?")}
-                        </div>
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-sm font-semibold text-[#1E0F2B]">{p.name || p.identity}</p>
-                        <p className="text-[10px] text-stone-500">
-                          {p.isMicrophoneEnabled ? "🎤 Micro actif" : "🔇 Micro coupé"}
+                    <div key={p.identity} className="flex items-center gap-3 p-2 bg-[#FAF6EF] rounded-xl">
+                      <VoiceAvatar
+                        name={p.name || p.identity || "?"}
+                        avatarUrl={participantAvatarUrl(p, channelMembers)}
+                        size={44}
+                        muted={!p.isMicrophoneEnabled}
+                      />
+                      <div className="flex-1 text-left min-w-0">
+                        <p
+                          className="text-sm font-semibold truncate"
+                          style={{ color: getRoleColor(channelMembers.find(m => m.userId === p.identity)?.role) }}
+                        >
+                          {p.name || p.identity}
+                        </p>
+                        <p className="text-[10px] text-[#8A8378]">
+                          {p.isMicrophoneEnabled ? "Micro actif" : "Micro coupé"}
                         </p>
                       </div>
+                      {!p.isMicrophoneEnabled && <MicOff className="w-4 h-4 text-red-500 flex-shrink-0" />}
                     </div>
                   ))
                 )}
               </div>
             </div>
 
-            {/* Contrôles */}
-            <div className="flex items-center justify-center gap-3">
+            {/* Contrôles audio */}
+            <div className="flex items-center justify-center gap-3 mt-4">
               <button
                 onClick={onToggleMute}
                 className={cn(
-                  "p-3 rounded-full transition-colors",
+                  "p-3 rounded-full transition-colors shadow-sm",
                   localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
                 )}
                 title={localAudioMuted ? "Activer le micro" : "Couper le micro"}
@@ -4367,8 +4862,8 @@ function VoiceChannelView({
               <button
                 onClick={onToggleSpeaker}
                 className={cn(
-                  "p-3 rounded-full transition-colors",
-                  speakerEnabled ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]" : "bg-stone-300 text-stone-600 hover:bg-stone-400"
+                  "p-3 rounded-full transition-colors shadow-sm",
+                  speakerEnabled ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]" : "bg-[#8A8378] text-white hover:bg-[#757064]"
                 )}
                 title={speakerEnabled ? "Couper le haut-parleur" : "Activer le haut-parleur"}
               >
@@ -4376,44 +4871,93 @@ function VoiceChannelView({
               </button>
               <button
                 onClick={onLeave}
-                className="p-3 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                className="p-3 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm"
                 title="Quitter le canal vocal"
               >
                 <PhoneOff className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-[10px] text-stone-400">
+            <p className="text-[10px] text-[#8A8378] text-center mt-2">
               Le canal reste ouvert même si vous le quittez.
             </p>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Membres du canal (info) */}
-        {channelMembers.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-stone-200">
-            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2">
-              Membres du canal
-            </p>
-            <div className="flex flex-wrap gap-1 justify-center">
-              {channelMembers.slice(0, 10).map((m) => (
-                <span
-                  key={m.userId}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-100 text-[10px] font-medium"
-                  style={{ color: getRoleColor(m.role) }}
-                >
-                  {m.name}
-                </span>
-              ))}
-              {channelMembers.length > 10 && (
-                <span className="text-[10px] text-stone-400 self-center">
-                  +{channelMembers.length - 10}
-                </span>
-              )}
-            </div>
+      {/* ─── Membres du canal (info, les deux modes) ──────────────────── */}
+      {channelMembers.length > 0 && (
+        <div className="px-4 py-2.5 border-t border-[#8A8378]/15 bg-white/50">
+          <div className="max-w-md mx-auto flex flex-wrap gap-1.5 justify-center">
+            {channelMembers.slice(0, 10).map((m) => (
+              <span
+                key={m.userId}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/15 text-[10px] font-medium"
+                style={{ color: getRoleColor(m.role) }}
+              >
+                {m.avatarUrl && (
+                  <img src={m.avatarUrl} alt={m.name} className="w-3.5 h-3.5 rounded-full object-cover" />
+                )}
+                {m.name}
+              </span>
+            ))}
+            {channelMembers.length > 10 && (
+              <span className="text-[10px] text-[#8A8378] self-center">
+                +{channelMembers.length - 10}
+              </span>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+/** Tuile vidéo locale (miroir) — photo si la caméra est coupée. */
+function LocalVideoTile({
+  room,
+  enabled,
+  avatarUrl,
+  name,
+}: {
+  room: Room | null;
+  enabled: boolean;
+  avatarUrl?: string;
+  name: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!room || !el || !enabled) return;
+    const localTrack = room.localParticipant.getTrackPublication(Track.Source.Camera);
+    if (localTrack?.track) {
+      localTrack.track.attach(el);
+    }
+    return () => {
+      if (localTrack?.track) {
+        try { localTrack.track.detach(el); } catch {}
+      }
+    };
+  }, [room, enabled]);
+
+  if (!enabled) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-4">
+        <VoiceAvatar name={name} avatarUrl={avatarUrl} size={64} />
+        <span className="text-[10px] text-[#FAF6EF]/60">Caméra coupée</span>
+      </div>
+    );
+  }
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      playsInline
+      muted
+      className="w-full h-full object-cover"
+      style={{ transform: "scaleX(-1)" }}
+    />
   );
 }
 

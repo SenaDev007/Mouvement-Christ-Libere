@@ -1,16 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
+/**
+ * ⭐ V2.7 — Profil membre/viewer « informations complètes ».
+ *
+ * Paramétrage demandé : les viewers qui créent leur compte sur Christ Libère
+ * peuvent ici renseigner leurs informations complètes ET LEUR PHOTO :
+ *   - Photo de profil : upload compressé (carré 256×256, JPEG ≤ 60 KB en
+ *     data URL) → User.avatarUrl en base (aucun filesystem, Vercel-safe).
+ *   - Nom, téléphone, pays (sélecteur 191 pays), ville, bio.
+ *   - Préférences de notifications (existant) + déconnexion.
+ *
+ * Tout est persisté en PostgreSQL et visible par les administrateurs dans
+ * le back-office /admin/users (photo, téléphone, pays, ville, bio) —
+ * la photo s'affiche aussi dans Yeshua Connect (canaux vocaux + chat).
+ */
+
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  Sparkles, ChevronRight, Loader2, User, Mail, MapPin, Calendar,
-  Bell, BellOff, Save, LogOut, Settings,
+  Loader2, User, Mail, MapPin, Phone as PhoneIcon, Camera, Trash2,
+  Bell, BellOff, Save, LogOut, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { api } from "@/lib/api-client";
+import { compressAvatar } from "@/lib/avatar-upload";
+import { COUNTRIES } from "@/lib/data/countries";
 
 export default function ProfilPage() {
   const { data: session, status } = useSession();
@@ -20,8 +36,16 @@ export default function ProfilPage() {
   const [bio, setBio] = useState("");
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
+  const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+
+  // ⭐ V2.7 — Photo de profil (data URL compressée ou URL existante)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarProcessing, setAvatarProcessing] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Notification preferences
   const [notifMessages, setNotifMessages] = useState(true);
@@ -39,19 +63,43 @@ export default function ProfilPage() {
   useEffect(() => {
     if (session?.user?.id) {
       // Fetch user profile
-      fetch(api.url("/api/user/profile")).then(r => r.json()).then(data => {
+      fetch(api.url("/api/user/profile")).then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      }).then(data => {
         if (data.name) setName(data.name);
         if (data.bio) setBio(data.bio);
         if (data.country) setCountry(data.country);
         if (data.city) setCity(data.city);
+        if (data.phone) setPhone(data.phone);
+        setAvatarUrl(data.avatarUrl ?? null);
         setNotifMessages(data.notifMessages ?? true);
         setNotifAnnouncements(data.notifAnnouncements ?? true);
         setNotifLive(data.notifLive ?? true);
         setNotifCommunity(data.notifCommunity ?? true);
         setDndEnabled(data.dndEnabled ?? false);
-      }).catch(() => {});
+      }).catch(() => {
+        setLoadError(true);
+      });
     }
   }, [session]);
+
+  /** Compresse la photo choisie (≤ 60 KB) et l'affiche en aperçu. */
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarProcessing(true);
+    setAvatarError(null);
+    try {
+      const dataUrl = await compressAvatar(file);
+      setAvatarUrl(dataUrl);
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : "Image invalide");
+    } finally {
+      setAvatarProcessing(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -60,13 +108,13 @@ export default function ProfilPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name, bio, country, city,
+          name, bio, country, city, phone, avatarUrl,
           notifMessages, notifAnnouncements, notifLive, notifCommunity,
           dndEnabled,
         }),
       });
       setSavedMsg(true);
-      setTimeout(() => setSavedMsg(false), 2000);
+      setTimeout(() => setSavedMsg(false), 2500);
     } catch (e) {
       console.error("save:", e);
     } finally {
@@ -84,31 +132,99 @@ export default function ProfilPage() {
 
   if (!session) return null;
 
+  const initials = (session.user?.name || session.user?.email || "?").charAt(0).toUpperCase();
+
   return (
     <div className="min-h-screen bg-[#FAF6EF] py-12 px-4">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
+        {/* Header — photo de profil éditable */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-8"
         >
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#2A0E3D] border-2 border-[#C9A227]/30 mb-4">
-            <span className="font-serif text-2xl font-semibold text-[#C9A227]">
-              {(session.user?.name || session.user?.email || "?").charAt(0).toUpperCase()}
-            </span>
+          <div className="relative inline-block mb-4 group">
+            <div className="w-28 h-28 rounded-full border-4 border-[#C9A227]/30 overflow-hidden bg-[#2A0E3D] flex items-center justify-center shadow-xl">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Ma photo" className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-serif text-4xl font-semibold text-[#C9A227]">{initials}</span>
+              )}
+              {avatarProcessing && (
+                <div className="absolute inset-0 bg-black/45 flex items-center justify-center rounded-full">
+                  <Loader2 className="w-7 h-7 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+            {/* Bouton caméra (badge) */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoChange}
+              className="hidden"
+              id="profile-avatar-input"
+              aria-label="Changer ma photo"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={avatarProcessing}
+              className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-[#C9A227] text-[#1E0F2B] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-[#FAF6EF]"
+              title="Changer ma photo"
+              aria-label="Changer ma photo"
+            >
+              <Camera className="w-4.5 h-4.5" />
+            </button>
           </div>
           <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1">
             Mon profil
           </h1>
           <p className="text-sm text-[#8A8378]">{session.user?.email}</p>
+          <div className="flex items-center justify-center gap-3 mt-3">
+            {avatarUrl ? (
+              <button
+                type="button"
+                onClick={() => setAvatarUrl(null)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Retirer ma photo
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 px-3 py-1.5 rounded-full transition-colors"
+              >
+                <Camera className="w-3.5 h-3.5 text-[#C9A227]" />
+                Ajouter ma photo
+              </button>
+            )}
+          </div>
+          {avatarError && (
+            <p className="text-xs text-red-600 flex items-center justify-center gap-1 mt-2">
+              <AlertCircle className="w-3.5 h-3.5" />
+              {avatarError}
+            </p>
+          )}
+          <p className="text-[10px] text-[#8A8378] mt-2">
+            JPG/PNG · recadrée en carré · compressée ≤ 60 Ko · visible dans Yeshua Connect
+          </p>
         </motion.div>
 
-        {/* Profile form */}
+        {loadError && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>Impossible de charger votre profil. Réessayez plus tard.</span>
+          </div>
+        )}
+
+        {/* Profile form — informations complètes */}
         <div className="bg-white rounded-lg border border-stone-200 border-t-[3px] border-t-[#C9A227] p-8 space-y-5 mb-6">
           <h2 className="font-serif text-lg font-semibold text-[#1E0F2B] flex items-center gap-2">
-            <User className="w-4 h-4 text-[#C9A227]" /> Informations
+            <User className="w-4 h-4 text-[#C9A227]" /> Informations complètes
           </h2>
 
           <div>
@@ -120,22 +236,35 @@ export default function ProfilPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Bio</label>
-            <textarea
-              value={bio} onChange={(e) => setBio(e.target.value)} rows={3}
-              placeholder="Quelques mots sur vous..."
-              className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 resize-none"
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">
+              <PhoneIcon className="w-3 h-3 text-[#C9A227]" /> Téléphone
+            </label>
+            <input
+              type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+              placeholder="+225 07 00 00 00 00"
+              maxLength={20}
+              className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
             />
+            <p className="text-[10px] text-[#8A8378] mt-1.5">
+              Visible uniquement par les administrateurs (back-office).
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Pays</label>
-              <input
-                type="text" value={country} onChange={(e) => setCountry(e.target.value)}
-                placeholder="Côte d'Ivoire"
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">
+                <MapPin className="w-3 h-3 text-[#C9A227]" /> Pays
+              </label>
+              <select
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
                 className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
-              />
+              >
+                <option value="">— Choisir —</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.name}>{c.name}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Ville</label>
@@ -145,6 +274,15 @@ export default function ProfilPage() {
                 className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Bio</label>
+            <textarea
+              value={bio} onChange={(e) => setBio(e.target.value)} rows={3}
+              placeholder="Quelques mots sur vous..."
+              className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 resize-none"
+            />
           </div>
         </div>
 
@@ -189,10 +327,10 @@ export default function ProfilPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mb-4"
+          className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mb-4 shadow-md"
         >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {savedMsg ? "Enregistré ✓" : "Enregistrer"}
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : savedMsg ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+          {savedMsg ? "Enregistré" : saving ? "Enregistrement..." : "Enregistrer"}
         </button>
 
         {/* Logout */}

@@ -1,15 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
 
 /**
  * POST /api/auth/register
  * Register a new user.
- * Body: { name, email, password, isMinor }
+ * Body: { name, email, password, isMinor, country?, city?, phone? }
+ *
+ * ⭐ V2.7 — Les informations du formulaire d'inscription (pays, ville,
+ * téléphone) sont désormais PERSISTÉES (elles étaient ignorées avant) —
+ * le membre peut les compléter/corriger plus tard depuis /profil, et les
+ * administrateurs les voient dans le back-office /admin/users.
  */
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, isMinor } = await req.json();
+    const raw = await req.json();
+    // ⭐ V2.7 — Le formulaire /register envoie « pays »/« ville » (libellés
+    // français) — on mappe vers country/city (+ champs anglais acceptés).
+    const {
+      name, email, password, isMinor,
+      country: countryEn, city: cityEn,
+    } = raw;
+    const country = countryEn ?? raw.pays;
+    const city = cityEn ?? raw.ville;
+    const phone = raw.phone ?? raw.telephone;
 
     // Validation
     if (!email || !password) {
@@ -48,6 +63,9 @@ export async function POST(req: NextRequest) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
 
+    // ⭐ V2.7 — Auto-réparation colonne User.phone avant le create
+    await ensureVoiceVideoColumns();
+
     // Create user
     // Les membres (rôle MEMBER) sont auto-validés — pas besoin d'approbation admin.
     // Seuls les rôles supérieurs (ADMIN, MODERATOR, ANIMATOR) nécessitent validation.
@@ -57,6 +75,10 @@ export async function POST(req: NextRequest) {
         email: email.toLowerCase(),
         passwordHash,
         role: "MEMBER",
+        // ⭐ V2.7 — Informations du formulaire d'inscription persistées
+        ...(typeof country === "string" && country.trim() && { country: country.trim() }),
+        ...(typeof city === "string" && city.trim() && { city: city.trim() }),
+        ...(typeof phone === "string" && phone.trim() && { phone: phone.trim() }),
         isVerified: true, // Auto-validation pour les membres
         isMinor: false,
         acceptedTerms: new Date(),

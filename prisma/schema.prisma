@@ -27,6 +27,8 @@ model User {
   bio           String?
   country       String?
   city          String?
+  // ⭐ V2.7 — « Informations complètes » du profil membre/viewer
+  phone         String?
   isVerified    Boolean   @default(false)
   isMinor       Boolean   @default(false)
   acceptedTerms DateTime
@@ -366,6 +368,10 @@ model Channel {
   // ⭐ V2.5 — Photo du canal/groupe (data URL compressée ≤ 80KB ou URL R2),
   // modifiable depuis le back-office, affichée dans Yeshua Connect.
   avatarUrl    String?
+  // ⭐ V2.7 — Mode vidéo des canaux vocaux (bascule façon WhatsApp, décidée
+  // par l'administrateur : quand videoMode = true, tous les participants
+  // connectés publient leur caméra et voient la grille vidéo ; false = audio).
+  videoMode    Boolean     @default(false)
   type         ChannelType
   isEncrypted  Boolean      @default(false)
   isRestricted Boolean      @default(false)

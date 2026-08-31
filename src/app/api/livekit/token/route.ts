@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AccessToken } from "livekit-server-sdk";
 import { db } from "@/lib/db";
+import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { auth as nextAuth } from "@/auth";
@@ -41,12 +42,16 @@ interface TokenRequestBody {
   role?: "publisher" | "subscriber";
   participantName?: string;
   liveId?: string;
+  /** ⭐ V2.7 — Avatar (photo réelle) du participant, injectée dans les
+   * métadonnées du token : chaque client Yeshua Connect peut ensuite lire
+   * `participant.metadata` pour afficher la photo dans les canaux vocaux. */
+  avatarUrl?: string | null;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body: TokenRequestBody = await req.json();
-    const { roomName, role = "subscriber", participantName, liveId } = body;
+    const { roomName, role = "subscriber", participantName, liveId, avatarUrl: avatarUrlFromBody } = body;
 
     if (!roomName) {
       return NextResponse.json({ error: "roomName requis" }, { status: 400 });
@@ -54,6 +59,9 @@ export async function POST(req: NextRequest) {
 
     let identity: string;
     let name: string;
+    // ⭐ V2.7 — Métadonnées participant (JSON sérialisé) : photo de profil,
+    // lue par les autres clients pour afficher l'avatar réel.
+    let participantMetadata: string | undefined;
     const isPublisher = role === "publisher";
     const yeshuaRoom = isYeshuaRoom(roomName);
 
@@ -113,6 +121,23 @@ export async function POST(req: NextRequest) {
         }
         identity = session.user.id;
         name = participantName || session.user.name || "Membre";
+
+        // ⭐ V2.7 — Photo de profil réelle : priorité à l'avatar fourni par le
+        // client, sinon on lit User.avatarUrl (photos de Pam, Pasteur Kongo,
+        // membres…) pour l'embarquer dans les métadonnées du participant.
+        let avatarUrl = avatarUrlFromBody ?? null;
+        if (!avatarUrl) {
+          try {
+            const user = await db.user.findUnique({
+              where: { id: session.user.id },
+              select: { avatarUrl: true },
+            });
+            avatarUrl = user?.avatarUrl ?? null;
+          } catch {
+            // avatar optionnel — pas bloquant pour le token
+          }
+        }
+        participantMetadata = JSON.stringify({ avatarUrl });
       } else {
         // Pas d'authentification valide pour un publisher hors Yeshua
         return NextResponse.json(
@@ -133,6 +158,7 @@ export async function POST(req: NextRequest) {
     const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
       identity,
       name,
+      ...(participantMetadata ? { metadata: participantMetadata } : {}),
     });
 
     at.addGrant({
@@ -149,11 +175,32 @@ export async function POST(req: NextRequest) {
       process.env.LIVEKIT_URL ||
       "wss://christ-libere.livekit.cloud";
 
+    // ⭐ V2.7 — Mode audio/vidéo du canal vocal (persisté en base) : servi au
+    // client au moment du join pour qu'il connaisse le mode AVANT même de
+    // lire les métadonnées de la room (room fraîchement créée, metadata
+    // éventuellement absente). Les bascules en cours d'appel arrivent ensuite
+    // en temps réel via RoomMetadataChanged.
+    let videoMode = false;
+    if (roomName?.startsWith("yeshua-voice-")) {
+      try {
+        await ensureVoiceVideoColumns();
+        const channelId = roomName.slice("yeshua-voice-".length);
+        const channel = await db.channel.findUnique({
+          where: { id: channelId },
+          select: { videoMode: true },
+        });
+        videoMode = channel?.videoMode ?? false;
+      } catch {
+        // best effort — mode audio par défaut
+      }
+    }
+
     return NextResponse.json({
       token,
       url: livekitUrl,
       roomName,
       role,
+      videoMode,
     });
   } catch (error) {
     console.error("[livekit/token] Error:", error);

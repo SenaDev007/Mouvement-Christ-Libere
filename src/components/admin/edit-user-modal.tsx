@@ -1,12 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Pencil, Loader2, AlertCircle, X, Shield, Crown, MessageSquare, Users as UsersIcon, CheckCircle2 } from "lucide-react";
+/**
+ * ⭐ V2.7 — Modal d'édition d'utilisateur (back-office /admin/users).
+ *
+ * Outre le rôle et la vérification (existant), permet désormais de
+ * MODIFIER LA PHOTO de l'utilisateur (upload compressé ≤ 60 KB en data URL
+ * → User.avatarUrl) — notamment les serviteurs (Pam, Pasteur Kongo) dont la
+ * photo s'affiche dans les canaux vocaux Yeshua Connect et les bulles de chat.
+ */
+
+import { useState, useEffect, useRef } from "react";
+import {
+  Pencil, Loader2, AlertCircle, X, Shield, Crown, MessageSquare,
+  Users as UsersIcon, CheckCircle2, Camera, Trash2,
+} from "lucide-react";
+import { compressAvatar } from "@/lib/avatar-upload";
 
 interface EditUserModalProps {
   userId: string;
+  userName: string | null;
   currentRole: string;
   isVerified: boolean;
+  currentAvatarUrl?: string | null;
   isSuperAdmin: boolean; // si l'admin courant est super admin
 }
 
@@ -19,17 +34,41 @@ const ROLES = [
   { value: "MEMBER", label: "Membre", desc: "Inscrit de base", icon: UsersIcon, color: "#9CA3AF" },
 ];
 
-export function EditUserModal({ userId, currentRole, isVerified, isSuperAdmin }: EditUserModalProps) {
+export function EditUserModal({ userId, userName, currentRole, isVerified, currentAvatarUrl, isSuperAdmin }: EditUserModalProps) {
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState(currentRole);
   const [verified, setVerified] = useState(isVerified);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // ⭐ V2.7 — Photo de l'utilisateur (data URL compressée ou URL existante)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(currentAvatarUrl ?? null);
+  const [avatarProcessing, setAvatarProcessing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const initials = (userName || "?").charAt(0).toUpperCase();
+
   useEffect(() => {
     setRole(currentRole);
     setVerified(isVerified);
-  }, [currentRole, isVerified, open]);
+    setAvatarUrl(currentAvatarUrl ?? null);
+  }, [currentRole, isVerified, currentAvatarUrl, open]);
+
+  /** Compresse l'image choisie (≤ 60 KB, 256×256) et l'affiche en aperçu. */
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarProcessing(true);
+    setError("");
+    try {
+      const dataUrl = await compressAvatar(file);
+      setAvatarUrl(dataUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Image invalide");
+    } finally {
+      setAvatarProcessing(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,10 +76,16 @@ export function EditUserModal({ userId, currentRole, isVerified, isSuperAdmin }:
     setError("");
 
     try {
+      const payload: Record<string, unknown> = { role, isVerified: verified };
+      // On n'envoie l'avatar que s'il a changé (data URL nouvelle ou retrait)
+      if ((currentAvatarUrl ?? null) !== avatarUrl) {
+        payload.avatarUrl = avatarUrl;
+      }
+
       const res = await fetch(`/admin/api/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, isVerified: verified }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -70,7 +115,7 @@ export function EditUserModal({ userId, currentRole, isVerified, isSuperAdmin }:
         disabled={!canEditRole}
         className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         aria-label="Modifier"
-        title={canEditRole ? "Modifier le rôle" : "Impossible de modifier un super admin"}
+        title={canEditRole ? "Modifier l'utilisateur (rôle, photo…)" : "Impossible de modifier un super admin"}
       >
         <Pencil className="w-3.5 h-3.5" />
       </button>
@@ -79,18 +124,72 @@ export function EditUserModal({ userId, currentRole, isVerified, isSuperAdmin }:
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#1A0826]/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
-          <div className="relative bg-white rounded-2xl shadow-2xl border border-[#8A8378]/15 max-w-md w-full overflow-hidden">
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-[#8A8378]/15 max-w-md w-full overflow-hidden max-h-[92vh] overflow-y-auto">
             <div className="h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
 
             {/* Header */}
-            <div className="px-6 py-4 border-b border-[#8A8378]/10 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[#1E0F2B]">Modifier l'utilisateur</h2>
+            <div className="px-6 py-4 border-b border-[#8A8378]/10 flex items-center justify-between sticky top-0 bg-white z-10">
+              <h2 className="text-lg font-bold text-[#1E0F2B]">Modifier l&apos;utilisateur</h2>
               <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-[#8A8378]/10 text-[#8A8378]">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+              {/* ⭐ V2.7 — Photo de profil */}
+              <div>
+                <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-2">
+                  Photo de profil
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[#C9A227] to-[#A3821C] flex items-center justify-center text-white font-bold text-2xl overflow-hidden border-2 border-[#C9A227]/30 flex-shrink-0">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={userName || "Avatar"} className="w-full h-full object-cover" />
+                    ) : (
+                      initials
+                    )}
+                    {avatarProcessing && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-white animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                      id={`avatar-input-${userId}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={avatarProcessing}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-xs font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      {avatarUrl ? "Changer la photo" : "Ajouter une photo"}
+                    </button>
+                    {avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setAvatarUrl(null)}
+                        disabled={avatarProcessing}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Retirer
+                      </button>
+                    )}
+                    <p className="text-[10px] text-[#8A8378]">
+                      JPG/PNG · recadrée en carré · compressée ≤ 60 KB
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Rôle */}
               <div>
                 <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-2">
@@ -139,7 +238,7 @@ export function EditUserModal({ userId, currentRole, isVerified, isSuperAdmin }:
                 />
                 <div>
                   <div className="text-sm font-semibold text-[#1E0F2B]">Compte vérifié</div>
-                  <div className="text-xs text-[#8A8378]">L'utilisateur peut se connecter et accéder à la communauté</div>
+                  <div className="text-xs text-[#8A8378]">L&apos;utilisateur peut se connecter et accéder à la communauté</div>
                 </div>
               </label>
 

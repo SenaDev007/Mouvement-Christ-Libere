@@ -19,6 +19,8 @@ import { db } from "@/lib/db";
 
 let channelAvatarOk = false;
 let inflight: Promise<void> | null = null;
+let voiceVideoOk = false;
+let inflightVoice: Promise<void> | null = null;
 
 /**
  * S'assure que la colonne `Channel.avatarUrl` (TEXT, nullable) existe.
@@ -52,4 +54,45 @@ export function ensureChannelAvatarUrl(): Promise<void> {
       });
   }
   return inflight;
+}
+
+/**
+ * ⭐ V2.7 — S'assure que les colonnes `Channel.videoMode` (BOOLEAN) et
+ * `User.phone` (TEXT) existent.
+ *
+ * - `Channel.videoMode` : bascule audio/vidéo des canaux vocaux Yeshua
+ *   Connect (mode WhatsApp — décidée par l'administrateur, visible par tous).
+ * - `User.phone` : « informations complètes » du profil des membres/viewers.
+ *
+ * Mêmes garanties que ensureChannelAvatarUrl : idempotent, mémoïsé,
+ * concurrentiel (un seul ALTER en vol), échec DDL purement loggué.
+ */
+export function ensureVoiceVideoColumns(): Promise<void> {
+  if (voiceVideoOk) return Promise.resolve();
+  if (!inflightVoice) {
+    inflightVoice = (async () => {
+      // ⚠️ PostgreSQL (prepared statements) refuse plusieurs commandes en une
+      // seule requête — deux ALTER distincts, exécutés séquentiellement.
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "videoMode" BOOLEAN DEFAULT false'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phone" TEXT'
+      );
+    })()
+      .then(() => {
+        voiceVideoOk = true;
+        console.log("[ensure-schema] Colonnes Channel.videoMode + User.phone vérifiées/créées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE Channel.videoMode / User.phone impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightVoice = null;
+      });
+  }
+  return inflightVoice;
 }

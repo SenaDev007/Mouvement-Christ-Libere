@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureChannelAvatarUrl } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureVoiceVideoColumns } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir les canaux RESTRICTED (pasteurs / modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -47,6 +47,9 @@ export async function GET(_req: NextRequest) {
     // la colonne avatarUrl (V2.5) manque et tout le findMany échoue (500
     // → Yeshua Connect s'affiche vide). Idempotent + mémoïsé par instance.
     await ensureChannelAvatarUrl();
+    // ⭐ V2.7 — Auto-réparation colonne videoMode (le findMany renvoie toutes
+    // les colonnes scalaires → sans ceci, 500 si la base n'est pas migrée)
+    await ensureVoiceVideoColumns();
 
     // Charger les canaux + membres + dernier message en une seule requête
     const channels = await db.channel.findMany({
@@ -136,6 +139,8 @@ export async function GET(_req: NextRequest) {
         description: ch.description ?? undefined,
         // ⭐ V2.5 — Photo du canal (uploadée depuis le back-office)
         avatarUrl: ch.avatarUrl ?? undefined,
+        // ⭐ V2.7 — Mode vidéo du canal vocal (bascule admin façon WhatsApp)
+        videoMode: ch.videoMode === true,
         createdBy: ch.members[0]?.userId ?? "",
         createdAt: ch.createdAt.toISOString(),
         updatedAt: ch.updatedAt.toISOString(),

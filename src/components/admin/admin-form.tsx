@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, AlertCircle } from "lucide-react";
+import { Loader2, Save, AlertCircle, Camera } from "lucide-react";
+import { compressAvatar } from "@/lib/avatar-upload";
 
 export interface FieldDef {
   name: string;
   label: string;
-  type: "text" | "textarea" | "select" | "number" | "date" | "datetime-local" | "checkbox" | "tags";
+  type: "text" | "textarea" | "select" | "number" | "date" | "datetime-local" | "checkbox" | "tags" | "photo";
   options?: { value: string; label: string }[];
   placeholder?: string;
   help?: string;
@@ -36,6 +37,34 @@ export function AdminForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // ⭐ V2.7 — Champs « photo » : valeur gérée hors FormData (data URL
+  // compressée côté client, impossible via un <input type=text> classique)
+  const photoFileRef = useRef<Record<string, HTMLInputElement | null>>({});
+  const [photoValues, setPhotoValues] = useState<Record<string, string | null>>(() => {
+    const initial: Record<string, string | null> = {};
+    for (const f of fields) {
+      if (f.type === "photo") initial[f.name] = (initialData?.[f.name] as string | null) ?? null;
+    }
+    return initial;
+  });
+  const [photoProcessing, setPhotoProcessing] = useState<string | null>(null);
+
+  const handlePhotoChange = async (fieldName: string, file: File | undefined) => {
+    if (!file) return;
+    setPhotoProcessing(fieldName);
+    setError("");
+    try {
+      const dataUrl = await compressAvatar(file);
+      setPhotoValues((prev) => ({ ...prev, [fieldName]: dataUrl }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Image invalide");
+    } finally {
+      setPhotoProcessing(null);
+      const input = photoFileRef.current[fieldName];
+      if (input) input.value = "";
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
@@ -46,6 +75,11 @@ export function AdminForm({
       const data: Record<string, unknown> = {};
 
       for (const field of fields) {
+        if (field.type === "photo") {
+          // ⭐ V2.7 — Valeur photo gérée en React state (data URL ou null)
+          data[field.name] = photoValues[field.name] ?? null;
+          continue;
+        }
         const value = formData.get(field.name);
 
         if (field.type === "checkbox") {
@@ -127,7 +161,51 @@ export function AdminForm({
                 {field.required && <span className="text-state-danger ml-1">*</span>}
               </label>
 
-              {field.type === "textarea" ? (
+              {field.type === "photo" ? (
+                <div className="flex items-center gap-4">
+                  <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[#C9A227] to-[#A3821C] flex items-center justify-center text-white font-bold text-2xl overflow-hidden border-2 border-[#C9A227]/30 flex-shrink-0">
+                    {photoValues[field.name] ? (
+                      <img src={photoValues[field.name] as string} alt={field.label} className="w-full h-full object-cover" />
+                    ) : (
+                      "📷"
+                    )}
+                    {photoProcessing === field.name && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-white animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <input
+                      ref={(el) => { photoFileRef.current[field.name] = el; }}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) => handlePhotoChange(field.name, e.target.files?.[0])}
+                      className="hidden"
+                      id={`photo-${field.name}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => photoFileRef.current[field.name]?.click()}
+                      disabled={photoProcessing === field.name}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-xs font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      {photoValues[field.name] ? "Changer la photo" : "Ajouter une photo"}
+                    </button>
+                    {photoValues[field.name] && (
+                      <button
+                        type="button"
+                        onClick={() => setPhotoValues((prev) => ({ ...prev, [field.name]: null }))}
+                        className="block px-3 py-1.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        Retirer la photo
+                      </button>
+                    )}
+                    <p className="text-[10px] text-stone">JPG/PNG · carré · compressée ≤ 60 KB</p>
+                  </div>
+                </div>
+              ) : field.type === "textarea" ? (
                 <textarea
                   name={field.name}
                   defaultValue={getValue(field) as string}

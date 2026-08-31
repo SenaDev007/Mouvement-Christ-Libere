@@ -3,12 +3,13 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import {
   Pencil, UserPlus, Crown, Shield, MessageSquare, Users as UsersIcon,
-  Mail, MapPin, Clock, CheckCircle2, AlertCircle, Trash2, Crown as CrownIcon, Search,
+  Mail, MapPin, Clock, CheckCircle2, AlertCircle, Trash2, Crown as CrownIcon, Search, Phone,
 } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { flagFromCountryCode } from "@/lib/data/flags";
 import { EditUserModal } from "@/components/admin/edit-user-modal";
+import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
 
 export const dynamic = "force-dynamic";
 
@@ -76,8 +77,8 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
-// Avatar avec initiales et couleur selon rôle
-function UserAvatar({ name, role }: { name: string | null; role: string }) {
+// Avatar : photo réelle (V2.7) si présente, sinon initiales + couleur selon rôle
+function UserAvatar({ name, role, avatarUrl }: { name: string | null; role: string; avatarUrl?: string | null }) {
   const config: Record<string, string> = {
     SUPER_ADMIN: "from-[#C9A227] to-[#A3821C]",
     ADMIN: "from-[#8C5FA8] to-[#6B4480]",
@@ -89,6 +90,14 @@ function UserAvatar({ name, role }: { name: string | null; role: string }) {
   };
   const gradient = config[role] || config.MEMBER;
   const initials = (name || "?").charAt(0).toUpperCase();
+
+  if (avatarUrl) {
+    return (
+      <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-[#C9A227]/40 shadow-md flex-shrink-0">
+        <img src={avatarUrl} alt={name || "Avatar"} className="w-full h-full object-cover" />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -122,6 +131,10 @@ export default async function AdminUsersPage({
   searchParams: Promise<{ q?: string; role?: string }>;
 }) {
   const { q, role: roleFilter } = await searchParams;
+
+  // ⭐ V2.7 — Auto-réparation colonne User.phone (findMany sélectionne toutes
+  // les colonnes → sans ceci, la page ferait 500 sur une base non migrée)
+  await ensureVoiceVideoColumns();
 
   // Construire le filtre de recherche
   const where: Record<string, unknown> = {};
@@ -285,8 +298,8 @@ export default async function AdminUsersPage({
               className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:shadow-md hover:border-[#C9A227]/30 transition-all group"
             >
               <div className="flex items-start gap-4">
-                {/* Avatar */}
-                <UserAvatar name={u.name} role={u.role} />
+                {/* Avatar — photo réelle V2.7 */}
+                <UserAvatar name={u.name} role={u.role} avatarUrl={u.avatarUrl} />
 
                 {/* Contenu principal */}
                 <div className="min-w-0 flex-1">
@@ -327,6 +340,12 @@ export default async function AdminUsersPage({
 
                   {/* Meta */}
                   <div className="flex items-center gap-3 text-[11px] text-[#8A8378] flex-wrap">
+                    {u.phone && (
+                      <a href={`tel:${u.phone}`} className="flex items-center gap-1 hover:text-[#C9A227]">
+                        <Phone className="w-3 h-3" />
+                        {u.phone}
+                      </a>
+                    )}
                     {u.country && (
                       <span className="flex items-center gap-1">
                         <span aria-hidden>{flagFromCountryCode(u.country)}</span>
@@ -350,8 +369,10 @@ export default async function AdminUsersPage({
                 <div className="flex items-center gap-1  flex-shrink-0">
                   <EditUserModal
                     userId={u.id}
+                    userName={u.name}
                     currentRole={u.role}
                     isVerified={u.isVerified}
+                    currentAvatarUrl={u.avatarUrl}
                     isSuperAdmin={isSuperAdmin}
                   />
                   {u.role !== "SUPER_ADMIN" && (

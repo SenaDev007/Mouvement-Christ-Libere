@@ -31,6 +31,9 @@ export interface ChatConversation {
   name: string;
   description?: string;
   avatarUrl?: string;
+  /** ⭐ V2.7 — Mode vidéo des canaux vocaux (bascule admin façon WhatsApp,
+   * propagée en temps réel via les métadonnées de la room LiveKit). */
+  videoMode?: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
