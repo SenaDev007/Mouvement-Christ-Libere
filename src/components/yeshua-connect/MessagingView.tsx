@@ -56,7 +56,7 @@ import {
   StopCircle, Play, Pause, Sparkles, AlertCircle,
   MessageCircle, AtSign, ChevronUp, ChevronRight, Copy, UploadCloud,
   PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
-  Radio, Camera, PanelLeftOpen, PanelLeftClose, Shield,
+  Radio, Camera, PanelLeftOpen, PanelLeftClose, Shield, Crown,
   Ban, MapPin, UserX, UserCheck,
 } from "lucide-react";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant, RemoteAudioTrack } from "livekit-client";
@@ -545,6 +545,9 @@ export function MessagingView() {
     userId: string;
     name: string;
     role: string;
+    /** ⭐ V3.13 — Rôle GLOBAL du compte : l'API members le renvoie déjà,
+      * il sert à l'icône distinctive et à la couleur des chips. */
+    userRole?: string;
     avatarUrl?: string;
   }>>([]);
   const [mentionQuery, setMentionQuery] = useState<{ start: number; query: string } | null>(null);
@@ -3879,6 +3882,31 @@ export function MessagingView() {
                   );
                 }
 
+                // ⭐ V3.13 — JOURNAL DE MEMBRE : « Baruch haba ! X a rejoint
+                // la communauté » — petite pastille dorée centrée (même
+                // famille visuelle que les journaux d'appel), suivie d'une
+                // invitation automatique à souhaiter shalom et bienvenue.
+                if (msg.type === "MEMBER_LOG") {
+                  return (
+                    <div key={msg.id} id={`msg-${msg.id}`} className="scroll-mt-24">
+                      {showDateSep && (
+                        <div className="flex items-center justify-center my-5">
+                          <div className="flex items-center gap-2 w-full max-w-[520px] mx-auto">
+                            <div className="flex-1 h-px bg-[#C9A227]/25" />
+                            <span className="px-3.5 py-1.5 bg-white border border-[#C9A227]/30 rounded-full text-[10px] font-bold text-[#8A8378] uppercase tracking-wider shadow-sm">
+                              {formatDateSeparator(msg.createdAt)}
+                            </span>
+                            <div className="flex-1 h-px bg-[#C9A227]/25" />
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex flex-col items-center justify-center py-2 my-1">
+                        <MemberLogMessage msg={msg} />
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={msg.id} id={`msg-${msg.id}`} className="scroll-mt-24">
                     {showDateSep && (
@@ -4508,7 +4536,13 @@ export function MessagingView() {
                         {getInitials(u.name || "?")}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[#1E0F2B]">{u.name}</p>
+                        <p className="text-sm font-semibold text-[#1E0F2B] flex items-center gap-1.5">
+                          {u.name}
+                          {/* ⭐ V3.13 — Icône distinctive des super admins. */}
+                          {u.role === "SUPER_ADMIN" && (
+                            <Crown className="w-3 h-3 text-[#C9A227]" aria-label="Administrateur principal" />
+                          )}
+                        </p>
                         <p className="text-xs text-stone-400">{u.role}</p>
                       </div>
                     </div>
@@ -5681,6 +5715,27 @@ const MEMBERS_PANEL_ADMIN_ROLES = new Set([
   "SUPER_ADMIN", "ADMIN", "MODERATOR", "ANIMATOR",
 ]);
 
+/** ⭐ V3.13 — Vrai si le membre est un admin DE FAÇON EFFECTIVE : rôle
+ * DANS le canal OU rôle GLOBAL du compte. C'est ce qui place PAM et le
+ * Pasteur Kongo (super admins du site, simples « MEMBER » de canal) dans
+ * la section « Admin » de TOUS les canaux — « eux ne doivent pas être mis
+ * dans la catégorie des membres comme ça » — demande explicite. */
+function estAdminEffectif(p: { role?: unknown; userRole?: unknown }): boolean {
+  return (
+    MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role ?? "")) ||
+    MEMBERS_PANEL_ADMIN_ROLES.has(String(p.userRole ?? ""))
+  );
+}
+
+/** ⭐ V3.13 — Rôle effectif d'un membre (canal OU global), pour la couleur
+ * et le libellé du badge : le rôle global prime visuellement pour les
+ * admins principaux. */
+function roleEffectif(p: { role?: unknown; userRole?: unknown }): string {
+  const global = String(p.userRole ?? "");
+  if (MEMBERS_PANEL_ADMIN_ROLES.has(global)) return global;
+  return String(p.role ?? "MEMBER");
+}
+
 /** Libellé FR d'un rôle DANS le canal (ChannelRole). */
 function channelRoleLabelFr(role?: string): string {
   switch (role) {
@@ -5767,8 +5822,11 @@ function MembersPanel({
       return (a.name || "").localeCompare(b.name || "", "fr");
     });
 
-  const admins = bySection(filtered.filter(p => MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role))));
-  const regulars = bySection(filtered.filter(p => !MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role))));
+  // ⭐ V3.13 — Admin EFFECTIF = rôle de canal OU rôle GLOBAL : les super
+  // admins du site (PAM, Pasteur Kongo) figurent dans la section « Admin »
+  // de TOUS les canaux, même membres simples du canal.
+  const admins = bySection(filtered.filter(p => estAdminEffectif(p)));
+  const regulars = bySection(filtered.filter(p => !estAdminEffectif(p)));
 
   // Invitations possibles dans les canaux/groupes — PAS dans un privé à 2.
   const isDirect = conversation.type === "DIRECT" && participants.length <= 2;
@@ -5860,11 +5918,14 @@ function MembersPanel({
    *  PROFIL COMPLET (bio, pays/ville, actions privées), comme Telegram. */
   const renderRow = (p: (typeof participants)[number]) => {
     const isMe = p.userId === currentUserId;
-    const globalLabel = globalRoleLabelFr(p.roleLabel || undefined);
-    // roleLabel est le rôle GLOBAL historiquement rempli par l'API — le
-    // rôle DANS le canal est `role`. On affiche les deux si distincts.
-    const chanLabel = channelRoleLabelFr(String(p.role));
-    const roleColor = getRoleColor(String(p.role));
+    // ⭐ V3.13 — Rôle EFFECTIF : canal OU global (les super admins du site
+    // apparaissent comme admins dans TOUS les canaux) + super admin du
+    // site → icône distinctive (couronne or).
+    const estSuperAdminGlobal = String(p.userRole ?? "") === "SUPER_ADMIN";
+    const effRole = roleEffectif(p);
+    const globalLabel = globalRoleLabelFr(p.userRole || p.roleLabel || undefined);
+    const chanLabel = channelRoleLabelFr(effRole);
+    const roleColor = getRoleColor(effRole);
     return (
       <div key={p.userId} className="border-b border-stone-100/80 last:border-b-0">
         <button
@@ -5884,11 +5945,27 @@ function MembersPanel({
                 {getInitials(p.name || "?")}
               </div>
             )}
+            {/* ⭐ V3.13 — Icône DISTINCTIVE des super admins du site
+                (PAM, Pasteur Kongo) : couronne or en badge sur l'avatar. */}
+            {estSuperAdminGlobal && (
+              <span
+                className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-[#C9A227] border-2 border-white flex items-center justify-center shadow-sm"
+                title="Administrateur principal du Mouvement"
+              >
+                <Crown className="w-2.5 h-2.5 text-white" />
+              </span>
+            )}
             {/* Présence réelle (lastSeenAt < 90 s) */}
             {p.online ? (
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" title="En ligne" />
+              <span className={cn(
+                "absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white",
+                estSuperAdminGlobal && "-right-1.5"
+              )} title="En ligne" />
             ) : (
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-stone-300 rounded-full border-2 border-white" title="Hors ligne" />
+              <span className={cn(
+                "absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-stone-300 rounded-full border-2 border-white",
+                estSuperAdminGlobal && "-right-1.5"
+              )} title="Hors ligne" />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -5897,6 +5974,12 @@ function MembersPanel({
               {isMe && (
                 <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-[#C9A227]/15 text-[#8C5FA8]">
                   Vous
+                </span>
+              )}
+              {/* ⭐ V3.13 — Badge « Admin principal » : super admin du site. */}
+              {estSuperAdminGlobal && (
+                <span className="flex-shrink-0 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-[#C9A227]/20 text-[#8C5FA8]" title="Administrateur principal du Mouvement">
+                  <Crown className="w-2.5 h-2.5 text-[#C9A227]" /> Admin
                 </span>
               )}
               {/* ⭐ V3.5 — Badge « Bloqué » : je l'ai bloqué (badge discret,
@@ -5908,17 +5991,17 @@ function MembersPanel({
               )}
             </p>
             <p className="text-xs text-[#8A8378] truncate flex items-center gap-1.5 mt-0.5">
-              {/* Badge du rôle DANS le canal (Administrateur, Modérateur…) */}
+              {/* Badge du rôle EFFECTIF (canal ou global) */}
               <span
                 className="inline-flex items-center gap-1 px-1.5 py-px rounded-full font-semibold"
                 style={{ backgroundColor: `${roleColor}18`, color: roleColor }}
               >
-                {MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role))
+                {estAdminEffectif(p)
                   ? <Shield className="w-2.5 h-2.5" /> : null}
                 {chanLabel}
               </span>
               {/* Badge du rôle GLOBAL (Pasteur…) si distinct et notable */}
-              {globalLabel && !MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role)) && (
+              {globalLabel && !estAdminEffectif(p) && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-px rounded-full bg-[#8C5FA8]/10 text-[#8C5FA8] font-semibold">
                   <Sparkles className="w-2.5 h-2.5" />{globalLabel}
                 </span>
@@ -6395,6 +6478,14 @@ function MemberProfileModal({
                   )}
                 </h3>
                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  {/* ⭐ V3.13 — Badge DISTINCTIF des administrateurs principaux
+                      (super admins du site — PAM, Pasteur Kongo) : couronne
+                      or + « Admin principal », avant tout autre badge. */}
+                  {profile.role === "SUPER_ADMIN" && (
+                    <span className="inline-flex items-center gap-1 px-2 py-px rounded-full bg-[#C9A227]/15 text-[#8C5FA8] text-[10px] font-bold border border-[#C9A227]/40" title="Administrateur principal du Mouvement">
+                      <Crown className="w-3 h-3 text-[#C9A227]" /> Admin principal
+                    </span>
+                  )}
                   {globalLabel && (
                     <span className="inline-flex items-center gap-1 px-2 py-px rounded-full bg-[#8C5FA8]/10 text-[#8C5FA8] text-[10px] font-semibold">
                       <Sparkles className="w-2.5 h-2.5" />{globalLabel}
@@ -7396,7 +7487,7 @@ function VoiceChannelView({
   onToggleSpeaker: () => void;
   onSwitchMode: (mode: "audio" | "video") => void;
   room: Room | null;
-  channelMembers: Array<{ userId: string; name: string; role?: string; avatarUrl?: string }>;
+  channelMembers: Array<{ userId: string; name: string; role?: string; userRole?: string; avatarUrl?: string }>;
   /** ⭐ V3.1 — Direct INTRA-CANAL en cours (null si aucun). */
   channelDirect?: { by: string; byAvatar?: string; isMe: boolean } | null;
   directSwitching?: boolean;
@@ -7804,18 +7895,28 @@ function VoiceChannelView({
       {channelMembers.length > 0 && (
         <div className="px-4 py-2.5 border-t border-[#8A8378]/15 bg-white/50">
           <div className="max-w-md mx-auto flex flex-wrap gap-1.5 justify-center">
-            {channelMembers.slice(0, 10).map((m) => (
-              <span
-                key={m.userId}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/15 text-[10px] font-medium"
-                style={{ color: getRoleColor(m.role) }}
-              >
-                {m.avatarUrl && (
-                  <img src={m.avatarUrl} alt={m.name} className="w-3.5 h-3.5 rounded-full object-cover" />
-                )}
-                {m.name}
-              </span>
-            ))}
+            {channelMembers.slice(0, 10).map((m) => {
+              // ⭐ V3.13 — Rôle effectif (canal OU global) : les super
+              // admins du site portent la couronne or dans les canaux
+              // vocaux aussi — « c'est pareil dans tous les canaux ».
+              const superAdmin = String(m.userRole ?? "") === "SUPER_ADMIN";
+              const roleColor = getRoleColor(roleEffectif(m));
+              return (
+                <span
+                  key={m.userId}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/15 text-[10px] font-medium"
+                  style={{ color: roleColor }}
+                >
+                  {superAdmin && (
+                    <Crown className="w-3 h-3 text-[#C9A227]" aria-label="Administrateur principal" />
+                  )}
+                  {m.avatarUrl && (
+                    <img src={m.avatarUrl} alt={m.name} className="w-3.5 h-3.5 rounded-full object-cover" />
+                  )}
+                  {m.name}
+                </span>
+              );
+            })}
             {channelMembers.length > 10 && (
               <span className="text-[10px] text-[#8A8378] self-center">
                 +{channelMembers.length - 10}
@@ -8365,6 +8466,53 @@ function CallLogMessage({ msg }: { msg: ChatMessage }) {
         <span className="font-medium opacity-70"> · {by}</span>
       </span>
       <span className="text-[10px] opacity-60 flex-shrink-0">{formatTime(msg.createdAt)}</span>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V3.13 — MEMBER LOG MESSAGE (journal d'arrivée d'un nouveau membre)
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Demande explicite : « lorsqu'un nouveau membre s'inscrit, il faut que ça
+// s'affiche EN PETIT, comme on affiche les appels en absence — exactement
+// comme Telegram et WhatsApp — pour que la communauté sache qu'un nouveau
+// membre est arrivé. Le système demande ensuite aux autres membres de lui
+// souhaiter shalom, bienvenue, avec une expression hébraïque
+// translittérée (Baruch haba — bienvenue ; Shalom aleikhem — que la paix
+// soit sur vous). »
+//   • pastille dorée centrée, compacte (même famille que les appels) ;
+//   • petite ligne d'invitation automatique « Souhaitez-lui shalom et
+//     bienvenue » ;
+//   • données structurées dans msg.verseRef (JSON écrit côté serveur à
+//     l'inscription) avec repli sur le texte lisible msg.content.
+function MemberLogMessage({ msg }: { msg: ChatMessage }) {
+  let meta: { name?: string; kind?: string; country?: string } = {};
+  try {
+    meta = msg.verseRef ? JSON.parse(msg.verseRef) : {};
+  } catch { /* meta illisible → repli content */ }
+  const nom = meta.name || msg.senderName;
+
+  return (
+    <div className="flex flex-col items-center gap-1.5 max-w-full">
+      {/* Pastille d'arrivée — compacte, or, façon WhatsApp */}
+      <div
+        className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-[#C9A227]/40 bg-[#C9A227]/10 text-[#8C5FA8] shadow-sm max-w-full"
+        title={msg.content}
+      >
+        <UserPlus className="w-4 h-4 flex-shrink-0 text-[#C9A227]" />
+        <span className="text-xs font-bold truncate">
+          Baruch haba !
+          <span className="font-medium opacity-80"> {nom} a rejoint la communauté</span>
+        </span>
+        <span className="text-[10px] opacity-60 flex-shrink-0">{formatTime(msg.createdAt)}</span>
+      </div>
+      {/* Message automatique du système : invitation à souhaiter la
+          bienvenue — expression hébraïque translittérée. */}
+      <p className="text-[10px] italic text-[#8A8378] text-center px-3">
+        Souhaitez shalom et bienvenue à {nom}, chers frères et sœurs —{" "}
+        <span className="not-italic font-semibold text-[#C9A227]">Shalom aleikhem !</span>
+      </p>
     </div>
   );
 }

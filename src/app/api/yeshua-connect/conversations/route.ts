@@ -188,6 +188,12 @@ export async function GET(_req: NextRequest) {
         participants: ch.members.map((m) => ({
           userId: m.user.id,
           role: m.role,
+          // ⭐ V3.13 — Rôle GLOBAL du compte (UserRole) : les super admins
+          // (PAM, Pasteur Kongo) figurent dans la section « Admin » de
+          // TOUS les canaux avec l'icône distinctive, même si leur rôle
+          // de canal est simple « MEMBER » — « eux ne doivent pas être mis
+          // dans la catégorie des membres ».
+          userRole: m.user.role,
           joinedAt: m.joinedAt.toISOString(),
           muted: false,
           name: m.user.name ?? "Membre",

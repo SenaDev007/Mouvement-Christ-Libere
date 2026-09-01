@@ -519,6 +519,7 @@ enum MessageType {
   ANNOUNCEMENT
   GIF
   CALL_LOG
+  MEMBER_LOG
 }
 
 // ⭐ V2.4 — Sondages (polls) dans Yeshua Connect

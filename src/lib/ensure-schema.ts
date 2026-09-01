@@ -329,10 +329,15 @@ export function ensureMessageTypeEnum(): Promise<void> {
       await db.$executeRawUnsafe(
         `ALTER TYPE "MessageType" ADD VALUE IF NOT EXISTS 'CALL_LOG'`
       );
+      // ⭐ V3.13 — Journal d'arrivée des nouveaux membres (« Baruch haba ! »
+      // pastille façon WhatsApp + invitation à souhaiter shalom).
+      await db.$executeRawUnsafe(
+        `ALTER TYPE "MessageType" ADD VALUE IF NOT EXISTS 'MEMBER_LOG'`
+      );
     })()
       .then(() => {
         messageTypeEnumOk = true;
-        console.log("[ensure-schema] Enum MessageType : valeurs VERSE/ANNOUNCEMENT/GIF/CALL_LOG vérifiées/ajoutées ✓");
+        console.log("[ensure-schema] Enum MessageType : valeurs VERSE/ANNOUNCEMENT/GIF/CALL_LOG/MEMBER_LOG vérifiées/ajoutées ✓");
       })
       .catch((e: unknown) => {
         console.error(

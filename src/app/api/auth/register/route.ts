@@ -1,7 +1,8 @@
+import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { ensureDisperseUserIdColumn, ensureVoiceVideoColumns } from "@/lib/ensure-schema";
+import { ensureDisperseUserIdColumn, ensureMessageTypeEnum, ensureVoiceVideoColumns } from "@/lib/ensure-schema";
 import { COUNTRIES } from "@/lib/data/countries";
 
 /**
@@ -22,6 +23,12 @@ import { COUNTRIES } from "@/lib/data/countries";
  * à 0.1° comme le reste de la carte, anonymat préservé). L'ancienne
  * inscription anonyme (« Ajouter ma position ») a été retirée : seul un
  * compte de membre crée un point sur la carte.
+ *
+ * ⭐ V3.13 — ANNONCE D'ARRIVÉE DANS LA COMMUNAUTÉ : à l'inscription, une
+ * petite pastille système « Baruch haba ! [nom] a rejoint la communauté »
+ * (façon journal d'appel — exactement comme Telegram/WhatsApp) est postée
+ * dans le canal d'accueil, suivie d'une invitation automatique demandant
+ * aux frères et sœurs de souhaiter shalom et bienvenue au nouveau membre.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -126,6 +133,65 @@ export async function POST(req: NextRequest) {
     } catch (chError) {
       // Non bloquant : l'auto-join paresseux (messages route V2.9) rattrape.
       console.error("[auth/register] Auto-enrollment canaux impossible :", chError);
+    }
+
+    // ⭐ V3.13 — ANNONCE D'ARRIVÉE « BARUCH HABA ! » : petite pastille
+    // système dans le canal d'accueil (journal de membre, façon WhatsApp/
+    // Telegram — même famille visuelle que les journaux d'appel V3.1).
+    // La communauté voit qu'un nouveau membre arrive et est invitée à lui
+    // souhaiter shalom et bienvenue. Non bloquant : le compte reste créé
+    // si l'annonce échoue.
+    try {
+      // Canal d'accueil : « Nouveaux croyants Yeshoua » (seed), à défaut le
+      // premier canal public de discussion (type TEXT, non restreint).
+      const canalAccueil =
+        (await db.channel.findFirst({
+          where: {
+            isRestricted: false,
+            type: { in: ["TEXT", "ANNOUNCEMENT"] },
+            name: { contains: "Nouveaux croyants", mode: "insensitive" },
+          },
+          orderBy: { order: "asc" },
+          select: { id: true },
+        })) ??
+        (await db.channel.findFirst({
+          where: { isRestricted: false, type: "TEXT" },
+          orderBy: { order: "asc" },
+          select: { id: true },
+        }));
+      if (canalAccueil) {
+        // L'enum Postgres doit connaître MEMBER_LOG avant l'insertion brute
+        // (même stratégie que CALL_LOG — le client Prisma régénéré au build
+        // connaît déjà la valeur côté lecture).
+        await ensureMessageTypeEnum();
+        const nomAffiche =
+          (typeof name === "string" && name.trim()) ||
+          (typeof raw.pseudonyme === "string" && raw.pseudonyme.trim()) ||
+          String(email).split("@")[0] ||
+          "Nouveau membre";
+        const texte =
+          `Baruch haba ! ${nomAffiche} a rejoint la communauté — ` +
+          `souhaitez-lui shalom et bienvenue 🙏`;
+        await db.$executeRawUnsafe(
+          `INSERT INTO "Message" ("id", "channelId", "userId", "content", "type", "verseRef", "createdAt", "updatedAt")
+           VALUES ($1, $2, $3, $4, 'MEMBER_LOG', $5, now(), now())`,
+          randomUUID(),
+          canalAccueil.id,
+          user.id,
+          texte,
+          JSON.stringify({
+            kind: "member_join",
+            name: nomAffiche,
+            userId: user.id,
+            country: typeof country === "string" ? country : undefined,
+          }),
+        );
+        console.log(
+          `[auth/register] Annonce d'arrivée postée pour « ${nomAffiche} » (canal ${canalAccueil.id})`
+        );
+      }
+    } catch (annonceError) {
+      console.error("[auth/register] Annonce d'arrivée impossible :", annonceError);
     }
 
     // ⭐ V3.11 — Placement automatique sur la carte des dispersés :

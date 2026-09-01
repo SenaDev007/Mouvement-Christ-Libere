@@ -8,7 +8,7 @@
  * Pas de "read receipts" — remplacé par "Bénédiction" (✋) et "Amen" (🙏).
  */
 
-export type MessageType = "TEXT" | "AUDIO" | "IMAGE" | "VIDEO" | "FILE" | "VERSE" | "ANNOUNCEMENT" | "GIF" | "POLL" | "SCHEDULED" | "CALL_LOG";
+export type MessageType = "TEXT" | "AUDIO" | "IMAGE" | "VIDEO" | "FILE" | "VERSE" | "ANNOUNCEMENT" | "GIF" | "POLL" | "SCHEDULED" | "CALL_LOG" | "MEMBER_LOG";
 export type ConversationType = "DIRECT" | "GROUP" | "CHANNEL" | "PASTORS" | "VOICE";
 export type AnnouncementPriority = "INFO" | "NORMAL" | "IMPORTANT" | "URGENT";
 export type AnnouncementTarget = "ALL" | "PASTORS" | "DISCIPLES" | "NEW_BELIEVERS" | "INTERCESSION";
@@ -19,6 +19,11 @@ export interface ChatParticipant {
   /** Rôle DANS le canal (ChannelRole Prisma) — ⭐ V3.4 : « ADMIN » ajouté
    * (l'API conversations/members le renvoie réellement depuis la base). */
   role: "SUPER_ADMIN" | "ADMIN" | "MODERATOR" | "ANIMATOR" | "MEMBER_VERIFIED" | "MEMBER";
+  /** ⭐ V3.13 — Rôle GLOBAL du compte (UserRole) : les super admins
+   * (PAM, Pasteur Kongo) figurent dans la section « Admin » de TOUS les
+   * canaux et portent l'icône distinctive, même si leur rôle de canal
+   * est simple « MEMBER ». */
+  userRole?: string;
   joinedAt: string;
   muted: boolean;
   name: string;
