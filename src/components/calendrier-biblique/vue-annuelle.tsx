@@ -60,6 +60,10 @@ const NOMS_MOIS = [
 const NOMS_JOURS = JOURS_SEMAINE_HEBREU;
 
 export function VueAnnuelle({ annee }: VueAnnuelleProps) {
+  // ⭐ V3.8 — « aujourd'hui » calculé une seule fois par rendu :
+  // sert au marqueur « Jour en cours » (annoncé par la légende).
+  const aujourdhui = new Date().toDateString();
+
   // Map des fêtes par jour de l'année
   const fetesParJour = new Map<number, Fete>();
   for (const fete of annee.fetes) {
@@ -186,6 +190,24 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {trimestre.mois.map((numMois) => {
                   const joursMois = joursT.filter((j) => j.mois === numMois);
+                  // ⭐ V3.8 — CORRECTION DE L'ALIGNEMENT (cohérence vue
+                  // année ↔ vue mois) : le 1er de chaque mois N'EST PAS
+                  // toujours un dimanche ! Dans l'année biblique de 364
+                  // jours (52 semaines EXACTES), le 1 Aviv — donc toute
+                  // l'année — commence toujours un MERCREDI, et chaque
+                  // trimestre de 91 jours (= 13 semaines exactes)
+                  // reproduit la même structure de semaine :
+                  //   · mois 1, 4, 7, 10 → commencent MERCREDI
+                  //   · mois 2, 5, 8, 11 → commencent VENDREDI
+                  //   · mois 3, 6, 9, 12 → commencent DIMANCHE
+                  // On décale donc la grille du jour de semaine RÉEL du
+                  // 1er jour du mois (même logique que la vue mensuelle →
+                  // organiserJoursParSemaine) : chaque jour figure sous la
+                  // bonne colonne Dim…Sam, le Shabbat tombe toujours dans
+                  // la colonne « Sam », et les infobulles (hover)
+                  // coïncident avec les colonnes affichées.
+                  const decalage =
+                    joursMois.length > 0 ? joursMois[0].jourDeSemaine - 1 : 0;
                   const fetesMois = annee.fetes.filter((f) => {
                     const jc = annee.jours.find((j) => {
                       const d1 = new Date(j.dateGregorienne);
@@ -240,8 +262,17 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                         })}
                       </div>
 
-                      {/* Jours du mois */}
+                      {/* Jours du mois — ⭐ V3.8 : cases vides de
+                          décalage AVANT le 1er jour (alignement réel
+                          sur les colonnes Dim…Sam), puis les jours. */}
                       <div className="grid grid-cols-7 gap-1">
+                        {Array.from({ length: decalage }, (_, i) => (
+                          <div
+                            key={`vide-${numMois}-${i}`}
+                            aria-hidden="true"
+                            className="aspect-square rounded"
+                          />
+                        ))}
                         {joursMois.map((jour) => {
                           const fete = fetesParJour.get(jour.jourDeAnnee);
                           const isShabbat = jour.estShabbat;
@@ -249,6 +280,20 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                           // (ex. « Aviv 12 · Yom Shishi »).
                           const nomHeb = jourSemaineHebreu(jour.jourDeSemaine);
                           const suffixeHeb = nomHeb ? ` · ${nomHeb.translit}` : "";
+                          // ⭐ V3.8 — date grégorienne + jour de semaine
+                          // complet dans l'infobulle : le survol est
+                          // désormais VÉRIFIABLE (« Aviv 1 · Yom Revi'i ·
+                          // mercredi 18 mars 2026 » sous la colonne Mer).
+                          const dateGreg = new Date(jour.dateGregorienne);
+                          const estAujourdhui =
+                            dateGreg.toDateString() === aujourdhui;
+                          const dateGregFr = dateGreg.toLocaleDateString("fr-FR", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                            timeZone: "UTC",
+                          });
                           return (
                             <div
                               key={jour.jourDeAnnee}
@@ -258,12 +303,14 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                                   ? "bg-[#C9A227] text-[#1E0F2B] font-bold"
                                   : isShabbat
                                     ? "bg-[#2A0E3D]/10 text-[#2A0E3D]"
-                                    : "bg-white text-[#1E0F2B] hover:bg-[#C9A227]/10"
+                                    : "bg-white text-[#1E0F2B] hover:bg-[#C9A227]/10",
+                                estAujourdhui &&
+                                  "ring-2 ring-inset ring-[#C9A227] font-bold"
                               )}
                               title={
                                 fete
-                                  ? `${fete.nomFr} — ${fete.referenceEcritures}${suffixeHeb}`
-                                  : `${NOMS_MOIS[numMois - 1]} ${jour.jourDuMois}${suffixeHeb}`
+                                  ? `${NOMS_MOIS[numMois - 1]} ${jour.jourDuMois}${suffixeHeb} — ${fete.nomFr} (${fete.referenceEcritures}) · ${dateGregFr}`
+                                  : `${NOMS_MOIS[numMois - 1]} ${jour.jourDuMois}${suffixeHeb} · ${dateGregFr}`
                               }
                             >
                               {jour.jourDuMois}
