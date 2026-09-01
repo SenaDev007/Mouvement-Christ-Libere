@@ -76,9 +76,11 @@ export default function Home() {
   }, []);
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
-      {/* ⭐ V3.9 — Intro du landing page : 30 s EXACTEMENT pendant
-          lesquelles retentissent les 30 premières secondes du VRAI son du
-          shofar (une fois par session de navigation, session storage). */}
+      {/* ⭐ V3.14 — Page de loading du Mouvement : rendue dans le HTML
+          initial (AVANT le landing — jamais de site visible avant elle),
+          5 secondes de chargement max (barre en pourcentage, « Christ
+          Libère »), pendant lesquelles démarre le son du shofar qui
+          continue ses 30 s naturelles après l'ouverture du site. */}
       <LandingIntro />
 
       {/* ═════ HERO ═════ */}

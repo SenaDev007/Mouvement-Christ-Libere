@@ -14,7 +14,10 @@
  *     anonymes (le pasteur voit la carte nettoyée dès sa première visite).
  */
 import { db } from "@/lib/db";
-import { ensureDisperseUserIdColumn } from "@/lib/ensure-schema";
+import {
+  ensureDisperseManuelColumn,
+  ensureDisperseUserIdColumn,
+} from "@/lib/ensure-schema";
 import { classerDisperses } from "./classification-purge";
 
 export {
@@ -46,9 +49,10 @@ export function purgerDispersesAnonymes(): Promise<ResultatPurge> {
   if (purgeEnCours) return purgeEnCours;
 
   purgeEnCours = (async (): Promise<ResultatPurge> => {
-    // La colonne userId doit exister avant toute sélection Prisma (le
-    // findMany la sélectionne via le modèle du schéma V3.12).
+    // Les colonnes userId (V3.12) et manuel (V3.14) doivent exister avant
+    // toute sélection Prisma (le findMany les sélectionne via le modèle).
     await ensureDisperseUserIdColumn();
+    await ensureDisperseManuelColumn();
 
     const membres = await db.disperseMember.findMany({
       select: {
@@ -57,6 +61,7 @@ export function purgerDispersesAnonymes(): Promise<ResultatPurge> {
         pays: true,
         liveMemberId: true,
         userId: true,
+        manuel: true, // ⭐ V3.14 — critère (e) : entrées manuelles protégées
         createdAt: true,
       },
       orderBy: { createdAt: "asc" },

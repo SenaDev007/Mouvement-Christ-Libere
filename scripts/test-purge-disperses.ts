@@ -13,6 +13,7 @@
  *   (d'') créée à 6 mois d'écart, même pays                        → supprimé
  *   (e) position anonyme classique (ancien formulaire)            → supprimé
  *   (f) accents/casse : « Élisée » vs « elisee »                   → conservé
+ *   (g) ⭐ V3.14 entrée MANUELLE (restaurée, ex. Akpovi Sènakpon)   → conservé
  */
 import {
   classerDisperses,
@@ -30,31 +31,33 @@ const utilisateurs: UtilisateurLite[] = [
 
 const membres: DisperseLite[] = [
   // (a) LiveMember lié → conservé
-  { id: "m1", pseudonyme: "Visiteur du live", pays: "FR", liveMemberId: "live-1", userId: null, createdAt: new Date(J("2026-05-01T09:00:00Z")) },
+  { id: "m1", pseudonyme: "Visiteur du live", pays: "FR", liveMemberId: "live-1", userId: null, manuel: false, createdAt: new Date(J("2026-05-01T09:00:00Z")) },
   // (b) userId → conservé
-  { id: "m2", pseudonyme: "Nouveau membre", pays: "BJ", liveMemberId: null, userId: "u2", createdAt: new Date(J("2026-09-01T09:00:00Z")) },
+  { id: "m2", pseudonyme: "Nouveau membre", pays: "BJ", liveMemberId: null, userId: "u2", manuel: false, createdAt: new Date(J("2026-09-01T09:00:00Z")) },
   // (c) pseudonyme = nom du compte « Pam » → conservé
-  { id: "m3", pseudonyme: "Pam", pays: "FR", liveMemberId: null, userId: null, createdAt: new Date(J("2026-04-01T09:00:00Z")) },
+  { id: "m3", pseudonyme: "Pam", pays: "FR", liveMemberId: null, userId: null, manuel: false, createdAt: new Date(J("2026-04-01T09:00:00Z")) },
   // (c bis) pseudonyme = préfixe email « grace225 » → conservé
-  { id: "m4", pseudonyme: "grace225", pays: "CI", liveMemberId: null, userId: null, createdAt: new Date(J("2026-07-01T09:00:00Z")) },
+  { id: "m4", pseudonyme: "grace225", pays: "CI", liveMemberId: null, userId: null, manuel: false, createdAt: new Date(J("2026-07-01T09:00:00Z")) },
   // (d) créée 30 s après le compte u2, même pays (Bénin) → conservé
-  { id: "m5", pseudonyme: "Élisée de Cotonou", pays: "BJ", liveMemberId: null, userId: null, createdAt: new Date(J("2026-08-30T12:00:30Z")) },
+  { id: "m5", pseudonyme: "Élisée de Cotonou", pays: "BJ", liveMemberId: null, userId: null, manuel: false, createdAt: new Date(J("2026-08-30T12:00:30Z")) },
   // (d') créée 30 s après le compte u2 mais pays DIFFÉRENT → supprimé
-  { id: "m6", pseudonyme: "Anonyme simultané", pays: "NG", liveMemberId: null, userId: null, createdAt: new Date(J("2026-08-30T12:00:30Z")) },
+  { id: "m6", pseudonyme: "Anonyme simultané", pays: "NG", liveMemberId: null, userId: null, manuel: false, createdAt: new Date(J("2026-08-30T12:00:30Z")) },
   // (d'') créée 6 mois après le compte u2, même pays → supprimé
-  { id: "m7", pseudonyme: "Vieux point Bénin", pays: "BJ", liveMemberId: null, userId: null, createdAt: new Date(J("2026-02-01T09:00:00Z")) },
+  { id: "m7", pseudonyme: "Vieux point Bénin", pays: "BJ", liveMemberId: null, userId: null, manuel: false, createdAt: new Date(J("2026-02-01T09:00:00Z")) },
   // (e) position anonyme classique → supprimé
-  { id: "m8", pseudonyme: "Sarah d'Abidjan", pays: "CI", liveMemberId: null, userId: null, createdAt: new Date(J("2026-03-15T09:00:00Z")) },
+  { id: "m8", pseudonyme: "Sarah d'Abidjan", pays: "CI", liveMemberId: null, userId: null, manuel: false, createdAt: new Date(J("2026-03-15T09:00:00Z")) },
   // (f) accents/casse : « élisée » vs compte « Élisée » → conservé
-  { id: "m9", pseudonyme: "  éLiSée  ", pays: "FR", liveMemberId: null, userId: null, createdAt: new Date(J("2026-01-01T09:00:00Z")) },
+  { id: "m9", pseudonyme: "  éLiSée  ", pays: "FR", liveMemberId: null, userId: null, manuel: false, createdAt: new Date(J("2026-01-01T09:00:00Z")) },
   // (b bis) userId d'un compte SUPPRIMÉ (orphelin) → supprimé (⭐ V3.13)
-  { id: "m10", pseudonyme: "Compte supprimé", pays: "CI", liveMemberId: null, userId: "u-inexistant", createdAt: new Date(J("2026-09-01T10:00:00Z")) },
+  { id: "m10", pseudonyme: "Compte supprimé", pays: "CI", liveMemberId: null, userId: "u-inexistant", manuel: false, createdAt: new Date(J("2026-09-01T10:00:00Z")) },
+  // (g) ⭐ V3.14 entrée MANUELLE restaurée, aucun compte → conservé
+  { id: "m11", pseudonyme: "Akpovi Sènakpon", pays: "BJ", liveMemberId: null, userId: null, manuel: true, createdAt: new Date(J("2026-09-02T08:00:00Z")) },
 ];
 
 const attendus: Record<string, "garder" | "supprimer"> = {
   m1: "garder", m2: "garder", m3: "garder", m4: "garder", m5: "garder",
   m6: "supprimer", m7: "supprimer", m8: "supprimer", m9: "garder",
-  m10: "supprimer",
+  m10: "supprimer", m11: "garder",
 };
 
 const { aSupprimer, aConserver, raisons } = classerDisperses(membres, utilisateurs);

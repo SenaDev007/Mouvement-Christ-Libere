@@ -393,6 +393,45 @@ export function ensureDisperseUserIdColumn(): Promise<void> {
   return inflightDisperseUserId;
 }
 
+let disperseManuelOk = false;
+let inflightDisperseManuel: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.14 — S'assure que la colonne `DisperseMember.manuel` (BOOLEAN,
+ * défaut false) existe.
+ *
+ * Contexte : restauration d'un membre supprimé par erreur par la purge
+ * V3.12 (Akpovi Sènakpon — membre réel du Mouvement, rétabli à la demande
+ * du pasteur). Une entrée « manuelle » (manuel = true) est TOUJOURS
+ * conservée par la purge, quels que soient les autres critères.
+ *
+ * Mêmes garanties que les helpers précédents : idempotent, mémoïsé,
+ * concurrentiel (un seul ALTER en vol), échec DDL purement loggué.
+ */
+export function ensureDisperseManuelColumn(): Promise<void> {
+  if (disperseManuelOk) return Promise.resolve();
+  if (!inflightDisperseManuel) {
+    inflightDisperseManuel = db
+      .$executeRawUnsafe(
+        'ALTER TABLE "DisperseMember" ADD COLUMN IF NOT EXISTS "manuel" BOOLEAN DEFAULT false'
+      )
+      .then(() => {
+        disperseManuelOk = true;
+        console.log("[ensure-schema] V3.14 : colonne DisperseMember.manuel vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE DisperseMember.manuel impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightDisperseManuel = null;
+      });
+  }
+  return inflightDisperseManuel;
+}
+
 /**
  * ⭐ V3.5 — S'assure que la table `UserBlock` (blocage entre membres,
  * sécurité des conversations privées Yeshua Connect) existe.

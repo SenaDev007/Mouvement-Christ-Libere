@@ -15,6 +15,7 @@ import { db } from "@/lib/db";
 import { COUNTRIES } from "@/lib/data/countries";
 import { ensureServantLocationColumns } from "@/lib/ensure-schema";
 import { purgerDispersesAnonymes } from "@/lib/disperses/purger-disperses";
+import { restaurerMembresManuels } from "@/lib/disperses/restaurer-manuels";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,6 +69,13 @@ export async function GET(request: NextRequest) {
     try {
       // ⭐ V3.3 — Auto-réparation Servant.pays / Servant.ville (idempotent)
       await ensureServantLocationColumns();
+
+      // ⭐ V3.14 — RESTAURATION des membres supprimés par erreur (ex.
+      // Akpovi Sènakpon, membre réel purgé avec les positions anonymes en
+      // V3.12) AVANT la purge : les entrées restaurées portent manuel =
+      // true → la purge ne peut plus jamais les toucher. Idempotent +
+      // mémoïsé par instance, non bloquant.
+      await restaurerMembresManuels();
 
       // ⭐ V3.12 — PURGE des positions créées sans compte officiel : les
       // entrées de l'ancien formulaire anonyme « Ajouter ma position »

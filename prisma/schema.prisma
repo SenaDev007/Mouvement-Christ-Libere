@@ -725,6 +725,10 @@ model DisperseMember {
   niveau        String   @default("chercheur") // chercheur, croyant, disciple, pasteur
   message       String?  @db.Text // témoignage court optionnel
   isPublic      Boolean  @default(true)
+  // ⭐ V3.14 — Entrée restaurée/gérée manuellement (ex. Akpovi Sènakpon,
+  // rétabli après la purge V3.12 à la demande du pasteur) : la purge ne
+  // peut JAMAIS supprimer une entrée manuelle.
+  manuel        Boolean  @default(false)
   createdAt     DateTime @default(now())
 
   liveMember    LiveMember? @relation(fields: [liveMemberId], references: [id], onDelete: SetNull)

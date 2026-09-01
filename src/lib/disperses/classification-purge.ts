@@ -22,7 +22,9 @@
  *   (d) la position a été créée dans la MÊME requête qu'un compte User
  *       (fenêtre de ±90 s + même pays) — signature exacte du placement
  *       automatique de /register (V3.11+), où le pseudonyme « Nom sur la
- *       carte des dispersés » peut différer du nom du compte.
+ *       carte des dispersés » peut différer du nom du compte ;
+ *   (e) ⭐ V3.14 `manuel` = true — entrée restaurée/gérée manuellement
+ *       (ex. Akpovi Sènakpon rétabli après la purge) : TOUJOURS conservée.
  *
  * Tout le reste (positions soumises anonymement par l'ancien formulaire)
  * est à supprimer.
@@ -39,6 +41,8 @@ export interface DisperseLite {
   pays: string;
   liveMemberId: string | null;
   userId: string | null;
+  /** ⭐ V3.14 — entrée restaurée/gérée manuellement (protégée). */
+  manuel: boolean;
   createdAt: Date;
 }
 
@@ -108,6 +112,13 @@ export function classerDisperses(
   );
 
   for (const m of membres) {
+    // (e) ⭐ V3.14 — Entrée restaurée/gérée manuellement : toujours conservée
+    // (protection des membres rétablis à la main, ex. Akpovi Sènakpon).
+    if (m.manuel) {
+      aConserver.push(m.id);
+      raisons.set(m.id, "entrée manuelle (membre restauré — protégé)");
+      continue;
+    }
     // (a) Inscrit officiellement via le système des lives
     if (m.liveMemberId) {
       aConserver.push(m.id);
