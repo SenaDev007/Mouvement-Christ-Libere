@@ -9,6 +9,24 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  // ⭐ V3.18 — @napi-rs/canvas (rendu texte/stickers PNG de la post-production
+  // vidéo, V3.16) est un module NATIF (.node) : Turbopack ne peut pas le
+  // placer dans un chunk ESM ("non-ecmascript placeable asset" → le build
+  // Vercel échouait sur /api/videos/[id]/render). Il doit rester EXTERNE au
+  // bundle serveur et être résolu au RUNTIME depuis node_modules — même
+  // mécanisme que "canvas" dans la liste par défaut de Next (qui ne couvre
+  // pas le fork @napi-rs). Les binaires de la plateforme (ex.
+  // @napi-rs/canvas-linux-x64-gnu) sont quant à eux GARANTIS embarqués dans
+  // la fonction serverless par outputFileTracingIncludes (le js-binding
+  // résout le paquet plateforme dynamiquement selon l'OS — sans cette
+  // clause le traçage nft pouvait l'oublier).
+  serverExternalPackages: ["@napi-rs/canvas"],
+  outputFileTracingIncludes: {
+    "/api/videos/[id]/render": [
+      "./node_modules/@napi-rs/canvas*/**/*",
+    ],
+  },
+
   // ⭐ V2.0 — next-auth v5 beta a des erreurs de types connues avec moduleResolution: "bundler"
   //    On ignore les erreurs TS au build (le runtime fonctionne correctement).
   //    TODO: retirer quand next-auth v5 stable sera publiée.
