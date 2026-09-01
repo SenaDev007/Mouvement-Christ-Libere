@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import type { AnneeBibliqueData, JourBiblique, Fete } from "./calendrier-app";
+import { JOURS_SEMAINE_HEBREU } from "@/lib/calendrier/jours-semaine-hebreu";
 import { cn } from "@/lib/utils";
 
 interface VueMensuelleProps {
@@ -21,16 +22,10 @@ const NOMS_MOIS_FR = [
   "Automne (Nov-Déc)", "Hiver (Déc-Jan)", "Hiver (Jan-Fév)", "Hiver (Fév-Mar)",
 ];
 
-// Noms hébreux + français des jours
-const NOMS_JOURS = [
-  { fr: "Dim", he: "Yom Rishon", full: "Dimanche" },
-  { fr: "Lun", he: "Yom Sheni", full: "Lundi" },
-  { fr: "Mar", he: "Yom Shlishi", full: "Mardi" },
-  { fr: "Mer", he: "Yom Revi'i", full: "Mercredi" },
-  { fr: "Jeu", he: "Yom Chamishi", full: "Jeudi" },
-  { fr: "Ven", he: "Yom Shishi", full: "Vendredi" },
-  { fr: "Sam", he: "Shabbat", full: "Samedi" },
-];
+// Noms français + hébreu des jours — table partagée (V3.6) :
+// chaque en-tête de colonne affiche l’abréviation française, le nom
+// hébreu (יום ראשון…שבת) et sa translittération.
+const NOMS_JOURS = JOURS_SEMAINE_HEBREU;
 
 // Images saisonnières par trimestre
 const SAISON_MOIS: Array<{ image: string; overlay: string; saison: string }> = [
@@ -153,36 +148,51 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
           <div className="relative z-10 p-6">
             {/* En-tête jours — noms français + hébreux */}
             <div className="grid grid-cols-7 gap-1 md:gap-2 mb-3">
-              {NOMS_JOURS.map((jour, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "text-center py-2 rounded-lg",
-                    jour.he === "Shabbat"
-                      ? "bg-[#2A0E3D]/40 backdrop-blur-sm"
-                      : "bg-[#FAF6EF]/10 backdrop-blur-sm"
-                  )}
-                >
+              {NOMS_JOURS.map((jour, i) => {
+                const estShabbat = jour.numero === 7;
+                return (
                   <div
+                    key={i}
+                    title={`${jour.fr} · ${jour.hebreuNiqoud} (${jour.translit})`}
                     className={cn(
-                      "text-xs font-bold",
-                      jour.he === "Shabbat" ? "text-[#C9A227]" : "text-[#FAF6EF]"
+                      "text-center py-2 rounded-lg",
+                      estShabbat
+                        ? "bg-[#2A0E3D]/40 backdrop-blur-sm"
+                        : "bg-[#FAF6EF]/10 backdrop-blur-sm"
                     )}
                   >
-                    {jour.fr}
+                    <div
+                      className={cn(
+                        "text-xs font-bold",
+                        estShabbat ? "text-[#C9A227]" : "text-[#FAF6EF]"
+                      )}
+                    >
+                      {jour.frAbbr}
+                    </div>
+                    <div
+                      dir="rtl"
+                      className={cn(
+                        "text-[10px] hidden md:block mt-0.5 font-serif leading-tight",
+                        estShabbat
+                          ? "text-[#C9A227]/85 font-semibold"
+                          : "text-[#FAF6EF]/65"
+                      )}
+                    >
+                      {jour.hebreu}
+                    </div>
+                    <div
+                      className={cn(
+                        "text-[9px] hidden lg:block mt-0.5 leading-tight",
+                        estShabbat
+                          ? "text-[#C9A227]/70 font-semibold"
+                          : "text-[#FAF6EF]/50"
+                      )}
+                    >
+                      {jour.translit}
+                    </div>
                   </div>
-                  <div
-                    className={cn(
-                      "text-[10px] hidden md:block mt-0.5",
-                      jour.he === "Shabbat"
-                        ? "text-[#C9A227]/80 font-semibold"
-                        : "text-[#FAF6EF]/60"
-                    )}
-                  >
-                    {jour.he}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Grille des jours */}
@@ -276,11 +286,12 @@ function JourMensuelCell({ jour, fete }: { jour: JourBiblique | null; fete?: Fet
   const dateGreg = new Date(jour.dateGregorienne);
   const estAujourdhui = dateGreg.toDateString() === maintenant.toDateString();
   const isShabbat = jour.estShabbat;
+  const jourHebreu = JOURS_SEMAINE_HEBREU[jour.jourDeSemaine - 1] ?? null;
 
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
-      title={`${jour.jourDuMois} ${jour.nomMois} — ${jour.nomJourSemaine}${fete ? ` — ${fete.nomFr}` : ""}`}
+      title={`${jour.jourDuMois} ${jour.nomMois} — ${jour.nomJourSemaine}${jourHebreu ? ` (${jourHebreu.hebreu})` : ""}${fete ? ` — ${fete.nomFr}` : ""}`}
       className={cn(
         "aspect-square rounded-md p-2 cursor-pointer transition-colors relative flex flex-col backdrop-blur-sm",
         fete

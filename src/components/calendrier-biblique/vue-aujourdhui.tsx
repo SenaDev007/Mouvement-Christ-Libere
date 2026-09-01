@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Sunset, Sun, Calendar, ChevronRight, BookOpen, Sparkles } from "lucide-react";
 import type { AnneeBibliqueData, JourBiblique, Fete } from "./calendrier-app";
+import { JOURS_SEMAINE_HEBREU } from "@/lib/calendrier/jours-semaine-hebreu";
 import { cn } from "@/lib/utils";
 
 interface VueAujourdhuiProps {
@@ -80,6 +81,8 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
   }
 
   const dateGreg = new Date(jourEnCours.dateGregorienne);
+  // ⭐ V3.6 — Nom hébreu du jour de la semaine (יום ראשון…שבת)
+  const jourHebreu = JOURS_SEMAINE_HEBREU[jourEnCours.jourDeSemaine - 1] ?? null;
 
   return (
     <div className="grid lg:grid-cols-3 gap-6">
@@ -111,9 +114,16 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
             <h3 className="font-serif text-4xl md:text-5xl font-bold text-[#FAF6EF] mb-2 drop-shadow-lg">
               {jourEnCours.jourDuMois} {jourEnCours.nomMois}
             </h3>
-            <p className="text-lg text-[#FAF6EF]/80 mb-6 drop-shadow">
+            <p className="text-lg text-[#FAF6EF]/80 mb-1 drop-shadow">
               {jourEnCours.nomJourSemaine} · Jour {jourEnCours.jourDeAnnee} de l&apos;année
             </p>
+            {/* ⭐ V3.6 — Nom hébreu du jour + translittération */}
+            {jourHebreu && (
+              <p className="font-serif text-base text-[#C9A227]/90 mb-6 drop-shadow">
+                <span dir="rtl">{jourHebreu.hebreuNiqoud}</span>
+                <span dir="ltr" className="opacity-80"> · {jourHebreu.translit}</span>
+              </p>
+            )}
 
             {/* Équivalence grégorienne */}
             <div className="flex items-center gap-2 text-sm text-[#FAF6EF]/80 mb-6">

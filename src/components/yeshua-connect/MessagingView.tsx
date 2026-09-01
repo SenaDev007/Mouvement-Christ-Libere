@@ -62,6 +62,8 @@ import {
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant, RemoteAudioTrack } from "livekit-client";
 import { cn } from "@/lib/utils";
 import { BibleWorkspace } from "@/components/bible/BibleWorkspace";
+import { CalendarWorkspace } from "./CalendarWorkspace";
+import { ShofarNotifier } from "./ShofarNotifier";
 import {
   QUICK_REACTIONS,
   type ChatConversation, type ChatMessage, type ChatPoll,
@@ -442,6 +444,10 @@ export function MessagingView() {
   // ⭐ V2.6 — Bible intégrée : s'ouvre DANS Yeshua Connect (plein écran),
   // plus aucune redirection vers la page /bible.
   const [showBible, setShowBible] = useState(false);
+  // ⭐ V3.6 — Calendrier biblique intégré : s'ouvre DANS Yeshua Connect
+  // (plein écran, même pattern que la Bible) — fêtes de l'Éternel,
+  // shofar au coucher du soleil, rappels 7 j / 3 j / 24 h.
+  const [showCalendar, setShowCalendar] = useState(false);
   // (⭐ V2.5) showScheduleModal / showPollModal supprimés : les formulaires
   // vivent désormais dans les panneaux du modal « Joindre » (attachPanel).
   // (S5) State pour poll et scheduled message
@@ -1215,6 +1221,34 @@ export function MessagingView() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [showBible]);
+
+  // ⭐ V3.6 — Fermer le calendrier intégré avec la touche Échap
+  useEffect(() => {
+    if (!showCalendar) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowCalendar(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showCalendar]);
+
+  // ⭐ V3.6 — Partager une annonce du calendrier biblique (Shabbat ou
+  // solennité) dans la conversation active : même pattern que le partage
+  // de verset depuis la Bible intégrée (toast de confirmation / erreur).
+  const handleShareAnnonce = useCallback(async (texte: string) => {
+    if (!texte) return;
+    if (!activeConvId) {
+      showToast("Ouvrez d'abord une conversation pour partager l'annonce", "error");
+      return;
+    }
+    try {
+      await postMessage({ content: texte, type: "TEXT" });
+      showToast("Annonce partagée dans la conversation");
+    } catch (e) {
+      console.error("handleShareAnnonce:", e);
+      showToast("Impossible de partager l'annonce", "error");
+    }
+  }, [activeConvId, postMessage, showToast]);
 
   // ⭐ V2.1 — Handle a slash command (called from SlashCommands onCommand
   // callback). Exécute la commande et agit selon le résultat :
@@ -3619,6 +3653,15 @@ export function MessagingView() {
               >
                 <BookOpen className="w-4 h-4" />
               </button>
+              {/* ⭐ V3.6 — Calendrier biblique intégré : fêtes de l'Éternel,
+                  shofar au coucher du soleil, rappels 7 j / 3 j / 24 h. */}
+              <button
+                onClick={() => setShowCalendar(true)}
+                className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors"
+                title="Calendrier biblique — fêtes, shofar & rappels"
+              >
+                <Calendar className="w-4 h-4" />
+              </button>
               <button onClick={() => handleMute(activeConv.id)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 hidden sm:block" title="Muet">
                 {mutedConversations.has(activeConv.id) ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
               </button>
@@ -4619,6 +4662,48 @@ export function MessagingView() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ⭐ V3.6 — CALENDRIER BIBLIQUE INTÉGRÉ ────────────────────────────
+          Même pattern que la Bible (V2.6) : plein écran par-dessus la
+          conversation. L'utilisateur consulte les fêtes de l'Éternel,
+          les noms hébreux des jours, écoute le shofar, règle les
+          notifications 7 j / 3 j / 24 h — et peut annoncer la prochaine
+          solennité dans la conversation active. Fermeture : X, Échap ou
+          clic sur le fond. */}
+      <AnimatePresence>
+        {showCalendar && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowCalendar(false);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 12 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="absolute inset-1.5 sm:inset-3 md:inset-6 lg:inset-8 rounded-2xl overflow-hidden shadow-2xl border border-[#C9A227]/40"
+            >
+              <CalendarWorkspace
+                onClose={() => setShowCalendar(false)}
+                onShareAnnonce={handleShareAnnonce}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ⭐ V3.6 — SHOFAR NOTIFIER (invisible, sauf bannières) ───────────
+          Surveille en arrière-plan les entrées de Shabbat et des fêtes
+          (coucher du soleil réel à Jérusalem) : sonnerie de shofar,
+          bannière et notification système ; rappels 7 j / 3 j / 24 h
+          pour les grandes solennités. */}
+      <ShofarNotifier onOpenCalendar={() => setShowCalendar(true)} />
 
       {/* ⭐ V2.5 — MODAL « JOINDRE » UNIFIÉ (façon WhatsApp) ─────────────────
           Un seul point d'entrée (bouton trombone) qui regroupe :
