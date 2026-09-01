@@ -2,13 +2,15 @@
  * API — Carte des dispersés d'Israël (V3)
  *
  * GET  /api/disperses          — Liste des membres dispersés (publiques)
- * POST /api/disperses          — Soumettre sa position (anonyme, arrondie à 0.1°)
+ * POST /api/disperses          — Soumettre sa position (⭐ V3.11 : session
+ *                                requise — fin des inscriptions anonymes)
  *
  * Les positions sont arrondies à 0.1° (environ 11 km) pour préserver l'anonymat.
  * Aucune information personnelle n'est stockée — pseudonyme seulement.
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { COUNTRIES } from "@/lib/data/countries";
 import { ensureServantLocationColumns } from "@/lib/ensure-schema";
@@ -175,6 +177,21 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // ⭐ V3.11 — Fin des inscriptions anonymes : le bouton « Ajouter ma
+    // position » a été remplacé par « Créer un compte » — on ne figure sur
+    // la carte qu'en créant son compte de membre (/register place le
+    // nouveau membre sur la carte automatiquement).
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        {
+          error:
+            "Un compte est requis pour figurer sur la carte. Créez votre compte depuis la page d'inscription.",
+        },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { pseudonyme, pays, ville, latitude, longitude, langue, niveau, message, sessionId } = body;
 

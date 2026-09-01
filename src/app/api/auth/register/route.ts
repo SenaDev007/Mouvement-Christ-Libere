@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
+import { COUNTRIES } from "@/lib/data/countries";
 
 /**
  * POST /api/auth/register
@@ -12,6 +13,15 @@ import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
  * téléphone) sont désormais PERSISTÉES (elles étaient ignorées avant) —
  * le membre peut les compléter/corriger plus tard depuis /profil, et les
  * administrateurs les voient dans le back-office /admin/users.
+ *
+ * ⭐ V3.11 — CARTOGRAPHIE AUTOMATIQUE : dès la création du compte, le
+ * nouveau membre apparaît sur la carte des dispersés (/disperses). Le
+ * formulaire d'inscription collectait déjà pseudonyme (« Nom sur la
+ * carte des dispersés »), pays, ville, langue, niveau et message — ces
+ * champs sont désormais persistés en position cartographique (arrondie
+ * à 0.1° comme le reste de la carte, anonymat préservé). L'ancienne
+ * inscription anonyme (« Ajouter ma position ») a été retirée : seul un
+ * compte de membre crée un point sur la carte.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -113,6 +123,49 @@ export async function POST(req: NextRequest) {
     } catch (chError) {
       // Non bloquant : l'auto-join paresseux (messages route V2.9) rattrape.
       console.error("[auth/register] Auto-enrollment canaux impossible :", chError);
+    }
+
+    // ⭐ V3.11 — Placement automatique sur la carte des dispersés :
+    // le membre apparaît aussitôt qu'il crée son compte. Le pays du
+    // formulaire est un code ISO (FR, CI…) — on tolère aussi un libellé.
+    // Non bloquant : si la carte est indisponible, le compte reste créé.
+    try {
+      const paysBrut = (typeof country === "string" ? country : "").trim();
+      const code = paysBrut.toUpperCase();
+      const cible =
+        COUNTRIES.find((c) => c.code === code) ||
+        COUNTRIES.find((c) => c.name.toLowerCase() === paysBrut.toLowerCase());
+      if (cible) {
+        const pseudonymeCarte =
+          (typeof raw.pseudonyme === "string" && raw.pseudonyme.trim()) ||
+          name ||
+          email.split("@")[0];
+        const NIVEAUX_VALIDES = ["chercheur", "croyant", "disciple", "pasteur"];
+        await db.disperseMember.create({
+          data: {
+            pseudonyme: pseudonymeCarte.toString().trim().substring(0, 100),
+            pays: cible.code,
+            ville: (typeof city === "string" ? city : "").trim().substring(0, 100) || null,
+            latitude: Math.round(cible.lat * 10) / 10,
+            longitude: Math.round(cible.lng * 10) / 10,
+            langue: (raw.langue || "FR").toString().toUpperCase().substring(0, 5),
+            niveau:
+              typeof raw.niveau === "string" && NIVEAUX_VALIDES.includes(raw.niveau)
+                ? raw.niveau
+                : "chercheur",
+            message:
+              typeof raw.message === "string" && raw.message.trim()
+                ? raw.message.trim().substring(0, 1000)
+                : null,
+            isPublic: true,
+          },
+        });
+        console.log(
+          `[auth/register] Nouveau membre placé sur la carte des dispersés (${cible.code})`
+        );
+      }
+    } catch (carteError) {
+      console.error("[auth/register] Placement sur la carte des dispersés impossible :", carteError);
     }
 
     return NextResponse.json({

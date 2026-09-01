@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
 /**
  * POST /api/disperses/add
  * Enregistre un nouveau membre dispersé dans la base de données.
+ * ⭐ V3.11 — Session requise : les inscriptions anonymes sont terminées
+ * (on figure sur la carte en créant son compte via /register).
  * Body: { pseudonyme, pays, ville?, langue, niveau, message?, latitude, longitude }
  */
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        {
+          error:
+            "Un compte est requis pour figurer sur la carte. Créez votre compte depuis la page d'inscription.",
+        },
+        { status: 401 },
+      );
+    }
+
     const body = await req.json();
 
     const { pseudonyme, pays, ville, langue, niveau, message, latitude, longitude } = body;

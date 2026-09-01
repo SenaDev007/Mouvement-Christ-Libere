@@ -22,6 +22,9 @@ export interface MembreDisperse {
 
 interface CarteDispersesProps {
   membres: MembreDisperse[];
+  /** ⭐ V3.11 — Panneau « Derniers inscrits » : réservé aux administrateurs
+   * principaux (SUPER_ADMIN). Masqué par défaut pour tous les autres. */
+  afficherDerniersInscrits?: boolean;
 }
 
 const NIVEAU_COULEURS: Record<string, string> = {
@@ -47,7 +50,7 @@ function getDrapeau(pays: string): string {
 // ⭐ V3.3 — La référence « Jérusalem » a été retirée à la demande de l'admin :
 // chaque dispersé est désormais relié aux points voisins, sans point focal.
 
-export function CarteDisperses({ membres }: CarteDispersesProps) {
+export function CarteDisperses({ membres, afficherDerniersInscrits = false }: CarteDispersesProps) {
   const [membreSelectionne, setMembreSelectionne] = useState<MembreDisperse | null>(null);
   const [filtreNiveau, setFiltreNiveau] = useState<string | null>(null);
 
@@ -295,31 +298,34 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
           </div>
         </div>
 
-        <div className="card-gold-top p-5">
-          <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-3">
-            Derniers inscrits
-          </h3>
-          <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-discrete">
-            {membresFiltres.slice(0, 8).map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setMembreSelectionne(m)}
-                className="w-full text-left p-2 rounded hover:bg-[#C9A227]/5 transition-colors flex items-center gap-2"
-              >
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: NIVEAU_COULEURS[m.niveau] }}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-[#1E0F2B] truncate">{m.pseudonyme}</p>
-                  <p className="text-[10px] text-[#8A8378]">
-                    {getDrapeau(m.pays)} {m.ville || m.pays}
-                  </p>
-                </div>
-              </button>
-            ))}
+        {/* ⭐ V3.11 — « Derniers inscrits » : SUPER_ADMIN uniquement */}
+        {afficherDerniersInscrits && (
+          <div className="card-gold-top p-5">
+            <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-3">
+              Derniers inscrits
+            </h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-discrete">
+              {membresFiltres.slice(0, 8).map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setMembreSelectionne(m)}
+                  className="w-full text-left p-2 rounded hover:bg-[#C9A227]/5 transition-colors flex items-center gap-2"
+                >
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: NIVEAU_COULEURS[m.niveau] }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-[#1E0F2B] truncate">{m.pseudonyme}</p>
+                    <p className="text-[10px] text-[#8A8378]">
+                      {getDrapeau(m.pays)} {m.ville || m.pays}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Modal détail membre */}

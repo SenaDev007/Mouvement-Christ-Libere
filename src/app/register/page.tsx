@@ -76,7 +76,9 @@ export default function RegisterPage() {
         throw new Error(data.error || "Échec de l'inscription");
       }
 
-      toast.success("Compte créé ! En attente de validation par un administrateur.");
+      // ⭐ V3.11 — Le compte créé place automatiquement le membre sur la
+      // carte des dispersés (voir /api/auth/register).
+      toast.success("Compte créé ! Vous apparaissez désormais sur la carte des dispersés.");
       window.location.href = "/login";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
