@@ -20,7 +20,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Globe, Loader2, Users, UserPlus, ShieldCheck } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { CarteDisperses, type MembreDisperse } from "@/components/disperses/carte-disperses";
+import { CarteDisperses, AvatarMembre, type MembreDisperse } from "@/components/disperses/carte-disperses";
 import { COUNTRIES } from "@/lib/data/countries";
 import { flagFromCountryCode } from "@/lib/data/flags";
 import { api } from "@/lib/api-client";
@@ -136,9 +136,13 @@ export default function DispersesPage() {
                     <motion.div key={member.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: i * 0.05 }}
                       className="bg-white rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-5">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#2A0E3D]">
-                          <span className="text-sm font-bold text-[#C9A227]">{member.pseudonyme.charAt(0).toUpperCase()}</span>
-                        </div>
+                        {/* ⭐ V3.15 — Photo du membre si elle a été ajoutée,
+                            sinon initiales (AKPOVI Sènakpon → AS, pas juste A) */}
+                        <AvatarMembre
+                          membre={member}
+                          className="w-10 h-10 rounded-full flex-shrink-0 bg-[#2A0E3D]"
+                          classNameTexte="text-sm font-bold text-[#C9A227]"
+                        />
                         <div>
                           <p className="text-sm font-bold text-[#1E0F2B]">{member.pseudonyme}</p>
                           <p className="text-xs text-[#8A8378]">{flagFromCountryCode(member.pays)} {country?.name || member.pays}{member.ville ? ` · ${member.ville}` : ""}</p>

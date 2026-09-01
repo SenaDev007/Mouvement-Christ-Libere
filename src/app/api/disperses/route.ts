@@ -30,6 +30,10 @@ interface MembreDisperseApi {
   langue: string;
   niveau: string;
   message?: string;
+  /** ⭐ V3.15 — Photo du membre : photo de profil de son compte
+   * (User.avatarUrl, ajoutée depuis /profil ou le back-office) ou portrait
+   * du serviteur (Servant.portraitUrl). Absente → initiales côté client. */
+  photo?: string;
 }
 
 // Données mock pour le mode démo (quand la DB n'est pas accessible)
@@ -97,6 +101,33 @@ export async function GET(request: NextRequest) {
       });
 
       if (dbMembres.length > 0) {
+        // ⭐ V3.15 — PHOTOS : on résout la photo de chaque entrée via son
+        // compte officiel (User.avatarUrl — photo de profil ajoutée depuis
+        // /profil ou le back-office ; User.image en secours). Les entrées
+        // sans compte n'ont pas de photo → initiales côté client.
+        const userIds = Array.from(
+          new Set(
+            dbMembres
+              .map((m) => m.userId)
+              .filter((id): id is string => typeof id === "string")
+          )
+        );
+        const photosParUserId = new Map<string, string>();
+        if (userIds.length > 0) {
+          try {
+            const comptes = await db.user.findMany({
+              where: { id: { in: userIds } },
+              select: { id: true, avatarUrl: true, image: true },
+            });
+            for (const c of comptes) {
+              const photo = c.avatarUrl || c.image;
+              if (photo) photosParUserId.set(c.id, photo);
+            }
+          } catch {
+            // Comptes indisponibles → membres sans photo (initiales)
+          }
+        }
+
         membres = dbMembres.map((m) => ({
           id: m.id,
           pseudonyme: m.pseudonyme,
@@ -107,6 +138,7 @@ export async function GET(request: NextRequest) {
           langue: m.langue,
           niveau: m.niveau,
           message: m.message || undefined,
+          photo: m.userId ? photosParUserId.get(m.userId) || undefined : undefined,
         }));
       } else {
         // ⭐ V3.12 — Base JOUABLE mais VIDE (après la purge) : on renvoie une
@@ -130,7 +162,7 @@ export async function GET(request: NextRequest) {
     try {
       const servants = await db.servant.findMany({
         where: { isActive: true },
-        select: { id: true, fullName: true, shortName: true, role: true, pays: true, ville: true },
+        select: { id: true, fullName: true, shortName: true, role: true, pays: true, ville: true, portraitUrl: true },
       });
       const existingPseudos = new Set(
         membres.map((m) => m.pseudonyme.trim().toLowerCase())
@@ -152,6 +184,7 @@ export async function GET(request: NextRequest) {
           langue: "FR",
           niveau: "pasteur",
           message: s.role || undefined,
+          photo: s.portraitUrl || undefined, // ⭐ V3.15 — portrait du serviteur
         });
         existingPseudos.add(pseudo.trim().toLowerCase());
       }

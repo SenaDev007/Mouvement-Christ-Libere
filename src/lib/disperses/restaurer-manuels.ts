@@ -47,12 +47,17 @@ export interface MembreARestaurer {
 
 /**
  * Membres à rétablir — purge V3.12 trop large.
- * « Akpovi Sènakpon » : membre réel du Mouvement, rétabli à la demande du
- * pasteur. Pays par défaut : BJ (Bénin, foyer du Mouvement) — remplacé
+ * « AKPOVI Sènakpon » : membre réel du Mouvement, rétabli à la demande du
+ * pasteur. ⭐ V3.15 — Le nom est EXACTEMENT celui que la personne a inscrit :
+ * « AKPOVI » en majuscules (directive du pasteur : « les noms doivent être
+ * affichés exactement comme la personne les a écrits »). Le module corrige
+ * donc aussi la casse d'une éventuelle entrée existante réécrite autrement
+ * (ex. « Akpovi Sènakpon » créé par la V3.14).
+ * Pays par défaut : BJ (Bénin, foyer du Mouvement) — remplacé
  * automatiquement par le pays du compte si Akpovi en possède un.
  */
 const MEMBRES_A_RESTAURER: MembreARestaurer[] = [
-  { pseudonyme: "Akpovi Sènakpon", paysParDefaut: "BJ", niveau: "croyant" },
+  { pseudonyme: "AKPOVI Sènakpon", paysParDefaut: "BJ", niveau: "croyant" },
 ];
 
 /**
@@ -123,20 +128,35 @@ export function restaurerMembresManuels(): Promise<ResultatRestauration> {
       if (existant) {
         // L'entrée est déjà là (le membre s'est par ex. réinscrit entre
         // temps) : la PROTEGER et la lier à son compte — pas de doublon.
+        // ⭐ V3.15 — CASSE EXACTE : le nom doit être affiché EXACTEMENT
+        // comme la personne l'a inscrit (ex. « AKPOVI » en majuscules) —
+        // si l'entrée existante porte le même nom dans une autre casse
+        // (ex. « Akpovi Sènakpon »), on la réécrit avec la casse exacte.
         await db.disperseMember.update({
           where: { id: existant.id },
           data: {
             manuel: true,
             ...(compte && !existant.userId ? { userId: compte.id } : {}),
+            ...(existant.pseudonyme !== cible.pseudonyme
+              ? { pseudonyme: cible.pseudonyme }
+              : {}),
           },
         });
         detail.push({
           pseudonyme: cible.pseudonyme,
           pays: existant.pays,
-          statut: "déjà présent — protégé" + (compte ? " et lié à son compte" : ""),
+          statut:
+            "déjà présent — protégé" +
+            (compte ? " et lié à son compte" : "") +
+            (existant.pseudonyme !== cible.pseudonyme
+              ? " — casse exacte rétablie"
+              : ""),
         });
         console.log(
-          `[disperses/restauration V3.14] « ${cible.pseudonyme} » déjà présent → protégé (manuel = true)`
+          `[disperses/restauration V3.14] « ${cible.pseudonyme} » déjà présent → protégé (manuel = true)` +
+            (existant.pseudonyme !== cible.pseudonyme
+              ? ` — casse corrigée : « ${existant.pseudonyme} » → « ${cible.pseudonyme} »`
+              : "")
         );
         continue;
       }

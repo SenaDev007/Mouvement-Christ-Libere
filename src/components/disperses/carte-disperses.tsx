@@ -18,6 +18,9 @@ export interface MembreDisperse {
   langue: string;
   niveau: string;
   message?: string;
+  /** ⭐ V3.15 — Photo du membre (photo de profil de son compte ou portrait
+   * du serviteur). Absente → initiales. */
+  photo?: string;
 }
 
 interface CarteDispersesProps {
@@ -49,6 +52,78 @@ function getDrapeau(pays: string): string {
 
 // ⭐ V3.3 — La référence « Jérusalem » a été retirée à la demande de l'admin :
 // chaque dispersé est désormais relié aux points voisins, sans point focal.
+
+/**
+ * ⭐ V3.15 — Initiales d'un nom : première lettre du PREMIER mot et du
+ * DERNIER mot, telles quelles en majuscules (le nom est affiché exactement
+ * comme la personne l'a inscrit, les initiales suivent la même règle).
+ * Les particules élidées (d', l'…) ne comptent pas : on prend la première
+ * lettre SIGNIFICATIVE (Sarah d'Abidjan → SA).
+ * Exemples : « AKPOVI Sènakpon » → « AS », « Pasteur Kongo » → « PK »,
+ * « Pam » → « P », « Élisée de Cotonou » → « ÉC ».
+ */
+function initialeMot(mot: string): string {
+  // Particule élidée (d'Abidjan, l'Église…) : initiale de la partie
+  // significative après l'apostrophe.
+  const elision = mot.match(/^[\p{L}]{1,2}['’](.+)$/u);
+  const cible = elision ? elision[1] : mot;
+  return (cible.match(/\p{L}/u)?.[0] ?? mot.charAt(0)).toUpperCase();
+}
+
+export function initialesMembre(nom: string): string {
+  const mots = nom.trim().split(/\s+/).filter(Boolean);
+  if (mots.length === 0) return "?";
+  const premiere = initialeMot(mots[0]);
+  if (mots.length === 1) return premiere;
+  return premiere + initialeMot(mots[mots.length - 1]);
+}
+
+/**
+ * ⭐ V3.15 — Avatar d'un dispersé : SA PHOTO si elle a été ajoutée (photo de
+ * profil du compte ou portrait du serviteur), sinon ses INITIALES.
+ * `photo` peut être une data URL (photo de profil, stockée en base) ou une
+ * URL http(s) (portrait serviteur) — le rendu s'adapte. L'anneau
+ * `couleurRing` (couleur du niveau spirituel) est optionnel.
+ */
+export function AvatarMembre({
+  membre,
+  className,
+  classNameTexte,
+  couleurRing,
+}: {
+  membre: MembreDisperse;
+  className: string;
+  classNameTexte: string;
+  /** Couleur de l'anneau autour de l'avatar (ex. couleur du niveau). */
+  couleurRing?: string;
+}) {
+  const style = couleurRing ? { boxShadow: `0 0 0 2px ${couleurRing}` } : undefined;
+  if (membre.photo) {
+    if (membre.photo.startsWith("data:")) {
+      // Data URL (photo de profil compressée côté client) — <img> natif,
+      // même pattern que la page /profil.
+      return (
+        <img src={membre.photo} alt={membre.pseudonyme} style={style} className={`${className} object-cover`} />
+      );
+    }
+    return (
+      <Image
+        src={membre.photo}
+        alt={membre.pseudonyme}
+        width={96}
+        height={96}
+        unoptimized
+        style={style}
+        className={`${className} object-cover`}
+      />
+    );
+  }
+  return (
+    <div style={style} className={`${className} flex items-center justify-center overflow-hidden`}>
+      <span className={classNameTexte}>{initialesMembre(membre.pseudonyme)}</span>
+    </div>
+  );
+}
 
 export function CarteDisperses({ membres, afficherDerniersInscrits = false }: CarteDispersesProps) {
   const [membreSelectionne, setMembreSelectionne] = useState<MembreDisperse | null>(null);
@@ -311,9 +386,13 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
                   onClick={() => setMembreSelectionne(m)}
                   className="w-full text-left p-2 rounded hover:bg-[#C9A227]/5 transition-colors flex items-center gap-2"
                 >
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: NIVEAU_COULEURS[m.niveau] }}
+                  {/* ⭐ V3.15 — Photo du membre ou initiales, anneau de la
+                      couleur du niveau spirituel */}
+                  <AvatarMembre
+                    membre={m}
+                    className="w-6 h-6 rounded-full flex-shrink-0"
+                    classNameTexte="text-[10px] font-bold leading-none"
+                    couleurRing={NIVEAU_COULEURS[m.niveau] || NIVEAU_COULEURS.chercheur}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-[#1E0F2B] truncate">{m.pseudonyme}</p>
@@ -356,10 +435,31 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
                   <X className="w-4 h-4" />
                 </button>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#FAF6EF]/20 border border-[#FAF6EF]/30">
-                    <span className="font-serif text-lg font-semibold">
-                      {membreSelectionne.pseudonyme.charAt(0)}
-                    </span>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#FAF6EF]/20 border border-[#FAF6EF]/30 overflow-hidden flex-shrink-0">
+                    {/* ⭐ V3.15 — Photo du membre si ajoutée, sinon initiales
+                        (AKPOVI Sènakpon → AS, plus un simple A) */}
+                    {membreSelectionne.photo ? (
+                      membreSelectionne.photo.startsWith("data:") ? (
+                        <img
+                          src={membreSelectionne.photo}
+                          alt={membreSelectionne.pseudonyme}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Image
+                          src={membreSelectionne.photo}
+                          alt={membreSelectionne.pseudonyme}
+                          width={96}
+                          height={96}
+                          unoptimized
+                          className="w-full h-full object-cover"
+                        />
+                      )
+                    ) : (
+                      <span className="font-serif text-lg font-semibold">
+                        {initialesMembre(membreSelectionne.pseudonyme)}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <h3 className="font-serif text-xl font-semibold">
