@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { ensureDisperseUserIdColumn } from "@/lib/ensure-schema";
 
 /**
  * POST /api/disperses/add
@@ -37,8 +38,17 @@ export async function POST(req: NextRequest) {
     const latRounded = Math.round(latitude * 10) / 10;
     const lngRounded = Math.round(longitude * 10) / 10;
 
+    // ⭐ V3.12 — Auto-réparation colonne DisperseMember.userId avant le create.
+    await ensureDisperseUserIdColumn();
+
     const member = await db.disperseMember.create({
       data: {
+        // ⭐ V3.12 — Lien direct avec le compte connecté (la purge V3.12
+        // conserve toujours les positions liées à un compte officiel).
+        userId:
+          session.user && "id" in session.user && typeof session.user.id === "string"
+            ? session.user.id
+            : null,
         pseudonyme,
         pays,
         ville: ville || null,

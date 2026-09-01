@@ -350,6 +350,44 @@ export function ensureMessageTypeEnum(): Promise<void> {
 let userBlockOk = false;
 let inflightUserBlock: Promise<void> | null = null;
 
+let disperseUserIdOk = false;
+let inflightDisperseUserId: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.12 — S'assure que la colonne `DisperseMember.userId` (TEXT,
+ * nullable) existe.
+ *
+ * Contexte : purge des positions créées SANS compte officiel. Les entrées
+ * créées par /register (ou /disperses/add connecté) portent désormais
+ * l'identifiant du compte — elles sont TOUJOURS conservées par la purge.
+ *
+ * Mêmes garanties que les helpers précédents : idempotent, mémoïsé,
+ * concurrentiel (un seul ALTER en vol), échec DDL purement loggué.
+ */
+export function ensureDisperseUserIdColumn(): Promise<void> {
+  if (disperseUserIdOk) return Promise.resolve();
+  if (!inflightDisperseUserId) {
+    inflightDisperseUserId = db
+      .$executeRawUnsafe(
+        'ALTER TABLE "DisperseMember" ADD COLUMN IF NOT EXISTS "userId" TEXT'
+      )
+      .then(() => {
+        disperseUserIdOk = true;
+        console.log("[ensure-schema] V3.12 : colonne DisperseMember.userId vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE DisperseMember.userId impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightDisperseUserId = null;
+      });
+  }
+  return inflightDisperseUserId;
+}
+
 /**
  * ⭐ V3.5 — S'assure que la table `UserBlock` (blocage entre membres,
  * sécurité des conversations privées Yeshua Connect) existe.

@@ -711,6 +711,10 @@ model UserCalendarPreference {
 model DisperseMember {
   id            String   @id @default(cuid())
   liveMemberId  String?  // lien vers LiveMember (inscription unique)
+  // ⭐ V3.12 — Lien direct vers le compte User officiel : les positions
+  // créées par /register (ou /disperses/add connecté) portent l'id du
+  // membre — la purge V3.12 conserve TOUJOURS ces entrées.
+  userId        String?
   pseudonyme    String   // nom ou pseudo, pas de vrai nom
   pays          String   // code ISO 2 lettres (FR, CI, US, etc.)
   ville         String?

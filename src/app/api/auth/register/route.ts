@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
+import { ensureDisperseUserIdColumn, ensureVoiceVideoColumns } from "@/lib/ensure-schema";
 import { COUNTRIES } from "@/lib/data/countries";
 
 /**
@@ -75,6 +75,9 @@ export async function POST(req: NextRequest) {
 
     // ⭐ V2.7 — Auto-réparation colonne User.phone avant le create
     await ensureVoiceVideoColumns();
+    // ⭐ V3.12 — Auto-réparation colonne DisperseMember.userId avant le
+    // placement automatique sur la carte des dispersés.
+    await ensureDisperseUserIdColumn();
 
     // Create user
     // Les membres (rôle MEMBER) sont auto-validés — pas besoin d'approbation admin.
@@ -144,6 +147,7 @@ export async function POST(req: NextRequest) {
         await db.disperseMember.create({
           data: {
             pseudonyme: pseudonymeCarte.toString().trim().substring(0, 100),
+            userId: user.id, // ⭐ V3.12 — lien direct avec le compte officiel
             pays: cible.code,
             ville: (typeof city === "string" ? city : "").trim().substring(0, 100) || null,
             latitude: Math.round(cible.lat * 10) / 10,

@@ -22,6 +22,7 @@
 import {
   PDFDocument,
   PDFFont,
+  PDFImage,
   PDFPage,
   rgb,
   type RGB,
@@ -32,6 +33,7 @@ import {
   FONT_SANS_GRAS_B64,
   FONT_SERIF_GRAS_B64,
 } from "./fonts";
+import { LOGO_CHRIST_LIBERE_B64 } from "./logo";
 import { MODES_PDF, type ModePdfCalendrier } from "./modes";
 export type { ModePdfCalendrier } from "./modes";
 import {
@@ -205,6 +207,7 @@ function piedDePage(ctx: Ctx, page: PDFPage, sousTitre: string): void {
 
 function pageCouverture(
   ctx: Ctx,
+  logo: PDFImage,
   annee: number,
   mode: ModePdfCalendrier,
   debut: Date,
@@ -216,74 +219,80 @@ function pageCouverture(
   // Fond nuit profonde
   page.drawRectangle({ x: 0, y: 0, width: A4[0], height: A4[1], color: NUIT_PROFONDE });
 
-  // Halo doré simulé : cercles concentriques translucides
   const cx = A4[0] / 2;
-  const cy = A4[1] - 300;
+
+  // ⭐ V3.12 — Refonte de la page de garde, conformément à la demande :
+  // « Christ Libère » et « Calendrier Biblique 2026-2027 » restent EN HAUT
+  // de la page (même style d'écriture serif que le reste du document), et
+  // le VRAI logo de Christ Libère occupe le CENTRE (à la place du médaillon
+  // shofar générique qui chevauchait les titres).
+
+  // ── EN-TÊTE (haut de page) ────────────────────────────────────────────
+  page.drawText("Christ Libère", {
+    x: cx - largeurTexte(ctx.serif, 20, "Christ Libère") / 2,
+    y: 792,
+    font: ctx.serif,
+    size: 20,
+    color: eclaircir(OR, 0.15),
+  });
+  page.drawText("Calendrier Biblique", {
+    x: cx - largeurTexte(ctx.serif, 34, "Calendrier Biblique") / 2,
+    y: 752,
+    font: ctx.serif,
+    size: 34,
+    color: CREME,
+  });
+  page.drawText(ctx.libelle, {
+    x: cx - largeurTexte(ctx.serif, 19, ctx.libelle) / 2,
+    y: 724,
+    font: ctx.serif,
+    size: 19,
+    color: OR,
+  });
+
+  // Filet or sous le bloc de titre
+  page.drawLine({
+    start: { x: cx - 80, y: 710 },
+    end: { x: cx + 80, y: 710 },
+    thickness: 0.8,
+    color: OR,
+  });
+
+  // ── LOGO OFFICIEL (centre) ────────────────────────────────────────────
+  const logoH = 205;
+  const logoW = (logo.width / logo.height) * logoH;
+  const logoY = 500;
+  const logoX = cx - logoW / 2;
+
+  // Halo doré doux derrière le logo (cercles concentriques translucides)
   const halos: Array<[number, number]> = [
-    [220, 0.05],
-    [160, 0.07],
-    [105, 0.10],
+    [170, 0.04],
+    [125, 0.05],
+    [85, 0.07],
   ];
   for (const [rayon, opacite] of halos) {
     page.drawCircle({
       x: cx,
-      y: cy,
+      y: logoY + logoH / 2,
       size: rayon,
       color: OR,
       opacity: opacite,
     });
   }
 
-  // Médaillon : cercle double or + corne stylisée (arc conique)
-  page.drawCircle({ x: cx, y: cy, size: 62, color: NUIT_PROFONDE });
-  page.drawCircle({ x: cx, y: cy, size: 62, borderColor: OR, borderWidth: 1.6 });
-  page.drawCircle({ x: cx, y: cy, size: 55, borderColor: eclaircir(OR, 0.4), borderWidth: 0.5 });
-  // Corne de shofar stylisée : deux arcs formant un cône courbe
-  page.drawSvgPath(
-    "M -34 8 C -10 26, 14 30, 30 16 C 20 28, 2 36, -14 30 C -26 26, -34 18, -34 8 Z",
-    { x: cx, y: cy - 6, borderColor: OR, borderWidth: 1.4, color: OR, opacity: 0.85 }
-  );
-  page.drawSvgPath(
-    "M -38 -2 C -16 -18, 12 -22, 34 -8 C 16 -26, -12 -24, -30 -12 Z",
-    { x: cx, y: cy - 4, borderColor: eclaircir(OR, 0.3), borderWidth: 0.8, color: OR, opacity: 0.4 }
-  );
-
-  // Titres
-  page.drawText("MOUVEMENT CHRIST LIBÈRE", {
-    x: cx - largeurTexte(ctx.sansGras, 10, "MOUVEMENT CHRIST LIBÈRE") / 2,
-    y: cy + 108,
-    font: ctx.sansGras,
-    size: 10,
-    color: eclaircir(OR, 0.25),
-  });
-  page.drawText("Calendrier Biblique", {
-    x: cx - largeurTexte(ctx.serif, 34, "Calendrier Biblique") / 2,
-    y: cy + 62,
-    font: ctx.serif,
-    size: 34,
-    color: CREME,
-  });
-  page.drawText(ctx.libelle, {
-    x: cx - largeurTexte(ctx.serif, 22, ctx.libelle) / 2,
-    y: cy + 34,
-    font: ctx.serif,
-    size: 22,
-    color: OR,
+  page.drawImage(logo, {
+    x: logoX,
+    y: logoY,
+    width: logoW,
+    height: logoH,
   });
 
-  // Filet or sous le libellé
-  page.drawLine({
-    start: { x: cx - 70, y: cy + 22 },
-    end: { x: cx + 70, y: cy + 22 },
-    thickness: 0.8,
-    color: OR,
-  });
-
+  // ── BAS DE PAGE ────────────────────────────────────────────────────────
   // Plage de l'année
   const plage = `du ${formatLong(debut)} au ${formatLong(fin)}`;
   page.drawText(plage, {
     x: cx - largeurTexte(ctx.sans, 10.5, plage) / 2,
-    y: cy - 92,
+    y: 366,
     font: ctx.sans,
     size: 10.5,
     color: CREME,
@@ -292,7 +301,7 @@ function pageCouverture(
   const resume = `364 jours · 52 semaines · 12 mois · ${nbFetes} fêtes de l'Éternel`;
   page.drawText(resume, {
     x: cx - largeurTexte(ctx.sans, 9.5, resume) / 2,
-    y: cy - 110,
+    y: 348,
     font: ctx.sans,
     size: 9.5,
     color: eclaircir(OR, 0.15),
@@ -304,7 +313,7 @@ function pageCouverture(
   const boxW = largeurTexte(ctx.sans, 9, edition) + 28;
   page.drawRectangle({
     x: (A4[0] - boxW) / 2,
-    y: cy - 156,
+    y: 296,
     width: boxW,
     height: 24,
     color: OR,
@@ -314,7 +323,7 @@ function pageCouverture(
   });
   page.drawText(edition, {
     x: (A4[0] - largeurTexte(ctx.sans, 9, edition)) / 2,
-    y: cy - 148,
+    y: 304,
     font: ctx.sans,
     size: 9,
     color: eclaircir(OR, 0.1),
@@ -825,17 +834,22 @@ function pageTrimestre(
         });
       }
 
+      // ⭐ V3.12 — Le numéro du jour et la date grégorienne ne partagent
+      // PLUS la même ligne : dans les mini-mois étroits (case ≈ 23,6 pt de
+      // large) les deux textes se chevauchaient (numéro haut-gauche + date
+      // gré haut-droite sur la même baseline). Le numéro reste en HAUT-GAUCHE
+      // et la date grégorienne passe en BAS-DROITE, sur une seconde ligne.
       page.drawText(String(jour.jourDuMois), {
-        x: x + 4,
-        y: y + caseH - 9,
+        x: x + 3,
+        y: y + caseH - 8.5,
         font: fete || jour.estShabbat ? ctx.sansGras : ctx.sans,
         size: 7.5,
         color: fete ? assombrir(hexToRgb(fete.fete.couleur), 0.35) : ENCRE,
       });
       const dGre = formatCourt(jour.dateGregorienne);
       page.drawText(dGre, {
-        x: x + pas - largeurTexte(ctx.sans, 5, dGre) - 3,
-        y: y + caseH - 9,
+        x: x + pas - largeurTexte(ctx.sans, 5, dGre) - 2.5,
+        y: y + 3,
         font: ctx.sans,
         size: 5,
         color: TAUPE,
@@ -1290,6 +1304,8 @@ export async function genererPdfCalendrier(
   const sans = await doc.embedFont(FONT_SANS_B64, { subset: true });
   const sansGras = await doc.embedFont(FONT_SANS_GRAS_B64, { subset: true });
   const serif = await doc.embedFont(FONT_SERIF_GRAS_B64, { subset: true });
+  // ⭐ V3.12 — Logo officiel Christ Libère pour la page de garde
+  const logo = await doc.embedPng(LOGO_CHRIST_LIBERE_B64);
 
   const anneeGeneree = genererAnnee(anneeBiblique);
   const fetes = calculerFetesPourAnnee(anneeBiblique, anneeGeneree.jours, maintenant);
@@ -1306,7 +1322,15 @@ export async function genererPdfCalendrier(
   };
 
   // Couverture (hors numérotation)
-  pageCouverture(ctx, anneeBiblique, mode, anneeGeneree.debut, anneeGeneree.fin, fetes.length);
+  pageCouverture(
+    ctx,
+    logo,
+    anneeBiblique,
+    mode,
+    anneeGeneree.debut,
+    anneeGeneree.fin,
+    fetes.length
+  );
 
   // Pages de contenu selon le mode
   if (mode === "mois") {

@@ -14,6 +14,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { COUNTRIES } from "@/lib/data/countries";
 import { ensureServantLocationColumns } from "@/lib/ensure-schema";
+import { purgerDispersesAnonymes } from "@/lib/disperses/purger-disperses";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,6 +69,15 @@ export async function GET(request: NextRequest) {
       // ⭐ V3.3 — Auto-réparation Servant.pays / Servant.ville (idempotent)
       await ensureServantLocationColumns();
 
+      // ⭐ V3.12 — PURGE des positions créées sans compte officiel : les
+      // entrées de l'ancien formulaire anonyme « Ajouter ma position »
+      // (fermé en V3.11) sont supprimées de la base, sauf celles qui
+      // correspondent à une inscription officielle (LiveMember lié,
+      // compte User lié, pseudonyme d'un compte ou position créée avec un
+      // compte dans la même requête). Idempotent + mémoïsé : au plus un
+      // passage utile par instance serverless.
+      await purgerDispersesAnonymes();
+
       const where: Record<string, unknown> = { isPublic: true };
       if (langue) where.langue = langue;
       if (niveau) where.niveau = niveau;
@@ -91,8 +101,12 @@ export async function GET(request: NextRequest) {
           message: m.message || undefined,
         }));
       } else {
-        // DB vide → utiliser mock
-        membres = DISPERSSES_MOCK;
+        // ⭐ V3.12 — Base JOUABLE mais VIDE (après la purge) : on renvoie une
+        // liste VIDE (plus de faux membres de démonstration). Le mock ne
+        // sert plus que si la base est totalement inaccessible (catch) —
+        // la carte n'affiche alors que la vérité : les serviteurs localisés
+        // et les inscrits officiels.
+        membres = [];
       }
     } catch {
       // DB inaccessible → utiliser mock
@@ -202,6 +216,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ⭐ V3.12 — Lien direct vers le compte connecté (la purge conserve
+    // toujours les positions liées à un compte officiel).
+    const userId =
+      session.user && "id" in session.user && typeof session.user.id === "string"
+        ? session.user.id
+        : null;
+
     // Arrondir à 0.1° pour anonymat (environ 11 km)
     const latArrondie = Math.round(latitude * 10) / 10;
     const lonArrondie = Math.round(longitude * 10) / 10;
@@ -241,6 +262,7 @@ export async function POST(request: NextRequest) {
           membre = await db.disperseMember.create({
             data: {
               liveMemberId,
+              userId, // ⭐ V3.12
               pseudonyme: pseudonyme.substring(0, 100),
               pays: pays.toUpperCase().substring(0, 2),
               ville: ville?.substring(0, 100) || null,
@@ -256,6 +278,7 @@ export async function POST(request: NextRequest) {
       } else {
         membre = await db.disperseMember.create({
           data: {
+            userId, // ⭐ V3.12
             pseudonyme: pseudonyme.substring(0, 100),
             pays: pays.toUpperCase().substring(0, 2),
             ville: ville?.substring(0, 100) || null,
