@@ -169,6 +169,51 @@ export function ensureCallSignalTable(): Promise<void> {
 let messageTypeEnumOk = false;
 let inflightMessageEnum: Promise<void> | null = null;
 
+let servantLocationOk = false;
+let inflightServantLocation: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.3 — S'assure que les colonnes `Servant.pays` (TEXT) et
+ * `Servant.ville` (TEXT) existent.
+ *
+ * Contexte : l'admin renseigne le pays et la ville d'un serviteur dans le
+ * back-office (/admin/servants → modal). Ces coordonnées alimentent la carte
+ * des dispersés (le serviteur y figure avec le niveau « pasteur ») et les
+ * cartes de la page /disperses.
+ *
+ * Mêmes garanties que les helpers précédents : idempotent, mémoïsé,
+ * concurrentiel (un seul ALTER en vol), échec DDL purement loggué.
+ */
+export function ensureServantLocationColumns(): Promise<void> {
+  if (servantLocationOk) return Promise.resolve();
+  if (!inflightServantLocation) {
+    inflightServantLocation = (async () => {
+      // ⚠️ PostgreSQL (prepared statements) refuse plusieurs commandes en une
+      // seule requête — deux ALTER distincts, exécutés séquentiellement.
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "Servant" ADD COLUMN IF NOT EXISTS "pays" TEXT'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "Servant" ADD COLUMN IF NOT EXISTS "ville" TEXT'
+      );
+    })()
+      .then(() => {
+        servantLocationOk = true;
+        console.log("[ensure-schema] V3.3 : colonnes Servant.pays + Servant.ville vérifiées/créées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE Servant.pays / Servant.ville impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightServantLocation = null;
+      });
+  }
+  return inflightServantLocation;
+}
+
 // ⭐ V2.9 — colonnes/tables de la V2.9 (présence + chunks vidéo)
 let v29Ok = false;
 let inflightV29: Promise<void> | null = null;

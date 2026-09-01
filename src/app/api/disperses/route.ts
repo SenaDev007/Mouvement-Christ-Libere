@@ -10,6 +10,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { COUNTRIES } from "@/lib/data/countries";
+import { ensureServantLocationColumns } from "@/lib/ensure-schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,6 +63,9 @@ export async function GET(request: NextRequest) {
     let membres: MembreDisperseApi[] = [];
 
     try {
+      // ⭐ V3.3 — Auto-réparation Servant.pays / Servant.ville (idempotent)
+      await ensureServantLocationColumns();
+
       const where: Record<string, unknown> = { isPublic: true };
       if (langue) where.langue = langue;
       if (niveau) where.niveau = niveau;
@@ -90,6 +95,44 @@ export async function GET(request: NextRequest) {
     } catch {
       // DB inaccessible → utiliser mock
       membres = DISPERSSES_MOCK;
+    }
+
+    // ⭐ V3.3 — SERVITEURS SUR LA CARTE : les serviteurs actifs dont le pays
+    // est renseigné (back-office /admin/servants) figurent sur la carte des
+    // dispersés avec le niveau « pasteur ». Leur position est déduite du pays
+    // (coordonnées de référence de src/lib/data/countries.ts).
+    // Anti-doublon : si le serviteur s'est déjà inscrit lui-même sur la carte
+    // (même pseudonyme insensible à la casse), son inscription prime.
+    try {
+      const servants = await db.servant.findMany({
+        where: { isActive: true },
+        select: { id: true, fullName: true, shortName: true, role: true, pays: true, ville: true },
+      });
+      const existingPseudos = new Set(
+        membres.map((m) => m.pseudonyme.trim().toLowerCase())
+      );
+      for (const s of servants) {
+        const code = (s.pays || "").trim().toUpperCase();
+        if (!code) continue; // pays non renseigné → pas sur la carte
+        const country = COUNTRIES.find((c) => c.code === code);
+        if (!country) continue; // code pays inconnu → position impossible
+        const pseudo = s.shortName || s.fullName;
+        if (existingPseudos.has(pseudo.trim().toLowerCase())) continue; // déjà inscrit
+        membres.push({
+          id: `servant-${s.id}`,
+          pseudonyme: pseudo,
+          pays: code,
+          ville: s.ville || undefined,
+          latitude: country.lat,
+          longitude: country.lng,
+          langue: "FR",
+          niveau: "pasteur",
+          message: s.role || undefined,
+        });
+        existingPseudos.add(pseudo.trim().toLowerCase());
+      }
+    } catch {
+      // Serviteurs indisponibles → la carte affiche simplement les inscrits
     }
 
     // Filtrer le mock si nécessaire

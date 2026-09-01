@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureVoiceVideoColumns } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureVoiceVideoColumns, ensureServantLocationColumns } from "@/lib/ensure-schema";
 
 // Force runtime Node.js (pas edge) pour Prisma
 export const runtime = "nodejs";
@@ -51,6 +51,8 @@ export async function GET(
     // ⭐ V2.6.1 — Le back-office Canaux sélectionne toutes les colonnes :
     // si la colonne avatarUrl (V2.5) manque en prod, la page échoue (500).
     if (entity === "channels") { await ensureChannelAvatarUrl(); await ensureVoiceVideoColumns(); } else if (entity === "users" || entity === "servants") { await ensureVoiceVideoColumns(); }
+    // ⭐ V3.3 — Auto-réparation colonnes Servant.pays / Servant.ville
+    if (entity === "servants") await ensureServantLocationColumns();
 
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get("limit") || "50");
@@ -88,6 +90,8 @@ export async function POST(
     const body = await request.json();
     // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl avant création (cf. ensure-schema.ts)
     if (entity === "channels") { await ensureChannelAvatarUrl(); await ensureVoiceVideoColumns(); } else if (entity === "users" || entity === "servants") { await ensureVoiceVideoColumns(); }
+    // ⭐ V3.3 — Auto-réparation colonnes Servant.pays / Servant.ville avant création
+    if (entity === "servants") await ensureServantLocationColumns();
     const delegate = getDelegate(entity as EntityName);
     const created = await delegate.create({ data: body });
     return NextResponse.json({ item: created }, { status: 201 });

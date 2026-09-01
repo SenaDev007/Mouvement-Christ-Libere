@@ -88,6 +88,10 @@ model Servant {
   bio         String
   portraitUrl String?
   isActive    Boolean  @default(true)
+  // ⭐ V3.3 — Localisation du serviteur : alimente la carte des dispersés
+  // (renseignée depuis le back-office /admin/servants).
+  pays        String? // code ISO 2 lettres : "CI", "FR", "IL"…
+  ville       String? // "Abidjan", "Paris"… (affiché sous le nom)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

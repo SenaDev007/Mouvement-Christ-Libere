@@ -19,6 +19,9 @@ export async function GET() {
 
   try {
     const { db } = await import("@/lib/db");
+    const { ensureServantLocationColumns } = await import("@/lib/ensure-schema");
+    // ⭐ V3.3 — Colonnes Servant.pays / Servant.ville (sinon findMany échoue)
+    await ensureServantLocationColumns();
 
     const [servants, testimonies, teachings, videos, liveStreams] = await Promise.all([
       db.servant.findMany({ where: { isActive: true } }),

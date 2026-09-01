@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureVoiceVideoColumns } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureVoiceVideoColumns, ensureServantLocationColumns } from "@/lib/ensure-schema";
 
 const ENTITY_MAP = {
   servants: "servant",
@@ -112,6 +112,8 @@ export async function GET(
     if (entity === "users" || entity === "servants" || entity === "channels") {
       await ensureVoiceVideoColumns();
     }
+    // ⭐ V3.3 — Auto-réparation colonnes Servant.pays / Servant.ville
+    if (entity === "servants") await ensureServantLocationColumns();
     const delegate = getDelegate(entity as EntityName);
     const item = await delegate.findUnique({ where: { id } });
     if (!item) {
@@ -141,6 +143,8 @@ export async function PATCH(
     if (entity === "users" || entity === "servants" || entity === "channels") {
       await ensureVoiceVideoColumns();
     }
+    // ⭐ V3.3 — Auto-réparation colonnes Servant.pays / Servant.ville
+    if (entity === "servants") await ensureServantLocationColumns();
 
     // ⭐ V2.7 — SYNCHRO PHOTO serviteur ↔ compte utilisateur : on capture
     // les infos de correspondance AVANT l'écriture (le code/nom/email peut

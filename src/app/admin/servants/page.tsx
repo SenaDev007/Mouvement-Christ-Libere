@@ -1,13 +1,20 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
-import { Crown, Video, FileText, BookOpen, Radio, BookMarked, Radio as RadioIcon } from "lucide-react";
+import { Crown, Video, FileText, BookOpen, Radio, BookMarked, Radio as RadioIcon, MapPin } from "lucide-react";
 import { NewServantButton } from "@/components/admin/create-buttons";
 import { ServantEditButton } from "@/components/admin/servant-edit-button";
+import { flagFromCountryCode } from "@/lib/data/flags";
+import { ensureServantLocationColumns } from "@/lib/ensure-schema";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminServantsPage() {
+  // ⭐ V3.3 — Auto-réparation des colonnes Servant.pays / Servant.ville
+  // (idempotent : sans ça, le findMany ci-dessous échouerait si les colonnes
+  // n'existent pas encore en base).
+  await ensureServantLocationColumns();
+
   const servants = await db.servant.findMany({
     orderBy: { code: "asc" },
     include: {
@@ -90,6 +97,13 @@ export default async function AdminServantsPage() {
                       <p className="text-xs uppercase tracking-[0.15em] font-semibold mt-0.5" style={{ color: accentColor }}>
                         {s.shortName} · {s.role}
                       </p>
+                      {(s.pays || s.ville) && (
+                        <p className="text-xs text-[#1E0F2B]/70 mt-1.5 inline-flex items-center gap-1.5">
+                          <MapPin className="w-3 h-3 text-[#C9A227] flex-shrink-0" />
+                          {s.pays ? flagFromCountryCode(s.pays) : ""}{" "}
+                          {s.ville || (s.pays ? s.pays : "")}
+                        </p>
+                      )}
                       {!s.isActive && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 mt-2">
                           Inactif
@@ -107,6 +121,8 @@ export default async function AdminServantsPage() {
                       bio: s.bio,
                       portraitUrl: s.portraitUrl,
                       isActive: s.isActive,
+                      pays: s.pays,
+                      ville: s.ville,
                     }}
                   />
                   <Link

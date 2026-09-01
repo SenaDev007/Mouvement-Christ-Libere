@@ -44,8 +44,8 @@ function getDrapeau(pays: string): string {
   return flagFromCountryCode(pays);
 }
 
-// Coordonnées de Jérusalem
-const JERUSALEM = { lat: 31.7683, lng: 35.2137 };
+// ⭐ V3.3 — La référence « Jérusalem » a été retirée à la demande de l'admin :
+// chaque dispersé est désormais relié aux points voisins, sans point focal.
 
 export function CarteDisperses({ membres }: CarteDispersesProps) {
   const [membreSelectionne, setMembreSelectionne] = useState<MembreDisperse | null>(null);
@@ -57,15 +57,8 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
   }, [membres, filtreNiveau]);
 
   // Générer la carte dotted-map avec pins intégrés (alignement parfait)
-  const { svgMap, pinPositions, jerusalemPos } = useMemo(() => {
+  const { svgMap, pinPositions } = useMemo(() => {
     const map = new DottedMap({ height: 80, grid: "diagonal" });
-
-    // Ajouter Jérusalem comme pin de référence
-    const jerusalemPin = map.addPin({
-      lat: JERUSALEM.lat,
-      lng: JERUSALEM.lng,
-      svgOptions: { color: "#C9A227", radius: 0.6 },
-    });
 
     // Ajouter chaque membre comme pin
     const positions: Array<{ membre: MembreDisperse; x: number; y: number }> = [];
@@ -100,12 +93,6 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
         x: (p.x / width) * 1000,
         y: (p.y / height) * 500,
       })),
-      jerusalemPos: jerusalemPin
-        ? {
-            x: (jerusalemPin.x / width) * 1000,
-            y: (jerusalemPin.y / height) * 500,
-          }
-        : null,
     };
   }, [membres]);
 
@@ -218,54 +205,6 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
                 ));
               })()}
 
-              {/* Courbes reliant chaque point à Jérusalem */}
-              {pinPositions && jerusalemPos && (() => {
-                return membresFiltres.map((membre) => {
-                  const pin = pinPositions.find((p) => p.membre.id === membre.id);
-                  if (!pin) return null;
-                  const x1 = pin.x, y1 = pin.y;
-                  const x2 = jerusalemPos.x, y2 = jerusalemPos.y;
-                  const midX = (x1 + x2) / 2;
-                  const midY = (y1 + y2) / 2;
-                  const offset = Math.abs(x2 - x1) * 0.25;
-                  const cx = midX;
-                  const cy = midY - offset;
-                  const d = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
-                  return (
-                    <motion.path
-                      key={`curve-jerusalem-${membre.id}`}
-                      d={d}
-                      fill="none"
-                      stroke="rgba(201, 162, 39, 0.2)"
-                      strokeWidth="0.8"
-                      strokeLinecap="round"
-                      strokeDasharray="3 4"
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      animate={{ pathLength: 1, opacity: 1 }}
-                      transition={{ duration: 1.5, delay: 0.5, ease: "easeInOut" }}
-                    />
-                  );
-                });
-              })()}
-
-              {/* Jérusalem — point de référence */}
-              {jerusalemPos && (
-                <g>
-                  <motion.circle
-                    cx={jerusalemPos.x}
-                    cy={jerusalemPos.y}
-                    r="6"
-                    fill="#C9A227"
-                    stroke="#FAF6EF"
-                    strokeWidth="1.5"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                    style={{ transformOrigin: `${jerusalemPos.x}px ${jerusalemPos.y}px` }}
-                  />
-                </g>
-              )}
-
               {/* Points des dispersés (overlay interactif) */}
               {membresFiltres.map((membre, idx) => {
                 const pin = pinPositions?.find((p) => p.membre.id === membre.id);
@@ -322,9 +261,8 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
               </span>
             ))}
             <span className="text-[#8A8378]/60">·</span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-[#C9A227]" />
-              Jérusalem (référence)
+            <span className="inline-flex items-center gap-1.5 text-[#8A8378]/70 italic">
+              Position arrondie à 0.1° pour anonymat
             </span>
           </div>
         </div>
