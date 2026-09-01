@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 
-/** Rôles pouvant inviter dans les canaux RESTRICTED (pasteurs / modération). */
+/** Rôles contournant l'appartenance au canal (modération incluse) —
+ * pour les canaux OUVERTS uniquement. */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
+
+/** ⭐ V3.7 — Rôles pouvant inviter dans les canaux RESTRICTED (cercle des
+ * pasteurs) : les ADMINISTRATEURS PRINCIPAUX — super admins (PAM et
+ * Pasteur Kongo portent SUPER_ADMIN) et admins/délégués. Groupe restreint :
+ * ce sont EUX SEULS qui ajoutent qui ils veulent. */
+const INVITE_RESTRICTED_ROLES = new Set(["SUPER_ADMIN", "ADMIN"]);
 
 /**
  * POST /api/yeshua-connect/conversations/:id/invite
@@ -16,9 +23,13 @@ const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
  *
  * - 🔒 Authentification NextAuth requise.
  * - 🔒 L'invitant doit être membre du canal (sauf rôles privilégiés) ;
- *   les canaux RESTRICTED ne sont invitable que par les privilégiés.
+ *   ⭐ V3.7 — les canaux RESTRICTED (cercle des pasteurs) ne sont invitables
+ *   QUE par les administrateurs principaux (SUPER_ADMIN/ADMIN), qui peuvent
+ *   y ajouter QUI ILS VEULENT (n'importe quel membre inscrit sur la
+ *   plateforme, pas seulement la communauté du canal).
  * - 🔒 Les invités doivent être membres de la MÊME communauté que le canal
- *   (anti-injection d'identifiants arbitraires).
+ *   (anti-injection d'identifiants arbitraires) — sauf canal RESTRICTED,
+ *   où les administrateurs principaux ajoutent qui ils veulent.
  * - Idempotent : skipDuplicates sur la contrainte unique (channelId, userId).
  * - Audit log : INVITE_MEMBERS (noms + canal).
  *
@@ -70,13 +81,16 @@ export async function POST(
       return NextResponse.json({ error: "Canal introuvable" }, { status: 404 });
     }
 
-    // 🔒 Permission : membre du canal OU rôle privilégié ; RESTRICTED →
-    // privilégiés uniquement.
+    // 🔒 Permission : membre du canal OU rôle privilégié ; ⭐ V3.7 —
+    // RESTRICTED (cercle des pasteurs) → administrateurs principaux
+    // UNIQUEMENT (super admins — PAM, Pasteur Kongo — et admins) : c'est un
+    // groupe restreint, ce sont eux qui ajoutent qui ils veulent.
     const privileged = PRIVILEGED_ROLES.has(userRole || "");
+    const canInviteRestricted = INVITE_RESTRICTED_ROLES.has(userRole || "");
     const isRestricted = channel.isRestricted || channel.type === "RESTRICTED";
-    if (isRestricted && !privileged) {
+    if (isRestricted && !canInviteRestricted) {
       return NextResponse.json(
-        { error: "Canal réservé aux pasteurs et à la modération" },
+        { error: "Cercle restreint — seuls les administrateurs principaux peuvent ajouter des membres dans ce canal" },
         { status: 403 },
       );
     }
@@ -93,17 +107,33 @@ export async function POST(
     }
 
     // 🔒 Les invités doivent appartenir à la MÊME communauté que le canal.
-    const validMembers = await db.communityMember.findMany({
-      where: {
-        communityId: channel.communityId,
-        userId: { in: uniqueIds },
-      },
-      select: { userId: true },
-    });
-    const validIds = validMembers.map((m) => m.userId);
+    // ⭐ V3.7 — EXCEPTION : dans un canal RESTRICTED (cercle des pasteurs),
+    // les administrateurs principaux ajoutent QUI ILS VEULENT — n'importe
+    // quel membre inscrit sur la plateforme (pas seulement la communauté).
+    let validIds: string[];
+    if (isRestricted) {
+      const users = await db.user.findMany({
+        where: { id: { in: uniqueIds } },
+        select: { id: true },
+      });
+      validIds = users.map((u) => u.id);
+    } else {
+      const validMembers = await db.communityMember.findMany({
+        where: {
+          communityId: channel.communityId,
+          userId: { in: uniqueIds },
+        },
+        select: { userId: true },
+      });
+      validIds = validMembers.map((m) => m.userId);
+    }
     if (validIds.length === 0) {
       return NextResponse.json(
-        { error: "Aucun de ces membres n'appartient à la communauté du canal" },
+        {
+          error: isRestricted
+            ? "Aucun de ces membres n'existe sur la plateforme"
+            : "Aucun de ces membres n'appartient à la communauté du canal",
+        },
         { status: 400 },
       );
     }

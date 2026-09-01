@@ -4538,6 +4538,7 @@ export function MessagingView() {
         <MembersPanel
           conversation={activeConv}
           currentUserId={currentUserId}
+          currentUserRole={currentUserRole}
           dmBusy={dmBusy}
           blockBusy={blockBusy}
           onOpenDirectMessage={(userId, name) => { openDirectMessage(userId, name); }}
@@ -5712,11 +5713,15 @@ function formatJoinedAtFr(iso?: string): string {
 }
 
 function MembersPanel({
-  conversation, currentUserId, dmBusy, blockBusy,
+  conversation, currentUserId, currentUserRole, dmBusy, blockBusy,
   onOpenDirectMessage, onCallMember, onOpenProfile, onToggleBlock, onInvited, onClose,
 }: {
   conversation: ChatConversation;
   currentUserId: string;
+  /** ⭐ V3.7 — Rôle GLOBAL de l'utilisateur connecté : dans les canaux
+   * restreints (cercle des pasteurs), seuls les administrateurs principaux
+   * (SUPER_ADMIN/ADMIN — PAM, Pasteur Kongo) peuvent inviter. */
+  currentUserRole?: string;
   dmBusy: boolean;
   blockBusy: boolean;
   onOpenDirectMessage: (userId: string, name: string) => void;
@@ -5741,6 +5746,9 @@ function MembersPanel({
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteBusyId, setInviteBusyId] = useState<string | null>(null);
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+  // ⭐ V3.7 — Message d'erreur renvoyé par l'API d'invitation (ex. cercle
+  // restreint), affiché en clair dans l'onglet « Inviter ».
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   const participants = conversation.participants || [];
   const onlineCount = participants.filter(p => p.online).length;
@@ -5764,6 +5772,22 @@ function MembersPanel({
 
   // Invitations possibles dans les canaux/groupes — PAS dans un privé à 2.
   const isDirect = conversation.type === "DIRECT" && participants.length <= 2;
+
+  // ⭐ V3.7 — CERCLE RESTREINT (cercle des pasteurs) : seuls les
+  // administrateurs principaux (super admins — PAM, Pasteur Kongo — et
+  // admins) peuvent ajouter QUI ILS VEULENT ; les autres membres ne voient
+  // même pas l'onglet « Inviter » (le serveur valide de son côté).
+  const isCercle =
+    conversation.isRestricted === true || conversation.type === "PASTORS";
+  const cercleGuardian =
+    currentUserRole === "SUPER_ADMIN" || currentUserRole === "ADMIN";
+  const inviteAllowed = !isDirect && (!isCercle || cercleGuardian);
+
+  // Sécurité : si l'utilisateur n'a pas le droit d'inviter ici, on force
+  // le retour sur l'onglet « Membres » (l'onglet est de toute façon masqué).
+  useEffect(() => {
+    if (!inviteAllowed && tab === "invite") setTab("members");
+  }, [inviteAllowed, tab]);
 
   // ⭐ V3.5 — Chargement des membres INVITABLE (communauté du canal, pas
   // encore membres) avec debounce de recherche de 250 ms, uniquement quand
@@ -5801,6 +5825,7 @@ function MembersPanel({
   const inviteMember = async (userId: string, name: string) => {
     if (inviteBusyId) return;
     setInviteBusyId(userId);
+    setInviteError(null);
     try {
       const res = await fetch(
         api.url(`/api/yeshua-connect/conversations/${conversation.id}/invite`),
@@ -5810,12 +5835,22 @@ function MembersPanel({
           body: JSON.stringify({ userIds: [userId] }),
         },
       );
-      if (!res.ok) return; // l'erreur exacte est rare (permissions déjà vérifiées)
+      if (!res.ok) {
+        // ⭐ V3.7 — L'erreur du serveur s'affiche en clair (cercle restreint,
+        // membre introuvable…) au lieu d'échouer en silence.
+        let msg = "Invitation impossible — réessayez";
+        try {
+          const err = await res.json();
+          if (err?.error) msg = String(err.error);
+        } catch { /* réponse non-JSON */ }
+        setInviteError(msg);
+        return;
+      }
       setInvitedIds((prev) => new Set(prev).add(userId));
       onInvited(); // rafraîchit le compteur « N membres » de l'en-tête
       void name; // nom disponible pour un toast futur côté parent
     } catch {
-      // silencieux — le bouton reste utilisable
+      setInviteError("Connexion impossible — réessayez");
     } finally {
       setInviteBusyId(null);
     }
@@ -5939,8 +5974,10 @@ function MembersPanel({
             <div className="flex items-center gap-1 flex-shrink-0">
               {/* ⭐ V3.5 — Inviter des membres DEPUIS le panneau (façon
                   Telegram) : ouvre l'onglet d'invitation. Masqué dans un
-                  privé (un privé s'ouvre par « Message privé »). */}
-              {!isDirect && (
+                  privé (un privé s'ouvre par « Message privé ») et — ⭐ V3.7 —
+                  dans les canaux RESTREINTS pour les non-administrateurs
+                  principaux (cercle des pasteurs : eux seuls ajoutent). */}
+              {inviteAllowed && (
                 <button
                   onClick={() => setTab(tab === "invite" ? "members" : "invite")}
                   className={cn(
@@ -5949,7 +5986,11 @@ function MembersPanel({
                       ? "bg-[#C9A227]/15 text-[#8C5FA8]"
                       : "hover:bg-[#C9A227]/10 text-[#8C5FA8]"
                   )}
-                  title="Inviter des membres de la communauté dans ce canal"
+                  title={
+                    isCercle
+                      ? "Ajouter qui vous voulez dans ce cercle restreint (toute la plateforme)"
+                      : "Inviter des membres de la communauté dans ce canal"
+                  }
                 >
                   <UserPlus className="w-4 h-4" />
                   <span className="hidden sm:inline">Inviter</span>
@@ -5966,8 +6007,11 @@ function MembersPanel({
           </div>
 
           {/* ⭐ V3.5 — Onglets Membres / Inviter (invitations visibles
-              uniquement hors privé). */}
-          {!isDirect && (
+              uniquement hors privé). ⭐ V3.7 — Dans un canal RESTREINT
+              (cercle des pasteurs), seuls les administrateurs principaux
+              voient l'onglet « Inviter » ; les autres membres lisent la
+              note « cercle restreint ». */}
+          {inviteAllowed && (
             <div className="mt-3 flex gap-1 p-1 bg-stone-100/70 rounded-xl">
               <button
                 onClick={() => setTab("members")}
@@ -5990,6 +6034,20 @@ function MembersPanel({
             </div>
           )}
 
+          {/* ⭐ V3.7 — Cercle restreint : note explicative pour les membres
+              NON habilités (l'invitation est réservée aux administrateurs
+              principaux — PAM, Pasteur Kongo, admins). */}
+          {isDirect === false && isCercle && !cercleGuardian && (
+            <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#2A0E3D]/[0.04] border border-[#2A0E3D]/10">
+              <Lock className="w-3.5 h-3.5 text-[#8C5FA8] flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#8A8378] leading-snug">
+                <b className="text-[#1E0F2B]">Cercle restreint</b> — seuls les
+                administrateurs principaux peuvent ajouter des membres dans ce
+                canal.
+              </p>
+            </div>
+          )}
+
           {/* Recherche (comme Telegram : filtre la liste par nom) —
               champ propre à chaque onglet. */}
           <div className="mt-3 relative">
@@ -5997,7 +6055,13 @@ function MembersPanel({
             <input
               value={tab === "invite" ? inviteQuery : query}
               onChange={e => (tab === "invite" ? setInviteQuery(e.target.value) : setQuery(e.target.value))}
-              placeholder={tab === "invite" ? "Rechercher à inviter (communauté)..." : "Rechercher un membre..."}
+              placeholder={
+                tab === "invite"
+                  ? isCercle
+                    ? "Rechercher un membre (toute la plateforme)…"
+                    : "Rechercher à inviter (communauté)…"
+                  : "Rechercher un membre…"
+              }
               className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20 focus:border-[#C9A227]/40"
             />
             {(tab === "invite" ? inviteQuery : query) && (
@@ -6015,6 +6079,25 @@ function MembersPanel({
         {/* ─── Onglet INVITER : membres de la communauté pas encore là ── */}
         {tab === "invite" && (
           <div className="flex-1 overflow-y-auto">
+            {/* ⭐ V3.7 — Bandeau de contexte du cercle restreint : les
+                administrateurs principaux ajoutent qui ils veulent. */}
+            {isCercle && (
+              <div className="mx-3 mt-3 px-3 py-2 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/25 flex items-start gap-2">
+                <Shield className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-[#8A8378] leading-snug">
+                  <b className="text-[#1E0F2B]">Cercle restreint</b> — en tant
+                  qu’administrateur principal, vous ajoutez <b className="text-[#1E0F2B]">qui
+                  vous voulez</b> : tout membre de la plateforme peut rejoindre ce
+                  cercle.
+                </p>
+              </div>
+            )}
+            {inviteError && (
+              <div className="mx-3 mt-3 px-3 py-2 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2">
+                <Ban className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-red-700 leading-snug">{inviteError}</p>
+              </div>
+            )}
             {inviteLoading && invitable.length === 0 && (
               <div className="py-10 flex flex-col items-center gap-2">
                 <Loader2 className="w-6 h-6 text-[#C9A227] animate-spin" />
@@ -6030,7 +6113,9 @@ function MembersPanel({
                 <p className="text-xs text-[#8A8378] mt-1">
                   {inviteQuery.trim()
                     ? "Essayez un autre nom"
-                    : "La communauté entière est déjà dans ce canal 🙌"}
+                    : isCercle
+                      ? "Toute la plateforme est déjà dans ce cercle 🙌"
+                      : "La communauté entière est déjà dans ce canal 🙌"}
                 </p>
               </div>
             )}
@@ -6058,7 +6143,8 @@ function MembersPanel({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#1E0F2B] truncate">{u.name || "Membre"}</p>
                     <p className="text-xs text-[#8A8378] truncate">
-                      {globalRoleLabelFr(u.role) || "Membre de la communauté"}
+                      {globalRoleLabelFr(u.role) ||
+                        (isCercle ? "Membre de la plateforme" : "Membre de la communauté")}
                       {u.isOnline && <span className="text-emerald-600 font-medium"> · en ligne</span>}
                     </p>
                   </div>
@@ -6122,14 +6208,26 @@ function MembersPanel({
         {/* ─── Pied : vocation communautaire ──────────────────────────── */}
         <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#FAF6EF]">
           {tab === "invite" ? (
-            <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
-              <UserPlus className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
-              <span>
-                Invitez les membres de la communauté dans ce canal — « Allez, faites de
-                toutes les nations des disciples » (Matthieu 28:19) : chaque invitation
-                fait <b className="text-[#1E0F2B]">grandir la communauté</b>.
-              </span>
-            </p>
+            isCercle ? (
+              <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
+                <Shield className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+                <span>
+                  Cercle restreint : vous ajoutez <b className="text-[#1E0F2B]">qui vous
+                  voulez</b>, sur toute la plateforme — « Prenez garde à
+                  tout le troupeau » (Actes 20:28) : le cercle garde son
+                  <b className="text-[#1E0F2B]"> caractère restreint</b>.
+                </span>
+              </p>
+            ) : (
+              <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
+                <UserPlus className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+                <span>
+                  Invitez les membres de la communauté dans ce canal — « Allez, faites de
+                  toutes les nations des disciples » (Matthieu 28:19) : chaque invitation
+                  fait <b className="text-[#1E0F2B]">grandir la communauté</b>.
+                </span>
+              </p>
+            )
           ) : (
             <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
               <Sparkles className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />

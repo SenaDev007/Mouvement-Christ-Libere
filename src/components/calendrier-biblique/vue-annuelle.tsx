@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Sun, Cloud, Snowflake } from "lucide-react";
 import type { AnneeBibliqueData, JourBiblique, Fete } from "./calendrier-app";
+import { JOURS_SEMAINE_HEBREU, jourSemaineHebreu } from "@/lib/calendrier/jours-semaine-hebreu";
 import { cn } from "@/lib/utils";
 
 interface VueAnnuelleProps {
@@ -50,7 +51,13 @@ const NOMS_MOIS = [
   "Éthanim", "Boul", "Kislev", "Tévet", "Shevat", "Adar",
 ];
 
-const NOMS_JOURS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+// ⭐ V3.7 — Noms des jours : table partagée (français + hébreu +
+// translittération « Yom Rishon…Yom Shabbat »). Les en-têtes de colonnes
+// des mini-mois montrent l'abréviation française + la translittération
+// courte ; le bandeau « La semaine hébraïque » en tête de vue donne la
+// translittération COMPLÈTE des 7 jours (Genèse 1 : « jour un », « jour
+// deux »… le septième, Shabbat).
+const NOMS_JOURS = JOURS_SEMAINE_HEBREU;
 
 export function VueAnnuelle({ annee }: VueAnnuelleProps) {
   // Map des fêtes par jour de l'année
@@ -68,20 +75,70 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
 
   return (
     <div className="space-y-12">
-      {/* Légende */}
-      <div className="flex flex-wrap items-center gap-4 text-xs bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-[#8A8378]/15 p-3">
-        <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
-          <span className="w-3 h-3 rounded bg-[#C9A227]" />
-          Fête de l&apos;Éternel
-        </span>
-        <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
-          <span className="w-3 h-3 rounded bg-[#2A0E3D]/30" />
-          Shabbat hebdomadaire
-        </span>
-        <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
-          <span className="w-3 h-3 rounded border-2 border-[#C9A227] bg-[#FAF6EF]" />
-          Jour en cours
-        </span>
+      <div className="space-y-3">
+        {/* Légende */}
+        <div className="flex flex-wrap items-center gap-4 text-xs bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-[#8A8378]/15 p-3">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
+            <span className="w-3 h-3 rounded bg-[#C9A227]" />
+            Fête de l&apos;Éternel
+          </span>
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
+            <span className="w-3 h-3 rounded bg-[#2A0E3D]/30" />
+            Shabbat hebdomadaire
+          </span>
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
+            <span className="w-3 h-3 rounded border-2 border-[#C9A227] bg-[#FAF6EF]" />
+            Jour en cours
+          </span>
+        </div>
+
+        {/* ⭐ V3.7 — LA SEMAINE HÉBRAÏQUE : translittération complète des
+            noms des jours (Yom Rishon → Yom Shabbat), visible en toute
+            taille d'écran — sur la page publique du calendrier biblique ET
+            dans le calendrier intégré de Yeshua Connect (composant partagé). */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-[#8A8378]/15 p-4">
+          <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-3 text-center">
+            La semaine hébraïque — du premier jour au jour du Shabbat
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
+            {JOURS_SEMAINE_HEBREU.map((jour) => {
+              const estShabbat = jour.numero === 7;
+              return (
+                <div
+                  key={jour.numero}
+                  title={`${jour.fr} · ${jour.hebreuNiqoud} (${jour.translit})`}
+                  className={cn(
+                    "text-center px-1.5 py-2 rounded-lg border min-w-0",
+                    estShabbat
+                      ? "bg-[#C9A227]/15 border-[#C9A227]/45"
+                      : "bg-[#FAF6EF] border-[#8A8378]/12",
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "text-[9px] font-bold uppercase tracking-wide",
+                      estShabbat ? "text-[#8C5FA8]" : "text-[#8A8378]",
+                    )}
+                  >
+                    {jour.fr}
+                  </div>
+                  <div className="text-[11px] font-bold text-[#1E0F2B] mt-1 leading-tight">
+                    {jour.translit}
+                  </div>
+                  <div
+                    dir="rtl"
+                    className={cn(
+                      "text-[10px] font-serif mt-0.5 leading-tight",
+                      estShabbat ? "text-[#8C5FA8]" : "text-[#8A8378]",
+                    )}
+                  >
+                    {jour.hebreu}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {NOMS_TRIMESTRES.map((trimestre, tIdx) => {
@@ -148,21 +205,39 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                         {joursMois.length} jours
                       </p>
 
-                      {/* En-tête jours */}
+                      {/* En-tête jours — ⭐ V3.7 : abréviation française +
+                          translittération hébraïque (Yom Rishon…Yom
+                          Shabbat, forme courte pour la grille compacte ;
+                          la forme complète figure dans le bandeau
+                          « La semaine hébraïque » et dans l'infobulle). */}
                       <div className="grid grid-cols-7 gap-1 mb-2">
-                        {NOMS_JOURS.map((jour, i) => (
-                          <div
-                            key={i}
-                            className={cn(
-                              "text-center text-[9px] font-bold py-1 rounded",
-                              jour === "Sam"
-                                ? "bg-[#2A0E3D]/10 text-[#2A0E3D]"
-                                : "text-[#8A8378]"
-                            )}
-                          >
-                            {jour}
-                          </div>
-                        ))}
+                        {NOMS_JOURS.map((jour, i) => {
+                          const estShabbat = jour.numero === 7;
+                          return (
+                            <div
+                              key={i}
+                              title={`${jour.fr} · ${jour.hebreuNiqoud} (${jour.translit})`}
+                              className={cn(
+                                "text-center py-1 rounded min-w-0",
+                                estShabbat
+                                  ? "bg-[#2A0E3D]/10 text-[#2A0E3D]"
+                                  : "text-[#8A8378]"
+                              )}
+                            >
+                              <div className="text-[9px] font-bold leading-none">
+                                {jour.frAbbr}
+                              </div>
+                              <div
+                                className={cn(
+                                  "text-[8px] font-semibold mt-0.5 leading-tight truncate",
+                                  estShabbat ? "text-[#8C5FA8]" : "text-[#8A8378]/75"
+                                )}
+                              >
+                                {jour.translit.replace(/^Yom\s+/, "")}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
 
                       {/* Jours du mois */}
@@ -170,6 +245,10 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                         {joursMois.map((jour) => {
                           const fete = fetesParJour.get(jour.jourDeAnnee);
                           const isShabbat = jour.estShabbat;
+                          // ⭐ V3.7 — Infobulle enrichie du nom hébreu du jour
+                          // (ex. « Aviv 12 · Yom Shishi »).
+                          const nomHeb = jourSemaineHebreu(jour.jourDeSemaine);
+                          const suffixeHeb = nomHeb ? ` · ${nomHeb.translit}` : "";
                           return (
                             <div
                               key={jour.jourDeAnnee}
@@ -183,8 +262,8 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                               )}
                               title={
                                 fete
-                                  ? `${fete.nomFr} — ${fete.referenceEcritures}`
-                                  : `${NOMS_MOIS[numMois - 1]} ${jour.jourDuMois}`
+                                  ? `${fete.nomFr} — ${fete.referenceEcritures}${suffixeHeb}`
+                                  : `${NOMS_MOIS[numMois - 1]} ${jour.jourDuMois}${suffixeHeb}`
                               }
                             >
                               {jour.jourDuMois}

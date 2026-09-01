@@ -34,6 +34,11 @@ export interface ChatParticipant {
 export interface ChatConversation {
   id: string;
   type: ConversationType;
+  /** ⭐ V3.7 — Canal RESTREINT (cercle des pasteurs) : seuls les
+   * administrateurs principaux (SUPER_ADMIN/ADMIN — PAM, Pasteur Kongo)
+   * peuvent y inviter, et ils ajoutent qui ils veulent (toute la
+   * plateforme, pas seulement la communauté du canal). */
+  isRestricted?: boolean;
   name: string;
   description?: string;
   avatarUrl?: string;

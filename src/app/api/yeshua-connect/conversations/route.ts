@@ -169,6 +169,10 @@ export async function GET(_req: NextRequest) {
       return {
         id: ch.id,
         type: convType,
+        // ⭐ V3.7 — Canal restreint (cercle des pasteurs) : le client n'ouvre
+        // l'onglet « Inviter » qu'aux administrateurs principaux
+        // (SUPER_ADMIN/ADMIN), qui ajoutent qui ils veulent.
+        isRestricted: ch.isRestricted === true || ch.type === "RESTRICTED",
         name: ch.name,
         description: ch.description ?? undefined,
         // ⭐ V2.5 — Photo du canal (uploadée depuis le back-office)
