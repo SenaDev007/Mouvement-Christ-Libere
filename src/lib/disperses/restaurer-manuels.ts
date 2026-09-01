@@ -55,6 +55,14 @@ const MEMBRES_A_RESTAURER: MembreARestaurer[] = [
   { pseudonyme: "Akpovi Sènakpon", paysParDefaut: "BJ", niveau: "croyant" },
 ];
 
+/**
+ * Positions de TEST à retirer de la carte publique (créées lors des
+ * validations, ex. « Test Baruch Haba » en V3.13) : la carte ne doit
+ * montrer que de vrais membres. Le compte de test lui-même reste
+ * supprimable en 1 clic depuis /admin/users.
+ */
+const PSEUDONYMES_DE_TEST: string[] = ["Test Baruch Haba"];
+
 export interface ResultatRestauration {
   restaures: number;
   detail: Array<{ pseudonyme: string; pays: string; statut: string }>;
@@ -179,6 +187,24 @@ export function restaurerMembresManuels(): Promise<ResultatRestauration> {
       console.log(
         `[disperses/restauration V3.14] « ${cible.pseudonyme} » rétabli sur la carte (${ciblePays.code}${compte ? ", compte lié" : ""})`
       );
+    }
+
+    // ⭐ Nettoyage : retirer de la carte publique les positions de TEST
+    // (elles survivent à la purge car liées à un compte, mais la carte ne
+    // doit montrer que de vrais membres).
+    for (const pseudoTest of PSEUDONYMES_DE_TEST) {
+      const cleTest = normaliser(pseudoTest);
+      const rangeesTest = existants.filter(
+        (m) => normaliser(m.pseudonyme) === cleTest
+      );
+      if (rangeesTest.length > 0) {
+        await db.disperseMember.deleteMany({
+          where: { id: { in: rangeesTest.map((r) => r.id) } },
+        });
+        console.log(
+          `[disperses/restauration V3.14] position de test « ${pseudoTest} » retirée de la carte (${rangeesTest.length} entrée(s))`
+        );
+      }
     }
 
     restaurationFaite = true;
