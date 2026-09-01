@@ -4,6 +4,7 @@ import { determinerAnneeBibliqueEnCours } from "@/lib/calendrier/ancrage";
 import { libelleAnneeBiblique } from "@/lib/calendrier/conversion";
 import { PageHero } from "@/components/site/page-hero";
 import { CalendrierBibliqueApp } from "@/components/calendrier-biblique/calendrier-app";
+import { BoutonHeroPdf } from "@/components/calendrier-biblique/bouton-hero-pdf";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
@@ -62,7 +63,7 @@ export default async function CalendrierBibliquePage() {
         title="Calendrier Biblique"
         subtitle="Le calendrier solaire de 364 jours attesté dans le Livre d'Hénoch (72-82) et les manuscrits de Qumrân. Chaque fête tombe le même jour de semaine, chaque année, sans exception. L'année commence toujours un mercredi — jour de la création des luminaires."
         primaryCta={{ label: "Aujourd'hui", href: "#aujourdhui" }}
-        secondaryCta={{ label: "Télécharger iCal", href: `/api/calendrier-biblique/ical?annee=${anneeBibliqueCourante}` }}
+        secondaryCtaNode={<BoutonHeroPdf annee={anneeBibliqueCourante} />}
       />
 
       <CalendrierBibliqueApp

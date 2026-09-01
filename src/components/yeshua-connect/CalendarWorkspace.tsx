@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   X, ChevronLeft, ChevronRight, Clock, Grid3x3, Calendar as CalendarIcon,
   List, BookOpen, Sunset, Volume2, VolumeX, Bell, BellOff, Send, RefreshCw, MapPin,
+  Download, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AnneeBibliqueData } from "@/components/calendrier-biblique/calendrier-app";
@@ -34,6 +35,8 @@ import { VueAnnuelle } from "@/components/calendrier-biblique/vue-annuelle";
 import { VueMensuelle } from "@/components/calendrier-biblique/vue-mensuelle";
 import { TimelineFetes } from "@/components/calendrier-biblique/timeline-fetes";
 import { TableEquivalence } from "@/components/calendrier-biblique/table-equivalence";
+import { ModalExportPdf } from "@/components/calendrier-biblique/modal-export-pdf";
+import { useAnneesBibliques } from "@/lib/calendrier/use-annees-bibliques";
 import type { EvenementShofar } from "@/lib/calendrier/evenements-shofar";
 import {
   jouerAnnonceShofar, armerAudioShofar,
@@ -108,12 +111,12 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [vueActive, setVueActive] = useState<Vue>("aujourdhui");
-  const [anneeIndex, setAnneeIndex] = useState(1);
   const [maintenantLive, setMaintenantLive] = useState(() => new Date());
   const [prefs, setPrefs] = useState<PrefsShofar>({ sound: true, notif: true });
   const [permissionNotif, setPermissionNotif] = useState<string>("default");
   const [audioBloque, setAudioBloque] = useState(false);
   const [annonceEnvoyee, setAnnonceEnvoyee] = useState(false);
+  const [exportPdfOuvert, setExportPdfOuvert] = useState(false);
   const [compteARebours, setCompteARebours] = useState({ jours: 0, heures: 0, minutes: 0, secondes: 0 });
 
   const annonceEnvoyeeRef = useRef(false);
@@ -171,8 +174,20 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
   }, []);
 
   // ── Données dérivées ────────────────────────────────────────────────────
+  // ⭐ V3.10 — Navigation CONTINUE : le hook charge à la volée les années
+  // hors cache (via /api/calendrier-biblique/[annee]) — plus de limite
+  // « 3 années ». L'année sélectionnée est passée à TOUTES les vues.
   const annees = donnees?.annees ?? [];
-  const annee = annees[Math.min(anneeIndex, Math.max(0, annees.length - 1))];
+  const indexInitial = useMemo(() => {
+    if (!donnees || donnees.annees.length === 0) return 1;
+    const aujourdhui = new Date(donnees.maintenant).getTime();
+    const idx = donnees.annees.findIndex(
+      (a) => new Date(a.debut).getTime() <= aujourdhui && new Date(a.fin).getTime() + 86400000 >= aujourdhui
+    );
+    return idx >= 0 ? idx : 1;
+  }, [donnees]);
+  const nav = useAnneesBibliques(annees, indexInitial);
+  const annee = nav.annee;
 
   const prochainsEvenements = useMemo(() => {
     const maintenant = Date.now();
@@ -181,15 +196,10 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
 
   const prochainEvenement = prochainsEvenements[0] ?? null;
 
-  // Positionner l'année courante quand les données arrivent + premier compte à rebours
+  // Positionner le compte à rebours quand les données arrivent
   useEffect(() => {
     if (!donnees || donnees.annees.length === 0) return;
     evenementsRef.current = donnees.evenements;
-    const aujourdhui = new Date(donnees.maintenant).getTime();
-    const idx = donnees.annees.findIndex(
-      (a) => new Date(a.debut).getTime() <= aujourdhui && new Date(a.fin).getTime() + 86400000 >= aujourdhui
-    );
-    setAnneeIndex(idx >= 0 ? idx : 1);
     const prochain = donnees.evenements.find((e) => new Date(e.entree).getTime() > Date.now());
     if (prochain) {
       setCompteARebours(formaterDuree(new Date(prochain.entree).getTime() - Date.now()));
@@ -270,23 +280,24 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
               Fêtes de l'Éternel · 364 jours · Shofar au coucher du soleil
             </p>
           </div>
-          {annees.length > 0 && (
+          {annee && (
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => setAnneeIndex((i) => Math.max(0, i - 1))}
-                disabled={anneeIndex === 0}
+                onClick={nav.anneePrecedente}
+                disabled={!nav.peutPrecedente}
                 className="p-1.5 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 title="Année précédente"
                 aria-label="Année précédente"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-xs font-bold text-[#C9A227] tabular-nums whitespace-nowrap">
-                {annee?.libelle ?? ""}
+              <span className="text-xs font-bold text-[#C9A227] tabular-nums whitespace-nowrap inline-flex items-center gap-1.5">
+                {nav.chargement && <Loader2 className="w-3 h-3 animate-spin" />}
+                {annee.libelle}
               </span>
               <button
-                onClick={() => setAnneeIndex((i) => Math.min(annees.length - 1, i + 1))}
-                disabled={anneeIndex === annees.length - 1}
+                onClick={nav.anneeSuivante}
+                disabled={!nav.peutSuivante}
                 className="p-1.5 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 title="Année suivante"
                 aria-label="Année suivante"
@@ -294,6 +305,18 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
+          )}
+          {/* ⭐ V3.10 — Export PDF (généré par le backend, choix de la
+              découpe : par mois / par trimestre / toute l'année) */}
+          {annee && (
+            <button
+              onClick={() => setExportPdfOuvert(true)}
+              className="ml-1.5 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A227] text-[#2A0E3D] text-[11px] font-bold hover:bg-[#9C7E1E] hover:text-[#FAF6EF] transition-colors"
+              title="Télécharger le calendrier en PDF"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">PDF</span>
+            </button>
           )}
         </div>
 
@@ -546,6 +569,17 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
           </div>
         )}
       </div>
+
+      {/* ⭐ V3.10 — Modal d'export PDF (découpe au choix, généré par le
+          backend : par mois / par trimestre / toute l'année) */}
+      {annee && (
+        <ModalExportPdf
+          ouverte={exportPdfOuvert}
+          onFermer={() => setExportPdfOuvert(false)}
+          annee={annee.annee}
+          libelle={annee.libelle}
+        />
+      )}
     </div>
   );
 }

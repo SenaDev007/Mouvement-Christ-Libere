@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Grid3x3, List, Clock, BookOpen, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Grid3x3, List, Clock, BookOpen, Download, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VueAujourdhui } from "./vue-aujourdhui";
 import { VueAnnuelle } from "./vue-annuelle";
 import { VueMensuelle } from "./vue-mensuelle";
 import { TimelineFetes } from "./timeline-fetes";
 import { TableEquivalence } from "./table-equivalence";
+import { ModalExportPdf } from "./modal-export-pdf";
+import { useAnneesBibliques } from "@/lib/calendrier/use-annees-bibliques";
 
 export interface JourBiblique {
   jourDeAnnee: number;
@@ -72,9 +74,16 @@ const VUES: Array<{
 export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }: CalendrierBibliqueAppProps) {
   const [vueActive, setVueActive] = useState<Vue>("aujourdhui");
   const [maintenantLive, setMaintenantLive] = useState(new Date(maintenant));
-  const [anneeIndex, setAnneeIndex] = useState(anneeCouranteIndex);
+  const [exportPdfOuvert, setExportPdfOuvert] = useState(false);
 
-  const annee = annees[anneeIndex];
+  // ⭐ V3.10 — Navigation CONTINUE entre années bibliques : au lieu d'un
+  // index borné au tableau initial (3 années → « limité à 2027-2028 »),
+  // on navigue par année civile et le hook charge à la volée toute année
+  // manquante via /api/calendrier-biblique/[annee] (bornes 1900-2100).
+  // `annee` est passé à TOUTES les vues — le switch impacte chaque onglet
+  // (Aujourd'hui, Année, Mois, Fêtes, Équivalence).
+  const nav = useAnneesBibliques(annees, anneeCouranteIndex);
+  const annee = nav.annee;
 
   // Mettre à jour l'heure chaque minute
   useEffect(() => {
@@ -84,25 +93,43 @@ export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }
     return () => clearInterval(timer);
   }, []);
 
+  // Garde défensive : l'année courante doit être dans le cache (elle y est
+  // dès l'initialisation) — pendant un éventuel rechargement on montre un
+  // indicateur de chargement plutôt qu'un rendu partiel.
+  if (!annee) {
+    return (
+      <section id="aujourdhui" className="bg-[#FAF6EF] py-12 md:py-16">
+        <div className="container mx-auto max-w-7xl px-4 flex items-center justify-center py-24">
+          <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" aria-label="Chargement" />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="aujourdhui" className="bg-[#FAF6EF] py-12 md:py-16">
       <div className="container mx-auto max-w-7xl px-4">
-        {/* En-tête : navigation années + titre + export iCal */}
+        {/* En-tête : navigation années + titre + export PDF */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            {/* Navigation entre années */}
+            {/* Navigation entre années — ⭐ V3.10 : CONTINUE, non bornée au
+                tableau initial (charge dynamiquement les années distantes) */}
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setAnneeIndex(i => Math.max(0, i - 1))}
-                disabled={anneeIndex === 0}
+                onClick={nav.anneePrecedente}
+                disabled={!nav.peutPrecedente}
                 className="p-2 rounded-lg border border-[#8A8378]/20 text-[#8A8378] hover:bg-[#FAF6EF] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 title="Année précédente"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
+              <span className="inline-flex items-center gap-2 min-w-[7.5rem] justify-center text-sm font-bold text-[#1E0F2B] tabular-nums">
+                {nav.chargement && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9A227]" />}
+                {annee.libelle}
+              </span>
               <button
-                onClick={() => setAnneeIndex(i => Math.min(annees.length - 1, i + 1))}
-                disabled={anneeIndex === annees.length - 1}
+                onClick={nav.anneeSuivante}
+                disabled={!nav.peutSuivante}
                 className="p-2 rounded-lg border border-[#8A8378]/20 text-[#8A8378] hover:bg-[#FAF6EF] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 title="Année suivante"
               >
@@ -132,14 +159,25 @@ export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }
             </div>
           </div>
 
-          <a
-            href={`/api/calendrier-biblique/ical?annee=${annee.annee}`}
+          {/* ⭐ V3.10 — Export PDF (remplace l'export iCal) : modal de
+              découpe (par mois / par trimestre / toute l'année), PDF
+              généré par le backend. */}
+          <button
+            onClick={() => setExportPdfOuvert(true)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#C9A227] text-[#2A0E3D] text-xs font-bold hover:bg-[#9C7E1E] hover:text-[#FAF6EF] transition-colors shadow-sm"
           >
             <Download className="w-3.5 h-3.5" />
-            Exporter en iCal
-          </a>
+            Télécharger PDF
+          </button>
         </div>
+
+        {/* Modal d'export PDF */}
+        <ModalExportPdf
+          ouverte={exportPdfOuvert}
+          onFermer={() => setExportPdfOuvert(false)}
+          annee={annee.annee}
+          libelle={annee.libelle}
+        />
 
         {/* Onglets de navigation */}
         <div className="flex items-center gap-1 mb-8 bg-[#2A0E3D]/5 p-1 rounded-xl overflow-x-auto">

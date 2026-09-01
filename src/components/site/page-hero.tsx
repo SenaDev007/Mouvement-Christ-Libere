@@ -12,9 +12,12 @@ interface PageHeroProps {
   imageSrc: string;
   primaryCta?: { label: string; href: string };
   secondaryCta?: { label: string; href: string };
+  /** ⭐ V3.10 — CTA secondaire personnalisé (bouton client, ex. export
+   * PDF avec modal) — remplace le lien secondaire quand fourni. */
+  secondaryCtaNode?: React.ReactNode;
 }
 
-export function PageHero({ kicker, title, subtitle, imageSrc, primaryCta, secondaryCta }: PageHeroProps) {
+export function PageHero({ kicker, title, subtitle, imageSrc, primaryCta, secondaryCta, secondaryCtaNode }: PageHeroProps) {
   return (
     <section className="relative min-h-[60vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
       {/* Background */}
@@ -45,18 +48,18 @@ export function PageHero({ kicker, title, subtitle, imageSrc, primaryCta, second
           {subtitle}
         </motion.p>
 
-        {(primaryCta || secondaryCta) && (
+        {(primaryCta || secondaryCta || secondaryCtaNode) && (
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.5 }} className="flex flex-col sm:flex-row gap-4 justify-center">
             {primaryCta && (
               <Link href={primaryCta.href} className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300">
                 {primaryCta.label} <ChevronRight className="w-4 h-4 ml-2" />
               </Link>
             )}
-            {secondaryCta && (
+            {secondaryCtaNode ?? (secondaryCta && (
               <Link href={secondaryCta.href} className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300">
                 {secondaryCta.label} <ChevronRight className="w-4 h-4 ml-2" />
               </Link>
-            )}
+            ))}
           </motion.div>
         )}
       </div>
