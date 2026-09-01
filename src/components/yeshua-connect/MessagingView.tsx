@@ -57,6 +57,7 @@ import {
   MessageCircle, AtSign, ChevronUp, ChevronRight, Copy, UploadCloud,
   PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
   Radio, Camera, PanelLeftOpen, PanelLeftClose, Shield,
+  Ban, MapPin, UserX, UserCheck,
 } from "lucide-react";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant, RemoteAudioTrack } from "livekit-client";
 import { cn } from "@/lib/utils";
@@ -68,6 +69,8 @@ import {
 import { getYeshuaWatermarkStyle } from "./YeshuaWatermark";
 import { ProfileSettingsModal } from "./ProfileSettingsModal";
 import { api } from "@/lib/api-client";
+import { flagFromCountryCode } from "@/lib/data/flags";
+import { COUNTRIES } from "@/lib/data/countries";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import { emitSocket, onSocket, offSocket } from "@/lib/chat/socket-client";
 import { SlashCommands, executeCommand, type SendMessagePayload } from "./SlashCommands";
@@ -419,6 +422,11 @@ export function MessagingView() {
   // ⭐ V3.4 — DM en cours de création (boutons du panneau des membres :
   // évite le double-clic qui créerait deux conversations privées).
   const [dmBusy, setDmBusy] = useState(false);
+  // ⭐ V3.5 — PROFIL COMPLET d'un membre au clic (façon Telegram) : bio,
+  // pays/ville, canaux communs + actions (message privé, appel, blocage).
+  const [profileMemberId, setProfileMemberId] = useState<string | null>(null);
+  // ⭐ V3.5 — Blocage en cours (POST/DELETE /blocks) : évite le double-clic.
+  const [blockBusy, setBlockBusy] = useState(false);
   // ⭐ V3.0 — SIDEBAR MOBILE REPLIABLE (façon Telegram/Discord) :
   // sur mobile (<lg), la barre latérale se replie en RAIL D'ICÔNES
   // (avatars des conversations, 68px) pour laisser toute la place à
@@ -2308,6 +2316,46 @@ export function MessagingView() {
     if (!conversationId) return;
     await startCall(type, conversationId, targetName ? { name: targetName, avatarUrl: targetAvatarUrl } : undefined);
   }, [callState, openDirectMessage, startCall, showToast]);
+
+  /**
+   * ⭐ V3.5 — Bloque / débloque un membre (sécurité des conversations
+   * PRIVÉES). Côté serveur, un blocage empêche les DM et les appels entre
+   * les deux membres, dans les DEUX sens — les canaux communs restent
+   * ouverts (on bloque la personne, pas la communauté).
+   */
+  const toggleBlockMember = useCallback(async (targetUserId: string, targetName: string | undefined, block: boolean) => {
+    if (blockBusy) return;
+    setBlockBusy(true);
+    try {
+      const res = block
+        ? await fetch(api.url("/api/yeshua-connect/blocks"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ targetUserId }),
+          })
+        : await fetch(api.url(`/api/yeshua-connect/blocks?targetUserId=${encodeURIComponent(targetUserId)}`), {
+            method: "DELETE",
+          });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Action impossible", "error");
+        return;
+      }
+      // Rafraîchir les conversations → les drapeaux blockedByMe/hasBlockedMe
+      // des participants se mettent à jour dans le panneau des membres.
+      await loadConversationsRef.current?.();
+      showToast(
+        block
+          ? `${targetName || "Membre"} bloqué — il ne peut plus vous écrire en privé`
+          : `${targetName || "Membre"} débloqué — vous pouvez à nouveau échanger en privé`,
+      );
+    } catch (e) {
+      console.error("[blocks] toggleBlockMember:", e);
+      showToast("Action impossible", "error");
+    } finally {
+      setBlockBusy(false);
+    }
+  }, [blockBusy, showToast]);
 
   /** ⭐ V3.1 — Fermeture LOCALE de l'overlay d'appel (sans signal). */
   const teardownCall = useCallback(() => {
@@ -4440,15 +4488,38 @@ export function MessagingView() {
 
       {/* ⭐ V3.4 — PANNEAU DES MEMBRES DU CANAL (façon Telegram/WhatsApp) :
           liste complète, recherche, administrateurs identifiés, présence,
-          et pour chaque membre : écrire en privé / appeler (audio/vidéo). */}
+          et pour chaque membre : écrire en privé / appeler (audio/vidéo).
+          ⭐ V3.5 : + invitations depuis le panneau (onglet « Inviter »),
+          + PROFIL COMPLET au clic (bio, pays/ville) et + blocage. */}
       {showMembersPanel && activeConv && (
         <MembersPanel
           conversation={activeConv}
           currentUserId={currentUserId}
           dmBusy={dmBusy}
+          blockBusy={blockBusy}
           onOpenDirectMessage={(userId, name) => { openDirectMessage(userId, name); }}
           onCallMember={(userId, type, name, avatarUrl) => { callMemberDirect(userId, type, name, avatarUrl); }}
+          onOpenProfile={(userId) => setProfileMemberId(userId)}
+          onToggleBlock={(userId, name, block) => { toggleBlockMember(userId, name, block); }}
+          onInvited={() => { loadConversationsRef.current?.(); }}
           onClose={() => setShowMembersPanel(false)}
+        />
+      )}
+
+      {/* ⭐ V3.5 — PROFIL COMPLET D'UN MEMBRE (au clic dans le panneau) :
+          photo, badges, présence, bio, pays/ville, canaux communs et
+          actions : message privé / appel / bloquer-débloquer. */}
+      {profileMemberId && activeConv && (
+        <MemberProfileModal
+          userId={profileMemberId}
+          currentUserId={currentUserId}
+          originConversationId={activeConv.id}
+          dmBusy={dmBusy}
+          blockBusy={blockBusy}
+          onOpenDirectMessage={(userId, name) => { openDirectMessage(userId, name); }}
+          onCallMember={(userId, type, name, avatarUrl) => { callMemberDirect(userId, type, name, avatarUrl); }}
+          onToggleBlock={(userId, name, block) => { toggleBlockMember(userId, name, block); }}
+          onClose={() => setProfileMemberId(null)}
         />
       )}
 
@@ -5556,20 +5627,35 @@ function formatJoinedAtFr(iso?: string): string {
 }
 
 function MembersPanel({
-  conversation, currentUserId, dmBusy,
-  onOpenDirectMessage, onCallMember, onClose,
+  conversation, currentUserId, dmBusy, blockBusy,
+  onOpenDirectMessage, onCallMember, onOpenProfile, onToggleBlock, onInvited, onClose,
 }: {
   conversation: ChatConversation;
   currentUserId: string;
   dmBusy: boolean;
+  blockBusy: boolean;
   onOpenDirectMessage: (userId: string, name: string) => void;
   onCallMember: (userId: string, type: "audio" | "video", name?: string, avatarUrl?: string) => void;
+  /** ⭐ V3.5 — Ouvre le profil complet du membre (bio, pays/ville…). */
+  onOpenProfile: (userId: string) => void;
+  /** ⭐ V3.5 — Bloque (true) / débloque (false) un membre. */
+  onToggleBlock: (userId: string, name: string | undefined, block: boolean) => void;
+  /** ⭐ V3.5 — Un membre a été invité → rafraîchir les conversations. */
+  onInvited: () => void;
   onClose: () => void;
 }) {
   const [query, setQuery] = useState("");
-  // Membre dont les ACTIONS sont dépliées (façon Telegram : on tape un
-  // membre → sa fiche avec « Message » / « Appel audio » / « Appel vidéo »).
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // ⭐ V3.5 — Onglet actif du panneau : « Membres » (liste) ou « Inviter »
+  // (membres de la communauté pas encore dans le canal — façon Telegram).
+  const [tab, setTab] = useState<"members" | "invite">("members");
+  // ⭐ V3.5 — Invitations : recherche + résultats + états d'invitation.
+  const [inviteQuery, setInviteQuery] = useState("");
+  const [invitable, setInvitable] = useState<Array<{
+    userId: string; name: string; avatarUrl?: string; role?: string; isOnline: boolean;
+  }>>([]);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteBusyId, setInviteBusyId] = useState<string | null>(null);
+  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
 
   const participants = conversation.participants || [];
   const onlineCount = participants.filter(p => p.online).length;
@@ -5591,10 +5677,69 @@ function MembersPanel({
   const admins = bySection(filtered.filter(p => MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role))));
   const regulars = bySection(filtered.filter(p => !MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role))));
 
-  /** Une rangée de membre (avatar, badges, présence + actions dépliables). */
+  // Invitations possibles dans les canaux/groupes — PAS dans un privé à 2.
+  const isDirect = conversation.type === "DIRECT" && participants.length <= 2;
+
+  // ⭐ V3.5 — Chargement des membres INVITABLE (communauté du canal, pas
+  // encore membres) avec debounce de recherche de 250 ms, uniquement quand
+  // l'onglet « Inviter » est actif.
+  useEffect(() => {
+    if (tab !== "invite") return;
+    let cancelled = false;
+    setInviteLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const url = api.url(
+          `/api/yeshua-connect/conversations/${conversation.id}/invitable` +
+          (inviteQuery.trim() ? `?q=${encodeURIComponent(inviteQuery.trim())}` : ""),
+        );
+        const res = await fetch(url);
+        if (!res.ok) {
+          if (!cancelled) setInvitable([]);
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data)) setInvitable(data);
+      } catch {
+        if (!cancelled) setInvitable([]);
+      } finally {
+        if (!cancelled) setInviteLoading(false);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [tab, conversation.id, inviteQuery]);
+
+  /** ⭐ V3.5 — Invite UN membre dans le canal (bouton de l'onglet). */
+  const inviteMember = async (userId: string, name: string) => {
+    if (inviteBusyId) return;
+    setInviteBusyId(userId);
+    try {
+      const res = await fetch(
+        api.url(`/api/yeshua-connect/conversations/${conversation.id}/invite`),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userIds: [userId] }),
+        },
+      );
+      if (!res.ok) return; // l'erreur exacte est rare (permissions déjà vérifiées)
+      setInvitedIds((prev) => new Set(prev).add(userId));
+      onInvited(); // rafraîchit le compteur « N membres » de l'en-tête
+      void name; // nom disponible pour un toast futur côté parent
+    } catch {
+      // silencieux — le bouton reste utilisable
+    } finally {
+      setInviteBusyId(null);
+    }
+  };
+
+  /** Une rangée de membre (avatar, badges, présence) — cliquable vers le
+   *  PROFIL COMPLET (bio, pays/ville, actions privées), comme Telegram. */
   const renderRow = (p: (typeof participants)[number]) => {
     const isMe = p.userId === currentUserId;
-    const expanded = expandedId === p.userId;
     const globalLabel = globalRoleLabelFr(p.roleLabel || undefined);
     // roleLabel est le rôle GLOBAL historiquement rempli par l'API — le
     // rôle DANS le canal est `role`. On affiche les deux si distincts.
@@ -5603,13 +5748,12 @@ function MembersPanel({
     return (
       <div key={p.userId} className="border-b border-stone-100/80 last:border-b-0">
         <button
-          onClick={() => setExpandedId(expanded ? null : p.userId)}
+          onClick={() => onOpenProfile(p.userId)}
           className={cn(
-            "w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors",
-            expanded ? "bg-[#FAF6EF]" : "hover:bg-[#FAF6EF]/60",
+            "w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors hover:bg-[#FAF6EF]/70",
             isMe && "bg-[#C9A227]/[0.06]"
           )}
-          aria-expanded={expanded}
+          title={`Profil de ${p.name || "Membre"}`}
         >
           <div className="relative flex-shrink-0">
             {p.avatarUrl ? (
@@ -5635,6 +5779,13 @@ function MembersPanel({
                   Vous
                 </span>
               )}
+              {/* ⭐ V3.5 — Badge « Bloqué » : je l'ai bloqué (badge discret,
+                  déblocage depuis sa fiche profil). */}
+              {p.blockedByMe && !isMe && (
+                <span className="flex-shrink-0 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-red-100 text-red-700">
+                  <Ban className="w-2.5 h-2.5" /> Bloqué
+                </span>
+              )}
             </p>
             <p className="text-xs text-[#8A8378] truncate flex items-center gap-1.5 mt-0.5">
               {/* Badge du rôle DANS le canal (Administrateur, Modérateur…) */}
@@ -5658,75 +5809,10 @@ function MembersPanel({
               </span>
             </p>
           </div>
-          {/* Chevron : déplie les actions privées */}
-          <ChevronUp className={cn(
-            "w-4 h-4 text-[#8A8378] flex-shrink-0 transition-transform",
-            expanded ? "" : "rotate-180"
-          )} />
+          {/* ⭐ V3.5 — Chevron : le clic ouvre le PROFIL COMPLET (bio,
+              pays/ville, actions privées, blocage) — comme Telegram. */}
+          <ChevronRight className="w-4 h-4 text-[#8A8378]/70 flex-shrink-0" />
         </button>
-
-        {/* ─── Actions privées (dépliées) : uniquement pour les AUTRES ── */}
-        <AnimatePresence initial={false}>
-          {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              className="overflow-hidden bg-[#FAF6EF]"
-            >
-              <div className="px-3 pb-3 pt-1">
-                {p.joinedAt && (
-                  <p className="text-[11px] text-[#8A8378] mb-2 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" /> Membre depuis le {formatJoinedAtFr(p.joinedAt)}
-                  </p>
-                )}
-                {!isMe ? (
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {/* Écrire en privé — le cœur de la demande : « créer
-                        en privé à un membre pour agrandir la communauté » */}
-                    <button
-                      onClick={() => onOpenDirectMessage(p.userId, p.name)}
-                      disabled={dmBusy}
-                      className="flex flex-col items-center gap-1 py-2 rounded-xl bg-[#8C5FA8] text-[#FAF6EF] text-[11px] font-semibold hover:bg-[#7A4E96] active:scale-95 transition-all disabled:opacity-40"
-                      title={`Ouvrir une conversation privée avec ${p.name}`}
-                    >
-                      {dmBusy
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
-                        : <MessageCircle className="w-4 h-4" />}
-                      Message privé
-                    </button>
-                    {/* Appel vocal (LiveKit — sonnerie chez le destinataire) */}
-                    <button
-                      onClick={() => onCallMember(p.userId, "audio", p.name, p.avatarUrl)}
-                      disabled={dmBusy}
-                      className="flex flex-col items-center gap-1 py-2 rounded-xl bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-40"
-                      title={`Appel audio privé avec ${p.name}`}
-                    >
-                      <Phone className="w-4 h-4" />
-                      Appel vocal
-                    </button>
-                    {/* Appel vidéo privé */}
-                    <button
-                      onClick={() => onCallMember(p.userId, "video", p.name, p.avatarUrl)}
-                      disabled={dmBusy}
-                      className="flex flex-col items-center gap-1 py-2 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-[11px] font-semibold hover:bg-[#3A1E4D] active:scale-95 transition-all disabled:opacity-40"
-                      title={`Appel vidéo privé avec ${p.name}`}
-                    >
-                      <Video className="w-4 h-4" />
-                      Appel vidéo
-                    </button>
-                  </div>
-                ) : (
-                  <div className="text-[11px] text-[#8A8378] bg-white/70 border border-[#C9A227]/20 rounded-xl px-3 py-2">
-                    C'est vous 😉 Modifiez votre photo et vos informations via
-                    le bouton profil de la barre latérale.
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     );
   };
@@ -5765,27 +5851,73 @@ function MembersPanel({
                 </p>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-stone-100 text-[#8A8378] flex-shrink-0"
-              aria-label="Fermer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* ⭐ V3.5 — Inviter des membres DEPUIS le panneau (façon
+                  Telegram) : ouvre l'onglet d'invitation. Masqué dans un
+                  privé (un privé s'ouvre par « Message privé »). */}
+              {!isDirect && (
+                <button
+                  onClick={() => setTab(tab === "invite" ? "members" : "invite")}
+                  className={cn(
+                    "p-1.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-colors",
+                    tab === "invite"
+                      ? "bg-[#C9A227]/15 text-[#8C5FA8]"
+                      : "hover:bg-[#C9A227]/10 text-[#8C5FA8]"
+                  )}
+                  title="Inviter des membres de la communauté dans ce canal"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Inviter</span>
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg hover:bg-stone-100 text-[#8A8378]"
+                aria-label="Fermer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          {/* Recherche (comme Telegram : filtre la liste par nom) */}
+
+          {/* ⭐ V3.5 — Onglets Membres / Inviter (invitations visibles
+              uniquement hors privé). */}
+          {!isDirect && (
+            <div className="mt-3 flex gap-1 p-1 bg-stone-100/70 rounded-xl">
+              <button
+                onClick={() => setTab("members")}
+                className={cn(
+                  "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors",
+                  tab === "members" ? "bg-white shadow-sm text-[#1E0F2B]" : "text-[#8A8378] hover:text-[#1E0F2B]"
+                )}
+              >
+                Membres ({participants.length})
+              </button>
+              <button
+                onClick={() => setTab("invite")}
+                className={cn(
+                  "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1",
+                  tab === "invite" ? "bg-white shadow-sm text-[#1E0F2B]" : "text-[#8A8378] hover:text-[#1E0F2B]"
+                )}
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Inviter
+              </button>
+            </div>
+          )}
+
+          {/* Recherche (comme Telegram : filtre la liste par nom) —
+              champ propre à chaque onglet. */}
           <div className="mt-3 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Rechercher un membre..."
-              autoFocus
+              value={tab === "invite" ? inviteQuery : query}
+              onChange={e => (tab === "invite" ? setInviteQuery(e.target.value) : setQuery(e.target.value))}
+              placeholder={tab === "invite" ? "Rechercher à inviter (communauté)..." : "Rechercher un membre..."}
               className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20 focus:border-[#C9A227]/40"
             />
-            {query && (
+            {(tab === "invite" ? inviteQuery : query) && (
               <button
-                onClick={() => setQuery("")}
+                onClick={() => (tab === "invite" ? setInviteQuery("") : setQuery(""))}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-stone-400 hover:text-stone-600"
                 aria-label="Effacer la recherche"
               >
@@ -5795,46 +5927,470 @@ function MembersPanel({
           </div>
         </div>
 
-        {/* ─── Liste scrollable : Administrateurs puis Membres ────────── */}
-        <div className="flex-1 overflow-y-auto">
-          {filtered.length === 0 && (
-            <div className="py-10 px-4 text-center">
-              <Search className="w-8 h-8 text-[#C9A227]/40 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-[#1E0F2B]">Aucun membre trouvé</p>
-              <p className="text-xs text-[#8A8378] mt-1">Essayez un autre nom</p>
-            </div>
-          )}
-          {admins.length > 0 && (
-            <>
-              <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
-                <Shield className="w-3 h-3 text-[#C9A227]" /> Administrateurs
-                <span className="ml-auto font-semibold normal-case">{admins.length}</span>
+        {/* ─── Onglet INVITER : membres de la communauté pas encore là ── */}
+        {tab === "invite" && (
+          <div className="flex-1 overflow-y-auto">
+            {inviteLoading && invitable.length === 0 && (
+              <div className="py-10 flex flex-col items-center gap-2">
+                <Loader2 className="w-6 h-6 text-[#C9A227] animate-spin" />
+                <p className="text-xs text-[#8A8378]">Recherche des membres invitable…</p>
               </div>
-              {admins.map(renderRow)}
-            </>
-          )}
-          {regulars.length > 0 && (
-            <>
-              <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
-                <Users className="w-3 h-3 text-[#C9A227]/70" /> Membres
-                <span className="ml-auto font-semibold normal-case">{regulars.length}</span>
+            )}
+            {!inviteLoading && invitable.length === 0 && (
+              <div className="py-10 px-4 text-center">
+                <UserCheck className="w-8 h-8 text-[#C9A227]/40 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-[#1E0F2B]">
+                  {inviteQuery.trim() ? "Aucun membre trouvé" : "Tous les membres sont déjà ici"}
+                </p>
+                <p className="text-xs text-[#8A8378] mt-1">
+                  {inviteQuery.trim()
+                    ? "Essayez un autre nom"
+                    : "La communauté entière est déjà dans ce canal 🙌"}
+                </p>
               </div>
-              {regulars.map(renderRow)}
-            </>
-          )}
-        </div>
+            )}
+            {invitable.map((u) => {
+              const invited = invitedIds.has(u.userId);
+              const busy = inviteBusyId === u.userId;
+              return (
+                <div
+                  key={u.userId}
+                  className="px-3 py-2.5 flex items-center gap-3 border-b border-stone-100/80 last:border-b-0 hover:bg-[#FAF6EF]/60 transition-colors"
+                >
+                  <div className="relative flex-shrink-0">
+                    {u.avatarUrl ? (
+                      <img src={u.avatarUrl} alt={u.name}
+                        className="w-10 h-10 rounded-full object-cover border border-[#C9A227]/30" />
+                    ) : (
+                      <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm", getAvatarColor(u.name || "?"))}>
+                        {getInitials(u.name || "?")}
+                      </div>
+                    )}
+                    {u.isOnline && (
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" title="En ligne" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#1E0F2B] truncate">{u.name || "Membre"}</p>
+                    <p className="text-xs text-[#8A8378] truncate">
+                      {globalRoleLabelFr(u.role) || "Membre de la communauté"}
+                      {u.isOnline && <span className="text-emerald-600 font-medium"> · en ligne</span>}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => inviteMember(u.userId, u.name)}
+                    disabled={invited || !!inviteBusyId}
+                    className={cn(
+                      "flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95",
+                      invited
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] disabled:opacity-40"
+                    )}
+                    title={invited ? "Invité ✓" : `Inviter ${u.name || "ce membre"} dans le canal`}
+                  >
+                    {busy ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : invited ? (
+                      <Check className="w-3.5 h-3.5" />
+                    ) : (
+                      <UserPlus className="w-3.5 h-3.5" />
+                    )}
+                    {invited ? "Invité" : "Inviter"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ─── Onglet MEMBRES : Administrateurs puis Membres ────────── */}
+        {tab === "members" && (
+          <div className="flex-1 overflow-y-auto">
+            {filtered.length === 0 && (
+              <div className="py-10 px-4 text-center">
+                <Search className="w-8 h-8 text-[#C9A227]/40 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-[#1E0F2B]">Aucun membre trouvé</p>
+                <p className="text-xs text-[#8A8378] mt-1">Essayez un autre nom</p>
+              </div>
+            )}
+            {admins.length > 0 && (
+              <>
+                <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
+                  <Shield className="w-3 h-3 text-[#C9A227]" /> Administrateurs
+                  <span className="ml-auto font-semibold normal-case">{admins.length}</span>
+                </div>
+                {admins.map(renderRow)}
+              </>
+            )}
+            {regulars.length > 0 && (
+              <>
+                <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
+                  <Users className="w-3 h-3 text-[#C9A227]/70" /> Membres
+                  <span className="ml-auto font-semibold normal-case">{regulars.length}</span>
+                </div>
+                {regulars.map(renderRow)}
+              </>
+            )}
+          </div>
+        )}
 
         {/* ─── Pied : vocation communautaire ──────────────────────────── */}
         <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#FAF6EF]">
-          <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
-            <span>
-              Touchez un membre pour lui <b className="text-[#1E0F2B]">écrire en privé</b> ou
-              l'<b className="text-[#1E0F2B]">appeler</b> — « qu'ils soient unis » (Jean 17:23) :
-              les liens personnels font grandir la communauté.
-            </span>
-          </p>
+          {tab === "invite" ? (
+            <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
+              <UserPlus className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+              <span>
+                Invitez les membres de la communauté dans ce canal — « Allez, faites de
+                toutes les nations des disciples » (Matthieu 28:19) : chaque invitation
+                fait <b className="text-[#1E0F2B]">grandir la communauté</b>.
+              </span>
+            </p>
+          ) : (
+            <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+              <span>
+                Touchez un membre pour découvrir son <b className="text-[#1E0F2B]">profil</b>, lui
+                <b className="text-[#1E0F2B]"> écrire en privé</b> ou
+                l'<b className="text-[#1E0F2B]">appeler</b> — « qu'ils soient unis » (Jean 17:23) :
+                les liens personnels font grandir la communauté.
+              </span>
+            </p>
+          )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V3.5 — PROFIL COMPLET D'UN MEMBRE (au clic dans le panneau)
+// ═══════════════════════════════════════════════════════════════════════
+// « ou profil complet au clic (bio, pays/ville) » — la fiche façon
+// Telegram : identité + badges + présence, bio, localisation (drapeau),
+// « membre depuis », canaux communs, et les actions :
+//   • Message privé / Appel vocal / Appel vidéo ;
+//   • Bloquer / Débloquer (sécurité des privés — le blocage coupe les DM
+//     et les appels dans les DEUX sens, les canaux communs restent ouverts).
+// ────────────────────────────────────────────────────────────────────────
+
+/** Résultat de GET /api/yeshua-connect/members/:userId/profile. */
+interface MemberProfileData {
+  userId: string;
+  name: string;
+  avatarUrl?: string;
+  bio?: string;
+  country?: string;
+  city?: string;
+  role?: string;
+  isOnline: boolean;
+  memberSince: string;
+  sharedChannels: Array<{ id: string; name: string; avatarUrl?: string; type: string }>;
+  blockedByMe: boolean;
+  hasBlockedMe: boolean;
+}
+
+/** Drapeau du pays d'un membre : User.country est un texte libre (« Bénin »,
+ *  « France »…) ou parfois un code ISO (« BJ ») — on résout les deux. */
+function memberCountryFlag(country?: string): string {
+  if (!country) return "";
+  const c = country.trim();
+  if (/^[a-zA-Z]{2}$/.test(c)) return flagFromCountryCode(c.toUpperCase());
+  const norm = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const hit = COUNTRIES.find((co) => norm(co.name) === norm(c));
+  return hit ? flagFromCountryCode(hit.code) : "";
+}
+
+function MemberProfileModal({
+  userId, currentUserId, dmBusy, blockBusy,
+  onOpenDirectMessage, onCallMember, onToggleBlock, onClose,
+}: {
+  userId: string;
+  currentUserId: string;
+  originConversationId: string;
+  dmBusy: boolean;
+  blockBusy: boolean;
+  onOpenDirectMessage: (userId: string, name: string) => void;
+  onCallMember: (userId: string, type: "audio" | "video", name?: string, avatarUrl?: string) => void;
+  onToggleBlock: (userId: string, name: string | undefined, block: boolean) => void;
+  onClose: () => void;
+}) {
+  const [profile, setProfile] = useState<MemberProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Chargement du profil (annulable si le modal se referme).
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setProfile(null);
+    fetch(api.url(`/api/yeshua-connect/members/${userId}/profile`))
+      .then(async (res) => {
+        if (!res.ok) {
+          const e = await res.json().catch(() => ({}));
+          throw new Error((e as { error?: string }).error || "Profil indisponible");
+        }
+        return res.json() as Promise<MemberProfileData>;
+      })
+      .then((data) => {
+        if (!cancelled) setProfile(data);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Profil indisponible");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  const isMe = profile?.userId === currentUserId;
+  const globalLabel = profile ? globalRoleLabelFr(profile.role) : null;
+  const flag = profile ? memberCountryFlag(profile.country) : "";
+  const location = profile
+    ? [profile.country, profile.city].filter(Boolean).join(", ")
+    : "";
+
+  return (
+    <div
+      className="fixed inset-0 bg-[#1A0826]/60 backdrop-blur-[2px] flex items-center justify-center z-[60] p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ─── En-tête : grande photo, nom, badges, présence ─────────── */}
+        <div className="px-4 pt-4 pb-3 border-b border-[#C9A227]/15 bg-[#FAF6EF] relative">
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-white/70 text-[#8A8378]"
+            aria-label="Fermer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {loading ? (
+            <div className="py-8 flex flex-col items-center gap-2">
+              <Loader2 className="w-6 h-6 text-[#C9A227] animate-spin" />
+              <p className="text-xs text-[#8A8378]">Chargement du profil…</p>
+            </div>
+          ) : error ? (
+            <div className="py-8 text-center">
+              <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-[#1E0F2B]">Profil indisponible</p>
+              <p className="text-xs text-[#8A8378] mt-1">{error}</p>
+            </div>
+          ) : profile ? (
+            <div className="flex items-center gap-4 pr-8">
+              <div className="relative flex-shrink-0">
+                {profile.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt={profile.name}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-[#C9A227]/40" />
+                ) : (
+                  <div className={cn("w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm", getAvatarColor(profile.name || "?"))}>
+                    {getInitials(profile.name || "?")}
+                  </div>
+                )}
+                <span
+                  className={cn(
+                    "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[3px] border-[#FAF6EF]",
+                    profile.isOnline ? "bg-emerald-500" : "bg-stone-300"
+                  )}
+                  title={profile.isOnline ? "En ligne" : "Hors ligne"}
+                />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-bold text-[#1E0F2B] text-lg leading-tight truncate flex items-center gap-2">
+                  <span className="truncate">{profile.name}</span>
+                  {isMe && (
+                    <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-[#C9A227]/15 text-[#8C5FA8]">
+                      Vous
+                    </span>
+                  )}
+                </h3>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  {globalLabel && (
+                    <span className="inline-flex items-center gap-1 px-2 py-px rounded-full bg-[#8C5FA8]/10 text-[#8C5FA8] text-[10px] font-semibold">
+                      <Sparkles className="w-2.5 h-2.5" />{globalLabel}
+                    </span>
+                  )}
+                  <span className={cn(
+                    "inline-flex items-center gap-1 text-[10px] font-medium",
+                    profile.isOnline ? "text-emerald-600" : "text-[#8A8378]"
+                  )}>
+                    · {profile.isOnline ? "en ligne" : "hors ligne"}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#8A8378] mt-1 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Membre depuis {formatJoinedAtFr(profile.memberSince)}
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        {/* ─── Corps scrollable : localisation, bio, canaux communs ──── */}
+        {profile && (
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            {/* Localisation (pays + ville, avec drapeau) */}
+            {location && (
+              <div className="bg-white border border-[#C9A227]/20 rounded-xl px-3 py-2 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+                <span className="text-sm text-[#1E0F2B] flex items-center gap-1.5 min-w-0">
+                  {flag && <span className="text-base leading-none" aria-hidden>{flag}</span>}
+                  <span className="truncate">{location}</span>
+                </span>
+              </div>
+            )}
+
+            {/* Bio (renseignée par le membre dans ses paramètres) */}
+            {profile.bio ? (
+              <div className="bg-white border border-[#C9A227]/20 rounded-xl px-3 py-2.5">
+                <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-1">Bio</p>
+                <p className="text-sm text-[#1E0F2B] whitespace-pre-wrap leading-relaxed">{profile.bio}</p>
+              </div>
+            ) : (
+              <div className="bg-white/70 border border-[#C9A227]/10 rounded-xl px-3 py-2">
+                <p className="text-xs text-[#8A8378]">
+                  {isMe
+                    ? "Ajoutez votre bio et votre localisation depuis le bouton profil de la barre latérale."
+                    : "Ce membre n'a pas encore partagé sa bio."}
+                </p>
+              </div>
+            )}
+
+            {/* Canaux communs (« vous êtes tous les deux dans… ») */}
+            {profile.sharedChannels.length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <Users2 className="w-3 h-3 text-[#C9A227]/70" />
+                  {isMe ? "Vos canaux" : "Canaux en commun"} ({profile.sharedChannels.length})
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.sharedChannels.slice(0, 6).map((c) => (
+                    <span
+                      key={c.id}
+                      className="inline-flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-[#FAF6EF] border border-[#C9A227]/20 text-[11px] font-semibold text-[#1E0F2B] max-w-[10rem]"
+                    >
+                      {c.avatarUrl ? (
+                        <img src={c.avatarUrl} alt={c.name} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <Hash className="w-3 h-3 text-[#C9A227] flex-shrink-0" />
+                      )}
+                      <span className="truncate">{c.name}</span>
+                    </span>
+                  ))}
+                  {profile.sharedChannels.length > 6 && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 text-[11px] font-semibold text-[#8A8378]">
+                      +{profile.sharedChannels.length - 6}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ─── Bannière de blocage (si J'AI bloqué ce membre) ────── */}
+            {profile.blockedByMe && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 flex items-start gap-2">
+                <Ban className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-red-700">Membre bloqué</p>
+                  <p className="text-[11px] text-red-600/90 mt-0.5">
+                    {profile.name} ne peut plus vous écrire en privé ni vous appeler.
+                    Les canaux communs restent ouverts.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Actions (pied) ─────────────────────────────────────────── */}
+        {profile && !isMe && (
+          <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#FAF6EF] space-y-2">
+            {profile.blockedByMe ? (
+              /* Bloqué par moi → un seul geste : débloquer. */
+              <button
+                onClick={() => onToggleBlock(profile.userId, profile.name, false)}
+                disabled={blockBusy}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-40"
+              >
+                {blockBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
+                Débloquer ce membre
+              </button>
+            ) : profile.hasBlockedMe ? (
+              /* Il m'a bloqué → contact privé indisponible, SANS révéler
+                 explicitement le blocage (discrétion, comme Telegram). */
+              <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/70 border border-stone-200 text-[#8A8378] text-xs font-semibold">
+                <UserX className="w-4 h-4" />
+                Ce membre ne peut pas être contacté en privé actuellement
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    onClick={() => onOpenDirectMessage(profile.userId, profile.name)}
+                    disabled={dmBusy}
+                    className="flex flex-col items-center gap-1 py-2 rounded-xl bg-[#8C5FA8] text-[#FAF6EF] text-[11px] font-semibold hover:bg-[#7A4E96] active:scale-95 transition-all disabled:opacity-40"
+                    title={`Ouvrir une conversation privée avec ${profile.name}`}
+                  >
+                    {dmBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+                    Message privé
+                  </button>
+                  <button
+                    onClick={() => onCallMember(profile.userId, "audio", profile.name, profile.avatarUrl)}
+                    disabled={dmBusy}
+                    className="flex flex-col items-center gap-1 py-2 rounded-xl bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-40"
+                    title={`Appel audio privé avec ${profile.name}`}
+                  >
+                    <Phone className="w-4 h-4" />
+                    Appel vocal
+                  </button>
+                  <button
+                    onClick={() => onCallMember(profile.userId, "video", profile.name, profile.avatarUrl)}
+                    disabled={dmBusy}
+                    className="flex flex-col items-center gap-1 py-2 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-[11px] font-semibold hover:bg-[#3A1E4D] active:scale-95 transition-all disabled:opacity-40"
+                    title={`Appel vidéo privé avec ${profile.name}`}
+                  >
+                    <Video className="w-4 h-4" />
+                    Appel vidéo
+                  </button>
+                </div>
+                {/* ⭐ V3.5 — Blocage : coupe les privés (messages + appels),
+                    les canaux communs restent ouverts. */}
+                <button
+                  onClick={() => onToggleBlock(profile.userId, profile.name, true)}
+                  disabled={blockBusy}
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-white border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 active:scale-[0.98] transition-all disabled:opacity-40"
+                  title={`Bloquer ${profile.name} : il ne pourra plus vous écrire en privé ni vous appeler`}
+                >
+                  {blockBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ban className="w-3.5 h-3.5" />}
+                  Bloquer ce membre
+                </button>
+              </>
+            )}
+            <p className="text-[10px] text-[#8A8378]/80 text-center">
+              Le blocage coupe uniquement les échanges privés — les canaux de la
+              communauté restent ouverts.
+            </p>
+          </div>
+        )}
+
+        {/* Fiche « soi-même » : rappel du chemin de modification. */}
+        {profile && isMe && (
+          <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#FAF6EF]">
+            <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+              <span>
+                C'est vous 😉 Photo, bio, pays et ville se modifient via le bouton
+                profil de la barre latérale.
+              </span>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureMessageTypeEnum } from "@/lib/ensure-schema";
+import { ensureMessageTypeEnum, ensureUserBlockTable } from "@/lib/ensure-schema";
 
 /** Rôles pouvant modérer (et donc lire) tous les canaux même sans y être membre. */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -293,6 +293,41 @@ export async function POST(
         } else {
           return NextResponse.json(
             { error: "Vous n'êtes pas membre de ce canal" },
+            { status: 403 },
+          );
+        }
+      }
+    }
+
+    // ─── 🔒 V3.5 — Blocage : impossible d'écrire dans un PRIVÉ (canal à     
+    // 2 personnes exactement) si l'un des deux a bloqué l'autre. Les      
+    // groupes/canaux (3+ membres) restent OUVERTS — on bloque la         
+    // personne, pas la communauté.                                        
+    const dmMembers = await db.channelMember.findMany({
+      where: { channelId: id },
+      select: { userId: true },
+      take: 3,
+    });
+    if (dmMembers.length === 2) {
+      const other = dmMembers.find((m) => m.userId !== userId);
+      if (other) {
+        await ensureUserBlockTable();
+        const blockRows = await db.$queryRawUnsafe<Array<{ blockerId: string; blockedId: string }>>(
+          `SELECT "blockerId", "blockedId" FROM "UserBlock"
+           WHERE ("blockerId" = $1 AND "blockedId" = $2)
+              OR ("blockerId" = $2 AND "blockedId" = $1)`,
+          userId, other.userId,
+        );
+        if (blockRows.length > 0) {
+          const iBlockedThem = blockRows.some(
+            (r) => r.blockerId === userId && r.blockedId === other.userId,
+          );
+          return NextResponse.json(
+            {
+              error: iBlockedThem
+                ? "Vous avez bloqué ce membre — débloquez-le pour lui écrire"
+                : "Impossible d'écrire à ce membre en privé",
+            },
             { status: 403 },
           );
         }

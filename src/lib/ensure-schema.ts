@@ -346,3 +346,76 @@ export function ensureMessageTypeEnum(): Promise<void> {
   }
   return inflightMessageEnum;
 }
+
+let userBlockOk = false;
+let inflightUserBlock: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.5 — S'assure que la table `UserBlock` (blocage entre membres,
+ * sécurité des conversations privées Yeshua Connect) existe.
+ *
+ * Une ligne UserBlock = « blockerId a bloqué blockedId ». Effet :
+ *   - plus de messages PRIVÉS entre les deux (API dm + envoi dans un
+ *     canal 2-personnes + signalisation d'appel refusés côté serveur) ;
+ *   - les canaux/groupe communs restent ouverts (on bloque la personne,
+ *     pas la communauté).
+ *
+ * Mêmes garanties que les autres helpers : idempotent (IF NOT EXISTS),
+ * mémoïsé, concurrentiel, échec DDL purement loggué.
+ */
+export function ensureUserBlockTable(): Promise<void> {
+  if (userBlockOk) return Promise.resolve();
+  if (!inflightUserBlock) {
+    inflightUserBlock = (async () => {
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "UserBlock" (
+          "id" TEXT NOT NULL,
+          "blockerId" TEXT NOT NULL,
+          "blockedId" TEXT NOT NULL,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "UserBlock_pkey" PRIMARY KEY ("id")
+        )
+      `);
+      await db.$executeRawUnsafe(
+        `CREATE UNIQUE INDEX IF NOT EXISTS "UserBlock_blockerId_blockedId_key" ON "UserBlock"("blockerId", "blockedId")`
+      );
+      await db.$executeRawUnsafe(
+        `CREATE INDEX IF NOT EXISTS "UserBlock_blockedId_idx" ON "UserBlock"("blockedId")`
+      );
+      // FK vers User (idempotent) — suppression en cascade si un compte part.
+      await db.$executeRawUnsafe(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'UserBlock_blockerId_fkey'
+          ) THEN
+            ALTER TABLE "UserBlock"
+              ADD CONSTRAINT "UserBlock_blockerId_fkey"
+              FOREIGN KEY ("blockerId") REFERENCES "User"("id") ON DELETE CASCADE;
+          END IF;
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'UserBlock_blockedId_fkey'
+          ) THEN
+            ALTER TABLE "UserBlock"
+              ADD CONSTRAINT "UserBlock_blockedId_fkey"
+              FOREIGN KEY ("blockedId") REFERENCES "User"("id") ON DELETE CASCADE;
+          END IF;
+        END $$;
+      `);
+    })()
+      .then(() => {
+        userBlockOk = true;
+        console.log("[ensure-schema] Table UserBlock (blocage des privés) vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] CREATE TABLE UserBlock impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightUserBlock = null;
+      });
+  }
+  return inflightUserBlock;
+}

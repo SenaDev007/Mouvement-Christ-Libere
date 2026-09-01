@@ -25,6 +25,10 @@ export interface ChatParticipant {
   avatarUrl?: string;
   roleLabel: string;
   online: boolean;
+  /** ⭐ V3.5 — Blocage (sécurité des privés) : j'AI bloqué ce membre. */
+  blockedByMe?: boolean;
+  /** ⭐ V3.5 — Ce membre m'a bloqué (actions privées désactivées). */
+  hasBlockedMe?: boolean;
 }
 
 export interface ChatConversation {

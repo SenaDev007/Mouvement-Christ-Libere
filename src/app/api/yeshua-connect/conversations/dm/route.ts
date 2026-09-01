@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { ensureUserBlockTable } from "@/lib/ensure-schema";
 
 /** Rôles pouvant contacter n'importe quel membre (pasteurs / modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -55,7 +56,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Membre introuvable" }, { status: 404 });
     }
 
-    // ─── 2) Anti-spam : canal commun (sauf rôles privilégiés) ─────────
+    // ─── 2) 🔒 V3.5 — Blocage : vérifié pour TOUS (même privilégiés) ────
+    // Le blocage protège le consentement du membre : on ne peut pas lui
+    // écrire en privé si elle/il vous a bloqué — et réciproquement. Les
+    // canaux communs restent ouverts (le blocage ne touche que le privé).
+    await ensureUserBlockTable();
+    const blockRows = await db.$queryRawUnsafe<Array<{ blockerId: string; blockedId: string }>>(
+      `SELECT "blockerId", "blockedId" FROM "UserBlock"
+       WHERE ("blockerId" = $1 AND "blockedId" = $2)
+          OR ("blockerId" = $2 AND "blockedId" = $1)`,
+      meId, targetUserId,
+    );
+    if (blockRows.length > 0) {
+      const iBlockedThem = blockRows.some(
+        (r) => r.blockerId === meId && r.blockedId === targetUserId,
+      );
+      return NextResponse.json(
+        {
+          error: iBlockedThem
+            ? "Vous avez bloqué ce membre — débloquez-le depuis sa fiche pour lui écrire en privé"
+            : "Impossible d'écrire en privé à ce membre",
+        },
+        { status: 403 },
+      );
+    }
+
+    // ─── 3) Anti-spam : canal commun (sauf rôles privilégiés) ─────────
     if (!PRIVILEGED_ROLES.has(myRole || "")) {
       let shared: { id: string; communityId: string } | null = null;
       if (originChannelId) {

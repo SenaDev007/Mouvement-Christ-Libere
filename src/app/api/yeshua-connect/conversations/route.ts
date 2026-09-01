@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureChannelAvatarUrl, ensureVoiceVideoColumns, ensureV29Schema } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureVoiceVideoColumns, ensureV29Schema, ensureUserBlockTable } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir les canaux RESTRICTED (pasteurs / modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -53,6 +53,26 @@ export async function GET(_req: NextRequest) {
     // ⭐ V2.9 — Présence (User.lastSeenAt) : sans Socket.io déployé, le
     // « N en ligne » et les badges de présence reposent sur cette colonne.
     await ensureV29Schema();
+    // ⭐ V3.5 — Blocage des membres : sans la table UserBlock, les requêtes
+    // ci-dessous échoueraient — l'auto-réparation la crée au premier appel.
+    // (échec DDL purement loggué → l'application retombe sur « aucun bloc »)
+    let iBlockIds = new Set<string>();
+    let blockMeIds = new Set<string>();
+    try {
+      await ensureUserBlockTable();
+      const [iBlockRows, blockMeRows] = await Promise.all([
+        db.$queryRawUnsafe<Array<{ blockedId: string }>>(
+          `SELECT "blockedId" FROM "UserBlock" WHERE "blockerId" = $1`, userId,
+        ),
+        db.$queryRawUnsafe<Array<{ blockerId: string }>>(
+          `SELECT "blockerId" FROM "UserBlock" WHERE "blockedId" = $1`, userId,
+        ),
+      ]);
+      iBlockIds = new Set(iBlockRows.map((r) => r.blockedId));
+      blockMeIds = new Set(blockMeRows.map((r) => r.blockerId));
+    } catch {
+      // table absente — traité comme « aucun blocage » (dégradation douce)
+    }
     // ⭐ V2.9 — Marquer l'utilisateur comme EN LIGNE (ce GET est appelé au
     // chargement, au focus et par le polling de secours toutes les ~10 s →
     // il sert aussi de heartbeat de présence, en plus du POST /presence).
@@ -169,6 +189,10 @@ export async function GET(_req: NextRequest) {
           name: m.user.name ?? "Membre",
           avatarUrl: m.user.avatarUrl ?? undefined,
           roleLabel: m.role,
+          // ⭐ V3.5 — Statut de blocage (sécurité des privés) : grise/active
+          // les actions « message privé » / « appeler » du panneau des membres.
+          blockedByMe: iBlockIds.has(m.user.id),
+          hasBlockedMe: blockMeIds.has(m.user.id),
           // ⭐ V2.9 — Présence RÉELLE (fini le `online: false` figé) :
           // User.lastSeenAt < 90 s = en ligne. Le client la rafraîchit via
           // le heartbeat /presence + ce GET. Sans Socket.io, c'est la

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureCallSignalTable } from "@/lib/ensure-schema";
+import { ensureCallSignalTable, ensureUserBlockTable } from "@/lib/ensure-schema";
 
 /**
  * ⭐ V3.1 — SIGNALISATION DES APPELS AUDIO/VIDÉO Yeshua Connect.
@@ -246,6 +246,35 @@ export async function POST(req: NextRequest) {
       if (!member) {
         return NextResponse.json({ error: "Vous n'êtes pas membre de cette conversation" }, { status: 403 });
       }
+
+      // ─── 🔒 V3.5 — Blocage : un appel PRIVÉ (conversation à 2 personnes)
+      // ne doit pas SONNER chez un membre qui vous a bloqué (et vous ne
+      // pouvez pas appeler quelqu'un que VOUS avez bloqué). Les appels de
+      // canal/groupe (3+ membres) ne sont pas concernés.
+      const callConvMembers = await db.channelMember.findMany({
+        where: { channelId: conversationId },
+        select: { userId: true },
+        take: 3,
+      });
+      if (callConvMembers.length === 2) {
+        const otherMember = callConvMembers.find((m) => m.userId !== userId);
+        if (otherMember) {
+          await ensureUserBlockTable();
+          const blockRows = await db.$queryRawUnsafe<Array<{ blockerId: string }>>(
+            `SELECT "blockerId" FROM "UserBlock"
+             WHERE ("blockerId" = $1 AND "blockedId" = $2)
+                OR ("blockerId" = $2 AND "blockedId" = $1)`,
+            userId, otherMember.userId,
+          );
+          if (blockRows.length > 0) {
+            return NextResponse.json(
+              { error: "Impossible d'appeler ce membre en privé" },
+              { status: 403 },
+            );
+          }
+        }
+      }
+
       const callId = randomUUID();
       // Remplace tout signal ringing antérieur du même canal (un seul
       // appel simultané par conversation — évite les sonneries fantômes).
