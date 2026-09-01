@@ -1,9 +1,10 @@
 "use client";
 
 import { apiFetch } from "@/lib/api-client";
+import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
-  Scissors, Upload, Download, Play, Pause, SkipBack, SkipForward,
+  ArrowLeft, Scissors, Upload, Download, Play, Pause, SkipBack, SkipForward,
   Image as ImageIcon, Type, Film, Plus, Trash2, Loader2,
   Layers, Video as VideoIcon, Volume2, Music, Mic, Palette,
   Zap, Crop, RotateCw, FlipHorizontal, FlipVertical,
@@ -102,6 +103,9 @@ interface PostProductionState {
 }
 
 export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, servantName }: PostProductionProps) {
+  // ⭐ V3.17 — navigation retour vers la page Vidéos du back-office
+  const router = useRouter();
+
   // ─── États principaux ───
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
@@ -142,6 +146,10 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [collaborators, setCollaborators] = useState<{ id: string; name: string; color: string }[]>([]);
   const [projectSaved, setProjectSaved] = useState(false);
+  // ⭐ V3.17 — index d'historique au moment de la dernière sauvegarde :
+  // permet au bouton Retour de détecter les modifications non sauvegardées
+  // (fiable même après undo/redo : on compare l'index courant au dernier sauvé).
+  const [savedHistoryIndex, setSavedHistoryIndex] = useState(-1);
   const [emojiCategory, setEmojiCategory] = useState(0);
   const [collabEnabled, setCollabEnabled] = useState(false);
   const [showCollabPanel, setShowCollabPanel] = useState(false);
@@ -737,9 +745,28 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     pushHistory();
   };
 
+  // ⭐ V3.17 — Retour à la page Vidéos du back-office
+  // (flèche retour dans l'en-tête : plus besoin de repasser par la sidebar).
+  // Garde-fou : si des modifications existent et n'ont pas été sauvegardées
+  // depuis la dernière édition (undo/redo compris), on demande confirmation.
+  const handleRetour = () => {
+    const nonSauvergarde = historyIndex >= 0 && historyIndex !== savedHistoryIndex;
+    if (
+      nonSauvergarde &&
+      !window.confirm(
+        "Des modifications de post-production ne sont pas sauvegardées.\n" +
+        "Voulez-vous vraiment quitter et retourner à la page Vidéos ?"
+      )
+    ) {
+      return;
+    }
+    router.push("/admin/videos");
+  };
+
   // ─── Sauvegarder le projet (cloud sync) ───
   const handleSaveProject = async () => {
     setProjectSaved(true);
+    setSavedHistoryIndex(historyIndex);
     try {
       const projectState = {
         videoId,
@@ -1059,6 +1086,15 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
       <div className="border-b border-[#8A8378]/15 px-6 py-3 bg-white sticky top-0 z-30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* ⭐ V3.17 — bouton retour vers la page Vidéos (plus besoin de repasser par la sidebar) */}
+            <button
+              onClick={handleRetour}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-[#2A0E3D]/5 text-xs font-bold transition-colors flex-shrink-0"
+              title="Retour à la page Vidéos"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Retour</span>
+            </button>
             <h1 className="text-xl font-bold flex items-center gap-2 text-[#1E0F2B]">
               <Film className="w-5 h-5 text-[#C9A227]" />Post-production
             </h1>
