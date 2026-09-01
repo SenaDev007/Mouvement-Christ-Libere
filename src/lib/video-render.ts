@@ -29,6 +29,10 @@ import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { uploadToR2, generateKey } from "@/lib/r2";
+// ⭐ V3.16 — Rendu canvas des overlays texte/stickers : ffmpeg-static n'a
+// PAS drawtext (pas de libfreetype) → PNG transparent + filtre overlay.
+import { renderTextOverlayPng, renderStickerPng } from "./video-render-assets/overlay-png";
+import { getVideoFontRegular } from "./video-render-assets/fonts";
 
 const execAsync = promisify(exec);
 
@@ -281,21 +285,6 @@ async function downloadToTemp(url: string, destPath: string): Promise<void> {
   }
 }
 
-// ─── Escape pour drawtext ───
-
-function escapeDrawtext(text: string): string {
-  // Échapper les caractères spéciaux pour drawtext
-  return text
-    .replace(/\\/g, "\\\\")
-    .replace(/'/g, "'\\''")
-    .replace(/:/g, "\\:")
-    .replace(/%/g, "\\%");
-}
-
-function escapeFontFile(path: string): string {
-  return path.replace(/'/g, "'\\''");
-}
-
 // ─── Construire le filter_complex ───
 
 interface FilterContext {
@@ -306,90 +295,20 @@ interface FilterContext {
   tempFiles: string[];
 }
 
-function buildOverlayFilters(
-  overlays: (TextOverlay | ImageOverlay)[],
-  videoWidth: number,
-  videoHeight: number,
-  ctx: FilterContext,
-): void {
-  for (const overlay of overlays) {
-    if (overlay.type === "text") {
-      const t = overlay as TextOverlay;
-      const px = Math.round((t.x / 100) * videoWidth);
-      const py = Math.round((t.y / 100) * videoHeight);
-      const start = t.startTime || 0;
-      const end = t.endTime || -1; // -1 = jusqu'à la fin
 
-      let drawtext = `drawtext=fontfile='${escapeFontFile(getDefaultFont())}'`;
-      drawtext += `:text='${escapeDrawtext(t.content)}'`;
-      drawtext += `:x=${px}:y=${py}`;
-      drawtext += `:fontsize=${t.fontSize}`;
-      drawtext += `:fontcolor=${t.fontColor}`;
-      if (t.bold) drawtext += `:box=1:boxcolor=${t.bgColor || "black@0.5"}:boxborderw=5`;
-      drawtext += `:enable='between(t,${start},${end})'`;
-
-      // Animation fade
-      if (t.animation && t.animation !== "none") {
-        const dur = t.animationDuration || 0.5;
-        if (t.animation === "fade-in") {
-          drawtext += `:alpha='if(lt(t-${start}),0,if(lt(t-${start + dur}),(t-${start})/${dur},1))'`;
-        } else if (t.animation === "fade-out") {
-          const endT = end > 0 ? end : 999999;
-          drawtext += `:alpha='if(gt(t,${endT - dur}),max(0,1-(t-(${endT - dur}))/${dur}),1)'`;
-        } else if (t.animation === "fade-in-out") {
-          drawtext += `:alpha='if(lt(t-${start}),0,if(lt(t-${start + dur}),(t-${start})/${dur},if(gt(t,${end > 0 ? end - dur : 999999}),max(0,1-(t-(${end > 0 ? end - dur : 999999}))/${dur}),1)))'`;
-        }
-      }
-
-      ctx.filters.push(drawtext);
-    } else if (overlay.type === "image") {
-      const img = overlay as ImageOverlay;
-      // L'image est un input supplémentaire — on l'ajoute comme -i
-      const imgInputIndex = ctx.inputCount;
-      ctx.inputCount++;
-
-      // Appliquer scale + opacity sur l'image
-      const px = Math.round((img.x / 100) * videoWidth);
-      const py = Math.round((img.y / 100) * videoHeight);
-      const imgFilters: string[] = [];
-      imgFilters.push(`scale=iw*${img.scale}:ih*${img.scale}`);
-      imgFilters.push(`format=rgba`);
-      imgFilters.push(`colorchannelmixer=aa=${img.opacity}`);
-
-      let imgLabel = `[${imgInputIndex}:v]`;
-      imgLabel += `${imgFilters.join(",")}[img${imgInputIndex}]`;
-      ctx.filters.push(imgLabel);
-
-      // Overlay sur la vidéo
-      const start = img.startTime || 0;
-      const end = img.endTime || -1;
-      const overlayFilter = `[${ctx.videoLabel.slice(1, -1)}][img${imgInputIndex}]overlay=x=${px}:y=${py}:enable='between(t,${start},${end})'[v${ctx.inputCount}]`;
-      ctx.filters.push(overlayFilter);
-      ctx.videoLabel = `[v${ctx.inputCount}]`;
-    }
-  }
-}
-
-function getDefaultFont(): string {
-  // Fonts disponibles sur Vercel serverless (Linux) et en dev
-  const candidates = [
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-    "/System/Library/Fonts/Helvetica.ttc",
-  ];
-  return candidates[0];
-}
-
-function getEmojiFont(): string {
-  // Font avec support emoji — Noto Color Emoji si disponible, sinon fallback
-  const candidates = [
-    "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",
-    "/usr/share/fonts/truetype/noto/NotoEmoji.ttf",
-    "/usr/share/fonts/truetype/noto-color-emoji/NotoColorEmoji.ttf",
-    "/System/Library/Fonts/Apple Color Emoji.ttc",
-  ];
-  return candidates[0];
+/**
+ * ⭐ V3.16 — Clause enable CORRECTE pour un overlay.
+ * Avant : un overlay sans endTime produisait enable='between(t,0,-1)' —
+ * condition TOUJOURS FAUSSE → le texte/l'image n'apparaissait JAMAIS dans
+ * la vidéo exportée. Désormais : pas de bornes → toujours visible.
+ */
+function buildEnableClause(start?: number, end?: number): string {
+  const hasStart = typeof start === "number" && start > 0;
+  const hasEnd = typeof end === "number" && end > 0;
+  if (hasStart && hasEnd) return `:enable='between(t,${start},${end})'`;
+  if (hasStart) return `:enable='gte(t,${start})'`;
+  if (hasEnd) return `:enable='lte(t,${end})'`;
+  return "";
 }
 
 function buildVideoFilterPreset(filter: VideoFilter): string {
@@ -587,6 +506,9 @@ export async function buildRenderPlan(
 
   // ─── 4. Appliquer les filtres (overlays, color, speed, transform, sous-titres, audio) ───
   let workingFile = concatFile;
+  // ⭐ V3.16 — BUG CORRIGÉ : un filtre preset / stabilisation / chroma key
+  // SEUL (sans autre réglage) ne déclenchait PAS la passe de filtrage → le
+  // rendu sortait identique à la source. Ces réglages comptent désormais.
   const hasFilters =
     project.overlays.length > 0 ||
     project.colorAdjust ||
@@ -594,7 +516,10 @@ export async function buildRenderPlan(
     project.transform ||
     project.subtitles ||
     project.audioTracks ||
-    project.mainVolume !== undefined;
+    project.mainVolume !== undefined ||
+    (project.filters && project.filters !== "none") ||
+    project.stabilisation?.enabled === true ||
+    project.chromaKey?.enabled === true;
 
   if (hasFilters) {
     const filteredFile = path.join(tmpDir, "filtered.mp4");
@@ -604,14 +529,44 @@ export async function buildRenderPlan(
     const inputs: string[] = [`-i "${workingFile}"`];
     let inputCount = 1;
 
-    // Ajouter les inputs pour les overlays image
+    // ⭐ V3.16 — Préparer TOUS les overlays en entrées PNG superposables.
+    // ffmpeg-static n'embarque PAS drawtext (texte impossible via ffmpeg) :
+    //   - image    → fichier téléchargé (comme avant) ;
+    //   - texte    → rendu @napi-rs/canvas (DejaVu embarquée) en PNG ;
+    //   - sticker  → emoji CDN (OpenMoji 618 px) composé avec rotation.
+    // Tout est ensuite superposé par le filtre overlay (disponible).
+    const overlayInputs: Array<{ index: number; overlay: (typeof project.overlays)[number] }> = [];
     for (const overlay of project.overlays) {
-      if (overlay.type === "image") {
-        const imgFile = path.join(tmpDir, `overlay-img-${inputCount}.png`);
-        await downloadToTemp((overlay as ImageOverlay).url, imgFile);
-        tempFiles.push(imgFile);
-        inputs.push(`-i "${imgFile}"`);
-        inputCount++;
+      try {
+        if (overlay.type === "image") {
+          const imgFile = path.join(tmpDir, `overlay-img-${inputCount}.png`);
+          await downloadToTemp((overlay as ImageOverlay).url, imgFile);
+          tempFiles.push(imgFile);
+          overlayInputs.push({ index: inputCount, overlay });
+          inputs.push(`-i "${imgFile}"`);
+          inputCount++;
+        } else if (overlay.type === "text") {
+          const pngFile = path.join(tmpDir, `overlay-text-${inputCount}.png`);
+          const png = renderTextOverlayPng(overlay as TextOverlay);
+          await fs.writeFile(pngFile, png);
+          tempFiles.push(pngFile);
+          overlayInputs.push({ index: inputCount, overlay });
+          inputs.push(`-i "${pngFile}"`);
+          inputCount++;
+        } else if (overlay.type === "sticker") {
+          const pngFile = path.join(tmpDir, `overlay-sticker-${inputCount}.png`);
+          const png = await renderStickerPng(overlay as StickerOverlay);
+          if (png) {
+            await fs.writeFile(pngFile, png);
+            tempFiles.push(pngFile);
+            overlayInputs.push({ index: inputCount, overlay });
+            inputs.push(`-i "${pngFile}"`);
+            inputCount++;
+          }
+        }
+      } catch (ovErr) {
+        // Un overlay introuvable n'interrompt pas le rendu entier.
+        console.warn("[render] overlay ignoré (préparation impossible) :", ovErr);
       }
     }
 
@@ -666,123 +621,152 @@ export async function buildRenderPlan(
       vf.push(speedFilters.video);
     }
 
-    // --- Overlays texte ---
-    for (const overlay of project.overlays) {
-      if (overlay.type === "text") {
-        const t = overlay as TextOverlay;
-        const px = Math.round((t.x / 100) * targetWidth);
-        const py = Math.round((t.y / 100) * targetHeight);
-        const start = t.startTime || 0;
-        const end = t.endTime || -1;
+    // ⭐ V3.16 — TOUS LES OVERLAYS VIA LE FILTRE overlay (plus AUCUN
+    // drawtext — absent de ffmpeg-static sur Vercel). Chaque overlay
+    // (image, texte rendu en PNG, sticker emoji rendu en PNG) est une
+    // chaîne étiquetée reliée au flux principal, assemblée par « ; ».
+    let imgInputIdx = 1; // premier index libre après les overlays préparés
+    const imageChains: string[] = [];
+    const overlayChains: string[] = [];
+    let videoFlowLabel = "vbase";
+    let ovIdx = 0;
+    for (const { index, overlay } of overlayInputs) {
+      const o = overlay as TextOverlay | ImageOverlay | StickerOverlay;
+      const px = Math.round((o.x / 100) * targetWidth);
+      const py = Math.round((o.y / 100) * targetHeight);
+      const start = "startTime" in o ? o.startTime : undefined;
+      const end = "endTime" in o ? o.endTime : undefined;
+      const enable = buildEnableClause(start, end);
 
-        let drawtext = `drawtext=fontfile='${escapeFontFile(getDefaultFont())}'`;
-        drawtext += `:text='${escapeDrawtext(t.content)}'`;
-        drawtext += `:x=${px}:y=${py}`;
-        drawtext += `:fontsize=${t.fontSize}`;
-        drawtext += `:fontcolor=${t.fontColor}`;
-        if (t.bold) {
-          drawtext += `:box=1:boxcolor=${t.bgColor || "black@0.5"}:boxborderw=5`;
-        }
-        drawtext += `:enable='between(t,${start},${end})'`;
-
-        vf.push(drawtext);
-      } else if (overlay.type === "sticker") {
-        // --- Stickers emoji (via drawtext avec emoji Unicode) ---
-        const s = overlay as StickerOverlay;
-        const px = Math.round((s.x / 100) * targetWidth);
-        const py = Math.round((s.y / 100) * targetHeight);
-        const start = s.startTime || 0;
-        const end = s.endTime || -1;
-
-        let drawtext = `drawtext=fontfile='${escapeFontFile(getEmojiFont())}'`;
-        drawtext += `:text='${escapeDrawtext(s.emoji)}'`;
-        drawtext += `:x=${px}:y=${py}`;
-        drawtext += `:fontsize=${s.size}`;
-        drawtext += `:fontcolor=white`;
-        drawtext += `:alpha=${s.opacity}`;
-        drawtext += `:enable='between(t,${start},${end})'`;
-
-        vf.push(drawtext);
-      }
-    }
-
-    // --- Overlays image ---
-    let imgInputIdx = 1; // commence à 1 car [0] est la vidéo principale
-    for (const overlay of project.overlays) {
+      // Chaîne d'entrée : mise à l'échelle (images) + opacité (tous)
+      const inFilters: string[] = ["format=rgba"];
       if (overlay.type === "image") {
         const img = overlay as ImageOverlay;
-        const px = Math.round((img.x / 100) * targetWidth);
-        const py = Math.round((img.y / 100) * targetHeight);
-        const start = img.startTime || 0;
-        const end = img.endTime || -1;
-
-        // Scale + opacity sur l'image input
-        vf.push(`[${imgInputIdx}:v]scale=iw*${img.scale}:ih*${img.scale},format=rgba,colorchannelmixer=aa=${img.opacity}[img${imgInputIdx}]`);
-        // Overlay sur le flux vidéo
-        const lastV = vf.length > 0 && vf[vf.length - 1].includes("[img") ? "v0" : "0:v";
-        vf.push(`[${lastV}][img${imgInputIdx}]overlay=x=${px}:y=${py}:enable='between(t,${start},${end})'[v${imgInputIdx}]`);
-        imgInputIdx++;
+        inFilters.unshift(`scale=iw*${img.scale}:ih*${img.scale}`);
       }
+      const opacity =
+        overlay.type === "image"
+          ? (overlay as ImageOverlay).opacity
+          : overlay.type === "sticker"
+            ? (overlay as StickerOverlay).opacity
+            : 1;
+      if (opacity !== undefined && opacity < 1) {
+        inFilters.push(`colorchannelmixer=aa=${opacity}`);
+      }
+      imageChains.push(`[${index}:v]${inFilters.join(",")}[ovin${index}]`);
+
+      // Superposition CENTRÉE sur (x%, y%) — WYSIWYG avec le preview
+      ovIdx++;
+      const outLabel = `ov${ovIdx}`;
+      overlayChains.push(`[${videoFlowLabel}][ovin${index}]overlay=x=${px}-overlay_w/2:y=${py}-overlay_h/2${enable}[${outLabel}]`);
+      videoFlowLabel = outLabel;
+      imgInputIdx = index + 1;
     }
 
-    // --- Sous-titres ---
+    // ⭐ V3.16 — postVf : filtres simples appliqués APRÈS la composition
+    // des overlays image (sous-titres, format, résolution).
+    const postVf: string[] = [];
+
+    // --- Sous-titres (libass + fontconfig dédié à la police embarquée) ---
+    // ⭐ V3.16 — le lambda Vercel ne contient AUCUNE police système : libass
+    // (filtre subtitles) ne trouvait rien à restituer. On écrit la police
+    // DejaVu embarquée dans le tmpDir + un fonts.conf minimal, et on pointe
+    // FONTCONFIG_FILE dessus pour la commande ffmpeg.
+    let fontconfigFile: string | null = null;
     if (project.subtitles && project.subtitles.srtContent) {
       const srtFile = path.join(tmpDir, "subtitles.srt");
       await fs.writeFile(srtFile, project.subtitles.srtContent, "utf-8");
       tempFiles.push(srtFile);
 
+      // Police + fonts.conf locaux (uniques fonts visibles de fontconfig)
+      const fontsDir = path.join(tmpDir, "fonts");
+      const cacheDir = path.join(tmpDir, "fontcache");
+      await fs.mkdir(fontsDir, { recursive: true });
+      await fs.mkdir(cacheDir, { recursive: true });
+      await fs.writeFile(path.join(fontsDir, "DejaVuSans.ttf"), getVideoFontRegular());
+      fontconfigFile = path.join(tmpDir, "fonts.conf");
+      const confContent = (
+        '<?xml version="1.0"?>\n' +
+        '<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">\n' +
+        '<fontconfig>\n' +
+        '  <dir>' + fontsDir + '</dir>\n' +
+        '  <cachedir>' + cacheDir + '</cachedir>\n' +
+        '</fontconfig>\n'
+      );
+      await fs.writeFile(fontconfigFile, confContent, "utf-8");
+
       const style = project.subtitles.style;
       const alignment = style.position === "top" ? 6 : style.position === "center" ? 5 : 2;
-      const forceStyle = `FontSize=${style.fontSize},PrimaryColour=${hexToAss(style.fontColor)},OutlineColour=${hexToAss(style.outlineColor)},Outline=${style.outlineWidth},Bold=${style.bold ? 1 : 0},Alignment=${alignment}`;
-      vf.push(`subtitles='${srtFile.replace(/'/g, "\\'")}':force_style='${forceStyle}'`);
+      const forceStyle = `FontName=DejaVu Sans,FontSize=${style.fontSize},PrimaryColour=${hexToAss(style.fontColor)},OutlineColour=${hexToAss(style.outlineColor)},Outline=${style.outlineWidth},Bold=${style.bold ? 1 : 0},Alignment=${alignment}`;
+      // ⭐ V3.16 — filtres POST-overlays (séparés des chaînes étiquetées)
+      postVf.push(`subtitles='${srtFile.replace(/'/g, "\\'")}':force_style='${forceStyle}'`);
     }
 
     // --- Aspect ratio / resolution d'export ---
     if (project.export.aspectRatio && project.export.aspectRatio !== "original") {
-      vf.push(buildAspectFilter(project.export.aspectRatio, targetWidth, targetHeight));
+      postVf.push(buildAspectFilter(project.export.aspectRatio, targetWidth, targetHeight));
     }
     if (project.export.resolution && project.export.resolution !== "original") {
-      vf.push(buildResolutionFilter(project.export.resolution));
+      postVf.push(buildResolutionFilter(project.export.resolution));
     }
 
-    // Construire la commande ffmpeg complète
-    const filterComplex = vf.length > 0 ? `-filter_complex "${vf.join(",")}"` : "";
-    const mapVideo = vf.length > 0 ? `-map "[v${imgInputIdx - 1}]"` : `-map 0:v`;
-    const mapAudio = project.audioTracks && project.audioTracks.length > 0 ? "" : `-map 0:a?`;
+    // ─── ⭐ V3.16 — ASSEMBLAGE CORRECT DU filter_complex ───
+    // L'ancien code rejoignait TOUT (filtres simples, chaînes étiquetées
+    // images, chaînes audio) par « , » → graphe ffmpeg invalide : l'export
+    // échouait dès qu'une image overlay OU une piste audio était présente.
+    // Structure désormais valide :
+    //   [0:v]filtres simples[vbase] ;
+    //   [i:v]scale,...[imgN] ;
+    //   [vbase][imgN]overlay=...[ovN] ; (chaînes successives)
+    //   [ovN]sous-titres,format,résolution[vout] ;
+    //   [0:a]atempo,volume[a0] ; [j:a]afade,volume[aJ] ;
+    //   [a0][aJ]amix=...[aout]
+    const hasImages = overlayChains.length > 0;
+    const chains: string[] = [];
 
-    // Gestion audio : mix des pistes
-    let audioFilter = "";
+    if (hasImages) {
+      chains.push(`[0:v]${vf.length > 0 ? vf.join(",") : "null"}[vbase]`);
+      chains.push(...imageChains);
+      chains.push(...overlayChains);
+      chains.push(`[${videoFlowLabel}]${postVf.length > 0 ? postVf.join(",") : "null"}[vout]`);
+    } else if (vf.length + postVf.length > 0) {
+      chains.push(`[0:v]${[...vf, ...postVf].join(",")}[vout]`);
+    }
+
+    // ─── Audio : atempo (vitesse) + volume principal + mix des pistes ───
+    // ⭐ V3.16 — le atempo de la vitesse était IGNORÉ avant (vidéo accélérée
+    // mais audio à vitesse normale → désynchronisation à l'export).
+    const audioChains: string[] = [];
+    let mapAudioLabel: string | null = null;
+    const mainAudioAtempo = project.speed ? buildSpeedFilter(project.speed).audio : "";
     if (project.audioTracks && project.audioTracks.length > 0) {
-      // amix des pistes audio supplémentaires + la piste principale
-      const audioInputs = ["[0:a]"];
+      const mainVol = project.mainVolume !== undefined ? project.mainVolume : 1;
+      audioChains.push(`[0:a]${mainAudioAtempo ? mainAudioAtempo + "," : ""}volume=${mainVol}[a0]`);
+      const mixLabels = ["[a0]"];
       let audioIdx = imgInputIdx; // les inputs audio suivent les inputs image
       for (let i = 0; i < project.audioTracks.length; i++) {
         const vol = project.audioTracks[i].volume;
         const fadeIn = project.audioTracks[i].fadeIn || 0;
         const fadeOut = project.audioTracks[i].fadeOut || 0;
         let aFilter = `[${audioIdx}:a]`;
-        if (fadeIn > 0 || fadeOut > 0) {
-          aFilter += `afade=t=in:st=0:d=${fadeIn},afade=t=out:st=9999:d=${fadeOut},`;
-        }
+        if (fadeIn > 0) aFilter += `afade=t=in:st=0:d=${fadeIn},`;
+        if (fadeOut > 0) aFilter += `afade=t=out:st=9999:d=${fadeOut},`;
         aFilter += `volume=${vol}[a${audioIdx}]`;
-        vf.push(aFilter);
-        audioInputs.push(`[a${audioIdx}]`);
+        audioChains.push(aFilter);
+        mixLabels.push(`[a${audioIdx}]`);
         audioIdx++;
       }
-      const mainVol = project.mainVolume !== undefined ? project.mainVolume : 1;
-      audioInputs[0] = `[0:a]volume=${mainVol}[a0]`;
-      vf.push(`[0:a]volume=${mainVol}[a0]`);
-      audioInputs[0] = "[a0]";
-      audioFilter = `${audioInputs.join("")}amix=inputs=${audioInputs.length}:duration=longest:dropout_transition=0[aout]`;
-      vf.push(audioFilter);
+      audioChains.push(`${mixLabels.join("")}amix=inputs=${mixLabels.length}:duration=first:dropout_transition=0[aout]`);
+      mapAudioLabel = "[aout]";
     } else if (project.mainVolume !== undefined && project.mainVolume !== 1) {
-      vf.push(`[0:a]volume=${project.mainVolume}[aout]`);
-      audioFilter = "";
+      audioChains.push(`[0:a]${mainAudioAtempo ? mainAudioAtempo + "," : ""}volume=${project.mainVolume}[aout]`);
+      mapAudioLabel = "[aout]";
     }
 
-    const finalMapAudio = project.audioTracks && project.audioTracks.length > 0
-      ? `-map "[aout]"`
-      : (project.mainVolume !== undefined && project.mainVolume !== 1 ? `-map "[aout]"` : `-map 0:a?`);
+    const allChains = [...chains, ...audioChains];
+    const filterComplex = allChains.length > 0 ? `-filter_complex "${allChains.join(";")}"` : "";
+    const mapVideo = chains.length > 0 ? `-map "[vout]"` : `-map 0:v`;
+    const finalMapAudio = mapAudioLabel ? `-map "${mapAudioLabel}"` : `-map 0:a?`;
 
     const fpsFlag = project.export.fps ? `-r ${project.export.fps}` : "";
     const crf = project.export.crf || 23;
@@ -793,8 +777,19 @@ export async function buildRenderPlan(
       `-c:a aac -b:a 128k -ar 44100 ` +
       `"${filteredFile}"`;
 
-    await execCmd(cmd);
-    steps.push(`Application des filtres (${vf.length} filtres)`);
+    // ⭐ V3.16 — fontconfig local pour libass (police embarquée) : sans
+    // cela, le lambda Vercel n'a AUCUNE police et les sous-titres sortent vides.
+    if (fontconfigFile) {
+      process.env.FONTCONFIG_FILE = fontconfigFile;
+    }
+    try {
+      await execCmd(cmd);
+    } finally {
+      if (fontconfigFile) {
+        delete process.env.FONTCONFIG_FILE;
+      }
+    }
+    steps.push(`Application des filtres (${vf.length} filtres + ${overlayChains.length} overlays)`);
     workingFile = filteredFile;
   }
 

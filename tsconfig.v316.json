@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/components/post-production/**/*.tsx",
+    "src/components/post-production/**/*.ts",
+    "src/lib/video-render.ts",
+    "src/lib/video-render-assets/**/*.ts",
+    "src/lib/r2.ts",
+    "src/app/api/videos/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

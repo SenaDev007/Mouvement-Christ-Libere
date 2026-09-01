@@ -82,6 +82,10 @@ export async function POST(
 
     if (body.segments && Array.isArray(body.segments)) {
       // Nouveau format : RenderProject complet
+      // ⭐ V3.16 — BUG CORRIGÉ : filters / stabilisation / chromaKey envoyés
+      // par le client étaient ABANDONNÉS ici (le moteur de rendu ne les
+      // recevait jamais → « les filtres ne fonctionnent pas », même à
+      // l'export). Ils sont désormais transmis tels quels.
       project = {
         videoId: id,
         segments: body.segments,
@@ -96,6 +100,9 @@ export async function POST(
         export: body.export || { aspectRatio: "original", resolution: "original" },
         thumbnailUrl: body.thumbnailUrl,
         title: body.title,
+        filters: body.filters,
+        stabilisation: body.stabilisation,
+        chromaKey: body.chromaKey,
       };
     } else {
       // Ancien format (rétro-compatibilité) : trim + intro/outro

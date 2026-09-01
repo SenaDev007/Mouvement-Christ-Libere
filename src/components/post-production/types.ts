@@ -382,7 +382,9 @@ export const SOUND_EFFECTS: SoundEffect[] = [
   { id: "sfx-cheer", name: "Acclamations", category: "crowd", url: "https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3", duration: 4.0, icon: "🎉" },
   { id: "sfx-laugh", name: "Rires", category: "crowd", url: "https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3", duration: 3.0, icon: "😂" },
   // Music
-  { id: "sfx-shofar", name: "Shofar", category: "music", url: "/sfx/shofar.mp3", duration: 3.0, icon: "📯" },
+  // ⭐ V3.16 — shofar : le fichier vit dans /sounds (chargé pour la page
+  // d'ouverture) — l'ancienne URL /sfx/shofar.mp3 n'existait pas (404).
+  { id: "sfx-shofar", name: "Shofar", category: "music", url: "/sounds/shofar.mp3", duration: 3.0, icon: "📯" },
   { id: "sfx-piano", name: "Piano doux", category: "music", url: "https://assets.mixkit.co/active_storage/sfx/2023/2023-preview.mp3", duration: 8.0, icon: "🎹" },
   { id: "sfx-guitar", name: "Guitare", category: "music", url: "https://assets.mixkit.co/active_storage/sfx/2024/2024-preview.mp3", duration: 6.0, icon: "🎸" },
 ];

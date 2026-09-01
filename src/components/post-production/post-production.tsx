@@ -1,7 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api-client";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   Scissors, Upload, Download, Play, Pause, SkipBack, SkipForward,
   Image as ImageIcon, Type, Film, Plus, Trash2, Loader2,
@@ -9,7 +9,7 @@ import {
   Zap, Crop, RotateCw, FlipHorizontal, FlipVertical,
   Subtitles, Wand2, Undo2, Redo2, Save, Eye, RefreshCw,
   Smile, Sparkles, Cloud, Users, Keyboard, Sticker as StickerIcon,
-  Wind, Shield, Eraser, CheckCircle2, Youtube,
+  Wind, Shield, Eraser, CheckCircle2, Youtube, Square,
 } from "lucide-react";
 import type {
   Overlay, TextOverlay, ImageOverlay, Segment, RenderProject,
@@ -21,11 +21,13 @@ import {
   DEFAULT_COLOR_ADJUST, DEFAULT_SPEED, DEFAULT_TRANSFORM, DEFAULT_EXPORT,
   DEFAULT_SUBTITLE_STYLE, ASPECT_RATIOS, RESOLUTIONS, TRANSITION_TYPES,
   EMOJI_CATEGORIES, VIDEO_FILTERS, SOUND_EFFECTS, KEYBOARD_SHORTCUTS,
+  type SoundEffect,
 } from "./types";
 import { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
 import { BgRemovalProcessor } from "./bg-removal-processor";
 import { useCollaboration } from "./use-collaboration";
 import { CollaborationPanel, CollaboratorCursors } from "./collaboration-panel";
+import { OverlayView } from "./overlay-view";
 
 interface PostProductionProps {
   videoId: string;
@@ -162,6 +164,14 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const voiceoverChunksRef = useRef<Blob[]>([]);
   const [isRecordingVoiceover, setIsRecordingVoiceover] = useState(false);
 
+  // ─── ⭐ V3.16 — PRÉVISUALISATION LIVE ───
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [previewWidth, setPreviewWidth] = useState(0);
+  const [videoDims, setVideoDims] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const [playingSfxId, setPlayingSfxId] = useState<string | null>(null);
+  const sfxPreviewRef = useRef<HTMLAudioElement | null>(null);
+
   // ─── Récupérer l'URL de la vidéo ───
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(initialVideoUrl || null);
   const [loadingVideo, setLoadingVideo] = useState(!initialVideoUrl);
@@ -191,11 +201,108 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     const onLoadedMetadata = () => {
       setTrimEnd(video.duration);
       setTotalDuration(video.duration);
+      setVideoDims({ w: video.videoWidth || 0, h: video.videoHeight || 0 });
       setTimeline((prev) => prev.map((clip) => clip.type === "main" ? { ...clip, duration: video.duration, url: currentVideoUrl } : clip));
     };
     video.addEventListener("loadedmetadata", onLoadedMetadata);
     return () => video.removeEventListener("loadedmetadata", onLoadedMetadata);
   }, [currentVideoUrl]);
+
+  // ─── ⭐ V3.16 — LARGEUR DU PREVIEW (ResizeObserver) : ratio WYSIWYG ───
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) setPreviewWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    setPreviewWidth(el.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, []);
+
+  // ─── ⭐ V3.16 — FILTRE CSS DE PRÉVISUALISATION (couleur + preset) ───
+  // Avant, les réglages couleur/filtres n'étaient visibles QU'À L'EXPORT :
+  // « les étalonnages couleur, luminosité, contraste, saturation, gamma,
+  // rien ne fonctionne » — désormais TOUT s'applique en direct au <video>.
+  const PRESET_CSS: Record<VideoFilter, string> = {
+    none: "",
+    vintage: "sepia(0.35) contrast(1.1) brightness(0.95) saturate(0.8)",
+    noir: "grayscale(1) contrast(1.3) brightness(0.95)",
+    sepia: "sepia(1)",
+    cool: "saturate(1.2) hue-rotate(-12deg) brightness(1.03)",
+    warm: "sepia(0.25) saturate(1.25) hue-rotate(-8deg) brightness(1.02)",
+    dramatic: "contrast(1.45) saturate(1.15) brightness(0.88)",
+    fade: "contrast(0.82) brightness(1.12) saturate(0.72)",
+    vivid: "saturate(1.6) contrast(1.15)",
+  };
+
+  const previewFilterCss = useMemo(() => {
+    const parts: string[] = [];
+    const preset = PRESET_CSS[videoFilter];
+    if (preset) parts.push(preset);
+    if (colorAdjust.brightness !== 0) parts.push(`brightness(${(1 + colorAdjust.brightness).toFixed(3)})`);
+    if (colorAdjust.contrast !== 1) parts.push(`contrast(${colorAdjust.contrast.toFixed(3)})`);
+    if (colorAdjust.saturation !== 1) parts.push(`saturate(${colorAdjust.saturation.toFixed(3)})`);
+    // Gamma : approximation visuelle (l'export ffmpeg applique le vrai eq=gamma)
+    if (colorAdjust.gamma !== 1) parts.push(`brightness(${Math.pow(colorAdjust.gamma, 0.5).toFixed(3)})`);
+    return parts.length > 0 ? parts.join(" ") : undefined;
+     
+  }, [videoFilter, colorAdjust.brightness, colorAdjust.contrast, colorAdjust.saturation, colorAdjust.gamma]);
+
+  // ─── ⭐ V3.16 — TRANSFORM CSS (miroir / rotation) en direct ───
+  const previewTransformCss = useMemo(() => {
+    const parts: string[] = [];
+    if (transform.flipH) parts.push("scaleX(-1)");
+    if (transform.flipV) parts.push("scaleY(-1)");
+    if (transform.rotate) parts.push(`rotate(${transform.rotate}deg)`);
+    return parts.length > 0 ? parts.join(" ") : undefined;
+  }, [transform.flipH, transform.flipV, transform.rotate]);
+
+  // ─── ⭐ V3.16 — RATIO WYSIWYG (px preview ÷ px export) ───
+  const EXPORT_WIDTHS: Record<string, number> = { "480p": 854, "720p": 1280, "1080p": 1920 };
+  const exportWidth = exportConfig.resolution === "original"
+    ? (videoDims.w || 1920)
+    : (EXPORT_WIDTHS[exportConfig.resolution] || 1920);
+  const previewRatio = previewWidth > 0 ? previewWidth / exportWidth : 0;
+
+  // ─── ⭐ V3.16 — FORMAT DU PREVIEW = format d'export ───
+  const previewAspect = useMemo(() => {
+    switch (exportConfig.aspectRatio) {
+      case "16:9": return "16 / 9";
+      case "9:16": return "9 / 16";
+      case "1:1": return "1 / 1";
+      case "4:5": return "4 / 5";
+      default: return videoDims.w > 0 ? `${videoDims.w} / ${videoDims.h}` : "16 / 9";
+    }
+  }, [exportConfig.aspectRatio, videoDims]);
+
+  // ─── ⭐ V3.16 — VITESSE DE LECTURE EN DIRECT ───
+  // « La vitesse de lecture aussi après paramétrage, ça ne fonctionne pas » —
+  // le playbackRate du <video> suit désormais le curseur (et l'audio aussi).
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.playbackRate = speed.factor;
+    audioRefs.current.forEach((el) => { el.playbackRate = speed.factor; });
+  }, [speed.factor, currentVideoUrl, isPlaying]);
+
+  // ─── ⭐ V3.16 — VOLUME PRINCIPAL EN DIRECT ───
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.volume = Math.min(1, Math.max(0, mainVolume));
+  }, [mainVolume, currentVideoUrl, isPlaying]);
+
+  // ─── ⭐ V3.16 — VOLUMES DES PISTES AUDIO EN DIRECT ───
+  useEffect(() => {
+    audioTracks.forEach((track) => {
+      const el = audioRefs.current.get(track.id);
+      if (el) el.volume = Math.min(1, Math.max(0, track.volume));
+    });
+  }, [audioTracks]);
+
+  // ─── ⭐ V3.16 — Arrêt de la préécoute SFX au démontage ───
+  useEffect(() => () => {
+    sfxPreviewRef.current?.pause();
+    sfxPreviewRef.current = null;
+    audioRefs.current.forEach((el) => el.pause());
+  }, []);
 
   // ─── Snapshot pour undo/redo ───
   const pushHistory = useCallback(() => {
@@ -246,12 +353,51 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   };
 
   // ─── Lecture ───
+  // ⭐ V3.16 — la lecture démarre DANS la zone de découpe (trimStart) et
+  // les pistes audio (musique, SFX, voiceover) sont SYNCHRONISÉES : elles
+  // jouent/pausent avec la vidéo, au même volume et à la même vitesse.
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) { video.play(); setIsPlaying(true); }
-    else { video.pause(); setIsPlaying(false); }
+    if (video.paused) {
+      if (trimStart > 0 && video.currentTime < trimStart) handleSeek(trimStart);
+      video.play().catch(() => {});
+      audioTracks.forEach((track) => {
+        const el = audioRefs.current.get(track.id);
+        if (!el) return;
+        el.volume = Math.min(1, Math.max(0, track.volume));
+        el.playbackRate = speed.factor;
+        const offset = track.startTime ? Math.max(0, video.currentTime - track.startTime) : video.currentTime;
+        try { if (el.duration && isFinite(el.duration)) el.currentTime = offset % el.duration; } catch {}
+        el.play().catch(() => {});
+      });
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      audioRefs.current.forEach((el) => el.pause());
+      setIsPlaying(false);
+    }
   };
+
+  // ⭐ V3.16 — Préécoute d'un SFX (avant ajout) : bouton Play/Stop dédié —
+  // « il faut qu'il y ait un play pour pouvoir jouer d'abord avant de
+  // pouvoir ajouter ».
+  const toggleSfxPreview = useCallback((sfx: SoundEffect) => {
+    if (playingSfxId === sfx.id) {
+      sfxPreviewRef.current?.pause();
+      sfxPreviewRef.current = null;
+      setPlayingSfxId(null);
+      return;
+    }
+    sfxPreviewRef.current?.pause();
+    const audio = new Audio(sfx.url);
+    audio.volume = 0.8;
+    audio.onended = () => { setPlayingSfxId(null); sfxPreviewRef.current = null; };
+    audio.onerror = () => { setPlayingSfxId(null); sfxPreviewRef.current = null; };
+    sfxPreviewRef.current = audio;
+    setPlayingSfxId(sfx.id);
+    audio.play().catch(() => setPlayingSfxId(null));
+  }, [playingSfxId]);
 
   const handleSeek = (time: number) => {
     const video = videoRef.current;
@@ -408,8 +554,17 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             throw new Error(data.error || "Erreur lors de la finalisation");
           }
           const result = await commitRes.json();
+          // ⭐ V3.16 — PLUS DE window.location.reload() : le rechargement
+          // perdait TOUS les réglages et laissait un écran vide de longues
+          // secondes (« rien ne s'affiche, ça a pris trop de temps »).
+          // La vidéo s'affiche immédiatement, l'éditeur reste intact.
           setCurrentVideoUrl(result.videoUrl);
-          setTimeout(() => window.location.reload(), 1500);
+          setTrimStart(0);
+          setTrimEnd(0);
+          setSelectedOverlayId(null);
+          setUploadProgress(100);
+          setUploadStage("Terminé ✓ — la vidéo remplace la source");
+          setTimeout(() => setUploadStage(""), 2500);
           return;
         } catch (putError) {
           // PUT R2 échoué (CORS…) → basculer sur l'upload par blocs.
@@ -477,10 +632,17 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         throw new Error(data.error || "Erreur lors de l'assemblage");
       }
       const result = await completeRes.json();
+      // ⭐ V3.16 — PLUS DE RELOAD (même raison : affichage immédiat +
+      // réglages conservés). Les métadonnées (durée, trimEnd, timeline)
+      // se rechargent seules via loadedmetadata quand la nouvelle source
+      // est montée dans le <video>.
       setCurrentVideoUrl(result.videoUrl);
+      setTrimStart(0);
+      setTrimEnd(0);
+      setSelectedOverlayId(null);
       setUploadProgress(100);
-      setUploadStage("Terminé ✓");
-      setTimeout(() => window.location.reload(), 1500);
+      setUploadStage("Terminé ✓ — la vidéo est prête");
+      setTimeout(() => setUploadStage(""), 2500);
       return;
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Erreur");
@@ -632,8 +794,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   }, [loadProject]);
 
   // ─── Modifier un overlay ───
+  // ⭐ V3.16 — setOverlays FONCTIONNEL : pendant un glisser/déplacement,
+  // chaque pointermove appelle updateOverlay — l'ancienne version capturait
+  // un tableau `overlays` périmé (stale closure) et le déplacement échouait.
   const updateOverlay = (id: string, updates: Partial<Overlay>) => {
-    setOverlays(overlays.map((o) => o.id === id ? { ...o, ...updates } as Overlay : o));
+    setOverlays((prev) => prev.map((o) => (o.id === id ? ({ ...o, ...updates } as Overlay) : o)));
   };
 
   const deleteOverlay = (id: string) => {
@@ -884,6 +1049,9 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const hasActiveSpeed = speed.factor !== 1;
   const hasActiveTransform = transform.rotate !== 0 || transform.flipH || transform.flipV;
   const hasActiveAudio = audioTracks.length > 0 || mainVolume !== 1;
+  // ⭐ V3.16 — indicateurs pour les onglets filtres/stickers aussi
+  const hasActiveFilter = videoFilter !== "none";
+  const hasActiveStickers = overlays.some((o) => o.type === "sticker");
 
   return (
     <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
@@ -1001,9 +1169,20 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
       <div className="grid lg:grid-cols-[1fr_360px] gap-4 p-4">
         {/* ─── Colonne gauche : Preview + Timeline ─── */}
         <div className="space-y-3">
-          {/* Preview */}
-          <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl"
-            onMouseMove={handleMouseMove}>
+          {/* Preview — ⭐ V3.16 : le format du preview suit le format
+              d'export (16:9, 9:16 Reels, 1:1…) : ce que l'on voit est ce
+              que l'on exporte. */}
+          <div
+            ref={previewRef}
+            className="relative bg-black rounded-xl overflow-hidden shadow-2xl mx-auto w-full"
+            style={{ aspectRatio: previewAspect, maxWidth: previewAspect.startsWith("9 / 16") || previewAspect.startsWith("4 / 5") || previewAspect.startsWith("1 /") ? "min(100%, 420px)" : undefined }}
+            onMouseMove={handleMouseMove}
+            onPointerDown={(e) => { if (e.target === e.currentTarget) setSelectedOverlayId(null); }}
+          >
+            {/* ⭐ V3.16 — Input d'upload TOUJOURS monté (avant, il n'existait
+                que dans l'état « Aucune vidéo source » : le bouton Uploader
+                du bandeau YouTube pointait sur une ref nulle). */}
+            <input ref={videoUploadRef} type="file" accept="video/*" onChange={handleVideoUpload} className="hidden" />
             {currentVideoUrl ? (
               <>
                 {youtubeMode ? (
@@ -1016,70 +1195,72 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     allowFullScreen
                   />
                 ) : (
-                  <video ref={videoRef} src={currentVideoUrl} className="w-full h-full object-contain"
-                    onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                    onEnded={() => setIsPlaying(false)} />
+                  <video
+                    ref={videoRef}
+                    src={currentVideoUrl}
+                    className="w-full h-full object-contain"
+                    style={{
+                      // ⭐ V3.16 — PRÉVISUALISATION LIVE : étalonnage couleur,
+                      // filtres, miroir et rotation s'appliquent EN DIRECT.
+                      filter: previewFilterCss,
+                      transform: previewTransformCss,
+                    }}
+                    onClick={() => setSelectedOverlayId(null)}
+                    onTimeUpdate={(e) => {
+                      const t = e.currentTarget.currentTime;
+                      setCurrentTime(t);
+                      // ⭐ V3.16 — la lecture S'ARRÊTE À LA FIN de la zone
+                      // de découpe (trimEnd) et revient au début (trimStart).
+                      if (
+                        trimEnd > 0 &&
+                        trimEnd < (totalDuration || Infinity) &&
+                        t >= trimEnd - 0.05
+                      ) {
+                        e.currentTarget.pause();
+                        audioRefs.current.forEach((el) => el.pause());
+                        setIsPlaying(false);
+                        e.currentTarget.currentTime = trimStart;
+                        setCurrentTime(trimStart);
+                      }
+                    }}
+                    onEnded={() => { setIsPlaying(false); audioRefs.current.forEach((el) => el.pause()); }}
+                  />
                 )}
 
-                {/* Overlays preview (texte) — masqués en mode YouTube car
-                    on ne peut pas superposer du contenu sur un iframe YouTube */}
-                {!youtubeMode && overlays.filter((o) => o.type === "text").map((overlay) => {
-                  const t = overlay as TextOverlay;
-                  const isActive = (!t.startTime || t.startTime <= currentTime) && (!t.endTime || t.endTime >= currentTime);
-                  if (!isActive) return null;
-                  return (
-                    <div key={t.id}
-                      className="absolute pointer-events-none"
-                      style={{
-                        left: `${t.x}%`, top: `${t.y}%`,
-                        transform: "translate(-50%, -50%)",
-                        fontSize: `${t.fontSize}px`,
-                        color: t.fontColor,
-                        fontWeight: t.bold ? "bold" : "normal",
-                        fontStyle: t.italic ? "italic" : "normal",
-                        backgroundColor: t.bgColor || "transparent",
-                        padding: t.bgColor ? "4px 8px" : 0,
-                        borderRadius: t.bgColor ? "4px" : 0,
-                        whiteSpace: "nowrap",
-                      }}>
-                      {t.content}
-                    </div>
-                  );
-                })}
+                {/* ⭐ V3.16 — PISTES AUDIO synchronisées (préécoute) : chaque
+                    piste est un <audio> caché piloté par togglePlay. */}
+                {!youtubeMode && audioTracks.map((track) => (
+                  <audio
+                    key={track.id}
+                    src={track.url}
+                    loop={track.loop || false}
+                    ref={(el) => {
+                      if (el) audioRefs.current.set(track.id, el);
+                      else audioRefs.current.delete(track.id);
+                    }}
+                  />
+                ))}
 
-                {/* Overlays preview (image) — masqués en mode YouTube */}
-                {!youtubeMode && overlays.filter((o) => o.type === "image").map((overlay) => {
-                  const img = overlay as ImageOverlay;
-                  const isActive = (!img.startTime || img.startTime <= currentTime) && (!img.endTime || img.endTime >= currentTime);
+                {/* ⭐ V3.16 — OVERLAYS INTERACTIFS : clic → sélection, glisser →
+                    déplacer, poignées de coin → redimensionner (images avec
+                    bords, ratio préservé, qualité intacte). Visible seulement
+                    dans sa fenêtre temporelle (startTime/endTime) comme avant. */}
+                {!youtubeMode && overlays.map((overlay) => {
+                  const startTime = "startTime" in overlay ? overlay.startTime : undefined;
+                  const endTime = "endTime" in overlay ? overlay.endTime : undefined;
+                  const isActive = (!startTime || startTime <= currentTime) && (!endTime || endTime >= currentTime);
                   if (!isActive) return null;
                   return (
-                    <img key={img.id} src={img.url} alt=""
-                      className="absolute pointer-events-none"
-                      style={{
-                        left: `${img.x}%`, top: `${img.y}%`,
-                        transform: `translate(-50%, -50%) scale(${img.scale})`,
-                        opacity: img.opacity,
-                      }} />
-                  );
-                })}
-
-                {/* Overlays preview (sticker emoji) — masqués en mode YouTube */}
-                {!youtubeMode && overlays.filter((o) => o.type === "sticker").map((overlay) => {
-                  const s = overlay as StickerOverlay;
-                  const isActive = (!s.startTime || s.startTime <= currentTime) && (!s.endTime || s.endTime >= currentTime);
-                  if (!isActive) return null;
-                  return (
-                    <div key={s.id}
-                      className="absolute pointer-events-none select-none"
-                      style={{
-                        left: `${s.x}%`, top: `${s.y}%`,
-                        transform: `translate(-50%, -50%) rotate(${s.rotation}deg)`,
-                        fontSize: `${s.size}px`,
-                        opacity: s.opacity,
-                        lineHeight: 1,
-                      }}>
-                      {s.emoji}
-                    </div>
+                    <OverlayView
+                      key={overlay.id}
+                      overlay={overlay}
+                      selected={selectedOverlayId === overlay.id}
+                      ratio={previewRatio || 0.35}
+                      onSelect={() => setSelectedOverlayId(overlay.id)}
+                      onChange={(updates) => updateOverlay(overlay.id, updates)}
+                      onCommit={pushHistory}
+                      containerRef={previewRef}
+                    />
                   );
                 })}
 
@@ -1113,12 +1294,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   </div>
                 )}
               </>
-            ) : loadingVideo ? (
-              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
-                <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
-                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Chargement de la vidéo...</p>
-              </div>
             ) : uploadingVideo ? (
+              /* ⭐ V3.16 — L'upload a LA PRIORITÉ sur l'ancienne vidéo :
+                  progression toujours visible (avant, elle n'apparaissait
+                  que si AUCUNE vidéo n'était chargée — l'écran restait
+                  figé sur l'ancienne source pendant l'upload). */
               <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
                 <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-4 animate-spin" />
                 <p className="text-sm font-bold text-[#FAF6EF] mb-2">{uploadStage || "Upload..."} {uploadProgress}%</p>
@@ -1126,6 +1306,12 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   <div className="h-full bg-gradient-to-r from-[#C9A227] to-[#DDBE55] rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
                 </div>
                 <p className="text-xs text-[#FAF6EF]/50">Ne fermez pas cette page</p>
+                {uploadError && <p className="text-xs text-red-400 mt-3 max-w-sm">{uploadError}</p>}
+              </div>
+            ) : loadingVideo ? (
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+                <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
+                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Chargement de la vidéo...</p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
@@ -1136,7 +1322,6 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   <Upload className="w-4 h-4" />Uploader le replay
                 </button>
                 {uploadError && <p className="text-xs text-red-400 mt-3 max-w-sm">{uploadError}</p>}
-                <input ref={videoUploadRef} type="file" accept="video/*" onChange={handleVideoUpload} className="hidden" />
               </div>
             )}
           </div>
@@ -1218,9 +1403,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               const hasIndicator =
                 (tab.id === "text" && overlays.some((o) => o.type === "text")) ||
                 (tab.id === "image" && overlays.some((o) => o.type === "image")) ||
+                (tab.id === "stickers" && hasActiveStickers) ||
                 (tab.id === "subtitles" && hasActiveSubtitles) ||
                 (tab.id === "transitions" && hasActiveTransitions) ||
                 (tab.id === "color" && hasActiveColor) ||
+                (tab.id === "filters" && hasActiveFilter) ||
                 (tab.id === "speed" && hasActiveSpeed) ||
                 (tab.id === "transform" && hasActiveTransform) ||
                 (tab.id === "audio" && hasActiveAudio);
@@ -1333,6 +1520,9 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           {/* ─── Panel: Images ─── */}
           {activeTab === "image" && (
             <Panel title="Images & Logos">
+              <p className="text-[10px] text-[#8A8378] leading-relaxed bg-[#C9A227]/10 rounded-lg p-2 mb-3">
+                ⭐ Cliquez sur l'image dans le preview pour la sélectionner : bordure dorée + poignées de coin. Glissez pour la déplacer, tirez une poignée pour la redimensionner (ratio préservé, qualité intacte).
+              </p>
               <button onClick={() => fileInputRef.current?.click()} className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors mb-3">
                 <Plus className="w-4 h-4" />Ajouter une image
               </button>
@@ -1557,6 +1747,9 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           {/* ─── Panel: Couleur ─── */}
           {activeTab === "color" && (
             <Panel title="Étalonnage couleur">
+              <p className="text-[10px] text-[#8A8378] leading-relaxed bg-[#C9A227]/10 rounded-lg p-2 mb-1">
+                ⭐ Les réglages s'appliquent EN DIRECT sur le preview (et à l'export).
+              </p>
               <div className="space-y-3">
                 <Slider label="Luminosité" min={-1} max={1} step={0.05} value={colorAdjust.brightness}
                   onChange={(v) => setColorAdjust({ ...colorAdjust, brightness: v })} format={(v) => v.toFixed(2)} />
@@ -1803,13 +1996,36 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     <p className="text-[10px] text-[#8A8378] uppercase font-bold mb-1">{cat}</p>
                     <div className="space-y-1">
                       {SOUND_EFFECTS.filter((s) => s.category === cat).map((sfx) => (
-                        <button key={sfx.id} onClick={() => addSoundEffect(sfx)}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors text-left">
-                          <span className="text-lg">{sfx.icon}</span>
+                        /* ⭐ V3.16 — Ligne SFX : bouton ▶ pour ÉCOUTER AVANT
+                           d'ajouter (« il faut qu'on puisse jouer avant
+                           d'ajouter »), puis le bouton + pour l'ajouter. */
+                        <div key={sfx.id} className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors">
+                          <button
+                            onClick={() => toggleSfxPreview(sfx)}
+                            title={playingSfxId === sfx.id ? "Arrêter l'écoute" : "Écouter"}
+                            className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                              playingSfxId === sfx.id
+                                ? "bg-[#C9A227] text-[#1E0F2B]"
+                                : "bg-[#2A0E3D]/10 text-[#2A0E3D] hover:bg-[#2A0E3D]/20"
+                            }`}
+                          >
+                            {playingSfxId === sfx.id ? (
+                              <Square className="w-3 h-3 fill-current" />
+                            ) : (
+                              <Play className="w-3.5 h-3.5 fill-current" />
+                            )}
+                          </button>
+                          <span className="text-lg flex-shrink-0">{sfx.icon}</span>
                           <span className="text-xs font-bold flex-1 truncate">{sfx.name}</span>
-                          <span className="text-[10px] text-[#8A8378]">{sfx.duration}s</span>
-                          <Plus className="w-3 h-3 text-[#C9A227]" />
-                        </button>
+                          <span className="text-[10px] text-[#8A8378] flex-shrink-0">{sfx.duration}s</span>
+                          <button
+                            onClick={() => addSoundEffect(sfx)}
+                            title="Ajouter à la timeline"
+                            className="flex-shrink-0 w-7 h-7 rounded-full bg-[#C9A227]/20 text-[#A3821C] hover:bg-[#C9A227]/30 flex items-center justify-center transition-colors"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
