@@ -12,8 +12,11 @@
  * critères suivants est rempli :
  *   (a) `liveMemberId` renseigné — la personne s'est officiellement inscrite
  *       via le système des lives (LiveMember) ;
- *   (b) `userId` renseigné — la position a été créée par /register ou
- *       /disperses/add avec un compte connecté (V3.12+) ;
+ *   (b) `userId` renseigné ET le compte existe TOUJOURS — la position a
+ *       été créée par /register ou /disperses/add avec un compte connecté
+ *       (V3.12+) ; ⭐ V3.13 : si le compte a été supprimé depuis (back-
+ *       office), la position ORPHELINE est purgée (plus de point fantôme
+ *       sur la carte) ;
  *   (c) le pseudonyme correspond à un compte User existant (nom affiché ou
  *       préfixe d'email, insensible à la casse et aux accents) ;
  *   (d) la position a été créée dans la MÊME requête qu'un compte User
@@ -94,9 +97,11 @@ export function classerDisperses(
   // Index des comptes par nom affiché et par préfixe d'email (normalisés).
   const parNom = new Map<string, UtilisateurLite>();
   const parEmail = new Map<string, UtilisateurLite>();
+  const idsUtilisateurs = new Set<string>();
   for (const u of utilisateurs) {
     if (u.name) parNom.set(normaliser(u.name), u);
     parEmail.set(normaliser(u.email.split("@")[0] ?? ""), u);
+    idsUtilisateurs.add(u.id);
   }
   const utilisateursTries = [...utilisateurs].sort(
     (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
@@ -110,7 +115,10 @@ export function classerDisperses(
       continue;
     }
     // (b) Position créée par un compte (register / disperses/add connecté)
-    if (m.userId) {
+    // ⭐ V3.13 — le compte doit encore EXISTER : un compte supprimé depuis
+    // (back-office) rend la position ORPHELINE → purge (plus de point
+    // fantôme sur la carte après suppression d'un compte).
+    if (m.userId && idsUtilisateurs.has(m.userId)) {
       aConserver.push(m.id);
       raisons.set(m.id, "userId (compte officiel)");
       continue;

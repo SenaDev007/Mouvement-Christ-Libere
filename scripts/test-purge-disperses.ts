@@ -5,6 +5,7 @@
  * Scénarios :
  *   (a) liveMemberId renseigné             → conservé
  *   (b) userId renseigné                    → conservé
+ *   (b bis) userId d'un compte SUPPRIMÉ     → supprimé (position orpheline, ⭐ V3.13)
  *   (c) pseudonyme = nom d'un compte       → conservé
  *   (c bis) pseudonyme = préfixe d'email   → conservé
  *   (d) créée à ±30 s d'un compte, même pays (signature /register) → conservé
@@ -46,11 +47,14 @@ const membres: DisperseLite[] = [
   { id: "m8", pseudonyme: "Sarah d'Abidjan", pays: "CI", liveMemberId: null, userId: null, createdAt: new Date(J("2026-03-15T09:00:00Z")) },
   // (f) accents/casse : « élisée » vs compte « Élisée » → conservé
   { id: "m9", pseudonyme: "  éLiSée  ", pays: "FR", liveMemberId: null, userId: null, createdAt: new Date(J("2026-01-01T09:00:00Z")) },
+  // (b bis) userId d'un compte SUPPRIMÉ (orphelin) → supprimé (⭐ V3.13)
+  { id: "m10", pseudonyme: "Compte supprimé", pays: "CI", liveMemberId: null, userId: "u-inexistant", createdAt: new Date(J("2026-09-01T10:00:00Z")) },
 ];
 
 const attendus: Record<string, "garder" | "supprimer"> = {
   m1: "garder", m2: "garder", m3: "garder", m4: "garder", m5: "garder",
   m6: "supprimer", m7: "supprimer", m8: "supprimer", m9: "garder",
+  m10: "supprimer",
 };
 
 const { aSupprimer, aConserver, raisons } = classerDisperses(membres, utilisateurs);
