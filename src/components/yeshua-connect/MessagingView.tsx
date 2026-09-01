@@ -56,7 +56,7 @@ import {
   StopCircle, Play, Pause, Sparkles, AlertCircle,
   MessageCircle, AtSign, ChevronUp, ChevronRight, Copy, UploadCloud,
   PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
-  Radio, Camera, PanelLeftOpen, PanelLeftClose,
+  Radio, Camera, PanelLeftOpen, PanelLeftClose, Shield,
 } from "lucide-react";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant, RemoteAudioTrack } from "livekit-client";
 import { cn } from "@/lib/utils";
@@ -411,6 +411,14 @@ export function MessagingView() {
   const [showNotifPrefs, setShowNotifPrefs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showForwardModal, setShowForwardModal] = useState<string | null>(null);
+  // ⭐ V3.4 — PANNEAU DES MEMBRES façon Telegram/WhatsApp : depuis l'en-tête
+  // du chat (« N membres · N en ligne » cliquable + bouton Users2), chaque
+  // membre peut voir QUI est dans le canal/groupe, qui l'administre, qui est
+  // en ligne — et ouvrir une conversation PRIVÉE ou appeler un membre.
+  const [showMembersPanel, setShowMembersPanel] = useState(false);
+  // ⭐ V3.4 — DM en cours de création (boutons du panneau des membres :
+  // évite le double-clic qui créerait deux conversations privées).
+  const [dmBusy, setDmBusy] = useState(false);
   // ⭐ V3.0 — SIDEBAR MOBILE REPLIABLE (façon Telegram/Discord) :
   // sur mobile (<lg), la barre latérale se replie en RAIL D'ICÔNES
   // (avatars des conversations, 68px) pour laisser toute la place à
@@ -2192,15 +2200,30 @@ export function MessagingView() {
    * 2. Rejoint la room LiveKit + publie micro/caméra.
    * 3. Overlay plein écran « outgoing » avec sonnerie (ringback).
    */
-  const startCall = useCallback(async (type: "audio" | "video") => {
-    if (!activeConvId) return;
-    const conv = conversations.find(c => c.id === activeConvId);
+  const startCall = useCallback(async (type: "audio" | "video", targetConversationId?: string, fallbackInfo?: { name: string; avatarUrl?: string }) => {
+    // ⭐ V3.4 — `targetConversationId` explicite : permet d'appeler un
+    // MEMBRE en direct depuis le panneau des membres (la conversation
+    // privée vient d'être créée/sélectionnée — activeConvId n'est pas
+    // encore mis à jour dans les closures). Par défaut : conversation
+    // active (comportement inchangé).
+    const convId = targetConversationId || activeConvId;
+    if (!convId) return;
+    const conv = conversations.find(c => c.id === convId);
+    // ⭐ V3.4 — Pour un appel vers un MEMBRE, l'overlay affiche le nom de
+    // l'interlocuteur (fallbackInfo = fiche du membre du panneau, quand
+    // la conversation n'est pas encore dans le state `conversations`).
+    const interlocutor = conv?.type === "DIRECT"
+      ? conv.participants.find(p => p.userId !== currentUserId)
+      : undefined;
     setCallType(type);
     setCallError(null);
     setCallEndStatus(null);
     endedByMeRef.current = false;
     callEndingRef.current = false;
-    setCallConvInfo({ name: conv?.name || "Conversation", avatarUrl: conv?.avatarUrl });
+    setCallConvInfo({
+      name: fallbackInfo?.name || interlocutor?.name || conv?.name || "Conversation",
+      avatarUrl: fallbackInfo?.avatarUrl || interlocutor?.avatarUrl || conv?.avatarUrl,
+    });
     // (S5) Afficher l'overlay IMMÉDIATEMENT pour feedback instantané
     // avant même que le token LiveKit soit récupéré.
     setCallState("outgoing");
@@ -2209,7 +2232,7 @@ export function MessagingView() {
       const signalRes = await fetch(api.url("/api/yeshua-connect/calls/signal"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "start", conversationId: activeConvId, type }),
+        body: JSON.stringify({ action: "start", conversationId: convId, type }),
       });
       if (!signalRes.ok) {
         const err = await signalRes.json().catch(() => ({}));
@@ -2218,7 +2241,7 @@ export function MessagingView() {
       const { callId } = await signalRes.json();
       setActiveCallSignalId(callId ?? null);
 
-      await joinCallRoom(activeConvId, type);
+      await joinCallRoom(convId, type);
       // (S5) callState est déjà "outgoing" depuis le début de startCall
     } catch (e) {
       console.error("[livekit] startCall failed:", e);
@@ -2227,7 +2250,64 @@ export function MessagingView() {
       setCallState("idle");
       setActiveCallSignalId(null);
     }
-  }, [activeConvId, conversations, cleanupLiveKit, joinCallRoom]);
+  }, [activeConvId, conversations, cleanupLiveKit, joinCallRoom, currentUserId]);
+
+  // ═════════════════════════════════════════════════════════════════════
+  //  ⭐ V3.4 — MESSAGERIE PRIVÉE ENTRE MEMBRES (façon Telegram/WhatsApp)
+  // ═════════════════════════════════════════════════════════════════════
+  // Depuis le panneau des membres d'un canal/groupe, tout membre peut
+  // ouvrir une conversation PRIVÉE avec un autre membre — la communauté
+  // grandit : on se découvre dans le canal, on approfondit en privé.
+  // Le busy-state évite les double-clics (deux créations de DM).
+
+  /** Ouvre (crée si besoin) la conversation privée avec un membre. */
+  const openDirectMessage = useCallback(async (targetUserId: string, targetName?: string): Promise<string | null> => {
+    if (targetUserId === currentUserId) return null;
+    setDmBusy(true);
+    try {
+      const res = await fetch(api.url("/api/yeshua-connect/conversations/dm"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId, originChannelId: activeConvId || undefined }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Impossible d'ouvrir la conversation privée", "error");
+        return null;
+      }
+      const { conversationId, created } = await res.json();
+      // Rafraîchir la liste (le DM apparaît dans la section « Direct »)
+      await loadConversationsRef.current?.();
+      // Basculer dessus (ferme la sidebar mobile + le panneau des membres)
+      setActiveConvId(conversationId);
+      setMobileSidebarExpanded(false);
+      setShowMembersPanel(false);
+      showToast(created ? `Conversation privée ouverte avec ${targetName || "le membre"}` : `Conversation avec ${targetName || "le membre"} ouverte`);
+      return conversationId;
+    } catch (e) {
+      console.error("[dm] openDirectMessage:", e);
+      showToast("Impossible d'ouvrir la conversation privée", "error");
+      return null;
+    } finally {
+      setDmBusy(false);
+    }
+  }, [currentUserId, activeConvId, showToast]);
+
+  /**
+   * ⭐ V3.4 — Appelle un MEMBRE en privé (audio ou vidéo) depuis le
+   * panneau des membres : ouvre la conversation privée (create-or-get)
+   * puis déclenche l'appel SUR CETTE conversation — le destinataire
+   * reçoit la sonnerie (polling signal V3.1) et peut décrocher.
+   */
+  const callMemberDirect = useCallback(async (targetUserId: string, type: "audio" | "video", targetName?: string, targetAvatarUrl?: string) => {
+    if (callState !== "idle") {
+      showToast("Un appel est déjà en cours", "error");
+      return;
+    }
+    const conversationId = await openDirectMessage(targetUserId, targetName);
+    if (!conversationId) return;
+    await startCall(type, conversationId, targetName ? { name: targetName, avatarUrl: targetAvatarUrl } : undefined);
+  }, [callState, openDirectMessage, startCall, showToast]);
 
   /** ⭐ V3.1 — Fermeture LOCALE de l'overlay d'appel (sans signal). */
   const teardownCall = useCallback(() => {
@@ -2945,7 +3025,18 @@ export function MessagingView() {
   }, [activeConvId, activeConv?.type, voiceChannelConnected]);
   const activeMessages = activeConvId ? (messages[activeConvId] || []) : [];
   const filteredConversations = convSearchQuery
-    ? conversations.filter(c => c.name.toLowerCase().includes(convSearchQuery.toLowerCase()))
+    ? conversations.filter(c => {
+        const q = convSearchQuery.toLowerCase();
+        // ⭐ V3.4 — Pour les conversations PRIVÉES, on cherche aussi le
+        // nom de MON interlocuteur (le nom stocké est celui du créateur).
+        const interlocutor = c.type === "DIRECT"
+          ? c.participants.find(p => p.userId !== currentUserId)
+          : undefined;
+        return (
+          c.name.toLowerCase().includes(q) ||
+          (interlocutor?.name || "").toLowerCase().includes(q)
+        );
+      })
     : conversations;
 
   // ⭐ V2.8 — Avatar + nom affichés dans le HEADER du chat (façon WhatsApp) :
@@ -3076,6 +3167,13 @@ export function MessagingView() {
             // ⭐ V3.1 — pastille DIRECT = direct INTRA-CANAL (métadonnées
             // de la room du canal), PLUS le module Live.
             const voiceLive = conv.type === "VOICE" && !!channelDirects[conv.id];
+            // ⭐ V3.4 — Conversation PRIVÉE : l'avatar du rail est celui de
+            // MON interlocuteur (+ point vert de présence, comme Telegram).
+            const interlocutor = conv.type === "DIRECT"
+              ? conv.participants.find(p => p.userId !== currentUserId) ?? conv.participants[0]
+              : undefined;
+            const railName = interlocutor?.name || conv.name;
+            const railAvatar = interlocutor?.avatarUrl || conv.avatarUrl;
             return (
               <button
                 key={conv.id}
@@ -3086,15 +3184,19 @@ export function MessagingView() {
                     ? "ring-2 ring-[#C9A227] ring-offset-2 ring-offset-white"
                     : "hover:opacity-80 active:scale-95"
                 )}
-                title={conv.name}
-                aria-label={conv.name}
+                title={railName}
+                aria-label={railName}
               >
-                {conv.avatarUrl ? (
-                  <img src={conv.avatarUrl} alt={conv.name} className="w-11 h-11 rounded-full object-cover border border-[#C9A227]/25" />
+                {railAvatar ? (
+                  <img src={railAvatar} alt={railName} className="w-11 h-11 rounded-full object-cover border border-[#C9A227]/25" />
                 ) : (
-                  <div className={cn("w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-[13px] shadow-sm", getAvatarColor(conv.name))}>
-                    {getInitials(conv.name)}
+                  <div className={cn("w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-[13px] shadow-sm", getAvatarColor(railName))}>
+                    {getInitials(railName)}
                   </div>
+                )}
+                {/* ⭐ V3.4 — Présence de l'interlocuteur (privé) */}
+                {interlocutor?.online && !voiceLive && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" title="En ligne" />
                 )}
                 {/* Badge non-lus */}
                 {conv.unreadCount > 0 && (
@@ -3109,7 +3211,7 @@ export function MessagingView() {
                     <span className="relative inline-flex w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
                   </span>
                 )}
-                {conv.isEncrypted && !voiceLive && (
+                {conv.isEncrypted && !voiceLive && !interlocutor?.online && (
                   <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-white rounded-full flex items-center justify-center border border-[#C9A227]/40">
                     <Lock className="w-2.5 h-2.5 text-[#C9A227]" />
                   </span>
@@ -3269,22 +3371,26 @@ export function MessagingView() {
               {/* Channels (broadcast) */}
               {channelConvs.length > 0 && (
                 <ConvSection title="Canaux" icon={<Megaphone className="w-3 h-3" />} convs={channelConvs}
-                  activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations} />
+                  activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations}
+                  currentUserId={currentUserId} />
               )}
               {/* Groups */}
               {groupConvs.length > 0 && (
                 <ConvSection title="Groupes" icon={<Users className="w-3 h-3" />} convs={groupConvs}
-                  activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations} />
+                  activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations}
+                  currentUserId={currentUserId} />
               )}
               {/* Direct */}
               {directConvs.length > 0 && (
                 <ConvSection title="Direct" icon={<MessageSquare className="w-3 h-3" />} convs={directConvs}
-                  activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations} />
+                  activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations}
+                  currentUserId={currentUserId} />
               )}
               {/* ⭐ V2.3 — Canaux vocaux persistants */}
               {voiceConvs.length > 0 && (
                 <ConvSection title="Canaux vocaux" icon={<Volume2 className="w-3 h-3" />} convs={voiceConvs}
                   activeConvId={activeConvId} onSelect={handleSelectConversation} mutedConversations={mutedConversations}
+                  currentUserId={currentUserId}
                   liveBadge={voiceLiveBadge} />
               )}
             </>
@@ -3362,14 +3468,28 @@ export function MessagingView() {
                   {activeConv.isEncrypted && <Lock className="w-3 h-3 text-[#C9A227] flex-shrink-0" />}
                 </h3>
                 {/* ⭐ V2.6.2 — Ligne d'info thématée (icônes lucide au lieu des
-                    emojis, ton chaud #8A8378 au lieu du gris stone) */}
-                <p className="text-xs text-[#8A8378] flex items-center gap-1 flex-wrap">
+                    emojis, ton chaud #8A8378 au lieu du gris stone).
+                    ⭐ V3.4 — La ligne « N membres · N en ligne » est CLIQUABLE :
+                    elle ouvre le panneau des membres du canal (façon Telegram /
+                    WhatsApp — on tape sur l'en-tête pour voir qui est là). */}
+                <button
+                  onClick={() => setShowMembersPanel(true)}
+                  className="text-xs text-[#8A8378] hover:text-[#1E0F2B] flex items-center gap-1 flex-wrap text-left group/members"
+                  title="Voir les membres du canal"
+                  aria-label="Voir les membres du canal"
+                >
                   {activeConv.isEncrypted && <><Lock className="w-3 h-3 text-[#C9A227]" /> Chiffré E2E ·</>}
                   <Users2 className="w-3 h-3 text-[#C9A227]/70" />
-                  {activeConv.participants.length} membres
+                  <span className="group-hover/members:underline decoration-[#C9A227]/50 underline-offset-2">
+                    {activeConv.participants.length} membres
+                  </span>
                   {(() => {
                     const onlineCount = activeConv.participants.filter(p => p.online).length;
-                    return onlineCount > 0 ? ` · ${onlineCount} en ligne` : "";
+                    return onlineCount > 0 ? (
+                      <span className="group-hover/members:underline decoration-[#C9A227]/50 underline-offset-2">
+                        · {onlineCount} en ligne
+                      </span>
+                    ) : null;
                   })()}
                   {mutedConversations.has(activeConv.id) && <> · <BellOff className="w-3 h-3 text-[#8A8378] inline" /> Muet</>}
                   {/* ⭐ V2.9 — Indicateur de synchro honnête : le temps réel
@@ -3384,7 +3504,7 @@ export function MessagingView() {
                       <Loader2 className="w-3 h-3 animate-spin" />Reconnexion…
                     </span>
                   )}
-                </p>
+                </button>
               </div>
             </div>
             {/* ⭐ V2.9 — Header RESPONSIVE mobile : la rangée d'actions passe
@@ -3392,6 +3512,20 @@ export function MessagingView() {
                 audit, recherche, muet) sont masqués sur très petits écrans —
                 « les éléments en haut ne sont pas responsives » corrigé. */}
             <div className="flex items-center gap-1 flex-wrap justify-end">
+              {/* ⭐ V3.4 — PANNEAU DES MEMBRES (façon Telegram/WhatsApp) :
+                  visible sur TOUS les écrans (mobile inclus — c'est la
+                  porte d'entrée vers les messages privés entre membres). */}
+              <button
+                onClick={() => setShowMembersPanel(true)}
+                className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 transition-colors relative"
+                title="Membres du canal — voir, écrire en privé, appeler"
+                aria-label="Membres du canal"
+              >
+                <Users2 className="w-4 h-4" />
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full text-[9px] font-bold bg-[#C9A227] text-[#1E0F2B] border border-white">
+                  {activeConv.participants.length > 99 ? "99+" : activeConv.participants.length}
+                </span>
+              </button>
               {/* ⭐ V2.3 — Appels audio/vidéo réels via LiveKit.
                   Masqués pour les canaux vocaux (diffusion par direct). */}
               {activeConv.type !== "VOICE" && (
@@ -4304,6 +4438,20 @@ export function MessagingView() {
       {/* New Channel/Group Modal */}
       {showNewChannel && <NewChannelModal onClose={() => setShowNewChannel(false)} onCreated={(id) => { setShowNewChannel(false); loadConversations(); setActiveConvId(id); }} />}
 
+      {/* ⭐ V3.4 — PANNEAU DES MEMBRES DU CANAL (façon Telegram/WhatsApp) :
+          liste complète, recherche, administrateurs identifiés, présence,
+          et pour chaque membre : écrire en privé / appeler (audio/vidéo). */}
+      {showMembersPanel && activeConv && (
+        <MembersPanel
+          conversation={activeConv}
+          currentUserId={currentUserId}
+          dmBusy={dmBusy}
+          onOpenDirectMessage={(userId, name) => { openDirectMessage(userId, name); }}
+          onCallMember={(userId, type, name, avatarUrl) => { callMemberDirect(userId, type, name, avatarUrl); }}
+          onClose={() => setShowMembersPanel(false)}
+        />
+      )}
+
       {/* Notification Preferences Modal */}
       {showNotifPrefs && (
         <Modal onClose={() => setShowNotifPrefs(false)} title="Préférences de notifications">
@@ -4875,9 +5023,12 @@ function formatConvTime(iso?: string): string {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 
-function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversations, liveBadge }: {
+function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversations, liveBadge, currentUserId }: {
   title: string; icon: React.ReactNode; convs: ChatConversation[];
   activeConvId: string | null; onSelect: (id: string) => void; mutedConversations: Set<string>;
+  /** ⭐ V3.4 — Pour les conversations DIRECT : afficher le nom + la photo
+   * de MON interlocuteur (pas le nom technique stocké du canal). */
+  currentUserId: string;
   /** ⭐ V2.9 — Badge « EN DIRECT » vert clignotant (canaux vocaux). */
   liveBadge?: { title: string; portraitUrl?: string | null } | null;
 }) {
@@ -4900,6 +5051,13 @@ function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversa
       {convs.map(conv => {
         const isActive = conv.id === activeConvId;
         const isMuted = mutedConversations.has(conv.id);
+        // ⭐ V3.4 — Conversation PRIVÉE : chacun voit SON interlocuteur
+        // (nom, photo, présence) — exactement comme Telegram/WhatsApp.
+        const interlocutor = conv.type === "DIRECT"
+          ? conv.participants.find(p => p.userId !== currentUserId) ?? conv.participants[0]
+          : undefined;
+        const displayName = interlocutor?.name || conv.name;
+        const displayAvatar = interlocutor?.avatarUrl || conv.avatarUrl;
         return (
           <button key={conv.id} onClick={() => onSelect(conv.id)}
             // ⭐ V2.6.2 — Rangée façon WhatsApp/Telegram : deux lignes
@@ -4913,16 +5071,22 @@ function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversa
                 : "border-transparent hover:bg-[#FAF6EF]/70"
             )}>
             <div className="relative flex-shrink-0">
-              {conv.avatarUrl ? (
-                // ⭐ V2.5 — Photo du canal (uploadée depuis le back-office)
-                <img src={conv.avatarUrl} alt={conv.name}
+              {displayAvatar ? (
+                // ⭐ V2.5 — Photo du canal (uploadée depuis le back-office) ;
+                // ⭐ V3.4 — ou photo de l'INTERLOCUTEUR pour les privés.
+                <img src={displayAvatar} alt={displayName}
                   className="w-11 h-11 rounded-full object-cover border border-[#C9A227]/25" />
               ) : (
-                <div className={cn("w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm", getAvatarColor(conv.name))}>
-                  {getInitials(conv.name)}
+                <div className={cn("w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm", getAvatarColor(displayName))}>
+                  {getInitials(displayName)}
                 </div>
               )}
-              {conv.isEncrypted && (
+              {/* ⭐ V3.4 — Présence de l'interlocuteur (privé, façon
+                  Telegram : point vert quand il est en ligne). */}
+              {interlocutor?.online && (
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" title="En ligne" />
+              )}
+              {conv.isEncrypted && !interlocutor?.online && (
                 <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-white rounded-full flex items-center justify-center border border-[#C9A227]/40">
                   <Lock className="w-2.5 h-2.5 text-[#C9A227]" />
                 </div>
@@ -4931,7 +5095,7 @@ function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversa
             <div className="flex-1 min-w-0">
               {/* Ligne 1 : nom + heure du dernier message (façon WhatsApp) */}
               <div className="flex items-baseline justify-between gap-2">
-                <p className="text-[15px] font-semibold text-[#1E0F2B] truncate leading-tight">{conv.name}</p>
+                <p className="text-[15px] font-semibold text-[#1E0F2B] truncate leading-tight">{displayName}</p>
                 <span className={cn(
                   "text-[11px] leading-none flex-shrink-0 font-medium",
                   conv.unreadCount > 0 ? "text-[#C9A227] font-bold" : "text-[#8A8378]"
@@ -4945,6 +5109,7 @@ function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversa
                   {conv.type === "CHANNEL" && <Hash className="w-3 h-3 text-[#C9A227]/70 flex-shrink-0" />}
                   {conv.type === "GROUP" && <Users className="w-3 h-3 text-[#C9A227]/70 flex-shrink-0" />}
                   {conv.type === "PASTORS" && <Users className="w-3 h-3 text-[#5B21B6] flex-shrink-0" />}
+                  {conv.type === "DIRECT" && <MessageCircle className="w-3 h-3 text-[#8C5FA8]/70 flex-shrink-0" />}
                   <span className="truncate">{conv.lastMessagePreview || conv.description || "Aucun message"}</span>
                 </p>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -5335,6 +5500,343 @@ function NewChannelModal({ onClose, onCreated }: { onClose: () => void; onCreate
         </button>
       </div>
     </Modal>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ⭐ V3.4 — PANNEAU DES MEMBRES DU CANAL (façon Telegram / WhatsApp)
+// ═══════════════════════════════════════════════════════════════════════
+// « Dans Telegram, dans WhatsApp, on arrive à voir les membres d'un groupe,
+//  d'un canal. Et aussi voir qui sont les administrateurs. Avec la
+//  possibilité de pouvoir envoyer des messages en privé à ce membre ou bien
+//  faire des vocales » — implémentation intégrale :
+//   • liste COMPLETE des membres (recherche par nom) ;
+//   • sections Administrateurs / Membres (comme Telegram) ;
+//   • badges de rôle (rôle DANS le canal + rôle global pasteur/animateur) ;
+//   • présence réelle (point vert, User.lastSeenAt < 90 s) ;
+//   • « Membre depuis … » (date d'adhésion) ;
+//   • actions par membre : ÉCRIRE EN PRIVÉ / APPELER (audio / vidéo) ;
+//   • explication communautaire : le privé fait GRANDIR la communauté.
+// ────────────────────────────────────────────────────────────────────────
+
+/** Rôles de canal qui apparaissent dans la section « Administrateurs ». */
+const MEMBERS_PANEL_ADMIN_ROLES = new Set([
+  "SUPER_ADMIN", "ADMIN", "MODERATOR", "ANIMATOR",
+]);
+
+/** Libellé FR d'un rôle DANS le canal (ChannelRole). */
+function channelRoleLabelFr(role?: string): string {
+  switch (role) {
+    case "SUPER_ADMIN": return "Fondateur du canal";
+    case "ADMIN": return "Administrateur";
+    case "MODERATOR": return "Modérateur";
+    case "ANIMATOR": return "Animateur";
+    default: return "Membre";
+  }
+}
+
+/** Libellé FR d'un rôle GLOBAL (UserRole) — badge « Pasteur », etc. */
+function globalRoleLabelFr(role?: string): string | null {
+  switch (role) {
+    case "SUPER_ADMIN": return "Pasteur";
+    case "ADMIN": return "Délégué";
+    case "MODERATOR": return "Modération";
+    case "ANIMATOR": return "Animateur";
+    case "MEMBER_VERIFIED": return "Membre authentifié";
+    default: return null;
+  }
+}
+
+/** « Membre depuis … » en français court. */
+function formatJoinedAtFr(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function MembersPanel({
+  conversation, currentUserId, dmBusy,
+  onOpenDirectMessage, onCallMember, onClose,
+}: {
+  conversation: ChatConversation;
+  currentUserId: string;
+  dmBusy: boolean;
+  onOpenDirectMessage: (userId: string, name: string) => void;
+  onCallMember: (userId: string, type: "audio" | "video", name?: string, avatarUrl?: string) => void;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  // Membre dont les ACTIONS sont dépliées (façon Telegram : on tape un
+  // membre → sa fiche avec « Message » / « Appel audio » / « Appel vidéo »).
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const participants = conversation.participants || [];
+  const onlineCount = participants.filter(p => p.online).length;
+
+  // Recherche insensible à la casse sur le nom.
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? participants.filter(p => (p.name || "").toLowerCase().includes(q))
+    : participants;
+
+  // Ordre : administrateurs en premier, puis les membres ; dans chaque
+  // section, les EN LIGNE remontent avant les hors-ligne, puis ordre alpha.
+  const bySection = (list: typeof participants) =>
+    [...list].sort((a, b) => {
+      if (a.online !== b.online) return a.online ? -1 : 1;
+      return (a.name || "").localeCompare(b.name || "", "fr");
+    });
+
+  const admins = bySection(filtered.filter(p => MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role))));
+  const regulars = bySection(filtered.filter(p => !MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role))));
+
+  /** Une rangée de membre (avatar, badges, présence + actions dépliables). */
+  const renderRow = (p: (typeof participants)[number]) => {
+    const isMe = p.userId === currentUserId;
+    const expanded = expandedId === p.userId;
+    const globalLabel = globalRoleLabelFr(p.roleLabel || undefined);
+    // roleLabel est le rôle GLOBAL historiquement rempli par l'API — le
+    // rôle DANS le canal est `role`. On affiche les deux si distincts.
+    const chanLabel = channelRoleLabelFr(String(p.role));
+    const roleColor = getRoleColor(String(p.role));
+    return (
+      <div key={p.userId} className="border-b border-stone-100/80 last:border-b-0">
+        <button
+          onClick={() => setExpandedId(expanded ? null : p.userId)}
+          className={cn(
+            "w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors",
+            expanded ? "bg-[#FAF6EF]" : "hover:bg-[#FAF6EF]/60",
+            isMe && "bg-[#C9A227]/[0.06]"
+          )}
+          aria-expanded={expanded}
+        >
+          <div className="relative flex-shrink-0">
+            {p.avatarUrl ? (
+              <img src={p.avatarUrl} alt={p.name}
+                className="w-10 h-10 rounded-full object-cover border border-[#C9A227]/30" />
+            ) : (
+              <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm", getAvatarColor(p.name || "?"))}>
+                {getInitials(p.name || "?")}
+              </div>
+            )}
+            {/* Présence réelle (lastSeenAt < 90 s) */}
+            {p.online ? (
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" title="En ligne" />
+            ) : (
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-stone-300 rounded-full border-2 border-white" title="Hors ligne" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-[#1E0F2B] truncate flex items-center gap-1.5">
+              <span className="truncate">{p.name || "Membre"}</span>
+              {isMe && (
+                <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-[#C9A227]/15 text-[#8C5FA8]">
+                  Vous
+                </span>
+              )}
+            </p>
+            <p className="text-xs text-[#8A8378] truncate flex items-center gap-1.5 mt-0.5">
+              {/* Badge du rôle DANS le canal (Administrateur, Modérateur…) */}
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-px rounded-full font-semibold"
+                style={{ backgroundColor: `${roleColor}18`, color: roleColor }}
+              >
+                {MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role))
+                  ? <Shield className="w-2.5 h-2.5" /> : null}
+                {chanLabel}
+              </span>
+              {/* Badge du rôle GLOBAL (Pasteur…) si distinct et notable */}
+              {globalLabel && !MEMBERS_PANEL_ADMIN_ROLES.has(String(p.role)) && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-px rounded-full bg-[#8C5FA8]/10 text-[#8C5FA8] font-semibold">
+                  <Sparkles className="w-2.5 h-2.5" />{globalLabel}
+                </span>
+              )}
+              {/* Statut de présence lisible */}
+              <span className={cn("truncate", p.online && "text-emerald-600 font-medium")}>
+                · {p.online ? "en ligne" : "hors ligne"}
+              </span>
+            </p>
+          </div>
+          {/* Chevron : déplie les actions privées */}
+          <ChevronUp className={cn(
+            "w-4 h-4 text-[#8A8378] flex-shrink-0 transition-transform",
+            expanded ? "" : "rotate-180"
+          )} />
+        </button>
+
+        {/* ─── Actions privées (dépliées) : uniquement pour les AUTRES ── */}
+        <AnimatePresence initial={false}>
+          {expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="overflow-hidden bg-[#FAF6EF]"
+            >
+              <div className="px-3 pb-3 pt-1">
+                {p.joinedAt && (
+                  <p className="text-[11px] text-[#8A8378] mb-2 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> Membre depuis le {formatJoinedAtFr(p.joinedAt)}
+                  </p>
+                )}
+                {!isMe ? (
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {/* Écrire en privé — le cœur de la demande : « créer
+                        en privé à un membre pour agrandir la communauté » */}
+                    <button
+                      onClick={() => onOpenDirectMessage(p.userId, p.name)}
+                      disabled={dmBusy}
+                      className="flex flex-col items-center gap-1 py-2 rounded-xl bg-[#8C5FA8] text-[#FAF6EF] text-[11px] font-semibold hover:bg-[#7A4E96] active:scale-95 transition-all disabled:opacity-40"
+                      title={`Ouvrir une conversation privée avec ${p.name}`}
+                    >
+                      {dmBusy
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <MessageCircle className="w-4 h-4" />}
+                      Message privé
+                    </button>
+                    {/* Appel vocal (LiveKit — sonnerie chez le destinataire) */}
+                    <button
+                      onClick={() => onCallMember(p.userId, "audio", p.name, p.avatarUrl)}
+                      disabled={dmBusy}
+                      className="flex flex-col items-center gap-1 py-2 rounded-xl bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-40"
+                      title={`Appel audio privé avec ${p.name}`}
+                    >
+                      <Phone className="w-4 h-4" />
+                      Appel vocal
+                    </button>
+                    {/* Appel vidéo privé */}
+                    <button
+                      onClick={() => onCallMember(p.userId, "video", p.name, p.avatarUrl)}
+                      disabled={dmBusy}
+                      className="flex flex-col items-center gap-1 py-2 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-[11px] font-semibold hover:bg-[#3A1E4D] active:scale-95 transition-all disabled:opacity-40"
+                      title={`Appel vidéo privé avec ${p.name}`}
+                    >
+                      <Video className="w-4 h-4" />
+                      Appel vidéo
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-[#8A8378] bg-white/70 border border-[#C9A227]/20 rounded-xl px-3 py-2">
+                    C'est vous 😉 Modifiez votre photo et vos informations via
+                    le bouton profil de la barre latérale.
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-[#1A0826]/60 backdrop-blur-[2px] flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* ─── En-tête du panneau : identité du canal + stats ─────────── */}
+        <div className="px-4 pt-4 pb-3 border-b border-[#C9A227]/15 bg-white">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative flex-shrink-0">
+                {conversation.avatarUrl ? (
+                  <img src={conversation.avatarUrl} alt={conversation.name}
+                    className="w-11 h-11 rounded-full object-cover border border-[#C9A227]/30" />
+                ) : (
+                  <div className={cn("w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm", getAvatarColor(conversation.name))}>
+                    {getInitials(conversation.name)}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-bold text-[#1E0F2B] text-base truncate">{conversation.name}</h3>
+                <p className="text-xs text-[#8A8378] flex items-center gap-1.5">
+                  <Users2 className="w-3 h-3 text-[#C9A227]/70" />
+                  {participants.length} membres
+                  {onlineCount > 0 && (
+                    <span className="text-emerald-600 font-medium">· {onlineCount} en ligne</span>
+                  )}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-stone-100 text-[#8A8378] flex-shrink-0"
+              aria-label="Fermer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          {/* Recherche (comme Telegram : filtre la liste par nom) */}
+          <div className="mt-3 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Rechercher un membre..."
+              autoFocus
+              className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20 focus:border-[#C9A227]/40"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-stone-400 hover:text-stone-600"
+                aria-label="Effacer la recherche"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ─── Liste scrollable : Administrateurs puis Membres ────────── */}
+        <div className="flex-1 overflow-y-auto">
+          {filtered.length === 0 && (
+            <div className="py-10 px-4 text-center">
+              <Search className="w-8 h-8 text-[#C9A227]/40 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-[#1E0F2B]">Aucun membre trouvé</p>
+              <p className="text-xs text-[#8A8378] mt-1">Essayez un autre nom</p>
+            </div>
+          )}
+          {admins.length > 0 && (
+            <>
+              <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
+                <Shield className="w-3 h-3 text-[#C9A227]" /> Administrateurs
+                <span className="ml-auto font-semibold normal-case">{admins.length}</span>
+              </div>
+              {admins.map(renderRow)}
+            </>
+          )}
+          {regulars.length > 0 && (
+            <>
+              <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
+                <Users className="w-3 h-3 text-[#C9A227]/70" /> Membres
+                <span className="ml-auto font-semibold normal-case">{regulars.length}</span>
+              </div>
+              {regulars.map(renderRow)}
+            </>
+          )}
+        </div>
+
+        {/* ─── Pied : vocation communautaire ──────────────────────────── */}
+        <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#FAF6EF]">
+          <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+            <span>
+              Touchez un membre pour lui <b className="text-[#1E0F2B]">écrire en privé</b> ou
+              l'<b className="text-[#1E0F2B]">appeler</b> — « qu'ils soient unis » (Jean 17:23) :
+              les liens personnels font grandir la communauté.
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 

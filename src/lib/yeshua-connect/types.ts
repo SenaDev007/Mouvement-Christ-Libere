@@ -16,7 +16,9 @@ export type CallType = "AUDIO" | "VIDEO";
 
 export interface ChatParticipant {
   userId: string;
-  role: "SUPER_ADMIN" | "MODERATOR" | "ANIMATOR" | "MEMBER_VERIFIED" | "MEMBER";
+  /** Rôle DANS le canal (ChannelRole Prisma) — ⭐ V3.4 : « ADMIN » ajouté
+   * (l'API conversations/members le renvoie réellement depuis la base). */
+  role: "SUPER_ADMIN" | "ADMIN" | "MODERATOR" | "ANIMATOR" | "MEMBER_VERIFIED" | "MEMBER";
   joinedAt: string;
   muted: boolean;
   name: string;
