@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
 import { PageHero } from "@/components/site/page-hero";
 import { ChannelView } from "@/components/premium/channel-view";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
@@ -15,6 +16,8 @@ interface PageProps {
 export default async function ChannelPage({ params }: PageProps) {
   const { id } = await params;
 
+  // ⭐ V3.20 — Auto-réparation colonne isDirect (2 findMany/findUnique sans select).
+  await ensureChannelIsDirectColumn();
   const channel = await db.channel.findUnique({
     where: { id },
     include: {

@@ -424,6 +424,12 @@ model Channel {
   type         ChannelType
   isEncrypted  Boolean      @default(false)
   isRestricted Boolean      @default(false)
+  // ⭐ V3.20 — Conversation PRIVÉE 1-1 (créée via POST /conversations/dm) :
+  // visible et lisible UNIQUEMENT par ses 2 membres — pas même les admins
+  // (directive : « un message privé entre deux membres ne devrait même pas
+  // être vu par les admins »). Posé par la route /dm, rétro-fixé par
+  // ensureChannelIsDirectColumn() via les AuditLog DM_CREATE existants.
+  isDirect     Boolean      @default(false)
   order        Int          @default(0)
   lastMessageAt DateTime?   // ⭐ V2.1 — date du dernier message (tri des canaux)
   createdAt    DateTime     @default(now())

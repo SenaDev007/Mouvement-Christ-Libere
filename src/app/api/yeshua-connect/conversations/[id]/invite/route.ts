@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
 
 /** Rôles contournant l'appartenance au canal (modération incluse) —
  * pour les canaux OUVERTS uniquement. */
@@ -73,12 +74,22 @@ export async function POST(
       );
     }
 
+    // 🔒 ⭐ V3.20 — CONFIDENTIALITÉ DES PRIVÉS : un PRIVÉ (isDirect) n'est
+    // pas invitable — un privé reste entre ses 2 membres (sinon l'ajout d'un
+    // 3e exposerait l'historique des deux autres). Auto-réparation d'abord.
+    await ensureChannelIsDirectColumn();
     const channel = await db.channel.findUnique({
       where: { id },
-      select: { id: true, name: true, communityId: true, isRestricted: true, type: true },
+      select: { id: true, name: true, communityId: true, isRestricted: true, type: true, isDirect: true },
     });
     if (!channel) {
       return NextResponse.json({ error: "Canal introuvable" }, { status: 404 });
+    }
+    if (channel.isDirect) {
+      return NextResponse.json(
+        { error: "Conversation privée — impossible d'y inviter d'autres membres" },
+        { status: 403 },
+      );
     }
 
     // 🔒 Permission : membre du canal OU rôle privilégié ; ⭐ V3.7 —

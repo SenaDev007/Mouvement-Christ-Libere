@@ -235,6 +235,10 @@ interface IncomingCallInfo {
   convName: string;
   convAvatarUrl?: string;
   convType: string;
+  /** ⭐ V3.20 — Privé 1-1 : le titre de la sonnerie doit être l'APPELANT
+   * (le nom du canal d'un privé = nom du DESTINATAIRE choisi par le
+   * créateur → sinon l'écran du destinataire montrait son PROPRE nom). */
+  isDirect?: boolean;
   callType: "audio" | "video";
   initiatorId: string;
   initiatorName: string;
@@ -2538,7 +2542,15 @@ export function MessagingView() {
     setCallEndStatus(null);
     endedByMeRef.current = false;
     callEndingRef.current = false;
-    setCallConvInfo({ name: info.convName, avatarUrl: info.convAvatarUrl });
+    // ⭐ V3.20 — PRIVÉ 1-1 : l'overlay d'appel (pendant TOUT l'appel) doit
+    // afficher l'APPELANT chez le destinataire — avant : convName = nom du
+    // canal privé = nom du DESTINATAIRE → Ora voyait « Ora » pendant que
+    // Pam l'appelait. Sur un canal/groupe, le nom du canal reste pertinent.
+    setCallConvInfo(
+      info.isDirect
+        ? { name: info.initiatorName, avatarUrl: info.initiatorAvatarUrl ?? info.convAvatarUrl }
+        : { name: info.convName, avatarUrl: info.convAvatarUrl },
+    );
     setActiveConvId(info.conversationId);
     setCallState("active"); // durée = depuis le décrochage (acceptedAt)
     cleanupLiveKit();
@@ -8665,7 +8677,16 @@ function IncomingCallOverlay({
     try { audioCtxRef.current?.resume().catch(() => {}); } catch {}
   };
 
-  const photo = info.convAvatarUrl || info.initiatorAvatarUrl;
+  // ⭐ V3.20 — PRIVE 1-1 : c'est l'APPELANT que le destinataire doit voir
+  // en GRAND (« Pam » appelle), pas le nom du canal — le nom stocké d'un
+  // privé est celui du DESTINATAIRE vu par le créateur, l'écran du
+  // destinataire montrait donc son PROPRE nom (« Ora »). Sur un appel de
+  // canal/groupe, on garde le nom du canal (avec l'appelant en sous-ligne).
+  const isDirectCall = info.isDirect === true;
+  const displayName = isDirectCall ? info.initiatorName : info.convName;
+  const photo = isDirectCall
+    ? (info.initiatorAvatarUrl || info.convAvatarUrl)
+    : (info.convAvatarUrl || info.initiatorAvatarUrl);
   const isVideo = info.callType === "video";
 
   return (
@@ -8678,25 +8699,29 @@ function IncomingCallOverlay({
         <motion.div
           animate={{ scale: [1, 1.06, 1] }}
           transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-          className={cn("w-28 h-28 sm:w-36 sm:h-36 rounded-full mx-auto mb-6 overflow-hidden flex items-center justify-center text-white text-4xl font-bold shadow-2xl", !photo && getAvatarColor(info.convName))}
+          className={cn("w-28 h-28 sm:w-36 sm:h-36 rounded-full mx-auto mb-6 overflow-hidden flex items-center justify-center text-white text-4xl font-bold shadow-2xl", !photo && getAvatarColor(displayName))}
         >
           {photo ? (
-            <img src={photo} alt={info.convName} className="w-full h-full object-cover" />
+            <img src={photo} alt={displayName} className="w-full h-full object-cover" />
           ) : (
-            getInitials(info.convName)
+            getInitials(displayName)
           )}
         </motion.div>
         <p className="text-xs font-bold uppercase tracking-widest text-[#C9A227] mb-1.5 flex items-center gap-1.5">
           {isVideo ? <Video className="w-3.5 h-3.5" /> : <Phone className="w-3.5 h-3.5" />}
           {isVideo ? "Appel vidéo entrant" : "Appel audio entrant"}
         </p>
-        <h2 className="text-2xl sm:text-3xl font-bold text-[#FAF6EF]">{info.convName}</h2>
-        {info.convName !== info.initiatorName && (
+        <h2 className="text-2xl sm:text-3xl font-bold text-[#FAF6EF]">{displayName}</h2>
+        {isDirectCall ? (
+          <p className="text-sm text-[#FAF6EF]/70 mt-1.5">
+            {displayName} vous appelle
+          </p>
+        ) : info.convName !== info.initiatorName ? (
           <p className="text-sm text-[#FAF6EF]/70 mt-1.5">
             {info.initiatorName} vous appelle
-            {info.convType === "DIRECT" ? "" : " depuis ce canal"}
+            {" depuis ce canal"}
           </p>
-        )}
+        ) : null}
         {/* Barre « sonnerie » animée (retour visuel même sans son). */}
         <div className="flex items-end gap-1.5 h-6 mt-6" aria-hidden>
           {[0, 1, 2, 3, 4].map((i) => (

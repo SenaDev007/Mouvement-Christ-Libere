@@ -563,3 +563,95 @@ export function ensureUserBlockTable(): Promise<void> {
   }
   return inflightUserBlock;
 }
+
+let channelIsDirectOk = false;
+let inflightChannelIsDirect: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.20 — S'assure que la colonne `Channel.isDirect` (BOOLEAN, défaut
+ * false) existe, puis RÉTRO-FIXE les conversations privées existantes.
+ *
+ * Contexte : correction de confidentialité — les conversations PRIVÉES 1-1
+ * (créées par POST /conversations/dm) étaient listées et lisibles par
+ * N'IMPORTE QUI (spectateurs ET admins). Un privé doit n'être visible que
+ * de ses 2 membres, pas même des admins (directive du pasteur).
+ *
+ * Deux étapes :
+ *  1. `ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "isDirect" ...` ;
+ *  2. rétro-fixage : chaque création de privé laisse un AuditLog
+ *     (action 'DM_CREATE', channelId renseigné) depuis la V3.4 → on marque
+ *     ces canaux isDirect = true. Les nouveaux privés posent le drapeau
+ *     à la création (route /dm). Un canal PUBLIC « Texte — groupe » avec
+ *     2 inscrits n'est PAS touché (pas d'ambiguïté de comptage).
+ *
+ * Mêmes garanties que les autres helpers : idempotent, mémoïsé,
+ * concurrentiel, échec DDL purement loggué.
+ */
+export function ensureChannelIsDirectColumn(): Promise<void> {
+  if (channelIsDirectOk) return Promise.resolve();
+  if (!inflightChannelIsDirect) {
+    inflightChannelIsDirect = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "isDirect" BOOLEAN NOT NULL DEFAULT false'
+      );
+      // Rétro-fixage via la piste d'audit des privés (DM_CREATE).
+      try {
+        await db.$executeRawUnsafe(
+          `UPDATE "Channel" SET "isDirect" = true
+           WHERE "id" IN (
+             SELECT DISTINCT "channelId" FROM "AuditLog"
+             WHERE "action" = 'DM_CREATE' AND "channelId" IS NOT NULL
+           )`
+        );
+      } catch {
+        // AuditLog absent (base très ancienne) → seuls les NOUVEAUX privés
+        // porteront le drapeau — dégradation douce, pas bloquant.
+      }
+      // ⭐ V3.20 — PURGE des intrus : le bug d'auto-join (V2.9) inscrivait
+      // en ChannelMember TOUT tiers qui ouvrait un privé listé à tort dans
+      // sa sidebar (« n'importe qui voit le chat »). La paire légitime est
+      // tracée par l'audit DM_CREATE (userId = créateur, targetId = cible) :
+      // on retire tout membre d'un privé qui n'est ni l'un ni l'autre.
+      // Idempotent (après la 1re passe, plus aucune ligne ne correspond) et
+      // SÛR : la suppression ne s'applique qu'aux canaux portant une trace
+      // d'audit DM_CREATE — pas de nettoyage en aveugle.
+      try {
+        await db.$executeRawUnsafe(
+          `DELETE FROM "ChannelMember" m
+           WHERE m."channelId" IN (
+             SELECT "id" FROM "Channel" WHERE "isDirect" = true
+           )
+           AND EXISTS (
+             SELECT 1 FROM "AuditLog" a
+             WHERE a."action" = 'DM_CREATE' AND a."channelId" = m."channelId"
+           )
+           AND m."userId" NOT IN (
+             SELECT a."userId" FROM "AuditLog" a
+             WHERE a."action" = 'DM_CREATE' AND a."channelId" = m."channelId"
+             UNION
+             SELECT a2."targetId" FROM "AuditLog" a2
+             WHERE a2."action" = 'DM_CREATE' AND a2."channelId" = m."channelId"
+               AND a2."targetId" IS NOT NULL
+           )`
+        );
+      } catch {
+        // best effort — si AuditLog manque, les gardes d'accès bloquent
+        // déjà les nouveaux intrus (l'ancien auto-join est refermé).
+      }
+    })()
+      .then(() => {
+        channelIsDirectOk = true;
+        console.log("[ensure-schema] V3.20 : colonne Channel.isDirect vérifiée/créée + privés rétro-fixés ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE Channel.isDirect impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightChannelIsDirect = null;
+      });
+  }
+  return inflightChannelIsDirect;
+}

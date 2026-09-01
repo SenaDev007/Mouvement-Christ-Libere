@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureCallSignalTable, ensureUserBlockTable } from "@/lib/ensure-schema";
+import { ensureCallSignalTable, ensureChannelIsDirectColumn, ensureUserBlockTable } from "@/lib/ensure-schema";
 
 /**
  * ⭐ V3.1 — SIGNALISATION DES APPELS AUDIO/VIDÉO Yeshua Connect.
@@ -32,7 +32,9 @@ import { ensureCallSignalTable, ensureUserBlockTable } from "@/lib/ensure-schema
  *
  *   GET ?incoming=1  (polling 3 s par chaque membre connecté)
  *        → appels qui sonnent POUR MOI (membre, non-initiateur) avec la
- *          PHOTO du canal + le nom/photo de l'appelant. Balayage « manqué » :
+ *          PHOTO du canal + le nom/photo de l'appelant + ⭐ V3.20 isDirect
+ *          (le front affiche le nom de l'APPELANT sur l'écran du
+ *          destinataire, plus le nom du canal privé). Balayage « manqué » :
  *          tout signal ringing de plus de 45 s devient "missed" + journal
  *          « Appel manqué » dans le chat.
  *
@@ -174,15 +176,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ status: row.status, duration, type: row.type });
     }
 
+    // ⭐ V3.20 — isDirect lu dans la requête ci-dessous (c."isDirect") :
+    // auto-réparation de la colonne AVANT de l'interroger.
+    await ensureChannelIsDirectColumn();
+
     // ─── Appels entrants qui sonnent pour moi ─────────────────────────
     await sweepMissedCalls();
     const incoming = await db.$queryRawUnsafe<Array<{
       callId: string; conversationId: string; callType: string; createdAt: Date;
       convName: string | null; convAvatarUrl: string | null; convType: string | null;
+      convIsDirect: boolean | null;
       initiatorId: string; initiatorName: string | null; initiatorAvatarUrl: string | null;
     }>>(
       `SELECT s."id" AS "callId", s."conversationId", s."type" AS "callType", s."createdAt",
               c."name" AS "convName", c."avatarUrl" AS "convAvatarUrl", c."type" AS "convType",
+              c."isDirect" AS "convIsDirect",
               s."initiatorId", u."name" AS "initiatorName", u."avatarUrl" AS "initiatorAvatarUrl"
        FROM "CallSignal" s
        JOIN "Channel" c ON c."id" = s."conversationId"
@@ -205,6 +213,10 @@ export async function GET(req: NextRequest) {
         convName: c.convName || "Conversation",
         convAvatarUrl: c.convAvatarUrl || undefined,
         convType: c.convType || "CHANNEL",
+        // ⭐ V3.20 — Privé 1-1 : le front doit titrer l'APPELANT (le nom du
+        // canal d'un privé est celui du DESTINATAIRE vu par son créateur —
+        // sinon l'écran du destinataire montrait son PROPRE nom).
+        isDirect: c.convIsDirect === true,
         callType: c.callType === "video" ? "video" : "audio",
         initiatorId: c.initiatorId,
         initiatorName: c.initiatorName || "Membre",
@@ -242,7 +254,31 @@ export async function POST(req: NextRequest) {
       if (!conversationId) {
         return NextResponse.json({ error: "conversationId requis" }, { status: 400 });
       }
-      const member = await isMemberOrPrivileged(conversationId, userId, userRole);
+      // ⭐ V3.20 — CONFIDENTIALITÉ DES PRIVÉS : sur un privé (isDirect),
+      // SEULS les 2 membres peuvent lancer l'appel — le bypass privilégié
+      // ne s'applique PAS (personne ne doit faire sonner le privé d'autrui).
+      // Colonne lue ci-dessous → auto-réparation d'abord.
+      await ensureChannelIsDirectColumn();
+      const startConv = await db.channel.findUnique({
+        where: { id: conversationId },
+        select: { isDirect: true },
+      });
+      let member: boolean;
+      if (startConv?.isDirect) {
+        const dmMembership = await db.channelMember.findUnique({
+          where: { channelId_userId: { channelId: conversationId, userId } },
+          select: { userId: true },
+        });
+        if (!dmMembership) {
+          return NextResponse.json(
+            { error: "Conversation privée — réservée à ses deux membres" },
+            { status: 403 },
+          );
+        }
+        member = true;
+      } else {
+        member = await isMemberOrPrivileged(conversationId, userId, userRole);
+      }
       if (!member) {
         return NextResponse.json({ error: "Vous n'êtes pas membre de cette conversation" }, { status: 403 });
       }

@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureVoiceVideoColumns, ensureServantLocationColumns } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns } from "@/lib/ensure-schema";
 
 const ENTITY_MAP = {
   servants: "servant",
@@ -107,7 +107,7 @@ export async function GET(
 
   try {
     // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl (cf. ensure-schema.ts)
-    if (entity === "channels") await ensureChannelAvatarUrl();
+    if (entity === "channels") { await ensureChannelAvatarUrl(); await ensureChannelIsDirectColumn(); }
     // ⭐ V2.7 — Auto-réparation colonnes User.phone (profil « infos complètes »)
     if (entity === "users" || entity === "servants" || entity === "channels") {
       await ensureVoiceVideoColumns();
@@ -138,7 +138,7 @@ export async function PATCH(
   try {
     const body = await request.json();
     // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl (cf. ensure-schema.ts)
-    if (entity === "channels") await ensureChannelAvatarUrl();
+    if (entity === "channels") { await ensureChannelAvatarUrl(); await ensureChannelIsDirectColumn(); }
     // ⭐ V2.7 — Auto-réparation colonnes V2.7 (User.phone, Channel.videoMode)
     if (entity === "users" || entity === "servants" || entity === "channels") {
       await ensureVoiceVideoColumns();

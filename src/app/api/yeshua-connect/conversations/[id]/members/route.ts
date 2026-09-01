@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureV29Schema } from "@/lib/ensure-schema";
+import { ensureChannelIsDirectColumn, ensureV29Schema } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir les membres de n'importe quel canal. */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -43,6 +43,27 @@ export async function GET(
     // ci-dessous (présence du panneau des membres) → sans ceci, 500 si la
     // base n'est pas migrée. Idempotent + mémoïsé par instance.
     await ensureV29Schema();
+
+    // 🔒 ⭐ V3.20 — CONFIDENTIALITÉ DES PRIVÉS : les membres d'un PRIVÉ
+    // (isDirect) ne sont exposés qu'à ses 2 membres — le bypass
+    // « rôles privilégiés » ne s'applique PAS (directive du pasteur).
+    await ensureChannelIsDirectColumn();
+    const channelFlag = await db.channel.findUnique({
+      where: { id },
+      select: { isDirect: true },
+    });
+    if (channelFlag?.isDirect) {
+      const dmMembership = await db.channelMember.findUnique({
+        where: { channelId_userId: { channelId: id, userId } },
+        select: { userId: true },
+      });
+      if (!dmMembership) {
+        return NextResponse.json(
+          { error: "Conversation privée — réservée à ses deux membres" },
+          { status: 403 },
+        );
+      }
+    }
 
     // 🔒 Vérifier que l'utilisateur est membre du canal (sauf rôles privilégiés)
     if (!PRIVILEGED_ROLES.has(userRole || "")) {

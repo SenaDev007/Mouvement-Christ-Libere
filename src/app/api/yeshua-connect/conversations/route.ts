@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureChannelAvatarUrl, ensureVoiceVideoColumns, ensureV29Schema, ensureUserBlockTable } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureV29Schema, ensureUserBlockTable } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir les canaux RESTRICTED (pasteurs / modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -15,6 +15,12 @@ const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
  * - 🔒 Authentification requise (NextAuth).
  * - 🔒 Les canaux RESTRICTED (type === "RESTRICTED" ou isRestricted === true)
  *   ne sont retournés que si l'utilisateur est SUPER_ADMIN, ADMIN ou MODERATOR.
+ * - 🔒 ⭐ V3.20 — CONFIDENTIALITÉ DES PRIVÉS : les conversations DIRECT
+ *   (isDirect = true, créées via /conversations/dm) ne sont retournées
+ *   qu'à leurs DEUX membres — PAS MÊME aux admins (directive : « un
+ *   message privé entre deux membres ne devrait même pas être vu par les
+ *   admins »). Auparavant : findMany global → tout le monde voyait tous
+ *   les privés des autres dans sa sidebar.
  *
  * Response: Array<{
  *   id: string;
@@ -47,6 +53,10 @@ export async function GET(_req: NextRequest) {
     // la colonne avatarUrl (V2.5) manque et tout le findMany échoue (500
     // → Yeshua Connect s'affiche vide). Idempotent + mémoïsé par instance.
     await ensureChannelAvatarUrl();
+    // ⭐ V3.20 — Auto-réparation colonne isDirect (confidentialité des
+    // privés) : le findMany ci-dessous sélectionne TOUTES les colonnes
+    // scalaires → sans ceci, 500 si la base n'est pas migrée.
+    await ensureChannelIsDirectColumn();
     // ⭐ V2.7 — Auto-réparation colonne videoMode (le findMany renvoie toutes
     // les colonnes scalaires → sans ceci, 500 si la base n'est pas migrée)
     await ensureVoiceVideoColumns();
@@ -109,6 +119,14 @@ export async function GET(_req: NextRequest) {
       },
     });
 
+    // ⭐ V3.20 — CONFIDENTIALITÉ : un PRIVÉ (isDirect) n'est listé qu'à ses
+    // 2 membres — SANS exception pour les rôles privilégiés. Les canaux
+    // et groupes publics restent visibles de tous (modèle communauté).
+    const visibleChannels = channels.filter((ch) => {
+      if (!ch.isDirect) return true;
+      return ch.members.some((m) => m.userId === userId);
+    });
+
     // ⭐ V2.1 — Pré-charger le lastReadAt de l'utilisateur courant pour
     // tous les canaux dont il est membre, en une seule requête.
     const myMemberships = await db.channelMember.findMany({
@@ -124,7 +142,7 @@ export async function GET(_req: NextRequest) {
     // requête agrégée (createdAt > lastReadAt AND senderId != userId).
     // On lance les compteurs en parallèle pour ne pas sérialiser les requêtes.
     const unreadCountEntries = await Promise.all(
-      channels.map(async (ch) => {
+      visibleChannels.map(async (ch) => {
         const lastReadAt = lastReadMap.get(ch.id) ?? null;
         // Si pas de lastReadAt ET l'utilisateur est membre, on compte tous les
         // messages qu'il n'a jamais "lus". Pour un modérateur non-membre on
@@ -153,7 +171,7 @@ export async function GET(_req: NextRequest) {
     const unreadCounts = new Map<string, number>(unreadCountEntries);
 
     // Mapper vers le format ChatConversation attendu par le frontend
-    const conversations = channels.map((ch) => {
+    const conversations = visibleChannels.map((ch) => {
       const lastMsg = ch.messages[0];
       // Mapper ChannelType → ConversationType
       let convType: "CHANNEL" | "GROUP" | "DIRECT" | "PASTORS" | "VOICE";
@@ -173,6 +191,9 @@ export async function GET(_req: NextRequest) {
         // l'onglet « Inviter » qu'aux administrateurs principaux
         // (SUPER_ADMIN/ADMIN), qui ajoutent qui ils veulent.
         isRestricted: ch.isRestricted === true || ch.type === "RESTRICTED",
+        // ⭐ V3.20 — Privé 1-1 : le front masque l'onglet Inviter et traite
+        // la conversation comme confidentielle (bulles, titre interlocuteur).
+        isDirect: ch.isDirect === true,
         name: ch.name,
         description: ch.description ?? undefined,
         // ⭐ V2.5 — Photo du canal (uploadée depuis le back-office)

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir tous les canaux (y compris RESTRICTED). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -29,18 +30,29 @@ export async function GET(req: Request) {
     const q = url.searchParams.get("q") || "";
     if (!q.trim()) return NextResponse.json({ messages: [], channels: [], users: [] });
 
+    // ⭐ V3.20 — La recherche interroge Channel.isDirect ci-dessous :
+    // auto-réparation de la colonne AVANT de l'interroger.
+    await ensureChannelIsDirectColumn();
+
     // Pour les utilisateurs non privilégiés, on limite la recherche aux canaux
     // dont ils sont membres (pour ne pas fuiter le contenu de canaux privés).
-    const accessibleChannelFilter = isPrivileged
-      ? {}
-      : {
-          channel: {
-            OR: [
-              { isRestricted: false, type: { not: "RESTRICTED" } },
-              { members: { some: { userId } } },
-            ],
-          },
-        };
+    // ⭐ V3.20 — CONFIDENTIALITÉ DES PRIVÉS : les messages d'un PRIVÉ
+    // (isDirect) n'apparaissent JAMAIS dans la recherche globale — ni pour
+    // les spectateurs ni pour les admins (directive : « même les admins ne
+    // devraient pas voir le message envoyé »). Un privé ne ressort que pour
+    // ses 2 membres (branche « members some userId »). AVANT : la branche
+    // publique matchait les canaux TEXT des privés → le contenu des privés
+    // d'autrui était cherchable par tout le monde.
+    const accessibleChannelFilter = {
+      channel: {
+        OR: [
+          isPrivileged
+            ? { isDirect: false }
+            : { isRestricted: false, type: { not: "RESTRICTED" }, isDirect: false },
+          { members: { some: { userId } } },
+        ],
+      },
+    };
 
     const [messages, channels, users] = await Promise.all([
       db.message.findMany({
@@ -59,6 +71,9 @@ export async function GET(req: Request) {
       db.channel.findMany({
         where: {
           name: { contains: q, mode: "insensitive" },
+          // ⭐ V3.20 — Les privés ne ressortent pas dans la recherche de
+          // canaux (leur « nom » est celui d'un membre — liste = fuite).
+          isDirect: false,
           ...(isPrivileged
             ? {}
             : { isRestricted: false, type: { not: "RESTRICTED" } }),

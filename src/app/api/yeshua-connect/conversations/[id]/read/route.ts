@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
 
 /** Rôles pouvant marquer comme lu n'importe quel canal (modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -13,6 +14,8 @@ const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
  *
  * - 🔒 Authentification NextAuth requise.
  * - 🔒 L'utilisateur doit être membre du canal (sauf rôles privilégiés).
+ * - 🔒 ⭐ V3.20 — Sur un PRIVÉ (isDirect) : membres UNIQUEMENT — un tiers
+ *   ne doit même pas pouvoir y créer d'entrée ChannelMember fantôme.
  * - Si l'utilisateur n'est pas encore membre (modérateur), on crée l'entrée
  *   ChannelMember à la volée pour pouvoir tracker son lastReadAt.
  *
@@ -33,6 +36,27 @@ export async function POST(
 
     const { id } = await params;
     const now = new Date();
+
+    // 🔒 ⭐ V3.20 — CONFIDENTIALITÉ DES PRIVÉS : membres UNIQUEMENT (même
+    // pour les rôles privilégiés — pas d'entrée ChannelMember fantôme dans
+    // un privé). Auto-réparation de la colonne d'abord.
+    await ensureChannelIsDirectColumn();
+    const channelFlag = await db.channel.findUnique({
+      where: { id },
+      select: { isDirect: true },
+    });
+    if (channelFlag?.isDirect) {
+      const dmMembership = await db.channelMember.findUnique({
+        where: { channelId_userId: { channelId: id, userId } },
+        select: { userId: true },
+      });
+      if (!dmMembership) {
+        return NextResponse.json(
+          { error: "Conversation privée — réservée à ses deux membres" },
+          { status: 403 },
+        );
+      }
+    }
 
     // 🔒 Vérifier que l'utilisateur est membre du canal (sauf rôles privilégiés)
     if (!PRIVILEGED_ROLES.has(userRole || "")) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureUserBlockTable } from "@/lib/ensure-schema";
+import { ensureChannelIsDirectColumn, ensureUserBlockTable } from "@/lib/ensure-schema";
 
 /** Rôles pouvant contacter n'importe quel membre (pasteurs / modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -184,8 +184,13 @@ export async function POST(req: NextRequest) {
       where: { id: meId },
       select: { name: true },
     });
+    // ⭐ V3.20 — Auto-réparation de la colonne isDirect AVANT la création
+    // (le create ci-dessous écrit le drapeau — sans colonne : erreur 500).
+    await ensureChannelIsDirectColumn();
     // Nom stocké = nom du destinataire (l'affichage côté client est calculé
     // PAR SPECTATEUR : chacun voit le nom de son interlocuteur).
+    // ⭐ V3.20 — isDirect = true : ce canal est un PRIVÉ, visible et lisible
+    // de ses 2 membres UNIQUEMENT (pas même les admins).
     const channel = await db.channel.create({
       data: {
         name: target.name || "Conversation privée",
@@ -193,6 +198,7 @@ export async function POST(req: NextRequest) {
         type: "TEXT",
         communityId,
         isEncrypted: false,
+        isDirect: true,
         order: 0,
       },
     });

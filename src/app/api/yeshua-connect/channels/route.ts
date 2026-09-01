@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureChannelAvatarUrl } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir tous les canaux (y compris RESTRICTED). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -25,6 +25,9 @@ export async function GET() {
 
     // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl (cf. ensure-schema.ts)
     await ensureChannelAvatarUrl();
+    // ⭐ V3.20 — Auto-réparation colonne isDirect (le findMany sans select
+    // ci-dessous renvoie TOUTES les colonnes scalaires → 500 si absente).
+    await ensureChannelIsDirectColumn();
 
     const channels = await db.channel.findMany({
       where: canSeeRestricted

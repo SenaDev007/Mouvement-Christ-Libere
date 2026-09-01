@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureMessageTypeEnum, ensureUserBlockTable } from "@/lib/ensure-schema";
+import { ensureChannelIsDirectColumn, ensureMessageTypeEnum, ensureUserBlockTable } from "@/lib/ensure-schema";
 
 /** Rôles pouvant modérer (et donc lire) tous les canaux même sans y être membre. */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -23,6 +23,12 @@ const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
  * - 🔒 Authentification NextAuth requise.
  * - 🔒 L'utilisateur doit être membre du canal (table ChannelMember).
  *   Les rôles SUPER_ADMIN / ADMIN / MODERATOR peuvent modérer sans être membres.
+ * - 🔒 ⭐ V3.20 — CONFIDENTIALITÉ DES PRIVÉS : si le canal est un PRIVÉ
+ *   (isDirect = true), SEULS ses 2 membres peuvent lire — ni auto-join,
+ *   ni exception pour les rôles privilégiés (directive du pasteur :
+ *   « même les admins ne devraient pas voir le message envoyé »).
+ *   AVANT : un tiers (ou un admin) qui ouvrait un privé était AUTO-INSCRIT
+ *   puis pouvait tout lire — c'est cette fuite que V3.20 referme.
  */
 export async function GET(
   _req: NextRequest,
@@ -42,6 +48,9 @@ export async function GET(
     const limit = parseInt(url.searchParams.get("limit") || "50", 10);
     const beforeMessageId = url.searchParams.get("before");
 
+    // ⭐ V3.20 — Colonne isDirect lue ci-dessous : auto-réparation d'abord.
+    await ensureChannelIsDirectColumn();
+
     // 🔒 Vérifier que l'utilisateur est membre du canal (sauf rôles privilégiés)
     // ⭐ V2.9 — AUTO-JOIN paresseux : les canaux PUBLICS (non RESTRICTED)
     // sont visibles par tous dans la liste — si l'utilisateur n'est pas
@@ -49,6 +58,8 @@ export async function GET(
     // inscription manuelle), on l'inscrit AUTOMATIQUEMENT au premier accès.
     // Avant : 403 « Vous n'êtes pas membre » → « je ne vois pas les messages
     // de Pam » alors que le canal s'affichait dans la sidebar.
+    // ⭐ V3.20 — L'auto-join ne s'applique JAMAIS à un PRIVÉ (isDirect) :
+    // un privé n'accepte que ses 2 membres, quels que soient les rôles.
     if (!PRIVILEGED_ROLES.has(userRole || "")) {
       const membership = await db.channelMember.findUnique({
         where: { channelId_userId: { channelId: id, userId } },
@@ -56,9 +67,9 @@ export async function GET(
       if (!membership) {
         const channelInfo = await db.channel.findUnique({
           where: { id },
-          select: { isRestricted: true, type: true },
+          select: { isRestricted: true, type: true, isDirect: true },
         });
-        if (channelInfo && !channelInfo.isRestricted && channelInfo.type !== "RESTRICTED") {
+        if (channelInfo && !channelInfo.isDirect && !channelInfo.isRestricted && channelInfo.type !== "RESTRICTED") {
           await db.channelMember
             .create({ data: { channelId: id, userId, role: "MEMBER" } })
             .catch(() => {
@@ -69,6 +80,25 @@ export async function GET(
         } else {
           return NextResponse.json(
             { error: "Vous n'êtes pas membre de ce canal" },
+            { status: 403 },
+          );
+        }
+      }
+    } else {
+      // ⭐ V3.20 — Rôles privilégiés : le bypass « modération » ne donne
+      // PAS accès aux PRIVÉS (isDirect) — mêmes règles que les membres.
+      const membership = await db.channelMember.findUnique({
+        where: { channelId_userId: { channelId: id, userId } },
+        select: { userId: true },
+      });
+      if (!membership) {
+        const channelInfo = await db.channel.findUnique({
+          where: { id },
+          select: { isDirect: true },
+        });
+        if (channelInfo?.isDirect) {
+          return NextResponse.json(
+            { error: "Conversation privée — réservée à ses deux membres" },
             { status: 403 },
           );
         }
@@ -277,6 +307,9 @@ export async function POST(
 
     // 🔒 Vérifier que l'utilisateur est membre du canal (sauf rôles privilégiés)
     // ⭐ V2.9 — Même auto-join paresseux côté envoi (cohérent avec le GET).
+    // ⭐ V3.20 — JAMAIS d'auto-join (ni de bypass privilégié) sur un PRIVÉ.
+    // ⭐ V3.20 — Colonne isDirect lue ci-dessous : auto-réparation d'abord.
+    await ensureChannelIsDirectColumn();
     if (!PRIVILEGED_ROLES.has(userRole || "")) {
       const membership = await db.channelMember.findUnique({
         where: { channelId_userId: { channelId: id, userId } },
@@ -284,15 +317,33 @@ export async function POST(
       if (!membership) {
         const channelInfo = await db.channel.findUnique({
           where: { id },
-          select: { isRestricted: true, type: true },
+          select: { isRestricted: true, type: true, isDirect: true },
         });
-        if (channelInfo && !channelInfo.isRestricted && channelInfo.type !== "RESTRICTED") {
+        if (channelInfo && !channelInfo.isDirect && !channelInfo.isRestricted && channelInfo.type !== "RESTRICTED") {
           await db.channelMember
             .create({ data: { channelId: id, userId, role: "MEMBER" } })
             .catch(() => {});
         } else {
           return NextResponse.json(
             { error: "Vous n'êtes pas membre de ce canal" },
+            { status: 403 },
+          );
+        }
+      }
+    } else {
+      // ⭐ V3.20 — Privés interdits aux non-membres, même privilégiés.
+      const membership = await db.channelMember.findUnique({
+        where: { channelId_userId: { channelId: id, userId } },
+        select: { userId: true },
+      });
+      if (!membership) {
+        const channelInfo = await db.channel.findUnique({
+          where: { id },
+          select: { isDirect: true },
+        });
+        if (channelInfo?.isDirect) {
+          return NextResponse.json(
+            { error: "Conversation privée — réservée à ses deux membres" },
             { status: 403 },
           );
         }

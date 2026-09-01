@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureCallSignalTable, ensureWebRTCSignalTable } from "@/lib/ensure-schema";
+import { ensureCallSignalTable, ensureChannelIsDirectColumn, ensureWebRTCSignalTable } from "@/lib/ensure-schema";
 
 /**
  * ⭐ V3.19 — SIGNALISATION WEBRTC DES APPELS P2P DE SECOURS (Plan C).
@@ -44,6 +44,22 @@ async function canAccessCall(callId: string, userId: string, userRole?: string |
   if (!rows.length) return { ok: false };
   const { initiatorId, conversationId } = rows[0];
   if (initiatorId === userId) return { ok: true, conversationId };
+  // ⭐ V3.20 — CONFIDENTIALITÉ DES PRIVÉS : la signalisation WebRTC d'un
+  // appel PRIVÉ (isDirect) est réservée à l'initiateur et aux 2 membres —
+  // le bypass « rôles privilégiés » ne s'applique pas (directive du
+  // pasteur : même les admins ne touchent pas les privés d'autrui).
+  await ensureChannelIsDirectColumn();
+  const conv = await db.channel.findUnique({
+    where: { id: conversationId },
+    select: { isDirect: true },
+  });
+  if (conv?.isDirect) {
+    const dm = await db.channelMember.findUnique({
+      where: { channelId_userId: { channelId: conversationId, userId } },
+      select: { role: true },
+    });
+    return dm ? { ok: true, conversationId } : { ok: false, conversationId };
+  }
   if (PRIVILEGED_ROLES.has(userRole || "")) return { ok: true, conversationId };
   const m = await db.channelMember.findUnique({
     where: { channelId_userId: { channelId: conversationId, userId } },

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
 import { PageHero } from "@/components/site/page-hero";
 import { ChannelCard, SecureBanner } from "@/components/premium/channel-card";
 import { QuoteBlock } from "@/components/premium/section-divider";
@@ -8,6 +9,8 @@ import { ChevronRight, MessageSquare, ArrowRight } from "lucide-react";
 export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
 export default async function CommunautePage() {
+  // ⭐ V3.20 — Auto-réparation colonne isDirect (findMany sans select).
+  await ensureChannelIsDirectColumn();
   const channels = await db.channel.findMany({
     orderBy: [{ communityId: "asc" }, { order: "asc" }],
     include: {
