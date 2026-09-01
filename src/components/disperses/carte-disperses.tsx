@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import DottedMap from "dotted-map";
+import Image from "next/image";
 import { MapPin, Users, Globe, X, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { flagFromCountryCode } from "@/lib/data/flags";
@@ -23,10 +25,10 @@ interface CarteDispersesProps {
 }
 
 const NIVEAU_COULEURS: Record<string, string> = {
-  pasteur: "#C9A227",      // or
-  disciple: "#8C5FA8",     // lavande
-  croyant: "#5B7052",      // vert olive
-  chercheur: "#8A8378",    // gris pierre
+  pasteur: "#C9A227",
+  disciple: "#8C5FA8",
+  croyant: "#5B7052",
+  chercheur: "#8A8378",
 };
 
 const NIVEAU_LABELS: Record<string, string> = {
@@ -37,30 +39,76 @@ const NIVEAU_LABELS: Record<string, string> = {
 };
 
 // Drapeaux — helper partagé qui génère automatiquement le drapeau Unicode
-// à partir du code ISO 2 lettres du pays.
+// à partir du code ISO 2 lettres du pays (191 pays couverts).
 function getDrapeau(pays: string): string {
   return flagFromCountryCode(pays);
 }
 
+// Coordonnées de Jérusalem
+const JERUSALEM = { lat: 31.7683, lng: 35.2137 };
+
 export function CarteDisperses({ membres }: CarteDispersesProps) {
   const [membreSelectionne, setMembreSelectionne] = useState<MembreDisperse | null>(null);
   const [filtreNiveau, setFiltreNiveau] = useState<string | null>(null);
-  const [hoveredPays, setHoveredPays] = useState<string | null>(null);
 
   const membresFiltres = useMemo(() => {
     if (!filtreNiveau) return membres;
     return membres.filter((m) => m.niveau === filtreNiveau);
   }, [membres, filtreNiveau]);
 
-  // Convertir lat/lon en coordonnées SVG (projection equirectangulaire simple)
-  const projectCoord = (lat: number, lon: number) => {
-    // SVG viewBox: 0 0 1000 500
-    const x = ((lon + 180) / 360) * 1000;
-    const y = ((90 - lat) / 180) * 500;
-    return { x, y };
-  };
+  // Générer la carte dotted-map avec pins intégrés (alignement parfait)
+  const { svgMap, pinPositions, jerusalemPos } = useMemo(() => {
+    const map = new DottedMap({ height: 80, grid: "diagonal" });
 
-  // Stats
+    // Ajouter Jérusalem comme pin de référence
+    const jerusalemPin = map.addPin({
+      lat: JERUSALEM.lat,
+      lng: JERUSALEM.lng,
+      svgOptions: { color: "#C9A227", radius: 0.6 },
+    });
+
+    // Ajouter chaque membre comme pin
+    const positions: Array<{ membre: MembreDisperse; x: number; y: number }> = [];
+    for (const membre of membres) {
+      const couleur = NIVEAU_COULEURS[membre.niveau] || NIVEAU_COULEURS.chercheur;
+      const pin = map.addPin({
+        lat: membre.latitude,
+        lng: membre.longitude,
+        svgOptions: { color: couleur, radius: 0.5 },
+      });
+      if (pin) {
+        positions.push({ membre, x: pin.x, y: pin.y });
+      }
+    }
+
+    const svg = map.getSVG({
+      radius: 0.25,
+      color: "#FAF6EF30",
+      shape: "circle",
+      backgroundColor: "#1A0826",
+    });
+
+    // Extraire les dimensions du viewBox
+    const viewBoxMatch = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+    const width = viewBoxMatch ? parseFloat(viewBoxMatch[1]) : 1000;
+    const height = viewBoxMatch ? parseFloat(viewBoxMatch[2]) : 500;
+
+    return {
+      svgMap: svg,
+      pinPositions: positions.map((p) => ({
+        ...p,
+        x: (p.x / width) * 1000,
+        y: (p.y / height) * 500,
+      })),
+      jerusalemPos: jerusalemPin
+        ? {
+            x: (jerusalemPin.x / width) * 1000,
+            y: (jerusalemPin.y / height) * 500,
+          }
+        : null,
+    };
+  }, [membres]);
+
   const stats = useMemo(() => {
     const pays = new Set(membres.map((m) => m.pays));
     const langues = new Set(membres.map((m) => m.langue));
@@ -112,52 +160,123 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
             ))}
           </div>
 
-          {/* Carte SVG */}
-          <div className="relative bg-[#1A0826]/40 rounded-2xl overflow-hidden" style={{ aspectRatio: "2 / 1" }}>
+          {/* Carte dotted-map avec overlay interactif */}
+          <div className="relative bg-[#1A0826] rounded-2xl overflow-hidden border-2 border-[#C9A227]/20" style={{ aspectRatio: "2 / 1" }}>
+            {/* Fond dotted-map */}
+            <Image
+              src={`data:image/svg+xml;utf8,${encodeURIComponent(svgMap)}`}
+              alt="Carte du monde — Dispersés d'Israël"
+              fill
+              unoptimized
+              sizes="(max-width: 1024px) 100vw, 75vw"
+              className="object-cover pointer-events-none select-none"
+              draggable={false}
+            />
+
+            {/* Overlay SVG pour points interactifs */}
             <svg
               viewBox="0 0 1000 500"
-              className="w-full h-full"
-              style={{ background: "linear-gradient(135deg, #1A0826 0%, #2A0E3D 50%, #1A0826 100%)" }}
+              className="absolute inset-0 w-full h-full"
+              preserveAspectRatio="xMidYMid meet"
             >
-              {/* Grille de coordonnées discrète */}
-              <defs>
-                <pattern id="grid-disperses" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
-                  <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(201, 162, 39, 0.05)" strokeWidth="0.5" />
-                </pattern>
-              </defs>
-              <rect width="1000" height="500" fill="url(#grid-disperses)" />
+              {/* Ligne de l'équateur */}
+              <line x1="0" y1="250" x2="1000" y2="250" stroke="rgba(201, 162, 39, 0.12)" strokeWidth="0.5" strokeDasharray="4 4" />
 
-              {/* Continents simplifiés (formes approximatives) */}
-              <g fill="rgba(201, 162, 39, 0.08)" stroke="rgba(201, 162, 39, 0.2)" strokeWidth="0.5">
-                {/* Amérique du Nord */}
-                <path d="M 120 100 Q 150 80 200 90 L 280 100 Q 300 120 290 180 L 250 220 Q 200 230 180 200 L 150 180 Q 130 150 120 100 Z" />
-                {/* Amérique du Sud */}
-                <path d="M 280 250 Q 300 270 310 320 L 300 380 Q 280 400 270 380 L 260 320 Q 270 280 280 250 Z" />
-                {/* Europe */}
-                <path d="M 480 100 Q 510 90 540 100 L 560 130 Q 550 160 520 170 L 490 160 Q 470 140 480 100 Z" />
-                {/* Afrique */}
-                <path d="M 500 200 Q 530 190 560 210 L 580 280 Q 570 350 540 380 L 510 370 Q 490 320 500 200 Z" />
-                {/* Asie */}
-                <path d="M 580 100 Q 700 80 800 120 L 850 180 Q 830 220 780 230 L 700 220 Q 620 200 580 150 Z" />
-                {/* Océanie */}
-                <path d="M 800 320 Q 830 310 860 330 L 870 360 Q 850 380 820 370 L 800 350 Z" />
-              </g>
+              {/* Courbes reliant les points entre eux */}
+              {membresFiltres.length > 1 && pinPositions && (() => {
+                const pins = membresFiltres
+                  .map(m => pinPositions.find((p) => p.membre.id === m.id))
+                  .filter(Boolean) as Array<{ x: number; y: number; membre: MembreDisperse }>;
 
-              {/* Lignes de latitude (équateur, tropiques) */}
-              <line x1="0" y1="250" x2="1000" y2="250" stroke="rgba(201, 162, 39, 0.15)" strokeWidth="0.5" strokeDasharray="4 4" />
-              <line x1="0" y1="185" x2="1000" y2="185" stroke="rgba(201, 162, 39, 0.1)" strokeWidth="0.3" strokeDasharray="2 4" />
-              <line x1="0" y1="315" x2="1000" y2="315" stroke="rgba(201, 162, 39, 0.1)" strokeWidth="0.3" strokeDasharray="2 4" />
+                // Générer des courbes de Bézier entre points consécutifs
+                const curves: Array<{ d: string }> = [];
+                for (let i = 0; i < pins.length - 1; i++) {
+                  const x1 = pins[i].x, y1 = pins[i].y;
+                  const x2 = pins[i + 1].x, y2 = pins[i + 1].y;
+                  // Point de contrôle : milieu + offset vertical pour courbe
+                  const midX = (x1 + x2) / 2;
+                  const midY = (y1 + y2) / 2;
+                  const offset = Math.abs(x2 - x1) * 0.3;
+                  const cx = midX;
+                  const cy = midY - offset;
+                  curves.push({ d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` });
+                }
 
-              {/* Points des dispersés */}
+                return curves.map((curve, i) => (
+                  <motion.path
+                    key={`curve-${i}`}
+                    d={curve.d}
+                    fill="none"
+                    stroke="rgba(201, 162, 39, 0.4)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeDasharray="4 3"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 1.5, delay: i * 0.15, ease: "easeInOut" }}
+                  />
+                ));
+              })()}
+
+              {/* Courbes reliant chaque point à Jérusalem */}
+              {pinPositions && jerusalemPos && (() => {
+                return membresFiltres.map((membre) => {
+                  const pin = pinPositions.find((p) => p.membre.id === membre.id);
+                  if (!pin) return null;
+                  const x1 = pin.x, y1 = pin.y;
+                  const x2 = jerusalemPos.x, y2 = jerusalemPos.y;
+                  const midX = (x1 + x2) / 2;
+                  const midY = (y1 + y2) / 2;
+                  const offset = Math.abs(x2 - x1) * 0.25;
+                  const cx = midX;
+                  const cy = midY - offset;
+                  const d = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+                  return (
+                    <motion.path
+                      key={`curve-jerusalem-${membre.id}`}
+                      d={d}
+                      fill="none"
+                      stroke="rgba(201, 162, 39, 0.2)"
+                      strokeWidth="0.8"
+                      strokeLinecap="round"
+                      strokeDasharray="3 4"
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{ duration: 1.5, delay: 0.5, ease: "easeInOut" }}
+                    />
+                  );
+                });
+              })()}
+
+              {/* Jérusalem — point de référence */}
+              {jerusalemPos && (
+                <g>
+                  <motion.circle
+                    cx={jerusalemPos.x}
+                    cy={jerusalemPos.y}
+                    r="6"
+                    fill="#C9A227"
+                    stroke="#FAF6EF"
+                    strokeWidth="1.5"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                    style={{ transformOrigin: `${jerusalemPos.x}px ${jerusalemPos.y}px` }}
+                  />
+                </g>
+              )}
+
+              {/* Points des dispersés (overlay interactif) */}
               {membresFiltres.map((membre, idx) => {
-                const { x, y } = projectCoord(membre.latitude, membre.longitude);
+                const pin = pinPositions?.find((p) => p.membre.id === membre.id);
+                if (!pin) return null;
                 const couleur = NIVEAU_COULEURS[membre.niveau] || NIVEAU_COULEURS.chercheur;
                 return (
                   <g key={membre.id}>
                     {/* Halo pulsant */}
                     <motion.circle
-                      cx={x}
-                      cy={y}
+                      cx={pin.x}
+                      cy={pin.y}
                       r="8"
                       fill={couleur}
                       opacity="0.2"
@@ -169,59 +288,26 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
                         delay: idx * 0.2,
                         ease: "easeInOut",
                       }}
-                      style={{ transformOrigin: `${x}px ${y}px` }}
+                      style={{ transformOrigin: `${pin.x}px ${pin.y}px` }}
                     />
                     {/* Point central */}
                     <motion.circle
-                      cx={x}
-                      cy={y}
-                      r="4"
+                      cx={pin.x}
+                      cy={pin.y}
+                      r="5"
                       fill={couleur}
                       stroke="#FAF6EF"
-                      strokeWidth="1"
+                      strokeWidth="1.5"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ duration: 0.5, delay: idx * 0.05 }}
                       className="cursor-pointer"
                       onClick={() => setMembreSelectionne(membre)}
-                      onMouseEnter={() => setHoveredPays(membre.pays)}
-                      onMouseLeave={() => setHoveredPays(null)}
                     />
-                    {/* Label au hover */}
-                    {hoveredPays === membre.pays && (
-                      <text
-                        x={x}
-                        y={y - 10}
-                        fill="#FAF6EF"
-                        fontSize="10"
-                        textAnchor="middle"
-                        className="pointer-events-none font-sans"
-                      >
-                        {membre.pseudonyme}
-                      </text>
-                    )}
                   </g>
                 );
               })}
-
-              {/* Légende Jérusalem */}
-              <g>
-                <circle cx="587" cy="232" r="5" fill="#C9A227" stroke="#FAF6EF" strokeWidth="1.5" />
-                <text x="587" y="222" fill="#C9A227" fontSize="9" textAnchor="middle" className="font-serif font-semibold">
-                  Jérusalem
-                </text>
-              </g>
             </svg>
-
-            {/* Overlay stats */}
-            <div className="absolute top-4 left-4 bg-[#2A0E3D]/80 backdrop-blur-sm text-[#FAF6EF] px-3 py-2 rounded-md border border-[#C9A227]/20">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/80 font-semibold mb-1">
-                Dispersés d'Israël
-              </p>
-              <p className="font-serif text-lg font-semibold">
-                {stats.total} membres · {stats.pays} pays
-              </p>
-            </div>
           </div>
 
           {/* Légende */}
@@ -237,7 +323,7 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
             ))}
             <span className="text-[#8A8378]/60">·</span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-[#C9A227] border border-[#FAF6EF]" />
+              <span className="w-3 h-3 rounded-full bg-[#C9A227]" />
               Jérusalem (référence)
             </span>
           </div>
@@ -246,7 +332,6 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
 
       {/* Sidebar (1/4) */}
       <div className="space-y-4">
-        {/* Stats globales */}
         <div className="card-gold-top p-5">
           <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-4 flex items-center gap-2">
             <Globe className="w-4 h-4 text-[#C9A227]" />
@@ -259,7 +344,6 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
           </div>
         </div>
 
-        {/* Prophétie */}
         <div className="bg-[#2A0E3D] text-[#FAF6EF] rounded-2xl p-5 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A227]/10 blur-2xl rounded-full pointer-events-none" />
           <div className="relative">
@@ -273,7 +357,6 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
           </div>
         </div>
 
-        {/* Liste des membres récents */}
         <div className="card-gold-top p-5">
           <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-3">
             Derniers inscrits
@@ -318,7 +401,6 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
               className="bg-[#FAF6EF] rounded-2xl max-w-md w-full overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* En-tête */}
               <div
                 className="p-6 text-[#FAF6EF] relative"
                 style={{ backgroundColor: NIVEAU_COULEURS[membreSelectionne.niveau] }}
@@ -347,7 +429,6 @@ export function CarteDisperses({ membres }: CarteDispersesProps) {
                 </div>
               </div>
 
-              {/* Contenu */}
               <div className="p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <span

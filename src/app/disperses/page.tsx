@@ -1,326 +1,298 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PageHero } from "@/components/site/page-hero";
-import { AuroraBackground } from "@/components/magic/aurora-background";
-import { ParticleField } from "@/components/magic/particle-field";
-import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
-import { CarteDisperses, type MembreDisperse } from "@/components/disperses/carte-disperses";
-import { MagneticButton } from "@/components/magic/magnetic-button";
-import { MapPin, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "@/lib/api-client";
+import Image from "next/image";
+import { Globe, MapPin, Loader2, CheckCircle2, ChevronRight, Search, Users, X } from "lucide-react";
+import { CarteDisperses, type MembreDisperse } from "@/components/disperses/carte-disperses";
+import { COUNTRIES } from "@/lib/data/countries";
 import { flagFromCountryCode } from "@/lib/data/flags";
+import { api } from "@/lib/api-client";
+import { toast } from "sonner";
+
+const LANGUES = [
+  { code: "FR", label: "Français" },
+  { code: "EN", label: "English" },
+  { code: "ES", label: "Español" },
+  { code: "PT", label: "Português" },
+  { code: "HE", label: "עברית" },
+  { code: "AM", label: "አማርኛ" },
+];
+
+const NIVEAUX = [
+  { code: "chercheur", label: "Chercheur" },
+  { code: "croyant", label: "Croyant" },
+  { code: "disciple", label: "Disciple" },
+  { code: "pasteur", label: "Pasteur" },
+];
 
 export default function DispersesPage() {
   const [membres, setMembres] = useState<MembreDisperse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [pseudonyme, setPseudonyme] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [countrySearch, setCountrySearch] = useState("");
+  const [showCountryList, setShowCountryList] = useState(false);
+  const [ville, setVille] = useState("");
+  const [langue, setLangue] = useState("FR");
+  const [niveau, setNiveau] = useState("chercheur");
+  const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({
-    pseudonyme: "",
-    pays: "",
-    ville: "",
-    latitude: 0,
-    longitude: 0,
-    langue: "FR",
-    niveau: "chercheur",
-    message: "",
-  });
 
-  useEffect(() => {
+  const loadMembers = () => {
     fetch(api.url("/api/disperses"))
-      .then((res) => res.json())
-      .then((data) => {
-        setMembres(data.membres || []);
-        setLoading(false);
-      })
+      .then(r => r.json())
+      .then(data => { setMembres(data.membres || data.members || []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
-
-  const detecterPosition = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setForm((prev) => ({
-            ...prev,
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          }));
-        },
-        (err) => {
-          alert("Impossible de détecter votre position : " + err.message);
-        }
-      );
-    } else {
-      alert("La géolocalisation n'est pas supportée par votre navigateur.");
-    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.pseudonyme || !form.pays || !form.latitude || !form.longitude) {
-      alert("Veuillez remplir tous les champs requis et détecter votre position.");
+  useEffect(() => { loadMembers(); }, []);
+
+  const filteredCountries = COUNTRIES.filter(c =>
+    c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+    c.code.toLowerCase().includes(countrySearch.toLowerCase())
+  ).slice(0, 8);
+
+  const resetForm = () => {
+    setPseudonyme(""); setSelectedCountry(""); setVille("");
+    setLangue("FR"); setNiveau("chercheur"); setMessage("");
+    setCountrySearch(""); setShowCountryList(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!pseudonyme || !selectedCountry) {
+      toast.error("Veuillez renseigner votre pseudonyme et votre pays.");
       return;
     }
     setSubmitting(true);
+    const country = COUNTRIES.find(c => c.code === selectedCountry);
+    if (!country) { toast.error("Pays invalide."); setSubmitting(false); return; }
+
     try {
       // Inclure le sessionId LiveMember si disponible (inscription unique)
       const sessionId = typeof window !== "undefined" ? localStorage.getItem("live-session-id") : null;
       const res = await fetch(api.url("/api/disperses"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, sessionId }),
+        body: JSON.stringify({
+          pseudonyme, pays: selectedCountry, ville: ville || null,
+          langue, niveau, message: message || null,
+          latitude: country.lat, longitude: country.lng,
+          sessionId,
+        }),
       });
+
       if (res.ok) {
-        setSubmitted(true);
-        // Recharger les membres
-        const data = await fetch(api.url("/api/disperses")).then((r) => r.json());
-        setMembres(data.membres || []);
+        toast.success("Votre position a été enregistrée ! La carte a été mise à jour.");
+        resetForm();
+        setShowModal(false);
+        loadMembers();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Erreur lors de l'enregistrement.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      toast.error("Erreur réseau. Réessayez.");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div>
-      <PageHero
-        imageSrc="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920&auto=format&fit=crop"
-        kicker="Rassemblement des fils d'Israël"
-        title="Carte des dispersés"
-        subtitle="Les fils d'Israël dispersés parmi les nations, dont la réunification est un signe des temps prophétique (Ésaïe 11:12, Ézéchiel 37). Ajoutez votre position pour rendre visible l'accomplissement de la promesse."
-        primaryCta={{ label: "Ajouter ma position", href: "#ajouter" }}
-        secondaryCta={{ label: "Voir la carte", href: "#carte" }}
-      />
+    <div className="min-h-screen">
+      {/* ═══ HERO ═══ */}
+      <section className="relative min-h-[50vh] flex items-center justify-center pt-24 pb-12 overflow-hidden bg-[#2A0E3D] text-white">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920&auto=format&fit=crop"
+            alt="Monde"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-15"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/90 to-[#1A0826]" />
+        </div>
+        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <Globe className="w-5 h-5 text-[#C9A227]" />
+            <span className="text-xs uppercase tracking-[0.25em] font-semibold text-[#C9A227]">Rassemblement des dispersés</span>
+          </div>
+          <h1 className="font-serif text-3xl md:text-5xl font-bold text-[#FAF6EF] mb-4 drop-shadow-lg">
+            Carte des <span className="text-[#C9A227]">dispersés</span> d'Israël
+          </h1>
+          <p className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-8">
+            « Il lèvera une bannière pour les nations lointaines, et il assemblera les exilés d'Israël. » — Ésaïe 11:12
+          </p>
+          <button
+            onClick={() => setShowModal(true)}
+            className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300"
+          >
+            <MapPin className="w-5 h-5 mr-2" />
+            Ajouter ma position
+          </button>
+        </div>
+      </section>
 
-      {/* Carte */}
-      <section id="carte" className="bg-[#FAF6EF] py-20 md:py-24 md:py-20">
-        <div className="container mx-auto max-w-7xl px-4">
+      {/* ═══ MAP ═══ */}
+      <section id="carte" className="py-12 md:py-16 bg-[#FAF6EF]">
+        <div className="max-w-7xl mx-auto px-4">
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
             </div>
           ) : (
-            <CarteDisperses membres={membres} />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+              <CarteDisperses membres={membres} />
+              <div className="mt-4 flex items-center justify-center gap-2 text-sm text-[#8A8378]">
+                <Users className="w-4 h-4" />
+                <span>{membres.length} dispersé{membres.length > 1 ? "s" : ""} recensé{membres.length > 1 ? "s" : ""} sur la carte</span>
+              </div>
+            </motion.div>
           )}
         </div>
       </section>
 
-      <SectionDivider variant="ornament" />
-
-      {/* Formulaire d'ajout */}
-      <section id="ajouter" className="bg-[#FAF6EF] py-20 md:py-24 md:py-20">
-        <div className="container mx-auto max-w-2xl px-4">
-          <div className="text-center mb-8">
-            <h2 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-3">
-              Ajouter ma position
-            </h2>
-            <p className="text-sm text-[#8A8378]">
-              Rendez visible le rassemblement. Votre position est arrondie à 0.1° (environ 11 km)
-              pour préserver votre anonymat. Aucune information personnelle n'est stockée.
-            </p>
-          </div>
-
-          {submitted ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="card-gold-top p-8 text-center"
-            >
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-state-success/15 border-2 border-state-success/40 mb-6">
-                <CheckCircle2 className="w-8 h-8 text-state-success" />
-              </div>
-              <h3 className="font-serif text-2xl font-semibold text-[#1E0F2B] mb-3">
-                Position ajoutée
-              </h3>
-              <p className="text-sm text-[#8A8378] mb-6">
-                Vous apparaissez maintenant sur la carte des dispersés. Que le Seigneur vous bénisse.
-              </p>
-              <button
-                onClick={() => {
-                  setSubmitted(false);
-                  setShowForm(false);
-                  setForm({
-                    pseudonyme: "",
-                    pays: "",
-                    ville: "",
-                    latitude: 0,
-                    longitude: 0,
-                    langue: "FR",
-                    niveau: "chercheur",
-                    message: "",
-                  });
-                }}
-                className="text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
-              >
-                Ajouter une autre position
-              </button>
-            </motion.div>
+      {/* ═══ LIST ═══ */}
+      <section className="py-12 md:py-16 bg-[#FAF6EF]">
+        <div className="max-w-5xl mx-auto px-4">
+          {membres.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 text-[#8A8378]/30 mx-auto mb-4" />
+              <p className="text-[#8A8378]">Aucun dispersé enregistré pour l'instant.</p>
+            </div>
           ) : (
-            <form onSubmit={handleSubmit} className="card-gold-top p-8 space-y-5">
-              <div className="grid md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {membres.map((member, i) => {
+                const country = COUNTRIES.find(c => c.code === member.pays);
+                return (
+                  <motion.div key={member.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: i * 0.05 }}
+                    className="bg-white rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#2A0E3D]">
+                        <span className="text-sm font-bold text-[#C9A227]">{member.pseudonyme.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-[#1E0F2B]">{member.pseudonyme}</p>
+                        <p className="text-xs text-[#8A8378]">{flagFromCountryCode(member.pays)} {country?.name || member.pays}{member.ville ? ` · ${member.ville}` : ""}</p>
+                      </div>
+                    </div>
+                    {member.message && <p className="text-xs text-[#1E0F2B]/60 italic leading-relaxed">« {member.message} »</p>}
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#8A8378]/10">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8C5FA8]/10 text-[#8C5FA8]">{member.langue}</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#C9A227]/10 text-[#C9A227] capitalize">{member.niveau}</span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ═══ CITA ═══ */}
+      <section className="py-20 bg-[#2A0E3D] relative overflow-hidden">
+        <div className="max-w-3xl mx-auto px-4 text-center">
+          <p className="font-serif text-lg md:text-xl italic text-[#FAF6EF]/80 leading-relaxed">
+            « Ne crains pas, car je suis avec toi ; je rassemblerai ta postérité de l'orient, et je te recueillerai de l'occident. »
+          </p>
+          <p className="text-sm text-[#C9A227] font-semibold mt-4">Ésaïe 43:5</p>
+        </div>
+      </section>
+
+      {/* ═══ MODAL FORM ═══ */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="bg-[#FAF6EF] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-[#8A8378]/10">
+                <h2 className="font-serif text-xl font-bold text-[#1E0F2B]">Ajouter ma position</h2>
+                <button onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-[#8A8378]/10 text-[#8A8378]">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <div className="p-6 space-y-4">
                 <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
-                    Pseudonyme *
-                  </label>
-                  <input
-                    type="text"
-                    value={form.pseudonyme}
-                    onChange={(e) => setForm({ ...form, pseudonyme: e.target.value })}
-                    required
-                    placeholder="Un nom ou pseudo (pas votre vrai nom)"
-                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
-                  />
+                  <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Pseudonyme</label>
+                  <input type="text" value={pseudonyme} onChange={e => setPseudonyme(e.target.value)} placeholder="Votre nom ou pseudo"
+                    className="w-full px-4 py-3 rounded-full bg-white border border-[#8A8378]/20 text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/30" />
                 </div>
-                <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
-                    Pays *
-                  </label>
+
+                {/* Pays — sélecteur avec recherche */}
+                <div className="relative">
+                  <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Pays</label>
                   <div className="relative">
-                    {form.pays && (
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg leading-none pointer-events-none" aria-hidden>
-                        {flagFromCountryCode(form.pays)}
-                      </span>
-                    )}
-                    <input
-                      type="text"
-                      value={form.pays}
-                      onChange={(e) => setForm({ ...form, pays: e.target.value.toUpperCase().substring(0, 2) })}
-                      required
-                      placeholder="FR, CI, US, IL..."
-                      maxLength={2}
-                      className={`w-full ${form.pays ? "pl-12" : "px-4"} py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 uppercase`}
-                    />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+                    <input type="text"
+                      value={selectedCountry ? COUNTRIES.find(c => c.code === selectedCountry)?.name || "" : countrySearch}
+                      onChange={e => { setCountrySearch(e.target.value); setSelectedCountry(""); setShowCountryList(true); }}
+                      onFocus={() => setShowCountryList(true)} placeholder="Rechercher un pays..."
+                      className="w-full pl-10 pr-4 py-3 rounded-full bg-white border border-[#8A8378]/20 text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/30" />
+                  </div>
+                  {showCountryList && (
+                    <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-white rounded-2xl shadow-xl border border-[#8A8378]/20 py-1">
+                      {filteredCountries.map(country => (
+                        <button key={country.code}
+                          onClick={() => { setSelectedCountry(country.code); setShowCountryList(false); setCountrySearch(""); }}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-[#FAF6EF] text-[#1E0F2B]">
+                          {flagFromCountryCode(country.code)} {country.name}<span className="text-[#8A8378] ml-2 text-xs">{country.code}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Ville <span className="text-[#8A8378] normal-case">(optionnel)</span></label>
+                  <input type="text" value={ville} onChange={e => setVille(e.target.value)} placeholder="Votre ville"
+                    className="w-full px-4 py-3 rounded-full bg-white border border-[#8A8378]/20 text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/30" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Langue</label>
+                    <select value={langue} onChange={e => setLangue(e.target.value)}
+                      className="w-full px-4 py-3 rounded-full bg-white border border-[#8A8378]/20 text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/30">
+                      {LANGUES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Niveau</label>
+                    <select value={niveau} onChange={e => setNiveau(e.target.value)}
+                      className="w-full px-4 py-3 rounded-full bg-white border border-[#8A8378]/20 text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/30">
+                      {NIVEAUX.map(n => <option key={n.code} value={n.code}>{n.label}</option>)}
+                    </select>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
-                    Ville (optionnel)
-                  </label>
-                  <input
-                    type="text"
-                    value={form.ville}
-                    onChange={(e) => setForm({ ...form, ville: e.target.value })}
-                    placeholder="Votre ville"
-                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
-                  />
+                  <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Témoignage court <span className="text-[#8A8378] normal-case">(optionnel)</span></label>
+                  <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Quelques mots sur votre parcours..." rows={3}
+                    className="w-full px-4 py-3 rounded-2xl bg-white border border-[#8A8378]/20 text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/30 resize-none" />
                 </div>
-                <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
-                    Langue
-                  </label>
-                  <select
-                    value={form.langue}
-                    onChange={(e) => setForm({ ...form, langue: e.target.value })}
-                    className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
-                  >
-                    <option value="FR">Français</option>
-                    <option value="EN">English</option>
-                    <option value="ES">Español</option>
-                    <option value="PT">Português</option>
-                    <option value="HE">עברית</option>
-                    <option value="AM">አማርኛ</option>
-                  </select>
-                </div>
-              </div>
 
-              <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
-                  Niveau de engagement
-                </label>
-                <select
-                  value={form.niveau}
-                  onChange={(e) => setForm({ ...form, niveau: e.target.value })}
-                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
-                >
-                  <option value="chercheur">Chercheur — en quête spirituelle</option>
-                  <option value="croyant">Croyant — engagé dans la foi</option>
-                  <option value="disciple">Disciple — engagé dans le ministère</option>
-                  <option value="pasteur">Pasteur — ministre affilié</option>
-                </select>
-              </div>
-
-              {/* Géolocalisation */}
-              <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
-                  Position géographique *
-                </label>
-                <button
-                  type="button"
-                  onClick={detecterPosition}
-                  className="w-full px-4 py-3 rounded-md border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5 transition-colors inline-flex items-center justify-center gap-2 text-sm font-semibold"
-                >
-                  <MapPin className="w-4 h-4" />
-                  {form.latitude ? `Position détectée : ${form.latitude.toFixed(1)}, ${form.longitude.toFixed(1)}` : "Détecter ma position"}
+                <button onClick={handleSubmit} disabled={!pseudonyme || !selectedCountry || submitting}
+                  className="w-full py-3.5 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg disabled:opacity-30 transition-all duration-300 flex items-center justify-center gap-2">
+                  {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (<><MapPin className="w-5 h-5" /> Enregistrer ma position</>)}
                 </button>
-                <p className="text-xs text-[#8A8378] mt-2">
-                  Votre navigateur vous demandera l'autorisation. La position est arrondie à 0.1° (environ 11 km) pour préserver votre anonymat.
-                </p>
               </div>
-
-              <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
-                  Message (optionnel)
-                </label>
-                <textarea
-                  value={form.message}
-                  onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  rows={3}
-                  placeholder="Un court témoignage, une bénédiction, un encouragement pour la communauté..."
-                  maxLength={500}
-                  className="w-full px-4 py-3 rounded-md border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-none"
-                />
-              </div>
-
-              {/* Bandeau confidentialité */}
-              <div className="p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-md flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-semibold text-[#1E0F2B] mb-1">Confidentialité</p>
-                  <p className="text-xs text-[#8A8378] leading-relaxed">
-                    Aucune information personnelle n'est stockée. La position est arrondie, le pseudonyme est libre,
-                    et vous pouvez modifier ou supprimer votre entrée à tout moment en contactant l'équipe.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting || !form.latitude}
-                className="w-full px-6 py-4 rounded-md bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Enregistrement...
-                  </>
-                ) : (
-                  "Ajouter ma position"
-                )}
-              </button>
-            </form>
-          )}
-        </div>
-      </section>
-
-      {/* Citation */}
-      <AuroraBackground variant="imperial" intensity="strong" className="py-24 md:py-32">
-        <ParticleField count={40} color="#C9A227" size={1.5} speed="slow" />
-        <div className="relative">
-          <QuoteBlock
-            text="Il élèvera une bannière pour les nations, il rassemblera les exilés d'Israël, et il recueillera les dispersés de Juda des quatre extrémités de la terre."
-            reference="Ésaïe 11:12"
-            variant="dark"
-          />
-        </div>
-      </AuroraBackground>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
