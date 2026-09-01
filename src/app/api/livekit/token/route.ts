@@ -5,6 +5,7 @@ import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { auth as nextAuth } from "@/auth";
+import { getLiveKitConfig } from "@/lib/livekit-config";
 
 /**
  * POST /api/livekit/token
@@ -27,9 +28,6 @@ import { auth as nextAuth } from "@/auth";
  * Pour les subscribers : pas d'auth requise (le live est public).
  */
 
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
-
 /** Préfixes de rooms réservés aux appels / canaux vocaux Yeshua Connect. */
 const YESHUA_ROOM_PREFIXES = ["yeshua-call-", "yeshua-voice-"];
 
@@ -49,6 +47,10 @@ interface TokenRequestBody {
 }
 
 export async function POST(req: NextRequest) {
+  // ⭐ V3.19 — clés lues au RUNTIME (bascule Plan B sans rebuild) :
+  // LIVEKIT_URL prioritaire sur NEXT_PUBLIC_LIVEKIT_URL (build) pour que
+  // la bascule Plan B (3 variables Vercel) prenne effet immédiatement.
+  const { apiKey: LIVEKIT_API_KEY, apiSecret: LIVEKIT_API_SECRET, url: LIVEKIT_URL } = getLiveKitConfig();
   try {
     const body: TokenRequestBody = await req.json();
     const { roomName, role = "subscriber", participantName, liveId, avatarUrl: avatarUrlFromBody } = body;
@@ -170,10 +172,8 @@ export async function POST(req: NextRequest) {
     });
 
     const token = await at.toJwt();
-    const livekitUrl =
-      process.env.NEXT_PUBLIC_LIVEKIT_URL ||
-      process.env.LIVEKIT_URL ||
-      "wss://christ-libere.livekit.cloud";
+    // ⭐ V3.19 — LIVEKIT_URL (runtime) prioritaire sur NEXT_PUBLIC (build)
+    const livekitUrl = LIVEKIT_URL;
 
     // ⭐ V2.7 — Mode audio/vidéo du canal vocal (persisté en base) : servi au
     // client au moment du join pour qu'il connaisse le mode AVANT même de

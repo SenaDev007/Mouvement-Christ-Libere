@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { IngressClient, IngressInput } from "livekit-server-sdk";
+import { getLiveKitConfig } from "@/lib/livekit-config";
 
 /**
  * GET /api/live/[id]/ingress
@@ -16,17 +17,12 @@ import { IngressClient, IngressInput } from "livekit-server-sdk";
  *          `info.url` + `info.streamKey` fournis par LiveKit.
  */
 
-const LIVEKIT_URL =
-  process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
-
 /**
  * Convertit l'URL WebSocket/HTTP LiveKit en URL HTTP(S) attendue par
  * IngressClient (qui attend `https://<project>.livekit.cloud`).
  */
-function livekitHttpUrl(): string {
-  const url = LIVEKIT_URL.trim();
+function livekitHttpUrl(rawUrl: string): string {
+  const url = rawUrl.trim();
   if (url.startsWith("wss://")) return `https://${url.slice("wss://".length)}`;
   if (url.startsWith("ws://")) return `http://${url.slice("ws://".length)}`;
   return url;
@@ -36,6 +32,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // ⭐ V3.19 — clés lues au RUNTIME (bascule Plan B sans rebuild)
+  const { url: LIVEKIT_URL, apiKey: LIVEKIT_API_KEY, apiSecret: LIVEKIT_API_SECRET } = getLiveKitConfig();
   try {
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
@@ -60,7 +58,7 @@ export async function GET(
     // - IngressInput.RTMP_INPUT est ré-exporté depuis `livekit-server-sdk`.
     // - `participantIdentity` est obligatoire selon CreateIngressOptions.
     const ingressClient = new IngressClient(
-      livekitHttpUrl(),
+      livekitHttpUrl(LIVEKIT_URL),
       LIVEKIT_API_KEY,
       LIVEKIT_API_SECRET
     );

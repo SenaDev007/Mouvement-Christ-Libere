@@ -1,0 +1,8 @@
+# ⭐ Plan B — Caddy : TLS automatique (Let's Encrypt) + proxy wss → LiveKit
+# ⚠️ REMPLACER « live.exemple.tld » par votre sous-domaine réel
+#    (A record vers l'IP de la VM, ou sous-domaine DuckDNS gratuit).
+# Le certificat est obtenu et renouvelé automatiquement au premier démarrage.
+
+live.exemple.tld {
+	reverse_proxy localhost:7880
+}

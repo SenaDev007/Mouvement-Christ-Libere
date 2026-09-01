@@ -56,7 +56,7 @@ import {
   StopCircle, Play, Pause, Sparkles, AlertCircle,
   MessageCircle, AtSign, ChevronUp, ChevronRight, Copy, UploadCloud,
   PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
-  Radio, Camera, PanelLeftOpen, PanelLeftClose, Shield, Crown,
+  Radio, Camera, PanelLeftOpen, PanelLeftClose, Shield, Crown, LifeBuoy,
   Ban, MapPin, UserX, UserCheck,
 } from "lucide-react";
 import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant, RemoteAudioTrack } from "livekit-client";
@@ -74,6 +74,7 @@ import { api } from "@/lib/api-client";
 import { flagFromCountryCode } from "@/lib/data/flags";
 import { COUNTRIES } from "@/lib/data/countries";
 import { useChatSocket } from "@/hooks/use-chat-socket";
+import { useP2PCall } from "@/hooks/use-p2p-call";
 import { emitSocket, onSocket, offSocket } from "@/lib/chat/socket-client";
 import { SlashCommands, executeCommand, type SendMessagePayload } from "./SlashCommands";
 import { MessageThreads, type ThreadMessage } from "./MessageThreads";
@@ -127,6 +128,38 @@ function getAvatarColor(name: string): string {
 
 function getInitials(name: string): string {
   return name.split(" ").map(p => p[0]).join("").substring(0, 2).toUpperCase();
+}
+
+/** ⭐ V3.19 — Promise avec délai maximal (Plan C) : une connexion LiveKit
+ *  morte ne doit pas suspendre l'appel indéfiniment — au bout de 15 s on
+ *  bascule en P2P si c'est un appel DIRECT. */
+function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    p.then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); },
+    );
+  });
+}
+
+/** ⭐ V3.19 — Plan C : room Jitsi DÉTERMINISTE par conversation (repli des
+ *  appels de GROUPE et des canaux vocaux quand LiveKit Cloud — Plan A — et
+ *  l'auto-hébergé — Plan B — sont tous deux indisponibles). L'UUID de la
+ *  conversation rend la room incachable pour qui n'en connaît pas l'ID. */
+function jitsiRoomFor(kind: "call" | "voice", conversationId: string): string {
+  const clean = conversationId.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
+  return `christlibere-yeshua-${kind}-${clean}`;
+}
+
+/** ⭐ V3.19 — URL de réunion Jitsi publique (gratuite — sans compte ni clé
+ *  d'API). displayName pré-rempli + pré-join désactivé pour rejoindre en un
+ *  clic ; le navigateur demande lui-même micro/caméra à l'iframe. */
+function jitsiUrlFor(room: string, displayName?: string): string {
+  const hash = displayName
+    ? `#config.prejoinConfig.enabled=false&userInfo.displayName=${encodeURIComponent(displayName)}`
+    : "#config.prejoinConfig.enabled=false";
+  return `https://meet.jit.si/${room}${hash}`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -525,6 +558,13 @@ export function MessagingView() {
   // ⭐ V3.1 — Nom + photo de la conversation appelée (l'overlay affiche la
   // VRAIE photo du canal — avant : toujours des initiales).
   const [callConvInfo, setCallConvInfo] = useState<{ name: string; avatarUrl?: string } | null>(null);
+  // ⭐ V3.19 — Plan C : repli JITSI (visio publique gratuite) des appels de
+  // GROUPE/canal quand LiveKit est indisponible — room déterministe : chaque
+  // participant y arrive via SON propre repli (l'appelant au démarrage,
+  // le destinataire au décrochage). Null = pas de repli actif.
+  const [callJitsiRoom, setCallJitsiRoom] = useState<string | null>(null);
+  // ⭐ V3.19 — Plan C : repli JITSI du canal vocal actif (false = LiveKit).
+  const [voiceJitsiActive, setVoiceJitsiActive] = useState(false);
   // Refs miroirs (les callbacks LiveKit/polling lisent les valeurs fraîches
   // sans re-créer les listeners).
   const activeCallSignalIdRef = useRef<string | null>(null);
@@ -616,6 +656,11 @@ export function MessagingView() {
   const [speakerEnabled, setSpeakerEnabled] = useState(true);
   const [remoteParticipants, setRemoteParticipants] = useState<RemoteParticipant[]>([]);
   const [callError, setCallError] = useState<string | null>(null);
+  // ⭐ V3.19 — miroir des participants distants (le sauvetage P2P asymétrique
+  // lit la valeur fraîche dans son intervalle sans recréer l'effet à chaque
+  // arrivée/départ de participant).
+  const remoteParticipantsRef = useRef<RemoteParticipant[]>([]);
+  useEffect(() => { remoteParticipantsRef.current = remoteParticipants; }, [remoteParticipants]);
   const [voiceChannelConnected, setVoiceChannelConnected] = useState(false);
   // ⭐ V2.7 — BASCULE AUDIO ↔ VIDÉO DES CANAUX VOCAUX (façon WhatsApp) :
   // mode décidé par l'ADMINISTRATEUR, propagé à TOUS les participants en
@@ -2089,6 +2134,11 @@ export function MessagingView() {
     } catch {}
   }, [speakerEnabled]);
 
+  /** ⭐ V3.19 — Plan C : appels DIRECT 1-1 en P2P de secours quand LiveKit
+   *  (Cloud ou auto-hébergé) est indisponible — signalisation via la table
+   *  WebRTCSignal, média direct entre navigateurs. */
+  const p2p = useP2PCall();
+
   /** Nettoie toutes les ressources LiveKit (room + tracks + stream local). */
   const cleanupLiveKit = useCallback(() => {
     if (localAudioTrackRef.current) {
@@ -2124,6 +2174,13 @@ export function MessagingView() {
 
   /** Active/désactive le micro local sur la Room LiveKit active. */
   const toggleMute = useCallback(async () => {
+    // ⭐ V3.19 — Mode P2P : couper/rallumer le track audio local directement
+    if (p2p.active) {
+      const newMuted = !localAudioMuted;
+      p2p.setMicEnabled(!newMuted);
+      setLocalAudioMuted(newMuted);
+      return;
+    }
     const room = livekitRoomRef.current;
     if (!room) return;
     try {
@@ -2133,7 +2190,7 @@ export function MessagingView() {
     } catch (e) {
       console.error("[livekit] toggleMute failed:", e);
     }
-  }, [localAudioMuted]);
+  }, [localAudioMuted, p2p.active, p2p.setMicEnabled]);
 
   /** ⭐ V2.9 — Haut-parleur VRAIMENT fonctionnel : avant, le bouton ne
    *  changeait qu'un booléen décoratif (aucun effet sur le son). On coupe
@@ -2148,6 +2205,13 @@ export function MessagingView() {
 
   /** Active/désactive la caméra locale (utile en appel vidéo). */
   const toggleCamera = useCallback(async () => {
+    // ⭐ V3.19 — Mode P2P : couper/rallumer le track vidéo local directement
+    if (p2p.active) {
+      const newEnabled = !localVideoEnabled;
+      p2p.setCameraEnabled(newEnabled);
+      setLocalVideoEnabled(newEnabled);
+      return;
+    }
     const room = livekitRoomRef.current;
     if (!room) return;
     try {
@@ -2157,7 +2221,7 @@ export function MessagingView() {
     } catch (e) {
       console.error("[livekit] toggleCamera failed:", e);
     }
-  }, [localVideoEnabled]);
+  }, [localVideoEnabled, p2p.active, p2p.setCameraEnabled]);
 
   /**
    * ⭐ V3.1 — Rejoint la room LiveKit d'un appel `yeshua-call-<convId>`.
@@ -2286,7 +2350,39 @@ export function MessagingView() {
       const { callId } = await signalRes.json();
       setActiveCallSignalId(callId ?? null);
 
-      await joinCallRoom(convId, type);
+      // ⭐ V3.19 — Plan C : LiveKit d'abord (Plan A/B) MAIS borné à 15 s —
+      // une connexion morte ne doit pas suspendre l'appel. En échec sur un
+      // appel DIRECT 1-1, on bascule en P2P (média direct entre navigateurs,
+      // signalisation via /calls/webrtc) : l'overlay reste « outgoing », la
+      // sonnerie/journal côté serveur sont inchangés.
+      const estDirect = conv?.type === "DIRECT";
+      try {
+        await withTimeout(
+          joinCallRoom(convId, type),
+          15000,
+          "Connexion multimédia indisponible (15 s)"
+        );
+      } catch (lkErr) {
+        if (estDirect && callId) {
+          console.warn("[call] LiveKit indisponible — repli P2P (Plan C) :", lkErr);
+          cleanupLiveKit();
+          p2p.stop();
+          await p2p.startCaller(callId, type);
+          setLocalVideoEnabled(type === "video");
+          setLocalAudioMuted(false);
+        } else if (callId) {
+          // ⭐ V3.19 — Plan C : appel de GROUPE/canal → repli JITSI (visio
+          // publique gratuite, sans compte ni clé — iframe meet.jit.si) ;
+          // les destinataires qui décrochent rejoignent la MÊME room
+          // déterministe quand leur LiveKit échoue à son tour.
+          console.warn("[call] LiveKit indisponible — repli Jitsi (Plan C) :", lkErr);
+          cleanupLiveKit();
+          setCallError(null);
+          setCallJitsiRoom(jitsiRoomFor("call", convId));
+        } else {
+          throw lkErr;
+        }
+      }
       // (S5) callState est déjà "outgoing" depuis le début de startCall
     } catch (e) {
       console.error("[livekit] startCall failed:", e);
@@ -2295,7 +2391,7 @@ export function MessagingView() {
       setCallState("idle");
       setActiveCallSignalId(null);
     }
-  }, [activeConvId, conversations, cleanupLiveKit, joinCallRoom, currentUserId]);
+  }, [activeConvId, conversations, cleanupLiveKit, joinCallRoom, currentUserId, p2p.startCaller, p2p.stop]);
 
   // ═════════════════════════════════════════════════════════════════════
   //  ⭐ V3.4 — MESSAGERIE PRIVÉE ENTRE MEMBRES (façon Telegram/WhatsApp)
@@ -2397,6 +2493,8 @@ export function MessagingView() {
   /** ⭐ V3.1 — Fermeture LOCALE de l'overlay d'appel (sans signal). */
   const teardownCall = useCallback(() => {
     cleanupLiveKit();
+    p2p.stop(); // ⭐ V3.19 — Plan C : coupe aussi l'éventuel appel P2P
+    setCallJitsiRoom(null); // ⭐ V3.19 — Plan C : referme l'éventuel repli Jitsi
     setCallState("idle");
     setIncomingCall(null);
     setActiveCallSignalId(null);
@@ -2404,7 +2502,7 @@ export function MessagingView() {
     setCallConvInfo(null);
     endedByMeRef.current = false;
     callEndingRef.current = false;
-  }, [cleanupLiveKit]);
+  }, [cleanupLiveKit, p2p.stop]);
   useEffect(() => { teardownCallRef.current = teardownCall; }, [teardownCall]);
 
   /**
@@ -2444,6 +2542,7 @@ export function MessagingView() {
     setActiveConvId(info.conversationId);
     setCallState("active"); // durée = depuis le décrochage (acceptedAt)
     cleanupLiveKit();
+    p2p.stop(); // ⭐ V3.19 — Plan C : repart d'un état P2P propre au décrochage
     try {
       await fetch(api.url("/api/yeshua-connect/calls/signal"), {
         method: "POST",
@@ -2451,15 +2550,57 @@ export function MessagingView() {
         body: JSON.stringify({ action: "accept", callId: info.callId }),
       }).catch(() => {});
       setActiveCallSignalId(info.callId);
-      await joinCallRoom(info.conversationId, info.callType);
+
+      // ⭐ V3.19 — Plan C : l'appelant a-t-il DÉJÀ basculé en P2P (son
+      // LiveKit a échoué pendant que la sonnerie sonnait chez nous) ? Son
+      // offre est alors en base → on décroche DIRECTEMENT en P2P, sans
+      // même tenter LiveKit.
+      if (await p2p.hasRemoteOffer(info.callId)) {
+        const p2pOk = await p2p.acceptCallee(info.callId, info.callType);
+        if (p2pOk) {
+          setLocalVideoEnabled(info.callType === "video");
+          setLocalAudioMuted(false);
+          return;
+        }
+      }
+
+      // Plan A/B : LiveKit, borné à 15 s (une connexion morte ne doit pas
+      // suspendre le décrochage non plus).
+      await withTimeout(
+        joinCallRoom(info.conversationId, info.callType),
+        15000,
+        "Connexion multimédia indisponible (15 s)"
+      );
     } catch (e) {
-      console.error("[livekit] acceptIncomingCall failed:", e);
+      console.error("[call] acceptIncomingCall failed:", e);
+      // ⭐ V3.19 — Plan C : LiveKit indisponible au décrochage —
+      //  · appel DIRECT : on attend l'offre P2P de l'appelant (il a basculé
+      //    de son côté au bout de ses 15 s) puis on décroche en P2P ;
+      //  · appel de groupe/canal : repli JITSI (room déterministe —
+      //    l'appelant dont le LiveKit a échoué y a déjà basculé).
+      const conv = conversations.find(c => c.id === info.conversationId);
+      // Conversation inconnue du state (rare) → on tente le P2P (cas 1-1).
+      const estDirect = conv ? conv.type === "DIRECT" : true;
+      if (estDirect && await p2p.waitForRemoteOffer(info.callId, 16000)) {
+        const p2pOk = await p2p.acceptCallee(info.callId, info.callType);
+        if (p2pOk) {
+          setLocalVideoEnabled(info.callType === "video");
+          setLocalAudioMuted(false);
+          return;
+        }
+      }
+      if (!estDirect) {
+        cleanupLiveKit();
+        setCallError(null);
+        setCallJitsiRoom(jitsiRoomFor("call", info.conversationId));
+        return;
+      }
       setCallError(e instanceof Error ? e.message : "Impossible de rejoindre l'appel");
       cleanupLiveKit();
       setCallState("idle");
       setActiveCallSignalId(null);
     }
-  }, [incomingCall, cleanupLiveKit, joinCallRoom]);
+  }, [incomingCall, cleanupLiveKit, joinCallRoom, conversations, p2p.hasRemoteOffer, p2p.acceptCallee, p2p.waitForRemoteOffer]);
 
   /**
    * ⭐ V3.1 — REFUSE l'appel entrant : en DIRECT, termine l'appel (l'appelant
@@ -2508,6 +2649,48 @@ export function MessagingView() {
     }, 2000);
     return () => clearInterval(iv);
   }, [session?.user?.id, activeCallSignalId, callState]);
+
+  // ⭐ V3.19 — Plan C : SAUVETAGE ASYMÉTRIQUE — si le LiveKit de L'APPELANT
+  // est tombé (il a basculé en P2P et posté son offre) mais que NOTRE
+  // propre connexion LiveKit a RÉUSSI, on est seul dans une room vide :
+  // tant qu'aucun track distant n'arrive et qu'une offre P2P existe, on
+  // bascule nous aussi en P2P (contrôle toutes les 5 s, appel DIRECT
+  // uniquement — un appel de groupe basculerait en Jitsi).
+  useEffect(() => {
+    if (!activeCallSignalId) return;
+    if (callState !== "active") return;
+    if (p2p.active) return;
+    if (remoteParticipants.length > 0) return;
+    const conv = conversations.find(c => c.id === activeConvId);
+    if (conv && conv.type !== "DIRECT") return;
+    const callId = activeCallSignalId;
+    let annule = false;
+    const iv = setInterval(async () => {
+      if (annule || p2p.active) return;
+      if (remoteParticipantsRef.current.length > 0) return; // l'autre est arrivé sur LiveKit
+      try {
+        if (await p2p.hasRemoteOffer(callId)) {
+          annule = true;
+          cleanupLiveKit();
+          const ok = await p2p.acceptCallee(callId, callType);
+          if (ok) {
+            setLocalVideoEnabled(callType === "video");
+            setLocalAudioMuted(false);
+          }
+        }
+      } catch { /* réseau — nouvelle tentative au tick suivant */ }
+    }, 5000);
+    return () => { annule = true; clearInterval(iv); };
+  }, [activeCallSignalId, callState, activeConvId, conversations]);
+
+  // ⭐ V3.19 — Plan C : le repli Jitsi du canal vocal est propre à chaque
+  // canal — on le referme en changeant de conversation.
+  useEffect(() => { setVoiceJitsiActive(false); }, [activeConvId]);
+  const startVoiceJitsi = useCallback(() => {
+    setVoiceJitsiActive(true);
+    setCallError(null);
+  }, []);
+  const stopVoiceJitsi = useCallback(() => setVoiceJitsiActive(false), []);
 
   /**
    * ⭐ V2.7 — Applique les métadonnées de room reçues (RoomMetadataChanged) :
@@ -3779,6 +3962,9 @@ export function MessagingView() {
             videoMode={voiceVideoMode}
             modeSwitching={voiceModeSwitching}
             onJoin={joinVoiceChannel}
+            jitsiActive={voiceJitsiActive}
+            onStartJitsi={startVoiceJitsi}
+            onStopJitsi={stopVoiceJitsi}
             onLeave={leaveVoiceChannel}
             onToggleMute={toggleMute}
             onToggleCamera={toggleCamera}
@@ -5167,6 +5353,11 @@ export function MessagingView() {
           speakerEnabled={speakerEnabled}
           error={callError}
           room={livekitRoomRef.current}
+          p2pRemoteStream={p2p.remoteStream}
+          p2pLocalStream={p2p.localStream}
+          p2pConnectionState={p2p.connectionState}
+          jitsiRoom={callJitsiRoom}
+          jitsiUserName={currentUserName}
           onToggleMute={toggleMute}
           onToggleCamera={toggleCamera}
           onToggleSpeaker={toggleSpeaker}
@@ -7466,6 +7657,9 @@ function VoiceChannelView({
   audioPlaybackBlocked,
   onUnlockAudio,
   voiceReconnecting,
+  jitsiActive,
+  onStartJitsi,
+  onStopJitsi,
 }: {
   conv: ChatConversation;
   connected: boolean;
@@ -7497,6 +7691,10 @@ function VoiceChannelView({
   audioPlaybackBlocked?: boolean;
   onUnlockAudio?: () => void;
   voiceReconnecting?: boolean;
+  /** ⭐ V3.19 — Plan C : repli Jitsi du canal vocal (LiveKit indisponible). */
+  jitsiActive?: boolean;
+  onStartJitsi?: () => void;
+  onStopJitsi?: () => void;
 }) {
   // L'admin du site OU l'admin du canal peut basculer le mode audio ↔ vidéo.
   const myChannelRole = channelMembers.find(m => m.userId === currentUserId)?.role;
@@ -7656,16 +7854,60 @@ function VoiceChannelView({
         </div>
       )}
 
-      {/* ─── Erreur éventuelle ─────────────────────────────────────────── */}
-      {error && (
+      {/* ─── Erreur éventuelle ─────────────────────────────────────── */}
+      {error && !jitsiActive && (
         <div className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <span>{error}</span>
+          <span className="flex-1">{error}</span>
+          {onStartJitsi && (
+            <button
+              onClick={onStartJitsi}
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1E0F2B] text-[#FAF6EF] text-[11px] font-bold hover:bg-[#2A0E3D] transition-colors shadow-sm"
+              title="Rejoindre le canal en visio de secours gratuite (Jitsi)"
+            >
+              <LifeBuoy className="w-3.5 h-3.5 text-[#C9A227]" />
+              Mode secours
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ─── ⭐ V3.19 — Plan C : REPLI JITSI ACTIF (LiveKit Cloud et
+          auto-hébergé indisponibles) : visio publique gratuite en iframe —
+          room DÉTERMINISTE du canal, tous les membres qui prennent le mode
+          secours s'y retrouvent. Quitter le secours revient au canal
+          normal (rejoignable à nouveau si LiveKit revient). ──────────── */}
+      {jitsiActive && (
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="mx-4 mt-3 mb-1 flex items-center gap-2 p-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-xs font-bold shadow">
+            <LifeBuoy className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+            <span className="flex-1 min-w-0 truncate">
+              Canal vocal en mode secours (Jitsi) · {conv.name}
+            </span>
+            {onStopJitsi && (
+              <button
+                onClick={onStopJitsi}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/25 text-[#FAF6EF] text-[11px] font-bold hover:bg-white/20 transition-colors"
+                title="Quitter le mode secours et revenir au canal normal"
+              >
+                <X className="w-3.5 h-3.5" />
+                Quitter le secours
+              </button>
+            )}
+          </div>
+          <div className="flex-1 min-h-0 px-4 pb-4">
+            <iframe
+              src={jitsiUrlFor(jitsiRoomFor("voice", conv.id), currentUserName)}
+              title="Canal vocal de secours Jitsi"
+              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              className="w-full h-full rounded-2xl border border-[#C9A227]/30 bg-black"
+            />
+          </div>
         </div>
       )}
 
       {/* ─── Corps : en attente d'un direct OU participants ──────────── */}
-      {!connected ? (
+      {jitsiActive ? null : !connected ? (
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <div className="max-w-sm w-full">
             {conv.avatarUrl ? (
@@ -8001,6 +8243,11 @@ function CallOverlay({
   speakerEnabled,
   error,
   room,
+  p2pRemoteStream,
+  p2pLocalStream,
+  p2pConnectionState,
+  jitsiRoom,
+  jitsiUserName,
   onToggleMute,
   onToggleCamera,
   onToggleSpeaker,
@@ -8020,6 +8267,13 @@ function CallOverlay({
   speakerEnabled: boolean;
   error: string | null;
   room: Room | null;
+  /** ⭐ V3.19 — Plan C : flux WebRTC P2P (repli des appels DIRECT 1-1). */
+  p2pRemoteStream?: MediaStream | null;
+  p2pLocalStream?: MediaStream | null;
+  p2pConnectionState?: RTCPeerConnectionState;
+  /** ⭐ V3.19 — Plan C : room Jitsi de repli (appels de groupe/canal). */
+  jitsiRoom?: string | null;
+  jitsiUserName?: string;
   onToggleMute: () => void;
   onToggleCamera: () => void;
   onToggleSpeaker: () => void;
@@ -8035,10 +8289,12 @@ function CallOverlay({
   // Joue en boucle tant que callState === "outgoing", s'arrête dès que
   // callState devient "active" (le correspondant a décroché) OU qu'une
   // issue arrive (refusé / manqué — ⭐ V3.1).
+  // ⭐ V3.19 — Plan C : pas de sonnerie en repli Jitsi (la visio prend le
+  // relais, la musique se changerait en cacophonie avec le "join" Jitsi).
   useEffect(() => {
     const el = ringtoneRef.current;
     if (!el) return;
-    if (callState === "outgoing" && !endStatus) {
+    if (callState === "outgoing" && !endStatus && !jitsiRoom) {
       el.loop = true;
       el.volume = 0.5;
       el.play().catch(() => {}); // ignore autoplay-blocked
@@ -8047,7 +8303,7 @@ function CallOverlay({
       el.currentTime = 0;
     }
     return () => { el.pause(); el.currentTime = 0; };
-  }, [callState, endStatus]);
+  }, [callState, endStatus, jitsiRoom]);
 
   // ⭐ Compteur de durée d'appel (démarre quand callState === "active")
   useEffect(() => {
@@ -8105,6 +8361,36 @@ function CallOverlay({
     };
   }, [room, remoteParticipants]);
 
+  // ⭐ V3.19 — Plan C : mode P2P — les flux WebRTC (aucune Room LiveKit)
+  // sont attachés en srcObject ; l'audio distant passe par le <audio>
+  // caché (un MediaStream branché sur <audio> n'en joue que les pistes
+  // audio, la vidéo part sur le <video> principal).
+  useEffect(() => {
+    const el = remoteAudioRef.current;
+    if (!el || !p2pRemoteStream) return;
+    el.srcObject = p2pRemoteStream;
+    el.play().catch(() => {});
+    return () => { el.srcObject = null; };
+  }, [p2pRemoteStream]);
+
+  // ⭐ V3.19 — Plan C : vidéo distante P2P (srcObject direct).
+  useEffect(() => {
+    const el = remoteVideoRef.current;
+    if (!el || !p2pRemoteStream) return;
+    el.srcObject = p2pRemoteStream;
+    el.play().catch(() => {});
+    return () => { el.srcObject = null; };
+  }, [p2pRemoteStream]);
+
+  // ⭐ V3.19 — Plan C : vidéo locale P2P (PIP miroir).
+  useEffect(() => {
+    const el = localVideoRef.current;
+    if (!el || !p2pLocalStream) return;
+    el.srcObject = p2pLocalStream;
+    el.play().catch(() => {});
+    return () => { el.srcObject = null; };
+  }, [p2pLocalStream]);
+
   const formatDuration = (s: number): string => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -8131,7 +8417,27 @@ function CallOverlay({
 
       {/* Zone centrale : vidéo distante OU avatar */}
       <div className="flex-1 flex items-center justify-center w-full">
-        {isVideoCall && remoteParticipant ? (
+        {jitsiRoom ? (
+          /* ⭐ V3.19 — Plan C : repli JITSI (appels de groupe quand LiveKit
+             Cloud — Plan A — et l'auto-hébergé — Plan B — sont tous deux
+             indisponibles) : visio publique gratuite intégrée en iframe,
+             room DÉTERMINISTE pour que chaque participant y converge de
+             son propre repli. */
+          <div className="w-full h-full flex flex-col min-h-0">
+            <div className="flex items-center justify-center gap-2 py-1.5 px-3 text-[11px] font-bold text-[#C9A227] text-center">
+              <LifeBuoy className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="truncate">
+                Mode secours Jitsi · micro et caméra se règlent dans la fenêtre ci-dessous
+              </span>
+            </div>
+            <iframe
+              src={jitsiUrlFor(jitsiRoom, jitsiUserName)}
+              title="Visio de secours Jitsi"
+              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              className="flex-1 w-full min-h-0 rounded-2xl border border-[#C9A227]/30 bg-black"
+            />
+          </div>
+        ) : isVideoCall && (remoteParticipant || p2pRemoteStream) ? (
           /* Appel vidéo actif : vidéo distante plein écran */
           <video
             ref={remoteVideoRef}
@@ -8189,12 +8495,23 @@ function CallOverlay({
                 En attente que l'autre participant rejoigne l'appel...
               </p>
             )}
+            {p2pLocalStream && !p2pRemoteStream && !endStatus && p2pConnectionState && p2pConnectionState !== "failed" && p2pConnectionState !== "connected" && (
+              <p className="text-xs text-[#C9A227]/70 mt-2">
+                Établissement de la connexion directe (P2P)…
+              </p>
+            )}
+            {p2pRemoteStream && !endStatus && (
+              <p className="mt-2 text-[10px] text-[#C9A227]/80 flex items-center justify-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-[#C9A227] rounded-full" />
+                Appel direct P2P — connexion navigateur à navigateur (sans serveur multimédia)
+              </p>
+            )}
           </div>
         )}
       </div>
 
       {/* PIP vidéo locale (si appel vidéo ET caméra activée) */}
-      {isVideoCall && localVideoEnabled && (
+      {isVideoCall && localVideoEnabled && !jitsiRoom && (room || p2pLocalStream) && (
         <div className="absolute top-4 right-4 w-32 h-24 sm:w-48 sm:h-32 rounded-xl overflow-hidden border-2 border-[#C9A227] bg-black shadow-xl">
           <video
             ref={localVideoRef}
@@ -8210,8 +8527,11 @@ function CallOverlay({
         </div>
       )}
 
-      {/* Boutons de contrôle */}
+      {/* Boutons de contrôle — masqués en mode Jitsi (les commandes
+          micro/caméra vivent dans la fenêtre Jitsi elle-même). */}
       <div className="flex items-center justify-center gap-3 sm:gap-4">
+        {!jitsiRoom && (
+        <>
         <button
           onClick={onToggleMute}
           className={cn(
@@ -8246,6 +8566,8 @@ function CallOverlay({
         >
           {speakerEnabled ? <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" /> : <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" />}
         </button>
+        </>
+        )}
 
         <button
           onClick={onHangup}

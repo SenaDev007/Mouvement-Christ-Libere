@@ -166,6 +166,68 @@ export function ensureCallSignalTable(): Promise<void> {
   return inflightCallSignal;
 }
 
+let webRtcSignalOk = false;
+let inflightWebRtcSignal: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.19 — S'assure que la table `WebRTCSignal` (signalisation des appels
+ * P2P de secours — Plan C) existe.
+ *
+ * Plan C : si LiveKit (Cloud OU auto-hébergé) est indisponible, les appels
+ * DIRECT 1-1 basculent en WebRTC peer-to-peer — AUCUN serveur multimédia,
+ * le média voyage directement entre les deux navigateurs. La signalisation
+ * (offre SDP, réponse, candidats ICE) transite par cette table, lue par le
+ * polling HTTP existant (la sonnerie CallSignal V3.1 est inchangée).
+ *
+ * Table « volante » comme CallSignal (SQL brut, pas de migration Prisma) :
+ *   - POST /api/yeshua-connect/calls/webrtc { callId, type, payload }
+ *     → insère un signal offer / answer / ice ;
+ *   - GET  ?callId=x → les signaux de l'appel (sauf les miens), pour que
+ *     chaque côté découvre l'offre / la réponse / les ICE de l'autre ;
+ *   - purge des lignes > 5 min (best effort, à chaque appel) : la
+ *     signalisation n'a plus de sens après la fin de l'appel.
+ *
+ * Idempotent + mémoïsé + concurrentiel comme les helpers précédents.
+ */
+export function ensureWebRTCSignalTable(): Promise<void> {
+  if (webRtcSignalOk) return Promise.resolve();
+  if (!inflightWebRtcSignal) {
+    inflightWebRtcSignal = (async () => {
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "WebRTCSignal" (
+          "id" TEXT NOT NULL,
+          "callId" TEXT NOT NULL,
+          "fromUserId" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "payload" JSONB NOT NULL,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "WebRTCSignal_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "WebRTCSignal_callId_idx" ON "WebRTCSignal"("callId")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "WebRTCSignal_createdAt_idx" ON "WebRTCSignal"("createdAt")'
+      );
+    })()
+      .then(() => {
+        webRtcSignalOk = true;
+        console.log("[ensure-schema] V3.19 : table WebRTCSignal (Plan C — appels P2P de secours) vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] DDL WebRTCSignal impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightWebRtcSignal = null;
+      });
+  }
+  return inflightWebRtcSignal;
+}
+
 let messageTypeEnumOk = false;
 let inflightMessageEnum: Promise<void> | null = null;
 

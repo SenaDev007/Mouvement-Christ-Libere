@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { RoomServiceClient } from "livekit-server-sdk";
 import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
+import { getLiveKitConfig } from "@/lib/livekit-config";
 
 /**
  * ⭐ V2.7 — Bascule audio / vidéo des canaux vocaux Yeshua Connect.
@@ -31,12 +32,11 @@ import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
  * (sauf rôles privilégiés qui peuvent modérer tous les canaux).
  */
 
-const LIVEKIT_URL =
-  process.env.NEXT_PUBLIC_LIVEKIT_URL ||
-  process.env.LIVEKIT_URL ||
-  "wss://christ-libere.livekit.cloud";
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
+// ⭐ V3.19 — clés LiveKit lues AU RUNTIME (bascule Plan B sans rebuild)
+function livekitRoomService(): RoomServiceClient {
+  const { url, apiKey, apiSecret } = getLiveKitConfig();
+  return new RoomServiceClient(url, apiKey, apiSecret);
+}
 
 /** Rôles site autorisés à basculer le mode d'un canal vocal. */
 const SITE_ADMIN_ROLES = new Set([
@@ -170,20 +170,12 @@ export async function POST(
     const roomName = `yeshua-voice-${id}`;
     let livekitPushed = false;
     try {
-      const roomService = new RoomServiceClient(
-        LIVEKIT_URL,
-        LIVEKIT_API_KEY,
-        LIVEKIT_API_SECRET,
-      );
+      const roomService = livekitRoomService();
       await roomService.updateRoomMetadata(roomName, roomMetadata(videoMode));
       livekitPushed = true;
     } catch {
       try {
-        const roomService = new RoomServiceClient(
-          LIVEKIT_URL,
-          LIVEKIT_API_KEY,
-          LIVEKIT_API_SECRET,
-        );
+        const roomService = livekitRoomService();
         // Room absente → on la crée avec les métadonnées (elle existera
         // déjà quand les participants rejoindront).
         await roomService.createRoom({

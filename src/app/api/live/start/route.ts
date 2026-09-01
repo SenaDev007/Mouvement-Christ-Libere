@@ -14,10 +14,6 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
  * Réservé aux admins authentifiés (cookie admin_session).
  */
 
-const LIVEKIT_URL = process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
-
 export async function POST(req: NextRequest) {
   try {
     // Vérifier l'authentification admin

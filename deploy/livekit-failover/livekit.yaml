@@ -1,0 +1,31 @@
+# ⭐ Plan B — Configuration LiveKit auto-hébergé
+# ⚠️ AVANT LE PREMIER DÉMARRAGE :
+#   1. Remplacer la paire de clés ci-dessous (devkey: devsecret) par celle générée :
+#        docker run --rm livekit/livekit-server --generate-keys
+#      → renseigner LIVEKIT_API_KEY / LIVEKIT_API_SECRET sur Vercel avec ces valeurs.
+#   2. Le port TCP 7881 doit être ouvert (firewall VM + Security List Oracle),
+#      c'est le repli des clients derrière un NAT strict.
+
+# API/WebSockets — Caddy (443, TLS auto) fait le proxy vers ce port
+port: 7880
+bind_addresses:
+  - ""
+
+# Média temps réel
+rtc:
+  tcp_port: 7881        # RTC sur TCP (repli NAT strict)
+  udp_port: 7881        # RTC sur UDP (chemin privilégié)
+  use_external_ip: true # indispensable sur VM cloud (IP publique via NAT)
+
+# TURN intégré (repli ultime des clients derrière NAT strict/symétrique)
+turn:
+  enabled: true
+  udp_port: 3478
+
+# Clés API — REMPLACER (voir en-tête)
+keys:
+  devkey: devsecret
+
+logging:
+  level: info
+  json: false

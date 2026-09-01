@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { RoomServiceClient } from "livekit-server-sdk";
 import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
+import { getLiveKitConfig } from "@/lib/livekit-config";
 
 /**
  * ⭐ V3.1 — DIRECT AU SEIN D'UN CANAL VOCAL (PAS le module Live !).
@@ -34,18 +35,13 @@ import { ensureVoiceVideoColumns } from "@/lib/ensure-schema";
  * identiques à la bascule audio/vidéo (voice-mode).
  */
 
-const LIVEKIT_URL =
-  process.env.NEXT_PUBLIC_LIVEKIT_URL ||
-  process.env.LIVEKIT_URL ||
-  "wss://christ-libere.livekit.cloud";
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
-
 const SITE_ADMIN_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR", "ANIMATOR"]);
 const CHANNEL_ADMIN_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR", "ANIMATOR"]);
 
+// ⭐ V3.19 — clés LiveKit lues AU RUNTIME (bascule Plan B sans rebuild)
 function roomService(): RoomServiceClient {
-  return new RoomServiceClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+  const { url, apiKey, apiSecret } = getLiveKitConfig();
+  return new RoomServiceClient(url, apiKey, apiSecret);
 }
 
 /** Lit les métadonnées actuelles d'une room (null si absente). */

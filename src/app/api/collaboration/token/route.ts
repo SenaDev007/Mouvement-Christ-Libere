@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AccessToken } from "livekit-server-sdk";
+import { getLiveKitConfig } from "@/lib/livekit-config";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 
@@ -14,10 +15,10 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
  *
  * La room est namespaced "collab-{videoId}" pour isoler chaque projet.
  */
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
 
 export async function POST(req: NextRequest) {
+  // ⭐ V3.19 — clés lues au RUNTIME (bascule Plan B sans rebuild)
+  const { apiKey: LIVEKIT_API_KEY, apiSecret: LIVEKIT_API_SECRET, url: LIVEKIT_URL } = getLiveKitConfig();
   try {
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
@@ -56,10 +57,7 @@ export async function POST(req: NextRequest) {
     });
 
     const token = await at.toJwt();
-    const livekitUrl =
-      process.env.NEXT_PUBLIC_LIVEKIT_URL ||
-      process.env.LIVEKIT_URL ||
-      "wss://christ-libere.livekit.cloud";
+    const livekitUrl = LIVEKIT_URL;
 
     return NextResponse.json({
       token,

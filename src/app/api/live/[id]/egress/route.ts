@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { EgressClient, StreamOutput } from "livekit-server-sdk";
+import { getLiveKitConfig } from "@/lib/livekit-config";
 
 /**
  * POST /api/live/[id]/egress
@@ -24,10 +25,6 @@ import { EgressClient, StreamOutput } from "livekit-server-sdk";
  *
  * Body: { } (utilise les clés RTMP configurées sur le serviteur)
  */
-
-const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || "wss://christ-libere.livekit.cloud";
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "dev-key";
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "dev-secret";
 
 /** Traduit les erreurs LiveKit Cloud (quota) en message français actionnable. */
 function translateEgressError(errMsg: string): string {
@@ -51,6 +48,8 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // ⭐ V3.19 — clés lues au RUNTIME (bascule Plan B sans rebuild)
+  const { url: LIVEKIT_URL, apiKey: LIVEKIT_API_KEY, apiSecret: LIVEKIT_API_SECRET } = getLiveKitConfig();
   try {
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
