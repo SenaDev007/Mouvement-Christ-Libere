@@ -10,6 +10,7 @@ import {
   Calendar, MessageSquare, Heart, ArrowRight,
 } from "lucide-react";
 import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
+import { LandingIntro } from "@/components/site/landing-intro";
 
 // NOTE: <AutoRefresh> était monté ici toutes les 30 s et déclenchait un
 // router.refresh() au mount + toutes les 30 s. Sur la landing page (client
@@ -75,6 +76,11 @@ export default function Home() {
   }, []);
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
+      {/* ⭐ V3.9 — Intro du landing page : 30 s EXACTEMENT pendant
+          lesquelles retentissent les 30 premières secondes du VRAI son du
+          shofar (une fois par session de navigation, session storage). */}
+      <LandingIntro />
+
       {/* ═════ HERO ═════ */}
       <section className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
         {/* Carte flottante du prochain live — en haut du hero */}
