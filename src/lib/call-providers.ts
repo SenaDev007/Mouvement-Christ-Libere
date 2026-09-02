@@ -225,6 +225,21 @@ function buildAgoraCreds(
   channel: string,
   userId: string,
 ): { appId: string; token: string; channel: string; uid: number } {
+  return buildAgoraRoleCreds(channel, userId, "publisher");
+}
+
+/**
+ * ⭐ V3.22 — Agora : token RTC pour un RÔLE donné.
+ * - "publisher"  : le studio qui diffuse (appels Yeshua + lives publics)
+ * - "subscriber" : les VIEWERS du live (rôle audience — reçoivent, ne
+ *   publient JAMAIS : aucun DataChannel, aucune interaction, exactement
+ *   comme un spectateur YouTube).
+ */
+export function buildAgoraRoleCreds(
+  channel: string,
+  userId: string,
+  role: "publisher" | "subscriber",
+): { appId: string; token: string; channel: string; uid: number } {
   const appId = agoraAppId();
   const uid = uidHash(userId);
   const token = RtcTokenBuilder.buildTokenWithUid(
@@ -232,7 +247,7 @@ function buildAgoraCreds(
     process.env.AGORA_APP_CERTIFICATE || "",
     channel,
     uid,
-    RtcRole.PUBLISHER,
+    role === "publisher" ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER,
     TOKEN_TTL_SEC,
     TOKEN_TTL_SEC,
   );
@@ -314,6 +329,17 @@ async function ensureDailyRoom(roomName: string): Promise<string> {
 
 /** Daily : meeting-token (owner non requis — participant simple). */
 async function buildDailyCreds(roomName: string): Promise<{ url: string; token: string }> {
+  return buildDailyCredsForRoom(roomName, false);
+}
+
+/**
+ * ⭐ V3.22 — Daily : creds d'une room arbitraire (appels Yeshua + LIVES
+ * publics). `owner` = true pour le studio qui diffuse.
+ */
+export async function buildDailyCredsForRoom(
+  roomName: string,
+  owner: boolean,
+): Promise<{ url: string; token: string }> {
   const url = await ensureDailyRoom(roomName);
   const tokenRes = await fetch("https://api.daily.co/v1/meeting-tokens", {
     method: "POST",
@@ -322,7 +348,7 @@ async function buildDailyCreds(roomName: string): Promise<{ url: string; token: 
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      properties: { room_name: roomName, is_owner: false },
+      properties: { room_name: roomName, is_owner: owner },
     }),
   });
   if (!tokenRes.ok) {

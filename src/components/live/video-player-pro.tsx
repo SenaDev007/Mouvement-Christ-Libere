@@ -7,7 +7,9 @@ import {
 } from "lucide-react";
 
 interface VideoPlayerProProps {
-  videoRef: React.RefObject<HTMLVideoElement>;
+  // ⭐ V3.22 — RefObject<HTMLVideoElement | null> : typage React 19 (le ref
+  // d'un élément vidéo peut valoir null avant montage — même usage qu'avant).
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   isLive: boolean;
   viewerCount: number;
   connecting?: boolean;

@@ -75,6 +75,27 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   // (C1) Refs pour éviter les reconnexions LiveKit inutiles
   const hasConnectedRef = useRef(false);
   const viewerFirstNameRef = useRef(viewerFirstName);
+  // ⭐ V3.22 — MODE DE LIVRAISON « YOUTUBE » (HLS) + replis Agora/Daily :
+  // le viewer ne rejoint PLUS systématiquement la room LiveKit.
+  const [streamMode, setStreamMode] = useState<"" | "hls" | "webrtc" | "agora" | "daily">("");
+  const streamModeRef = useRef("");
+  const [streamBadge, setStreamBadge] = useState("");
+  const hlsRef = useRef<{ destroy: () => void } | null>(null);
+  const agoraClientRef = useRef<{
+    leave: () => Promise<void>;
+    on: (evt: string, cb: (...args: unknown[]) => void) => void;
+    setClientRole?: (role: string) => Promise<void>;
+  } | null>(null);
+  const dailyCallRef = useRef<{
+    join: (opts: { url: string; token?: string; userName?: string; startVideoOff?: boolean; startAudioOff?: boolean }) => Promise<void>;
+    leave: () => Promise<void>;
+    destroy: () => void;
+    participants: () => Record<string, {
+      local: boolean;
+      tracks?: Record<string, { state?: string; persistentTrack?: MediaStreamTrack | null; track?: MediaStreamTrack | null }>;
+    }>;
+    on: (evt: string, cb: (ev?: unknown) => void) => void;
+  } | null>(null);
   useEffect(() => {
     viewerFirstNameRef.current = viewerFirstName;
   }, [viewerFirstName]);
@@ -148,23 +169,21 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   }, [live.status, live.scheduledAt]);
 
   // Polling statut
-  // (YT-pause) Pour les lives YouTube, on continue à poller même après le
-  // démarrage du live, pour récupérer l'état de pause (isPaused / pausedAt)
-  // côté serveur — les viewers YouTube ne reçoivent pas le DataChannel LiveKit.
-  // Pour les lives LiveKit purs, on arrête de poller une fois qu'on a startedAt
-  // (le signal de pause arrive via DataChannel, pas besoin de polling).
+  // (YT-pause + ⭐ V3.22) : l'état de pause est synchronisé depuis l'API
+  // pour TOUS les viewers qui ne reçoivent pas le DataChannel LiveKit —
+  // c'est-à-dire YouTube (embed), HLS (mode YouTube), Agora (audience)
+  // et Daily. Le DataChannel ne couvre que le repli WebRTC LiveKit ; on
+  // synchronise quand même la base pour ce mode aussi (la source de
+  // vérité de la pause est /api/live/[id]/pause).
   // ⭐ V2.9 — ARRÊT DU DIRECT : on poll TOUJOURS pendant le direct (10 s).
   // Quand le statut passe à ENDED (stop depuis le back-office, quick-action
-  // ou webhook), l'écran du viewer COUPE : « Direct terminé » + déconnexion
-  // de la room LiveKit — « lorsque le direct est arrêté, l'écran de tout le
-  // monde doit couper ».
+  // ou webhook), l'écran du viewer COUPE.
   useEffect(() => {
     const isYoutubeLive = !!live.youtubeUrl;
     // Poller tant que :
     //  - le live est SCHEDULED (attente du démarrage), OU
     //  - le live est LIVE mais startedAt n'est pas encore connu, OU
-    //  - le live est LIVE via YouTube (pause), OU
-    //  - ⭐ V2.9 : le live est LIVE, point final (détection d'arrêt).
+    //  - le live est LIVE, point final (pause + détection d'arrêt).
     if (live.status !== "SCHEDULED" && !(isLive && !liveStartedAt) && !isLive) return;
     const checkStatus = async () => {
       try {
@@ -180,7 +199,8 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
             if (isLive) {
               setLiveEnded(true);
               setIsLive(false);
-              // Déconnecter la room LiveKit (arrête la lecture/les pistes).
+              // Couper TOUTES les formes de lecture (room LiveKit, hls.js,
+              // Agora, Daily) — arrête la lecture et les pistes.
               try { roomRef.current?.disconnect(); roomRef.current = null; } catch {}
             }
             return;
@@ -189,8 +209,10 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
           if (data.live.startedAt) {
             setLiveStartedAt(data.live.startedAt);
           }
-          // (YT-pause) Sync pause state depuis l'API (pour les viewers YouTube)
-          if (isYoutubeLive) {
+          // (YT-pause + V3.22) Sync pause state depuis l'API — YouTube,
+          // HLS, Agora, Daily (pas de DataChannel) ET WebRTC (source de
+          // vérité base : pause déclenchée depuis le back-office).
+          {
             const paused = !!data.live.isPaused;
             setViewerPaused(paused);
             setLivePausedAt(data.live.pausedAt || null);
@@ -205,7 +227,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     };
     checkStatus();
     // ⭐ V2.9 : 10 s pendant le direct (arrêt détecté en < 10 s), 3 s pour
-    // les lives YouTube (pause), 30 s en attente de démarrage.
+    // les lives YouTube (pause réactive), 30 s en attente de démarrage.
     const intervalMs = isLive ? (isYoutubeLive ? 3000 : 10000) : 30000;
     const interval = setInterval(checkStatus, intervalMs);
     return () => clearInterval(interval);
@@ -300,10 +322,18 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   }, [isLive, hasJoined, memberId, live.id]);
 
   // ═══════════════════════════════════════════════════════════════════
-  // (C1) Effet 2 : Connexion LiveKit subscriber — deps MINIMALES
-  // [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined]
-  // memberId et viewerFirstName sont retirés des deps (lus via refs)
-  // pour éviter déconnexion/reconnexion rapide → track détaché.
+  // ⭐ V3.22 — Effet 2 : LECTURE DU DIRECT « FAÇON YOUTUBE » + replis.
+  // Le viewer ne rejoint PLUS la room LiveKit systématiquement :
+  //  - "hls"    : flux HLS du direct (lecteur <video>, comme YouTube) —
+  //              ZÉRO participant LiveKit → seuls le diffuseur (1) est
+  //              facturé, exactement la demande « à l'instar de YouTube » ;
+  //  - "webrtc" : spectateur WebRTC LiveKit (repli si l'egress HLS
+  //              échoue — comportement historique) ;
+  //  - "agora"  : LiveKit indisponible → audience Agora (reçoit, sans
+  //              interaction) ;
+  //  - "daily"  : dernier repli.
+  // Le serveur arbitre (GET /stream) ; un polling (12 s) suit la bascule
+  // de fournisseur décidée par le studio (la source) — reconnexion auto.
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (!isLive || !live.livekitRoomName || live.youtubeUrl) return;
@@ -316,157 +346,404 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     // (H1) Éléments <audio> attachés au DOM (Safari/iOS exige qu'ils soient
     // dans le document pour pouvoir les jouer). Nettoyés au unmount/déconnexion.
     const attachedAudioEls: HTMLAudioElement[] = [];
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     streamReceivedRef.current = false;
+    // Mode HLS dont les URLs ont toutes échoué localement → on retombe en
+    // WebRTC et on ne RETENTE PAS ce mode tant que le fournisseur ne change
+    // pas (sinon bascule/thrash à chaque poll de 12 s).
+    let hlsLocallyFailed = false;
+    let currentProvider = "";
 
-    const connectToRoom = async () => {
-      setConnecting(true);
-      setConnectionError("");
-      setStreamReceived(false);
+    const setMode = (mode: "" | "hls" | "webrtc" | "agora" | "daily", badge: string) => {
+      streamModeRef.current = mode;
+      setStreamMode(mode);
+      setStreamBadge(badge);
+    };
+
+    const markStreamReceived = () => {
+      if (streamReceivedRef.current) return;
+      streamReceivedRef.current = true;
+      setStreamReceived(true);
       setWaitingForStream(false);
-      try {
-        const tokenRes = await apiFetch("/api/livekit/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            roomName: live.livekitRoomName,
-            role: "subscriber",
-            participantName: viewerFirstNameRef.current || "Visiteur",
-          }),
-        });
-        if (!tokenRes.ok) {
-          const data = await tokenRes.json();
-          throw new Error(data.error || "Token LiveKit indisponible");
+      setConnecting(false);
+      setConnectionError("");
+    };
+
+    // ─── Nettoyage complet du média courant ───
+    const teardownMedia = () => {
+      try { hlsRef.current?.destroy(); } catch {}
+      hlsRef.current = null;
+      const video = videoRef.current;
+      if (video) {
+        try { video.pause(); } catch {}
+        video.removeAttribute("src");
+        try { video.srcObject = null; } catch {}
+        try { video.load(); } catch {}
+      }
+      try { roomRef.current?.disconnect(); } catch {}
+      roomRef.current = null;
+      try { agoraClientRef.current?.leave(); } catch {}
+      agoraClientRef.current = null;
+      try { dailyCallRef.current?.leave(); } catch {}
+      try { dailyCallRef.current?.destroy(); } catch {}
+      dailyCallRef.current = null;
+      for (const el of attachedAudioEls) {
+        try { el.pause(); } catch {}
+        el.remove();
+      }
+      attachedAudioEls.length = 0;
+      streamReceivedRef.current = false;
+      setStreamReceived(false);
+    };
+
+    // ─── A. MODE HLS (comme YouTube) — hls.js / HLS natif Safari ───
+    const attachHls = async (urls: string[]): Promise<boolean> => {
+      const video = videoRef.current;
+      if (!video || urls.length === 0) return false;
+      video.muted = true; // autoplay ; le viewer active le son via le lecteur
+      const { default: Hls } = await import("hls.js");
+      for (const url of urls) {
+        if (cancelled) return false;
+        // A1) HLS natif (Safari / iOS)
+        if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          const ok = await new Promise<boolean>((resolve) => {
+            let settled = false;
+            const done = (v: boolean) => {
+              if (settled) return;
+              settled = true;
+              video.removeEventListener("canplay", onOk);
+              video.removeEventListener("error", onKo);
+              resolve(v);
+            };
+            const onOk = () => done(true);
+            const onKo = () => done(false);
+            video.addEventListener("canplay", onOk);
+            video.addEventListener("error", onKo);
+            video.src = url;
+            video.play().catch(() => {});
+            setTimeout(() => done(video.readyState >= 2), 8000);
+          });
+          if (cancelled) return false;
+          if (ok) { markStreamReceived(); return true; }
+          try { video.removeAttribute("src"); video.load(); } catch {}
         }
-        const { token, url } = await tokenRes.json();
+        // A2) hls.js (Chrome/Firefox/Edge)
+        if (Hls.isSupported()) {
+          const ok = await new Promise<boolean>((resolve) => {
+            let settled = false;
+            const done = (v: boolean) => {
+              if (settled) return;
+              settled = true;
+              resolve(v);
+            };
+            try {
+              const hls = new Hls({
+                lowLatencyMode: true,
+                liveDurationInfinity: true,
+                manifestLoadingTimeOut: 8000,
+                manifestLoadingMaxRetry: 1,
+                levelLoadingTimeOut: 8000,
+                fragLoadingTimeOut: 12000,
+              });
+              hlsRef.current = hls;
+              hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                video.play().catch(() => {});
+                // Quelques fragments bufferisés → on considère le flux actif
+                setTimeout(() => done(video.readyState >= 2 || video.currentTime > 0), 4000);
+              });
+              hls.on(Hls.Events.ERROR, (_evt, data) => {
+                if (data?.fatal) done(false);
+              });
+              hls.loadSource(url);
+              hls.attachMedia(video);
+              setTimeout(() => done(false), 10000);
+            } catch {
+              done(false);
+            }
+          });
+          if (cancelled) return false;
+          if (ok) { markStreamReceived(); return true; }
+          try { hlsRef.current?.destroy(); } catch {}
+          hlsRef.current = null;
+        }
+      }
+      return false;
+    };
 
-        const room = new Room({ adaptiveStream: true, dynacast: true });
-        roomRef.current = room;
+    // ─── B. MODE WebRTC LiveKit (spectateur — repli) ───
+    const attachLiveKit = async (creds: { url: string; token: string }) => {
+      const room = new Room({ adaptiveStream: true, dynacast: true });
+      roomRef.current = room;
 
-        // (C1) Afficher "Connexion perdue" si la room se déconnecte
-        room.on(RoomEvent.Disconnected, () => {
-          if (!cancelled) {
-            setConnectionError("Connexion perdue — tentative de reconnexion...");
-          }
-        });
+      room.on(RoomEvent.Disconnected, () => {
+        if (!cancelled) {
+          setConnectionError("Connexion perdue — tentative de reconnexion...");
+        }
+      });
 
-        await room.connect(url, token);
+      await room.connect(creds.url, creds.token);
 
-        // (S5) Démarrer le timer d'attente : si aucun track reçu après 4s,
-        // afficher l'overlay "En attente du diffuseur". Le studio peut avoir
-        // démarré le live côté API sans être encore connecté à LiveKit, ou
-        // le flux RTMP vers YouTube n'est pas encore actif.
-        const waitTimer = setTimeout(() => {
-          if (!cancelled && !streamReceivedRef.current) {
-            setWaitingForStream(true);
-          }
-        }, 4000);
+      // (S5) Attente : si aucun track reçu après 4 s → overlay « En attente »
+      const waitTimer = setTimeout(() => {
+        if (!cancelled && !streamReceivedRef.current) {
+          setWaitingForStream(true);
+        }
+      }, 4000);
 
-        room.on(RoomEvent.TrackSubscribed, (track) => {
-          if (track.kind === Track.Kind.Video && videoRef.current) {
-            streamReceivedRef.current = true;
-            setStreamReceived(true);
-            setWaitingForStream(false);
+      room.on(RoomEvent.TrackSubscribed, (track) => {
+        if (track.kind === Track.Kind.Video && videoRef.current) {
+          clearTimeout(waitTimer);
+          track.attach(videoRef.current);
+          videoRef.current.muted = true;
+          videoRef.current.play().catch((err) => {
+            console.warn("[viewer] Video play failed:", err);
+          });
+          markStreamReceived();
+        } else if (track.kind === Track.Kind.Audio) {
+          const audioEl = document.createElement("audio");
+          audioEl.autoplay = true;
+          track.attach(audioEl);
+          document.body.appendChild(audioEl);
+          attachedAudioEls.push(audioEl);
+          audioEl.play().catch(() => {});
+        }
+      });
+
+      // Écouter les messages DataChannel (pause/play du studio)
+      room.on(RoomEvent.DataReceived, (_payload, _participant, _kind, topic) => {
+        if (!cancelled && topic === "live-control") {
+          try {
+            const decoder = new TextDecoder();
+            const msg = JSON.parse(decoder.decode(_payload));
+            if (msg.action === "pause") setViewerPaused(true);
+            else if (msg.action === "resume") setViewerPaused(false);
+          } catch {}
+        }
+      });
+
+      // (H1) Nettoyer l'élément audio quand le track est désabonné
+      room.on(RoomEvent.TrackUnsubscribed, (track) => {
+        if (track.kind !== Track.Kind.Audio) return;
+        for (let i = attachedAudioEls.length - 1; i >= 0; i--) {
+          const el = attachedAudioEls[i];
+          try { track.detach(el); } catch {}
+          try { el.pause(); } catch {}
+          el.remove();
+          attachedAudioEls.splice(i, 1);
+        }
+      });
+
+      room.remoteParticipants.forEach((participant) => {
+        participant.getTrackPublications().forEach((pub) => {
+          if (pub.track && pub.track.kind === Track.Kind.Video && videoRef.current) {
             clearTimeout(waitTimer);
-            track.attach(videoRef.current);
+            pub.track.attach(videoRef.current);
             videoRef.current.muted = true;
-            videoRef.current.play().catch((err) => {
-              console.warn("[viewer] Video play failed:", err);
-            });
-          } else if (track.kind === Track.Kind.Audio) {
+            videoRef.current.play().catch(() => {});
+            markStreamReceived();
+          } else if (pub.track && pub.track.kind === Track.Kind.Audio) {
             const audioEl = document.createElement("audio");
             audioEl.autoplay = true;
-            track.attach(audioEl);
+            pub.track.attach(audioEl);
+            // (H1) Attacher au DOM pour Safari/iOS
             document.body.appendChild(audioEl);
             attachedAudioEls.push(audioEl);
             audioEl.play().catch(() => {});
           }
         });
+      });
+    };
 
-        // Écouter les messages DataChannel (pause/play du studio)
-        room.on(RoomEvent.DataReceived, (_payload, _participant, _kind, topic) => {
-          if (!cancelled && topic === "live-control") {
-            try {
-              const decoder = new TextDecoder();
-              const msg = JSON.parse(decoder.decode(_payload));
-              if (msg.action === "pause") setViewerPaused(true);
-              else if (msg.action === "resume") setViewerPaused(false);
-            } catch {}
+    // ─── C. MODE Agora (audience — LiveKit indisponible) ───
+    const attachAgora = async (ag: { appId: string; channel: string; token: string; uid: number }) => {
+      const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
+      const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+      // ⭐ Spectateur PUR : rôle audience — jamais de publication, jamais
+      // d'interaction (mêmes règles qu'un viewer YouTube).
+      await client.setClientRole("audience");
+      const onUserPublished = async (
+        user: { videoTrack?: { play: (el: HTMLElement) => void } | null; audioTrack?: { play: () => void } | null },
+        mediaType: "video" | "audio",
+      ) => {
+        try {
+          await client.subscribe(user as never, mediaType);
+          if (mediaType === "video" && videoRef.current) {
+            user.videoTrack?.play(videoRef.current);
+            markStreamReceived();
+          } else if (mediaType === "audio") {
+            user.audioTrack?.play();
           }
-        });
+        } catch {}
+      };
+      const onUserUnpublished = () => { /* le studio est reparti : overlay géré par le poll */ };
+      client.on("user-published", onUserPublished as never);
+      client.on("user-unpublished", onUserUnpublished as never);
+      await client.join(ag.appId, ag.channel, ag.token, ag.uid);
+      agoraClientRef.current = client as unknown as typeof agoraClientRef.current;
+    };
 
-        // (H1) Nettoyer l'élément audio quand le track est désabonné
-        room.on(RoomEvent.TrackUnsubscribed, (track) => {
-          if (track.kind !== Track.Kind.Audio) return;
-          for (let i = attachedAudioEls.length - 1; i >= 0; i--) {
-            const el = attachedAudioEls[i];
-            try {
-              track.detach(el);
-            } catch {}
-            try {
-              el.pause();
-            } catch {}
-            el.remove();
-            attachedAudioEls.splice(i, 1);
+    // ─── D. MODE Daily (dernier repli) ───
+    const attachDaily = async (d: { url: string; token: string }) => {
+      const Daily = (await import("@daily-co/daily-js")) as unknown as {
+        createCallObject(): NonNullable<typeof dailyCallRef.current>;
+      };
+      const call = Daily.createCallObject();
+      dailyCallRef.current = call;
+      const refresh = () => {
+        for (const p of Object.values(call.participants ? call.participants() : {})) {
+          if (p.local) continue;
+          const t = p.tracks?.["video"];
+          const raw = t?.persistentTrack ?? t?.track ?? null;
+          if (raw && t?.state === "playable" && videoRef.current) {
+            videoRef.current.srcObject = new MediaStream([raw]);
+            videoRef.current.muted = true;
+            videoRef.current.play().catch(() => {});
+            markStreamReceived();
           }
-        });
-
-        room.remoteParticipants.forEach((participant) => {
-          participant.getTrackPublications().forEach((pub) => {
-            if (pub.track && pub.track.kind === Track.Kind.Video && videoRef.current) {
-              streamReceivedRef.current = true;
-              setStreamReceived(true);
-              setWaitingForStream(false);
-              clearTimeout(waitTimer);
-              pub.track.attach(videoRef.current);
-              videoRef.current.muted = true;
-              videoRef.current.play().catch(() => {});
-            } else if (pub.track && pub.track.kind === Track.Kind.Audio) {
-              const audioEl = document.createElement("audio");
-              audioEl.autoplay = true;
-              pub.track.attach(audioEl);
-              // (H1) Attacher au DOM pour Safari/iOS
-              document.body.appendChild(audioEl);
-              attachedAudioEls.push(audioEl);
-              audioEl.play().catch(() => {});
+          const a = p.tracks?.["audio"];
+          const rawA = a?.persistentTrack ?? a?.track ?? null;
+          if (rawA && a?.state === "playable") {
+            let el = attachedAudioEls.find((x) => x.dataset.dly === "1");
+            if (!el) {
+              el = document.createElement("audio");
+              el.autoplay = true;
+              el.dataset.dly = "1";
+              document.body.appendChild(el);
+              attachedAudioEls.push(el);
             }
-          });
-        });
+            if (!el.srcObject) el.srcObject = new MediaStream([rawA]);
+            el.play().catch(() => {});
+          }
+        }
+      };
+      call.on?.("participant-updated", refresh);
+      call.on?.("track-started", refresh);
+      call.on?.("track-stopped", refresh);
+      await call.join({ url: d.url, token: d.token, userName: viewerFirstNameRef.current || "Visiteur" });
+    };
 
-        if (!cancelled) {
-          setConnecting(false);
-          setConnectionError(""); // Effacer l'éventuel message "Connexion perdue"
+    // ─── Orchestration : suivre la décision du serveur ───
+    const applyBundle = async (bundle: {
+      mode?: string; reason?: string; provider?: string;
+      hls?: { urls: string[] };
+      livekit?: { url: string; token: string };
+      agora?: { appId: string; token: string; channel: string; uid: number };
+      daily?: { url: string; token: string };
+    }) => {
+      const mode = bundle.mode || "off";
+      const provider = bundle.provider || "livekit";
+      if (mode === "off") return;
+      const key = `${mode}:${provider}`;
+      if (key === `${streamModeRef.current}:${currentProvider}`) return; // rien ne change
+
+      teardownMedia();
+      setConnecting(true);
+      setConnectionError("");
+      setWaitingForStream(false);
+      currentProvider = provider;
+      try {
+        if (mode === "hls") {
+          if (hlsLocallyFailed) {
+            // HLS a déjà échoué localement pour CE fournisseur → WebRTC direct
+            const creds = await fetchSubscriberToken();
+            await attachLiveKit(creds);
+            setMode("webrtc", "Lecture WebRTC (HLS momentanément indisponible)");
+            return;
+          }
+          const ok = await attachHls(bundle.hls?.urls || []);
+          if (ok) {
+            setMode("hls", "Mode YouTube — spectateurs non comptés");
+            return;
+          }
+          // Toutes les URLs HLS ont échoué → repli WebRTC SANS basculer la
+          // chaîne (le studio diffuse toujours très bien sur LiveKit).
+          hlsLocallyFailed = true;
+          const creds = await fetchSubscriberToken();
+          await attachLiveKit(creds);
+          setMode("webrtc", "Lecture WebRTC (HLS momentanément indisponible)");
+          return;
+        }
+        if (mode === "webrtc" && bundle.livekit) {
+          await attachLiveKit(bundle.livekit);
+          setMode("webrtc", "Lecture WebRTC");
+          return;
+        }
+        if (mode === "agora" && bundle.agora) {
+          await attachAgora(bundle.agora);
+          setMode("agora", "Réseau : Agora (repli — LiveKit indisponible)");
+          return;
+        }
+        if (mode === "daily" && bundle.daily) {
+          await attachDaily(bundle.daily);
+          setMode("daily", "Réseau : Daily (repli)");
+          return;
         }
       } catch (err) {
-        if (!cancelled) {
-          setConnectionError(err instanceof Error ? err.message : "Erreur de connexion");
-          setConnecting(false);
-          // Autoriser une nouvelle tentative si l'effet se ré-exécute
-          hasConnectedRef.current = false;
-        }
+        if (cancelled) return;
+        setConnectionError(err instanceof Error ? err.message : "Erreur de connexion");
+      } finally {
+        if (!cancelled) setConnecting(false);
       }
     };
 
-    connectToRoom();
+    // Repli WebRTC local : l'ancienne route token (subscriber) reste dispo.
+    const fetchSubscriberToken = async (): Promise<{ url: string; token: string }> => {
+      const tokenRes = await apiFetch("/api/livekit/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomName: live.livekitRoomName,
+          role: "subscriber",
+          participantName: viewerFirstNameRef.current || "Visiteur",
+        }),
+      });
+      if (!tokenRes.ok) {
+        const data = await tokenRes.json().catch(() => ({}));
+        throw new Error(data.error || "Token LiveKit indisponible");
+      }
+      return tokenRes.json();
+    };
+
+    const fetchAndApply = async () => {
+      if (cancelled) return;
+      try {
+        const res = await apiFetch(`/api/live/${live.id}/stream`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || !data || data.mode === "off") return;
+        await applyBundle(data);
+      } catch {}
+    };
+
+    (async () => {
+      await fetchAndApply();
+      // (S5) Overlay d'attente si rien n'est encore arrivé après 4 s.
+      setTimeout(() => {
+        if (!cancelled && !streamReceivedRef.current) setWaitingForStream(true);
+      }, 4000);
+    })();
+
+    // Polling de bascule : si le studio change de fournisseur (LiveKit →
+    // Agora → Daily), TOUS les viewers suivent automatiquement (≤ 12 s).
+    pollTimer = setInterval(fetchAndApply, 12000);
 
     return () => {
       cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
       // (H1) Retirer tous les éléments <audio> du DOM au nettoyage
       for (const el of attachedAudioEls) {
-        try {
-          el.pause();
-        } catch {}
+        try { el.pause(); } catch {}
         el.remove();
       }
       attachedAudioEls.length = 0;
-      if (roomRef.current) {
-        roomRef.current.disconnect();
-        roomRef.current = null;
-      }
+      teardownMedia();
+      setStreamBadge("");
+      streamModeRef.current = "";
       // Réinitialiser pour permettre une reconnexion future si l'effet re-démarre
       hasConnectedRef.current = false;
     };
-  }, [isLive, live.livekitRoomName, live.youtubeUrl, hasJoined]);
+  }, [isLive, live.id, live.livekitRoomName, live.youtubeUrl, hasJoined]);
 
   const accentColor = live.servantCode === "pam" ? "#C9A227" : "#8C5FA8";
   const getYouTubeEmbedUrl = (url: string) => {
@@ -591,6 +868,21 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                   connectionError={connectionError}
                   onRetry={() => window.location.reload()}
                 />
+              )}
+
+              {/* ⭐ V3.22 — Badge du mode de livraison (YouTube-like / repli).
+                  Discret, coin haut-droit : informe sans gêner la lecture. */}
+              {isLive && !live.youtubeUrl && hasJoined && !connecting && streamBadge && (
+                <div className="absolute top-2 right-2 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/10 pointer-events-none">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      streamMode === "hls" ? "bg-[#C9A227]" : streamMode === "webrtc" ? "bg-blue-400" : "bg-orange-400"
+                    }`}
+                  />
+                  <span className="text-[10px] font-medium text-white/80 tracking-wide">
+                    {streamBadge}
+                  </span>
+                </div>
               )}
 
               {/* (S5) Overlay "En attente du diffuseur" — quand connecté à LiveKit

@@ -92,6 +92,17 @@ export function LiveStudioClient({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  // ⭐ V3.22 — CHAÎNE DE DIFFUSION DU STUDIO (LiveKit → Agora → Daily) :
+  // fournisseur actif + handles des replis (déconnexion propre au stop).
+  const [mediaProvider, setMediaProvider] = useState<"livekit" | "agora" | "daily">("livekit");
+  const mediaProviderRef = useRef<"livekit" | "agora" | "daily">("livekit");
+  const agoraClientRef = useRef<{ leave: () => Promise<void> } | null>(null);
+  const agoraTracksRef = useRef<Array<{ stop: () => void }>>([]);
+  const dailyCallRef = useRef<{
+    join: (opts: Record<string, unknown>) => Promise<void>;
+    leave: () => Promise<void>;
+    destroy: () => void;
+  } | null>(null);
 
   const initCamera = useCallback(async () => {
     try {
@@ -117,6 +128,14 @@ export function LiveStudioClient({
       if (localStreamRef.current) localStreamRef.current.getTracks().forEach((t) => t.stop());
       if (screenStreamRef.current) screenStreamRef.current.getTracks().forEach((t) => t.stop());
       if (roomRef.current) roomRef.current.disconnect();
+      // ⭐ V3.22 — Déconnecter AUSSI les replis (Agora/Daily).
+      try { agoraClientRef.current?.leave(); } catch {}
+      agoraClientRef.current = null;
+      for (const t of agoraTracksRef.current) { try { t.stop(); } catch {} }
+      agoraTracksRef.current = [];
+      try { dailyCallRef.current?.leave(); } catch {}
+      try { dailyCallRef.current?.destroy(); } catch {}
+      dailyCallRef.current = null;
       if (durationTimerRef.current) clearInterval(durationTimerRef.current);
       if (statsTimerRef.current) clearInterval(statsTimerRef.current);
       if (viewerPollRef.current) clearInterval(viewerPollRef.current);
@@ -251,47 +270,47 @@ export function LiveStudioClient({
     }
   };
 
-  const goLive = async () => {
-    setLoading(true);
-    setError("");
-    setInfo("");
-    try {
-      // ─── 1. Démarrer le live côté DB (statut LIVE + startedAt) ───
-      let roomConnected = false;
-      try {
-        const startRes = await apiFetch("/api/live/start", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ liveId }),
-        });
-        if (!startRes.ok) { const data = await startRes.json(); throw new Error(data.error || "Erreur démarrage"); }
+  // ═══════════════════════════════════════════════════════════════════
+  //  ⭐ V3.22 — CONNEXION DU STUDIO À LA CHAÎNE DE DIFFUSION
+  //  (LiveKit source de vérité → Agora → Daily, arbitrage serveur).
+  //
+  //  1. POST /api/live/[id]/stream {role:"publisher"} → le SERVEUR choisit
+  //     le fournisseur (chaîne + santé partagée avec les appels Yeshua).
+  //  2. Connexion + publication selon le fournisseur (canvas overlay sinon
+  //     caméra brute + micro — les MÊMES tracks locales pour les 3).
+  //  3. Échec → action « failover » : le serveur fait AVANCER la chaîne et
+  //     le studio réessaie immédiatement sur le suivant. Les VIEWERS suivent
+  //     tous automatiquement via le polling GET /stream (≤ 12 s).
+  // ═══════════════════════════════════════════════════════════════════
+  const disconnectAltProviders = () => {
+    try { agoraClientRef.current?.leave(); } catch {}
+    agoraClientRef.current = null;
+    for (const t of agoraTracksRef.current) { try { t.stop(); } catch {} }
+    agoraTracksRef.current = [];
+    try { dailyCallRef.current?.leave(); } catch {}
+    try { dailyCallRef.current?.destroy(); } catch {}
+    dailyCallRef.current = null;
+  };
 
-        // Tier C : si un broadcast YouTube a été pré-créé, l'afficher
-        const startData = await startRes.json().catch(() => ({}));
-        if (startData.youtubeBroadcast?.url) {
-          setInfo(`✓ Broadcast YouTube pré-créé: ${startData.youtubeBroadcast.url}`);
-          console.log("[studio] Broadcast YouTube pré-créé:", startData.youtubeBroadcast);
-        }
-      } catch (err) {
-        // Si l'API start échoue, on continue quand même — le live peut fonctionner sans DB
-        console.error("[studio] /api/live/start failed (continuing anyway):", err);
-        setError("Attention: l'API start a échoué, mais le studio continue.");
+  const connectPublisherWithFailover = useCallback(async (opts: { applyPause: boolean }): Promise<"livekit" | "agora" | "daily"> => {
+    let lastError = "erreur inconnue";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      // 1. Bundle serveur (fournisseur arbitré, tokens 100 % serveur)
+      const res = await apiFetch(`/api/live/${liveId}/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "publisher" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Bundle de diffusion indisponible (HTTP ${res.status})`);
       }
+      const bundle = await res.json();
+      const provider = (bundle.provider || "livekit") as "livekit" | "agora" | "daily";
 
-      // ─── 2. Connexion à LiveKit (CRITIQUE — tout dépend de ça) ───
-      setInfo("Connexion à LiveKit en cours...");
       try {
-        const tokenRes = await apiFetch("/api/livekit/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomName, role: "publisher", participantName: servantName, liveId }),
-        });
-        if (!tokenRes.ok) {
-          const tokenErr = await tokenRes.json().catch(() => ({}));
-          throw new Error(tokenErr.error || `Token LiveKit: HTTP ${tokenRes.status}`);
-        }
-        const { token, url } = await tokenRes.json();
-
+        // ─── LIVEKIT (source de vérité) : chemin historique, inchangé ───
+        if (provider === "livekit" && bundle.livekit) {
           const room = new Room({
             adaptiveStream: true,
             dynacast: true,
@@ -299,18 +318,18 @@ export function LiveStudioClient({
             publishDefaults: { videoCodec: "h264" },
           });
           roomRef.current = room;
-          await room.connect(url, token);
-          setInfo("Connecté à LiveKit — publication du flux...");
-          roomConnected = true;
+          await room.connect(bundle.livekit.url, bundle.livekit.token);
 
           if (localStreamRef.current) {
             const audioTrack = localStreamRef.current.getAudioTracks()[0];
-
-            if (!overlayStreamRef.current) {
-              console.warn("[studio] overlayStreamRef null — fallback caméra brute");
+            // (V2.6.2) reconnexion : respecter l'état de pause AVANT publish
+            if (opts.applyPause) {
+              const videoTrack = localStreamRef.current.getVideoTracks()[0];
+              if (videoTrack) videoTrack.enabled = !isPaused && cameraOn;
+              if (audioTrack) audioTrack.enabled = !isPaused && micOn;
             }
 
-            // Publier le canvas composite
+            // Publier le canvas composite (overlay) sinon la caméra brute
             let videoPublished = false;
             if (overlayStreamRef.current) {
               const canvasVideoTrack = overlayStreamRef.current.getVideoTracks()[0];
@@ -336,11 +355,165 @@ export function LiveStudioClient({
             }
             if (audioTrack) await room.localParticipant.publishTrack(audioTrack, { source: Track.Source.Microphone });
           }
+          mediaProviderRef.current = "livekit";
+          setMediaProvider("livekit");
+          return "livekit";
+        }
 
-          // ─── LiveKit connecté + track publié → MAINTENANT on peut démarrer ───
+        // ─── AGORA (1ᵉʳ repli) : host + MÊMES tracks locales (custom) ───
+        if (provider === "agora" && bundle.agora) {
+          const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
+          const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+          await client.setClientRole("host");
+          await client.join(bundle.agora.appId, bundle.agora.channel, bundle.agora.token, bundle.agora.uid);
+          const published: Array<{ stop: () => void }> = [];
+          try {
+            const micRaw = localStreamRef.current?.getAudioTracks()[0];
+            const audioTrack = micRaw
+              ? AgoraRTC.createCustomAudioTrack({ mediaStreamTrack: micRaw })
+              : await AgoraRTC.createMicrophoneAudioTrack();
+            published.push(audioTrack);
+            const videoRaw = overlayStreamRef.current?.getVideoTracks()[0]
+              ?? localStreamRef.current?.getVideoTracks()[0];
+            const videoTrack = videoRaw
+              ? AgoraRTC.createCustomVideoTrack({ mediaStreamTrack: videoRaw })
+              : await AgoraRTC.createCameraVideoTrack();
+            published.push(videoTrack);
+            if (opts.applyPause) {
+              if (micRaw) micRaw.enabled = !isPaused && micOn;
+              const camRaw = localStreamRef.current?.getVideoTracks()[0];
+              if (camRaw) camRaw.enabled = !isPaused && cameraOn;
+            }
+            await client.publish([audioTrack, videoTrack]);
+          } catch (publishErr) {
+            for (const t of published) { try { t.stop(); } catch {} }
+            throw publishErr;
+          }
+          agoraClientRef.current = client;
+          agoraTracksRef.current = published;
+          mediaProviderRef.current = "agora";
+          setMediaProvider("agora");
+          console.log("[studio] Diffusion via Agora (canvas + micro)");
+          return "agora";
+        }
+
+        // ─── DAILY (dernier repli) ───
+        if (provider === "daily" && bundle.daily) {
+          const Daily = (await import("@daily-co/daily-js")) as unknown as {
+            createCallObject(): NonNullable<typeof dailyCallRef.current>;
+          };
+          const call = Daily.createCallObject();
+          const videoRaw = overlayStreamRef.current?.getVideoTracks()[0]
+            ?? localStreamRef.current?.getVideoTracks()[0];
+          const audioRaw = localStreamRef.current?.getAudioTracks()[0];
+          if (opts.applyPause) {
+            if (audioRaw) audioRaw.enabled = !isPaused && micOn;
+            const camRaw = localStreamRef.current?.getVideoTracks()[0];
+            if (camRaw) camRaw.enabled = !isPaused && cameraOn;
+          }
+          await call.join({
+            url: bundle.daily.url,
+            token: bundle.daily.token,
+            userName: servantName,
+            ...(videoRaw ? { videoSource: videoRaw } : {}),
+            ...(audioRaw ? { audioSource: audioRaw } : {}),
+          });
+          dailyCallRef.current = call;
+          mediaProviderRef.current = "daily";
+          setMediaProvider("daily");
+          console.log("[studio] Diffusion via Daily");
+          return "daily";
+        }
+
+        throw new Error(`Bundle ${provider} incomplet`);
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : "erreur";
+        console.error(`[studio] Connexion ${provider} échouée:`, lastError);
+        // Nettoyer l'état du fournisseur qui vient d'échouer
+        try { roomRef.current?.disconnect(); } catch {}
+        roomRef.current = null;
+        disconnectAltProviders();
+        // ⭐ 2. FAILOVER serveur : avancer la chaîne (LiveKit → Agora → Daily)
+        try {
+          const failoverRes = await apiFetch(`/api/live/${liveId}/stream`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "failover", from: provider }),
+          });
+          const data = await failoverRes.json().catch(() => ({}));
+          if (!data.provider) break; // chaîne épuisée → OBS
+          setInfo(`Bascule automatique : ${provider === "livekit" ? "LiveKit" : provider} → ${data.provider === "agora" ? "Agora" : data.provider}...`);
+        } catch {
+          break;
+        }
+      }
+    }
+    throw new Error(
+      `Tous les serveurs de diffusion ont échoué (${lastError}). ` +
+      "Utilisez le mode « Encodeur externe (OBS) » pour diffuser maintenant, " +
+      "puis réessayez plus tard.",
+    );
+  }, [liveId, servantName, isPaused, cameraOn, micOn]);
+
+  const goLive = async () => {
+    setLoading(true);
+    setError("");
+    setInfo("");
+    try {
+      // ─── 1. Démarrer le live côté DB (statut LIVE + startedAt) ───
+      try {
+        const startRes = await apiFetch("/api/live/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ liveId }),
+        });
+        if (!startRes.ok) { const data = await startRes.json(); throw new Error(data.error || "Erreur démarrage"); }
+
+        // Tier C : si un broadcast YouTube a été pré-créé, l'afficher
+        const startData = await startRes.json().catch(() => ({}));
+        if (startData.youtubeBroadcast?.url) {
+          setInfo(`✓ Broadcast YouTube pré-créé: ${startData.youtubeBroadcast.url}`);
+          console.log("[studio] Broadcast YouTube pré-créé:", startData.youtubeBroadcast);
+        }
+      } catch (err) {
+        // Si l'API start échoue, on continue quand même — le live peut fonctionner sans DB
+        console.error("[studio] /api/live/start failed (continuing anyway):", err);
+        setError("Attention: l'API start a échoué, mais le studio continue.");
+      }
+
+      // ─── 2. Connexion au serveur de diffusion (⭐ V3.22 : chaîne
+      //     LiveKit → Agora → Daily avec bascule AUTOMATIQUE serveur) ───
+      setInfo("Connexion au serveur de diffusion...");
+      try {
+        const provider = await connectPublisherWithFailover({ applyPause: false });
+        setInfo(
+          provider === "livekit"
+            ? "Connecté à LiveKit — publication du flux..."
+            : `Connecté (repli ${provider === "agora" ? "Agora" : "Daily"} — LiveKit indisponible)`,
+        );
+
+          // ─── Connecté + flux publié → MAINTENANT on peut démarrer ───
           setIsLive(true);
           setStatus("LIVE");
-          setInfo("Vous êtes en direct !");
+          setInfo(provider === "livekit" ? "Vous êtes en direct !" : `Vous êtes en direct via ${provider === "agora" ? "Agora" : "Daily"} (repli automatique).`);
+
+          // ⭐ V3.22 — MODE YOUTUBE : démarrer l'egress HLS dès maintenant
+          // pour que la playlist soit prête AVANT l'arrivée des viewers.
+          // Best effort — les viewers retombent proprement en WebRTC si
+          // l'egress échoue (quota/plan), sans interrompre le direct.
+          if (provider === "livekit") {
+            apiFetch(`/api/live/${liveId}/stream`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "hls-start" }),
+            }).then((r) => r.json().catch(() => ({}))).then((data: { success?: boolean; reason?: string }) => {
+              if (data?.success) {
+                console.log("[studio] Egress HLS démarré (mode YouTube — viewers non comptés)");
+              } else if (data?.reason) {
+                console.warn("[studio] HLS indisponible :", data.reason);
+              }
+            }).catch(() => {});
+          }
 
           // Démarrer les timers APRÈS connexion LiveKit
           const startTime = Date.now();
@@ -396,8 +569,11 @@ export function LiveStudioClient({
             }
           }
 
-          // ─── Démarrer le multistreaming RTMP APRÈS publication du track ───
-          if (multistream.enabled) {
+          // ─── Démarrer le multistreaming RTMP (⭐ V3.22 : LiveKit
+          // uniquement — l'egress RTMP lit la room LiveKit ; en repli
+          // Agora/Daily le multistreaming n'est pas disponible, le direct
+          // reste accessible sur le site) APRÈS publication du track ───
+          if (multistream.enabled && mediaProviderRef.current === "livekit") {
             try {
               setInfo("Démarrage du multistreaming RTMP...");
               const egressRes = await apiFetch(`/api/live/${liveId}/egress`, {
@@ -426,11 +602,11 @@ export function LiveStudioClient({
           }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : "erreur inconnue";
-        console.error("[studio] LiveKit connection failed:", errMsg);
-        setError(`Connexion LiveKit échouée: ${errMsg}. Les viewers ne pourront pas voir le flux.`);
-        setInfo("⚠ LiveKit indisponible — les viewers voient un écran noir.");
-        // LiveKit a échoué : ne pas démarrer timers/recorder/egress
-        // Annuler le statut LIVE côté DB
+        console.error("[studio] Connexion de diffusion échouée:", errMsg);
+        setError(`Diffusion impossible: ${errMsg}. Les viewers ne pourront pas voir le flux.`);
+        setInfo("⚠ Tous les serveurs de diffusion sont indisponibles — passez en mode « Encodeur externe (OBS) ».");
+        // (⭐ V3.22) La chaîne a échoué partout : ne pas démarrer timers/
+        // recorder/egress. Annuler le statut LIVE côté DB.
         try {
           await apiFetch("/api/live/stop", {
             method: "POST",
@@ -458,69 +634,26 @@ export function LiveStudioClient({
   // depuis startedAt et on réutilise l'egress RTMP existant (zéro doublon).
   // ═══════════════════════════════════════════════════════════════════
   const reconnectLive = useCallback(async () => {
-    if (roomRef.current) return; // déjà connecté
+    if (roomRef.current || agoraClientRef.current || dailyCallRef.current) return; // déjà connecté
     setReconnecting(true);
     setInfo("Reconnexion à la diffusion en cours...");
     try {
-      // 1. Token LiveKit (role publisher) — PAS d'appel à /api/live/start
-      //    (le live est déjà LIVE en base ; re-démarrer remettrait startedAt
-      //    à zéro, d'où l'ancien bug « ça reprend à zéro »).
-      const tokenRes = await apiFetch("/api/livekit/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomName, role: "publisher", participantName: servantName, liveId }),
-      });
-      if (!tokenRes.ok) {
-        const tokenErr = await tokenRes.json().catch(() => ({}));
-        throw new Error(tokenErr.error || `Token LiveKit: HTTP ${tokenRes.status}`);
-      }
-      const { token, url } = await tokenRes.json();
+      // 1. (⭐ V3.22) Connexion au fournisseur arbitré (chaîne LiveKit →
+      //    Agora → Daily avec bascule serveur) — PAS d'appel à
+      //    /api/live/start (le live est déjà LIVE en base ; re-démarrer
+      //    remettrait startedAt à zéro, d'où l'ancien bug « ça reprend à
+      //    zéro »). applyPause=true : tracks désactivées si isPaused.
+      await connectPublisherWithFailover({ applyPause: true });
 
-      const room = new Room({
-        adaptiveStream: true,
-        dynacast: true,
-        videoCaptureDefaults: { resolution: { width: 1280, height: 720 } },
-        publishDefaults: { videoCodec: "h264" },
-      });
-      roomRef.current = room;
-      await room.connect(url, token);
-
-      // 2. Republier les tracks locaux (caméra/micro — ou canvas si overlay actif)
-      //    en RESPECTANT l'état de pause : tracks désactivés si isPaused.
-      const applyPauseToTracks = () => {
-        if (localStreamRef.current) {
-          const videoTrack = localStreamRef.current.getVideoTracks()[0];
-          const audioTrack = localStreamRef.current.getAudioTracks()[0];
-          if (videoTrack) videoTrack.enabled = !isPaused && cameraOn;
-          if (audioTrack) audioTrack.enabled = !isPaused && micOn;
-        }
-      };
-      applyPauseToTracks();
-
-      if (localStreamRef.current) {
-        const audioTrack = localStreamRef.current.getAudioTracks()[0];
-        let videoPublished = false;
-        if (overlayStreamRef.current) {
-          const canvasVideoTrack = overlayStreamRef.current.getVideoTracks()[0];
-          if (canvasVideoTrack) {
-            try {
-              await room.localParticipant.publishTrack(canvasVideoTrack, {
-                source: Track.Source.Camera,
-                name: "composite",
-              });
-              videoPublished = true;
-            } catch (err) {
-              console.error("[studio/reconnect] Failed to publish canvas track:", err);
-            }
-          }
-        }
-        if (!videoPublished) {
-          const videoTrack = localStreamRef.current.getVideoTracks()[0];
-          if (videoTrack) {
-            await room.localParticipant.publishTrack(videoTrack, { source: Track.Source.Camera });
-          }
-        }
-        if (audioTrack) await room.localParticipant.publishTrack(audioTrack, { source: Track.Source.Microphone });
+      // ⭐ V3.22 — Anticiper l'egress HLS après reconnexion (mode YouTube).
+      if (mediaProviderRef.current === "livekit") {
+        apiFetch(`/api/live/${liveId}/stream`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "hls-start" }),
+        }).then((r) => r.json().catch(() => ({}))).then((data: { success?: boolean }) => {
+          if (data?.success) console.log("[studio/reconnect] Egress HLS actif (mode YouTube)");
+        }).catch(() => {});
       }
 
       // 3. Restaurer la durée RÉELLE depuis la base (startedAt) :
@@ -588,7 +721,8 @@ export function LiveStudioClient({
 
       // 6. Egress RTMP : la route est idempotente (V2.6.2) — elle RÉUTILISE
       //    l'egress actif pour cette room au lieu d'en démarrer un doublon.
-      if (multistream.enabled) {
+      //    (⭐ V3.22 : LiveKit uniquement — l'egress RTMP lit la room.)
+      if (multistream.enabled && mediaProviderRef.current === "livekit") {
         try {
           const egressRes = await apiFetch(`/api/live/${liveId}/egress`, {
             method: "POST",
@@ -624,7 +758,7 @@ export function LiveStudioClient({
     } finally {
       setReconnecting(false);
     }
-  }, [liveId, roomName, servantName, multistream.enabled, isPaused, cameraOn, micOn, initialStartedAt, initialPausedAt]);
+  }, [liveId, servantName, multistream.enabled, isPaused, cameraOn, micOn, initialStartedAt, initialPausedAt, connectPublisherWithFailover]);
 
   // Déclencher la reconnexion une seule fois, quand on arrive sur un live
   // déjà LIVE ET que la caméra est prête (les tracks existent avant publish).
@@ -699,6 +833,9 @@ export function LiveStudioClient({
       }
 
       if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+      // ⭐ V3.22 — Déconnecter AUSSI les replis (Agora/Daily) : le stop
+      // doit couper TOUTES les formes de diffusion, comme pour LiveKit.
+      disconnectAltProviders();
 
       // ─── Uploader le replay si disponible ───
       let recordingUrl: string | null = null;
@@ -1154,6 +1291,8 @@ export function LiveStudioClient({
                 <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Qualité audio</span><span className="text-xs font-bold text-[#1E0F2B]">Opus · Stéréo</span></div>
                 <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Spectateurs</span><span className="text-xs font-bold text-[#1E0F2B]">{isLive ? String(viewerCount) : "—"}</span></div>
                 <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Room LiveKit</span><span className="text-xs font-mono text-[#1E0F2B]/40 truncate max-w-[200px]">{roomName}</span></div>
+                <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Réseau de diffusion</span><span className="text-xs font-bold text-[#1E0F2B]">{mediaProvider === "livekit" ? "LiveKit (source de vérité)" : mediaProvider === "agora" ? "Agora (repli)" : "Daily (repli)"}</span></div>
+                <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Mode viewers</span><span className="text-xs font-bold text-[#1E0F2B]">{mediaProvider === "livekit" ? "YouTube (HLS, 0 participant)" : "Spectateurs (repli)"}</span></div>
                 <div className="flex items-center justify-between"><span className="text-xs text-[#1E0F2B]/50">Mode</span><span className="text-xs font-bold text-[#1E0F2B]">{isPaused ? "En pause" : isLive ? "Diffusion active" : "En attente"}</span></div>
               </div>
             )}
