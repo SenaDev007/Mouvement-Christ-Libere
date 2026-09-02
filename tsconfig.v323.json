@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/lib/push-notifications.ts",
+    "src/app/api/yeshua-connect/devices/route.ts",
+    "src/app/api/yeshua-connect/calls/signal/route.ts",
+    "src/app/api/yeshua-connect/conversations/[id]/messages/route.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
+}

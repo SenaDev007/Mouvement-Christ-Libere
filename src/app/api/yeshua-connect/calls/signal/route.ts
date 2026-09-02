@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { ensureCallSignalTable, ensureChannelIsDirectColumn, ensureUserBlockTable, ensureCallMediaTables } from "@/lib/ensure-schema";
+import { sendPushToUser } from "@/lib/push-notifications";
 
 /**
  * ⭐ V3.1 — SIGNALISATION DES APPELS AUDIO/VIDÉO Yeshua Connect.
@@ -340,6 +341,36 @@ export async function POST(req: NextRequest) {
         where: { id: conversationId },
         select: { name: true, avatarUrl: true, type: true },
       });
+
+      // ⭐ V3.23 — NOTIFICATION PUSH de l'appel entrant (privé uniquement,
+      // pour ne pas sonner sur tout un canal) : le mobile du destinataire
+      // sonne/l'affiche MÊME APPLICATION FERMÉE (FCM haute priorité).
+      // Best effort — sans FCM_* configurées, silencieux.
+      if (callConvMembers.length === 2) {
+        const callee = callConvMembers.find((m) => m.userId !== userId);
+        if (callee) {
+          let callerName = "Un membre";
+          try {
+            const caller = await db.user.findUnique({
+              where: { id: userId },
+              select: { name: true },
+            });
+            if (caller?.name) callerName = caller.name;
+          } catch { /* nom optionnel */ }
+          await sendPushToUser(callee.userId, {
+            title: "Appel entrant — Yeshua Connect",
+            body: `${callerName} vous appelle (${type === "video" ? "vidéo" : "audio"})`,
+            data: {
+              type: "incoming_call",
+              callId,
+              conversationId,
+            },
+            highPriority: true,
+            androidChannelId: "yeshua_calls",
+          });
+        }
+      }
+
       return NextResponse.json({
         callId,
         conversation: conv

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { ensureChannelIsDirectColumn, ensureMessageTypeEnum, ensureUserBlockTable } from "@/lib/ensure-schema";
+import { sendPushToUser } from "@/lib/push-notifications";
 
 /** Rôles pouvant modérer (et donc lire) tous les canaux même sans y être membre. */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -417,6 +418,37 @@ export async function POST(
     }).catch(() => {
       // ignore — ne pas casser l'envoi si la mise à jour échoue
     });
+
+    // ⭐ V3.23 — NOTIFICATION PUSH du message privé : le destinataire est
+    // prévenu MÊME APPLICATION FERMÉE (FCM). PRIVÉS uniquement — pas les
+    // canaux (bruit pour 50 membres ; le badge non-lus suffit en app).
+    if (dmMembers.length === 2) {
+      const recipient = dmMembers.find((m) => m.userId !== userId);
+      if (recipient) {
+        // (V3.23) nom d'affichage de la SESSION (le typage de db.message
+        // n'expose pas `user` dans cette version de Prisma — même motif
+        // que la réponse ci-dessous, sans ajouter d'instance d'erreur).
+        const senderName = (session.user as { name?: string | null }).name ?? "Membre";
+        let preview = "Nouveau message";
+        if (type === "VOICE") preview = "Note vocale";
+        else if (type === "VERSE") preview = verseRef ? `Verset — ${verseRef}` : "Verset partagé";
+        else if (type === "IMAGE") preview = "Photo";
+        else if (type === "FILE") preview = attachmentName ? `Fichier — ${attachmentName}` : "Fichier joint";
+        else if (typeof content === "string" && content.length > 0) {
+          preview = content.length > 90 ? `${content.slice(0, 90)}…` : content;
+        }
+        await sendPushToUser(recipient.userId, {
+          title: senderName,
+          body: preview,
+          data: {
+            type: "new_message",
+            conversationId: id,
+            messageId: message.id,
+          },
+          androidChannelId: "yeshua_messages",
+        });
+      }
+    }
 
     return NextResponse.json({
       id: message.id,
