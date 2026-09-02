@@ -56,8 +56,40 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email || !form.password || !form.name || !form.pays) {
-      toast.error("Veuillez remplir tous les champs requis.");
+
+    // ⭐ V3.24 — Auto-résolution du pays : le champ « Pays » est un champ de
+    // recherche + liste de suggestions. Si l'utilisateur tape le nom du pays
+    // mais ne clique PAS sur la suggestion, form.pays restait vide et la
+    // validation échouait SANS aucun message visible (toast sonner jamais
+    // affiché — Toaster non monté, corrigé dans le layout) : « le bouton
+    // Créer ne fait rien ». On résout le pays depuis le texte saisi
+    // (match exact sur le nom ou le code, sinon préfixe unique).
+    let paysFinal = form.pays;
+    if (!paysFinal && countrySearch.trim()) {
+      const recherche = countrySearch.trim().toLowerCase();
+      const exact =
+        COUNTRIES.find((c) => c.name.toLowerCase() === recherche) ??
+        COUNTRIES.find((c) => c.code.toLowerCase() === recherche);
+      const prefixes = COUNTRIES.filter((c) =>
+        c.name.toLowerCase().startsWith(recherche),
+      );
+      const resolu = exact ?? (prefixes.length === 1 ? prefixes[0] : undefined);
+      if (resolu) {
+        paysFinal = resolu.code;
+        setForm((f) => ({ ...f, pays: resolu.code }));
+      }
+    }
+
+    if (!form.email || !form.password || !form.name || !paysFinal) {
+      // ⭐ V3.24 — Message VISIBLE directement dans le formulaire (setError)
+      // en plus du toast : l'erreur ne dépend plus de l'affichage d'un toast
+      // pour être vue de l'utilisateur.
+      const message = !paysFinal
+        ? "Veuillez sélectionner votre pays dans la liste de suggestions (tapez puis cliquez sur le pays)."
+        : "Veuillez remplir tous les champs requis.";
+      setError(message);
+      toast.error(message);
+      if (!paysFinal) setShowCountryList(true);
       return;
     }
 
@@ -68,7 +100,7 @@ export default function RegisterPage() {
       const res = await apiFetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, pays: paysFinal }),
       });
 
       if (!res.ok) {
@@ -81,8 +113,12 @@ export default function RegisterPage() {
       toast.success("Compte créé ! Vous apparaissez désormais sur la carte des dispersés.");
       window.location.href = "/login";
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
-      toast.error(err instanceof Error ? err.message : "Erreur");
+      // ⭐ V3.24 — Erreur affichée DANS le formulaire (bloc rouge) et en
+      // toast : l'échec d'inscription est toujours visible, même si le
+      // composant Toaster rencontre un problème de montage.
+      const message = err instanceof Error ? err.message : "Erreur inconnue";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -172,6 +208,13 @@ export default function RegisterPage() {
                   </div>
                   {showCountryList && (
                     <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto bg-white rounded-xl shadow-xl border border-[#8A8378]/20 py-1">
+                      {/* ⭐ V3.24 — Aide explicite quand aucune suggestion ne correspond :
+                          l'utilisateur comprend qu'il doit sélectionner un pays. */}
+                      {filteredCountries.length === 0 && (
+                        <p className="px-4 py-2 text-sm text-[#8A8378]">
+                          Aucun pays trouvé — vérifiez l&#39;orthographe puis cliquez sur un pays de la liste.
+                        </p>
+                      )}
                       {filteredCountries.map(c => (
                         <button key={c.code} type="button" onClick={() => { setForm({ ...form, pays: c.code }); setShowCountryList(false); setCountrySearch(""); }}
                           className="w-full text-left px-4 py-2 text-sm hover:bg-[#FAF6EF] text-[#1E0F2B]">

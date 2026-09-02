@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ServantProvider } from "@/components/site/servant-context";
 import { ScrollProgress } from "@/components/magic/scroll-progress";
 import { NextAuthProvider } from "@/components/auth/next-auth-provider";
@@ -70,7 +71,17 @@ export default function RootLayout({
             </LayoutShell>
           </ServantProvider>
         </NextAuthProvider>
+        {/* ⭐ V3.24 — DOUBLE Toaster :
+            1. Toaster shadcn/Radix (hook use-toast) — existant.
+            2. Toaster SONNER — AJOUTÉ : les pages qui appellent
+               `toast()` depuis "sonner" (ex. /register) n'étaient
+               JAMAIS affichées car ce composant n'était pas monté.
+               Conséquence : les erreurs de validation du formulaire
+               d'inscription étaient invisibles (« le bouton Créer ne
+               fait rien »). Le Toaster sonner est désormais rendu
+               pour TOUS les appels toast de sonner de l'application. */}
         <Toaster />
+        <SonnerToaster richColors position="top-center" closeButton />
       </body>
     </html>
   );
