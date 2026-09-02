@@ -41,8 +41,10 @@ export async function DELETE(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
+    // Token dans le body {token} OU en query ?token= (Dio DELETE ne pose
+    // pas de body facilement côté Flutter).
     const body = await req.json().catch(() => ({}));
-    const token: string | undefined = body?.token;
+    const token: string | undefined = body?.token || req.nextUrl.searchParams.get("token") || undefined;
     if (!token || typeof token !== "string") {
       return NextResponse.json({ error: "token requis" }, { status: 400 });
     }
