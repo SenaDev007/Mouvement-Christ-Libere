@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureCallSignalTable, ensureChannelIsDirectColumn, ensureUserBlockTable } from "@/lib/ensure-schema";
+import { ensureCallSignalTable, ensureChannelIsDirectColumn, ensureUserBlockTable, ensureCallMediaTables } from "@/lib/ensure-schema";
 
 /**
  * ⭐ V3.1 — SIGNALISATION DES APPELS AUDIO/VIDÉO Yeshua Connect.
@@ -139,6 +139,8 @@ export async function GET(req: NextRequest) {
     }
     const userId = session.user.id;
     await ensureCallSignalTable();
+    // ⭐ V3.21 — colonne mediaProvider lue plus bas : DDL garanti AVANT.
+    await ensureCallMediaTables();
 
     const url = new URL(req.url);
     const callId = url.searchParams.get("callId");
@@ -148,8 +150,9 @@ export async function GET(req: NextRequest) {
       const rows = await db.$queryRawUnsafe<Array<{
         status: string; initiatorId: string; conversationId: string; type: string;
         acceptedAt: Date | null; endedAt: Date | null;
+        mediaProvider: string | null;
       }>>(
-        `SELECT "status", "initiatorId", "conversationId", "type", "acceptedAt", "endedAt"
+        `SELECT "status", "initiatorId", "conversationId", "type", "acceptedAt", "endedAt", "mediaProvider"
          FROM "CallSignal" WHERE "id" = $1`,
         callId,
       );
@@ -173,7 +176,16 @@ export async function GET(req: NextRequest) {
       if (row.status === "ended" && row.acceptedAt && row.endedAt) {
         duration = Math.max(0, Math.round((new Date(row.endedAt).getTime() - new Date(row.acceptedAt).getTime()) / 1000));
       }
-      return NextResponse.json({ status: row.status, duration, type: row.type });
+      // ⭐ V3.21 — Le FOURNISSEUR MULTIMÉDIA de l'appel (arbitrage serveur
+      // LiveKit → Agora → Daily) : si l'autre partie a signalé un échec et
+      // que le serveur a basculé l'appel, NOTRE client le voit ici (polling
+      // 2 s) et bascule son média vers le même réseau.
+      return NextResponse.json({
+        status: row.status,
+        duration,
+        type: row.type,
+        mediaProvider: row.mediaProvider || undefined,
+      });
     }
 
     // ⭐ V3.20 — isDirect lu dans la requête ci-dessous (c."isDirect") :

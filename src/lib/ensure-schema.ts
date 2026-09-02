@@ -655,3 +655,76 @@ export function ensureChannelIsDirectColumn(): Promise<void> {
   }
   return inflightChannelIsDirect;
 }
+
+let callMediaOk = false;
+let inflightCallMedia: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.21 — CHAÎNE DE REPLI MULTIMÉDIA (LiveKit → Agora → Daily).
+ *
+ * S'assure que l'infrastructure d'arbitrage serveur existe :
+ *
+ *  1. Colonne `CallSignal.mediaProvider` (TEXT DEFAULT 'livekit') —
+ *     fournisseur actif PAR APPEL : quand un participant signale l'échec
+ *     d'un fournisseur (action « failover » de /calls/media), le serveur
+ *     fait avancer l'appel au suivant et PERSITE le choix — toutes les
+ *     parties convergent via le polling de statut existant (2 s).
+ *
+ *  2. Table `CallProviderHealth` (santé PARTAGÉE, serverless-safe) :
+ *     un fournisseur défaillant entre en cooldown 5 minutes → les
+ *     NOUVEAUX appels/rooms l'évitent et tombent directement sur son
+ *     remplaçant ; à l'expiration, LiveKit (source de vérité) redevient
+ *     éligible sans intervention humaine.
+ *
+ *  3. Table `VoiceMediaProvider` — même arbitrage pour les CANAUX VOCAUX
+ *     persistants (rooms sans CallSignal).
+ *
+ * Mêmes garanties que les helpers précédents : idempotent, mémoïsé,
+ * concurrentiel (un seul DDL en vol), échec purement loggué.
+ */
+export function ensureCallMediaTables(): Promise<void> {
+  if (callMediaOk) return Promise.resolve();
+  if (!inflightCallMedia) {
+    inflightCallMedia = (async () => {
+      // Colonne d'arbitrage par appel (la table CallSignal existe depuis
+      // la V3.1 — ensureCallSignalTable est appelé par les mêmes routes).
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "CallSignal" ADD COLUMN IF NOT EXISTS "mediaProvider" TEXT DEFAULT 'livekit'`
+      );
+      // Santé partagée des fournisseurs (cooldown anti-tempête).
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "CallProviderHealth" (
+          "provider" TEXT NOT NULL,
+          "failCount" INTEGER NOT NULL DEFAULT 0,
+          "lastFailureAt" TIMESTAMPTZ,
+          "lastReason" TEXT,
+          "cooldownUntil" TIMESTAMPTZ,
+          CONSTRAINT "CallProviderHealth_pkey" PRIMARY KEY ("provider")
+        )`
+      );
+      // Arbitrage des canaux vocaux persistants.
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "VoiceMediaProvider" (
+          "channelId" TEXT NOT NULL,
+          "provider" TEXT NOT NULL,
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "VoiceMediaProvider_pkey" PRIMARY KEY ("channelId")
+        )`
+      );
+    })()
+      .then(() => {
+        callMediaOk = true;
+        console.log("[ensure-schema] V3.21 : CallSignal.mediaProvider + CallProviderHealth + VoiceMediaProvider vérifiés/créés ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] DDL V3.21 (call-media) impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightCallMedia = null;
+      });
+  }
+  return inflightCallMedia;
+}

@@ -1,0 +1,33 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/lib/ensure-schema.ts",
+    "src/app/api/yeshua-connect/conversations/route.ts",
+    "src/app/api/yeshua-connect/conversations/dm/route.ts",
+    "src/app/api/yeshua-connect/conversations/[id]/messages/route.ts",
+    "src/app/api/yeshua-connect/conversations/[id]/members/route.ts",
+    "src/app/api/yeshua-connect/conversations/[id]/invite/route.ts",
+    "src/app/api/yeshua-connect/conversations/[id]/read/route.ts",
+    "src/app/api/yeshua-connect/calls/signal/route.ts",
+    "src/app/api/yeshua-connect/calls/webrtc/route.ts",
+    "src/app/api/yeshua-connect/search/route.ts",
+    "src/app/api/yeshua-connect/channels/route.ts",
+    "src/app/admin/channels/page.tsx",
+    "src/app/communaute/page.tsx",
+    "src/app/communaute/[id]/page.tsx",
+    "src/app/admin/api/[entity]/route.ts",
+    "src/app/admin/api/[entity]/[id]/route.ts",
+    "src/components/yeshua-connect/MessagingView.tsx",
+    "src/lib/call-providers.ts",
+    "src/lib/yeshua-connect/media-adapters.ts",
+    "src/app/api/yeshua-connect/calls/media/route.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
+}

@@ -59,7 +59,7 @@ import {
   Radio, Camera, PanelLeftOpen, PanelLeftClose, Shield, Crown, LifeBuoy,
   Ban, MapPin, UserX, UserCheck,
 } from "lucide-react";
-import { Room, RoomEvent, Track, RemoteParticipant, LocalParticipant, RemoteAudioTrack } from "livekit-client";
+import { Room, RoomEvent, Track, RemoteAudioTrack } from "livekit-client";
 import { cn } from "@/lib/utils";
 import { BibleWorkspace } from "@/components/bible/BibleWorkspace";
 import { CalendarWorkspace } from "./CalendarWorkspace";
@@ -75,6 +75,17 @@ import { flagFromCountryCode } from "@/lib/data/flags";
 import { COUNTRIES } from "@/lib/data/countries";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import { useP2PCall } from "@/hooks/use-p2p-call";
+import {
+  type YcRemoteParticipant,
+  type MediaProviderName,
+  type MediaSessionHandle,
+  fetchMediaJoin,
+  fetchMediaFailover,
+  createMediaSession,
+  wrapLiveKitParticipants,
+  providerLabel,
+  ChainExhaustedError,
+} from "@/lib/yeshua-connect/media-adapters";
 import { emitSocket, onSocket, offSocket } from "@/lib/chat/socket-client";
 import { SlashCommands, executeCommand, type SendMessagePayload } from "./SlashCommands";
 import { MessageThreads, type ThreadMessage } from "./MessageThreads";
@@ -263,16 +274,13 @@ function parseRoomMetadataVideoMode(metadata: string | undefined): boolean | und
 // Priorité : métadonnées du token (JSON { avatarUrl }) → fallback liste des
 // membres du canal chargée côté client → undefined (initiales).
 function participantAvatarUrl(
-  p: RemoteParticipant,
+  p: YcRemoteParticipant,
   channelMembers: Array<{ userId: string; avatarUrl?: string }>,
 ): string | undefined {
-  try {
-    if (p.metadata) {
-      const meta = JSON.parse(p.metadata);
-      if (typeof meta?.avatarUrl === "string" && meta.avatarUrl) return meta.avatarUrl;
-    }
-  } catch { /* metadata non-JSON → fallback */ }
-  return channelMembers.find(m => m.userId === p.identity)?.avatarUrl;
+  // ⭐ V3.21 — interface normalisée : l'avatar vient directement de
+  // l'adaptateur (métadonnées LiveKit, lookup Agora, Daily) ; le fallback
+  // membres reste pour les identités LiveKit pures.
+  return p.avatarUrl || channelMembers.find(m => m.userId === p.identity)?.avatarUrl;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -573,6 +581,12 @@ export function MessagingView() {
   // sans re-créer les listeners).
   const activeCallSignalIdRef = useRef<string | null>(null);
   useEffect(() => { activeCallSignalIdRef.current = activeCallSignalId; }, [activeCallSignalId]);
+  // ⭐ V3.21 — Miroirs pour la bascule chaude (le polling lit les valeurs
+  // fraîches sans recréer l'intervalle).
+  const activeConvIdRef = useRef<string | null>(null);
+  useEffect(() => { activeConvIdRef.current = activeConvId; }, [activeConvId]);
+  const callTypeRef = useRef<"audio" | "video">("audio");
+  useEffect(() => { callTypeRef.current = callType; }, [callType]);
   const callStateRef = useRef<"idle" | "outgoing" | "incoming" | "active">("idle");
   useEffect(() => { callStateRef.current = callState; }, [callState]);
   const endedByMeRef = useRef(false);
@@ -658,12 +672,27 @@ export function MessagingView() {
   const [localAudioMuted, setLocalAudioMuted] = useState(false);
   const [localVideoEnabled, setLocalVideoEnabled] = useState(false);
   const [speakerEnabled, setSpeakerEnabled] = useState(true);
-  const [remoteParticipants, setRemoteParticipants] = useState<RemoteParticipant[]>([]);
+  const [remoteParticipants, setRemoteParticipants] = useState<YcRemoteParticipant[]>([]);
   const [callError, setCallError] = useState<string | null>(null);
+  // ⭐ V3.21 — CHAÎNE DE REPLI LiveKit → Agora → Daily (arbitrage serveur) :
+  //   mediaProvider  — fournisseur ACTIF de l'appel/canal en cours (badge UI
+  //                     « Réseau : LiveKit/Agora/Daily ») ;
+  //   mediaSwitching — bascule automatique en cours (l'écran montre « Bascule
+  //                     vers Agora… » pendant le failover) ;
+  //   mediaSessionRef — la session adaptateur connectée (contrôles micro/
+  //                     caméra/haut-parleur routés vers le BON réseau).
+  const [mediaProvider, setMediaProvider] = useState<MediaProviderName | null>(null);
+  const [mediaSwitching, setMediaSwitching] = useState(false);
+  const mediaSessionRef = useRef<MediaSessionHandle | null>(null);
+  const mediaProviderRef = useRef<MediaProviderName | null>(null);
+  useEffect(() => { mediaProviderRef.current = mediaProvider; }, [mediaProvider]);
+  // Garde-boucle anti-double-failover (les onDisconnected distants arrivent
+  // parfois en rafale pendant une bascule).
+  const mediaFailoverInFlightRef = useRef(false);
   // ⭐ V3.19 — miroir des participants distants (le sauvetage P2P asymétrique
   // lit la valeur fraîche dans son intervalle sans recréer l'effet à chaque
   // arrivée/départ de participant).
-  const remoteParticipantsRef = useRef<RemoteParticipant[]>([]);
+  const remoteParticipantsRef = useRef<YcRemoteParticipant[]>([]);
   useEffect(() => { remoteParticipantsRef.current = remoteParticipants; }, [remoteParticipants]);
   const [voiceChannelConnected, setVoiceChannelConnected] = useState(false);
   // ⭐ V2.7 — BASCULE AUDIO ↔ VIDÉO DES CANAUX VOCAUX (façon WhatsApp) :
@@ -2143,8 +2172,67 @@ export function MessagingView() {
    *  WebRTCSignal, média direct entre navigateurs. */
   const p2p = useP2PCall();
 
+  /** ⭐ V3.21 — Résolveur identité → profil {nom, photo} (replis Agora/Daily
+   *  qui ne transportent pas l'identité NextAuth) : membres du canal actif,
+   *  puis participants de la conversation active. */
+  const identityToName = useCallback(
+    (identity: string): string | undefined => {
+      const viaMembers = channelMembers.find(m => m.userId === identity)?.name;
+      if (viaMembers) return viaMembers;
+      const conv = conversations.find(c => c.id === activeConvId);
+      return conv?.participants.find(p => p.userId === identity)?.name;
+    },
+    [channelMembers, conversations, activeConvId],
+  );
+  const identityToProfile = useCallback(
+    (identity: string): { name?: string; avatarUrl?: string } | undefined => {
+      const name = identityToName(identity);
+      return name ? { name } : undefined;
+    },
+    [identityToName],
+  );
+
+  /** ⭐ V3.21 — Lookup uid Agora (uint32 = hash djb2 de l'userId — même
+   *  algorithme que src/lib/call-providers.ts) → profil {nom, photo}. */
+  const resolveUserByUid = useCallback(
+    (uid: number): { name?: string; avatarUrl?: string } | undefined => {
+      const candidats = [
+        ...channelMembers.map(m => ({ id: m.userId, name: m.name, avatarUrl: m.avatarUrl })),
+        ...(conversations.find(c => c.id === activeConvId)?.participants ?? []).map(
+          p => ({ id: p.userId, name: p.name, avatarUrl: p.avatarUrl }),
+        ),
+      ];
+      for (const c of candidats) {
+        let h = 5381;
+        for (let i = 0; i < c.id.length; i++) h = ((h << 5) + h + c.id.charCodeAt(i)) >>> 0;
+        if (h % 2147483647 === uid) return { name: c.name, avatarUrl: c.avatarUrl };
+      }
+      return undefined;
+    },
+    [channelMembers, conversations, activeConvId],
+  );
+
+  /** ⭐ V3.21 — Coupe la session média de la chaîne (LiveKit/Agora/Daily)
+   *  SANS toucher aux autres ressources (les chemins voix/P2P/Jitsi ont
+   *  leur propre nettoyage). */
+  const disconnectMediaSession = useCallback(() => {
+    if (mediaSessionRef.current) {
+      try { mediaSessionRef.current.disconnect(); } catch {}
+      mediaSessionRef.current = null;
+    }
+    setMediaProvider(null);
+    setMediaSwitching(false);
+  }, []);
+
   /** Nettoie toutes les ressources LiveKit (room + tracks + stream local). */
   const cleanupLiveKit = useCallback(() => {
+    // ⭐ V3.21 — coupe AUSSI la session adaptateur de la chaîne de repli.
+    if (mediaSessionRef.current) {
+      try { mediaSessionRef.current.disconnect(); } catch {}
+      mediaSessionRef.current = null;
+    }
+    setMediaProvider(null);
+    setMediaSwitching(false);
     if (localAudioTrackRef.current) {
       try { localAudioTrackRef.current.stop(); } catch {}
       localAudioTrackRef.current = null;
@@ -2176,8 +2264,19 @@ export function MessagingView() {
     setCallError(null);
   }, [removeRemoteAudio]);
 
-  /** Active/désactive le micro local sur la Room LiveKit active. */
+  /** Active/désactive le micro local (session chaîne V3.21 en priorité). */
   const toggleMute = useCallback(async () => {
+    // ⭐ V3.21 — Chaîne de repli : l'adaptateur route vers le BON réseau.
+    if (mediaSessionRef.current) {
+      try {
+        const newMuted = !localAudioMuted;
+        await mediaSessionRef.current.setMicEnabled(!newMuted);
+        setLocalAudioMuted(newMuted);
+      } catch (e) {
+        console.error("[media] toggleMute failed:", e);
+      }
+      return;
+    }
     // ⭐ V3.19 — Mode P2P : couper/rallumer le track audio local directement
     if (p2p.active) {
       const newMuted = !localAudioMuted;
@@ -2198,17 +2297,34 @@ export function MessagingView() {
 
   /** ⭐ V2.9 — Haut-parleur VRAIMENT fonctionnel : avant, le bouton ne
    *  changeait qu'un booléen décoratif (aucun effet sur le son). On coupe
-   *  désormais physiquement les <audio> distants. */
+   *  désormais physiquement les <audio> distants. ⭐ V3.21 : la session
+   *  chaîne route aussi (adaptateur). */
   const toggleSpeaker = useCallback(() => {
     const next = !speakerEnabled;
     setSpeakerEnabled(next);
+    // ⭐ V3.21 — Chaîne de repli (LiveKit/Agora/Daily).
+    if (mediaSessionRef.current) {
+      try { mediaSessionRef.current.setSpeakerEnabled(next); } catch {}
+    }
     for (const el of remoteAudioElsRef.current.values()) {
       el.muted = !next;
     }
   }, [speakerEnabled]);
 
-  /** Active/désactive la caméra locale (utile en appel vidéo). */
+  /** Active/désactive la caméra locale (utile en appel vidéo) — ⭐ V3.21 :
+   *  la session chaîne route en priorité. */
   const toggleCamera = useCallback(async () => {
+    // ⭐ V3.21 — Chaîne de repli : l'adaptateur route vers le BON réseau.
+    if (mediaSessionRef.current) {
+      try {
+        const newEnabled = !localVideoEnabled;
+        await mediaSessionRef.current.setCameraEnabled(newEnabled);
+        setLocalVideoEnabled(newEnabled);
+      } catch (e) {
+        console.error("[media] toggleCamera failed:", e);
+      }
+      return;
+    }
     // ⭐ V3.19 — Mode P2P : couper/rallumer le track vidéo local directement
     if (p2p.active) {
       const newEnabled = !localVideoEnabled;
@@ -2227,82 +2343,143 @@ export function MessagingView() {
     }
   }, [localVideoEnabled, p2p.active, p2p.setCameraEnabled]);
 
+  // (⭐ V3.21 — l'ancien joinCallRoom LiveKit a été ABSORBÉ par l'adaptateur
+  //  LiveKit de src/lib/yeshua-connect/media-adapters.ts : la connexion
+  //  d'appel passe désormais par connectMediaChain, qui enchaîne
+  //  LiveKit → Agora → Daily avec arbitrage serveur.)
+
   /**
-   * ⭐ V3.1 — Rejoint la room LiveKit d'un appel `yeshua-call-<convId>`.
-   * Factored depuis startCall : le MÊME code sert à l'APPELANT (start) et au
-   * DESTINATAIRE (accept) — publie micro (toujours) + caméra (si vidéo).
+   * ⭐⭐ V3.21 — ORCHESTRATEUR DE LA CHAÎNE DE REPLI MULTIMÉDIA ⭐⭐
+   * ============================================================================
+   * Directive du pasteur : « LiveKit = source de vérité ; si LiveKit a des
+   * problèmes, Agora prend immédiatement le relais ; si Agora a des
+   * problèmes, Daily prend automatiquement le relais. »
+   *
+   *   1. POST /calls/media { action: "join" } → le SERVEUR arbitre le
+   *      fournisseur de CET appel (colonne CallSignal.mediaProvider —
+   *      l'appelant et le destinataire rejoignent le MÊME réseau, même si
+   *      l'appelant a déjà basculé pendant la sonnerie).
+   *   2. Connexion de l'adaptateur (12 s max par fournisseur).
+   *   3. En échec : POST { action: "failover" } → le serveur fait avancer
+   *      l'appel, PERSISTE le choix et renvoie le bundle suivant → on
+   *      rebranche. Les participants distants suivent via leur polling
+   *      d'état (champ mediaProvider) → bascule chaude du même côté.
+   *   4. Chaîne épuisée → throw ChainExhaustedError → l'appelant retombe
+   *      sur le Plan C existant (P2P 1-1 / Jitsi groupe).
+   *
+   * Utilisé par startCall (appelant) et acceptIncomingCall (destinataire),
+   * ET par la bascule à chaud (effet de polling mediaProvider).
    */
-  const joinCallRoom = useCallback(async (conversationId: string, type: "audio" | "video") => {
-    const roomName = `yeshua-call-${conversationId}`;
-    const tokenRes = await fetch(api.url("/api/livekit/token"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        roomName,
-        role: "publisher",
-        participantName: currentUserName,
-      }),
-    });
-    if (!tokenRes.ok) {
-      const err = await tokenRes.json().catch(() => ({}));
-      throw new Error(err.error || `Token LiveKit: HTTP ${tokenRes.status}`);
+  const connectMediaChain = useCallback(async (params: {
+    kind: "call";
+    conversationId: string;
+    callId: string | undefined;
+    type: "audio" | "video";
+  }): Promise<void> => {
+    const { kind, conversationId, callId, type } = params;
+    // Nettoyage préalable : une seule session média à la fois.
+    if (mediaSessionRef.current) {
+      try { mediaSessionRef.current.disconnect(); } catch {}
+      mediaSessionRef.current = null;
     }
-    const { token, url } = await tokenRes.json();
+    livekitRoomRef.current = null; // (la Room LiveKit éventuelle vit DÉSORMAIS dans l'adaptateur)
+    setMediaProvider(null);
 
-    const room = new Room({
-      adaptiveStream: true,
-      dynacast: true,
-      videoCaptureDefaults: { resolution: { width: 1280, height: 720 } },
-    });
-    livekitRoomRef.current = room;
+    let bundle = await fetchMediaJoin(kind, conversationId, callId);
+    if (bundle.exhausted) {
+      throw new ChainExhaustedError(bundle.reason);
+    }
 
-    // ─── Listeners : participants distants ───────────────────────────
-    // TrackSubscribed = un participant distant publie un track audio/vidéo.
-    // ParticipantConnected / Disconnected = mise à jour de la liste.
-    room.on(RoomEvent.TrackSubscribed, () => {
-      const remotes = Array.from(room.remoteParticipants.values());
-      setRemoteParticipants(remotes);
-      setCallState("active");
-    });
-    room.on(RoomEvent.TrackUnsubscribed, () => {
-      const remotes = Array.from(room.remoteParticipants.values());
-      setRemoteParticipants(remotes);
-    });
-    room.on(RoomEvent.ParticipantConnected, () => {
-      setRemoteParticipants(Array.from(room.remoteParticipants.values()));
-    });
-    room.on(RoomEvent.ParticipantDisconnected, () => {
-      setRemoteParticipants(Array.from(room.remoteParticipants.values()));
-    });
-    room.on(RoomEvent.Disconnected, () => {
-      // Déconnexion réseau/serveur → retour à l'état repos SEULEMENT si on
-      // n'est pas en train d'afficher une issue (refusé/manqué/terminé).
-      if (!callEndingRef.current) {
-        setCallState("idle");
-        setRemoteParticipants([]);
+    // Boucle : essai du fournisseur arbitré → failover serveur → suivant.
+    for (let essai = 0; essai < 3; essai++) {
+      setMediaProvider(bundle.provider);
+      try {
+        const session = await withTimeout(
+          createMediaSession(
+            bundle,
+            {
+              video: type === "video",
+              participantName: currentUserName,
+              resolveUser: identityToProfile,
+              resolveUserByUid,
+            },
+            {
+              onParticipants: (ps) => {
+                setRemoteParticipants(ps);
+                if (ps.length > 0 && callStateRef.current === "outgoing") setCallState("active");
+              },
+              onActiveSpeakers: (ids) => setActiveSpeakerIds(ids),
+              onDisconnected: (reason) => {
+                // Défaillance EN COURS d'appel → bascule chaude (failover
+                // serveur + reconnexion au nouveau fournisseur) SEULEMENT
+                // si l'appel vit encore et qu'aucune bascule n'est en vol.
+                if (callEndingRef.current) return;
+                if (mediaFailoverInFlightRef.current) return;
+                const inCall = callStateRef.current === "active" || callStateRef.current === "outgoing";
+                if (!inCall) return;
+                console.warn(`[media] ${reason} → bascule chaude vers le suivant`);
+                (async () => {
+                  mediaFailoverInFlightRef.current = true;
+                  setMediaSwitching(true);
+                  try {
+                    if (mediaSessionRef.current) {
+                      try { mediaSessionRef.current.disconnect(); } catch {}
+                      mediaSessionRef.current = null;
+                    }
+                    const nextBundle = await fetchMediaFailover(
+                      kind, conversationId, callId, bundle.provider, reason,
+                    );
+                    if (nextBundle.exhausted) {
+                      // Chaîne épuisée en COURS d'appel : le Plan C (P2P/Jitsi)
+                      // prend le relais via le même chemin qu'un échec initial.
+                      throw new ChainExhaustedError(nextBundle.reason);
+                    }
+                    // ⚠️ Recalcule les events avec le NOUVEAU bundle (la
+                    // closure référence bundle.provider — on rejoint via la
+                    // boucle récursive plutôt que dupliquer le code).
+                    await connectMediaChainRef.current?.({
+                      kind, conversationId, callId, type,
+                      // le serveur vient d'écrire le nouveau fournisseur :
+                      // fetchMediaJoin le renverra directement.
+                    });
+                  } catch (e) {
+                    console.error("[media] bascule chaude impossible:", e);
+                    if (!callEndingRef.current) setCallError(e instanceof Error ? e.message : "Bascule réseau impossible");
+                  } finally {
+                    mediaFailoverInFlightRef.current = false;
+                    setMediaSwitching(false);
+                  }
+                })();
+              },
+            },
+          ),
+          12000,
+          `Connexion ${bundle.provider} indisponible (12 s)`,
+        );
+        // Succès : la session vit dans le ref, l'UI est à jour.
+        mediaSessionRef.current = session;
+        setLocalAudioMuted(false);
+        setLocalVideoEnabled(type === "video");
+        return;
+      } catch (e) {
+        console.warn(`[media] ${bundle.provider} a échoué:`, e);
+        const reason = e instanceof Error ? e.message : String(e);
+        const next = await fetchMediaFailover(kind, conversationId, callId, bundle.provider, reason);
+        if (next.exhausted) {
+          throw new ChainExhaustedError(next.reason);
+        }
+        bundle = next;
       }
-    });
-    room.on(RoomEvent.ConnectionQualityChanged, () => {
-      setRemoteParticipants(Array.from(room.remoteParticipants.values()));
-    });
-
-    await room.connect(url, token);
-
-    // ─── Publier tracks locaux ────────────────────────────────────────
-    // setMicrophoneEnabled / setCameraEnabled utilisent en interne
-    // getUserMedia et publient le track sur la Room — pas besoin de gérer
-    // nous-mêmes le MediaStream local.
-    await room.localParticipant.setMicrophoneEnabled(true);
-    setLocalAudioMuted(false);
-
-    if (type === "video") {
-      await room.localParticipant.setCameraEnabled(true);
-      setLocalVideoEnabled(true);
-    } else {
-      await room.localParticipant.setCameraEnabled(false);
-      setLocalVideoEnabled(false);
     }
-  }, [currentUserName]);
+    throw new ChainExhaustedError();
+  }, [currentUserName, identityToProfile, resolveUserByUid]);
+
+  // Miroir de connectMediaChain (les callbacks events appellent la version
+  // fraîche sans recréer les listeners).
+  const connectMediaChainRef = useRef<((p: {
+    kind: "call"; conversationId: string; callId: string | undefined; type: "audio" | "video";
+  }) => Promise<void>) | null>(null);
+  useEffect(() => { connectMediaChainRef.current = connectMediaChain; }, [connectMediaChain]);
 
   /**
    * ⭐ V3.1 — Démarre un appel audio ou vidéo.
@@ -2354,37 +2531,37 @@ export function MessagingView() {
       const { callId } = await signalRes.json();
       setActiveCallSignalId(callId ?? null);
 
-      // ⭐ V3.19 — Plan C : LiveKit d'abord (Plan A/B) MAIS borné à 15 s —
-      // une connexion morte ne doit pas suspendre l'appel. En échec sur un
-      // appel DIRECT 1-1, on bascule en P2P (média direct entre navigateurs,
-      // signalisation via /calls/webrtc) : l'overlay reste « outgoing », la
+      // ⭐ V3.21 — CHAÎNE DE REPLI : LiveKit (vérité) → Agora → Daily,
+      // arbitré SERVEUR (le destinataire qui décroche rejoint le MÊME
+      // réseau). Chaîne épuisée → Plan C historique : P2P (appel DIRECT)
+      // ou Jitsi (groupe/canal) — l'overlay reste « outgoing », la
       // sonnerie/journal côté serveur sont inchangés.
       const estDirect = conv?.type === "DIRECT";
       try {
-        await withTimeout(
-          joinCallRoom(convId, type),
-          15000,
-          "Connexion multimédia indisponible (15 s)"
-        );
-      } catch (lkErr) {
-        if (estDirect && callId) {
-          console.warn("[call] LiveKit indisponible — repli P2P (Plan C) :", lkErr);
-          cleanupLiveKit();
-          p2p.stop();
-          await p2p.startCaller(callId, type);
-          setLocalVideoEnabled(type === "video");
-          setLocalAudioMuted(false);
-        } else if (callId) {
-          // ⭐ V3.19 — Plan C : appel de GROUPE/canal → repli JITSI (visio
-          // publique gratuite, sans compte ni clé — iframe meet.jit.si) ;
-          // les destinataires qui décrochent rejoignent la MÊME room
-          // déterministe quand leur LiveKit échoue à son tour.
-          console.warn("[call] LiveKit indisponible — repli Jitsi (Plan C) :", lkErr);
-          cleanupLiveKit();
-          setCallError(null);
-          setCallJitsiRoom(jitsiRoomFor("call", convId));
+        await connectMediaChain({ kind: "call", conversationId: convId, callId, type });
+      } catch (chainErr) {
+        if (chainErr instanceof ChainExhaustedError) {
+          if (estDirect && callId) {
+            console.warn("[call] Chaîne multimédia épuisée — repli P2P (Plan C) :", chainErr);
+            cleanupLiveKit();
+            p2p.stop();
+            await p2p.startCaller(callId, type);
+            setLocalVideoEnabled(type === "video");
+            setLocalAudioMuted(false);
+          } else if (callId) {
+            // ⭐ V3.19 — Plan C : appel de GROUPE/canal → repli JITSI (visio
+            // publique gratuite, sans compte ni clé — iframe meet.jit.si) ;
+            // les destinataires qui décrochent rejoignent la MÊME room
+            // déterministe quand leur chaîne échoue à son tour.
+            console.warn("[call] Chaîne multimédia épuisée — repli Jitsi (Plan C) :", chainErr);
+            cleanupLiveKit();
+            setCallError(null);
+            setCallJitsiRoom(jitsiRoomFor("call", convId));
+          } else {
+            throw chainErr;
+          }
         } else {
-          throw lkErr;
+          throw chainErr;
         }
       }
       // (S5) callState est déjà "outgoing" depuis le début de startCall
@@ -2395,7 +2572,7 @@ export function MessagingView() {
       setCallState("idle");
       setActiveCallSignalId(null);
     }
-  }, [activeConvId, conversations, cleanupLiveKit, joinCallRoom, currentUserId, p2p.startCaller, p2p.stop]);
+  }, [activeConvId, conversations, cleanupLiveKit, connectMediaChain, currentUserId, p2p.startCaller, p2p.stop]);
 
   // ═════════════════════════════════════════════════════════════════════
   //  ⭐ V3.4 — MESSAGERIE PRIVÉE ENTRE MEMBRES (façon Telegram/WhatsApp)
@@ -2576,13 +2753,42 @@ export function MessagingView() {
         }
       }
 
-      // Plan A/B : LiveKit, borné à 15 s (une connexion morte ne doit pas
-      // suspendre le décrochage non plus).
-      await withTimeout(
-        joinCallRoom(info.conversationId, info.callType),
-        15000,
-        "Connexion multimédia indisponible (15 s)"
-      );
+      // ⭐ V3.21 — CHAÎNE DE REPLI : le serveur arbitre le fournisseur de
+      // l'appel (l'appelant a pu déjà basculer pendant la sonnerie → le
+      // bundle renvoyé EST déjà le bon réseau). Chaîne épuisée → Plan C.
+      try {
+        await connectMediaChain({
+          kind: "call",
+          conversationId: info.conversationId,
+          callId: info.callId,
+          type: info.callType,
+        });
+      } catch (chainErr) {
+        if (!(chainErr instanceof ChainExhaustedError)) throw chainErr;
+        // ⭐ V3.19 — Plan C : chaîne multimédia épuisée au décrochage —
+        //  · appel DIRECT : on attend l'offre P2P de l'appelant (il a basculé
+        //    de son côté au moment de SON échec) puis on décroche en P2P ;
+        //  · appel de groupe/canal : repli JITSI (room déterministe —
+        //    l'appelant dont la chaîne a échoué y a déjà basculé).
+        const conv = conversations.find(c => c.id === info.conversationId);
+        // Conversation inconnue du state (rare) → on tente le P2P (cas 1-1).
+        const estDirect = conv ? conv.type === "DIRECT" : true;
+        if (estDirect && await p2p.waitForRemoteOffer(info.callId, 16000)) {
+          const p2pOk = await p2p.acceptCallee(info.callId, info.callType);
+          if (p2pOk) {
+            setLocalVideoEnabled(info.callType === "video");
+            setLocalAudioMuted(false);
+            return;
+          }
+        }
+        if (!estDirect) {
+          cleanupLiveKit();
+          setCallError(null);
+          setCallJitsiRoom(jitsiRoomFor("call", info.conversationId));
+          return;
+        }
+        throw new Error("Impossible de rejoindre l'appel — réseaux indisponibles");
+      }
     } catch (e) {
       console.error("[call] acceptIncomingCall failed:", e);
       // ⭐ V3.19 — Plan C : LiveKit indisponible au décrochage —
@@ -2612,7 +2818,7 @@ export function MessagingView() {
       setCallState("idle");
       setActiveCallSignalId(null);
     }
-  }, [incomingCall, cleanupLiveKit, joinCallRoom, conversations, p2p.hasRemoteOffer, p2p.acceptCallee, p2p.waitForRemoteOffer]);
+  }, [incomingCall, cleanupLiveKit, connectMediaChain, conversations, p2p.hasRemoteOffer, p2p.acceptCallee, p2p.waitForRemoteOffer]);
 
   /**
    * ⭐ V3.1 — REFUSE l'appel entrant : en DIRECT, termine l'appel (l'appelant
@@ -2635,6 +2841,9 @@ export function MessagingView() {
   // terminé pendant un appel (l'autre a raccroché) et fait passer l'overlay
   // « outgoing » → « active » dès que le signal est accepté (même si les
   // tracks LiveKit mettent une seconde à arriver).
+  // ⭐ V3.21 — Le champ `mediaProvider` arbitre la BASCULE CHAUDE : si
+  // l'autre partie a signalé l'échec d'un fournisseur (failover serveur),
+  // NOTRE média bascule vers le même réseau — l'appel continue sans coupure.
   useEffect(() => {
     if (!session?.user?.id || !activeCallSignalId) return;
     if (callState !== "outgoing" && callState !== "active") return;
@@ -2650,6 +2859,40 @@ export function MessagingView() {
           setCallState("active");
           return;
         }
+        // ⭐ V3.21 — BASCULE CHAUDE : le serveur a changé le fournisseur de
+        // l'appel (l'autre partie a failoveré) → on rejoint le même réseau.
+        const distantProvider = data?.mediaProvider as string | undefined;
+        if (
+          distantProvider &&
+          (distantProvider === "livekit" || distantProvider === "agora" || distantProvider === "daily") &&
+          distantProvider !== mediaProviderRef.current &&
+          mediaSessionRef.current &&
+          !mediaFailoverInFlightRef.current &&
+          !callJitsiRoom &&
+          !p2p.active
+        ) {
+          console.warn(`[media] bascule serveur → ${distantProvider}`);
+          mediaFailoverInFlightRef.current = true;
+          setMediaSwitching(true);
+          try {
+            if (mediaSessionRef.current) {
+              try { mediaSessionRef.current.disconnect(); } catch {}
+              mediaSessionRef.current = null;
+            }
+            await connectMediaChainRef.current?.({
+              kind: "call",
+              conversationId: activeConvIdRef.current || "",
+              callId,
+              type: callTypeRef.current,
+            });
+          } catch {
+            // La bascule distante n'a pas marché chez nous — le prochain
+            // polling retentera (ou notre propre onDisconnected déclenchera).
+          } finally {
+            mediaFailoverInFlightRef.current = false;
+            setMediaSwitching(false);
+          }
+        }
         if (status === "declined" || status === "missed" || status === "cancelled" || status === "ended") {
           callEndingRef.current = true;
           setCallEndStatus(status);
@@ -2660,7 +2903,7 @@ export function MessagingView() {
       } catch { /* réseau — nouvelle tentative dans 2 s */ }
     }, 2000);
     return () => clearInterval(iv);
-  }, [session?.user?.id, activeCallSignalId, callState]);
+  }, [session?.user?.id, activeCallSignalId, callState, callJitsiRoom, p2p.active]);
 
   // ⭐ V3.19 — Plan C : SAUVETAGE ASYMÉTRIQUE — si le LiveKit de L'APPELANT
   // est tombé (il a basculé en P2P et posté son offre) mais que NOTRE
@@ -2784,18 +3027,18 @@ export function MessagingView() {
         if (track.kind === Track.Kind.Audio && track instanceof RemoteAudioTrack) {
           attachRemoteAudio(participant.identity, track);
         }
-        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+        setRemoteParticipants(wrapLiveKitParticipants(room, identityToName));
       });
       room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
         if (track.kind === Track.Kind.Audio) removeRemoteAudio(participant.identity);
-        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+        setRemoteParticipants(wrapLiveKitParticipants(room, identityToName));
       });
       room.on(RoomEvent.ParticipantConnected, () => {
-        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+        setRemoteParticipants(wrapLiveKitParticipants(room, identityToName));
       });
       room.on(RoomEvent.ParticipantDisconnected, (participant) => {
         removeRemoteAudio(participant.identity);
-        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+        setRemoteParticipants(wrapLiveKitParticipants(room, identityToName));
       });
       // ─── ⭐ V2.9 — Événements d'ÉTAT : les objets RemoteParticipant sont
       // mutables → sans ces événements, « Micro coupé », photos et compteurs
@@ -2803,10 +3046,10 @@ export function MessagingView() {
       // un setRemoteParticipants avec un NOUVEAU tableau → re-render avec
       // les valeurs fraîches (p.isMicrophoneEnabled etc.).
       room.on(RoomEvent.TrackMuted, () => {
-        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+        setRemoteParticipants(wrapLiveKitParticipants(room, identityToName));
       });
       room.on(RoomEvent.TrackUnmuted, () => {
-        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+        setRemoteParticipants(wrapLiveKitParticipants(room, identityToName));
       });
       room.on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
         setActiveSpeakerIds(new Set(speakers.map((s) => s.identity)));
@@ -2821,7 +3064,7 @@ export function MessagingView() {
             attachRemoteAudio(p.identity, pub.track);
           }
         }
-        setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+        setRemoteParticipants(wrapLiveKitParticipants(room, identityToName));
       });
       room.on(RoomEvent.Disconnected, () => {
         // Déconnexion réseau / serveur → l'UI repasse en mode « Rejoindre »
@@ -2881,7 +3124,7 @@ export function MessagingView() {
       }
 
       setLocalAudioMuted(false);
-      setRemoteParticipants(Array.from(room.remoteParticipants.values()));
+      setRemoteParticipants(wrapLiveKitParticipants(room, identityToName));
       setVoiceChannelConnected(true);
       setVoiceReconnecting(false);
       // ⭐ V3.1 — DIRECT INTRA-CANAL : lit l'état initial depuis les
@@ -2896,6 +3139,66 @@ export function MessagingView() {
       }
     } catch (e) {
       console.error("[livekit] joinVoiceChannel failed:", e);
+      // ⭐ V3.21 — CHAÎNE DE REPLI (directive pasteur : « si LiveKit a des
+      // problèmes, Agora prend immédiatement le relais ; et si Agora a des
+      // problèmes, Daily prend automatiquement le relais ») : le canal vocal
+      // tente Agora puis Daily via l'arbitrage serveur (join-voice) AVANT de
+      // déclarer l'échec — le bouton Jitsi manuel reste le filet ultime.
+      try {
+        let voiceBundle = await fetchMediaJoin("voice", activeConvId);
+        if (!voiceBundle.exhausted) {
+          for (let essai = 0; essai < 2 && voiceBundle && !voiceBundle.exhausted; essai++) {
+            setMediaProvider(voiceBundle.provider);
+            try {
+              const session = await withTimeout(
+                createMediaSession(
+                  voiceBundle,
+                  {
+                    video: false,
+                    participantName: currentUserName,
+                    resolveUser: identityToProfile,
+                    resolveUserByUid,
+                  },
+                  {
+                    onParticipants: (ps) => setRemoteParticipants(ps),
+                    onActiveSpeakers: (ids) => setActiveSpeakerIds(ids),
+                    onDisconnected: (reason) => {
+                      // Canal vocal : défaillance → on revient au mode
+                      // « Rejoindre » (pas de bascule chaude auto en room
+                      // persistante — l'utilisateur re-clique, la chaîne
+                      // repartira du fournisseur arbitré par le serveur).
+                      console.warn(`[media-voice] ${reason}`);
+                      if (mediaSessionRef.current?.provider === "livekit"
+                        || mediaSessionRef.current?.provider === "agora"
+                        || mediaSessionRef.current?.provider === "daily") {
+                        // rien : le UI reste, l'utilisateur rejoint
+                      }
+                      setVoiceChannelConnected(false);
+                    },
+                  },
+                ),
+                12000,
+                `Canal vocal ${voiceBundle.provider} indisponible (12 s)`,
+              );
+              mediaSessionRef.current = session;
+              setLocalAudioMuted(false);
+              setVoiceChannelConnected(true);
+              setVoiceReconnecting(false);
+              if (currentUserId) {
+                try { localStorage.setItem(`yc-voice-${currentUserId}`, activeConvId); } catch {}
+              }
+              showToast(`Canal vocal relié via ${providerLabel(voiceBundle.provider)} (repli)`, "success");
+              return;
+            } catch (ve) {
+              const vreason = ve instanceof Error ? ve.message : String(ve);
+              const next = await fetchMediaFailover("voice", activeConvId, undefined, voiceBundle.provider, vreason);
+              if (next.exhausted) break;
+              voiceBundle = next;
+            }
+          }
+        }
+      } catch { /* la chaîne voix n'a pas réussi — on continue vers l'erreur */ }
+      setMediaProvider(null);
       setCallError(e instanceof Error ? e.message : "Échec de la connexion au canal vocal");
       cleanupLiveKit();
       setVoiceChannelConnected(false);
@@ -2904,7 +3207,7 @@ export function MessagingView() {
         try { localStorage.removeItem(`yc-voice-${currentUserId}`); } catch {}
       }
     }
-  }, [activeConvId, cleanupLiveKit, currentUserName, currentUserAvatar, applyVoiceMetadata, attachRemoteAudio, removeRemoteAudio, currentUserId]);
+  }, [activeConvId, cleanupLiveKit, currentUserName, currentUserAvatar, applyVoiceMetadata, attachRemoteAudio, removeRemoteAudio, currentUserId, identityToProfile, resolveUserByUid, showToast]);
 
   /**
    * ⭐ V2.7 — Bascule le mode du canal vocal (RÉSERVÉ AUX ADMINISTRATEURS).
@@ -5370,6 +5673,8 @@ export function MessagingView() {
           p2pConnectionState={p2p.connectionState}
           jitsiRoom={callJitsiRoom}
           jitsiUserName={currentUserName}
+          mediaProvider={mediaProvider}
+          mediaSwitching={mediaSwitching}
           onToggleMute={toggleMute}
           onToggleCamera={toggleCamera}
           onToggleSpeaker={toggleSpeaker}
@@ -7572,14 +7877,15 @@ function VoiceAvatar({
 }
 
 /**
- * Tuile vidéo d'un participant distant — attache le track caméra publié
- * au <video> (re-attache à chaque changement de publication/état).
+ * Tuile vidéo d'un participant distant — attache la piste caméra au
+ * <video> via l'interface NORMALISÉE V3.21 (attachVideo/detachVideo —
+ * marche sur LiveKit, Agora et Daily), re-attache à chaque changement.
  */
 function ParticipantVideoTile({
   participant,
   avatarUrl,
 }: {
-  participant: RemoteParticipant;
+  participant: YcRemoteParticipant;
   avatarUrl?: string;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -7589,18 +7895,10 @@ function ParticipantVideoTile({
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-    const pub = participant.getTrackPublication(Track.Source.Camera);
-    if (pub?.track && pub.isSubscribed) {
-      pub.track.attach(el);
-      setHasVideo(true);
-    } else {
-      setHasVideo(false);
-    }
+    const attached = participant.attachVideo(el);
+    setHasVideo(attached);
     return () => {
-      const currentPub = participant.getTrackPublication(Track.Source.Camera);
-      if (currentPub?.track) {
-        try { currentPub.track.detach(el); } catch {}
-      }
+      participant.detachVideo(el);
     };
   }, [participant, participant.isCameraEnabled]);
 
@@ -7675,7 +7973,7 @@ function VoiceChannelView({
 }: {
   conv: ChatConversation;
   connected: boolean;
-  remoteParticipants: RemoteParticipant[];
+  remoteParticipants: YcRemoteParticipant[];
   currentUserId: string;
   currentUserName: string;
   currentUserAvatar?: string;
@@ -8260,6 +8558,8 @@ function CallOverlay({
   p2pConnectionState,
   jitsiRoom,
   jitsiUserName,
+  mediaProvider,
+  mediaSwitching,
   onToggleMute,
   onToggleCamera,
   onToggleSpeaker,
@@ -8273,7 +8573,7 @@ function CallOverlay({
   /** ⭐ V3.1 — issue distante : declined/missed/cancelled/ended (affichée 2 s). */
   endStatus?: "declined" | "missed" | "ended" | "cancelled" | null;
   currentUserName: string;
-  remoteParticipants: RemoteParticipant[];
+  remoteParticipants: YcRemoteParticipant[];
   localAudioMuted: boolean;
   localVideoEnabled: boolean;
   speakerEnabled: boolean;
@@ -8286,6 +8586,10 @@ function CallOverlay({
   /** ⭐ V3.19 — Plan C : room Jitsi de repli (appels de groupe/canal). */
   jitsiRoom?: string | null;
   jitsiUserName?: string;
+  /** ⭐ V3.21 — Réseau ACTIF de la chaîne LiveKit → Agora → Daily (badge). */
+  mediaProvider?: MediaProviderName | null;
+  /** ⭐ V3.21 — Bascule automatique en cours (« Bascule vers Agora… »). */
+  mediaSwitching?: boolean;
   onToggleMute: () => void;
   onToggleCamera: () => void;
   onToggleSpeaker: () => void;
@@ -8339,39 +8643,23 @@ function CallOverlay({
     };
   }, [room, localVideoEnabled]);
 
-  // ⭐ Attacher le track vidéo distant au <video> principal
+  // ⭐ Attacher le track vidéo distant au <video> principal — ⭐ V3.21 :
+  // interface NORMALISÉE (attachVideo marche sur LiveKit/Agora/Daily).
   useEffect(() => {
     const el = remoteVideoRef.current;
-    if (!room || !el) return;
+    if (!el) return;
     const remote = remoteParticipants[0];
     if (!remote) return;
-    const videoPub = remote.getTrackPublication(Track.Source.Camera);
-    if (videoPub?.track) {
-      videoPub.track.attach(el);
-    }
+    const attached = remote.attachVideo(el);
+    void attached;
     return () => {
-      if (videoPub?.track) {
-        try { videoPub.track.detach(el); } catch {}
-      }
+      remote.detachVideo(el);
     };
-  }, [room, remoteParticipants]);
+  }, [remoteParticipants, room]);
 
-  // ⭐ Attacher le track audio distant au <audio> (rendu audio)
-  useEffect(() => {
-    const el = remoteAudioRef.current;
-    if (!room || !el) return;
-    const remote = remoteParticipants[0];
-    if (!remote) return;
-    const audioPub = remote.getTrackPublication(Track.Source.Microphone);
-    if (audioPub?.track) {
-      audioPub.track.attach(el);
-    }
-    return () => {
-      if (audioPub?.track) {
-        try { audioPub.track.detach(el); } catch {}
-      }
-    };
-  }, [room, remoteParticipants]);
+  // ⭐ V3.21 — Attacher le track audio distant : les ADAPTATEURS gèrent la
+  // lecture audio distante en interne (<audio> cachés par fournisseur —
+  // LiveKit/Agora/Daily) ; cet effet ne sert plus que pour le P2P ci-dessous.
 
   // ⭐ V3.19 — Plan C : mode P2P — les flux WebRTC (aucune Room LiveKit)
   // sont attachés en srcObject ; l'audio distant passe par le <audio>
@@ -8505,6 +8793,21 @@ function CallOverlay({
             {callState === "outgoing" && !endStatus && (
               <p className="text-xs text-[#FAF6EF]/50 mt-2">
                 En attente que l'autre participant rejoigne l'appel...
+              </p>
+            )}
+            {/* ⭐ V3.21 — Badge « Réseau » : fournisseur ACTIF de la chaîne
+                LiveKit → Agora → Daily + bandeau de bascule automatique. */}
+            {mediaSwitching && !endStatus && (
+              <p className="mt-2 text-xs text-[#C9A227] flex items-center justify-center gap-1.5">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Bascule automatique vers le réseau de secours…
+              </p>
+            )}
+            {!mediaSwitching && mediaProvider && !jitsiRoom && !endStatus && (
+              <p className="mt-2 text-[10px] text-[#FAF6EF]/40 flex items-center justify-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-[#C9A227]/70 rounded-full" />
+                Réseau : {providerLabel(mediaProvider)}
+                {mediaProvider !== "livekit" && " (secours)"}
               </p>
             )}
             {p2pLocalStream && !p2pRemoteStream && !endStatus && p2pConnectionState && p2pConnectionState !== "failed" && p2pConnectionState !== "connected" && (
