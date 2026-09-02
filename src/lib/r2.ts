@@ -10,6 +10,18 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
  * - R2_SECRET_ACCESS_KEY: Secret Access Key
  * - R2_BUCKET_NAME      : Nom du bucket R2
  * - R2_PUBLIC_URL       : (optionnel) Domaine public personnalisé lié au bucket
+ * - R2_PUBLIC_DEV_URL   : (optionnel) URL de développement public du bucket
+ *                         (Dashboard Cloudflare → R2 → bucket → Settings →
+ *                         Public Development URL — format pub-<hash>.r2.dev)
+ *
+ * ⭐ V3.25 — AVANT, le fallback construisait https://pub-<ACCOUNT_ID>.r2.dev/
+ * qui est TOUJOURS invalide : le préfixe pub-… de l'URL r2.dev est un hash
+ * PROPRE AU BUCKET (visible dans ses réglages), PAS l'ID de compte. Résultat :
+ * les uploads réussissaient mais les fichiers étaient INACCESSIBLES (replays,
+ * miniatures, vidéos jamais chargeables) — « l'upload R2 échoue ». Désormais :
+ * R2_PUBLIC_URL (domaine custom) → R2_PUBLIC_DEV_URL (pub-<hash> réel) →
+ * fallback historique conservé mais avec avertissement explicite + le
+ * diagnostic /admin/r2-test teste la JOINISSABILITÉ de l'URL publique.
  *
  * ⚠️ Les variables sont lues au RUNTIME (pas au top-level) pour garantir
  * qu'elles sont fraîches même après un redéploiement Vercel.
@@ -24,6 +36,7 @@ function getConfig() {
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
     bucket: process.env.R2_BUCKET_NAME || "",
     publicUrl: process.env.R2_PUBLIC_URL || "",
+    publicDevUrl: process.env.R2_PUBLIC_DEV_URL || "",
   };
 }
 
@@ -96,15 +109,26 @@ export async function ensureR2CorsConfig(): Promise<void> {
 
 /**
  * Construit l'URL publique d'un key R2.
- * - Si R2_PUBLIC_URL est défini : utilise le domaine custom (CDN)
- * - Sinon : utilise l'URL de dev R2 (public-dev URL à activer sur le bucket)
+ * Ordre : R2_PUBLIC_URL (domaine custom/CDN) → R2_PUBLIC_DEV_URL
+ * (pub-<hash>.r2.dev du bucket) → fallback historique + avertissement.
  */
 export function getPublicUrl(key: string): string {
   const cfg = getConfig();
   if (cfg.publicUrl) {
     return `${cfg.publicUrl.replace(/\/$/, "")}/${key}`;
   }
-  // Fallback : URL publique de dev R2 (r2.dev)
+  if (cfg.publicDevUrl) {
+    return `${cfg.publicDevUrl.replace(/\/$/, "")}/${key}`;
+  }
+  // ⭐ V3.25 — Fallback historique INVALIDE en règle générale : le préfixe
+  // pub-<accountId> n'est PAS le hash r2.dev du bucket. On le conserve pour
+  // ne casser aucun déploiement existant, mais on alerte dans les logs.
+  console.warn(
+    "[r2] Ni R2_PUBLIC_URL ni R2_PUBLIC_DEV_URL ne sont définis — l'URL publique " +
+    "est construite sur le format pub-<accountId>.r2.dev, probablement INVALIDE. " +
+    "Configurez R2_PUBLIC_URL (domaine custom) ou R2_PUBLIC_DEV_URL " +
+    "(Public Development URL du bucket, Dashboard Cloudflare → R2 → Settings)."
+  );
   return `https://pub-${cfg.accountId}.r2.dev/${key}`;
 }
 
@@ -199,13 +223,18 @@ export async function listBucketsR2(): Promise<{ name: string; creationDate?: st
 }
 
 /**
- * Diagnostic complet R2 — teste credentials, bucket existence, permissions écriture.
+ * Diagnostic complet R2 — teste credentials, bucket existence, permissions
+ * écriture ET (⭐ V3.25) l'ACCESSIBILITÉ de l'URL publique du fichier test.
  */
 export async function diagnoseR2(): Promise<{
   credentialsValid: boolean;
   bucketsAccessible: string[];
   bucketExists: boolean;
   canWrite: boolean;
+  /** URL publique du fichier test (remplie si l'upload a réussi). */
+  publicUrl?: string;
+  /** ⭐ V3.25 — true si l'URL publique répond (HEAD 2xx). */
+  publicUrlOk?: boolean;
   error?: string;
   errorCode?: string;
   details: string[];
@@ -217,6 +246,8 @@ export async function diagnoseR2(): Promise<{
     bucketsAccessible: [] as string[],
     bucketExists: false,
     canWrite: false,
+    publicUrl: undefined as string | undefined,
+    publicUrlOk: undefined as boolean | undefined,
     error: undefined as string | undefined,
     errorCode: undefined as string | undefined,
     details,
@@ -273,13 +304,12 @@ export async function diagnoseR2(): Promise<{
   }
 
   // ─── Test 2 : Upload test (vérifie les permissions d'écriture sur le bucket) ───
+  const testKey = `test/diagnostic-${Date.now()}.txt`;
   try {
-    const testKey = `test/diagnostic-${Date.now()}.txt`;
     const testBuffer = Buffer.from(`R2 diagnostic ${new Date().toISOString()}`, "utf-8");
     await uploadToR2(testKey, testBuffer, "text/plain");
     result.canWrite = true;
     details.push("✓ Upload test réussi — permissions d'écriture OK sur le bucket");
-    details.push(`✓ URL publique : ${getPublicUrl(testKey)}`);
   } catch (err) {
     const code = extractErrorCode(err);
     const msg = err instanceof Error ? err.message : "Erreur upload";
@@ -299,6 +329,40 @@ export async function diagnoseR2(): Promise<{
       details.push("  → R2_ACCESS_KEY_ID invalide");
     } else if (code === "SignatureDoesNotMatch") {
       details.push("  → R2_SECRET_ACCESS_KEY invalide (la signature ne correspond pas)");
+    }
+  }
+
+  // ─── Test 3 (⭐ V3.25) : l'URL publique est-elle RÉELLEMENT accessible ? ───
+  // Un upload réussi + une URL publique cassée = « l'upload échoue » pour
+  // l'utilisateur (le replay/la miniature/la vidéo ne charge jamais). On
+  // vérifie donc que le fichier test est bien servi par son URL publique.
+  if (result.canWrite) {
+    const publicUrl = getPublicUrl(testKey);
+    result.publicUrl = publicUrl;
+    try {
+      const res = await fetch(publicUrl, {
+        method: "HEAD",
+        redirect: "follow",
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (res.ok) {
+        result.publicUrlOk = true;
+        details.push(`✓ URL publique ACCESSIBLE : ${publicUrl}`);
+      } else {
+        result.publicUrlOk = false;
+        details.push(`✗ URL publique INACCESSIBLE (HTTP ${res.status}) : ${publicUrl}`);
+        details.push("  → L'upload fonctionne mais les fichiers ne sont PAS servis : replays/miniatures/vidéos ne chargeront jamais.");
+        if (!cfg.publicUrl && !cfg.publicDevUrl) {
+          details.push("  → CAUSE PROBABLE : ni R2_PUBLIC_URL ni R2_PUBLIC_DEV_URL définis — l'URL pub-<accountId>.r2.dev construite est INVALIDE (le préfixe r2.dev est un hash propre au bucket, PAS l'ID de compte).");
+          details.push("  → CORRECTION : Dashboard Cloudflare → R2 → votre bucket → Settings → Public access → activez « Public Development URL » puis copiez-la dans la variable R2_PUBLIC_DEV_URL (ou liez un domaine custom → R2_PUBLIC_URL).");
+        } else {
+          details.push("  → CORRECTION : vérifiez que l'URL publique configurée correspond bien à CE bucket et que l'accès public y est activé.");
+        }
+      }
+    } catch (err) {
+      result.publicUrlOk = false;
+      details.push(`✗ URL publique INJOIGNABLE (${err instanceof Error ? err.message : "erreur réseau"}) : ${publicUrl}`);
+      details.push("  → DNS/réseau : l'URL publique ne résout pas ou n'existe pas — vérifiez R2_PUBLIC_URL / R2_PUBLIC_DEV_URL.");
     }
   }
 

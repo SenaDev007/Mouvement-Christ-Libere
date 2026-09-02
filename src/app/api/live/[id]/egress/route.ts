@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { EgressClient, StreamOutput } from "livekit-server-sdk";
+import {
+  EgressClient,
+  StreamOutput,
+  EncodingOptions,
+  AudioCodec,
+  VideoCodec,
+} from "livekit-server-sdk";
 import { getLiveKitConfig } from "@/lib/livekit-config";
 
 /**
@@ -175,15 +181,31 @@ export async function POST(
       }
       try {
         const streamOutput = new StreamOutput({ urls: [dest.url] });
-        // ⭐ V2.9 — QUALITÉ DE DIFFUSION (overlay flou sur YouTube/viewer) :
-        // avant, AUCUNE option d'encodage → défauts LiveKit (bitrate bas,
-        // 720p « soft »). On force H.264 4,5 Mbps + Opus 128 kbps @ 30 fps
-        // → texte des overlays net, image nettement plus claire.
-        const { EncodingOptions } = await import("livekit-server-sdk");
+        // ⭐ V2.9 → V3.25 — QUALITÉ DE DIFFUSION (overlay flou sur
+        // YouTube/viewer) : H.264 4,5 Mbps @ 30 fps → texte des overlays
+        // net, image claire.
+        //
+        // ⭐ V3.25 — REPARATION CRITIQUE : ce bloc passait des CHAÎNES
+        // ("opus"/"h264") à EncodingOptions alors que le SDK exige des
+        // ENUMS protobuf (AudioCodec.AAC = 2, VideoCodec.H264_MAIN = 2).
+        // La sérialisation protojson échouait alors SYSTÉMATIQUEMENT :
+        //   « RTMP échoué: youtube: cannot encode field
+        //      livekit.RoomCompositeEgressRequest.advanced to JSON:
+        //      cannot encode field livekit.EncodingOptions.audio_codec
+        //      to JSON »
+        // → le RTMP n'a JAMAIS démarré depuis le commit V2.9 (bug
+        // reproduit et vérifié : new EncodingOptions({audioCodec:'opus'})
+        // jette exactement cette erreur ; AudioCodec.AAC sérialise
+        // proprement). Même pattern que live-media.ts (HLS V3.22,
+        // fonctionnel) qui utilise déjà les enums.
+        //
+        // AUDIO = AAC OBLIGATOIRE : le RTMP encapsule en FLV, qui n'accepte
+        // QUE l'AAC (YouTube/Facebook rejettent l'Opus en RTMP). L'ancien
+        // « Opus 128 kbps » était de toute façon inadapté au RTMP.
         const encoding = new EncodingOptions({
-          audioCodec: "opus",
+          audioCodec: AudioCodec.AAC,
           audioBitrate: 128_000,
-          videoCodec: "h264",
+          videoCodec: VideoCodec.H264_MAIN,
           videoBitrate: 4_500_000,
           framerate: 30,
           width: 1280,

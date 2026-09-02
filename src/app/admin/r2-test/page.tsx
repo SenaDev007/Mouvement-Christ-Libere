@@ -271,7 +271,10 @@ export default function R2TestPage() {
 R2_ACCESS_KEY_ID=votre_access_key
 R2_SECRET_ACCESS_KEY=votre_secret
 R2_BUCKET_NAME=nom-du-bucket
-R2_PUBLIC_URL=https://cdn.mouvementchristlibere.org`}
+# Accès public (AU MOINS UN des deux) :
+R2_PUBLIC_URL=https://cdn.mouvementchristlibere.org
+# ou (bucket → Settings → Public Development URL) :
+R2_PUBLIC_DEV_URL=https://pub-<hash-du-bucket>.r2.dev`}
             </pre>
             <p className="text-[10px] text-[#8A8378] mt-3">
               Docs : <a href="https://developers.cloudflare.com/r2/api/s3/api/" target="_blank" rel="noopener noreferrer" className="text-[#C9A227] hover:underline">R2 S3 API</a>
@@ -291,10 +294,10 @@ R2_PUBLIC_URL=https://cdn.mouvementchristlibere.org`}
             <ol className="text-xs text-blue-800 list-decimal list-inside space-y-1">
               <li>Dashboard Cloudflare → R2 → votre bucket → Settings</li>
               <li>Activez "Public access" via un domaine custom (recommandé) ou r2.dev</li>
-              <li>Renseignez R2_PUBLIC_URL avec votre domaine custom (optionnel mais recommandé)</li>
+              <li>Renseignez R2_PUBLIC_URL avec votre domaine custom, OU R2_PUBLIC_DEV_URL avec la « Public Development URL » du bucket (format https://pub-&lt;hash&gt;.r2.dev — ATTENTION : ce hash est propre au bucket, ce n'est PAS l'ID de compte)</li>
             </ol>
             <p className="text-[10px] text-blue-700 mt-2">
-              Avantage R2 : zéro frais de transfert sortant (egress gratuit)
+              Sans URL publique valide, les uploads réussissent mais les replays/miniatures/vidéos ne chargeront jamais. Le test ci-dessus vérifie désormais aussi l'accessibilité de l'URL publique.
             </p>
           </div>
         )}

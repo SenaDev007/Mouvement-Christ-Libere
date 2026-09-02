@@ -27,7 +27,8 @@ export async function GET(req: NextRequest) {
         provider: "Cloudflare R2",
         accountId: process.env.R2_ACCOUNT_ID ? `${process.env.R2_ACCOUNT_ID.substring(0, 8)}...` : "(non défini)",
         bucket: process.env.R2_BUCKET_NAME || "(non défini)",
-        publicUrl: process.env.R2_PUBLIC_URL || "(non défini — utilisera r2.dev)",
+        publicUrl: process.env.R2_PUBLIC_URL || "(non défini)",
+        publicDevUrl: process.env.R2_PUBLIC_DEV_URL || "(non défini)",
         accessKeyId: process.env.R2_ACCESS_KEY_ID ? `${process.env.R2_ACCESS_KEY_ID.substring(0, 8)}...` : "(non défini)",
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ? "(défini)" : "(non défini)",
         // Diagnostic rapide : quelles variables sont présentes ?
@@ -37,6 +38,7 @@ export async function GET(req: NextRequest) {
           R2_SECRET_ACCESS_KEY: !!process.env.R2_SECRET_ACCESS_KEY,
           R2_BUCKET_NAME: !!process.env.R2_BUCKET_NAME,
           R2_PUBLIC_URL: !!process.env.R2_PUBLIC_URL,
+          R2_PUBLIC_DEV_URL: !!process.env.R2_PUBLIC_DEV_URL,
         },
       });
     }
@@ -61,12 +63,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         success: diag.canWrite,
         message: diag.canWrite
-          ? "Upload test réussi — R2 fonctionne correctement"
+          ? diag.publicUrlOk === false
+            ? "Upload OK MAIS l'URL publique est inaccessible — les fichiers sont stockés mais ne se chargeront jamais (voir détails)"
+            : "Upload test réussi — R2 fonctionne correctement"
           : diag.error || "Échec du test R2",
         credentialsValid: diag.credentialsValid,
         bucketsAccessible: diag.bucketsAccessible,
         bucketExists: diag.bucketExists,
         canWrite: diag.canWrite,
+        publicUrl: diag.publicUrl,
+        publicUrlOk: diag.publicUrlOk,
         error: diag.error,
         errorCode: diag.errorCode,
         details: diag.details,
