@@ -26,6 +26,13 @@ import { api } from "@/lib/api-client";
  * dans le back-office de l'administration (/admin/intercession), où
  * l'équipe pastorale la prend en charge.
  *
+ * ⭐ V3.32 — LOCALISATION + CONTACT (demande du pasteur : « savoir d'où
+ * vient la personne qui fait la demande ») : le formulaire recueille
+ * désormais le NOM COMPLET (qui remplace le pseudonyme), le PAYS, la VILLE,
+ * le TÉLÉPHONE et l'EMAIL. L'équipe pastorale sait ainsi d'où vient chaque
+ * demande et peut recontacter la personne. Ces informations restent
+ * strictement confidentielles (back-office + canal dédié Yeshua Connect).
+ *
  * ⭐ V3.30 — NOTE VOCALE (demande du pasteur : « possibilité de faire un
  * audio pour permettre à la personne de s'exprimer librement ») : la
  * personne peut enregistrer une note vocale en plus du texte. La demande
@@ -37,7 +44,17 @@ import { api } from "@/lib/api-client";
  */
 
 export default function IntercessionPage() {
-  const [form, setForm] = useState({ auteur: "", sujet: "", description: "", categorie: "general", isUrgent: false });
+  const [form, setForm] = useState({
+    auteur: "",
+    pays: "",
+    ville: "",
+    telephone: "",
+    email: "",
+    sujet: "",
+    description: "",
+    categorie: "general",
+    isUrgent: false,
+  });
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioDuration, setAudioDuration] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -53,6 +70,10 @@ export default function IntercessionPage() {
       // ⭐ V3.30 — multipart/form-data : champs + note vocale éventuelle.
       const data = new FormData();
       data.set("auteur", form.auteur);
+      data.set("pays", form.pays);
+      data.set("ville", form.ville);
+      data.set("telephone", form.telephone);
+      data.set("email", form.email);
       data.set("sujet", form.sujet);
       data.set("description", form.description);
       data.set("categorie", form.categorie);
@@ -67,7 +88,17 @@ export default function IntercessionPage() {
       });
       if (res.ok) {
         setSubmitted(true);
-        setForm({ auteur: "", sujet: "", description: "", categorie: "general", isUrgent: false });
+        setForm({
+          auteur: "",
+          pays: "",
+          ville: "",
+          telephone: "",
+          email: "",
+          sujet: "",
+          description: "",
+          categorie: "general",
+          isUrgent: false,
+        });
         setAudioFile(null);
         setAudioDuration(0);
       } else {
@@ -108,8 +139,9 @@ export default function IntercessionPage() {
               </h2>
               <p className="text-sm text-[#8A8378] leading-relaxed">
                 Chaque demande est transmise directement à l&apos;administration du site et à
-                l&apos;équipe pastorale, dans leur espace privé. Votre nom et votre sujet de prière
-                ne sont jamais affichés publiquement.
+                l&apos;équipe pastorale, dans leur espace privé. Votre nom complet, votre
+                localisation, vos coordonnées et votre sujet de prière ne sont jamais
+                affichés publiquement.
               </p>
             </div>
           </div>
@@ -151,21 +183,44 @@ export default function IntercessionPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="card-gold-top p-6 md:p-8 space-y-5">
-                <div className="grid md:grid-cols-2 gap-5">
+                <div>
+                  <label htmlFor="intercession-auteur" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Nom complet *</label>
+                  <input id="intercession-auteur" type="text" value={form.auteur} onChange={(e) => setForm({ ...form, auteur: e.target.value })} required placeholder="Votre nom et prénom" autoComplete="name" maxLength={100} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
+                </div>
+
+                {/* ⭐ V3.32 — Localisation : savoir d'où vient la demande */}
+                <div className="grid sm:grid-cols-2 gap-5">
                   <div>
-                    <label htmlFor="intercession-auteur" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Pseudonyme *</label>
-                    <input id="intercession-auteur" type="text" value={form.auteur} onChange={(e) => setForm({ ...form, auteur: e.target.value })} required placeholder="Votre nom ou pseudo" autoComplete="name" maxLength={100} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
+                    <label htmlFor="intercession-pays" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Pays *</label>
+                    <input id="intercession-pays" type="text" value={form.pays} onChange={(e) => setForm({ ...form, pays: e.target.value })} required placeholder="Ex. : Bénin" autoComplete="country-name" maxLength={100} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
                   </div>
                   <div>
-                    <label htmlFor="intercession-categorie" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Catégorie</label>
-                    <select id="intercession-categorie" value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20">
-                      <option value="general">Général</option>
-                      <option value="sante">Santé</option>
-                      <option value="famille">Famille</option>
-                      <option value="spiritual">Spirituel</option>
-                      <option value="action_graces">Action de grâces</option>
-                    </select>
+                    <label htmlFor="intercession-ville" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Ville</label>
+                    <input id="intercession-ville" type="text" value={form.ville} onChange={(e) => setForm({ ...form, ville: e.target.value })} placeholder="Ex. : Cotonou" autoComplete="address-level2" maxLength={100} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
                   </div>
+                </div>
+
+                {/* ⭐ V3.32 — Contact : pouvoir recontacter la personne */}
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <div>
+                    <label htmlFor="intercession-telephone" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Numéro de téléphone</label>
+                    <input id="intercession-telephone" type="tel" inputMode="tel" value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} placeholder="Ex. : +229 01 02 03 04 05" autoComplete="tel" maxLength={30} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
+                  </div>
+                  <div>
+                    <label htmlFor="intercession-email" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Email</label>
+                    <input id="intercession-email" type="email" inputMode="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="votre.email@exemple.com" autoComplete="email" maxLength={150} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="intercession-categorie" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Catégorie</label>
+                  <select id="intercession-categorie" value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20">
+                    <option value="general">Général</option>
+                    <option value="sante">Santé</option>
+                    <option value="famille">Famille</option>
+                    <option value="spiritual">Spirituel</option>
+                    <option value="action_graces">Action de grâces</option>
+                  </select>
                 </div>
 
                 <div>
@@ -214,7 +269,7 @@ export default function IntercessionPage() {
 
                 <p className="text-[11px] text-[#8A8378] flex items-center justify-center gap-1.5 text-center">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
-                  Votre demande part directement dans l&apos;espace privé de l&apos;administration — rien n&apos;est publié.
+                  Votre demande et vos coordonnées partent directement dans l&apos;espace privé de l&apos;administration — rien n&apos;est publié.
                 </p>
               </form>
             </>

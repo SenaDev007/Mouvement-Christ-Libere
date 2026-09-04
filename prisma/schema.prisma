@@ -764,7 +764,7 @@ model DisperseMember {
 
 model IntercessionRequest {
   id          String   @id @default(cuid())
-  auteur      String   // pseudonyme
+  auteur      String   // nom complet (V3.32 : remplace le pseudonyme)
   sujet       String   // court résumé
   description String   @db.Text
   categorie   String   @default("general") // sante, famille, spiritual, urgence, action_graces
@@ -773,6 +773,14 @@ model IntercessionRequest {
   statut      String   @default("ouvert") // ouvert, en_priere, exauce, archive
   temoignageExaucement String? @db.Text
   prayCount   Int      @default(0) // nombre de personnes qui ont prié
+  // ⭐ V3.32 — LOCALISATION + CONTACT (demande du pasteur : « savoir d'où
+  // vient la personne qui fait la demande ») : pays, ville, téléphone et
+  // email transmis avec la demande, visibles dans le back-office et le
+  // canal « Sujets de prière » de Yeshua Connect.
+  pays      String?  // pays de la personne (ex. Bénin)
+  ville     String?  // ville (ex. Cotonou)
+  telephone String?  // numéro de téléphone pour être recontacté
+  email     String?  // adresse email pour être recontacté
   // ⭐ V3.30 — NOTE VOCALE : la personne peut s'exprimer en audio en plus du
   // texte (R2, fallback data URL ≤ 1,2 Mo — même stratégie que les pièces
   // jointes Yeshua Connect). Relaisée telle quelle dans le canal dédié

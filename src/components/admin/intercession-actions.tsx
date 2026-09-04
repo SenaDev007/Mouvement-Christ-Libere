@@ -5,6 +5,11 @@
  * changer le statut (en prière / exaucé / archivé), enregistrer un
  * témoignage d'exaucement, supprimer la demande.
  * Utilise l'API admin générique /admin/api/intercessionrequests/[id].
+ *
+ * ⭐ V3.32 — RESPONSIVE : le composant vit désormais en PIED DE CARTE sur
+ * une ligne pleine largeur (plus de colonne latérale qui écrasait le texte
+ * sur téléphone). Les boutons s'alignent à droite, se replient proprement
+ * si l'écran est trop étroit, et la zone de témoignage passe en w-full.
  */
 
 import { useState } from "react";
@@ -65,13 +70,14 @@ export function IntercessionActions({
   };
 
   return (
-    <div className="flex flex-col items-end gap-1.5">
-      <div className="flex items-center gap-1">
+    <div className="w-full flex flex-col items-end gap-1.5">
+      <div className="flex items-center justify-end gap-1 flex-wrap w-full">
         {statut !== "en_priere" && (
           <button
             onClick={() => patch({ statut: "en_priere" }, "prier")}
             disabled={!!busy}
             title="Marquer « en prière »"
+            aria-label="Marquer en prière"
             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A8378] hover:bg-[#C9A227]/15 hover:text-[#A3821C] transition-colors disabled:opacity-50"
           >
             {busy === "prier" ? <Loader2 className="w-4 h-4 animate-spin" /> : <HandHeart className="w-4 h-4" />}
@@ -82,6 +88,7 @@ export function IntercessionActions({
             onClick={() => patch({ statut: "exauce" }, "exauce")}
             disabled={!!busy}
             title="Marquer « exaucé »"
+            aria-label="Marquer exaucé"
             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A8378] hover:bg-emerald-100 hover:text-emerald-700 transition-colors disabled:opacity-50"
           >
             {busy === "exauce" ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
@@ -91,7 +98,8 @@ export function IntercessionActions({
           onClick={() => setShowTestimony((v) => !v)}
           disabled={!!busy}
           title="Témoignage d'exaucement"
-          className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+          aria-label="Témoignage d'exaucement"
+          className={`inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors disabled:opacity-50 ${
             showTestimony || temoignageExaucement
               ? "text-[#A3821C] bg-[#C9A227]/15"
               : "text-[#8A8378] hover:bg-[#C9A227]/15 hover:text-[#A3821C]"
@@ -104,6 +112,7 @@ export function IntercessionActions({
             onClick={() => patch({ statut: "archive" }, "archive")}
             disabled={!!busy}
             title="Archiver"
+            aria-label="Archiver"
             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A8378] hover:bg-gray-100 hover:text-gray-600 transition-colors disabled:opacity-50"
           >
             {busy === "archive" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Archive className="w-4 h-4" />}
@@ -113,6 +122,7 @@ export function IntercessionActions({
             onClick={() => patch({ statut: "ouvert" }, "ouvrir")}
             disabled={!!busy}
             title="Réouvrir"
+            aria-label="Réouvrir"
             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A8378] hover:bg-[#C9A227]/15 hover:text-[#A3821C] transition-colors disabled:opacity-50"
           >
             {busy === "ouvrir" ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
@@ -122,6 +132,7 @@ export function IntercessionActions({
           onClick={remove}
           disabled={!!busy}
           title="Supprimer"
+          aria-label="Supprimer"
           className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A8378] hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
         >
           {busy === "delete" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
@@ -129,7 +140,7 @@ export function IntercessionActions({
       </div>
 
       {showTestimony && (
-        <div className="w-full sm:w-80 bg-[#FAF6EF] border border-[#C9A227]/25 rounded-xl p-3">
+        <div className="w-full bg-[#FAF6EF] border border-[#C9A227]/25 rounded-xl p-3">
           <textarea
             value={testimony}
             onChange={(e) => setTestimony(e.target.value)}

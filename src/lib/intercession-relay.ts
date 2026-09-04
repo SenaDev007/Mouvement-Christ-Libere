@@ -9,7 +9,9 @@ import { sendPushToUser } from "@/lib/push-notifications";
  * /intercession (bouton « Transmettre ma demande à l'équipe pastorale »),
  * elle doit arriver AUSSI dans la communauté Yeshua Connect, dans un CANAL
  * DÉDIÉ « Sujets de prière », sous forme de message structuré :
- *   - qui a envoyé (pseudonyme) ;
+ *   - qui a envoyé (nom complet) ;
+ *   - d'où vient la personne (pays, ville) et comment la recontacter
+ *     (téléphone, email) — ⭐ V3.32 ;
  *   - la catégorie de prière (santé, famille, spirituel…) ;
  *   - le caractère urgent ou non ;
  *   - le sujet et la description ;
@@ -52,6 +54,10 @@ export const CATEGORIES_INTERCESSION: Record<string, string> = {
 export interface DemandeIntercessionRelais {
   id: string;
   auteur: string;
+  pays?: string | null;
+  ville?: string | null;
+  telephone?: string | null;
+  email?: string | null;
   sujet: string;
   description: string;
   categorie: string;
@@ -185,8 +191,13 @@ function formaterMessageTexte(d: DemandeIntercessionRelais): string {
     "🕊️ NOUVELLE DEMANDE D'INTERCESSION",
     "",
     `De : ${d.auteur}`,
-    `Catégorie : ${CATEGORIES_INTERCESSION[d.categorie] || d.categorie}`,
   ];
+  // ⭐ V3.32 — Localisation (pays, ville) + coordonnées de contact.
+  const localisation = [d.ville, d.pays].filter(Boolean).join(", ");
+  if (localisation) lignes.push(`Provenance : ${localisation}`);
+  if (d.telephone) lignes.push(`Téléphone : ${d.telephone}`);
+  if (d.email) lignes.push(`Email : ${d.email}`);
+  lignes.push(`Catégorie : ${CATEGORIES_INTERCESSION[d.categorie] || d.categorie}`);
   if (d.isUrgent) lignes.push("URGENTE : oui — à traiter en priorité");
   lignes.push(`Sujet : ${d.sujet}`);
   lignes.push("");

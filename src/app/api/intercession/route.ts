@@ -7,6 +7,12 @@
  * que le formulaire de dépôt (page /intercession) ; les demandes arrivent
  * directement dans le back-office (/admin/intercession).
  *
+ * ⭐ V3.32 — LOCALISATION + CONTACT (demande du pasteur) : le POST recueille
+ * désormais le nom complet (champ auteur), le pays (requis), la ville, le
+ * téléphone et l'email — « afin de savoir d'où vient la personne qui fait la
+ * demande ». Ces informations confidentielles sont visibles uniquement dans
+ * le back-office et le canal dédié « Sujets de prière » de Yeshua Connect.
+ *
  * ⭐ V3.30 — NOTE VOCALE + RELAIS YESHUA CONNECT (demandes du pasteur) :
  *   - POST accepte désormais multipart/form-data avec un fichier audio
  *     facultatif (« possibilité de faire un audio pour permettre à la
@@ -25,7 +31,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { ensureIntercessionAudioColumns } from "@/lib/ensure-schema";
+import { ensureIntercessionAudioColumns, ensureIntercessionContactColumns } from "@/lib/ensure-schema";
 import { relayerDemandeIntercession } from "@/lib/intercession-relay";
 import { uploadToR2, isR2Configured, generateKey } from "@/lib/r2";
 
@@ -54,7 +60,9 @@ export async function GET(request: NextRequest) {
 
   // ⭐ V3.30.1 — Auto-réparation des colonnes audio AVANT lecture (le POST
   // l'avait, pas le GET : findMany sans select → P2022 sur base froide).
+  // ⭐ V3.32 — Idem pour les colonnes pays/ville/telephone/email.
   await ensureIntercessionAudioColumns();
+  await ensureIntercessionContactColumns();
 
   const where: Record<string, unknown> = {};
   if (categorie && categorie !== "tous") where.categorie = categorie;
@@ -147,10 +155,16 @@ function bufferVersDataUrl(buffer: Buffer, mime: string): string {
 export async function POST(request: NextRequest) {
   try {
     // ⭐ V3.30 — Auto-réparation des colonnes audio avant TOUTE écriture.
+    // ⭐ V3.32 — Idem localisation/contact (pays, ville, téléphone, email).
     await ensureIntercessionAudioColumns();
+    await ensureIntercessionContactColumns();
 
     // ─── Parse : multipart (avec note vocale) OU JSON (historique) ───
     let auteur = "";
+    let pays = "";
+    let ville = "";
+    let telephone = "";
+    let email = "";
     let sujet = "";
     let description = "";
     let categorie = "general";
@@ -162,6 +176,10 @@ export async function POST(request: NextRequest) {
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       auteur = String(formData.get("auteur") || "").trim();
+      pays = String(formData.get("pays") || "").trim();
+      ville = String(formData.get("ville") || "").trim();
+      telephone = String(formData.get("telephone") || "").trim();
+      email = String(formData.get("email") || "").trim();
       sujet = String(formData.get("sujet") || "").trim();
       description = String(formData.get("description") || "").trim();
       categorie = String(formData.get("categorie") || "general");
@@ -175,6 +193,10 @@ export async function POST(request: NextRequest) {
     } else {
       const body = await request.json();
       auteur = (body.auteur || "").trim();
+      pays = (body.pays || "").trim();
+      ville = (body.ville || "").trim();
+      telephone = (body.telephone || "").trim();
+      email = (body.email || "").trim();
       sujet = (body.sujet || "").trim();
       description = (body.description || "").trim();
       categorie = body.categorie || "general";
@@ -183,7 +205,21 @@ export async function POST(request: NextRequest) {
 
     // ─── Validation ───
     if (!auteur || !sujet) {
-      return NextResponse.json({ error: "auteur et sujet requis" }, { status: 400 });
+      return NextResponse.json({ error: "Votre nom complet et le sujet sont requis" }, { status: 400 });
+    }
+    // ⭐ V3.32 — Le pays est requis (directive : savoir d'où vient la
+    // demande). Ville, téléphone et email restent facultatifs.
+    if (!pays) {
+      return NextResponse.json({ error: "Indiquez votre pays — il aide l'équipe à savoir d'où vient votre demande" }, { status: 400 });
+    }
+    // ⭐ V3.32 — Validation douce des coordonnées FACULTATIVES : on ne
+    // rejette pas la demande, on nettoie/normalise simplement.
+    const telNettoye = telephone.replace(/[\s().-]/g, "");
+    if (telNettoye && !/^\+?\d{6,20}$/.test(telNettoye)) {
+      return NextResponse.json({ error: "Le numéro de téléphone semble invalide. Vérifiez-le, ou laissez le champ vide." }, { status: 400 });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      return NextResponse.json({ error: "L'adresse email semble invalide. Vérifiez-la, ou laissez le champ vide." }, { status: 400 });
     }
     // ⭐ V3.30 — La description devient facultative SI une note vocale est
     // jointe (« que ça soit par texte, que ça soit par note vocale »).
@@ -213,6 +249,12 @@ export async function POST(request: NextRequest) {
       const demande = await db.intercessionRequest.create({
         data: {
           auteur: auteur.substring(0, 100),
+          // ⭐ V3.32 — Localisation + contact (confidentiels, back-office +
+          // canal Yeshua Connect uniquement).
+          pays: pays.substring(0, 100) || null,
+          ville: ville.substring(0, 100) || null,
+          telephone: telNettoye || null,
+          email: email.substring(0, 150) || null,
           sujet: sujet.substring(0, 200),
           description: (description || "— (demande exprimée en note vocale)").substring(0, 2000),
           categorie: categorie || "general",
@@ -235,6 +277,10 @@ export async function POST(request: NextRequest) {
       await relayerDemandeIntercession({
         id: demande.id,
         auteur: demande.auteur,
+        pays: demande.pays,
+        ville: demande.ville,
+        telephone: demande.telephone,
+        email: demande.email,
         sujet: demande.sujet,
         description: description || "— (demande exprimée en note vocale)",
         categorie: demande.categorie,

@@ -828,6 +828,58 @@ export function ensureIntercessionAudioColumns(): Promise<void> {
 let channelIsIntercessionOk = false;
 let inflightChannelIsIntercession: Promise<void> | null = null;
 
+let intercessionContactOk = false;
+let inflightIntercessionContact: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.32 — S'assure que les colonnes LOCALISATION + CONTACT de
+ * `IntercessionRequest` existent : pays (TEXT), ville (TEXT),
+ * telephone (TEXT), email (TEXT).
+ *
+ * Contexte (demande du pasteur) : « savoir d'où vient la personne qui fait
+ * la demande — de quel pays elle est ». Le formulaire public /intercession
+ * recueille désormais le nom complet (colonne `auteur` existante), le pays,
+ * la ville, le téléphone et l'email. Ces informations restent strictement
+ * confidentielles (back-office + canal dédié « Sujets de prière » de
+ * Yeshua Connect, jamais publiques).
+ *
+ * Mêmes garanties que les autres helpers : idempotent, mémoïsé,
+ * concurrentiel, échec DDL purement loggué.
+ */
+export function ensureIntercessionContactColumns(): Promise<void> {
+  if (intercessionContactOk) return Promise.resolve();
+  if (!inflightIntercessionContact) {
+    inflightIntercessionContact = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "IntercessionRequest" ADD COLUMN IF NOT EXISTS "pays" TEXT'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "IntercessionRequest" ADD COLUMN IF NOT EXISTS "ville" TEXT'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "IntercessionRequest" ADD COLUMN IF NOT EXISTS "telephone" TEXT'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "IntercessionRequest" ADD COLUMN IF NOT EXISTS "email" TEXT'
+      );
+    })()
+      .then(() => {
+        intercessionContactOk = true;
+        console.log("[ensure-schema] V3.32 : colonnes IntercessionRequest.pays/ville/telephone/email vérifiées/créées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE IntercessionRequest.pays/ville/telephone/email impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightIntercessionContact = null;
+      });
+  }
+  return inflightIntercessionContact;
+}
+
 /**
  * ⭐ V3.30 — S'assure que la colonne `Channel.isIntercession` (BOOLEAN,
  * défaut false) existe.

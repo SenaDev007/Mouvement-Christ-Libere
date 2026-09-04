@@ -1,9 +1,15 @@
 import { db } from "@/lib/db";
-import { Inbox, Mail, Phone, CheckCircle, Archive, Clock, Trash2 } from "lucide-react";
+import { Inbox, Mail, Phone, CheckCircle, Archive, Clock } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { UpdateContactStatusButton } from "@/components/admin/update-contact-status-button";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * ⭐ V3.32 — RESPONSIVE MOBILE : les actions passent en PIED DE CARTE sur
+ * une ligne pleine largeur (même correctif que le module Intercession —
+ * capture utilisateur : la colonne latérale de boutons écrasait le texte).
+ */
 
 const STATUS_CONFIG = {
   PENDING: { label: "En attente", color: "bg-[#C9A227]/15 text-[#A3821C] border-[#C9A227]/30" },
@@ -121,17 +127,19 @@ export default async function AdminContactRequestsPage() {
                       {new Date(r.createdAt).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
+                </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-col gap-1 flex-shrink-0 ">
-                    {r.status !== "ANSWERED" && (
-                      <UpdateContactStatusButton id={r.id} status="ANSWERED" icon="check" />
-                    )}
-                    {r.status !== "ARCHIVED" && (
-                      <UpdateContactStatusButton id={r.id} status="ARCHIVED" icon="archive" />
-                    )}
-                    <DeleteButton entity="contactrequests" id={r.id} />
-                  </div>
+                {/* ⭐ V3.32 — Actions en pied de carte : le message garde
+                    toute la largeur, les boutons s'alignent à droite sur une
+                    ligne dédiée (plus de colonne qui écrase le texte). */}
+                <div className="mt-2 pt-2 border-t border-[#8A8378]/10 flex items-center justify-end gap-1 flex-wrap">
+                  {r.status !== "ANSWERED" && (
+                    <UpdateContactStatusButton id={r.id} status="ANSWERED" icon="check" />
+                  )}
+                  {r.status !== "ARCHIVED" && (
+                    <UpdateContactStatusButton id={r.id} status="ARCHIVED" icon="archive" />
+                  )}
+                  <DeleteButton entity="contactrequests" id={r.id} />
                 </div>
               </div>
             );

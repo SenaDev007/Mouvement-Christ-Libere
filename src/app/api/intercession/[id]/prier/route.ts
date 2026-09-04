@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { ensureIntercessionAudioColumns } from "@/lib/ensure-schema";
+import { ensureIntercessionAudioColumns, ensureIntercessionContactColumns } from "@/lib/ensure-schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +29,7 @@ export async function POST(
     // retourne l'objet complet : sans la garde, tombait dans le catch →
     // demo:true silencieux au lieu d'incrémenter réellement).
     await ensureIntercessionAudioColumns();
+    await ensureIntercessionContactColumns();
     const demande = await db.intercessionRequest.update({
       where: { id },
       data: {

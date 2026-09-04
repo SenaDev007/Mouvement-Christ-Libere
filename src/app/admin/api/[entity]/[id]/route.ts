@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns } from "@/lib/ensure-schema";
 
 const ENTITY_MAP = {
   servants: "servant",
@@ -116,7 +116,11 @@ export async function GET(
     if (entity === "servants") await ensureServantLocationColumns();
     // ⭐ V3.30.1 — Auto-réparation colonnes audio IntercessionRequest
     // (findUnique retourne l'objet COMPLET → P2022 sur base froide sinon).
-    if (entity === "intercessionrequests") await ensureIntercessionAudioColumns();
+    if (entity === "intercessionrequests") {
+      await ensureIntercessionAudioColumns();
+      // ⭐ V3.32 — colonnes pays/ville/telephone/email (même garde)
+      await ensureIntercessionContactColumns();
+    }
     const delegate = getDelegate(entity as EntityName);
     const item = await delegate.findUnique({ where: { id } });
     if (!item) {
@@ -151,7 +155,11 @@ export async function PATCH(
     // ⭐ V3.30.1 — Auto-réparation colonnes audio IntercessionRequest
     // (l'update retourne l'objet complet : sans cette garde, changer le
     // statut d'une demande depuis le back-office échouait en P2022).
-    if (entity === "intercessionrequests") await ensureIntercessionAudioColumns();
+    if (entity === "intercessionrequests") {
+      await ensureIntercessionAudioColumns();
+      // ⭐ V3.32 — colonnes pays/ville/telephone/email (même garde)
+      await ensureIntercessionContactColumns();
+    }
 
     // ⭐ V2.7 — SYNCHRO PHOTO serviteur ↔ compte utilisateur : on capture
     // les infos de correspondance AVANT l'écriture (le code/nom/email peut
@@ -207,7 +215,11 @@ export async function DELETE(
   try {
     // ⭐ V3.30.1 — Auto-réparation colonnes audio IntercessionRequest
     // (le delete retourne l'objet supprimé complet → P2022 sinon).
-    if (entity === "intercessionrequests") await ensureIntercessionAudioColumns();
+    if (entity === "intercessionrequests") {
+      await ensureIntercessionAudioColumns();
+      // ⭐ V3.32 — colonnes pays/ville/telephone/email (même garde)
+      await ensureIntercessionContactColumns();
+    }
     const delegate = getDelegate(entity as EntityName);
     await delegate.delete({ where: { id } });
     return NextResponse.json({ success: true });

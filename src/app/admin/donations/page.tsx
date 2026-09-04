@@ -1,8 +1,14 @@
 import { db } from "@/lib/db";
-import { Heart, Euro, TrendingUp, Calendar, MessageSquare, User, Mail, Clock } from "lucide-react";
+import { Heart, Euro, TrendingUp, Calendar, MessageSquare, Mail, Clock } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * ⭐ V3.32 — RESPONSIVE MOBILE : suppression déplacée en PIED DE CARTE sur
+ * une ligne pleine largeur (même correctif que Intercession/Contact —
+ * capture utilisateur : la colonne latérale écrasait le texte).
+ */
 
 export default async function AdminDonationsPage() {
   const donations = await db.donation.findMany({
@@ -160,11 +166,11 @@ export default async function AdminDonationsPage() {
                       {new Date(d.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
                     </div>
                   </div>
+                </div>
 
-                  {/* Actions */}
-                  <div className=" flex-shrink-0">
-                    <DeleteButton entity="donations" id={d.id} />
-                  </div>
+                {/* ⭐ V3.32 — Suppression en pied de carte, pleine largeur */}
+                <div className="mt-2 pt-2 border-t border-[#8A8378]/10 flex items-center justify-end">
+                  <DeleteButton entity="donations" id={d.id} />
                 </div>
               </div>
             ))
