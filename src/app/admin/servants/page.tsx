@@ -127,7 +127,7 @@ export default async function AdminServantsPage() {
                   />
                   <Link
                     href={`/admin/servants/${s.id}/stream-config`}
-                    className="p-2 rounded-lg hover:bg-white/60 text-[#8A8378] hover:text-[#C9A227] transition-colors"
+                    className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-white/60 text-[#8A8378] hover:text-[#C9A227] transition-colors"
                     aria-label="Configuration streaming"
                     title="Configuration RTMP"
                   >
@@ -143,32 +143,32 @@ export default async function AdminServantsPage() {
                 </div>
               )}
 
-              {/* Stats grid */}
-              <div className="grid grid-cols-5 divide-x divide-[#8A8378]/10">
+              {/* Stats grid — 3 colonnes lisibles <640px, 5 à partir de sm */}
+              <div className="grid grid-cols-3 sm:grid-cols-5 sm:divide-x divide-[#8A8378]/10">
                 <Link href={`/admin/videos?servant=${s.code}`} className="p-3 text-center hover:bg-[#FAF6EF] transition-colors group">
                   <Video className="w-4 h-4 mx-auto text-[#8A8378] group-hover:text-[#C9A227] transition-colors" />
                   <div className="text-base font-bold text-[#1E0F2B] mt-1">{s._count.videos}</div>
-                  <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Vidéos</div>
+                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378]">Vidéos</div>
                 </Link>
                 <Link href={`/admin/testimonies?servant=${s.code}`} className="p-3 text-center hover:bg-[#FAF6EF] transition-colors group">
                   <FileText className="w-4 h-4 mx-auto text-[#8A8378] group-hover:text-[#C9A227] transition-colors" />
                   <div className="text-base font-bold text-[#1E0F2B] mt-1">{s._count.testimonies}</div>
-                  <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Témoig.</div>
+                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378]">Témoignages</div>
                 </Link>
                 <Link href={`/admin/teachings?servant=${s.code}`} className="p-3 text-center hover:bg-[#FAF6EF] transition-colors group">
                   <BookOpen className="w-4 h-4 mx-auto text-[#8A8378] group-hover:text-[#C9A227] transition-colors" />
                   <div className="text-base font-bold text-[#1E0F2B] mt-1">{s._count.teachings}</div>
-                  <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Enseig.</div>
+                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378]">Enseignements</div>
                 </Link>
                 <Link href={`/admin/biographies?servant=${s.code}`} className="p-3 text-center hover:bg-[#FAF6EF] transition-colors group">
                   <BookMarked className="w-4 h-4 mx-auto text-[#8A8378] group-hover:text-[#C9A227] transition-colors" />
                   <div className="text-base font-bold text-[#1E0F2B] mt-1">{s._count.biographies}</div>
-                  <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Biog.</div>
+                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378]">Biographies</div>
                 </Link>
                 <Link href={`/admin/lives?servant=${s.code}`} className="p-3 text-center hover:bg-[#FAF6EF] transition-colors group">
                   <Radio className="w-4 h-4 mx-auto text-[#8A8378] group-hover:text-[#C9A227] transition-colors" />
                   <div className="text-base font-bold text-[#1E0F2B] mt-1">{s._count.liveStreams}</div>
-                  <div className="text-[9px] uppercase tracking-wider text-[#8A8378]">Lives</div>
+                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378]">Lives</div>
                 </Link>
               </div>
             </div>
