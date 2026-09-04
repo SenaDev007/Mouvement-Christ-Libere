@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureChannelIsDirectColumn, ensureUserBlockTable } from "@/lib/ensure-schema";
+import { ensureChannelIsDirectColumn, ensureChannelIsIntercessionColumn, ensureUserBlockTable } from "@/lib/ensure-schema";
 
 /** Rôles pouvant contacter n'importe quel membre (pasteurs / modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -126,6 +126,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // ⭐ V3.30 — Le findMany « candidates » ci-dessous renvoie TOUTES les
+    // colonnes scalaires du canal (dont isIntercession) → auto-réparation
+    // d'abord pour éviter un 500 sur une instance froide.
+    await ensureChannelIsIntercessionColumn();
+
     // ─── 3) Retrouver une conversation privée existante ────────────────
     // Une conversation « DIRECT » = un canal dont les membres sont
     // EXACTEMENT moi + le destinataire. On retourne la plus récente.
@@ -187,6 +192,7 @@ export async function POST(req: NextRequest) {
     // ⭐ V3.20 — Auto-réparation de la colonne isDirect AVANT la création
     // (le create ci-dessous écrit le drapeau — sans colonne : erreur 500).
     await ensureChannelIsDirectColumn();
+    // (V3.30 : isIntercession déjà assuré avant le findMany candidates)
     // Nom stocké = nom du destinataire (l'affichage côté client est calculé
     // PAR SPECTATEUR : chacun voit le nom de son interlocuteur).
     // ⭐ V3.20 — isDirect = true : ce canal est un PRIVÉ, visible et lisible

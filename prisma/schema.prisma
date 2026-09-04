@@ -439,6 +439,13 @@ model Channel {
   // être vu par les admins »). Posé par la route /dm, rétro-fixé par
   // ensureChannelIsDirectColumn() via les AuditLog DM_CREATE existants.
   isDirect     Boolean      @default(false)
+  // ⭐ V3.30 — Canal DÉDIÉ « Sujets de prière » : recevra chaque demande
+  // d'intercession déposée sur /intercession (texte + note vocale). Visible
+  // UNIQUEMENT par SUPER_ADMIN et ADMIN (directive pasteur : « seuls les
+  // admins, les super admins ont accès — même les membres qui envoient
+  // ne voient pas ce canal »). Posé par /api/intercession, rétro-fixé par
+  // ensureChannelIsIntercessionColumn().
+  isIntercession Boolean   @default(false)
   order        Int          @default(0)
   lastMessageAt DateTime?   // ⭐ V2.1 — date du dernier message (tri des canaux)
   createdAt    DateTime     @default(now())
@@ -766,6 +773,14 @@ model IntercessionRequest {
   statut      String   @default("ouvert") // ouvert, en_priere, exauce, archive
   temoignageExaucement String? @db.Text
   prayCount   Int      @default(0) // nombre de personnes qui ont prié
+  // ⭐ V3.30 — NOTE VOCALE : la personne peut s'exprimer en audio en plus du
+  // texte (R2, fallback data URL ≤ 1,2 Mo — même stratégie que les pièces
+  // jointes Yeshua Connect). Relaisée telle quelle dans le canal dédié
+  // « Sujets de prière » de Yeshua Connect.
+  audioUrl      String?  // URL publique R2 ou data URL
+  audioDuration Float?   // durée en secondes
+  audioMime     String?  // audio/webm;codecs=opus, audio/mp4…
+  audioSize     Int?     // taille en octets
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

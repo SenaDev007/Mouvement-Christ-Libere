@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureV29Schema, ensureUserBlockTable } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureChannelIsIntercessionColumn, ensureVoiceVideoColumns, ensureV29Schema, ensureUserBlockTable } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir les canaux RESTRICTED (pasteurs / modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
+
+/** ⭐ V3.30 — Rôles voyant le canal dédié d'intercession « Sujets de
+ * prière » (directive pasteur : seulement les admins et super admins —
+ * ni les MODERATORs, ni les membres, ni les déposants eux-mêmes). */
+const ROLES_CANAL_INTERCESSION = new Set(["SUPER_ADMIN", "ADMIN"]);
 
 /**
  * GET /api/yeshua-connect/conversations
@@ -48,6 +53,7 @@ export async function GET(_req: NextRequest) {
     const userId = session.user.id;
     const userRole = session.user.role;
     const canSeeRestricted = PRIVILEGED_ROLES.has(userRole || "");
+    const canSeeIntercession = ROLES_CANAL_INTERCESSION.has(userRole || "");
 
     // ⭐ V2.6.1 — Auto-réparation : si `db:push` n'a pas été lancé en prod,
     // la colonne avatarUrl (V2.5) manque et tout le findMany échoue (500
@@ -95,12 +101,21 @@ export async function GET(_req: NextRequest) {
       // colonne absente (instance froide avant ensure) — non bloquant
     });
 
+    // ⭐ V3.30 — Auto-réparation colonne isIntercession (le findMany
+    // ci-dessous renvoie toutes les colonnes scalaires → 500 si absente,
+    // et le filtre du canal dédié repose dessus).
+    await ensureChannelIsIntercessionColumn();
+
     // Charger les canaux + membres + dernier message en une seule requête
     const channels = await db.channel.findMany({
-      // Filtrer les canaux RESTRICTED pour les utilisateurs non privilégiés
+      // Filtrer les canaux RESTRICTED pour les utilisateurs non privilégiés.
+      // ⭐ V3.30 — Et le canal dédié d'intercession pour tous SAUF les
+      // SUPER_ADMIN/ADMIN (les déposants ne doivent même pas le voir).
       where: canSeeRestricted
-        ? {}
-        : { isRestricted: false, type: { not: "RESTRICTED" } },
+        ? canSeeIntercession
+          ? {}
+          : { isIntercession: false }
+        : { isRestricted: false, type: { not: "RESTRICTED" }, isIntercession: false },
       orderBy: [{ communityId: "asc" }, { order: "asc" }],
       include: {
         members: {

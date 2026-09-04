@@ -9,11 +9,13 @@ import {
   Flame,
   ShieldCheck,
   Lock,
+  AlertCircle,
 } from "lucide-react";
 import { PageHero } from "@/components/site/page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock } from "@/components/premium/section-divider";
+import { AudioRecorder } from "@/components/intercession/audio-recorder";
 import { api } from "@/lib/api-client";
 
 /**
@@ -23,28 +25,61 @@ import { api } from "@/lib/api-client";
  * Le public ne voit que ce formulaire ; chaque demande arrive directement
  * dans le back-office de l'administration (/admin/intercession), où
  * l'équipe pastorale la prend en charge.
+ *
+ * ⭐ V3.30 — NOTE VOCALE (demande du pasteur : « possibilité de faire un
+ * audio pour permettre à la personne de s'exprimer librement ») : la
+ * personne peut enregistrer une note vocale en plus du texte. La demande
+ * est envoyée en multipart/form-data (champs + fichier audio) et arrive :
+ *   1. dans le module intercession du back-office (texte + audio) ;
+ *   2. dans le canal dédié « Sujets de prière » de Yeshua Connect, réservé
+ *      aux super administrateurs (message structuré : auteur, catégorie,
+ *      urgence, sujet, description, note vocale).
  */
 
 export default function IntercessionPage() {
   const [form, setForm] = useState({ auteur: "", sujet: "", description: "", categorie: "general", isUrgent: false });
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioDuration, setAudioDuration] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
+    setErreur(null);
     try {
+      // ⭐ V3.30 — multipart/form-data : champs + note vocale éventuelle.
+      const data = new FormData();
+      data.set("auteur", form.auteur);
+      data.set("sujet", form.sujet);
+      data.set("description", form.description);
+      data.set("categorie", form.categorie);
+      data.set("isUrgent", String(form.isUrgent));
+      if (audioFile) {
+        data.set("audio", audioFile, audioFile.name);
+        data.set("audioDuration", String(Math.round(audioDuration)));
+      }
       const res = await fetch(api.url("/api/intercession"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: data, // pas de Content-Type : le navigateur pose le boundary multipart
       });
       if (res.ok) {
         setSubmitted(true);
         setForm({ auteur: "", sujet: "", description: "", categorie: "general", isUrgent: false });
+        setAudioFile(null);
+        setAudioDuration(0);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setErreur(
+          body?.error ||
+            "La transmission a échoué. Vérifiez votre connexion puis réessayez.",
+        );
       }
     } catch (err) {
       console.error(err);
+      setErreur("La transmission a échoué. Vérifiez votre connexion puis réessayez.");
     } finally {
       setSubmitting(false);
     }
@@ -115,34 +150,57 @@ export default function IntercessionPage() {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="card-gold-top p-8 space-y-5">
+              <form onSubmit={handleSubmit} className="card-gold-top p-6 md:p-8 space-y-5">
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Pseudonyme *</label>
-                    <input type="text" value={form.auteur} onChange={(e) => setForm({ ...form, auteur: e.target.value })} required placeholder="Votre nom ou pseudo" className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
+                    <label htmlFor="intercession-auteur" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Pseudonyme *</label>
+                    <input id="intercession-auteur" type="text" value={form.auteur} onChange={(e) => setForm({ ...form, auteur: e.target.value })} required placeholder="Votre nom ou pseudo" autoComplete="name" maxLength={100} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Catégorie</label>
-                    <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })} className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20">
+                    <label htmlFor="intercession-categorie" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Catégorie</label>
+                    <select id="intercession-categorie" value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20">
                       <option value="general">Général</option>
                       <option value="sante">Santé</option>
                       <option value="famille">Famille</option>
                       <option value="spiritual">Spirituel</option>
+                      <option value="action_graces">Action de grâces</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Sujet *</label>
-                  <input type="text" value={form.sujet} onChange={(e) => setForm({ ...form, sujet: e.target.value })} required placeholder="Résumé court de votre demande" maxLength={200} className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
+                  <label htmlFor="intercession-sujet" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Sujet *</label>
+                  <input id="intercession-sujet" type="text" value={form.sujet} onChange={(e) => setForm({ ...form, sujet: e.target.value })} required placeholder="Résumé court de votre demande" maxLength={200} className="w-full min-h-[44px] px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20" />
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">Description *</label>
-                  <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows={5} placeholder="Décrivez votre demande en détail…" maxLength={2000} className="w-full px-4 py-3 rounded-3xl border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-y font-serif" />
+                  <label htmlFor="intercession-description" className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
+                    Description {audioFile ? "(facultative — votre note vocale sera transmise)" : "*"}
+                  </label>
+                  <textarea id="intercession-description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required={!audioFile} rows={5} placeholder="Décrivez votre demande en détail, ou enregistrez plutôt une note vocale ci-dessous…" maxLength={2000} className="w-full min-h-[120px] px-4 py-3 rounded-3xl border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 resize-y font-serif" />
+                  <p className="text-[11px] text-[#8A8378] mt-1.5">
+                    {audioFile
+                      ? "Votre note vocale suffit : la description écrite est devenue facultative."
+                      : "Obligatoire, sauf si vous enregistrez une note vocale."}
+                  </p>
                 </div>
 
-                <label className="flex items-center gap-2 cursor-pointer">
+                {/* ⭐ V3.30 — Note vocale : s'exprimer librement en audio */}
+                <AudioRecorder
+                  onFileChange={(file, d) => {
+                    setAudioFile(file);
+                    setAudioDuration(d);
+                  }}
+                />
+
+                {erreur && (
+                  <p className="text-sm text-[#B5502F] font-semibold bg-[#B5502F]/10 rounded-xl px-4 py-3 flex items-start gap-2" role="alert">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    {erreur}
+                  </p>
+                )}
+
+                <label className="flex items-center gap-2.5 cursor-pointer min-h-[44px]">
                   <input type="checkbox" checked={form.isUrgent} onChange={(e) => setForm({ ...form, isUrgent: e.target.checked })} className="w-4 h-4 rounded border-[#8A8378]/30 text-state-danger focus:ring-state-danger" />
                   <span className="text-sm text-[#1E0F2B] inline-flex items-center gap-1">
                     <Flame className="w-3.5 h-3.5 text-state-danger" />
@@ -150,7 +208,7 @@ export default function IntercessionPage() {
                   </span>
                 </label>
 
-                <button type="submit" disabled={submitting} className="w-full px-6 py-4 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50">
+                <button type="submit" disabled={submitting} className="w-full min-h-[52px] px-6 py-4 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50">
                   {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Transmission en cours…</> : <><Heart className="w-4 h-4" /> Transmettre ma demande à l&apos;équipe pastorale</>}
                 </button>
 

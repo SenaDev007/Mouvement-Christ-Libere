@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { Heart, Flame, CheckCircle2, Archive, HandHeart, Lock } from "lucide-react";
+import { Heart, Flame, CheckCircle2, Archive, HandHeart, Lock, AudioLines } from "lucide-react";
 import { IntercessionActions } from "@/components/admin/intercession-actions";
 
 export const dynamic = "force-dynamic";
@@ -194,6 +194,22 @@ export default async function AdminIntercessionPage({
                     <p className="text-sm text-[#1E0F2B]/80 leading-relaxed mt-2 whitespace-pre-wrap">
                       {d.description}
                     </p>
+
+                    {/* ⭐ V3.30 — Note vocale : lecteur direct dans le back-office */}
+                    {d.audioUrl && (
+                      <div className="mt-3 p-3 bg-[#C9A227]/5 border border-[#C9A227]/25 rounded-xl">
+                        <p className="text-[11px] font-bold text-[#A3821C] mb-1.5 flex items-center gap-1.5">
+                          <AudioLines className="w-3.5 h-3.5" />
+                          Note vocale
+                          {d.audioDuration
+                            ? ` · ${Math.floor(d.audioDuration / 60)}:${String(Math.round(d.audioDuration % 60)).padStart(2, "0")}`
+                            : ""}
+                          {d.audioSize ? ` · ${Math.round(d.audioSize / 1024)} Ko` : ""}
+                        </p>
+                        { }
+                        <audio controls src={d.audioUrl} preload="metadata" className="w-full h-10" />
+                      </div>
+                    )}
 
                     {d.temoignageExaucement && (
                       <div className="mt-3 p-3 bg-state-success/5 border border-state-success/20 rounded-xl">

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
+import { ensureChannelIsDirectColumn, ensureChannelIsIntercessionColumn } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir tous les canaux (y compris RESTRICTED). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -33,6 +33,12 @@ export async function GET(req: Request) {
     // ⭐ V3.20 — La recherche interroge Channel.isDirect ci-dessous :
     // auto-réparation de la colonne AVANT de l'interroger.
     await ensureChannelIsDirectColumn();
+    // ⭐ V3.30 — Le findMany des canaux renvoie TOUTES les colonnes scalaires
+    // (dont isIntercession) → auto-réparation d'abord ; et le canal dédié
+    // « Sujets de prière » ne doit sortir QUE pour SUPER_ADMIN/ADMIN.
+    await ensureChannelIsIntercessionColumn();
+    const isIntercessionRole =
+      userRole === "SUPER_ADMIN" || userRole === "ADMIN";
 
     // Pour les utilisateurs non privilégiés, on limite la recherche aux canaux
     // dont ils sont membres (pour ne pas fuiter le contenu de canaux privés).
@@ -46,9 +52,11 @@ export async function GET(req: Request) {
     const accessibleChannelFilter = {
       channel: {
         OR: [
-          isPrivileged
+          isIntercessionRole
             ? { isDirect: false }
-            : { isRestricted: false, type: { not: "RESTRICTED" }, isDirect: false },
+            : isPrivileged
+              ? { isDirect: false, isIntercession: false }
+              : { isRestricted: false, type: { not: "RESTRICTED" }, isDirect: false, isIntercession: false },
           { members: { some: { userId } } },
         ],
       },
@@ -74,9 +82,11 @@ export async function GET(req: Request) {
           // ⭐ V3.20 — Les privés ne ressortent pas dans la recherche de
           // canaux (leur « nom » est celui d'un membre — liste = fuite).
           isDirect: false,
-          ...(isPrivileged
-            ? {}
-            : { isRestricted: false, type: { not: "RESTRICTED" } }),
+          ...(isPrivileged ? {} : { isRestricted: false, type: { not: "RESTRICTED" } }),
+          // ⭐ V3.30 — Canal dédié d'intercession : jamais dans la recherche
+          // sauf pour SUPER_ADMIN/ADMIN (les déposants ne doivent pas le
+          // découvrir — ni même les MODERATORs).
+          ...(isIntercessionRole ? {} : { isIntercession: false }),
         },
         take: 10,
       }),

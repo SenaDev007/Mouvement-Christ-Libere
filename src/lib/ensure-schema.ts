@@ -773,3 +773,101 @@ export function ensureVideoLikesColumn(): Promise<void> {
   }
   return inflightVideoLikes;
 }
+
+let intercessionAudioOk = false;
+let inflightIntercessionAudio: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.30 — S'assure que les colonnes audio de `IntercessionRequest`
+ * existent : audioUrl (TEXT), audioDuration (DOUBLE PRECISION), audioMime
+ * (TEXT), audioSize (INTEGER).
+ *
+ * Contexte : la page /intercession permet désormais de joindre une NOTE
+ * VOCALE en plus du texte (« possibilité de faire un audio pour permettre
+ * à la personne de s'exprimer librement » — demande du pasteur). L'audio
+ * est stocké sur R2 (fallback data URL ≤ 1,2 Mo) et relayé dans le canal
+ * dédié « Sujets de prière » de Yeshua Connect.
+ *
+ * Mêmes garanties que les autres helpers : idempotent, mémoïsé,
+ * concurrentiel, échec DDL purement loggué.
+ */
+export function ensureIntercessionAudioColumns(): Promise<void> {
+  if (intercessionAudioOk) return Promise.resolve();
+  if (!inflightIntercessionAudio) {
+    inflightIntercessionAudio = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "IntercessionRequest" ADD COLUMN IF NOT EXISTS "audioUrl" TEXT'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "IntercessionRequest" ADD COLUMN IF NOT EXISTS "audioDuration" DOUBLE PRECISION'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "IntercessionRequest" ADD COLUMN IF NOT EXISTS "audioMime" TEXT'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "IntercessionRequest" ADD COLUMN IF NOT EXISTS "audioSize" INTEGER'
+      );
+    })()
+      .then(() => {
+        intercessionAudioOk = true;
+        console.log("[ensure-schema] V3.30 : colonnes IntercessionRequest.audio* vérifiées/créées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE IntercessionRequest.audio* impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightIntercessionAudio = null;
+      });
+  }
+  return inflightIntercessionAudio;
+}
+
+let channelIsIntercessionOk = false;
+let inflightChannelIsIntercession: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.30 — S'assure que la colonne `Channel.isIntercession` (BOOLEAN,
+ * défaut false) existe.
+ *
+ * Contexte : chaque demande d'intercession déposée sur /intercession est
+ * relayée dans un canal DÉDIÉ « Sujets de prière » de Yeshua Connect. Ce
+ * canal n'est visible et lisible QUE par SUPER_ADMIN et ADMIN (directive
+ * pasteur : « c'est seulement les admins, les super admins qui ont accès —
+ * même les membres qui envoient leurs sujets ne peuvent pas voir ce qui
+ * s'y passe »). Le drapeau permet de distinguer CE canal des autres canaux
+ * RESTRICTED (qui restent accessibles aux MODERATORs) et garantit le
+ * cloisonnement même si le canal est renommé depuis le back-office.
+ *
+ * Le canal lui-même est créé à la demande par la route /api/intercession
+ * (find-or-create) — ce helper ne fait que poser la colonne.
+ *
+ * Mêmes garanties que les autres helpers : idempotent, mémoïsé,
+ * concurrentiel, échec DDL purement loggué.
+ */
+export function ensureChannelIsIntercessionColumn(): Promise<void> {
+  if (channelIsIntercessionOk) return Promise.resolve();
+  if (!inflightChannelIsIntercession) {
+    inflightChannelIsIntercession = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "Channel" ADD COLUMN IF NOT EXISTS "isIntercession" BOOLEAN NOT NULL DEFAULT false'
+      );
+    })()
+      .then(() => {
+        channelIsIntercessionOk = true;
+        console.log("[ensure-schema] V3.30 : colonne Channel.isIntercession vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE Channel.isIntercession impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightChannelIsIntercession = null;
+      });
+  }
+  return inflightChannelIsIntercession;
+}

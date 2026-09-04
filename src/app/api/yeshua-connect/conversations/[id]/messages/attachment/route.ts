@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { ensureChannelIsIntercessionColumn } from "@/lib/ensure-schema";
 import { uploadToR2, isR2Configured, generateKey } from "@/lib/r2";
 
 /** Rôles pouvant modérer (et donc poster dans) tous les canaux même sans y être membre. */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
+
+/** ⭐ V3.30 — Rôles autorisés sur le canal dédié d'intercession
+ * (Sujets de prière) — SUPER_ADMIN/ADMIN uniquement. */
+const ROLES_CANAL_INTERCESSION = new Set(["SUPER_ADMIN", "ADMIN"]);
 
 /** Préfixe de clé R2 pour les pièces jointes Yeshua Connect. */
 const R2_PREFIX = "yeshua-connect/attachments";
@@ -42,6 +47,22 @@ export async function POST(
     const userRole = session.user.role;
 
     const { id } = await params;
+
+    // ⭐ V3.30 — Garde du canal dédié d'intercession (Sujets de prière) :
+    // SUPER_ADMIN/ADMIN uniquement — avant toute vérification de membre.
+    await ensureChannelIsIntercessionColumn();
+    {
+      const canalIntercession = await db.channel.findUnique({
+        where: { id },
+        select: { isIntercession: true },
+      });
+      if (canalIntercession?.isIntercession && !ROLES_CANAL_INTERCESSION.has(userRole || "")) {
+        return NextResponse.json(
+          { error: "Canal réservé à l'administration" },
+          { status: 403 },
+        );
+      }
+    }
 
     // 🔒 Vérifier que l'utilisateur est membre du canal (sauf rôles privilégiés)
     if (!PRIVILEGED_ROLES.has(userRole || "")) {

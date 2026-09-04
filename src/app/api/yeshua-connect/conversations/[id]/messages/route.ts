@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureChannelIsDirectColumn, ensureMessageTypeEnum, ensureUserBlockTable } from "@/lib/ensure-schema";
+import { ensureChannelIsDirectColumn, ensureChannelIsIntercessionColumn, ensureMessageTypeEnum, ensureUserBlockTable } from "@/lib/ensure-schema";
 import { sendPushToUser } from "@/lib/push-notifications";
 
 /** Rôles pouvant modérer (et donc lire) tous les canaux même sans y être membre. */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
+
+/** ⭐ V3.30 — Rôles autorisés sur le canal dédié d'intercession (directive
+ * pasteur : « c'est seulement les admins, les super admins qui ont accès »).
+ * Le canal reçoit les demandes déposées sur /intercession (texte + notes
+ * vocales) — les MODERATORs n'y ont PAS accès, pas plus que les membres. */
+const ROLES_CANAL_INTERCESSION = new Set(["SUPER_ADMIN", "ADMIN"]);
 
 /**
  * GET /api/yeshua-connect/conversations/:id/messages
@@ -51,6 +57,24 @@ export async function GET(
 
     // ⭐ V3.20 — Colonne isDirect lue ci-dessous : auto-réparation d'abord.
     await ensureChannelIsDirectColumn();
+    // ⭐ V3.30 — Colonne isIntercession lue ci-dessous (garde du canal dédié
+    // « Sujets de prière ») : auto-réparation d'abord.
+    await ensureChannelIsIntercessionColumn();
+
+    // 🔒 ⭐ V3.30 — CANAL DÉDIÉ D'INTERCESSION : SUPER_ADMIN/ADMIN uniquement,
+    // AVANT tout auto-join ou bypass privilégié — même un MODERATOR est refusé.
+    {
+      const canalIntercession = await db.channel.findUnique({
+        where: { id },
+        select: { isIntercession: true },
+      });
+      if (canalIntercession?.isIntercession && !ROLES_CANAL_INTERCESSION.has(userRole || "")) {
+        return NextResponse.json(
+          { error: "Canal réservé à l'administration" },
+          { status: 403 },
+        );
+      }
+    }
 
     // 🔒 Vérifier que l'utilisateur est membre du canal (sauf rôles privilégiés)
     // ⭐ V2.9 — AUTO-JOIN paresseux : les canaux PUBLICS (non RESTRICTED)
@@ -311,6 +335,21 @@ export async function POST(
     // ⭐ V3.20 — JAMAIS d'auto-join (ni de bypass privilégié) sur un PRIVÉ.
     // ⭐ V3.20 — Colonne isDirect lue ci-dessous : auto-réparation d'abord.
     await ensureChannelIsDirectColumn();
+    // ⭐ V3.30 — Garde du canal dédié d'intercession (Sujets de prière) :
+    // SUPER_ADMIN/ADMIN uniquement — même un MODERATOR ne peut pas y écrire.
+    await ensureChannelIsIntercessionColumn();
+    {
+      const canalIntercession = await db.channel.findUnique({
+        where: { id },
+        select: { isIntercession: true },
+      });
+      if (canalIntercession?.isIntercession && !ROLES_CANAL_INTERCESSION.has(userRole || "")) {
+        return NextResponse.json(
+          { error: "Canal réservé à l'administration" },
+          { status: 403 },
+        );
+      }
+    }
     if (!PRIVILEGED_ROLES.has(userRole || "")) {
       const membership = await db.channelMember.findUnique({
         where: { channelId_userId: { channelId: id, userId } },

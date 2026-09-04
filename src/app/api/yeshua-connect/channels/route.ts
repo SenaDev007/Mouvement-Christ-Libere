@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureChannelIsIntercessionColumn } from "@/lib/ensure-schema";
 
 /** Rôles pouvant voir tous les canaux (y compris RESTRICTED). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
+
+/** ⭐ V3.30 — Rôles voyant le canal dédié d'intercession (directive
+ * pasteur : « seulement les admins, les super admins » — PAS les
+ * MODERATORs, PAS les membres, et les membres déposant un sujet ne
+ * savent même pas que ce canal existe). */
+const ROLES_CANAL_INTERCESSION = new Set(["SUPER_ADMIN", "ADMIN"]);
 
 /**
  * GET /api/yeshua-connect/channels
@@ -12,6 +18,8 @@ const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
  *
  * - 🔒 Authentification NextAuth requise.
  * - 🔒 Les canaux RESTRICTED ne sont retournés qu'aux rôles privilégiés.
+ * - 🔒 ⭐ V3.30 — Le canal dédié « Sujets de prière » (isIntercession)
+ *   n'est retourné QU'AUX SUPER_ADMIN/ADMIN.
  */
 export async function GET() {
   try {
@@ -22,17 +30,23 @@ export async function GET() {
     }
     const userRole = session.user.role;
     const canSeeRestricted = PRIVILEGED_ROLES.has(userRole || "");
+    const canSeeIntercession = ROLES_CANAL_INTERCESSION.has(userRole || "");
 
     // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl (cf. ensure-schema.ts)
     await ensureChannelAvatarUrl();
     // ⭐ V3.20 — Auto-réparation colonne isDirect (le findMany sans select
     // ci-dessous renvoie TOUTES les colonnes scalaires → 500 si absente).
     await ensureChannelIsDirectColumn();
+    // ⭐ V3.30 — Auto-réparation colonne isIntercession (même raison : le
+    // findMany renvoie toutes les colonnes scalaires).
+    await ensureChannelIsIntercessionColumn();
 
     const channels = await db.channel.findMany({
       where: canSeeRestricted
-        ? {}
-        : { isRestricted: false, type: { not: "RESTRICTED" } },
+        ? canSeeIntercession
+          ? {}
+          : { isIntercession: false }
+        : { isRestricted: false, type: { not: "RESTRICTED" }, isIntercession: false },
       orderBy: [{ communityId: "asc" }, { order: "asc" }],
       include: {
         community: { select: { id: true, name: true } },

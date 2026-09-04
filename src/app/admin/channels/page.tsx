@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
+import { ensureChannelIsDirectColumn, ensureChannelIsIntercessionColumn } from "@/lib/ensure-schema";
 import { ChannelsAdminClient, type AdminChannelItem } from "@/components/admin/channels-admin-client";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +15,9 @@ export const dynamic = "force-dynamic";
 export default async function AdminChannelsPage() {
   // ⭐ V3.20 — Auto-réparation colonne isDirect (findMany sans select).
   await ensureChannelIsDirectColumn();
+  // ⭐ V3.30 — Auto-réparation colonne isIntercession (findMany sans select
+  // → renvoie toutes les colonnes scalaires, dont la nouvelle).
+  await ensureChannelIsIntercessionColumn();
   const [channels, communities] = await Promise.all([
     db.channel.findMany({
       orderBy: [{ communityId: "asc" }, { order: "asc" }],
