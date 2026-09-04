@@ -26,7 +26,11 @@ export function TestimoniesFilters({
   };
 
   return (
-    <section className="bg-[#FAF6EF] border-b border-[#8A8378]/15 py-6 sticky top-[120px] z-30 backdrop-blur-md bg-[#FAF6EF]/95">
+    // ⭐ V3.30 — Plus de position sticky : la section défilait avec la page
+    // mais restait figée (top-120px) au-dessus des témoignages et MASQUAIT
+    // les textes (retour utilisateur pasteur). Elle est désormais dans le
+    // flux normal : elle défile et disparaît comme le reste du contenu.
+    <section className="bg-[#FAF6EF] border-b border-[#8A8378]/15 py-6">
       <div className="container mx-auto max-w-7xl px-4">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
