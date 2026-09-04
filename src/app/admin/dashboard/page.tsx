@@ -141,7 +141,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Cards secondaires */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {secondaryCards.map((stat) => {
           const Icon = stat.icon;
           return (
@@ -181,17 +181,17 @@ export default async function AdminDashboardPage() {
               </Link>
             </div>
             <div className="grid grid-cols-3 divide-x divide-[#8A8378]/10">
-              <Link href="/admin/videos?servant=pam" className="p-4 text-center hover:bg-[#FAF6EF] transition-colors">
+              <Link href="/admin/videos?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
                 <div className="text-xl font-bold text-[#1E0F2B]">{stats.pam._count.videos}</div>
-                <div className="text-[10px] uppercase tracking-wider text-[#8A8378] mt-0.5">Vidéos</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Vidéos</div>
               </Link>
-              <Link href="/admin/testimonies?servant=pam" className="p-4 text-center hover:bg-[#FAF6EF] transition-colors">
+              <Link href="/admin/testimonies?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
                 <div className="text-xl font-bold text-[#1E0F2B]">{stats.pam._count.testimonies}</div>
-                <div className="text-[10px] uppercase tracking-wider text-[#8A8378] mt-0.5">Témoignages</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Témoignages</div>
               </Link>
-              <Link href="/admin/teachings?servant=pam" className="p-4 text-center hover:bg-[#FAF6EF] transition-colors">
+              <Link href="/admin/teachings?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
                 <div className="text-xl font-bold text-[#1E0F2B]">{stats.pam._count.teachings}</div>
-                <div className="text-[10px] uppercase tracking-wider text-[#8A8378] mt-0.5">Enseignements</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Enseignements</div>
               </Link>
             </div>
           </div>
@@ -213,17 +213,17 @@ export default async function AdminDashboardPage() {
               </Link>
             </div>
             <div className="grid grid-cols-3 divide-x divide-[#8A8378]/10">
-              <Link href="/admin/videos?servant=kongo" className="p-4 text-center hover:bg-[#FAF6EF] transition-colors">
+              <Link href="/admin/videos?servant=kongo" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
                 <div className="text-xl font-bold text-[#1E0F2B]">{stats.kongo._count.videos}</div>
-                <div className="text-[10px] uppercase tracking-wider text-[#8A8378] mt-0.5">Vidéos</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Vidéos</div>
               </Link>
-              <Link href="/admin/testimonies?servant=kongo" className="p-4 text-center hover:bg-[#FAF6EF] transition-colors">
+              <Link href="/admin/testimonies?servant=kongo" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
                 <div className="text-xl font-bold text-[#1E0F2B]">{stats.kongo._count.testimonies}</div>
-                <div className="text-[10px] uppercase tracking-wider text-[#8A8378] mt-0.5">Témoignages</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Témoignages</div>
               </Link>
-              <Link href="/admin/teachings?servant=kongo" className="p-4 text-center hover:bg-[#FAF6EF] transition-colors">
+              <Link href="/admin/teachings?servant=kongo" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
                 <div className="text-xl font-bold text-[#1E0F2B]">{stats.kongo._count.teachings}</div>
-                <div className="text-[10px] uppercase tracking-wider text-[#8A8378] mt-0.5">Enseignements</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Enseignements</div>
               </Link>
             </div>
           </div>
