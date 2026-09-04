@@ -40,6 +40,9 @@ export default async function LiveStudioPage({
       servantPortraitUrl={live.servant.portraitUrl}
       thumbnailUrl={live.thumbnailUrl}
       status={live.status}
+      // ⭐ V3.31 — Date programmée pour l'écran pré-direct de la preview
+      // (miniature + compte à rebours, même présentation que le viewer).
+      scheduledAt={live.scheduledAt.toISOString()}
       // ⭐ V2.6.2 — Restaurer l'état de pause et la durée réelle quand on
       // revient dans le studio d'un live DÉJÀ en cours : avant, le studio
       // repartait en « lecture » tout seul avec une durée remise à zéro.

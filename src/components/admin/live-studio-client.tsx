@@ -9,7 +9,7 @@ import {
   Monitor, MonitorOff, Wifi, Activity, Heart,
   Youtube, Facebook, Music2, Instagram,
   ChevronDown, ChevronUp, Eye, MessageCircle, BarChart3,
-  X, Pause, Play, Maximize2, Cast, Copy, Camera, RotateCcw,
+  X, Pause, Play, Maximize2, Cast, Copy, Camera, RotateCcw, Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
@@ -24,6 +24,9 @@ interface LiveStudioClientProps {
   servantPortraitUrl?: string | null;
   thumbnailUrl?: string | null;
   status: string;
+  // ⭐ V3.31 — Date/heure programmée (écran pré-direct : miniature + compte
+  // à rebours, même présentation que le viewer public).
+  scheduledAt?: string | null;
   // ⭐ V2.6.2 — État persisté du live (restauration à la reconnexion)
   initialIsPaused?: boolean;
   initialStartedAt?: string | null;
@@ -113,7 +116,7 @@ async function getUserMediaWithTimeout(constraints: MediaStreamConstraints, ms =
 
 export function LiveStudioClient({
   liveId, roomName, title, servantName, servantPortraitUrl, thumbnailUrl,
-  status: initialStatus, multistream,
+  status: initialStatus, multistream, scheduledAt = null,
   initialIsPaused = false, initialStartedAt = null, initialPausedAt = null,
 }: LiveStudioClientProps) {
   const [status, setStatus] = useState(initialStatus);
@@ -155,6 +158,12 @@ export function LiveStudioClient({
   // ⭐ V2.6.2 — Reconnexion auto d'un live déjà en cours (studio refermé puis rouvert)
   const [reconnecting, setReconnecting] = useState(false);
   const reconnectAttemptedRef = useRef(false);
+  // ⭐ V3.31 — ÉCRAN PRÉ-DIRECT : compte à rebours vers l'heure programmée
+  // (même format que le viewer public) + détection « flux caméra noir »
+  // (getUserMedia a RÉUSSI mais aucun frame n'arrive : Windows bloque
+  // l'application de bureau → l'écran reste noir SANS diagnostic).
+  const [preLiveCountdown, setPreLiveCountdown] = useState("");
+  const [blackFeed, setBlackFeed] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -274,6 +283,63 @@ export function LiveStudioClient({
       );
     }
   }, [attachStreamToVideo]);
+
+  // ⭐ V3.31 — COMPTE À REBOURS PRÉ-DIRECT (même format que le viewer
+  // public) : alimente l'écran « Live programmé » de la preview. Ne tourne
+  // qu'avant le direct (SCHEDULED), s'arrête net au passage EN DIRECT.
+  useEffect(() => {
+    if (isLive || status !== "SCHEDULED" || !scheduledAt) {
+      setPreLiveCountdown("");
+      return;
+    }
+    const update = () => {
+      const target = new Date(scheduledAt).getTime();
+      const diff = target - Date.now();
+      if (diff <= 0) {
+        setPreLiveCountdown("Débute à l'instant…");
+        return;
+      }
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setPreLiveCountdown(
+        days > 0 ? `dans ${days}j ${hours}h ${minutes}m`
+        : hours > 0 ? `dans ${hours}h ${minutes}m ${seconds}s`
+        : `dans ${minutes}m ${seconds}s`
+      );
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [isLive, status, scheduledAt]);
+
+  // ⭐ V3.31 — DÉTECTEUR « FLUX CAMÉRA NOIR » : getUserMedia peut RÉUSSIR
+  // alors qu'aucun frame n'arrive jamais (Windows bloque l'application de
+  // bureau, périphérique fantôme…). Avant, le spinner disparaissait
+  // (cameraReady = true) et la preview restait NOIRE sans aucune explication
+  // — exactement le symptôme remonté (« le fond demeure noir comme ça »).
+  // Après 8 s sans le moindre frame, on affiche un bandeau discret avec la
+  // cause probable et un bouton « Réessayer » (relance sans rechargement).
+  useEffect(() => {
+    if (!cameraReady || cameraDiag || isLive || !cameraOn) {
+      setBlackFeed(false);
+      return;
+    }
+    let zeroFrameSeconds = 0;
+    const probe = setInterval(() => {
+      const video = videoRef.current;
+      if (!video) return;
+      if (video.videoWidth > 0) {
+        zeroFrameSeconds = 0;
+        setBlackFeed(false);
+        return;
+      }
+      zeroFrameSeconds += 1;
+      if (zeroFrameSeconds >= 8) setBlackFeed(true);
+    }, 1000);
+    return () => clearInterval(probe);
+  }, [cameraReady, cameraDiag, isLive, cameraOn]);
 
   useEffect(() => {
     initCamera();
@@ -1249,24 +1315,76 @@ export function LiveStudioClient({
               style={{ zIndex: 1 }} />
 
             {!cameraOn && cameraReady && !screenSharing && !isPaused && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/80 pointer-events-none">
-                <div className="text-center">
-                  <VideoOff className="w-12 h-12 text-[#1E0F2B]/30 mx-auto mb-2" />
-                  <p className="text-sm text-[#1E0F2B]/50">Caméra désactivée</p>
+              <div className="absolute inset-0 pointer-events-none">
+                {/* ⭐ V3.31 — miniature en fond (cohérence : plus jamais de
+                    noir total hors direct) */}
+                {thumbnailUrl && (
+                  <img src={thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 blur-sm" />
+                )}
+                <div className="absolute inset-0 bg-black/70" />
+                <div className="relative h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <VideoOff className="w-12 h-12 text-[#FAF6EF]/40 mx-auto mb-2" />
+                    <p className="text-sm text-[#FAF6EF]/60">Caméra désactivée</p>
+                  </div>
                 </div>
               </div>
             )}
-            {!cameraReady && !cameraDiag && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                {/* ⭐ V3.27 — miniature du live en fond pendant l'init (fini
-                    le « noir » à l'entrée du module) */}
-                {thumbnailUrl && (
-                   
-                  <img src={thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-sm" />
+            {/* ⭐ V3.31 — ÉCRAN PRÉ-DIRECT DYNAMIQUE (remplace le spinner
+                plein écran sur fond noir) : dès l'entrée dans le studio,
+                la preview présente la miniature du live programmé — même
+                présentation que le viewer public (miniature + dégradé de
+                marque + date programmée + compte à rebours). La caméra
+                s'initialise EN ARRIÈRE-PLAN : son statut est une pastille
+                compacte, l'initialisation (qui peut durer si une invite de
+                permission Windows reste ouverte) ne masque PLUS l'écran.
+                Dès que la caméra est prête, cet écran s'efface et laisse
+                place à l'aperçu caméra (contrôle du cadrage avant Go Live). */}
+            {!isLive && !cameraReady && !cameraDiag && !screenSharing && (
+              <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+                {thumbnailUrl ? (
+                  <img src={thumbnailUrl} alt={title} className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#2A0E3D] to-[#1A0826]" />
                 )}
-                <div className="relative text-center">
-                  <Loader2 className="w-10 h-10 text-[#C9A227] mx-auto mb-2 animate-spin" />
-                  <p className="text-sm text-[#FAF6EF]/80">Initialisation de la caméra...</p>
+                {thumbnailUrl && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#1A0826] via-[#1A0826]/55 to-[#1A0826]/25" />
+                )}
+                <div className="relative h-full flex flex-col items-center justify-center text-center px-4 sm:px-6">
+                  {status !== "ENDED" ? (
+                    <>
+                      <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30 flex items-center justify-center mb-1.5 sm:mb-4">
+                        <Calendar className="w-4 h-4 sm:w-6 sm:h-6 text-[#C9A227]" />
+                      </div>
+                      <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.25em] font-bold text-[#C9A227] mb-1 sm:mb-2">Live programmé</p>
+                      <h2 className="text-sm sm:text-base md:text-xl font-bold text-[#FAF6EF] mb-1 sm:mb-2 max-w-md line-clamp-2">{title}</h2>
+                      {scheduledAt && (
+                        <p className="text-[11px] sm:text-sm text-[#FAF6EF]/75 mb-2 sm:mb-3">
+                          {new Date(scheduledAt).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      )}
+                      {preLiveCountdown && (
+                        <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-xs sm:text-sm font-bold">
+                          <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />{preLiveCountdown}
+                        </span>
+                      )}
+                      {/* Statut caméra COMPACT — le grand loader centré est
+                          supprimé : la miniature reste visible pendant toute
+                          l'initialisation, même longue. Dans le flux (et non
+                          en absolute) : aucun chevauchement sur les petits
+                          écrans où la preview fait ~180 px de haut. */}
+                      <span className="mt-3 sm:mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-[#FAF6EF]/90 text-xs font-medium">
+                        <Loader2 className="w-3.5 h-3.5 text-[#C9A227] animate-spin" />
+                        Initialisation de la caméra…
+                      </span>
+                    </>
+                  ) : (
+                    <div className="text-center">
+                      <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-[#FAF6EF]/30 mx-auto mb-2 sm:mb-3" />
+                      <p className="text-sm sm:text-lg font-bold text-[#FAF6EF] mb-1">Ce direct est terminé</p>
+                      <p className="text-xs sm:text-sm text-[#FAF6EF]/50">Le replay sera disponible en post-production</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1288,6 +1406,28 @@ export function LiveStudioClient({
                     <RotateCcw className="w-4 h-4" />Réessayer
                   </button>
                   <p className="text-[11px] text-[#FAF6EF]/40 mt-3">« Réessayer » relance la caméra sans recharger la page — utilisez-le après avoir modifié les autorisations.</p>
+                </div>
+              </div>
+            )}
+
+            {/* ⭐ V3.31 — BANDEAU « FLUX CAMÉRA NOIR » : getUserMedia a réussi
+                (cameraReady) mais AUCUN frame n'arrive (videoWidth = 0) après
+                8 s. Symptôme : le loader disparaît et « le fond demeure noir »
+                sans aucune explication (Windows bloque l'application de
+                bureau, périphérique retenu par un autre logiciel…). Bandeau
+                discret en haut de la preview — il ne masque PAS l'aperçu —
+                avec cause probable + relance sans rechargement. */}
+            {!isLive && cameraReady && !cameraDiag && cameraOn && blackFeed && (
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 w-[min(92%,26rem)]">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1A0826]/95 border border-[#C9A227]/40 text-[#FAF6EF] text-xs shadow-lg">
+                  <AlertCircle className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+                  <span className="min-w-0 flex-1 text-left leading-snug">
+                    Flux caméra noir — vérifiez que Windows autorise les applications de bureau (Chrome/Edge) à utiliser la caméra.
+                  </span>
+                  <button onClick={() => { setBlackFeed(false); initCamera(); }}
+                    className="inline-flex items-center gap-1.5 px-3 min-h-[36px] rounded-lg bg-[#C9A227] text-[#1E0F2B] font-bold text-xs hover:bg-[#DDBE55] transition-colors flex-shrink-0">
+                    <RotateCcw className="w-3.5 h-3.5" />Réessayer
+                  </button>
                 </div>
               </div>
             )}
