@@ -51,7 +51,7 @@ export function TeachingCard({ title, excerpt, theme, book, level, readingTime, 
           </div>
 
           {/* Titre */}
-          <h3 className="font-serif text-lg md:text-xl font-bold text-[#1E0F2B] leading-snug mb-3 group-hover:text-[#C9A227] transition-colors line-clamp-2">
+          <h3 className="font-serif text-lg md:text-xl font-bold text-[#1E0F2B] leading-snug mb-3 group-hover:text-[#C9A227] transition-colors line-clamp-2 break-words">
             {title}
           </h3>
 
@@ -82,8 +82,8 @@ export function TeachingCard({ title, excerpt, theme, book, level, readingTime, 
                   {servantName.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div className="flex flex-col">
-                <span className="text-[11px] font-bold text-[#2A0E3D] leading-tight">
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] font-bold text-[#2A0E3D] leading-tight break-words">
                   {servantName}
                 </span>
                 <span className="flex items-center gap-1 text-[10px] text-[#8A8378]">

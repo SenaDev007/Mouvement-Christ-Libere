@@ -448,8 +448,13 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
                   {video.thumbnailUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={video.thumbnailUrl} alt={video.title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                    <Image
+                      src={video.thumbnailUrl}
+                      alt={video.title}
+                      fill
+                      sizes="(max-width: 1023px) 100vw, 62vw"
+                      className="object-cover opacity-30"
+                    />
                   )}
                   <div className="relative z-10">
                     <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
@@ -538,12 +543,11 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
             {recommended.map((rec) => (
               <button key={rec.id} onClick={() => onSelectVideo(rec)} className="group flex gap-2.5 w-full text-left hover:bg-[#2A0E3D]/5 rounded-lg p-1.5 transition-colors">
                 <div className="relative w-40 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-[#1A0826]">
-                  <img
+                  {/* ⭐ V3.28 — <img> brut -> next/image (optimisée + lazy) */}
+                  <ThumbWithFallback
                     src={rec.thumbnailUrl || (rec.youtubeId ? `https://img.youtube.com/vi/${rec.youtubeId}/mqdefault.jpg` : "/logo-christ-libere.png")}
-                    alt={rec.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).src = "/logo-christ-libere.png"; }}
-                    loading="lazy"
+                    title={rec.title}
+                    sizes="160px"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -563,17 +567,35 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
 // ============================================================
 // CARTE VIDÉO STYLE YOUTUBE
 // ============================================================
+// ⭐ V3.28 — Miniature de secours : next/image ne peut pas échanger son
+// src en erreur comme un <img> brut — ce petit composant gère le repli
+// vers le logo local avec un état par carte.
+function ThumbWithFallback({ src, title, sizes, className }: { src: string; title: string; sizes: string; className?: string }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <Image
+      src={failed ? "/logo-christ-libere.png" : src}
+      alt={title}
+      fill
+      sizes={sizes}
+      className={className || "object-cover"}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () => void }) {
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.3 }}>
       <button onClick={onClick} className="group block w-full text-left">
         <div className="relative aspect-video rounded-xl overflow-hidden bg-[#1A0826] mb-2.5">
-          <img
+          {/* ⭐ V3.28 — <img> brut -> next/image : AVIF/WebP dimensionné,
+              lazy loading natif, plus de miniatures 480px chargées sur mobile. */}
+          <ThumbWithFallback
             src={video.thumbnailUrl || (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg` : "/logo-christ-libere.png")}
-            alt={video.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => { (e.target as HTMLImageElement).src = "/logo-christ-libere.png"; }}
-            loading="lazy"
+            title={video.title}
+            sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 300px"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -587,7 +609,7 @@ function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () =>
             <Image src={video.servant === "pam" ? "/pam.jpeg" : "/pasteur-kongo.jpeg"} alt={video.servantName} width={32} height={32} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-[#1E0F2B] leading-snug line-clamp-2 group-hover:text-[#C9A227] transition-colors mb-0.5">{video.title}</h3>
+            <h3 className="text-sm font-semibold text-[#1E0F2B] leading-snug line-clamp-2 break-words group-hover:text-[#C9A227] transition-colors mb-0.5">{video.title}</h3>
             <p className="text-xs text-[#8A8378]">{video.servantName}</p>
             <p className="text-xs text-[#8A8378]/70">{video.category}</p>
           </div>

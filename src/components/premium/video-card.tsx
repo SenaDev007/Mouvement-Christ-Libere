@@ -99,7 +99,7 @@ export function VideoCard({
 
         {/* Contenu texte */}
         <div className="mt-3 px-1">
-          <h3 className="font-serif text-base font-semibold text-[#1E0F2B] leading-snug mb-1.5 line-clamp-2 group-hover:text-[#A3821C] transition-colors">
+          <h3 className="font-serif text-base font-semibold text-[#1E0F2B] leading-snug mb-1.5 line-clamp-2 break-words group-hover:text-[#A3821C] transition-colors">
             {title}
           </h3>
           <p className="text-xs text-[#8A8378] mb-2">{servantName}</p>
