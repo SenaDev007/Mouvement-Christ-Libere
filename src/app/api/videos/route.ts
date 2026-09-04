@@ -1,12 +1,16 @@
 /** GET /api/videos — Liste des vidéos depuis la DB */
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { ensureVideoLikesColumn } from "@/lib/ensure-schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
+    // ⭐ V3.26 — colonne Video.likes (compteur de likes RÉEL, distinct de
+    // views) créée à la volée si absente (idempotent, mémoïsé).
+    await ensureVideoLikesColumn();
     const { searchParams } = new URL(request.url);
     const servant = searchParams.get("servant");
 
@@ -49,6 +53,10 @@ export async function GET(request: NextRequest) {
         description: v.description,
         duration: v.duration || "",
         views: v.views,
+        // ⭐ V3.26 — likes RÉELS (colonne dédiée) : le cœur du lecteur
+        // n'affiche plus views (ancienne donnée fictive — un replay
+        // fraîchement publié affichait « 5 likes » = ses viewers live).
+        likes: (v as unknown as { likes?: number }).likes ?? 0,
         publishedAt: v.publishedAt?.toISOString() || "",
         category: categorize(v.title, v.servant.code),
         servant: v.servant.code,

@@ -473,6 +473,25 @@ export function MediaOverlay({
     return () => { if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current); };
   }, [drawCanvas]);
 
+  // ⭐ V3.26 — CHIEN DE GARDE « caméra noire » : l'élément <video> source
+  // (masqué, opacité 0.01) nourrit le canvas. S'il se met en pause —
+  // autoplay bloqué tardivement (React ne rend pas l'attribut `muted` dans
+  // le DOM, bug facebook/react#10389), onglet sorti de veille, reprise
+  // après partage d'écran — videoWidth reste 0, le canvas peint du NOIR,
+  // et TOUTE la chaîne en aval devient noire (preview studio, HLS viewers,
+  // RTMP YouTube). On vérifie toutes les 2 s et on relance la lecture.
+  useEffect(() => {
+    const watchdog = setInterval(() => {
+      const video = videoSourceRef.current;
+      if (!video || !video.srcObject) return;
+      if (video.paused || video.readyState < 2) {
+        try { video.muted = true; } catch {}
+        video.play().catch(() => {});
+      }
+    }, 2000);
+    return () => clearInterval(watchdog);
+  }, [videoSourceRef]);
+
   useEffect(() => {
     if (!canvasRef.current || !onCanvasStream) return;
     try {

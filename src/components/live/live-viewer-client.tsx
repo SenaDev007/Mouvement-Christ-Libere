@@ -178,6 +178,14 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   // ⭐ V2.9 — ARRÊT DU DIRECT : on poll TOUJOURS pendant le direct (10 s).
   // Quand le statut passe à ENDED (stop depuis le back-office, quick-action
   // ou webhook), l'écran du viewer COUPE.
+  // ⭐ V3.26 — RÉPARATION « Direct terminé » FAUX : avant, ce poll
+  // interrogeait /api/live/next qui renvoie le premier live trié par
+  // scheduledAt parmi TOUS les SCHEDULED/LIVE. Si un AUTRE live programmé
+  // plus tôt existait en base, le viewer recevait un id ≠ le sien et
+  // concluait « direct terminé » alors que le direct ÉTAIT TOUJOURS EN
+  // COURS (anomalie remontée par le pasteur : écran noir quelques secondes
+  // puis « direct terminé », faux). On interroge désormais /api/live/[id]/stats
+  // qui renvoie le VRAI statut de CE live (public, pas d'auth).
   useEffect(() => {
     const isYoutubeLive = !!live.youtubeUrl;
     // Poller tant que :
@@ -187,41 +195,35 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     if (live.status !== "SCHEDULED" && !(isLive && !liveStartedAt) && !isLive) return;
     const checkStatus = async () => {
       try {
-        const res = await apiFetch("/api/live/next");
+        const res = await apiFetch(`/api/live/${live.id}/stats`);
+        if (!res.ok) return;
         const data = await res.json();
-        if (data.live?.id === live.id) {
-          if (data.live.status === "LIVE") {
-            setIsLive(true);
+        if (data.status === "LIVE") {
+          setIsLive(true);
+        }
+        // ⭐ V2.9 — Le direct vient d'être ARRÊTÉ côté back-office :
+        // couper l'écran du viewer.
+        else if (data.status === "ENDED" || data.status === "CANCELLED") {
+          if (isLive) {
+            setLiveEnded(true);
+            setIsLive(false);
+            // Couper TOUTES les formes de lecture (room LiveKit, hls.js,
+            // Agora, Daily) — arrête la lecture et les pistes.
+            try { roomRef.current?.disconnect(); roomRef.current = null; } catch {}
           }
-          // ⭐ V2.9 — Le direct vient d'être ARRÊTÉ côté back-office :
-          // couper l'écran du viewer.
-          else if (data.live.status === "ENDED" || data.live.status === "CANCELLED") {
-            if (isLive) {
-              setLiveEnded(true);
-              setIsLive(false);
-              // Couper TOUTES les formes de lecture (room LiveKit, hls.js,
-              // Agora, Daily) — arrête la lecture et les pistes.
-              try { roomRef.current?.disconnect(); roomRef.current = null; } catch {}
-            }
-            return;
-          }
-          // (C6) Récupérer startedAt fraîche depuis l'API
-          if (data.live.startedAt) {
-            setLiveStartedAt(data.live.startedAt);
-          }
-          // (YT-pause + V3.22) Sync pause state depuis l'API — YouTube,
-          // HLS, Agora, Daily (pas de DataChannel) ET WebRTC (source de
-          // vérité base : pause déclenchée depuis le back-office).
-          {
-            const paused = !!data.live.isPaused;
-            setViewerPaused(paused);
-            setLivePausedAt(data.live.pausedAt || null);
-          }
-        } else if (data.live?.id && data.live.id !== live.id && isLive) {
-          // Un AUTRE live est passé devant (le nôtre est terminé/enterré)
-          setLiveEnded(true);
-          setIsLive(false);
-          try { roomRef.current?.disconnect(); roomRef.current = null; } catch {}
+          return;
+        }
+        // (C6) Récupérer startedAt fraîche depuis l'API
+        if (data.startedAt) {
+          setLiveStartedAt(data.startedAt);
+        }
+        // (YT-pause + V3.22) Sync pause state depuis l'API — YouTube,
+        // HLS, Agora, Daily (pas de DataChannel) ET WebRTC (source de
+        // vérité base : pause déclenchée depuis le back-office).
+        {
+          const paused = !!data.isPaused;
+          setViewerPaused(paused);
+          setLivePausedAt(data.pausedAt || null);
         }
       } catch {}
     };

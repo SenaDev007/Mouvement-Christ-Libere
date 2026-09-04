@@ -23,6 +23,8 @@ interface VideoItem {
   description: string;
   duration: string;
   views: number;
+  // ⭐ V3.26 — likes RÉELS (colonne dédiée) — le cœur n'affiche plus views.
+  likes?: number;
   publishedAt: string;
   category: string;
   servant: "pam" | "kongo";
@@ -320,7 +322,12 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
   onSelectVideo: (v: VideoItem) => void;
 }) {
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(video.views || 0);
+  // ⭐ V3.26 — likes RÉELS : avant, likeCount était initialisé avec
+  // video.views — la colonne des VUES était détournée en compteur de
+  // likes, et un replay fraîchement publié (créé avec views = viewers
+  // du live) affichait « 5 likes » sans AUCUN like réel. On affiche
+  // désormais la vraie colonne likes (0 par défaut).
+  const [likeCount, setLikeCount] = useState(video.likes || 0);
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -332,12 +339,13 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
   useEffect(() => {
     const likedVideos = JSON.parse(localStorage.getItem("likedVideos") || "{}");
     if (likedVideos[video.id]) setLiked(true);
-    setLikeCount(video.views || 0);
-  }, [video.id, video.views]);
+    setLikeCount(video.likes || 0);
+  }, [video.id, video.likes]);
 
   const handleLike = async () => {
     const newLiked = !liked;
     setLiked(newLiked);
+    // Optimiste ; corrigé par la réponse du serveur (compteur réel).
     setLikeCount(prev => newLiked ? prev + 1 : Math.max(0, prev - 1));
 
     // Persister dans localStorage
@@ -346,9 +354,18 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
     else delete likedVideos[video.id];
     localStorage.setItem("likedVideos", JSON.stringify(likedVideos));
 
-    // Persister en DB
+    // Persister en DB — ⭐ V3.26 : action explicite like/unlike (avant,
+    // la route incrémentait TOUJOURS views : unlike puis re-like comptait +2).
     try {
-      await apiFetch(`/api/videos/${video.id}/like`, { method: "POST" });
+      const res = await apiFetch(`/api/videos/${video.id}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: newLiked ? "like" : "unlike" }),
+      });
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (typeof data.likes === "number") setLikeCount(data.likes);
+      }
     } catch {}
   };
 

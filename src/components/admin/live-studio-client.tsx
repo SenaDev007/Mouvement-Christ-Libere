@@ -104,23 +104,84 @@ export function LiveStudioClient({
     destroy: () => void;
   } | null>(null);
 
-  const initCamera = useCallback(async () => {
-    try {
-      setError("");
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720, facingMode: "user" },
-        audio: true,
-      });
-      localStreamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
-      videoRef.current?.play().catch(() => {});
-      setCameraReady(true);
-      setCameraOn(true);
-      setMicOn(true);
-    } catch (err) {
-      setError("Impossible d'accéder à la caméra/micro. Vérifiez les permissions du navigateur.");
-    }
+  // ⭐ V3.26 — RÉPARATION « CAMÉRA NOIRE » : attache un flux à l'élément
+  // <video> source du canvas et GARANTIT qu'il joue.
+  //
+  // Contexte : le studio publie (et affiche) le CANVAS composite, nourri par
+  // cet élément <video> masqué. React ne rend PAS l'attribut `muted` dans le
+  // DOM (bug connu facebook/react#10389) — si la propriété n'est pas
+  // effectivement posée AVANT play(), Chrome REFUSE l'autoplay, la vidéo
+  // reste à videoWidth = 0, le canvas peint du NOIR… et TOUTE la chaîne en
+  // aval (preview du studio, HLS viewers, RTMP YouTube) est noire. On force
+  // donc la propriété en JS, avec reprise automatique.
+  const attachStreamToVideo = useCallback((stream: MediaStream) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.srcObject = stream;
+    video.muted = true;
+    try { video.defaultMuted = true; } catch {}
+    const tryPlay = () => { video.play().catch(() => {}); };
+    tryPlay();
+    // Reprise : certains navigateurs n'autorisent play() qu'une fois les
+    // métadonnées arrivées, ou après un léger délai (policy).
+    video.addEventListener("loadeddata", tryPlay, { once: true });
+    setTimeout(tryPlay, 600);
+    setTimeout(tryPlay, 2000);
   }, []);
+
+  const initCamera = useCallback(async () => {
+    setError("");
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setError(
+        "Caméra indisponible : ce navigateur/contexte ne supporte pas getUserMedia. " +
+        "Le studio exige HTTPS (ou localhost)."
+      );
+      return;
+    }
+    // ⭐ V3.26 — Contraintes en cascade + DIAGNOSTIC PRÉCIS : avant, tout
+    // échec getUserMedia renvoyait le même message vague. On distingue
+    // désormais permission refusée / caméra occupée / caméra absente /
+    // contrainte non supportée, avec la marche à suivre.
+    const attempts: Array<MediaStreamConstraints> = [
+      { video: { width: 1280, height: 720, facingMode: "user" }, audio: true },
+      { video: true, audio: true },
+      { video: true },
+    ];
+    let stream: MediaStream | null = null;
+    let lastErr: unknown = null;
+    for (const constraints of attempts) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        break;
+      } catch (err) { lastErr = err; }
+    }
+    if (!stream) {
+      const name = lastErr instanceof DOMException ? lastErr.name : "";
+      let reason: string;
+      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+        reason =
+          "accès REFUSÉ. Cliquez sur l'icône 🔒 (ou l'icône caméra) à gauche de la barre " +
+          "d'adresse → autorisez Caméra et Microphone → rechargez la page.";
+      } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+        reason = "aucune caméra détectée sur cette machine.";
+      } else if (name === "NotReadableError" || name === "TrackStartError") {
+        reason =
+          "la caméra est déjà utilisée par une autre application (Zoom, OBS, Windows " +
+          "Hello…) — fermez-la et rechargez la page.";
+      } else if (name === "OverconstrainedError") {
+        reason = "la caméra ne supporte pas la résolution demandée (essayez une autre caméra).";
+      } else {
+        reason = lastErr instanceof Error ? lastErr.message : "erreur inconnue.";
+      }
+      setError(`Impossible d'accéder à la caméra/micro : ${reason}`);
+      return;
+    }
+    localStreamRef.current = stream;
+    attachStreamToVideo(stream);
+    setCameraReady(true);
+    setCameraOn(true);
+    setMicOn(true);
+  }, [attachStreamToVideo]);
 
   useEffect(() => {
     initCamera();
@@ -239,24 +300,22 @@ export function LiveStudioClient({
         screenStreamRef.current.getTracks().forEach((t) => t.stop());
         screenStreamRef.current = null;
       }
-      if (localStreamRef.current && videoRef.current) {
-        videoRef.current.srcObject = localStreamRef.current;
-        videoRef.current?.play().catch(() => {});
+      // ⭐ V3.26 — reprise garantie du flux caméra après le partage d'écran
+      // (même mécanique que initCamera : muted + play avec retries).
+      if (localStreamRef.current) {
+        attachStreamToVideo(localStreamRef.current);
       }
       setScreenSharing(false);
     } else {
       try {
         const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
         screenStreamRef.current = displayStream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = displayStream;
-          videoRef.current?.play().catch(() => {});
-        }
+        // ⭐ V3.26 — attacher avec la même garantie de lecture.
+        attachStreamToVideo(displayStream);
         setScreenSharing(true);
         displayStream.getVideoTracks()[0].onended = () => {
-          if (localStreamRef.current && videoRef.current) {
-            videoRef.current.srcObject = localStreamRef.current;
-            videoRef.current?.play().catch(() => {});
+          if (localStreamRef.current) {
+            attachStreamToVideo(localStreamRef.current);
           }
           if (screenStreamRef.current) {
             screenStreamRef.current.getTracks().forEach((t) => t.stop());
@@ -460,164 +519,201 @@ export function LiveStudioClient({
     setError("");
     setInfo("");
     try {
-      // ─── 1. Démarrer le live côté DB (statut LIVE + startedAt) ───
+      // ═══ ⭐ V3.26 — ORDRE DES ÉTAPES CORRIGÉ (anomalie « la minuterie
+      // démarre avant la stabilisation du bouton Terminer ») ═══
+      // AVANT : /api/live/start (statut LIVE en base) → connexion →
+      // « EN DIRECT » + minuterie qui court PENDANT que le multistreaming
+      // RTMP était encore en configuration → le bouton « Terminer » et la
+      // minuterie n'étaient pas stabilisés.
+      // NOUVEL ORDRE : (1) connexion au serveur de diffusion → (2) egress
+      // HLS → (3) enregistrement local → (4) multistreaming RTMP →
+      // (5) /api/live/start (statut LIVE + startedAt = le VRAI début du
+      // direct) → (6) SEULEMENT ALORS « EN DIRECT » + minuterie + stats.
+      // La minuterie démarre donc une fois la chaîne STABILISÉE, et
+      // startedAt (côté viewer) correspond au vrai passage à l'antenne.
+
+      // ─── 1. Connexion au serveur de diffusion (⭐ V3.22 : chaîne
+      //     LiveKit → Agora → Daily avec bascule AUTOMATIQUE serveur) ───
+      // ⭐ V3.26 : AVANT tout changement d'état — si cette étape échoue,
+      // rien n'a été démarré (ni statut DB, ni minuterie) : il n'y a
+      // donc PLUS RIEN à annuler (l'ancien code appelait /api/live/stop
+      // en compensation d'un /start déjà fait — inutile désormais).
+      setInfo("Connexion au serveur de diffusion...");
+      const provider = await connectPublisherWithFailover({ applyPause: false });
+      setInfo(
+        provider === "livekit"
+          ? "Connecté à LiveKit — publication du flux..."
+          : `Connecté (repli ${provider === "agora" ? "Agora" : "Daily"} — LiveKit indisponible)`,
+      );
+
+      // ─── 2. ⭐ V3.22 — MODE YOUTUBE : démarrer l'egress HLS dès
+      //     maintenant pour que la playlist soit prête AVANT l'arrivée
+      //     des viewers. Best effort — les viewers retombent proprement
+      //     en WebRTC si l'egress échoue (quota/plan). ───
+      if (provider === "livekit") {
+        apiFetch(`/api/live/${liveId}/stream`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "hls-start" }),
+        }).then((r) => r.json().catch(() => ({}))).then((data: { success?: boolean; reason?: string }) => {
+          if (data?.success) {
+            console.log("[studio] Egress HLS démarré (mode YouTube — viewers non comptés)");
+          } else if (data?.reason) {
+            console.warn("[studio] HLS indisponible :", data.reason);
+          }
+        }).catch(() => {});
+      }
+
+      // ─── 3. Enregistrement local du replay (dès la connexion, AVANT
+      //     l'egress : le replay ne perd rien du direct) ───
+      const recordStream = overlayStreamRef.current || localStreamRef.current;
+      if (recordStream && typeof MediaRecorder !== "undefined" && !mediaRecorderRef.current) {
+        try {
+          const combinedStream = new MediaStream();
+          recordStream.getVideoTracks().forEach((t) => combinedStream.addTrack(t));
+          if (localStreamRef.current) {
+            localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
+          }
+          const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+            ? "video/webm;codecs=vp9,opus"
+            : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+            ? "video/webm;codecs=vp8,opus"
+            : "video/webm";
+          const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
+          recordedChunksRef.current = [];
+          recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+          };
+          recorder.start(1000);
+          mediaRecorderRef.current = recorder;
+          setIsRecording(true);
+          console.log("[studio] Enregistrement démarré");
+        } catch (err) {
+          console.error("[studio] MediaRecorder failed:", err);
+        }
+      }
+
+      // ─── 4. Multistreaming RTMP (⭐ V3.22 : LiveKit uniquement —
+      //     l'egress RTMP lit la room LiveKit ; en repli Agora/Daily le
+      //     multistreaming n'est pas disponible, le direct reste
+      //     accessible sur le site) APRÈS publication du track.
+      //     ⭐ V3.26 : AVANT le passage « EN DIRECT » — quand cette étape
+      //     se termine (réussie OU échouée), la chaîne est STABILISÉE. ───
+      if (multistream.enabled && mediaProviderRef.current === "livekit") {
+        try {
+          setInfo("Démarrage du multistreaming RTMP...");
+          const egressRes = await apiFetch(`/api/live/${liveId}/egress`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+          const egressData = await egressRes.json().catch(() => ({}));
+          console.log("[studio] Egress RTMP response:", egressData);
+
+          if (egressRes.ok && egressData.totalStarted > 0) {
+            const reused = (egressData.results || []).some((r: { reused?: boolean }) => r.reused);
+            setInfo(`✓ Multistreaming actif (${egressData.totalStarted} destination(s))${reused ? " — egress réutilisé" : ""}`);
+          } else if (egressRes.ok && egressData.totalFailed > 0) {
+            const failed = egressData.results?.filter((r: { egressId: string | null }) => !r.egressId).map((r: { name: string; error?: string }) => `${r.name}: ${r.error || "échec"}`).join(", ");
+            setInfo(`⚠ Multistreaming: ${egressData.totalFailed} échec(s) — ${failed}`);
+            setError(`RTMP échoué: ${failed}`);
+          } else if (!egressRes.ok) {
+            const errMsg = egressData.error || `HTTP ${egressRes.status}`;
+            const diag = egressData.diagnostic ? `\n${egressData.diagnostic.join("\n")}` : "";
+            setInfo(`⚠ Multistreaming échoué: ${errMsg}${diag}`);
+            setError(`Multistreaming: ${errMsg}${diag}`);
+          }
+        } catch (err) {
+          console.error("[studio] Failed to start RTMP egress:", err);
+          setError(`RTMP egress: ${err instanceof Error ? err.message : "erreur"}`);
+        }
+      }
+
+      // ─── 5. Démarrer le live côté DB (statut LIVE + startedAt + Tier C
+      //     broadcast YouTube) — ⭐ V3.26 : APRÈS la stabilisation de la
+      //     chaîne, pour que startedAt (et la minuterie du viewer)
+      //     correspondent au VRAI passage à l'antenne et non au clic sur
+      //     « Go Live ». Best effort : le studio continue même si la DB
+      //     est momentanément indisponible. ───
+      let startedAtIso: string | null = null;
       try {
         const startRes = await apiFetch("/api/live/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ liveId }),
         });
-        if (!startRes.ok) { const data = await startRes.json(); throw new Error(data.error || "Erreur démarrage"); }
-
-        // Tier C : si un broadcast YouTube a été pré-créé, l'afficher
+        // ⭐ V3.26 — startedAt renvoyé par la route (ancrage minuterie).
         const startData = await startRes.json().catch(() => ({}));
+        if (!startRes.ok) {
+          // « Le live est déjà en cours » = reprise (studio rouvert) :
+          // PAS une erreur bloquante — startedAt est déjà en base.
+          if (!/déjà en cours/i.test(String(startData.error || ""))) {
+            throw new Error(startData.error || "Erreur démarrage");
+          }
+        }
         if (startData.youtubeBroadcast?.url) {
           setInfo(`✓ Broadcast YouTube pré-créé: ${startData.youtubeBroadcast.url}`);
           console.log("[studio] Broadcast YouTube pré-créé:", startData.youtubeBroadcast);
         }
+        if (startData.startedAt) startedAtIso = startData.startedAt;
       } catch (err) {
-        // Si l'API start échoue, on continue quand même — le live peut fonctionner sans DB
         console.error("[studio] /api/live/start failed (continuing anyway):", err);
         setError("Attention: l'API start a échoué, mais le studio continue.");
       }
 
-      // ─── 2. Connexion au serveur de diffusion (⭐ V3.22 : chaîne
-      //     LiveKit → Agora → Daily avec bascule AUTOMATIQUE serveur) ───
-      setInfo("Connexion au serveur de diffusion...");
-      try {
-        const provider = await connectPublisherWithFailover({ applyPause: false });
-        setInfo(
-          provider === "livekit"
-            ? "Connecté à LiveKit — publication du flux..."
-            : `Connecté (repli ${provider === "agora" ? "Agora" : "Daily"} — LiveKit indisponible)`,
-        );
+      // ─── 6. STABILISATION FINALE (⭐ V3.26) : maintenant (et seulement
+      //     maintenant) on passe « EN DIRECT » — minuterie ancrée sur le
+      //     startedAt réel de la base, bouton « Terminer » stable. ───
+      setIsLive(true);
+      setStatus("LIVE");
+      setInfo(
+        (provider === "livekit" ? "Vous êtes en direct !" : `Vous êtes en direct via ${provider === "agora" ? "Agora" : "Daily"} (repli automatique).`) +
+          (multistream.enabled && mediaProviderRef.current !== "livekit"
+            ? " Multistreaming indisponible en mode repli (visible sur le site uniquement)."
+            : ""),
+      );
 
-          // ─── Connecté + flux publié → MAINTENANT on peut démarrer ───
-          setIsLive(true);
-          setStatus("LIVE");
-          setInfo(provider === "livekit" ? "Vous êtes en direct !" : `Vous êtes en direct via ${provider === "agora" ? "Agora" : "Daily"} (repli automatique).`);
+      const anchor = startedAtIso ? new Date(startedAtIso).getTime() : Date.now();
+      if (durationTimerRef.current) clearInterval(durationTimerRef.current);
+      setStreamDuration(Math.max(0, Math.floor((Date.now() - anchor) / 1000)));
+      durationTimerRef.current = setInterval(() => {
+        setStreamDuration(Math.max(0, Math.floor((Date.now() - anchor) / 1000)));
+      }, 1000);
 
-          // ⭐ V3.22 — MODE YOUTUBE : démarrer l'egress HLS dès maintenant
-          // pour que la playlist soit prête AVANT l'arrivée des viewers.
-          // Best effort — les viewers retombent proprement en WebRTC si
-          // l'egress échoue (quota/plan), sans interrompre le direct.
-          if (provider === "livekit") {
-            apiFetch(`/api/live/${liveId}/stream`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "hls-start" }),
-            }).then((r) => r.json().catch(() => ({}))).then((data: { success?: boolean; reason?: string }) => {
-              if (data?.success) {
-                console.log("[studio] Egress HLS démarré (mode YouTube — viewers non comptés)");
-              } else if (data?.reason) {
-                console.warn("[studio] HLS indisponible :", data.reason);
-              }
-            }).catch(() => {});
-          }
-
-          // Démarrer les timers APRÈS connexion LiveKit
-          const startTime = Date.now();
-          durationTimerRef.current = setInterval(() => {
-            setStreamDuration(Math.floor((Date.now() - startTime) / 1000));
-          }, 1000);
-
-          // ⭐ V2.9 — Stats RÉELLES : plus de bitrate/latence aléatoires —
-          // on interroge /stats (viewers, chat, likes, YouTube) toutes
-          // les 5 s. (Remplace AUSSI l'ancien poll /viewers séparé.)
-          if (statsPollRef.current) clearInterval(statsPollRef.current);
-          const pollStats = async () => {
-            try {
-              const res = await apiFetch(`/api/live/${liveId}/stats`);
-              if (!res.ok) return;
-              const data = await res.json();
-              setViewerCount(data.viewerCount || 0);
-              setChatMessageCount(data.chatMessageCount || 0);
-              setReactionCount(data.reactionCount || 0);
-              setLikesTotal(data.likesTotal || 0);
-              setYoutubeStats(data.youtube || null);
-              setYoutubeConfigured(!!data.youtubeConfigured);
-            } catch {}
-          };
-          pollStats();
-          statsPollRef.current = setInterval(pollStats, 5000);
-
-          // Démarrer le MediaRecorder APRÈS connexion LiveKit
-          const recordStream = overlayStreamRef.current || localStreamRef.current;
-          if (recordStream && typeof MediaRecorder !== "undefined") {
-            try {
-              const combinedStream = new MediaStream();
-              recordStream.getVideoTracks().forEach((t) => combinedStream.addTrack(t));
-              if (localStreamRef.current) {
-                localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
-              }
-              const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-                ? "video/webm;codecs=vp9,opus"
-                : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-                ? "video/webm;codecs=vp8,opus"
-                : "video/webm";
-              const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
-              recordedChunksRef.current = [];
-              recorder.ondataavailable = (e) => {
-                if (e.data.size > 0) recordedChunksRef.current.push(e.data);
-              };
-              recorder.start(1000);
-              mediaRecorderRef.current = recorder;
-              setIsRecording(true);
-              console.log("[studio] Enregistrement démarré");
-            } catch (err) {
-              console.error("[studio] MediaRecorder failed:", err);
-            }
-          }
-
-          // ─── Démarrer le multistreaming RTMP (⭐ V3.22 : LiveKit
-          // uniquement — l'egress RTMP lit la room LiveKit ; en repli
-          // Agora/Daily le multistreaming n'est pas disponible, le direct
-          // reste accessible sur le site) APRÈS publication du track ───
-          if (multistream.enabled && mediaProviderRef.current === "livekit") {
-            try {
-              setInfo("Démarrage du multistreaming RTMP...");
-              const egressRes = await apiFetch(`/api/live/${liveId}/egress`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-              });
-              const egressData = await egressRes.json().catch(() => ({}));
-              console.log("[studio] Egress RTMP response:", egressData);
-
-              if (egressRes.ok && egressData.totalStarted > 0) {
-                setInfo(`✓ Multistreaming actif (${egressData.totalStarted} destination(s))`);
-              } else if (egressRes.ok && egressData.totalFailed > 0) {
-                const failed = egressData.results?.filter((r: { egressId: string | null }) => !r.egressId).map((r: { name: string; error?: string }) => `${r.name}: ${r.error || "échec"}`).join(", ");
-                setInfo(`⚠ Multistreaming: ${egressData.totalFailed} échec(s) — ${failed}`);
-                setError(`RTMP échoué: ${failed}`);
-              } else if (!egressRes.ok) {
-                const errMsg = egressData.error || `HTTP ${egressRes.status}`;
-                const diag = egressData.diagnostic ? `\n${egressData.diagnostic.join("\n")}` : "";
-                setInfo(`⚠ Multistreaming échoué: ${errMsg}${diag}`);
-                setError(`Multistreaming: ${errMsg}${diag}`);
-              }
-            } catch (err) {
-              console.error("[studio] Failed to start RTMP egress:", err);
-              setError(`RTMP egress: ${err instanceof Error ? err.message : "erreur"}`);
-            }
-          }
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : "erreur inconnue";
-        console.error("[studio] Connexion de diffusion échouée:", errMsg);
-        setError(`Diffusion impossible: ${errMsg}. Les viewers ne pourront pas voir le flux.`);
-        setInfo("⚠ Tous les serveurs de diffusion sont indisponibles — passez en mode « Encodeur externe (OBS) ».");
-        // (⭐ V3.22) La chaîne a échoué partout : ne pas démarrer timers/
-        // recorder/egress. Annuler le statut LIVE côté DB.
+      // ⭐ V2.9 — Stats RÉELLES : plus de bitrate/latence aléatoires —
+      // on interroge /stats (viewers, chat, likes, YouTube) toutes
+      // les 5 s. (Remplace AUSSI l'ancien poll /viewers séparé.)
+      if (statsPollRef.current) clearInterval(statsPollRef.current);
+      const pollStats = async () => {
         try {
-          await apiFetch("/api/live/stop", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ liveId, recordingUrl: null }),
-          });
+          const res = await apiFetch(`/api/live/${liveId}/stats`);
+          if (!res.ok) return;
+          const data = await res.json();
+          setViewerCount(data.viewerCount || 0);
+          setChatMessageCount(data.chatMessageCount || 0);
+          setReactionCount(data.reactionCount || 0);
+          setLikesTotal(data.likesTotal || 0);
+          setYoutubeStats(data.youtube || null);
+          setYoutubeConfigured(!!data.youtubeConfigured);
         } catch {}
-      }
+      };
+      pollStats();
+      statsPollRef.current = setInterval(pollStats, 5000);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      // La connexion de diffusion a échoué : ⭐ V3.26 — le statut DB
+      // n'étant plus modifié avant la connexion, il n'y a RIEN à annuler.
+      const errMsg = err instanceof Error ? err.message : "erreur inconnue";
+      console.error("[studio] Connexion de diffusion échouée:", errMsg);
+      setError(`Diffusion impossible: ${errMsg}. Les viewers ne pourront pas voir le flux.`);
+      setInfo("⚠ Tous les serveurs de diffusion sont indisponibles — passez en mode « Encodeur externe (OBS) ».");
+      // Nettoyer ce qui a pu démarrer localement (recorder) :
+      try {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+          mediaRecorderRef.current.stop();
+        }
+      } catch {}
+      mediaRecorderRef.current = null;
+      setIsRecording(false);
     } finally {
       setLoading(false);
     }
@@ -876,14 +972,36 @@ export function LiveStudioClient({
             const { uploadUrl, publicUrl } = await presignRes.json();
 
             // Upload direct vers R2
+            // ⭐ V3.26 — RETRY + diagnostic : « Failed to fetch » sur ce PUT
+            // = échec réseau OU CORS du bucket R2. Le serveur applique
+            // désormais les règles CORS AVANT de délivrer l'URL
+            // (ensureR2CorsConfig dans /api/live/[id]/presign) ; on garde
+            // un retry pour survivre à une coupure réseau brève.
             setInfo(`Upload du replay vers R2 (${Math.round(sizeMB)}MB) — patientez...`);
-            const uploadRes = await fetch(uploadUrl, {
-              method: "PUT",
-              body: recordingBlob,
-              headers: { "Content-Type": "video/webm" },
-            });
-            if (!uploadRes.ok) {
-              throw new Error(`Upload R2 échoué: HTTP ${uploadRes.status}`);
+            let uploadOk = false;
+            let uploadErrMsg = "";
+            for (let attempt = 1; attempt <= 2 && !uploadOk; attempt++) {
+              try {
+                const uploadRes = await fetch(uploadUrl, {
+                  method: "PUT",
+                  body: recordingBlob,
+                  headers: { "Content-Type": "video/webm" },
+                });
+                if (uploadRes.ok) { uploadOk = true; break; }
+                uploadErrMsg = `HTTP ${uploadRes.status}`;
+              } catch (err) {
+                uploadErrMsg =
+                  err instanceof TypeError
+                    ? "Failed to fetch (réseau ou CORS du bucket R2 — exécutez /admin/r2-test pour le diagnostic exact)"
+                    : err instanceof Error ? err.message : "erreur réseau";
+              }
+              if (attempt < 2) {
+                console.warn(`[studio] Upload R2 tentative ${attempt} échouée (${uploadErrMsg}) — nouvelle tentative...`);
+                await new Promise((r) => setTimeout(r, 1500));
+              }
+            }
+            if (!uploadOk) {
+              throw new Error(`Upload R2 échoué: ${uploadErrMsg}`);
             }
             recordingUrl = publicUrl;
             console.log("[studio] Replay uploadé (R2 direct):", recordingUrl);

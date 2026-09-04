@@ -728,3 +728,48 @@ export function ensureCallMediaTables(): Promise<void> {
   }
   return inflightCallMedia;
 }
+
+let videoLikesOk = false;
+let inflightVideoLikes: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.26 — S'assure que la colonne `Video.likes` (INTEGER, défaut 0)
+ * existe.
+ *
+ * Contexte : le compteur de likes était stocké dans la colonne `views`
+ * (« réutilisation temporaire » historique), et le replay d'un live était
+ * créé avec views = nombre de viewers du direct → un replay fraîchement
+ * publié affichait « 5 likes » (ou N) sans AUCUN like réel (données
+ * fictives remontées par le pasteur). Désormais :
+ *   - `views` = vues (audience du live transférée, affichée « X vues ») ;
+ *   - `likes` = vrais likes, incrémentés/décrémentés par
+ *     /api/videos/[id]/like uniquement.
+ *
+ * Mêmes garanties que les autres helpers : idempotent, mémoïsé,
+ * concurrentiel, échec DDL purement loggué (la route like retombe
+ * proprement sur 0).
+ */
+export function ensureVideoLikesColumn(): Promise<void> {
+  if (videoLikesOk) return Promise.resolve();
+  if (!inflightVideoLikes) {
+    inflightVideoLikes = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "likes" INTEGER NOT NULL DEFAULT 0'
+      );
+    })()
+      .then(() => {
+        videoLikesOk = true;
+        console.log("[ensure-schema] V3.26 : colonne Video.likes vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE Video.likes impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightVideoLikes = null;
+      });
+  }
+  return inflightVideoLikes;
+}

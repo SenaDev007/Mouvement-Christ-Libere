@@ -195,13 +195,13 @@ export async function POST(req: NextRequest) {
     const liveDate = new Date(live.startedAt || live.scheduledAt);
     const dateStr = liveDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-    // Calculer le nombre total de viewers uniques du live (cumul sur la session)
-    // → sera transféré comme "views" de la vidéo archivée
-    const uniqueViewerCount = await db.liveViewer.count({
-      where: { liveId: liveId },
-    });
-    const totalViews = Math.max(live.viewerCount, uniqueViewerCount);
-
+    // ⭐ V3.26 — FIN DES DONNÉES FICTIVES sur le replay :
+    // AVANT, le replay était créé avec views = totalViews (nombre de
+    // viewers du direct, transférés) et le lecteur vidéo affichait…
+    // views comme compteur de LIKES → « 5 likes » (ou N) sans aucun like
+    // réel (anomalie remontée par le pasteur). Désormais le replay est
+    // créé avec des compteurs à ZÉRO : les vues et les likes ne
+    // s'accumulent que par les interactions réelles des visiteurs.
     try {
       // Vérifier si un replay existe déjà (éviter les doublons)
       const existingReplay = await db.video.findFirst({
@@ -218,7 +218,7 @@ export async function POST(req: NextRequest) {
             title: `${live.title} (Replay)`,
             description: `Replay du live du ${dateStr}${live.description ? ` — ${live.description}` : ""}`,
             duration: durationStr,
-            views: totalViews,
+            views: 0,
             isLive: false,
             videoUrl: replayUrl,
             hlsUrl: recordingUrl || null,
@@ -226,10 +226,11 @@ export async function POST(req: NextRequest) {
             publishedAt: new Date(),
           },
         });
-        console.log(`[live/stop] Replay archivé pour le live ${liveId} (${totalViews} vues)`);
+        console.log(`[live/stop] Replay archivé pour le live ${liveId} (compteurs à zéro — données réelles uniquement)`);
       } else {
-        // Mettre à jour le replay existant — cumuler les vues
-        const newViews = Math.max(existingReplay.views, totalViews);
+        // Mettre à jour le replay existant — URL/durée/miniature
+        // (les compteurs ne sont JAMAIS écrasés : ils continuent de
+        // refléter les interactions réelles sur la vidéo publiée).
         await db.video.update({
           where: { id: existingReplay.id },
           data: {
@@ -237,10 +238,9 @@ export async function POST(req: NextRequest) {
             hlsUrl: recordingUrl || existingReplay.hlsUrl,
             duration: durationStr || existingReplay.duration,
             thumbnailUrl: live.thumbnailUrl || existingReplay.thumbnailUrl,
-            views: newViews,
           },
         });
-        console.log(`[live/stop] Replay mis à jour pour le live ${liveId} (${newViews} vues)`);
+        console.log(`[live/stop] Replay mis à jour pour le live ${liveId}`);
       }
     } catch (err) {
       console.error("[live/stop] Failed to archive replay:", err);

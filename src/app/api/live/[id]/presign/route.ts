@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { getPresignedUploadUrl, getPublicUrl, generateKey, isR2Configured } from "@/lib/r2";
+import { getPresignedUploadUrl, getPublicUrl, generateKey, isR2Configured, ensureR2CorsConfig } from "@/lib/r2";
 
 /**
  * POST /api/live/[id]/presign
  *
  * Génère une URL pré-signée pour upload direct d'un gros fichier vidéo
- * depuis le navigateur vers Backblaze B2 (sans passer par le body Vercel).
+ * (replay) depuis le navigateur vers Cloudflare R2 (sans passer par le
+ * body Vercel, limité à ~4,5 Mo).
  *
  * Body: { contentType: "video/webm" }
  * Response: { uploadUrl, publicUrl, key }
+ *
+ * ⭐ V3.26 — RÉPARATION « Upload replay échoue: Failed to fetch » :
+ * un PUT navigateur vers R2 est TOUJOURS une requête « non simple » →
+ * le navigateur envoie d'abord un preflight OPTIONS ; si le bucket n'a
+ * PAS de règle CORS, le preflight est bloqué et fetch() jette
+ * « TypeError: Failed to fetch ». La route vidéos presign appliquait
+ * déjà les règles CORS du bucket… mais PAS celle-ci (celle du replay !).
+ * Désormais cette route applique ensureR2CorsConfig() AVANT de délivrer
+ * l'URL — même mécanisme idempotent que /api/videos/[id]/presign.
  */
 export async function POST(
   req: NextRequest,
@@ -33,6 +43,14 @@ export async function POST(
     const { id } = await params;
     const body = await req.json();
     const { contentType = "video/webm" } = body;
+
+    // ⭐ V3.26 — CORS AVANT tout : le PUT navigateur exige un preflight
+    // OPTIONS autorisé côté bucket (sinon « Failed to fetch »).
+    // Idempotent et best-effort (token sans permission CORS → on continue,
+    // le client affichera le diagnostic /admin/r2-test).
+    await ensureR2CorsConfig().catch((e) => {
+      console.warn("[presign] Impossible d'appliquer la configuration CORS du bucket:", e);
+    });
 
     const ext = contentType.includes("mp4") ? "mp4" : "webm";
     const key = generateKey("replays", id, ext);

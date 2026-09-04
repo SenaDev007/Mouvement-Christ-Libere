@@ -26,6 +26,20 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 
 const PRESENCE_WINDOW_MS = 90_000;
 
+// ⭐ V3.26 — CACHE des stats YouTube (30 s) : le viewer poll désormais
+// /stats (au lieu de /next — réparation « direct terminé » faux), or la
+// route interrogeait l'API YouTube À CHAQUE appel : N viewers × 1 appel/3 s
+// = des dizaines de milliers d'unités de quota YouTube par jour (quota
+// quotidien : 10 000). Avec ce cache mémoire partagé (studio + viewers,
+// par instance serverless), on retombe à ≤ 2 appels API/minute — et la
+// persistance du viewerCount sur le LiveStream suit le même rythme.
+const YOUTUBE_STATS_TTL_MS = 30_000;
+const ytStatsGlobal = globalThis as unknown as {
+  __ytStatsCache?: Map<string, { stats: { viewCount: number; likeCount: number; commentCount: number } | null; fetchedAt: number }>;
+};
+if (!ytStatsGlobal.__ytStatsCache) ytStatsGlobal.__ytStatsCache = new Map();
+const ytStatsCache: NonNullable<typeof ytStatsGlobal.__ytStatsCache> = ytStatsGlobal.__ytStatsCache;
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -66,26 +80,33 @@ export async function GET(
       }),
     ]);
 
-    // ─── Stats YouTube (si OAuth configuré) ───
+    // ─── Stats YouTube (si OAuth configuré) — ⭐ V3.26 via cache 30 s ───
     let youtube: { viewCount: number; likeCount: number; commentCount: number } | null = null;
     let youtubeConfigured = false;
     if (live.youtubeUrl) {
       try {
-        const { isYouTubeOAuthConfigured } = await import("@/lib/youtube");
-        youtubeConfigured = isYouTubeOAuthConfigured();
-        if (youtubeConfigured) {
-          const { fetchYouTubeStats } = await import("@/lib/youtube-live-chat");
-          const videoId = live.youtubeUrl.match(
-            /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
-          )?.[1];
-          if (videoId) {
-            youtube = await fetchYouTubeStats(videoId);
-            // Persister sur le LiveStream (page d'accueil, archives)
-            if (youtube) {
-              await db.liveStream.update({
-                where: { id },
-                data: { viewerCount: youtube.viewCount },
-              }).catch(() => {});
+        const videoId = live.youtubeUrl.match(
+          /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+        )?.[1];
+        if (videoId) {
+          const { isYouTubeOAuthConfigured } = await import("@/lib/youtube");
+          youtubeConfigured = isYouTubeOAuthConfigured();
+          if (youtubeConfigured) {
+            const cached = ytStatsCache.get(videoId);
+            if (cached && Date.now() - cached.fetchedAt < YOUTUBE_STATS_TTL_MS) {
+              youtube = cached.stats;
+            } else {
+              const { fetchYouTubeStats } = await import("@/lib/youtube-live-chat");
+              youtube = await fetchYouTubeStats(videoId);
+              ytStatsCache.set(videoId, { stats: youtube, fetchedAt: Date.now() });
+              // Persister sur le LiveStream (page d'accueil, archives) —
+              // au rythme du cache, plus à chaque poll.
+              if (youtube) {
+                await db.liveStream.update({
+                  where: { id },
+                  data: { viewerCount: youtube.viewCount },
+                }).catch(() => {});
+              }
             }
           }
         }

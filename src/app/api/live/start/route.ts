@@ -87,11 +87,15 @@ export async function POST(req: NextRequest) {
     // Mettre à jour le live : statut LIVE + startedAt + roomName + youtubeUrl (Tier C)
     // (YT-pause) Réinitialiser l'état de pause au cas où le live aurait été
     // arrêté puis redémarré sans passage par /stop (rare mais possible).
+    // ⭐ V3.26 — startedAt capturé et RENVOYÉ : le studio ancre sa minuterie
+    // dessus (elle démarre à la STABILISATION de la chaîne de diffusion —
+    // connexion + egress — et non plus au clic « Go Live »).
+    const startedAt = new Date();
     await db.liveStream.update({
       where: { id: liveId },
       data: {
         status: "LIVE",
-        startedAt: new Date(),
+        startedAt,
         livekitRoomName: roomName,
         isPaused: false,
         pausedAt: null,
@@ -122,6 +126,8 @@ export async function POST(req: NextRequest) {
       liveId,
       roomName,
       status: "LIVE",
+      // ⭐ V3.26 — ancrage de la minuterie studio (début RÉEL du direct).
+      startedAt: startedAt.toISOString(),
       multistream: {
         enabled: live.multistreamEnabled,
         destinations: egressIds,

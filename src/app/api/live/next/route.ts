@@ -7,13 +7,25 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const nextLive = await db.liveStream.findFirst({
-      where: {
-        status: { in: ["SCHEDULED", "LIVE"] },
-      },
-      orderBy: { scheduledAt: "asc" },
+    // ⭐ V3.26 — PRIORITÉ AU DIRECT EN COURS : avant, un simple findFirst
+    // orderBy scheduledAt ASC sur {SCHEDULED, LIVE} — si un AUTRE live
+    // programmé plus tôt existait en base, la route renvoyait CE live-là
+    // (SCHEDULED) alors qu'un direct ÉTAIT EN COURS. Le viewer (et le
+    // bandeau des directs à venir) en déduisait « direct terminé » à tort.
+    // Désormais : un live LIVE (le plus récemment démarré) PRIME sur
+    // tout programmé ; à défaut, le prochain programmé.
+    const activeLive = await db.liveStream.findFirst({
+      where: { status: "LIVE" },
+      orderBy: { startedAt: "desc" },
       include: { servant: true },
     });
+    const nextLive =
+      activeLive ||
+      (await db.liveStream.findFirst({
+        where: { status: "SCHEDULED" },
+        orderBy: { scheduledAt: "asc" },
+        include: { servant: true },
+      }));
 
     if (!nextLive) {
       return NextResponse.json({ live: null });

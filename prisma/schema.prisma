@@ -200,6 +200,15 @@ model Video {
   videoUrl    String?
   hlsUrl      String?
   views       Int      @default(0)
+  // ⭐ V3.26 — Likes RÉELS, distincts des vues : avant, le bouton cœur
+  // affichait Video.views (colonne détournée « temporairement » par la
+  // route /like), et le replay d'un live était créé avec views = le
+  // nombre de viewers du direct → un replay fraîchement publié
+  // affichait « 5 likes » (ou N) sans AUCUN like réel — données
+  // fictives remontées par le pasteur. Le compteur de likes est
+  // désormais une vraie colonne dédiée, incrémentée/décrémentée
+  // uniquement par /api/videos/[id]/like.
+  likes       Int      @default(0)
   isLive      Boolean  @default(false)
   publishedAt DateTime?
   // ─── Post-production cloud sync ───
