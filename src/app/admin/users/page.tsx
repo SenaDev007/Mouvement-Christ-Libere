@@ -298,15 +298,15 @@ export default async function AdminUsersPage({
           {users.map((u) => (
             <div
               key={u.id}
-              className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:shadow-md hover:border-[#C9A227]/30 transition-all group"
+              className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:shadow-md hover:border-[#C9A227]/30 transition-all group min-w-0"
             >
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4 flex-wrap">
                 {/* Avatar — photo réelle V2.7 */}
                 <UserAvatar name={u.name} role={u.role} avatarUrl={u.avatarUrl} />
 
                 {/* Contenu principal */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
+                  <div className="flex items-start justify-between gap-3 mb-2 flex-wrap">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-bold text-sm text-[#1E0F2B]">{u.name || "Sans nom"}</h3>
@@ -330,10 +330,10 @@ export default async function AdminUsersPage({
                       {/* Email */}
                       <a
                         href={`mailto:${u.email}`}
-                        className="inline-flex items-center gap-1 text-xs text-[#8C5FA8] hover:underline mt-1"
+                        className="inline-flex items-center gap-1 text-xs text-[#8C5FA8] hover:underline mt-1 min-w-0"
                       >
-                        <Mail className="w-3 h-3" />
-                        {u.email}
+                        <Mail className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{u.email}</span>
                       </a>
                     </div>
 
@@ -342,7 +342,7 @@ export default async function AdminUsersPage({
                   </div>
 
                   {/* Meta */}
-                  <div className="flex items-center gap-3 text-[11px] text-[#8A8378] flex-wrap">
+                  <div className="flex items-center gap-3 text-[11px] text-[#8A8378] flex-wrap min-w-0">
                     {u.phone && (
                       <a href={`tel:${u.phone}`} className="flex items-center gap-1 hover:text-[#C9A227]">
                         <Phone className="w-3 h-3" />
