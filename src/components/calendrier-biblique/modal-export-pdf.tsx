@@ -53,6 +53,35 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
     return () => window.removeEventListener("keydown", onEchap);
   }, [ouverte, onFermer]);
 
+  // ⭐ V3.30 — VERROU DE SCROLL du body pendant que le modal est ouvert.
+  // Avant : rien ne bloquait le défilement de la page derrière l'overlay →
+  // sur mobile, le geste de scroll traversait le modal (scroll chaining) et
+  // les textes de la page défilaient/débordaient PAR-DESSOUS du modal de
+  // façon bizarre (retour utilisateur pasteur). Le verrou iOS-safe
+  // (position: fixed + mémorisation du scroll) fige réellement la page,
+  // et la carte du modal scrolle seule, sans entraîner le fond.
+  useEffect(() => {
+    if (!ouverte) return;
+    const body = document.body;
+    const scrollY = window.scrollY;
+    const prevBodyStyle = body.getAttribute("style");
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    return () => {
+      if (prevBodyStyle !== null) {
+        body.setAttribute("style", prevBodyStyle);
+      } else {
+        body.removeAttribute("style");
+      }
+      // Restaure la position de scroll exacte d'avant l'ouverture
+      window.scrollTo(0, scrollY);
+    };
+  }, [ouverte]);
+
   const telecharger = async () => {
     if (telechargement) return;
     setTelechargement(true);
@@ -98,7 +127,7 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ type: "spring", stiffness: 300, damping: 26 }}
-            className="w-full max-w-md bg-[#FAF6EF] rounded-2xl shadow-2xl border border-[#8A8378]/20 overflow-hidden"
+            className="w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain bg-[#FAF6EF] rounded-2xl shadow-2xl border border-[#8A8378]/20"
             onClick={(e) => e.stopPropagation()}
           >
             {/* En-tête */}
