@@ -88,7 +88,7 @@ export default async function AdminTestimoniesPage() {
             return (
               <div
                 key={t.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:border-[#C9A227]/30 hover:shadow-md transition-all group"
+                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:border-[#C9A227]/30 hover:shadow-md transition-all group min-w-0"
               >
                 <div className="flex items-start gap-4">
                   {/* Icon serviteur */}
@@ -100,9 +100,9 @@ export default async function AdminTestimoniesPage() {
                   </div>
 
                   {/* Contenu */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3 mb-1">
-                      <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
+                    <div className="flex items-start justify-between gap-3 mb-1 flex-wrap">
+                      <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
                         <h3 className="font-bold text-sm text-[#1E0F2B] truncate">{t.title}</h3>
                         {t.short && (
                           <p className="text-xs text-[#8A8378] line-clamp-1 mt-0.5">{t.short}</p>
@@ -116,7 +116,7 @@ export default async function AdminTestimoniesPage() {
                     </div>
 
                     {/* Meta */}
-                    <div className="flex items-center gap-3 text-[11px] text-[#8A8378] mt-2">
+                    <div className="flex items-center gap-3 text-[11px] text-[#8A8378] mt-2 flex-wrap">
                       <span
                         className="font-bold uppercase tracking-wider"
                         style={{ color: accentColor }}

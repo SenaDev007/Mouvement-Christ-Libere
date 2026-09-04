@@ -1083,9 +1083,9 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   return (
     <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
       {/* ─── Header ─── */}
-      <div className="border-b border-[#8A8378]/15 px-6 py-3 bg-white sticky top-0 z-30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className="border-b border-[#8A8378]/15 px-4 sm:px-6 py-3 bg-white sticky top-0 z-30">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3 flex-wrap min-w-0">
             {/* ⭐ V3.17 — bouton retour vers la page Vidéos (plus besoin de repasser par la sidebar) */}
             <button
               onClick={handleRetour}
@@ -1095,12 +1095,12 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Retour</span>
             </button>
-            <h1 className="text-xl font-bold flex items-center gap-2 text-[#1E0F2B]">
-              <Film className="w-5 h-5 text-[#C9A227]" />Post-production
+            <h1 className="text-xl font-bold flex items-center gap-2 text-[#1E0F2B] min-w-0">
+              <Film className="w-5 h-5 text-[#C9A227] flex-shrink-0" /><span className="truncate">Post-production</span>
             </h1>
-            <span className="text-xs text-[#8A8378]">{title} — {servantName}</span>
+            <span className="text-xs text-[#8A8378] min-w-0 break-words">{title} — {servantName}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Undo/Redo */}
             <button onClick={undo} disabled={historyIndex <= 0}
               className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 disabled:opacity-30 transition-colors" title="Annuler">

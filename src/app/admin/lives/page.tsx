@@ -92,9 +92,9 @@ export default async function AdminLivesPage() {
             return (
               <div
                 key={l.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:border-[#C9A227]/30 hover:shadow-md transition-all group"
+                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:border-[#C9A227]/30 hover:shadow-md transition-all group min-w-0"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 flex-wrap">
                   {/* Icon */}
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 relative"
@@ -107,9 +107,9 @@ export default async function AdminLivesPage() {
                   </div>
 
                   {/* Contenu */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3 mb-1">
-                      <h3 className="font-bold text-sm text-[#1E0F2B]">{l.title}</h3>
+                  <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
+                    <div className="flex items-start justify-between gap-3 mb-1 flex-wrap">
+                      <h3 className="font-bold text-sm text-[#1E0F2B] min-w-0 break-words">{l.title}</h3>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold ${status.color} ${status.pulse ? "animate-pulse" : ""}`}>
                         {status.label}
                       </span>
@@ -140,8 +140,8 @@ export default async function AdminLivesPage() {
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-1">
+                  {/* Actions — repassent sous le contenu quand elles ne tiennent pas */}
+                  <div className="flex items-center gap-1 flex-wrap">
                     {(l.status === "SCHEDULED" || l.status === "LIVE") && (
                       <Link
                         href={`/admin/lives/${l.id}/studio`}

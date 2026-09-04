@@ -87,9 +87,9 @@ export default async function AdminTeachingsPage() {
             return (
               <div
                 key={t.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:border-[#C9A227]/30 hover:shadow-md transition-all group"
+                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:border-[#C9A227]/30 hover:shadow-md transition-all group min-w-0"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 flex-wrap">
                   {/* Icon */}
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -99,9 +99,9 @@ export default async function AdminTeachingsPage() {
                   </div>
 
                   {/* Contenu */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <h3 className="font-bold text-sm text-[#1E0F2B] leading-tight">{t.title}</h3>
+                  <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
+                    <div className="flex items-start justify-between gap-2 mb-1 flex-wrap">
+                      <h3 className="font-bold text-sm text-[#1E0F2B] leading-tight min-w-0 break-words">{t.title}</h3>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border flex-shrink-0 ${level.color}`}>
                         <GraduationCap className="w-2.5 h-2.5" />
                         {level.label}
