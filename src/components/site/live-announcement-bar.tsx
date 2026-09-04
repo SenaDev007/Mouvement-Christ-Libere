@@ -1,16 +1,11 @@
 "use client";
 
-import { apiFetch } from "@/lib/api-client";
+import { fetchUpcomingLives, type UpcomingLiveItem } from "@/lib/live-upcoming";
 import { useState, useEffect } from "react";
 import { ChevronRight, Clock, Radio } from "lucide-react";
 import Link from "next/link";
 
-interface LiveAnnouncement {
-  id: string;
-  title: string;
-  scheduledAt: string;
-  status: "SCHEDULED" | "LIVE";
-  servantName: string;
+interface LiveAnnouncement extends UpcomingLiveItem {
   youtubeUrl?: string | null;
 }
 
@@ -26,17 +21,13 @@ export function LiveAnnouncementBar() {
 
   useEffect(() => {
     setMounted(true);
+    // ⭐ V3.28 — fetchUpcomingLives (lib partagée) : la requête initiale est
+    // dédupliquée avec UpcomingLiveFloat monté sur la même page (2×61 Ko
+    // → 1×61 Ko), puis les polls de 60 s rafraîchissent normalement.
     const fetchLives = async () => {
       try {
-        const res = await apiFetch("/api/live/upcoming");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.lives && data.lives.length > 0) {
-            setLives(data.lives);
-          } else {
-            setLives([]);
-          }
-        }
+        const lives = await fetchUpcomingLives();
+        setLives(lives as LiveAnnouncement[]);
       } catch {}
     };
     fetchLives();

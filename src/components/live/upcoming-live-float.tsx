@@ -1,17 +1,12 @@
 "use client";
 
-import { apiFetch } from "@/lib/api-client";
+import { fetchUpcomingLives, type UpcomingLiveItem } from "@/lib/live-upcoming";
+import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Radio, Clock, Play, ChevronLeft, ChevronRight } from "lucide-react";
 
-interface UpcomingLive {
-  id: string;
-  title: string;
-  scheduledAt: string;
-  status: string;
-  servantName: string;
-  servantCode: string;
+interface UpcomingLive extends UpcomingLiveItem {
   thumbnailUrl: string | null;
 }
 
@@ -27,16 +22,13 @@ export function UpcomingLiveFloat() {
 
   const fetchUpcoming = useCallback(async () => {
     try {
-      const res = await apiFetch("/api/live/upcoming");
-      const data = await res.json();
-      if (data.lives && data.lives.length > 0) {
-        // Filter lives that have thumbnails
-        const withThumbs = data.lives.filter((l: UpcomingLive) => l.thumbnailUrl);
-        setLives(withThumbs);
-        if (currentIndex >= withThumbs.length) setCurrentIndex(0);
-      } else {
-        setLives([]);
-      }
+      // ⭐ V3.28 — lib partagée : dédupliqué avec LiveAnnouncementBar
+      // (une seule requête /api/live/upcoming au chargement de page).
+      const lives = await fetchUpcomingLives();
+      // Filter lives that have thumbnails
+      const withThumbs = lives.filter((l: UpcomingLive) => l.thumbnailUrl);
+      setLives(withThumbs);
+      if (currentIndex >= withThumbs.length) setCurrentIndex(0);
     } catch {}
   }, [currentIndex]);
 
@@ -109,12 +101,14 @@ export function UpcomingLiveFloat() {
         <div className="relative bg-[#1A0826]/80 backdrop-blur-md rounded-2xl overflow-hidden border border-[#C9A227]/30 shadow-2xl w-64 transition-all group-hover:scale-105">
           {/* Miniature */}
           <div className="relative aspect-video overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {/* ⭐ V3.28 — <img> brut -> next/image : miniature R2/YouTube
+                optimisée (AVIF/WebP) au lieu du JPEG d'origine intégral. */}
+            <Image
               src={live.thumbnailUrl}
               alt={live.title}
-              className="w-full h-full object-cover"
-              loading="eager"
+              fill
+              sizes="(min-width: 1024px) 256px, 320px"
+              className="object-cover"
             />
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0826] via-[#1A0826]/20 to-transparent" />

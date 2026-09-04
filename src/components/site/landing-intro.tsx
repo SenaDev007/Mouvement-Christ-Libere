@@ -37,6 +37,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import Image from "next/image";
 import { Volume2, FastForward } from "lucide-react";
 
 /**
@@ -220,14 +221,19 @@ export function LandingIntro() {
                   className="absolute -inset-6 rounded-full"
                   style={{ background: "radial-gradient(circle, rgba(201,162,39,0.28) 0%, rgba(201,162,39,0) 70%)" }}
                 />
-                {/* Using img pour éviter le loader Next (aucun décalage de layout) */}
-                <img
+                {/* ⭐ V3.28 — logo via next/image : le PNG source de 156 Ko
+                    était servi TEL QUEL par le <img> ; l'optimiseur sert
+                    désormais un ~144/176px AVIF/WebP (~15-30 Ko). width/height
+                    déclarés + w-36 h-auto → zéro CLS (comportement du <img>
+                    d'origine conservé), priority car premier élément visible. */}
+                <Image
                   src="/logo-christ-libere.png"
                   alt="Logo Christ Libère"
                   width={168}
                   height={178}
+                  priority
+                  sizes="(min-width: 768px) 176px, 144px"
                   className="relative w-36 h-auto md:w-44 select-none drop-shadow-[0_0_38px_rgba(201,162,39,0.5)]"
-                  draggable={false}
                 />
               </motion.div>
 
