@@ -87,7 +87,7 @@ export default function PamPage() {
       </section>
 
       {/* ═══ BIOGRAPHIE — Style ghostwriter avec photo ═══ */}
-      <article className="py-16 md:py-24 bg-[#FAF6EF]">
+      <article className="py-16 md:py-24 bg-[#FAF6EF] overflow-x-clip">
         <div className="max-w-6xl mx-auto px-4">
           {/* En-tête biographie */}
           <motion.div
@@ -165,7 +165,7 @@ export default function PamPage() {
                     repeat: Infinity,
                     ease: "easeInOut",
                   }}
-                  className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-[#C9A227]/30 via-[#C9A227]/10 to-transparent blur-2xl pointer-events-none"
+                  className="absolute inset-0 md:-inset-4 rounded-3xl bg-gradient-to-br from-[#C9A227]/30 via-[#C9A227]/10 to-transparent blur-2xl pointer-events-none"
                 />
 
                 {/* Cadre photo */}

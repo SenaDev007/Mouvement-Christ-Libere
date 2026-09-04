@@ -123,7 +123,7 @@ export default function ContribuerPage() {
                       setSelectedAmount(null);
                     }}
                     placeholder="0"
-                    className="flex-1 px-4 py-3.5 rounded-2xl border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
+                    className="flex-1 min-w-0 px-4 py-3.5 rounded-2xl border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
                   />
                   <span className="text-[#8A8378] font-semibold text-lg">€</span>
                 </div>

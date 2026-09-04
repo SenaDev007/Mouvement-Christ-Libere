@@ -286,24 +286,60 @@ export function ContextualNav() {
                         )}
                     </NavigationMenuItem>
                   ))}
+
+                  {/* ⭐ V3.28 — Liens d'authentification DANS le menu burger
+                      (l'icône "Créer un compte" est masquée sous 400px). */}
+                  {!isAuthenticated && (
+                    <NavigationMenuItem className="w-full">
+                      <div
+                        role="separator"
+                        aria-orientation="horizontal"
+                        className="bg-[#C9A227]/20 -mx-1 my-1 h-px w-full"
+                      />
+                      <div className="text-[#C9A227] px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">
+                        Mon compte
+                      </div>
+                      <ul>
+                        <li>
+                          <NavigationMenuLink
+                            href="/login"
+                            className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            Se connecter
+                          </NavigationMenuLink>
+                        </li>
+                        <li>
+                          <NavigationMenuLink
+                            href="/register"
+                            className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            Créer un compte
+                          </NavigationMenuLink>
+                        </li>
+                      </ul>
+                    </NavigationMenuItem>
+                  )}
                 </NavigationMenuList>
               </NavigationMenu>
             </PopoverContent>
           </Popover>
 
-          {/* Logo Christ Libère */}
+          {/* Logo Christ Libère — ⭐ V3.28 : 40px sous sm pour que burger +
+              logo + wordmark + icône connexion tiennent sur iPhone SE (320px) */}
           <Link href="/" className="flex items-center gap-1 group/logo">
             <Image
               src="/logo-christ-libere.png"
               alt="Christ Libère"
               width={56}
               height={56}
-              sizes="(max-width: 767px) 48px, 56px"
-              className="relative w-12 h-12 md:w-14 md:h-14 object-contain"
+              sizes="(max-width: 639px) 40px, (max-width: 767px) 48px, 56px"
+              className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain"
               priority
             />
             <span
-              className="text-xl md:text-2xl font-bold whitespace-nowrap"
+              className="text-lg sm:text-xl md:text-2xl font-bold whitespace-nowrap"
               style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
             >
               <span style={{ color: "#C9A227" }}>Christ</span>
@@ -550,10 +586,12 @@ export function ContextualNav() {
               >
                 Se connecter
               </Link>
-              {/* Mobile: icône seule */}
+              {/* Mobile: icône seule — ⭐ V3.28 : masquée sous 400px (l'entrée
+                  "Créer un compte" est dans le menu burger) pour ne pas
+                  déborder sur iPhone SE ; visible de 400px à sm. */}
               <Link
                 href="/register"
-                className="sm:hidden inline-flex items-center justify-center size-11 rounded-lg text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 transition-colors"
+                className="sm:hidden hidden min-[400px]:inline-flex items-center justify-center size-11 rounded-lg text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 transition-colors"
                 aria-label="Créer un compte"
               >
                 <UserPlus className="w-5 h-5" />

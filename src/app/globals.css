@@ -292,6 +292,16 @@
   }
 }
 
+/* ⭐ V3.28 — Clip horizontal local (sans créer de conteneur de scroll :
+   position:sticky continue de fonctionner, contrairement à
+   overflow-x:hidden). Utilisé p.ex. sur les articles biographiques où
+   les animations d'entrée framer-motion (translateX initial) pouvaient
+   dépasser le viewport avant d'être déclenchées. Définition explicite :
+   la classe Tailwind overflow-x-clip n'était pas émise par le JIT. */
+.overflow-x-clip {
+  overflow-x: clip;
+}
+
 /* ============================================================
    Marquee — défilement des versets
    ============================================================ */
