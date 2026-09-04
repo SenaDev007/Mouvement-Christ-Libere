@@ -164,7 +164,7 @@ export default function RegisterPage() {
                   <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Nom complet *</label>
                   <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
-                    <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="Votre nom"
+                    <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="Votre nom" autoComplete="name"
                       className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
                   </div>
                 </div>
@@ -172,7 +172,7 @@ export default function RegisterPage() {
                   <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Email *</label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
-                    <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required placeholder="vous@email.com"
+                    <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required placeholder="vous@email.com" autoComplete="email" inputMode="email"
                       className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
                   </div>
                 </div>
@@ -184,13 +184,13 @@ export default function RegisterPage() {
                   <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Mot de passe *</label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
-                    <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required placeholder="••••••••"
+                    <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required autoComplete="new-password" placeholder="••••••••"
                       className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
                   </div>
                 </div>
                 <div>
                   <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Pseudonyme</label>
-                  <input type="text" value={form.pseudonyme} onChange={e => setForm({ ...form, pseudonyme: e.target.value })} placeholder="Nom sur la carte des dispersés"
+                  <input type="text" value={form.pseudonyme} onChange={e => setForm({ ...form, pseudonyme: e.target.value })} placeholder="Nom sur la carte des dispersés" autoComplete="off"
                     className="w-full px-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
                 </div>
               </div>
@@ -203,7 +203,7 @@ export default function RegisterPage() {
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
                     <input type="text" value={form.pays ? COUNTRIES.find(c => c.code === form.pays)?.name || "" : countrySearch}
                       onChange={e => { setCountrySearch(e.target.value); setForm({ ...form, pays: "" }); setShowCountryList(true); }}
-                      onFocus={() => setShowCountryList(true)} placeholder="Rechercher un pays..."
+                      onFocus={() => setShowCountryList(true)} placeholder="Rechercher un pays..." autoComplete="off"
                       className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
                   </div>
                   {showCountryList && (
@@ -228,7 +228,7 @@ export default function RegisterPage() {
                   <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Ville</label>
                   <div className="relative">
                     <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
-                    <input type="text" value={form.ville} onChange={e => setForm({ ...form, ville: e.target.value })} placeholder="Votre ville"
+                    <input type="text" value={form.ville} onChange={e => setForm({ ...form, ville: e.target.value })} placeholder="Votre ville" autoComplete="address-level2"
                       className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
                   </div>
                 </div>
