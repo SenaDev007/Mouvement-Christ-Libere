@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { ensureIntercessionAudioColumns } from "@/lib/ensure-schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,10 @@ export async function POST(
   const { id } = await params;
 
   try {
+    // ⭐ V3.30.1 — Auto-réparation des colonnes audio avant l'update (l'update
+    // retourne l'objet complet : sans la garde, tombait dans le catch →
+    // demo:true silencieux au lieu d'incrémenter réellement).
+    await ensureIntercessionAudioColumns();
     const demande = await db.intercessionRequest.update({
       where: { id },
       data: {

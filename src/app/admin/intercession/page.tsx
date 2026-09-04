@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { ensureIntercessionAudioColumns } from "@/lib/ensure-schema";
 import { Heart, Flame, CheckCircle2, Archive, HandHeart, Lock, AudioLines } from "lucide-react";
 import { IntercessionActions } from "@/components/admin/intercession-actions";
 
@@ -34,6 +35,13 @@ export default async function AdminIntercessionPage({
   searchParams: Promise<{ statut?: string }>;
 }) {
   const { statut: statutFilter = "tous" } = await searchParams;
+
+  // ⭐ V3.30.1 — Auto-réparation des colonnes audio AVANT lecture (P2022 :
+  // « The column IntercessionRequest.audioUrl does not exist » → 500 « Une
+  // erreur est survenue » dès l'entrée du module, tant qu'aucune demande
+  // n'a été déposée depuis le déploiement V3.30). Même garde que le POST
+  // /api/intercession, qui l'avait déjà.
+  await ensureIntercessionAudioColumns();
 
   const where =
     statutFilter !== "tous" && statutFilter !== ""

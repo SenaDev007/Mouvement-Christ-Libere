@@ -52,6 +52,10 @@ export async function GET(request: NextRequest) {
   const urgent = url.searchParams.get("urgent");
   const statut = url.searchParams.get("statut");
 
+  // ⭐ V3.30.1 — Auto-réparation des colonnes audio AVANT lecture (le POST
+  // l'avait, pas le GET : findMany sans select → P2022 sur base froide).
+  await ensureIntercessionAudioColumns();
+
   const where: Record<string, unknown> = {};
   if (categorie && categorie !== "tous") where.categorie = categorie;
   if (urgent === "true") where.isUrgent = true;

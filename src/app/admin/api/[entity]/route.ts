@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns } from "@/lib/ensure-schema";
 
 // Force runtime Node.js (pas edge) pour Prisma
 export const runtime = "nodejs";
@@ -53,6 +53,9 @@ export async function GET(
     if (entity === "channels") { await ensureChannelAvatarUrl(); await ensureVoiceVideoColumns(); await ensureChannelIsDirectColumn(); } else if (entity === "users" || entity === "servants") { await ensureVoiceVideoColumns(); }
     // ⭐ V3.3 — Auto-réparation colonnes Servant.pays / Servant.ville
     if (entity === "servants") await ensureServantLocationColumns();
+    // ⭐ V3.30.1 — Auto-réparation colonnes audio IntercessionRequest
+    // (findMany sans select → toutes les colonnes → P2022 sinon).
+    if (entity === "intercessionrequests") await ensureIntercessionAudioColumns();
 
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get("limit") || "50");
@@ -92,6 +95,9 @@ export async function POST(
     if (entity === "channels") { await ensureChannelAvatarUrl(); await ensureVoiceVideoColumns(); await ensureChannelIsDirectColumn(); } else if (entity === "users" || entity === "servants") { await ensureVoiceVideoColumns(); }
     // ⭐ V3.3 — Auto-réparation colonnes Servant.pays / Servant.ville avant création
     if (entity === "servants") await ensureServantLocationColumns();
+    // ⭐ V3.30.1 — Auto-réparation colonnes audio IntercessionRequest
+    // (create retourne l'objet complet → P2022 sinon).
+    if (entity === "intercessionrequests") await ensureIntercessionAudioColumns();
     const delegate = getDelegate(entity as EntityName);
     const created = await delegate.create({ data: body });
     return NextResponse.json({ item: created }, { status: 201 });
