@@ -19,6 +19,12 @@ import { Mic, Square, Trash2, RotateCcw, AudioLines } from "lucide-react";
 
 const DUREE_MAX_S = 120; // 2 minutes
 const TAILLE_MAX_OCTETS = 4 * 1024 * 1024; // 4 Mo (limite upload API)
+// ⭐ V3.30.1 — Bitrate explicite : sans lui, Chrome encode l'opus à ~128 kbit/s
+// → 2 min ≈ 1,9 Mo > 1,2 Mo (seuil du secours data-URL serveur quand R2
+// est indisponible) → « Impossible d'enregistrer la note vocale ».
+// À 48 kbit/s (qualité très correcte pour la voix), 2 min ≈ 720 Ko : la
+// note passe TOUJOURS, même en secours data-URL.
+const BITRATE_AUDIO = 48_000;
 
 type Etat = "idle" | "recording" | "preview" | "error";
 
@@ -76,7 +82,12 @@ export function AudioRecorder({ onFileChange }: AudioRecorderProps) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mime = getSupportedAudioMime();
-      const recorder = new MediaRecorder(stream, { mimeType: mime });
+      const recorder = new MediaRecorder(stream, {
+        mimeType: mime,
+        // ⭐ V3.30.1 — Bitrate plafonné (cf. constante) : garantit une note
+        // légère, acceptée par le serveur même si le stockage R2 est absent.
+        audioBitsPerSecond: BITRATE_AUDIO,
+      });
       chunksRef.current = [];
 
       recorder.ondataavailable = (e) => {
@@ -93,6 +104,19 @@ export function AudioRecorder({ onFileChange }: AudioRecorderProps) {
             blob.size === 0
               ? "Aucun son capté. Vérifiez votre micro puis réessayez."
               : `Note trop lourde (${Math.round(blob.size / 1024)} Ko, max 4 Mo) — enregistrez moins de 2 minutes.`,
+          );
+          setDuree(0);
+          dureeRef.current = 0;
+          notify(null, 0);
+          return;
+        }
+        // ⭐ V3.30.1 — Garde douce : certains navigateurs (Safari/AAC) peuvent
+        // ignorer le bitrate demandé ; si la note dépasse ~1,1 Mo (seuil du
+        // secours serveur), on prévient AVANT l'envoi plutôt qu'un refus sec.
+        if (blob.size > 1_100 * 1024) {
+          setEtat("error");
+          setErreur(
+            "La note est trop volumineuse pour être transmise de façon fiable. Réenregistrez-vous en visant moins de 2 minutes, ou décrivez votre demande par écrit.",
           );
           setDuree(0);
           dureeRef.current = 0;

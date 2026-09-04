@@ -101,20 +101,32 @@ async function stockerAudio(
 
   if (isR2Configured()) {
     const key = generateKey("intercession", `${Date.now()}`, ext);
-    try {
-      const url = await uploadToR2(key, buffer, mime);
-      return { url, taille, mime };
-    } catch (e) {
-      console.error("[intercession] Upload R2 impossible :", e instanceof Error ? e.message : e);
-      // Fallback data URL si raisonnable, sinon erreur explicite.
-      if (taille <= INLINE_MAX_OCTETS) {
-        return { url: bufferVersDataUrl(buffer, mime), taille, mime };
+    // ⭐ V3.30.1 — 2 tentatives : un échec R2 transitoire (DNS, 5xx, token
+    // provisoirement refusé) ne doit pas faire échouer la note vocale.
+    const NB_TENTATIVES_R2 = 2;
+    for (let tentative = 1; tentative <= NB_TENTATIVES_R2; tentative++) {
+      try {
+        const url = await uploadToR2(key, buffer, mime);
+        return { url, taille, mime };
+      } catch (e) {
+        console.error(
+          `[intercession] Upload R2 tentative ${tentative}/${NB_TENTATIVES_R2} échouée ` +
+            `(${taille} octets, ${mime}, clé ${key}) :`,
+          e instanceof Error ? e.message : e,
+        );
+        if (tentative < NB_TENTATIVES_R2) {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+        }
       }
-      return {
-        erreur:
-          "Impossible d'enregistrer la note vocale pour le moment. Réessayez, ou envoyez votre demande sans note vocale.",
-      };
     }
+    // Fallback data URL si raisonnable, sinon erreur explicite.
+    if (taille <= INLINE_MAX_OCTETS) {
+      return { url: bufferVersDataUrl(buffer, mime), taille, mime };
+    }
+    return {
+      erreur:
+        "Impossible d'enregistrer la note vocale pour le moment. Réessayez, ou envoyez votre demande sans note vocale.",
+    };
   }
 
   if (taille <= INLINE_MAX_OCTETS) {
