@@ -230,14 +230,16 @@ export function ContextualNav() {
           <Popover open={mobileOpen} onOpenChange={setMobileOpen}>
             <PopoverTrigger asChild>
               <Button
-                className="group size-8 md:hidden"
+                // ⭐ V3.28 — 44px minimum (norme tactile) au lieu de 32px
+                className="group size-11 md:hidden"
                 variant="ghost"
                 size="icon"
+                aria-label="Ouvrir le menu de navigation"
               >
                 <Menu className="w-5 h-5 text-[#FAF6EF]" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-72 p-1 md:hidden bg-[#2A0E3D] border-[#C9A227]/30">
+            <PopoverContent align="start" className="w-72 max-w-[calc(100vw-1.5rem)] p-1 md:hidden bg-[#2A0E3D] border-[#C9A227]/30">
               <NavigationMenu className="max-w-none *:w-full">
                 <NavigationMenuList className="flex-col items-start gap-0 md:gap-2">
                   {navigationLinks.map((link, index) => (
@@ -252,7 +254,7 @@ export function ContextualNav() {
                               <li key={itemIndex}>
                                 <NavigationMenuLink
                                   href={item.href}
-                                  className="py-1.5 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                                  className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
                                   onClick={() => setMobileOpen(false)}
                                 >
                                   {item.label}
@@ -264,7 +266,7 @@ export function ContextualNav() {
                       ) : (
                         <NavigationMenuLink
                           href={link.href}
-                          className="py-1.5 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                          className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
                           onClick={() => setMobileOpen(false)}
                         >
                           {link.label}
@@ -296,6 +298,7 @@ export function ContextualNav() {
               alt="Christ Libère"
               width={56}
               height={56}
+              sizes="(max-width: 767px) 48px, 56px"
               className="relative w-12 h-12 md:w-14 md:h-14 object-contain"
               priority
             />
@@ -440,13 +443,15 @@ export function ContextualNav() {
                   href="/profil"
                   aria-label="Paramètres de mon compte"
                   title="Modifier ma photo et mes informations"
-                  className="p-2 rounded-lg text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#FAF6EF]/10 transition-colors"
+                  className="inline-flex items-center justify-center size-11 rounded-lg text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#FAF6EF]/10 transition-colors"
                 >
                   <Settings className="w-4.5 h-4.5" />
                 </Link>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-[#FAF6EF]/10 transition-colors"
+                  className="flex items-center gap-2 min-h-11 p-1.5 pr-2.5 rounded-full hover:bg-[#FAF6EF]/10 transition-colors"
+                  aria-haspopup="menu"
+                  aria-expanded={userMenuOpen}
                 >
                   {displayAvatar ? (
                     <img
@@ -533,7 +538,7 @@ export function ContextualNav() {
               {/* Mobile: icône seule */}
               <Link
                 href="/login"
-                className="sm:hidden p-2 rounded-lg text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors"
+                className="sm:hidden inline-flex items-center justify-center size-11 rounded-lg text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors"
                 aria-label="Se connecter"
               >
                 <LogIn className="w-5 h-5" />
@@ -541,14 +546,14 @@ export function ContextualNav() {
               {/* Desktop: texte */}
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors px-3 py-1.5"
+                className="hidden sm:inline-flex items-center text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors px-3 py-2.5"
               >
                 Se connecter
               </Link>
               {/* Mobile: icône seule */}
               <Link
                 href="/register"
-                className="sm:hidden p-2 rounded-lg text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 transition-colors"
+                className="sm:hidden inline-flex items-center justify-center size-11 rounded-lg text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 transition-colors"
                 aria-label="Créer un compte"
               >
                 <UserPlus className="w-5 h-5" />
