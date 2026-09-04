@@ -1202,16 +1202,16 @@ export function LiveStudioClient({
   return (
     <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
       {/* Header */}
-      <div className="border-b border-[#8A8378]/15 px-6 py-3 flex items-center justify-between bg-[#FAF6EF]">
-        <div className="flex items-center gap-4">
+      <div className="border-b border-[#8A8378]/15 px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-2 bg-[#FAF6EF]">
+        <div className="flex items-center gap-4 min-w-0 flex-wrap">
           <Link href="/admin/lives" className="text-xs text-[#1E0F2B]/50 hover:text-[#C9A227] transition-colors">← Lives</Link>
           <div className="h-4 w-px bg-[#2A0E3D]/5" />
-          <div>
+          <div className="min-w-0">
             <h1 className="text-base font-bold text-[#1E0F2B] truncate max-w-[400px]">{title}</h1>
             <p className="text-[11px] text-[#1E0F2B]/40">{servantName} · Studio Live</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           {isLive ? (
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-600 text-[#1E0F2B] text-xs font-bold">
