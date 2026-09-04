@@ -156,7 +156,7 @@ export default async function AdminLivesPage() {
                       <Link
                         href={`/live/${l.id}`}
                         target="_blank"
-                        className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-red-50 text-red-600 transition-colors"
                         aria-label="Voir le live"
                         title="Voir sur le site"
                       >

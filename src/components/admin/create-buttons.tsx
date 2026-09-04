@@ -82,7 +82,7 @@ export function NewServantButton({ accentColor = "#C9A227" }: NewServantButtonPr
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md"
+        className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-sm font-bold transition-colors shadow-md"
         style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
       >
         <Plus className="w-4 h-4" />
@@ -172,7 +172,7 @@ export function NewBiographyButton({ servants, accentColor = "#C9A227" }: NewBio
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md"
+        className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-sm font-bold transition-colors shadow-md"
         style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
       >
         <Plus className="w-4 h-4" />
@@ -271,7 +271,7 @@ export function NewTestimonyButton({ servants, accentColor = "#C9A227" }: NewTes
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md"
+        className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-sm font-bold transition-colors shadow-md"
         style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
       >
         <Plus className="w-4 h-4" />
@@ -375,7 +375,7 @@ export function NewTeachingButton({ servants, accentColor = "#C9A227" }: NewTeac
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md"
+        className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-sm font-bold transition-colors shadow-md"
         style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
       >
         <Plus className="w-4 h-4" />
@@ -478,7 +478,7 @@ export function NewLiveButton({ servants, accentColor = "#C9A227" }: NewLiveButt
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md"
+        className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-sm font-bold transition-colors shadow-md"
         style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
       >
         <Plus className="w-4 h-4" />

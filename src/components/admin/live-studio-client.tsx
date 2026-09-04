@@ -1351,7 +1351,7 @@ export function LiveStudioClient({
               </div>
               {isLive && (
                 <button onClick={toggleFullscreen}
-                  className="p-2 rounded-md bg-[#2A0E3D]/80 text-white hover:bg-[#2A0E3D] transition-colors backdrop-blur-sm"
+                  className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md bg-[#2A0E3D]/80 text-white hover:bg-[#2A0E3D] transition-colors backdrop-blur-sm"
                   title={isFullscreen ? "Quitter plein écran" : "Plein écran"}>
                   {isFullscreen ? <X className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 </button>

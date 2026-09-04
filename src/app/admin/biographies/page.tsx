@@ -122,7 +122,7 @@ export default async function AdminBiographiesPage() {
                       <div className="flex items-center gap-1 ">
                         <Link
                           href={`/admin/biographies/${b.id}/edit`}
-                          className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
+                          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
                           aria-label="Modifier"
                         >
                           <Pencil className="w-3.5 h-3.5" />

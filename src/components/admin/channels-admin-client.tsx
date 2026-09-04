@@ -226,7 +226,7 @@ export function ChannelsAdminClient({ channels, communities }: ChannelsAdminClie
                               avatarUrl: c.avatarUrl,
                             })
                           }
-                          className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
+                          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
                           aria-label={`Modifier ${c.name}`}
                           title="Modifier (photo, nom, type…)"
                         >

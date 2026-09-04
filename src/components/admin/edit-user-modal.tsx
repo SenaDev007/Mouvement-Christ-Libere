@@ -113,7 +113,7 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
         type="button"
         onClick={() => setOpen(true)}
         disabled={!canEditRole}
-        className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         aria-label="Modifier"
         title={canEditRole ? "Modifier l'utilisateur (rôle, photo…)" : "Impossible de modifier un super admin"}
       >

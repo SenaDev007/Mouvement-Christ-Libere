@@ -323,7 +323,7 @@ export function VideosTabsClient({ videos, servants }: VideosTabsClientProps) {
                   <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-[#8A8378]/10 ">
                     <Link
                       href={`/admin/videos/${v.id}/edit`}
-                      className="p-2 rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
+                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
                       aria-label="Modifier"
                     >
                       <Pencil className="w-3.5 h-3.5" />

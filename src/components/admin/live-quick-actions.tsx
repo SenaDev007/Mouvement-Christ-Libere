@@ -64,7 +64,7 @@ export function LiveQuickActions({ liveId, status }: LiveQuickActionsProps) {
           type="button"
           onClick={handleStart}
           disabled={loading}
-          className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
+          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
           title="Démarrer le live"
         >
           {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
@@ -81,7 +81,7 @@ export function LiveQuickActions({ liveId, status }: LiveQuickActionsProps) {
           type="button"
           onClick={handleStop}
           disabled={loading}
-          className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
+          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
           title="Terminer le live"
         >
           {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
