@@ -19,7 +19,7 @@ interface PageHeroProps {
 
 export function PageHero({ kicker, title, subtitle, imageSrc, primaryCta, secondaryCta, secondaryCtaNode }: PageHeroProps) {
   return (
-    <section className="relative min-h-[60vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
+    <section className="page-hero-min-h relative flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
       {/* Background */}
       <div className="absolute inset-0 z-0">
         <Image

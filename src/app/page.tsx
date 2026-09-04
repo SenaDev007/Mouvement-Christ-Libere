@@ -84,16 +84,26 @@ export default function Home() {
       <LandingIntro />
 
       {/* ═════ HERO ═════ */}
-      <section className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
+      {/* ⭐ V3.28 — hero-min-h : min-height 90vh avec repli 90svh (les
+          barres d'adresse mobiles faussent 100vh — svh mesure le viewport
+          réellement visible, fallback vh pour les navigateurs anciens). */}
+      <section className="hero-min-h relative flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
         {/* Carte flottante du prochain live — en haut du hero */}
         <UpcomingLiveFloat />
         {/* Background image — Pam et Pasteur Kongo */}
+        {/* ⭐ V3.28 — next/image (fill + priority + sizes) au lieu d'un <img>
+            brut de 228 Ko servi identique sur tous les écrans : l'optimiseur
+            Next sert désormais un AVIF/WebP dimensionné selon le viewport
+            (LCP mobile fortement réduit), object-cover conserve l'aspect. */}
         <div className="absolute inset-0 z-0">
-          <img
+          <Image
             src="/pam-kongo-hero.webp"
-            alt="Pam et Pasteur Kongo"
-            className="w-full h-full opacity-60"
-            style={{ objectFit: "cover", objectPosition: "center center" }}
+            alt="Pam et Pasteur Kongo, au son du chofar"
+            fill
+            priority
+            quality={75}
+            sizes="(max-width: 767px) 100vw, (max-width: 1279px) 80vw, 1200px"
+            className="object-cover opacity-60"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/50 via-[#2A0E3D]/60 to-[#1A0826]" />
         </div>
@@ -264,6 +274,7 @@ export default function Home() {
                   alt="Pam — Afrika Alkebulane Pamela Dali"
                   width={80}
                   height={80}
+                  sizes="80px"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -309,6 +320,7 @@ export default function Home() {
                   alt="Pasteur Kongo"
                   width={80}
                   height={80}
+                  sizes="80px"
                   className="w-full h-full object-cover"
                 />
               </div>

@@ -269,6 +269,30 @@
 }
 
 /* ============================================================
+   Hero — hauteur mobile-safe (svh avec repli vh)
+   ⭐ V3.28 — Les barres d'adresse mobiles rendent 100vh trompeur :
+   svh mesure la fenêtre réellement visible. Fallback vh pour les
+   navigateurs sans support svh (déclaré AVANT l'override @supports).
+   ============================================================ */
+.hero-min-h {
+  min-height: 90vh;
+}
+@supports (min-height: 90svh) {
+  .hero-min-h {
+    min-height: 90svh;
+  }
+}
+/* Idem pour les heroes de pages internes (60vh -> 60svh) */
+.page-hero-min-h {
+  min-height: 60vh;
+}
+@supports (min-height: 60svh) {
+  .page-hero-min-h {
+    min-height: 60svh;
+  }
+}
+
+/* ============================================================
    Marquee — défilement des versets
    ============================================================ */
 @keyframes marquee {
