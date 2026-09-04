@@ -54,6 +54,7 @@ export const Footer = ({
                     alt="Christ Libère"
                     width={72}
                     height={72}
+                    sizes="(max-width: 767px) 64px, 80px"
                     className="relative w-16 h-16 md:w-20 md:h-20 object-contain"
                     priority
                   />
@@ -82,7 +83,7 @@ export const Footer = ({
               </div>
 
               {socialLinks.length > 0 && (
-                <div className="flex mb-6 mt-3 gap-4">
+                <div className="flex mb-6 mt-3 gap-2">
                   {socialLinks.map((link, index) => (
                     <Link
                       key={index}
@@ -91,7 +92,8 @@ export const Footer = ({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <div className="w-5 h-5 hover:scale-110 duration-300">
+                      {/* ⭐ V3.28 — zone tactile 44x44px (norme accessibilité) */}
+                      <div className="inline-flex items-center justify-center w-11 h-11 rounded-full hover:scale-110 hover:bg-[#FAF6EF]/10 duration-300">
                         {link.icon}
                       </div>
                       <span className="sr-only">{link.label}</span>
@@ -101,11 +103,11 @@ export const Footer = ({
               )}
 
               {navLinks.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-medium text-[#FAF6EF]/50 max-w-full px-4 z-20 relative">
+                <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 text-xs font-medium text-[#FAF6EF]/50 max-w-full px-4 z-20 relative">
                   {navLinks.map((link, index) => (
                     <Link
                       key={index}
-                      className="hover:text-[#C9A227] duration-300 hover:font-semibold"
+                      className="inline-flex items-center min-h-11 px-2 hover:text-[#C9A227] duration-300 hover:font-semibold"
                       href={link.href}
                     >
                       {link.label}
