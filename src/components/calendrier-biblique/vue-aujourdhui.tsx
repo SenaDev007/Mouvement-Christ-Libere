@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Sunset, Sun, Calendar, ChevronRight, BookOpen, Sparkles } from "lucide-react";
 import type { AnneeBibliqueData, JourBiblique, Fete } from "./calendrier-app";
 import { JOURS_SEMAINE_HEBREU } from "@/lib/calendrier/jours-semaine-hebreu";
@@ -88,14 +89,18 @@ export function VueAujourdhui({ annee, maintenant }: VueAujourdhuiProps) {
     <div className="grid lg:grid-cols-3 gap-6">
       {/* Carte principale : jour en cours — avec image saisonnière */}
       <div className="lg:col-span-2">
-        <div
-          className="relative rounded-2xl overflow-hidden shadow-xl border border-[#8A8378]/20"
-          style={{
-            backgroundImage: `url(${saison.image})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
+        <div className="relative rounded-2xl overflow-hidden shadow-xl border border-[#8A8378]/20">
+          {/* ⭐ V3.28 — image de saison via next/image (remplace le
+              background-image CSS Unsplash 1920px non optimisé) : AVIF/WebP
+              dimensionné selon le viewport, lazy loading natif. */}
+          <Image
+            src={saison.image}
+            alt=""
+            fill
+            quality={60}
+            sizes="(max-width: 1023px) 100vw, 66vw"
+            className="object-cover"
+          />
           {/* Overlay saisonnier */}
           <div className="absolute inset-0" style={{ background: saison.overlay }} />
 

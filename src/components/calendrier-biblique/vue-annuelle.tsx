@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Sun, Cloud, Snowflake } from "lucide-react";
 import type { AnneeBibliqueData, JourBiblique, Fete } from "./calendrier-app";
 import { JOURS_SEMAINE_HEBREU, jourSemaineHebreu } from "@/lib/calendrier/jours-semaine-hebreu";
@@ -157,12 +158,17 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: tIdx * 0.1 }}
             className="relative rounded-2xl overflow-hidden shadow-xl border border-[#8A8378]/20"
-            style={{
-              backgroundImage: `url(${trimestre.image})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
           >
+            {/* ⭐ V3.28 — image de saison via next/image (remplace le
+                background-image CSS Unsplash 1920px non optimisé). */}
+            <Image
+              src={trimestre.image}
+              alt=""
+              fill
+              quality={60}
+              sizes="(max-width: 767px) 100vw, 900px"
+              className="object-cover"
+            />
             {/* Overlay saisonnier pour la lisibilité */}
             <div className="absolute inset-0" style={{ background: trimestre.overlay }} />
 
