@@ -135,7 +135,7 @@ export default function AdminLayout({
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden text-[#FAF6EF]/70"
+                className="lg:hidden -mr-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#FAF6EF]/70 hover:text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
                 aria-label="Fermer le menu"
               >
                 <X className="w-5 h-5" />
@@ -162,7 +162,7 @@ export default function AdminLayout({
                           href={item.href}
                           onClick={() => setSidebarOpen(false)}
                           className={cn(
-                            "flex items-center gap-3 px-5 py-2.5 text-sm transition-colors",
+                            "flex items-center gap-3 px-5 py-3 text-sm transition-colors",
                             isActive
                               ? "bg-[#C9A227]/15 text-[#C9A227] border-l-2 border-[#C9A227]"
                               : "text-[#FAF6EF]/70 hover:bg-[#3D1A54]/40 hover:text-[#FAF6EF] border-l-2 border-transparent"
@@ -214,7 +214,7 @@ export default function AdminLayout({
         <header className="lg:hidden sticky top-0 z-20 bg-[#2A0E3D] text-[#FAF6EF] px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-[#FAF6EF]"
+            className="-ml-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
             aria-label="Ouvrir le menu"
           >
             <Menu className="w-5 h-5" />
@@ -238,8 +238,9 @@ export default function AdminLayout({
           <div className="w-5" />
         </header>
 
-        {/* Contenu */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-auto">
+        {/* Contenu — plus d'overflow-x-auto global (échappatoire qui masquait
+            les débordements) : chaque tableau gère son propre conteneur scrollable */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>
