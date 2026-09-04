@@ -78,16 +78,17 @@ export default async function AdminLiveMembersPage() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px]">
             <thead className="bg-[#2A0E3D] text-[#FAF6EF]">
               <tr>
-                <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold">Nom</th>
-                <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold">Pays</th>
-                <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold">Ville</th>
-                <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold">Contact</th>
-                <th className="text-center px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold">XP</th>
-                <th className="text-center px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold">Lives</th>
-                <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold">Inscrit le</th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold whitespace-nowrap">Nom</th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold whitespace-nowrap">Pays</th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold whitespace-nowrap">Ville</th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold whitespace-nowrap">Contact</th>
+                <th className="text-center px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold whitespace-nowrap">XP</th>
+                <th className="text-center px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold whitespace-nowrap">Lives</th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-[0.18em] font-semibold whitespace-nowrap">Inscrit le</th>
               </tr>
             </thead>
             <tbody>
@@ -148,6 +149,7 @@ export default async function AdminLiveMembersPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
