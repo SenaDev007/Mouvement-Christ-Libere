@@ -9,7 +9,7 @@ import {
   Monitor, MonitorOff, Wifi, Activity, Heart,
   Youtube, Facebook, Music2, Instagram,
   ChevronDown, ChevronUp, Eye, MessageCircle, BarChart3,
-  X, Pause, Play, Maximize2, Cast, Copy,
+  X, Pause, Play, Maximize2, Cast, Copy, Camera, RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
@@ -37,6 +37,80 @@ interface LiveStudioClientProps {
   };
 }
 
+// ⭐ V3.27 — Traduit un échec getUserMedia en diagnostic ACTIONNABLE.
+// Cause n°1 constatée du « voyant caméra jamais allumé alors que les
+// permissions du NAVIGATEUR sont accordées et que l'app Caméra Windows
+// fonctionne » : Windows bloque les APPLICATIONS DE BUREAU (Chrome/Edge).
+// L'app Caméra Windows est une app « Store » régie par un réglage
+// DIFFÉRENT — d'où l'impression que « la caméra marche ailleurs ».
+function describeGumError(err: unknown): { reason: string; hint: string } {
+  const name = err instanceof DOMException ? err.name : "";
+  if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+    return {
+      reason: "accès refusé par Windows ou le navigateur",
+      hint:
+        "Vos permissions navigateur sont accordées, mais Windows bloque très probablement Chrome/Edge : " +
+        "ouvrez Paramètres Windows → Confidentialité et sécurité → Caméra → activez « Accès à la caméra » " +
+        "ET « Autoriser les applications de bureau à accéder à votre caméra » (Chrome/Edge sont des " +
+        "applications de bureau ; l'app Caméra Windows fonctionne car c'est une app « Store » — c'est un " +
+        "réglage DIFFÉRENT). Faites de même sous Microphone, puis revenez cliquer sur « Réessayer » — " +
+        "inutile de recharger la page.",
+    };
+  }
+  if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+    return {
+      reason: "aucune caméra détectée",
+      hint: "Aucune caméra trouvée sur cette machine. Branchez/en allumez une, puis « Réessayer ».",
+    };
+  }
+  if (name === "NotReadableError" || name === "TrackStartError") {
+    return {
+      reason: "caméra occupée par une autre application",
+      hint: "La caméra est utilisée ailleurs (Zoom, OBS, app Caméra, Windows Hello, TeamViewer…). Fermez ces applications puis « Réessayer ».",
+    };
+  }
+  if (name === "OverconstrainedError") {
+    return {
+      reason: "résolution non supportée",
+      hint: "La caméra ne gère pas la résolution demandée — le repli automatique sera utilisé au prochain essai.",
+    };
+  }
+  if (name === "TimeoutError") {
+    return {
+      reason: "le navigateur n'a jamais répondu",
+      hint: "Une invite d'autorisation est peut-être restée ouverte ou masquée (regardez derrière la fenêtre, en haut de l'écran), ou un logiciel de sécurité retient l'accès. Cliquez sur « Réessayer ».",
+    };
+  }
+  return {
+    reason: err instanceof Error ? err.message : "erreur inconnue",
+    hint: "Cliquez sur « Réessayer » ; si le problème persiste, testez la caméra dans une autre application puis revenez ici.",
+  };
+}
+
+// ⭐ V3.27 — getUserMedia avec délai de garde : si le navigateur ne répond
+// JAMAIS (invite bloquée, périphérique retenu par un autre logiciel…), on
+// obtient un diagnostic au lieu du spinner « Initialisation... » éternel.
+async function getUserMediaWithTimeout(constraints: MediaStreamConstraints, ms = 10_000): Promise<MediaStream> {
+  let timedOut = false;
+  const p = navigator.mediaDevices.getUserMedia(constraints);
+  const timeout = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      timedOut = true;
+      reject(new DOMException("getUserMedia sans réponse", "TimeoutError"));
+    }, ms);
+  });
+  try {
+    return await Promise.race([p, timeout]);
+  } catch (err) {
+    if (timedOut) {
+      // La permission peut arriver TARD (invite enfin cliquée) : refermer
+      // les périphériques pour ne pas laisser un voyant allumé sans flux.
+      p.then((s) => s.getTracks().forEach((t) => t.stop())).catch(() => {});
+    }
+    throw err;
+  }
+}
+
 export function LiveStudioClient({
   liveId, roomName, title, servantName, servantPortraitUrl, thumbnailUrl,
   status: initialStatus, multistream,
@@ -50,6 +124,10 @@ export function LiveStudioClient({
   const [cameraOn, setCameraOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
+  // ⭐ V3.27 — Diagnostic caméra affiché DANS la preview : fini le spinner
+  // « Initialisation de la caméra... » ÉTERNEL quand getUserMedia échoue
+  // ou ne répond jamais (voyant caméra jamais allumé).
+  const [cameraDiag, setCameraDiag] = useState<{ reason: string; hint: string } | null>(null);
   const [screenSharing, setScreenSharing] = useState(false);
   const [streamDuration, setStreamDuration] = useState(0);
   // ⭐ V2.9 — Les anciens états `bitrate`/`latence` (valeurs ALÉATOIRES,
@@ -91,6 +169,11 @@ export function LiveStudioClient({
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+  // ⭐ V3.27 — Egress RTMP en tâche de fond : promise en vol (attendue au
+  // stop ≤ 12 s pour couper proprement) + drapeau « live terminé » pour
+  // neutraliser les retours d'egress arrivant après l'arrêt.
+  const liveEndedRef = useRef(false);
+  const egressInFlightRef = useRef<Promise<void> | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   // ⭐ V3.22 — CHAÎNE DE DIFFUSION DU STUDIO (LiveKit → Agora → Daily) :
   // fournisseur actif + handles des replis (déconnexion propre au stop).
@@ -129,58 +212,67 @@ export function LiveStudioClient({
     setTimeout(tryPlay, 2000);
   }, []);
 
+  // ⭐ V3.27 — RÉPARATION « voyant caméra jamais allumé / spinner infini » :
+  // VIDÉO et AUDIO sont demandés SÉPARÉMENT (un micro bloqué par Windows ne
+  // doit plus noircir la vidéo, ni l'inverse), chaque demande a un délai de
+  // garde (plus de « Initialisation de la caméra... » éternel), et tout
+  // échec affiche un PANNEAU DE DIAGNOSTIC directement dans la preview —
+  // avec la cause n°1 (Windows bloque les applications de bureau) et un
+  // bouton « Réessayer » qui n'exige pas de recharger la page.
   const initCamera = useCallback(async () => {
     setError("");
+    setCameraDiag(null);
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-      setError(
-        "Caméra indisponible : ce navigateur/contexte ne supporte pas getUserMedia. " +
-        "Le studio exige HTTPS (ou localhost)."
-      );
+      setCameraDiag({
+        reason: "navigateur non compatible",
+        hint:
+          "Ce navigateur/contexte ne supporte pas getUserMedia. Le studio exige HTTPS (ou localhost) " +
+          "et un navigateur récent (Chrome, Edge, Firefox).",
+      });
       return;
     }
-    // ⭐ V3.26 — Contraintes en cascade + DIAGNOSTIC PRÉCIS : avant, tout
-    // échec getUserMedia renvoyait le même message vague. On distingue
-    // désormais permission refusée / caméra occupée / caméra absente /
-    // contrainte non supportée, avec la marche à suivre.
-    const attempts: Array<MediaStreamConstraints> = [
-      { video: { width: 1280, height: 720, facingMode: "user" }, audio: true },
-      { video: true, audio: true },
+    // 1) VIDÉO seule — cascade de contraintes (720p → repli générique)
+    const videoAttempts: Array<MediaStreamConstraints> = [
+      { video: { width: 1280, height: 720, facingMode: "user" } },
       { video: true },
     ];
-    let stream: MediaStream | null = null;
-    let lastErr: unknown = null;
-    for (const constraints of attempts) {
+    let videoStream: MediaStream | null = null;
+    let lastVideoErr: unknown = null;
+    for (const constraints of videoAttempts) {
       try {
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoStream = await getUserMediaWithTimeout(constraints);
         break;
-      } catch (err) { lastErr = err; }
+      } catch (err) { lastVideoErr = err; }
     }
-    if (!stream) {
-      const name = lastErr instanceof DOMException ? lastErr.name : "";
-      let reason: string;
-      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
-        reason =
-          "accès REFUSÉ. Cliquez sur l'icône 🔒 (ou l'icône caméra) à gauche de la barre " +
-          "d'adresse → autorisez Caméra et Microphone → rechargez la page.";
-      } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
-        reason = "aucune caméra détectée sur cette machine.";
-      } else if (name === "NotReadableError" || name === "TrackStartError") {
-        reason =
-          "la caméra est déjà utilisée par une autre application (Zoom, OBS, Windows " +
-          "Hello…) — fermez-la et rechargez la page.";
-      } else if (name === "OverconstrainedError") {
-        reason = "la caméra ne supporte pas la résolution demandée (essayez une autre caméra).";
-      } else {
-        reason = lastErr instanceof Error ? lastErr.message : "erreur inconnue.";
-      }
-      setError(`Impossible d'accéder à la caméra/micro : ${reason}`);
+    // 2) AUDIO seul — INDÉPENDANT : si le micro est bloqué, la vidéo (et le
+    //    direct) démarrent quand même, avec un avertissement sonore clair.
+    let audioStream: MediaStream | null = null;
+    let lastAudioErr: unknown = null;
+    try {
+      audioStream = await getUserMediaWithTimeout({ audio: true });
+    } catch (err) { lastAudioErr = err; }
+
+    if (!videoStream) {
+      // Pas de vidéo = pas de direct : diagnostic complet dans la preview.
+      setCameraDiag(describeGumError(lastVideoErr));
       return;
     }
-    localStreamRef.current = stream;
-    attachStreamToVideo(stream);
+    // 3) Fusion vidéo + audio dans le flux local du studio
+    const merged = new MediaStream();
+    videoStream.getVideoTracks().forEach((t) => merged.addTrack(t));
+    if (audioStream) audioStream.getAudioTracks().forEach((t) => merged.addTrack(t));
+    localStreamRef.current = merged;
+    attachStreamToVideo(merged);
     setCameraReady(true);
     setCameraOn(true);
-    setMicOn(true);
+    setMicOn(merged.getAudioTracks().length > 0);
+    if (!audioStream) {
+      const d = describeGumError(lastAudioErr);
+      setError(
+        "⚠ Micro inaccessible — le direct sera diffusé SANS SON. " +
+        `Cause probable : ${d.reason}. ${d.hint}`
+      );
+    }
   }, [attachStreamToVideo]);
 
   useEffect(() => {
@@ -593,47 +685,17 @@ export function LiveStudioClient({
         }
       }
 
-      // ─── 4. Multistreaming RTMP (⭐ V3.22 : LiveKit uniquement —
-      //     l'egress RTMP lit la room LiveKit ; en repli Agora/Daily le
-      //     multistreaming n'est pas disponible, le direct reste
-      //     accessible sur le site) APRÈS publication du track.
-      //     ⭐ V3.26 : AVANT le passage « EN DIRECT » — quand cette étape
-      //     se termine (réussie OU échouée), la chaîne est STABILISÉE. ───
-      if (multistream.enabled && mediaProviderRef.current === "livekit") {
-        try {
-          setInfo("Démarrage du multistreaming RTMP...");
-          const egressRes = await apiFetch(`/api/live/${liveId}/egress`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-          });
-          const egressData = await egressRes.json().catch(() => ({}));
-          console.log("[studio] Egress RTMP response:", egressData);
-
-          if (egressRes.ok && egressData.totalStarted > 0) {
-            const reused = (egressData.results || []).some((r: { reused?: boolean }) => r.reused);
-            setInfo(`✓ Multistreaming actif (${egressData.totalStarted} destination(s))${reused ? " — egress réutilisé" : ""}`);
-          } else if (egressRes.ok && egressData.totalFailed > 0) {
-            const failed = egressData.results?.filter((r: { egressId: string | null }) => !r.egressId).map((r: { name: string; error?: string }) => `${r.name}: ${r.error || "échec"}`).join(", ");
-            setInfo(`⚠ Multistreaming: ${egressData.totalFailed} échec(s) — ${failed}`);
-            setError(`RTMP échoué: ${failed}`);
-          } else if (!egressRes.ok) {
-            const errMsg = egressData.error || `HTTP ${egressRes.status}`;
-            const diag = egressData.diagnostic ? `\n${egressData.diagnostic.join("\n")}` : "";
-            setInfo(`⚠ Multistreaming échoué: ${errMsg}${diag}`);
-            setError(`Multistreaming: ${errMsg}${diag}`);
-          }
-        } catch (err) {
-          console.error("[studio] Failed to start RTMP egress:", err);
-          setError(`RTMP egress: ${err instanceof Error ? err.message : "erreur"}`);
-        }
-      }
-
-      // ─── 5. Démarrer le live côté DB (statut LIVE + startedAt + Tier C
-      //     broadcast YouTube) — ⭐ V3.26 : APRÈS la stabilisation de la
-      //     chaîne, pour que startedAt (et la minuterie du viewer)
-      //     correspondent au VRAI passage à l'antenne et non au clic sur
-      //     « Go Live ». Best effort : le studio continue même si la DB
-      //     est momentanément indisponible. ───
+      // ─── 4. Démarrer le live côté DB (statut LIVE + startedAt + Tier C
+      //     broadcast YouTube) — ⭐ V3.27 : dès la connexion + publication
+      //     réussies (la chaîne est prête à diffuser), AVANT l'egress RTMP
+      //     qui tourne désormais EN ARRIÈRE-PLAN. La configuration
+      //     YouTube/Facebook prend plusieurs secondes : elle ne doit plus
+      //     geler le bouton « Go Live » (anomalie « ça prend trop de temps
+      //     avant que le live ne démarre ») ni la minuterie.
+      //     startedAt (renvoyé par la route) reste l'ancre de la minuterie :
+      //     elle démarre au VRAI passage à l'antenne, chaîne stabilisée.
+      //     Best effort : le studio continue même si la DB est momentanément
+      //     indisponible. ───
       let startedAtIso: string | null = null;
       try {
         const startRes = await apiFetch("/api/live/start", {
@@ -660,14 +722,20 @@ export function LiveStudioClient({
         setError("Attention: l'API start a échoué, mais le studio continue.");
       }
 
-      // ─── 6. STABILISATION FINALE (⭐ V3.26) : maintenant (et seulement
+      // ─── 5. STABILISATION FINALE (⭐ V3.26) : maintenant (et seulement
       //     maintenant) on passe « EN DIRECT » — minuterie ancrée sur le
-      //     startedAt réel de la base, bouton « Terminer » stable. ───
+      //     startedAt réel de la base, bouton « Terminer » stable.
+      //     ⭐ V3.27 : le multistreaming se configure en arrière-plan — le
+      //     direct démarre immédiatement sur le site (WebRTC), YouTube/
+      //     Facebook partent quelques secondes plus tard. ───
       setIsLive(true);
+      liveEndedRef.current = false;
       setStatus("LIVE");
       setInfo(
         (provider === "livekit" ? "Vous êtes en direct !" : `Vous êtes en direct via ${provider === "agora" ? "Agora" : "Daily"} (repli automatique).`) +
-          (multistream.enabled && mediaProviderRef.current !== "livekit"
+          (multistream.enabled && mediaProviderRef.current === "livekit"
+            ? " Multistreaming en cours de configuration (vous pouvez déjà parler)…"
+            : multistream.enabled && mediaProviderRef.current !== "livekit"
             ? " Multistreaming indisponible en mode repli (visible sur le site uniquement)."
             : ""),
       );
@@ -698,6 +766,47 @@ export function LiveStudioClient({
       };
       pollStats();
       statsPollRef.current = setInterval(pollStats, 5000);
+
+      // ─── 6. ⭐ V3.27 — MULTISTREAMING RTMP EN TÂCHE DE FOND ───
+      // La configuration egress (listEgress + création par destination +
+      // poignée de main YouTube/Facebook) prend de 3 à 10 s : elle GELAIT
+      // le « Go Live ». Elle s'exécute désormais en parallèle et rapporte
+      // son résultat dans le bandeau d'info. Le « Terminer » reste
+      // utilisable pendant la configuration : l'arrêt attend l'egress en
+      // vol (≤ 12 s) pour couper proprement.
+      if (multistream.enabled && mediaProviderRef.current === "livekit") {
+        const egressTask = (async () => {
+          try {
+            const egressRes = await apiFetch(`/api/live/${liveId}/egress`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+            });
+            const egressData = await egressRes.json().catch(() => ({}));
+            console.log("[studio] Egress RTMP response:", egressData);
+            if (liveEndedRef.current) return; // arrêté entre-temps : ne pas écraser les bandeaux
+            if (egressRes.ok && egressData.totalStarted > 0) {
+              const reused = (egressData.results || []).some((r: { reused?: boolean }) => r.reused);
+              setInfo(`✓ Multistreaming actif (${egressData.totalStarted} destination(s))${reused ? " — egress réutilisé" : ""}`);
+            } else if (egressRes.ok && egressData.totalFailed > 0) {
+              const failed = egressData.results?.filter((r: { egressId: string | null }) => !r.egressId).map((r: { name: string; error?: string }) => `${r.name}: ${r.error || "échec"}`).join(", ");
+              setInfo(`⚠ Multistreaming: ${egressData.totalFailed} échec(s) — ${failed}`);
+              setError(`RTMP échoué: ${failed}`);
+            } else if (!egressRes.ok) {
+              const errMsg = egressData.error || `HTTP ${egressRes.status}`;
+              const diag = egressData.diagnostic ? `\n${egressData.diagnostic.join("\n")}` : "";
+              setInfo(`⚠ Multistreaming échoué: ${errMsg}${diag}`);
+              setError(`Multistreaming: ${errMsg}${diag}`);
+            }
+          } catch (err) {
+            console.error("[studio] Failed to start RTMP egress:", err);
+            if (!liveEndedRef.current) setError(`RTMP egress: ${err instanceof Error ? err.message : "erreur"}`);
+          }
+        })();
+        egressInFlightRef.current = egressTask.then(
+          () => { egressInFlightRef.current = null; },
+          () => { egressInFlightRef.current = null; },
+        );
+      }
 
     } catch (err) {
       // La connexion de diffusion a échoué : ⭐ V3.26 — le statut DB
@@ -909,6 +1018,22 @@ export function LiveStudioClient({
     setError("");
     setInfo("Arrêt de l'enregistrement et archivage du replay...");
     try {
+      // ⭐ V3.27 — Si l'egress RTMP est encore en configuration en
+      // arrière-plan (Go Live rapide), attendre qu'il se termine (≤ 12 s)
+      // AVANT le démontage serveur : /stop coupe alors l'egress proprement.
+      // Sans cela, un egress « fantôme » démarré après le /stop continuerait
+      // de diffuser vers YouTube (fenêtre de course restante de l'anomalie
+      // « YouTube continuait après l'arrêt », déjà corrigée côté serveur).
+      if (egressInFlightRef.current) {
+        try {
+          await Promise.race([
+            egressInFlightRef.current,
+            new Promise((resolve) => setTimeout(resolve, 12_000)),
+          ]);
+        } catch {}
+      }
+      liveEndedRef.current = true;
+
       // ─── Arrêter le MediaRecorder et récupérer le blob ───
       let recordingBlob: Blob | null = null;
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
@@ -1131,11 +1256,38 @@ export function LiveStudioClient({
                 </div>
               </div>
             )}
-            {!cameraReady && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center">
+            {!cameraReady && !cameraDiag && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                {/* ⭐ V3.27 — miniature du live en fond pendant l'init (fini
+                    le « noir » à l'entrée du module) */}
+                {thumbnailUrl && (
+                   
+                  <img src={thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-sm" />
+                )}
+                <div className="relative text-center">
                   <Loader2 className="w-10 h-10 text-[#C9A227] mx-auto mb-2 animate-spin" />
-                  <p className="text-sm text-[#1E0F2B]/70">Initialisation de la caméra...</p>
+                  <p className="text-sm text-[#FAF6EF]/80">Initialisation de la caméra...</p>
+                </div>
+              </div>
+            )}
+            {cameraDiag && (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#1A0826]/95 z-10 overflow-y-auto">
+                {thumbnailUrl && (
+                   
+                  <img src={thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-15 blur-sm pointer-events-none" />
+                )}
+                <div className="relative max-w-xl mx-4 text-center py-6">
+                  <div className="w-16 h-16 rounded-full bg-red-600/20 flex items-center justify-center mx-auto mb-4">
+                    <Camera className="w-8 h-8 text-red-400" />
+                  </div>
+                  <p className="text-lg font-bold text-[#FAF6EF]">Caméra inaccessible</p>
+                  <p className="text-sm font-semibold text-[#C9A227] mt-1">{cameraDiag.reason}</p>
+                  <p className="text-sm text-[#FAF6EF]/75 mt-3 text-left leading-relaxed">{cameraDiag.hint}</p>
+                  <button onClick={() => initCamera()}
+                    className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#0F0F0F] font-bold text-sm hover:bg-[#DDBE55] transition-colors">
+                    <RotateCcw className="w-4 h-4" />Réessayer
+                  </button>
+                  <p className="text-[11px] text-[#FAF6EF]/40 mt-3">« Réessayer » relance la caméra sans recharger la page — utilisez-le après avoir modifié les autorisations.</p>
                 </div>
               </div>
             )}
@@ -1144,7 +1296,7 @@ export function LiveStudioClient({
               <div className="absolute inset-0 flex items-center justify-center bg-[#1A0826]/90 backdrop-blur-sm pointer-events-none z-30">
                 {/* Miniature du live en fond si disponible */}
                 {thumbnailUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
+                   
                   <img src={thumbnailUrl} alt="Miniature" className="absolute inset-0 w-full h-full object-cover opacity-20" />
                 )}
                 <div className="relative z-10 text-center">
@@ -1370,7 +1522,7 @@ export function LiveStudioClient({
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">
                 {servantPortraitUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
+                   
                   <img src={servantPortraitUrl} alt={servantName} className="w-9 h-9 rounded-full object-cover" />
                 ) : (
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2A0E3D] to-[#3D1A54] flex items-center justify-center text-[#C9A227] font-bold text-sm">
