@@ -111,7 +111,10 @@ export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }
       <div className="container mx-auto max-w-7xl px-4">
         {/* En-tête : navigation années + titre + export PDF */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
+          {/* ⭐ V3.28 — flex-wrap : sur xs (320px) la navigation d'année et le
+              titre se rangent sur deux lignes au lieu de déborder de 5px
+              (scroll horizontal parasite interdit, spec section 8). */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 min-w-0">
             {/* Navigation entre années — ⭐ V3.10 : CONTINUE, non bornée au
                 tableau initial (charge dynamiquement les années distantes) */}
             <div className="flex items-center gap-2">
