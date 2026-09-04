@@ -56,7 +56,6 @@ export const Footer = ({
                     height={72}
                     sizes="(max-width: 767px) 64px, 80px"
                     className="relative w-16 h-16 md:w-20 md:h-20 object-contain"
-                    priority
                   />
                   <span
                     className="text-2xl md:text-4xl font-bold whitespace-nowrap"
