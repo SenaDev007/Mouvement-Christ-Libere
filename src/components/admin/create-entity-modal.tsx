@@ -83,7 +83,7 @@ export function CreateEntityModal({
       setTagsInput({});
       setError("");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [open]);
 
   const setValue = (name: string, value: string | number | boolean) => {
