@@ -254,7 +254,7 @@ export function VideosTabsClient({ videos, servants }: VideosTabsClientProps) {
                 {/* Thumbnail */}
                 <div className="relative aspect-video bg-[#1A0826] overflow-hidden">
                   {v.thumbnailUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                     
                     <img
                       src={v.thumbnailUrl}
                       alt={v.title}
