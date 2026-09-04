@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Save, AlertCircle, Camera } from "lucide-react";
 import { compressAvatar } from "@/lib/avatar-upload";
+import { semanticInputProps } from "@/lib/form-semantics";
 
 export interface FieldDef {
   name: string;
@@ -245,7 +246,9 @@ export function AdminForm({
                   defaultValue={getValue(field) as string}
                   placeholder={field.placeholder}
                   required={field.required}
-                  className="w-full px-4 py-2.5 rounded border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                  autoComplete={field.type === "text" ? undefined : "off"}
+                  {...(field.type === "text" ? semanticInputProps(field.name) : {})}
+                  className="w-full px-4 min-h-[44px] py-3 rounded border border-stone/30 bg-ivory text-ink placeholder:text-stone/60 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
                 />
               )}
 
@@ -267,7 +270,7 @@ export function AdminForm({
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-5 min-h-[44px] py-2.5 rounded bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors disabled:opacity-50"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />

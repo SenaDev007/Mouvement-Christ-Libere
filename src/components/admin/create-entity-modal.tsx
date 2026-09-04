@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ReactNode } from "react";
 import { AdminModal, ModalField, ModalSubmit, ModalError, modalInputClass } from "@/components/admin/admin-modal";
+import { semanticInputProps } from "@/lib/form-semantics";
 
 interface FieldOption {
   value: string;
@@ -279,10 +280,14 @@ export function CreateEntityModal({
           ? "date"
           : "text";
 
+    const sem = field.type === "text" ? semanticInputProps(field.name) : {};
+
     return (
       <ModalField key={field.name} label={field.label} required={field.required} fullWidth={field.fullWidth}>
         <input
-          type={inputType}
+          type={sem.type ?? inputType}
+          inputMode={sem.inputMode}
+          autoComplete={sem.autoComplete ?? "off"}
           value={String(value)}
           onChange={(e) =>
             setValue(field.name, field.type === "number" ? Number(e.target.value) : e.target.value)

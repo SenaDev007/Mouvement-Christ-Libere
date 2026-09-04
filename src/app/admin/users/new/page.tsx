@@ -109,6 +109,7 @@ export default function NewAdminUserPage() {
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
+            autoComplete="name"
             placeholder="Ex : Marie Dubois"
             className="w-full px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
           />
@@ -127,6 +128,7 @@ export default function NewAdminUserPage() {
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             required
+            autoComplete="email"
             placeholder="marie@christ-libere.org"
             className="w-full px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
           />
@@ -143,6 +145,7 @@ export default function NewAdminUserPage() {
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
             minLength={8}
+            autoComplete="new-password"
             placeholder="Minimum 8 caractères"
             className="w-full px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] font-mono"
           />
