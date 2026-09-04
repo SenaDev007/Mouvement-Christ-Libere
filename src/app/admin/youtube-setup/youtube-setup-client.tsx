@@ -288,10 +288,10 @@ export function YoutubeSetupClient({
                   { label: "Terms of Service URL", value: termsUrl, key: "terms" },
                 ].map((l) => (
                   <div key={l.key} className="px-3 py-2 rounded-lg bg-[#C9A227]/5 border border-[#C9A227]/20">
-                    <div className="flex items-center gap-2">
-                      <code className="text-xs font-bold break-all flex-1">{l.value}</code>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <code className="text-xs font-bold break-all flex-1 min-w-0">{l.value}</code>
                       <button onClick={() => copyToClipboard(l.value, l.key)}
-                        className="p-1 rounded hover:bg-[#2A0E3D]/10 text-[#8A8378] flex-shrink-0">
+                        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#2A0E3D]/10 text-[#8A8378] flex-shrink-0">
                         <Copy className="w-3 h-3" />
                       </button>
                       {copied === l.key && <span className="text-[10px] text-green-600">Copié !</span>}
@@ -344,11 +344,11 @@ export function YoutubeSetupClient({
               Dans <strong>Authorized redirect URIs</strong>, ajoutez <strong>les 2 URIs</strong> :
               <div className="mt-2 space-y-2">
                 <div className="px-3 py-2 rounded-lg bg-[#C9A227]/5 border border-[#C9A227]/20">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Globe className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
-                    <code className="text-xs font-bold break-all">{inAppRedirectUri}</code>
+                    <code className="text-xs font-bold break-all flex-1 min-w-0">{inAppRedirectUri}</code>
                     <button onClick={() => copyToClipboard(inAppRedirectUri, "redirect-inapp")}
-                      className="ml-auto p-1 rounded hover:bg-[#2A0E3D]/10 text-[#8A8378] flex-shrink-0">
+                      className="ml-auto inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#2A0E3D]/10 text-[#8A8378] flex-shrink-0">
                       <Copy className="w-3 h-3" />
                     </button>
                     {copied === "redirect-inapp" && <span className="text-[10px] text-green-600">Copié !</span>}
@@ -357,11 +357,11 @@ export function YoutubeSetupClient({
                     → <strong>requis pour la méthode recommandée (étape 2)</strong> — flux directement depuis le site
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Terminal className="w-3.5 h-3.5 text-[#8A8378] flex-shrink-0" />
-                  <code className="px-2 py-1 bg-[#2A0E3D]/5 rounded text-xs">http://localhost:3001/callback</code>
+                  <code className="px-2 py-1 bg-[#2A0E3D]/5 rounded text-xs break-all">http://localhost:3001/callback</code>
                   <button onClick={() => copyToClipboard("http://localhost:3001/callback", "redirect-local")}
-                    className="p-1 rounded hover:bg-[#2A0E3D]/10 text-[#8A8378]">
+                    className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#2A0E3D]/10 text-[#8A8378] flex-shrink-0">
                     <Copy className="w-3 h-3" />
                   </button>
                   {copied === "redirect-local" && <span className="text-[10px] text-green-600">Copié !</span>}
@@ -548,12 +548,12 @@ export function YoutubeSetupClient({
               { key: "YOUTUBE_REFRESH_TOKEN", desc: "Généré à l'étape 2 (ou 3)" },
               { key: "YOUTUBE_CHANNEL_ID", desc: "ID de votre chaîne (UC...)" },
             ].map((v) => (
-              <div key={v.key} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#2A0E3D]/5">
+              <div key={v.key} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 flex-wrap">
                 <code className="text-xs font-bold text-[#1E0F2B]">{v.key}</code>
-                <span className="text-[10px] text-[#8A8378] flex-1">{v.desc}</span>
+                <span className="text-[10px] text-[#8A8378] flex-1 min-w-0">{v.desc}</span>
                 <button
                   onClick={() => copyToClipboard(v.key, v.key)}
-                  className="p-1 rounded hover:bg-[#2A0E3D]/10 text-[#8A8378]"
+                  className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#2A0E3D]/10 text-[#8A8378] flex-shrink-0"
                 >
                   <Copy className="w-3 h-3" />
                 </button>
