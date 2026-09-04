@@ -1200,7 +1200,7 @@ export function LiveStudioClient({
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B] overflow-x-clip" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
       {/* Header */}
       <div className="border-b border-[#8A8378]/15 px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-2 bg-[#FAF6EF]">
         <div className="flex items-center gap-4 min-w-0 flex-wrap">
@@ -1231,7 +1231,7 @@ export function LiveStudioClient({
       </div>
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-4 p-4">
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Preview */}
           <div
             ref={previewContainerRef}
