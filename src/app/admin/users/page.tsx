@@ -92,9 +92,12 @@ function UserAvatar({ name, role, avatarUrl }: { name: string | null; role: stri
   const initials = (name || "?").charAt(0).toUpperCase();
 
   if (avatarUrl) {
+    // NB : avatarUrl est une DATA URL (compression ≤ 60 Ko côté client) —
+    // next/image ne supporte pas data: ; <img> à taille fixe (pas de CLS) est
+    // l'exception technique justifiée ici.
     return (
       <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-[#C9A227]/40 shadow-md flex-shrink-0">
-        <img src={avatarUrl} alt={name || "Avatar"} className="w-full h-full object-cover" />
+        <img src={avatarUrl} alt={name || "Avatar"} width={40} height={40} className="w-full h-full object-cover" loading="lazy" />
       </div>
     );
   }
@@ -263,19 +266,19 @@ export default async function AdminUsersPage({
           name="q"
           defaultValue={q || ""}
           placeholder="Rechercher par nom ou email..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-white text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+          className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-white text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] min-h-[44px]"
         />
       </form>
 
       {/* Onglets filtres */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Filtrer:</span>
-        <Link href="/admin/users" className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${!roleFilter || roleFilter === "all" ? "bg-[#1E0F2B] text-white border-[#1E0F2B]" : "bg-[#2A0E3D]/5 text-[#8A8378] border-[#8A8378]/20 hover:border-[#C9A227]/40"}`}>Tous</Link>
+        <Link href="/admin/users" className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full text-xs font-semibold border ${!roleFilter || roleFilter === "all" ? "bg-[#1E0F2B] text-white border-[#1E0F2B]" : "bg-[#2A0E3D]/5 text-[#8A8378] border-[#8A8378]/20 hover:border-[#C9A227]/40"}`}>Tous</Link>
         {roleGroups.map((g) => (
           <Link
             key={g.id}
             href={`/admin/users?role=${g.id}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${roleFilter === g.id ? "text-white border-transparent" : "hover:border-[#C9A227]/40"}`}
+            className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full text-xs font-semibold border ${roleFilter === g.id ? "text-white border-transparent" : "hover:border-[#C9A227]/40"}`}
             style={roleFilter === g.id ? { backgroundColor: g.color, borderColor: g.color } : { borderColor: `${g.color}30`, backgroundColor: `${g.color}08`, color: g.color }}
           >
             {g.label}
