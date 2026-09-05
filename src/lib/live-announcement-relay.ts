@@ -3,19 +3,29 @@ import { sendPushToUser } from "@/lib/push-notifications";
 
 /**
  * ⭐ V3.36 — ANNONCE AUTOMATIQUE DES LIVES PROGRAMMÉS DANS YESHUA CONNECT.
+ * ⭐ V3.38 — étendue à la REPROGRAMMATION (PATCH back-office) et à
+ *            l'ANNULATION d'un live.
  * ============================================================================
  *
  * Directive du pasteur : quand un admin programme un live depuis le
  * back-office (module Lives — « Programmer un live »), l'information doit
- * être annoncée AUTOMATIQUEMENT dans Yeshua Connect, précisément dans le
+ * être annoncée AUTOMATIQUEMENT dans Yeshoua Connect, précisément dans le
  * canal d'annonces, sous une forme « nickel et pro » :
  *   - la MINIATURE du live, intacte ;
  *   - un message structuré : qui anime le live, le thème (titre), la
  *     description, le JOUR et l'HEURE ;
  *   - le lien public de la page du live.
  *
+ * V3.38 : « programmer » couvre aussi « REprogrammer » — quand l'admin
+ * modifie un live déjà annoncé (date, heure, serviteur, thème, description)
+ * depuis le modal « Modifier le live » (PATCH /admin/api/lives/[id]), la
+ * communauté doit être tenue au courant de la NOUVELLE date/heure. Et si le
+ * live est annulé, un message d'annulation clair évite que les membres se
+ * connectent pour rien.
+ *
  * Fonctionnement (même philosophie que le relais d'intercession V3.30) :
- *   - appelé par POST /admin/api/lives APRÈS création du live ;
+ *   - appelé par POST /admin/api/lives (création) et PATCH
+ *     /admin/api/lives/[id] (reprogrammation / annulation) APRÈS écriture ;
  *   - BEST-EFFORT : aucune erreur ici ne fait échouer la programmation (le
  *     back-office reste la source de vérité) ;
  *   - find-or-create du canal d'annonces (type ANNOUNCEMENT) : on réutilise
@@ -48,6 +58,17 @@ export interface LiveProgrammeAnnonce {
   scheduledAt: Date;
   servantNom: string;
   thumbnailUrl?: string | null;
+}
+
+/** Mode d'annonce : création ou mise à jour d'un live déjà annoncé. */
+export type ModeAnnonce = "PROGRAMME" | "REPROGRAMME";
+
+/** Données minimales pour annoncer l'annulation d'un live. */
+export interface LiveAnnuleAnnonce {
+  liveId: string;
+  titre: string;
+  scheduledAt: Date;
+  servantNom: string;
 }
 
 /**
@@ -140,8 +161,54 @@ async function assurerUtilisateurSysteme(): Promise<{ id: string } | null> {
 /**
  * Message texte structuré — lisible d'un coup d'œil dans le canal :
  * qui anime, le thème, le jour, l'heure, la description.
+ * En mode REPROGRAMME, l'en-tête et les libellés signalent clairement que
+ * la date/heure précédente est REMPLACÉE (les membres ne doivent pas se
+ * présenter à l'ancienne heure).
  */
-function formaterMessageAnnonce(l: LiveProgrammeAnnonce): string {
+function formaterMessageAnnonce(l: LiveProgrammeAnnonce, mode: ModeAnnonce): string {
+  const date = new Date(l.scheduledAt);
+  const jour = date.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const heure = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const reprogram = mode === "REPROGRAMME";
+
+  const lignes: string[] = [
+    reprogram
+      ? "🔴 LIVE REPROGRAMMÉ — Christ Libère"
+      : "🔴 LIVE PROGRAMMÉ — Christ Libère",
+    "",
+    `Thème : ${l.titre}`,
+    `Avec : ${l.servantNom}`,
+    `📅 ${reprogram ? "Nouveau jour" : "Jour"} : ${jour}`,
+    `🕒 ${reprogram ? "Nouvelle heure" : "Heure"} : ${heure}`,
+  ];
+  if (l.description && l.description.trim()) {
+    lignes.push("", l.description.trim().substring(0, 600));
+  }
+  if (reprogram) {
+    lignes.push(
+      "",
+      "ℹ️ Ce live avait déjà été annoncé — la date et l'heure ci-dessus " +
+        "REMPLACENT celles de l'annonce précédente.",
+    );
+  }
+  lignes.push(
+    "",
+    "➡️ Rejoignez-nous sur la page Live du site le moment venu — la diffusion " +
+      "démarrera automatiquement, et vous pourrez participer au chat en direct.",
+  );
+  return lignes.join("\n");
+}
+
+/**
+ * Message d'annulation : thème, animateur et créneau prévu, pour que les
+ * membres ne se connectent pas pour rien.
+ */
+function formaterMessageAnnulation(l: LiveAnnuleAnnonce): string {
   const date = new Date(l.scheduledAt);
   const jour = date.toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -151,23 +218,17 @@ function formaterMessageAnnonce(l: LiveProgrammeAnnonce): string {
   });
   const heure = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
-  const lignes: string[] = [
-    "🔴 LIVE PROGRAMMÉ — Christ Libère",
+  return [
+    "⚠️ LIVE ANNULÉ — Christ Libère",
     "",
     `Thème : ${l.titre}`,
     `Avec : ${l.servantNom}`,
-    `📅 Jour : ${jour}`,
-    `🕒 Heure : ${heure}`,
-  ];
-  if (l.description && l.description.trim()) {
-    lignes.push("", l.description.trim().substring(0, 600));
-  }
-  lignes.push(
+    `📅 Était prévu le : ${jour}`,
+    `🕒 à ${heure}`,
     "",
-    "➡️ Rejoignez-nous sur la page Live du site le moment venu — la diffusion " +
-      "démarrera automatiquement, et vous pourrez participer au chat en direct.",
-  );
-  return lignes.join("\n");
+    "Le live prévu à ce créneau n'aura pas lieu. Merci de votre compréhension, " +
+      "restez bénis 🙏",
+  ].join("\n");
 }
 
 /** Notification push (best effort) aux membres abonnés aux lives. */
@@ -196,19 +257,32 @@ async function notifierMembres(titre: string, corps: string, canalId: string): P
   }
 }
 
+/** Aperçu compact servant de corps de notification push. */
+function apercuPush(l: { servantNom: string; titre: string; scheduledAt: Date }): string {
+  const date = new Date(l.scheduledAt);
+  return (
+    `${l.servantNom} — ${l.titre} · ` +
+    date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) +
+    " " +
+    date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+  );
+}
+
 /**
- * Annonce un live programmé dans le canal d'annonces Yeshua Connect.
- * BEST-EFFORT : n'JETTE JAMAIS (la programmation back-office reste la
- * source de vérité garantie).
+ * Cœur partagé de publication : canal + bot + message texte + miniature +
+ * tri sidebar + notification push. BEST-EFFORT intégral.
  */
-export async function annoncerLiveProgramme(
-  live: LiveProgrammeAnnonce,
+async function publierAnnonce(
+  live: { liveId: string; titre: string; thumbnailUrl?: string | null },
+  message: string,
+  push: { title: string; body: string },
+  tagLog: string,
 ): Promise<{ ok: boolean; canalId?: string }> {
   try {
     const canal = await assurerCanalAnnonces();
     const bot = await assurerUtilisateurSysteme();
     if (!canal || !bot) {
-      console.error("[live-annonce] Canal ou utilisateur système introuvable — annonce ignorée");
+      console.error(`[${tagLog}] Canal ou utilisateur système introuvable — annonce ignorée`);
       return { ok: false };
     }
 
@@ -217,7 +291,7 @@ export async function annoncerLiveProgramme(
       data: {
         channelId: canal.id,
         userId: bot.id,
-        content: formaterMessageAnnonce(live),
+        content: message,
         type: "TEXT",
       },
     });
@@ -242,7 +316,7 @@ export async function annoncerLiveProgramme(
       // Miniature trop lourde pour un message : on l'ignore proprement
       // (l'annonce texte reste complète).
       console.warn(
-        `[live-annonce] Miniature ignorée (${miniature.length} caractères > garde-fou)`,
+        `[${tagLog}] Miniature ignorée (${miniature.length} caractères > garde-fou)`,
       );
     }
 
@@ -252,21 +326,53 @@ export async function annoncerLiveProgramme(
       .catch(() => {});
 
     // Push aux membres qui suivent les lives.
-    const date = new Date(live.scheduledAt);
-    const apercu =
-      `${live.servantNom} — ${live.titre} · ` +
-      date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) +
-      " " +
-      date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    await notifierMembres("🔴 Live programmé", apercu, canal.id);
+    await notifierMembres(push.title, push.body, canal.id);
 
-    console.log(`[live-annonce] Live ${live.liveId} annoncé dans le canal ${canal.id}`);
+    console.log(`[${tagLog}] Live ${live.liveId} annoncé dans le canal ${canal.id}`);
     return { ok: true, canalId: canal.id };
   } catch (e) {
     console.error(
-      "[live-annonce] Échec de l'annonce (le live reste programmé dans le back-office) :",
+      `[${tagLog}] Échec de l'annonce (le live reste enregistré dans le back-office) :`,
       e instanceof Error ? e.message : e,
     );
     return { ok: false };
   }
+}
+
+/**
+ * Annonce un live programmé dans le canal d'annonces Yeshua Connect.
+ * BEST-EFFORT : n'JETTE JAMAIS (la programmation back-office reste la
+ * source de vérité garantie).
+ * `opts.reprogramme = true` → message « LIVE REPROGRAMMÉ » (nouvelle
+ * date/heure) au lieu de « LIVE PROGRAMMÉ ».
+ */
+export async function annoncerLiveProgramme(
+  live: LiveProgrammeAnnonce,
+  opts: { reprogramme?: boolean } = {},
+): Promise<{ ok: boolean; canalId?: string }> {
+  const mode: ModeAnnonce = opts.reprogramme ? "REPROGRAMME" : "PROGRAMME";
+  return publierAnnonce(
+    live,
+    formaterMessageAnnonce(live, mode),
+    {
+      title: mode === "REPROGRAMME" ? "🔴 Live reprogrammé" : "🔴 Live programmé",
+      body: apercuPush(live),
+    },
+    mode === "REPROGRAMME" ? "live-reprogramme" : "live-annonce",
+  );
+}
+
+/**
+ * Annonce l'ANNULATION d'un live dans le canal d'annonces Yeshua Connect.
+ * BEST-EFFORT : n'JETTE JAMAIS.
+ */
+export async function annoncerLiveAnnule(
+  live: LiveAnnuleAnnonce,
+): Promise<{ ok: boolean; canalId?: string }> {
+  return publierAnnonce(
+    { liveId: live.liveId, titre: live.titre, thumbnailUrl: null },
+    formaterMessageAnnulation(live),
+    { title: "⚠️ Live annulé", body: apercuPush(live) },
+    "live-annule",
+  );
 }

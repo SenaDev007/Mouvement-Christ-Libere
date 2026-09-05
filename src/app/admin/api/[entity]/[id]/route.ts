@@ -5,9 +5,10 @@
  *   DELETE /admin/api/[entity]/[id]   — suppression
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns } from "@/lib/ensure-schema";
+import { annoncerLiveProgramme, annoncerLiveAnnule } from "@/lib/live-announcement-relay";
 
 const ENTITY_MAP = {
   servants: "servant",
@@ -183,6 +184,36 @@ export async function PATCH(
     }
 
     const delegate = getDelegate(entity as EntityName);
+
+    // ⭐ V3.38 — capture l'état AVANT modification d'un live : nécessaire
+    // pour savoir si la reprogrammation doit être annoncée (changement de
+    // date/heure/serviteur/thème/description) et pour détecter une
+    // annulation. Lecture ciblée (select) : aucune colonne runtime ajoutée
+    // hors Prisma n'est lue → aucun risque P2022 sur base froide.
+    let ancienLive: {
+      id: string;
+      title: string;
+      description: string;
+      scheduledAt: Date;
+      servantId: string;
+      status: string;
+      thumbnailUrl: string | null;
+    } | null = null;
+    if (entity === "lives") {
+      ancienLive = (await db.liveStream.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          scheduledAt: true,
+          servantId: true,
+          status: true,
+          thumbnailUrl: true,
+        },
+      })) as typeof ancienLive;
+    }
+
     const updated = await delegate.update({ where: { id }, data: body });
 
     // ⭐ V2.7 — Propagation de la photo vers l'autre « versant » de la
@@ -191,6 +222,88 @@ export async function PATCH(
       await syncServantUserPhoto("servant", (body as { portraitUrl?: string | null }).portraitUrl ?? null, syncMatch);
     } else if (syncSide === "user") {
       await syncServantUserPhoto("user", (body as { avatarUrl?: string | null }).avatarUrl ?? null, syncMatch);
+    }
+
+    // ⭐ V3.38 — ANNONCE AUTOMATIQUE À LA REPROGRAMMATION D'UN LIVE :
+    // quand un admin modifie un live déjà programmé (date, heure,
+    // serviteur, thème, description) via « Modifier le live », la
+    // communauté est informée de la nouvelle date/heure dans le canal
+    // d'annonces Yeshua Connect — même relay que la création (V3.36).
+    // L'ANNULATION d'un live programmé est également annoncée. Best-effort
+    // APRÈS la réponse (after) : la modification back-office ne doit jamais
+    // être ralentie ni échouer à cause de l'annonce.
+    if (entity === "lives" && ancienLive) {
+      try {
+        const liveMAJ = updated as unknown as {
+          id: string;
+          title: string;
+          description?: string | null;
+          scheduledAt: string | Date;
+          servantId: string;
+          status?: string | null;
+          thumbnailUrl?: string | null;
+        };
+        const statutFinal = (liveMAJ.status || "SCHEDULED").toUpperCase();
+
+        // Champs affichés dans l'annonce : on ne ré-annonce QUE s'ils
+        // changent (anti-spam : cocher/décocher le multistream, changer la
+        // seule miniature ou éditer le statut LIVE/ENDED ne ré-annonce pas).
+        const dateAvant = ancienLive.scheduledAt
+          ? new Date(ancienLive.scheduledAt).getTime()
+          : null;
+        const dateApres = liveMAJ.scheduledAt
+          ? new Date(liveMAJ.scheduledAt).getTime()
+          : null;
+        const infosModifiees =
+          dateAvant !== dateApres ||
+          (liveMAJ.servantId || "") !== (ancienLive.servantId || "") ||
+          (liveMAJ.title || "") !== (ancienLive.title || "") ||
+          (liveMAJ.description || "") !== (ancienLive.description || "");
+
+        if (statutFinal === "SCHEDULED" && liveMAJ.servantId && infosModifiees) {
+          const servant = await db.servant.findUnique({
+            where: { id: liveMAJ.servantId },
+            select: { shortName: true },
+          });
+          after(() => {
+            annoncerLiveProgramme(
+              {
+                liveId: liveMAJ.id,
+                titre: liveMAJ.title || "Live",
+                description: liveMAJ.description ?? null,
+                scheduledAt: new Date(liveMAJ.scheduledAt),
+                servantNom: servant?.shortName || "Serviteur de Dieu",
+                thumbnailUrl: liveMAJ.thumbnailUrl ?? null,
+              },
+              { reprogramme: true },
+            ).catch(() => {});
+          });
+        } else if (
+          statutFinal === "CANCELLED" &&
+          (ancienLive.status || "").toUpperCase() !== "CANCELLED"
+        ) {
+          const servantIdAnnule = liveMAJ.servantId || ancienLive.servantId;
+          const servant = servantIdAnnule
+            ? await db.servant.findUnique({
+                where: { id: servantIdAnnule },
+                select: { shortName: true },
+              })
+            : null;
+          after(() => {
+            annoncerLiveAnnule({
+              liveId: liveMAJ.id,
+              titre: liveMAJ.title || ancienLive.title || "Live",
+              scheduledAt: new Date(liveMAJ.scheduledAt ?? ancienLive.scheduledAt),
+              servantNom: servant?.shortName || "Serviteur de Dieu",
+            }).catch(() => {});
+          });
+        }
+      } catch (e) {
+        console.warn(
+          "[admin/api/lives] Annonce Yeshua Connect impossible :",
+          e instanceof Error ? e.message : e,
+        );
+      }
     }
 
     return NextResponse.json({ item: updated });
