@@ -4,6 +4,13 @@ import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { getLiveKitConfig } from "@/lib/livekit-config";
 
+// ⭐ V3.34 — le nettoyage LiveKit (éjections + egress + room) peut prendre
+// plusieurs dizaines de secondes : sans cette marge, la fonction était tuée
+// par Vercel avant d'avoir terminé (l'archivage du replay se faisait APRÈS
+// le nettoyage → jamais exécuté — cause racine de « la vidéo n'apparaît
+// pas dans Vidéos »).
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   // ⭐ V3.19 — clés lues au RUNTIME (bascule Plan B sans rebuild)
   const { url: LIVEKIT_URL, apiKey: LIVEKIT_API_KEY, apiSecret: LIVEKIT_API_SECRET } = getLiveKitConfig();
@@ -82,6 +89,74 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // ─── ⭐ V3.34 — ARCHIVER LE REPLAY IMMÉDIATEMENT, AVANT LE NETTOYAGE ───
+    // Anomalie remontée par le pasteur : « la vidéo est bien enregistrée au
+    // niveau de YouTube, mais on ne la voit pas dans Vidéos, et la récupération
+    // auto de l'ID YouTube ne marche pas ». Cause racine : l'archivage avait
+    // lieu APRÈS le nettoyage LiveKit (éjection des participants + arrêt des
+    // egress + suppression de la room — facilement > 10 s) ; la fonction
+    // serverless était tuée avant d'y arriver → l'entrée Vidéo (Replay)
+    // n'était JAMAIS créée, alors que le statut ENDED (posé en premier)
+    // laissait croire que l'arrêt avait parfaitement fonctionné. Désormais :
+    //   1. l'entrée est créée TOUT DE SUITE (avec l'URL YouTube du broadcast
+    //      Tier C pré-créé si connue — le cas nominal) ;
+    //   2. le nettoyage LiveKit + la transition YouTube restent best-effort
+    //      APRÈS ;
+    //   3. si l'URL n'est pas (encore) connue, l'entrée est créée avec
+    //      videoUrl null et la récupération différée (lib/live-replay-recovery,
+    //      déclenchée à la consultation du module Vidéos) la remplira dès que
+    //      YouTube publie le replay (30 s à 5 min après la fin du flux).
+    const replayUrl = recordingUrl || live.youtubeUrl || null;
+    const liveDate = new Date(live.startedAt || live.scheduledAt);
+    const dateStr = liveDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+    // ⭐ V3.26 — FIN DES DONNÉES FICTIVES sur le replay : compteurs à ZÉRO,
+    // les vues et les likes ne s'accumulent que par les interactions réelles.
+    try {
+      // Vérifier si un replay existe déjà (éviter les doublons — le /stop est
+      // idempotent, un 2ᵉ appel ne fait que mettre à jour cette entrée)
+      const existingReplay = await db.video.findFirst({
+        where: {
+          servantId: live.servantId,
+          title: { startsWith: `${live.title} (Replay)` },
+        },
+      });
+
+      if (!existingReplay) {
+        await db.video.create({
+          data: {
+            servantId: live.servantId,
+            title: `${live.title} (Replay)`,
+            description: `Replay du live du ${dateStr}${live.description ? ` — ${live.description}` : ""}`,
+            duration: durationStr,
+            views: 0,
+            isLive: false,
+            videoUrl: replayUrl,
+            hlsUrl: recordingUrl || null,
+            thumbnailUrl: live.thumbnailUrl || (live.youtubeUrl ? `https://img.youtube.com/vi/${extractYoutubeId(live.youtubeUrl)}/hqdefault.jpg` : null),
+            publishedAt: new Date(),
+          },
+        });
+        console.log(`[live/stop] Replay archivé pour le live ${liveId} (compteurs à zéro — données réelles uniquement)`);
+      } else {
+        // Mettre à jour le replay existant — URL/durée/miniature (les
+        // compteurs ne sont JAMAIS écrasés : ils continuent de refléter les
+        // interactions réelles sur la vidéo publiée).
+        await db.video.update({
+          where: { id: existingReplay.id },
+          data: {
+            videoUrl: replayUrl || existingReplay.videoUrl,
+            hlsUrl: recordingUrl || existingReplay.hlsUrl,
+            duration: durationStr || existingReplay.duration,
+            thumbnailUrl: live.thumbnailUrl || existingReplay.thumbnailUrl,
+          },
+        });
+        console.log(`[live/stop] Replay mis à jour pour le live ${liveId}`);
+      }
+    } catch (err) {
+      console.error("[live/stop] Failed to archive replay:", err);
+    }
+
     // ─── ⭐ V2.9 — FERMETURE FORCÉE DE LA DIFFUSION (cause racine du
     //     « YouTube continuait de streamer après l'arrêt dans le
     //     back-office » : seul l'egress était arrêté "best effort", mais
@@ -147,13 +222,11 @@ export async function POST(req: NextRequest) {
       console.error("[live/stop] LiveKit SDK indisponible:", e);
     }
 
-    // ─── Toujours archiver le replay en tant que vidéo ───
-    // Même sans recordingUrl, on crée l'entrée pour qu'elle apparaisse dans le module vidéo
-    //
-    // (YouTube-replay) Si pas de recordingUrl (R2) ET que le live était streamé vers
-    // YouTube, on tente de récupérer automatiquement l'URL YouTube du replay via
-    // l'API YouTube Data. Cela évite de stocker le replay sur R2 (économie de
-    // stockage — le free tier R2 est 10GB).
+    // ─── ⭐ V3.33/V3.34 — FINALISATION YOUTUBE (best-effort, APRÈS
+    //     l'archivage qui a déjà eu lieu plus haut) ───
+    // L'entrée Vidéo (Replay) est déjà créée/mise à jour ci-dessus avec le
+    // statut ENDED. Ce qui suit ne fait qu'optimiser la finalisation côté
+    // YouTube — un échec ici ne retire JAMAIS la vidéo du module Vidéos.
     let youtubeReplayUrl = live.youtubeUrl;
 
     // ─── Tier C : Transitionner le broadcast vers "complete" si pré-créé ───
@@ -177,10 +250,12 @@ export async function POST(req: NextRequest) {
     }
 
     // ─── Tier B fallback : si pas d'URL YouTube connue, la récupérer ───
+    // ⭐ V3.34 — YouTube met 30 s à 5 min à publier le replay après la fin
+    // du flux : cette tentative instantanée échoue donc la plupart du temps.
+    // Ce n'est plus un problème : la récupération DIFFÉRÉE
+    // (lib/live-replay-recovery — déclenchée à la consultation du module
+    // Vidéos) retentera automatiquement jusqu'à 60 fois (throttle 30 s).
     if (!recordingUrl && live.streamToYoutube && !youtubeReplayUrl) {
-      // YouTube met 30s à 5min pour publier le replay après la fin du RTMP.
-      // On tente une récupération — si elle échoue, le replay aura videoUrl=null
-      // et l'admin pourra le récupérer manuellement via /api/live/[id]/youtube-replay.
       try {
         const { resolveYoutubeReplayUrl, isYouTubeOAuthConfigured } = await import("@/lib/youtube");
         if (isYouTubeOAuthConfigured() && live.startedAt) {
@@ -192,75 +267,21 @@ export async function POST(req: NextRequest) {
           );
           if (ytResult) {
             youtubeReplayUrl = ytResult.url;
-            // Persister l'URL YouTube pour les futurs appels
-            await db.liveStream.update({
-              where: { id: liveId },
-              data: { youtubeUrl: ytResult.url },
-            });
+            // ⭐ V3.34 — persister sur le LiveStream ET sur l'entrée Vidéo
+            // (Replay) déjà archivée plus haut (l'ancien code ne mettait à
+            // jour que le LiveStream → la vidéo restait invisible dans le
+            // module Vidéos même quand l'URL était récupérée ici).
+            const { appliquerUrlReplaySurLiveEtVideo } = await import("@/lib/live-replay-recovery");
+            await appliquerUrlReplaySurLiveEtVideo(liveId, ytResult.url);
             console.log(`[live/stop] YouTube replay récupéré: ${ytResult.url} (source: ${ytResult.source})`);
           } else {
-            console.log("[live/stop] YouTube replay non trouvé — l'admin peut le récupérer manuellement");
+            console.log("[live/stop] YouTube replay non trouvé — la récupération différée s'en chargera (module Vidéos)");
           }
         }
       } catch (ytError) {
         console.error("[live/stop] Erreur récupération YouTube replay:", ytError);
         // Ne pas faire échouer le stop pour autant
       }
-    }
-
-    const replayUrl = recordingUrl || youtubeReplayUrl || null;
-    const liveDate = new Date(live.startedAt || live.scheduledAt);
-    const dateStr = liveDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-
-    // ⭐ V3.26 — FIN DES DONNÉES FICTIVES sur le replay :
-    // AVANT, le replay était créé avec views = totalViews (nombre de
-    // viewers du direct, transférés) et le lecteur vidéo affichait…
-    // views comme compteur de LIKES → « 5 likes » (ou N) sans aucun like
-    // réel (anomalie remontée par le pasteur). Désormais le replay est
-    // créé avec des compteurs à ZÉRO : les vues et les likes ne
-    // s'accumulent que par les interactions réelles des visiteurs.
-    try {
-      // Vérifier si un replay existe déjà (éviter les doublons)
-      const existingReplay = await db.video.findFirst({
-        where: {
-          servantId: live.servantId,
-          title: { startsWith: `${live.title} (Replay)` },
-        },
-      });
-
-      if (!existingReplay) {
-        await db.video.create({
-          data: {
-            servantId: live.servantId,
-            title: `${live.title} (Replay)`,
-            description: `Replay du live du ${dateStr}${live.description ? ` — ${live.description}` : ""}`,
-            duration: durationStr,
-            views: 0,
-            isLive: false,
-            videoUrl: replayUrl,
-            hlsUrl: recordingUrl || null,
-            thumbnailUrl: live.thumbnailUrl || (live.youtubeUrl ? `https://img.youtube.com/vi/${extractYoutubeId(live.youtubeUrl)}/hqdefault.jpg` : null),
-            publishedAt: new Date(),
-          },
-        });
-        console.log(`[live/stop] Replay archivé pour le live ${liveId} (compteurs à zéro — données réelles uniquement)`);
-      } else {
-        // Mettre à jour le replay existant — URL/durée/miniature
-        // (les compteurs ne sont JAMAIS écrasés : ils continuent de
-        // refléter les interactions réelles sur la vidéo publiée).
-        await db.video.update({
-          where: { id: existingReplay.id },
-          data: {
-            videoUrl: replayUrl || existingReplay.videoUrl,
-            hlsUrl: recordingUrl || existingReplay.hlsUrl,
-            duration: durationStr || existingReplay.duration,
-            thumbnailUrl: live.thumbnailUrl || existingReplay.thumbnailUrl,
-          },
-        });
-        console.log(`[live/stop] Replay mis à jour pour le live ${liveId}`);
-      }
-    } catch (err) {
-      console.error("[live/stop] Failed to archive replay:", err);
     }
 
     return NextResponse.json({

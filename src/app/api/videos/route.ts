@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ensureVideoLikesColumn } from "@/lib/ensure-schema";
+import { recupererReplaysManquants } from "@/lib/live-replay-recovery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +12,20 @@ export async function GET(request: NextRequest) {
     // ⭐ V3.26 — colonne Video.likes (compteur de likes RÉEL, distinct de
     // views) créée à la volée si absente (idempotent, mémoïsé).
     await ensureVideoLikesColumn();
+
+    // ⭐ V3.34 — récupération opportuniste des replays YouTube manquants
+    // (≤ 3 s pour ne pas ralentir la page publique) : chaque visite aide à
+    // retenter la récupération des lives terminés dont l'URL YouTube n'a
+    // pas encore été trouvée (throttle 30 s par live côté serveur).
+    try {
+      await Promise.race([
+        recupererReplaysManquants(),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ]);
+    } catch {
+      // Non bloquant — la liste doit toujours être renvoyée.
+    }
+
     const { searchParams } = new URL(request.url);
     const servant = searchParams.get("servant");
 

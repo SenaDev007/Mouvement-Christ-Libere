@@ -1234,15 +1234,19 @@ export function LiveStudioClient({
             const { uploadUrl, publicUrl } = await presignRes.json();
 
             // Upload direct vers R2
-            // ⭐ V3.26 — RETRY + diagnostic : « Failed to fetch » sur ce PUT
-            // = échec réseau OU CORS du bucket R2. Le serveur applique
-            // désormais les règles CORS AVANT de délivrer l'URL
-            // (ensureR2CorsConfig dans /api/live/[id]/presign) ; on garde
-            // un retry pour survivre à une coupure réseau brève.
+            // ⭐ V3.26/V3.34 — RETRY + diagnostic réel : un échec sur ce PUT
+            // est soit réseau/CORS (TypeError « Failed to fetch », CORS
+            // appliqué au bucket par /presign avant de délivrer l'URL), soit
+            // un refus R2 (403 « AccessDenied » = credentials/permissions du
+            // token — le vrai code d'erreur est dans le corps XML de la
+            // réponse, on l'extrait pour l'afficher au pasteur au lieu d'un
+            // « HTTP 403 » opaque). Un 3ᵉ essai laisse une chance aux erreurs
+            // transitoires ; si l'upload échoue définitivement, le replay
+            // YouTube est récupéré automatiquement (V3.34, module Vidéos).
             setInfo(`Direct arrêté ✓ — Upload du replay vers R2 (${Math.round(sizeMB)}MB) — patientez...`);
             let uploadOk = false;
             let uploadErrMsg = "";
-            for (let attempt = 1; attempt <= 2 && !uploadOk; attempt++) {
+            for (let attempt = 1; attempt <= 3 && !uploadOk; attempt++) {
               try {
                 const uploadRes = await fetch(uploadUrl, {
                   method: "PUT",
@@ -1250,14 +1254,24 @@ export function LiveStudioClient({
                   headers: { "Content-Type": "video/webm" },
                 });
                 if (uploadRes.ok) { uploadOk = true; break; }
-                uploadErrMsg = `HTTP ${uploadRes.status}`;
+                // ⭐ V3.34 — extraire le VRAI code d'erreur du corps XML R2
+                // (ex. « AccessDenied », « SignatureDoesNotMatch ») au lieu
+                // d'un « HTTP 403 » qui ne dit rien de la cause.
+                const errBody = await uploadRes.text().catch(() => "");
+                const xmlCode = errBody.match(/<Code>([^<]{1,60})<\/Code>/)?.[1];
+                uploadErrMsg = xmlCode
+                  ? `${xmlCode} (HTTP ${uploadRes.status})`
+                  : `HTTP ${uploadRes.status}`;
+                if (uploadRes.status === 403 || uploadRes.status === 401) {
+                  uploadErrMsg += " — exécutez /admin/r2-test pour le diagnostic exact (token R2 sans permission d'écriture ?)";
+                }
               } catch (err) {
                 uploadErrMsg =
                   err instanceof TypeError
                     ? "Failed to fetch (réseau ou CORS du bucket R2 — exécutez /admin/r2-test pour le diagnostic exact)"
                     : err instanceof Error ? err.message : "erreur réseau";
               }
-              if (attempt < 2) {
+              if (attempt < 3) {
                 console.warn(`[studio] Upload R2 tentative ${attempt} échouée (${uploadErrMsg}) — nouvelle tentative...`);
                 await new Promise((r) => setTimeout(r, 1500));
               }
@@ -1284,7 +1298,23 @@ export function LiveStudioClient({
           const errMsg = err instanceof Error ? err.message : "erreur inconnue";
           console.error("[studio] Upload replay failed:", errMsg);
           setError(`Upload replay échoué: ${errMsg}`);
-          setInfo(`Upload échoué — téléchargement local du replay...`);
+          // ⭐ V3.34 — message rassurant et exact : le live est BIEN terminé
+          // et le replay YouTube existe — la récupération automatique
+          // (module Vidéos) s'en chargera même si R2 refuse l'upload.
+          setInfo(
+            "Direct terminé ✓ — l'upload R2 a échoué (replay local téléchargé en secours). " +
+            "Pas d'inquiétude : le replay YouTube sera récupéré automatiquement — ouvrez le module Vidéos dans quelques minutes."
+          );
+          // ⭐ V3.34 — tenter immédiatement la récupération YouTube (best
+          // effort, 1 appel) ; si YouTube n'a pas encore publié le replay,
+          // la récupération différée (module Vidéos) retentera.
+          try {
+            await apiFetch(`/api/live/${liveId}/youtube-replay`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: "{}",
+            });
+          } catch { /* best effort — la récupération différée prend le relais */ }
           // Téléchargement local en fallback
           const url = URL.createObjectURL(recordingBlob);
           const a = document.createElement("a");

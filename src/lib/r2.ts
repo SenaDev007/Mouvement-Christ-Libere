@@ -60,6 +60,19 @@ function getClient(): S3Client {
     // R2 utilise virtual-hosted-style par défaut :
     // https://{bucket}.{accountId}.r2.cloudflarestorage.com
     // NE PAS mettre forcePathStyle: true (cause Access Denied sur R2)
+    //
+    // ⭐ V3.34 — GEL DU COMPORTEMENT CHECKSUM (défensif) : depuis AWS SDK
+    // v3.729, les clients calculent par défaut des checksums CRC32
+    // ("WHEN_SUPPORTED"). Selon la version du SDK et la commande, ces
+    // en-têtes (x-amz-checksum-crc32) peuvent être inclus dans les en-têtes
+    // SIGNÉS des URL pré-signées — or le navigateur ne les renvoie jamais
+    // lors du PUT direct → 403 AccessDenied systématique (problème connu
+    // R2/MinIO, contournement officiel : WHEN_REQUIRED). Vérifié
+    // empiriquement sur la v3.1121 installée (les URL générées ne signent
+    // que « host ») : cette config est un no-op aujourd'hui qui protège
+    // contre les montées de version futures du SDK.
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
   });
   return s3Client;
 }

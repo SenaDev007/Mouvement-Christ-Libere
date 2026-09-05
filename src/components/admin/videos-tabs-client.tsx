@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Plus, Pencil, Video as VideoIcon, Radio, Eye, Clock, Crown,
@@ -16,6 +17,10 @@ type VideoWithServant = Video & { servant: Servant };
 interface VideosTabsClientProps {
   videos: VideoWithServant[];
   servants: Servant[];
+  /** ⭐ V3.34 — replays YouTube encore en attente de récupération : si > 0,
+   *  un bandeau s'affiche et la page se rafraîchit automatiquement jusqu'à
+   *  ce que la vidéo du dernier live apparaisse. */
+  pendingReplayCount?: number;
 }
 
 // Catégorisation (même logique que la page /videos publique)
@@ -47,7 +52,8 @@ function categorize(title: string, servant: string): string {
   return "Paroles & Exhortations";
 }
 
-export function VideosTabsClient({ videos, servants }: VideosTabsClientProps) {
+export function VideosTabsClient({ videos, servants, pendingReplayCount = 0 }: VideosTabsClientProps) {
+  const router = useRouter();
   const initialServant =
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("servant") || "all"
@@ -113,8 +119,48 @@ export function VideosTabsClient({ videos, servants }: VideosTabsClientProps) {
     setModalOpen(true);
   };
 
+  // ─── ⭐ V3.34 — AUTO-REFRESH PENDANT LA RÉCUPÉRATION YOUTUBE ───
+  // Le pasteur arrive ici juste après l'arrêt du live (redirection depuis
+  // le studio) ; YouTube publie le replay 30 s à 5 min après la fin du
+  // flux. Tant qu'il reste des replays en attente, la page se rafraîchit
+  // toute seule (router.refresh() → le composant serveur relance la
+  // récupération + renvoie des props à jour) : la vidéo apparaît sans
+  // qu'on ait besoin de recliquer. Le throttle côté serveur (30 s par
+  // live) protège le quota YouTube (liveBroadcasts.list, 1 unité/appel).
+  const nbRafraichissements = useRef(0);
+  useEffect(() => {
+    if (pendingReplayCount <= 0) return;
+    const interval = setInterval(() => {
+      if (nbRafraichissements.current >= 18) {
+        // ~3,5 min sans succès : on arrête l'auto-refresh (le bandeau
+        // reste visible avec l'invitation à actualiser manuellement).
+        clearInterval(interval);
+        return;
+      }
+      nbRafraichissements.current += 1;
+      router.refresh();
+    }, 12_000);
+    return () => clearInterval(interval);
+  }, [pendingReplayCount, router]);
+
   return (
     <div className="space-y-6">
+      {/* ⭐ V3.34 — bandeau de récupération des replays YouTube en cours */}
+      {pendingReplayCount > 0 && (
+        <div className="flex items-start gap-3 rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10 px-4 py-3">
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#C9A227] mt-0.5" />
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-[#1E0F2B]">
+              Récupération du replay YouTube en cours
+              {pendingReplayCount > 1 ? ` (${pendingReplayCount} lives en attente)` : ""}
+            </p>
+            <p className="text-xs text-[#1E0F2B]/60 mt-0.5">
+              YouTube publie la vidéo quelques minutes après la fin du direct — cette page se met
+              à jour automatiquement et la vidéo apparaîtra ici toute seule.
+            </p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>

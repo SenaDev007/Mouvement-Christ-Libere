@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { resolveYoutubeReplayUrl, isYouTubeOAuthConfigured } from "@/lib/youtube";
+import { appliquerUrlReplaySurLiveEtVideo } from "@/lib/live-replay-recovery";
 
 /**
  * POST /api/live/[id]/youtube-replay
@@ -15,7 +16,12 @@ import { resolveYoutubeReplayUrl, isYouTubeOAuthConfigured } from "@/lib/youtube
  * 2. Manual (body: { youtubeUrl }) : valide et persiste une URL collée
  *    manuellement par l'admin.
  *
- * Dans les deux cas, l'URL est persistée dans LiveStream.youtubeUrl.
+ * ⭐ V3.34 — Dans les DEUX cas, l'URL est désormais persistée sur le
+ * LiveStream ET sur l'entrée Vidéo (Replay) — AVANT, seule
+ * LiveStream.youtubeUrl était mise à jour : la vidéo récupérée restait
+ * INVISIBLE dans le module Vidéos (anomalie remontée par le pasteur :
+ * « si ça avait récupéré l'ID YouTube, on aurait eu accès direct à la
+ * vidéo »).
  *
  * Réservé aux admins authentifiés.
  */
@@ -65,10 +71,9 @@ export async function POST(
         );
       }
 
-      await db.liveStream.update({
-        where: { id: liveId },
-        data: { youtubeUrl: url },
-      });
+      // ⭐ V3.34 — LiveStream + entrée Vidéo (Replay) via le helper partagé
+      // (crée l'entrée si elle manque, pose la miniature YouTube si absente).
+      await appliquerUrlReplaySurLiveEtVideo(liveId, url);
 
       return NextResponse.json({
         success: true,
@@ -109,11 +114,10 @@ export async function POST(
       }, { status: 404 });
     }
 
-    // Persister l'URL
-    await db.liveStream.update({
-      where: { id: liveId },
-      data: { youtubeUrl: result.url },
-    });
+    // ⭐ V3.34 — persister sur le LiveStream ET sur l'entrée Vidéo (Replay)
+    // via le helper partagé (crée l'entrée si elle manque — cas « fonction
+    // /stop morte avant l'archivage » — et pose la miniature si absente).
+    await appliquerUrlReplaySurLiveEtVideo(liveId, result.url);
 
     return NextResponse.json({
       success: true,

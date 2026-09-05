@@ -1,9 +1,31 @@
 import { db } from "@/lib/db";
 import { VideosTabsClient } from "@/components/admin/videos-tabs-client";
+import { recupererReplaysManquants, compterReplaysEnAttente } from "@/lib/live-replay-recovery";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminVideosPage() {
+  // ┌───────────────────────────────────────────────────────────────────────────┐
+  // │ ⭐ V3.34 — RÉCUPÉRATION DES REPLAYS YOUTUBE AVANT LE CHARGEMENT (≤ 8 s)  │
+  // ├───────────────────────────────────────────────────────────────────────────┤
+  // │ Anomalie remontée par le pasteur : l'upload R2 du replay échoue (access │
+  // │ denied) et la récupération auto de l'ID YouTube « ne marche pas » — la │
+  // │ vidéo n'apparaît pas dans Vidéos alors qu'elle existe sur YouTube.      │
+  // │ En arrivant ici (le studio redirige vers cette page ~2 s après          │
+  // │ l'arrêt du live), on tente immédiatement de récupérer les replays       │
+  // │ manquants : YouTube publie le replay 30 s à 5 min après la fin du       │
+  // │ flux, donc le bandeau d'attente (côté client) rafraîchit               │
+  // │ automatiquement la page jusqu'à ce que la vidéo apparaisse.            │
+  // └───────────────────────────────────────────────────────────────────────────┘
+  try {
+    await Promise.race([
+      recupererReplaysManquants(),
+      new Promise((resolve) => setTimeout(resolve, 8000)),
+    ]);
+  } catch {
+    // La récupération ne doit JAMAIS bloquer ni casser la page.
+  }
+
   const [videos, servants] = await Promise.all([
     db.video.findMany({
       orderBy: { createdAt: "desc" },
@@ -45,5 +67,15 @@ export default async function AdminVideosPage() {
     };
   });
 
-  return <VideosTabsClient videos={safeVideos} servants={servants} />;
+  // ⭐ V3.34 — lives ENDED encore récupérables (bandeau + auto-refresh côté
+  // client). 0 si l'OAuth YouTube n'est pas configuré ou si rien ne manque.
+  const replaysEnAttente = await compterReplaysEnAttente().catch(() => 0);
+
+  return (
+    <VideosTabsClient
+      videos={safeVideos}
+      servants={servants}
+      pendingReplayCount={replaysEnAttente}
+    />
+  );
 }
