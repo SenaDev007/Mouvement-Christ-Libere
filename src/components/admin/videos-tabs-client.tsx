@@ -7,10 +7,23 @@ import Image from "next/image";
 import {
   Plus, Pencil, Video as VideoIcon, Radio, Eye, Clock, Crown,
   X, Loader2, AlertCircle, Save, Tag, ChevronDown,
+  Download, Trash2, FolderDown,
 } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { AdminModal, ModalField, ModalSubmit, ModalError, modalInputClass } from "@/components/admin/admin-modal";
 import type { Video, Servant } from "@prisma/client";
+// ⭐ V3.37 — Copies locales de secours des replays (IndexedDB, propres à
+// CET appareil) : quand l'upload R2 a échoué à l'arrêt d'un live, la vidéo
+// complète reste récupérable ici, même après avoir quitté le studio.
+import {
+  listLocalReplays,
+  getLocalReplay,
+  deleteLocalReplay,
+  telechargerBlob,
+  nomFichierReplay,
+  tailleLisible,
+  type LocalReplayMeta,
+} from "@/lib/local-replay-store";
 
 type VideoWithServant = Video & { servant: Servant };
 
@@ -150,8 +163,105 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
     return () => clearInterval(interval);
   }, [pendingReplayCount, youtubeOauthMissing, router]);
 
+  // ─── ⭐ V3.37 — COPIES LOCALES DE SECOURS (IndexedDB, CET appareil) ───
+  // Si l'upload R2 a échoué à l'arrêt d'un live fait depuis CE navigateur,
+  // la vidéo complète y est restée sauvegardée. On l'affiche ici avec un
+  // bouton de téléchargement direct + suppression, pour que l'admin puisse
+  // la réuploader (« Nouvelle vidéo ») même s'il a déjà quitté le studio.
+  const [replaysLocaux, setReplaysLocaux] = useState<LocalReplayMeta[]>([]);
+  const [telechargementEnCours, setTelechargementEnCours] = useState<string | null>(null);
+  useEffect(() => {
+    listLocalReplays().then(setReplaysLocaux).catch(() => {});
+  }, []);
+  const telechargerReplayLocal = async (meta: LocalReplayMeta) => {
+    setTelechargementEnCours(meta.liveId);
+    try {
+      const rec = await getLocalReplay(meta.liveId).catch(() => null);
+      if (rec?.blob) {
+        telechargerBlob(rec.blob, nomFichierReplay(meta.title, meta.mimeType, meta.savedAt));
+      }
+    } finally {
+      setTelechargementEnCours(null);
+    }
+  };
+  const supprimerReplayLocal = async (meta: LocalReplayMeta) => {
+    setTelechargementEnCours(meta.liveId);
+    try {
+      await deleteLocalReplay(meta.liveId).catch(() => {});
+      setReplaysLocaux((prev) => prev.filter((r) => r.liveId !== meta.liveId));
+    } finally {
+      setTelechargementEnCours(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* ⭐ V3.37 — bandeau des COPIES LOCALES de secours (IndexedDB de CET
+          appareil) : replays dont l'upload R2 a échoué, toujours disponibles
+          au téléchargement même après avoir quitté le studio. */}
+      {replaysLocaux.length > 0 && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+          <div className="flex items-start gap-3">
+            <FolderDown className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-amber-900">
+                {replaysLocaux.length === 1
+                  ? "Vidéo d'un live sauvegardée sur cet appareil (upload R2 échoué)"
+                  : `${replaysLocaux.length} vidéos de lives sauvegardées sur cet appareil (upload R2 échoué)`}
+              </p>
+              <p className="text-xs text-amber-800/80 mt-0.5">
+                Ces enregistrements n'ont pas pu être envoyés au serveur au moment de l'arrêt du
+                live, mais ils restent en sécurité dans ce navigateur (même après fermeture de
+                la page). Téléchargez-les, puis réuploadez-les ici via « Nouvelle vidéo » pour
+                les publier et les travailler.
+              </p>
+              <div className="mt-2.5 space-y-2">
+                {replaysLocaux.map((r) => (
+                  <div
+                    key={r.liveId}
+                    className="flex items-center gap-2 flex-wrap rounded-lg bg-white/70 border border-amber-200 px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-[#1E0F2B] truncate">{r.title}</p>
+                      <p className="text-[10px] text-[#1E0F2B]/50">
+                        {tailleLisible(r.sizeBytes)} · {(r.mimeType || "video/webm").includes("mp4") ? "MP4" : "WebM"} ·{" "}
+                        {new Date(r.savedAt).toLocaleString("fr-FR", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => telechargerReplayLocal(r)}
+                      disabled={telechargementEnCours === r.liveId}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 transition-colors disabled:opacity-50"
+                    >
+                      {telechargementEnCours === r.liveId ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      Télécharger
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => supprimerReplayLocal(r)}
+                      disabled={telechargementEnCours === r.liveId}
+                      className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-amber-700/60 hover:text-red-500 text-xs font-medium transition-colors disabled:opacity-40"
+                      title="Supprimer cette copie locale"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ⭐ V3.35 — bandeau de CONFIGURATION : des lives attendent leur replay
           YouTube mais l'OAuth n'est pas configuré → l'identifiant YouTube ne
           sera JAMAIS récupéré automatiquement (c'est le cas « l'identifiant

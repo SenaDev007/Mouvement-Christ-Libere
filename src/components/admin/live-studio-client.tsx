@@ -10,7 +10,22 @@ import {
   Youtube, Facebook, Music2, Instagram,
   ChevronDown, ChevronUp, Eye, MessageCircle, BarChart3,
   X, Pause, Play, Maximize2, Cast, Copy, Camera, RotateCcw, Calendar,
+  Download, Trash2, FolderDown,
 } from "lucide-react";
+// ⭐ V3.37 — Copie locale de secours du replay (IndexedDB) + téléchargement
+// robuste PC/smartphone : si l'upload R2 échoue après le live, l'admin
+// récupère le fichier vidéo complet sur SON appareil pour le réuploader et
+// le retravailler.
+import {
+  saveLocalReplay,
+  updateLocalReplayFlags,
+  getLocalReplay,
+  deleteLocalReplay,
+  telechargerBlob,
+  nomFichierReplay,
+  tailleLisible,
+  type LocalReplayMeta,
+} from "@/lib/local-replay-store";
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
 import { LiveReactions } from "@/components/live/live-reactions";
@@ -183,6 +198,18 @@ export function LiveStudioClient({
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+  // ⭐ V3.37 — VRAI format d'enregistrement choisi par le navigateur (webm
+  // sur Chrome/Firefox, mp4 sur iPhone/Safari : l'ancien code forçait webm,
+  // format que Safari ne sait PAS enregistrer → aucun replay local sur
+  // smartphone). Conservé pour le blob final, l'upload et le nom de fichier.
+  const recorderMimeRef = useRef<string>("video/webm");
+  // ⭐ V3.37 — Copie locale de secours du replay : blob en mémoire + métas
+  // (persistées dans IndexedDB → le panneau de récupération se réaffiche
+  // même après rechargement de la page studio).
+  const replayBlobRef = useRef<Blob | null>(null);
+  const [localReplayMeta, setLocalReplayMeta] = useState<LocalReplayMeta | null>(null);
+  const [downloadingReplay, setDownloadingReplay] = useState(false);
+  const [retryingUpload, setRetryingUpload] = useState(false);
   // ⭐ V3.27 — Egress RTMP en tâche de fond : promise en vol (attendue au
   // stop ≤ 12 s pour couper proprement) + drapeau « live terminé » pour
   // neutraliser les retours d'egress arrivant après l'arrêt.
@@ -737,12 +764,21 @@ export function LiveStudioClient({
           if (localStreamRef.current) {
             localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
           }
-          const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-            ? "video/webm;codecs=vp9,opus"
-            : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-            ? "video/webm;codecs=vp8,opus"
-            : "video/webm";
-          const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
+          // ⭐ V3.37 — webm (Chrome/Firefox) OU mp4 (iPhone/Safari) : l'ancien
+          // code forçait webm — format que Safari ne sait PAS enregistrer →
+          // AUCUN replay local sur smartphone. On prend le premier format
+          // supporté, et on mémorise le CHOIX RÉEL du navigateur (recorder.
+          // mimeType) pour le blob final, l'upload et le nom de fichier.
+          const mimeSupporte = [
+            "video/webm;codecs=vp9,opus",
+            "video/webm;codecs=vp8,opus",
+            "video/webm",
+            "video/mp4",
+          ].find((t) => MediaRecorder.isTypeSupported(t));
+          const recorder = mimeSupporte
+            ? new MediaRecorder(combinedStream, { mimeType: mimeSupporte, videoBitsPerSecond: 2_000_000 })
+            : new MediaRecorder(combinedStream, { videoBitsPerSecond: 2_000_000 });
+          recorderMimeRef.current = recorder.mimeType || mimeSupporte || "video/webm";
           recordedChunksRef.current = [];
           recorder.ondataavailable = (e) => {
             if (e.data.size > 0) recordedChunksRef.current.push(e.data);
@@ -977,12 +1013,17 @@ export function LiveStudioClient({
           if (localStreamRef.current) {
             localStreamRef.current.getAudioTracks().forEach((t) => combinedStream.addTrack(t));
           }
-          const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-            ? "video/webm;codecs=vp9,opus"
-            : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-            ? "video/webm;codecs=vp8,opus"
-            : "video/webm";
-          const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2_000_000 });
+          // ⭐ V3.37 — même cascade webm/mp4 que goLive (Safari/iPhone).
+          const mimeSupporte = [
+            "video/webm;codecs=vp9,opus",
+            "video/webm;codecs=vp8,opus",
+            "video/webm",
+            "video/mp4",
+          ].find((t) => MediaRecorder.isTypeSupported(t));
+          const recorder = mimeSupporte
+            ? new MediaRecorder(combinedStream, { mimeType: mimeSupporte, videoBitsPerSecond: 2_000_000 })
+            : new MediaRecorder(combinedStream, { videoBitsPerSecond: 2_000_000 });
+          recorderMimeRef.current = recorder.mimeType || mimeSupporte || "video/webm";
           recordedChunksRef.current = [];
           recorder.ondataavailable = (e) => {
             if (e.data.size > 0) recordedChunksRef.current.push(e.data);
@@ -1050,6 +1091,31 @@ export function LiveStudioClient({
     }
   }, [cameraReady, initialStatus, reconnectLive]);
 
+  // ─── ⭐ V3.37 — RÉCUPÉRATION POST-RECHARGEMENT de la copie locale ───
+  // Si l'upload R2 du replay a échoué à l'arrêt du live, la vidéo complète
+  // est restée sauvegardée sur CET appareil (IndexedDB). En rouvrant le
+  // studio (rechargement, retour arrière, autre onglet), le panneau de
+  // secours doit se réafficher avec le bouton « Télécharger la vidéo ».
+  useEffect(() => {
+    let annule = false;
+    getLocalReplay(liveId)
+      .then((rec) => {
+        if (annule || !rec) return;
+        replayBlobRef.current = rec.blob;
+        setLocalReplayMeta({
+          liveId: rec.liveId,
+          title: rec.title,
+          savedAt: rec.savedAt,
+          sizeBytes: rec.sizeBytes,
+          mimeType: rec.mimeType,
+          uploadFailed: rec.uploadFailed,
+        });
+      })
+      .catch(() => {});
+    return () => { annule = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveId]);
+
   // ─── Récupérer l'URL YouTube du replay (auto ou manuel) ───
   const handleFetchYoutubeReplay = async () => {
     setFetchingYoutubeReplay(true);
@@ -1115,6 +1181,187 @@ export function LiveStudioClient({
     throw lastErr instanceof Error ? lastErr : new Error("Arrêt impossible");
   };
 
+  // ─── ⭐ V3.37 — UPLOAD DU REPLAY (fonction réutilisable) ───
+  // Extraite de confirmStopLive pour servir AUSSI au bouton « Réessayer
+  // l'upload » du panneau de secours. Petit fichier (≤ 4 Mo) : upload via
+  // API (FormData). Gros fichier : URL pré-signée R2 + PUT direct navigateur
+  // (3 tentatives, vrai code d'erreur XML extrait). Le Content-Type suit le
+  // VRAI format du blob (webm ou mp4 — l'ancien code forçait webm, ce qui
+  // cassait les replay enregistrés en mp4 sur iPhone/Safari).
+  const uploadReplayBlob = useCallback(
+    async (blob: Blob): Promise<string> => {
+      const sizeMB = blob.size / 1024 / 1024;
+      const mimeType = blob.type || recorderMimeRef.current || "video/webm";
+      const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+
+      if (sizeMB <= 4) {
+        // Petit fichier : upload direct via API (FormData) — la route met à
+        // jour le live ET la vidéo (Replay) déjà archivée par /stop.
+        const formData = new FormData();
+        formData.append("file", blob, `replay.${ext}`);
+        formData.append("liveId", liveId);
+        const uploadRes = await apiFetch(`/api/live/${liveId}/recording`, {
+          method: "POST",
+          body: formData,
+          // Un upload 4 Mo peut légitimement dépasser le plafond par défaut.
+          timeoutMs: 60_000,
+        });
+        if (uploadRes.ok) {
+          const data = await uploadRes.json();
+          console.log("[studio] Replay uploadé (API):", data.recordingUrl);
+          return data.recordingUrl as string;
+        }
+        const errData = await uploadRes.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${uploadRes.status}`);
+      }
+
+      // Gros fichier : upload direct vers R2 via URL pré-signée.
+      // ⭐ V3.26/V3.35 — RETRY + diagnostic réel : un échec sur ce PUT est
+      // soit réseau/CORS (TypeError « Failed to fetch »), soit un refus R2
+      // (403 « AccessDenied »). Le vrai code d'erreur XML est extrait du
+      // corps de la réponse. Un 3ᵉ essai laisse une chance aux erreurs
+      // transitoires ; en cas d'échec définitif, le filet de sécurité local
+      // V3.37 prend le relais (téléchargement + copie IndexedDB).
+      const presignRes = await apiFetch(`/api/live/${liveId}/presign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentType: mimeType }),
+      });
+      if (!presignRes.ok) {
+        const errData = await presignRes.json().catch(() => ({}));
+        throw new Error(errData.error || "Impossible de générer l'URL d'upload R2");
+      }
+      const { uploadUrl, publicUrl } = await presignRes.json();
+
+      setInfo(`Direct arrêté ✓ — Upload du replay vers R2 (${Math.round(sizeMB)} Mo) — patientez...`);
+      let uploadOk = false;
+      let uploadErrMsg = "";
+      for (let attempt = 1; attempt <= 3 && !uploadOk; attempt++) {
+        try {
+          const uploadRes = await fetch(uploadUrl, {
+            method: "PUT",
+            body: blob,
+            headers: { "Content-Type": mimeType },
+          });
+          if (uploadRes.ok) { uploadOk = true; break; }
+          // ⭐ V3.34 — extraire le VRAI code d'erreur du corps XML R2
+          // (ex. « AccessDenied », « SignatureDoesNotMatch ») au lieu d'un
+          // « HTTP 403 » qui ne dit rien de la cause.
+          const errBody = await uploadRes.text().catch(() => "");
+          const xmlCode = errBody.match(/<Code>([^<]{1,60})<\/Code>/)?.[1];
+          uploadErrMsg = xmlCode
+            ? `${xmlCode} (HTTP ${uploadRes.status})`
+            : `HTTP ${uploadRes.status}`;
+          if (uploadRes.status === 403 || uploadRes.status === 401) {
+            uploadErrMsg +=
+              " — ouvrez /admin/r2-test et lancez le « Test d'upload navigateur » (le vrai chemin du replay) pour voir la cause exacte";
+          }
+        } catch (err) {
+          uploadErrMsg =
+            err instanceof TypeError
+              ? "Failed to fetch (réseau ou CORS du bucket R2 — ouvrez /admin/r2-test et lancez le « Test d'upload navigateur » pour le diagnostic exact)"
+              : err instanceof Error ? err.message : "erreur réseau";
+        }
+        if (attempt < 3) {
+          console.warn(`[studio] Upload R2 tentative ${attempt} échouée (${uploadErrMsg}) — nouvelle tentative...`);
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+      }
+      if (!uploadOk) {
+        throw new Error(`Upload R2 échoué: ${uploadErrMsg}`);
+      }
+      console.log("[studio] Replay uploadé (R2 direct):", publicUrl);
+      // ⭐ V3.33 — Persister l'URL R2 sur le live + la vidéo (Replay)
+      // archivée par /stop (mode JSON de /recording — zéro re-transfert).
+      try {
+        await apiFetch(`/api/live/${liveId}/recording`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recordingUrl: publicUrl }),
+        });
+      } catch (persistErr) {
+        console.error("[studio] Persistance recordingUrl R2 échouée:", persistErr);
+      }
+      return publicUrl as string;
+    },
+    [liveId]
+  );
+
+  // ─── ⭐ V3.37 — PANNEAU DE SECOURS : télécharger la copie locale ───
+  // (blob en mémoire, sinon relû depuis IndexedDB — fonctionne même après
+  // un rechargement de la page studio).
+  const handleDownloadLocalReplay = async () => {
+    let blob = replayBlobRef.current;
+    if (!blob) {
+      const rec = await getLocalReplay(liveId).catch(() => null);
+      blob = rec?.blob ?? null;
+      if (blob) replayBlobRef.current = blob;
+    }
+    if (!blob || blob.size === 0) {
+      setError(
+        "Enregistrement local introuvable sur cet appareil (il a peut-être été supprimé, " +
+        "ou le live a été fait depuis un autre appareil/navigateur)."
+      );
+      return;
+    }
+    setDownloadingReplay(true);
+    try {
+      const meta = localReplayMeta;
+      const ok = telechargerBlob(
+        blob,
+        nomFichierReplay(title, blob.type || meta?.mimeType || "video/webm", meta?.savedAt || new Date().toISOString())
+      );
+      setInfo(
+        ok
+          ? `Téléchargement de la vidéo lancé (${tailleLisible(blob.size)}) — selon le navigateur, elle arrive dans Téléchargements (PC/Android) ou Fichiers (iPhone/iPad).`
+          : "Le navigateur a refusé le téléchargement automatique — réessayez, ou utilisez le partage via le menu du navigateur."
+      );
+      if (!ok) setError("Téléchargement impossible (navigateur).");
+    } finally {
+      setDownloadingReplay(false);
+    }
+  };
+
+  // ─── ⭐ V3.37 — PANNEAU DE SECOURS : réessayer l'upload R2 ───
+  const handleRetryUploadReplay = async () => {
+    let blob = replayBlobRef.current;
+    if (!blob) {
+      const rec = await getLocalReplay(liveId).catch(() => null);
+      blob = rec?.blob ?? null;
+      if (blob) replayBlobRef.current = blob;
+    }
+    if (!blob || blob.size === 0) {
+      setError("Enregistrement local introuvable sur cet appareil.");
+      return;
+    }
+    setRetryingUpload(true);
+    setError("");
+    setInfo(`Nouvelle tentative d'upload du replay (${tailleLisible(blob.size)})...`);
+    try {
+      const url = await uploadReplayBlob(blob);
+      // Succès → la copie locale devient inutile.
+      await deleteLocalReplay(liveId).catch(() => {});
+      replayBlobRef.current = null;
+      setLocalReplayMeta(null);
+      setInfo(`✓ Replay uploadé avec succès (${url}) — redirection vers le module Vidéos...`);
+      setTimeout(() => { window.location.href = "/admin/videos"; }, 2000);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "erreur inconnue";
+      setError(`Nouvel échec d'upload : ${errMsg} — la copie locale reste disponible, vous pouvez télécharger la vidéo.`);
+      setInfo("");
+    } finally {
+      setRetryingUpload(false);
+    }
+  };
+
+  // ─── ⭐ V3.37 — PANNEAU DE SECOURS : supprimer la copie locale ───
+  const handleDeleteLocalReplay = async () => {
+    await deleteLocalReplay(liveId).catch(() => {});
+    replayBlobRef.current = null;
+    setLocalReplayMeta(null);
+    setInfo("Copie locale supprimée de cet appareil.");
+  };
+
   const confirmStopLive = async () => {
     // ─── Si l'admin a collé une URL YouTube, la persister avant le stop ───
     if (youtubeReplayUrl.trim()) {
@@ -1148,13 +1395,17 @@ export function LiveStudioClient({
       liveEndedRef.current = true;
 
       // ─── Arrêter le MediaRecorder et récupérer le blob ───
+      // ⭐ V3.37 : le blob utilise le VRAI format d'enregistrement
+      // (webm ou mp4 selon le navigateur — cf. recorderMimeRef).
       let recordingBlob: Blob | null = null;
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         recordingBlob = await new Promise<Blob | null>((resolve) => {
           const recorder = mediaRecorderRef.current!;
           recorder.onstop = () => {
             if (recordedChunksRef.current.length > 0) {
-              const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+              const blob = new Blob(recordedChunksRef.current, {
+                type: recorder.mimeType || recorderMimeRef.current || "video/webm",
+              });
               resolve(blob);
             } else {
               resolve(null);
@@ -1194,120 +1445,86 @@ export function LiveStudioClient({
       // ⭐ V2.9 — Poll de stats temps réel
       if (statsPollRef.current) clearInterval(statsPollRef.current);
 
-      // ─── Uploader le replay APRÈS l'arrêt (best effort) ───
-      let recordingUrl: string | null = null;
+      // ─── ⭐ V3.37 — Uploader le replay APRÈS l'arrêt, AVEC FILET DE
+      //     SÉCURITÉ LOCAL ───
+      // Nouvel ordre de priorités (demande du pasteur : « si après le live
+      // le site R2 ne marche pas, je veux quand même pouvoir télécharger
+      // le fichier vidéo du live, automatiquement, sur PC ou smartphone,
+      // pour le réuploader et le retravailler ») :
+      //   1. SAUVEGARDE DURABLE DU BLOB SUR CET APPAREIL (IndexedDB) AVANT
+      //      toute tentative d'upload — quoi qu'il arrive ensuite (échec
+      //      R2, crash de page, navigation), la vidéo complète reste
+      //      récupérable depuis ce studio ET depuis le module Vidéos ;
+      //   2. upload (≤ 4 Mo API / > 4 Mo presign R2, 3 tentatives) ;
+      //   3. succès → la copie locale devient inutile → suppression ;
+      //      échec → TÉLÉCHARGEMENT AUTOMATIQUE robuste + PAS de
+      //      redirection auto (l'ancien code quittait la page 2 s après
+      //      l'échec → le fichier était perdu si le téléchargement
+      //      n'était pas parti) + panneau de secours avec bouton
+      //      « Télécharger la vidéo » et « Réessayer l'upload ».
+      let uploadFailed = false;
       if (recordingBlob && recordingBlob.size > 0) {
         const sizeMB = recordingBlob.size / 1024 / 1024;
-        setInfo(`Direct arrêté ✓ — Upload du replay (${Math.round(sizeMB)}MB)...`);
 
+        // ─── 1. Copie locale durable AVANT tout upload ───
+        replayBlobRef.current = recordingBlob;
+        const savedAtIso = new Date().toISOString();
+        setLocalReplayMeta({
+          liveId,
+          title,
+          savedAt: savedAtIso,
+          sizeBytes: recordingBlob.size,
+          mimeType: recordingBlob.type || recorderMimeRef.current || "video/webm",
+          uploadFailed: false,
+        });
+        const sauvegardeLocale = saveLocalReplay({
+          liveId,
+          title,
+          blob: recordingBlob,
+          uploadFailed: false,
+        });
+
+        // ─── 2. Upload (best effort) ───
+        setInfo(`Direct arrêté ✓ — Upload du replay (${Math.round(sizeMB)} Mo)...`);
         try {
-          if (sizeMB <= 4) {
-            // Petit fichier : upload direct via API (FormData) — la route
-            // met à jour le live ET la vidéo (Replay) déjà archivée par /stop.
-            const formData = new FormData();
-            formData.append("file", recordingBlob, "replay.webm");
-            formData.append("liveId", liveId);
-            const uploadRes = await apiFetch(`/api/live/${liveId}/recording`, {
-              method: "POST",
-              body: formData,
-            });
-            if (uploadRes.ok) {
-              const data = await uploadRes.json();
-              recordingUrl = data.recordingUrl;
-              console.log("[studio] Replay uploadé (API):", recordingUrl);
-              setInfo(`✓ Replay uploadé (${data.storage || 'DB'})`);
-            } else {
-              const errData = await uploadRes.json().catch(() => ({}));
-              throw new Error(errData.error || `HTTP ${uploadRes.status}`);
-            }
-          } else {
-            // Gros fichier : upload direct vers R2 via URL pré-signée
-            const presignRes = await apiFetch(`/api/live/${liveId}/presign`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ contentType: "video/webm" }),
-            });
-            if (!presignRes.ok) {
-              const errData = await presignRes.json().catch(() => ({}));
-              throw new Error(errData.error || "Impossible de générer l'URL d'upload R2");
-            }
-            const { uploadUrl, publicUrl } = await presignRes.json();
-
-            // Upload direct vers R2
-            // ⭐ V3.26/V3.35 — RETRY + diagnostic réel : un échec sur ce PUT
-            // est soit réseau/CORS (TypeError « Failed to fetch »), soit un
-            // refus R2 (403 « AccessDenied »). ⭐ V3.35 : la cause historique
-            // du 403 (paramètres checksum x-amz-checksum-crc32 signés dans
-            // l'URL par le SDK ≥ 3.729 — checksum d'un corps VIDE opposé au
-            // vrai corps uploadé) est corrigée à la source (client de
-            // pré-signage dédié + garde-fou dans lib/r2.ts). Le vrai code
-            // d'erreur XML est extrait du corps de la réponse. Un 3ᵉ essai
-            // laisse une chance aux erreurs transitoires ; si l'upload
-            // échoue définitivement, le replay YouTube est récupéré
-            // automatiquement (V3.34, module Vidéos) et le replay local est
-            // téléchargé en secours.
-            setInfo(`Direct arrêté ✓ — Upload du replay vers R2 (${Math.round(sizeMB)}MB) — patientez...`);
-            let uploadOk = false;
-            let uploadErrMsg = "";
-            for (let attempt = 1; attempt <= 3 && !uploadOk; attempt++) {
-              try {
-                const uploadRes = await fetch(uploadUrl, {
-                  method: "PUT",
-                  body: recordingBlob,
-                  headers: { "Content-Type": "video/webm" },
-                });
-                if (uploadRes.ok) { uploadOk = true; break; }
-                // ⭐ V3.34 — extraire le VRAI code d'erreur du corps XML R2
-                // (ex. « AccessDenied », « SignatureDoesNotMatch ») au lieu
-                // d'un « HTTP 403 » qui ne dit rien de la cause.
-                const errBody = await uploadRes.text().catch(() => "");
-                const xmlCode = errBody.match(/<Code>([^<]{1,60})<\/Code>/)?.[1];
-                uploadErrMsg = xmlCode
-                  ? `${xmlCode} (HTTP ${uploadRes.status})`
-                  : `HTTP ${uploadRes.status}`;
-                if (uploadRes.status === 403 || uploadRes.status === 401) {
-                  uploadErrMsg +=
-                    " — ouvrez /admin/r2-test et lancez le « Test d'upload navigateur » (le vrai chemin du replay) pour voir la cause exacte";
-                }
-              } catch (err) {
-                uploadErrMsg =
-                  err instanceof TypeError
-                    ? "Failed to fetch (réseau ou CORS du bucket R2 — ouvrez /admin/r2-test et lancez le « Test d'upload navigateur » pour le diagnostic exact)"
-                    : err instanceof Error ? err.message : "erreur réseau";
-              }
-              if (attempt < 3) {
-                console.warn(`[studio] Upload R2 tentative ${attempt} échouée (${uploadErrMsg}) — nouvelle tentative...`);
-                await new Promise((r) => setTimeout(r, 1500));
-              }
-            }
-            if (!uploadOk) {
-              throw new Error(`Upload R2 échoué: ${uploadErrMsg}`);
-            }
-            recordingUrl = publicUrl;
-            console.log("[studio] Replay uploadé (R2 direct):", recordingUrl);
-            setInfo(`✓ Replay uploadé vers R2 (${Math.round(sizeMB)}MB)`);
-            // ⭐ V3.33 — Persister l'URL R2 sur le live + la vidéo (Replay)
-            // archivée par /stop (mode JSON de /recording — zéro re-transfert).
-            try {
-              await apiFetch(`/api/live/${liveId}/recording`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ recordingUrl: publicUrl }),
-              });
-            } catch (persistErr) {
-              console.error("[studio] Persistance recordingUrl R2 échouée:", persistErr);
-            }
-          }
+          await uploadReplayBlob(recordingBlob);
+          // ─── 3a. Succès : la copie locale est devenue inutile → on la
+          //     retire (après stabilisation de la sauvegarde, sinon la
+          //     suppression passe AVANT l'écriture IndexedDB en vol).
+          await sauvegardeLocale.catch(() => {});
+          await deleteLocalReplay(liveId).catch(() => {});
+          replayBlobRef.current = null;
+          setLocalReplayMeta(null);
+          setInfo(`✓ Replay uploadé (${Math.round(sizeMB)} Mo)`);
         } catch (err) {
+          // ─── 3b. Échec R2 : filet de sécurité local complet ───
+          uploadFailed = true;
           const errMsg = err instanceof Error ? err.message : "erreur inconnue";
           console.error("[studio] Upload replay failed:", errMsg);
           setError(`Upload replay échoué: ${errMsg}`);
-          // ⭐ V3.34 — message rassurant et exact : le live est BIEN terminé
-          // et le replay YouTube existe — la récupération automatique
-          // (module Vidéos) s'en chargera même si R2 refuse l'upload.
+          // Marquer la copie IndexedDB comme « à récupérer » (bannières du
+          // studio ET du module Vidéos) — sans ré-écrire le blob.
+          await sauvegardeLocale.catch(() => {});
+          await updateLocalReplayFlags(liveId, { uploadFailed: true }).catch(() => {});
+          setLocalReplayMeta((prev) =>
+            prev ? { ...prev, uploadFailed: true } : prev
+          );
+          // ⭐ V3.37 — TÉLÉCHARGEMENT AUTOMATIQUE ROBUSTE : l'URL objet est
+          // conservée 60 s (l'ancienne révocation immédiate pouvait couper
+          // le téléchargement en cours sur Safari/Firefox) et le nom de
+          // fichier est lisible (replay-<titre>-<date>.webm|mp4).
+          const autoOk = telechargerBlob(
+            recordingBlob,
+            nomFichierReplay(title, recordingBlob.type || recorderMimeRef.current, savedAtIso)
+          );
           setInfo(
-            "Direct terminé ✓ — l'upload R2 a échoué (replay local téléchargé en secours). " +
-            "Pas d'inquiétude : le replay YouTube sera récupéré automatiquement — ouvrez le module Vidéos dans quelques minutes."
+            "Direct terminé ✓ — l'envoi du replay vers R2 a échoué, MAIS la vidéo complète " +
+            `(${tailleLisible(recordingBlob.size)}) est préservée sur cet appareil` +
+            (autoOk
+              ? " et son téléchargement vient d'être lancé automatiquement."
+              : " — cliquez sur « Télécharger la vidéo » ci-dessous (le navigateur a bloqué le lancement automatique).") +
+            " Vous pourrez la réuploader (module Vidéos → « Nouvelle vidéo ») et la retravailler. " +
+            "Le replay YouTube sera aussi récupéré automatiquement dans quelques minutes."
           );
           // ⭐ V3.34 — tenter immédiatement la récupération YouTube (best
           // effort, 1 appel) ; si YouTube n'a pas encore publié le replay,
@@ -1319,20 +1536,17 @@ export function LiveStudioClient({
               body: "{}",
             });
           } catch { /* best effort — la récupération différée prend le relais */ }
-          // Téléchargement local en fallback
-          const url = URL.createObjectURL(recordingBlob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `replay-${liveId}.webm`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
         }
       }
 
-      setInfo("Live terminé. Le replay a été archivé.");
-      setTimeout(() => { window.location.href = "/admin/videos"; }, 2000);
+      // ⭐ V3.37 — Redirection auto UNIQUEMENT si tout est en ordre : en cas
+      // d'échec d'upload on reste sur le studio — le panneau de secours
+      // (téléchargement + nouvel essai) doit rester accessible, l'admin
+      // choisit lui-même quand partir.
+      if (!uploadFailed) {
+        setInfo("Live terminé. Le replay a été archivé.");
+        setTimeout(() => { window.location.href = "/admin/videos"; }, 2000);
+      }
     } catch (err) {
       // ⭐ V3.33 — Message explicite : l'arrêt est idempotent — un nouveau
       // clic « Terminer » re-tentera proprement (le serveur marque ENDED en
@@ -1635,6 +1849,98 @@ export function LiveStudioClient({
 
             {isLive && <LiveReactions liveId={liveId} isLive={isLive} />}
           </div>
+
+          {/* ─── ⭐ V3.37 — PANNEAU DE SECOURS « COPIE LOCALE DU REPLAY » ───
+              Affiché dès qu'un enregistrement de CE live existe sur cet
+              appareil (upload R2 échoué à l'arrêt du direct — ou upload non
+              encore abouti). La copie est DURABLE (IndexedDB) : le panneau
+              se réaffiche même après rechargement de la page. L'admin peut
+              télécharger le fichier vidéo (PC ou smartphone), réessayer
+              l'upload, ou supprimer la copie. */}
+          {!isLive && localReplayMeta && (
+            <div
+              className={`rounded-xl p-4 border ${
+                localReplayMeta.uploadFailed
+                  ? "bg-amber-50 border-amber-300"
+                  : "bg-[#FAF6EF] border-[#C9A227]/30"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    localReplayMeta.uploadFailed
+                      ? "bg-amber-100 text-amber-600"
+                      : "bg-[#C9A227]/10 text-[#C9A227]"
+                  }`}
+                >
+                  <FolderDown className="w-5 h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-[#1E0F2B]">
+                    {localReplayMeta.uploadFailed
+                      ? "Vidéo du live préservée sur cet appareil (upload échoué)"
+                      : "Enregistrement local du live disponible"}
+                  </p>
+                  <p className="text-xs text-[#1E0F2B]/70 mt-1 leading-relaxed">
+                    {localReplayMeta.uploadFailed
+                      ? "L'envoi du replay vers le serveur R2 a échoué, mais la vidéo complète est sauvegardée en sécurité sur cet appareil — elle résiste au rechargement de cette page."
+                      : "La vidéo enregistrée de ce direct est disponible sur cet appareil."}
+                    {" "}
+                    ({tailleLisible(localReplayMeta.sizeBytes)} ·{" "}
+                    {(localReplayMeta.mimeType || "video/webm").includes("mp4") ? "MP4" : "WebM"} ·
+                    sauvegardée le{" "}
+                    {new Date(localReplayMeta.savedAt).toLocaleString("fr-FR", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    )
+                  </p>
+                  <p className="text-[11px] text-[#1E0F2B]/50 mt-1.5 leading-relaxed">
+                    Téléchargez le fichier pour le réuploader ensuite (module Vidéos → «
+                    Nouvelle vidéo ») et le travailler en post-production. Sur smartphone, le
+                    fichier arrive dans Téléchargements (Android) ou Fichiers (iPhone/iPad).
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                    <button
+                      onClick={handleDownloadLocalReplay}
+                      disabled={downloadingReplay}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-50 shadow-md"
+                    >
+                      {downloadingReplay ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4" />
+                      )}
+                      Télécharger la vidéo ({tailleLisible(localReplayMeta.sizeBytes)})
+                    </button>
+                    <button
+                      onClick={handleRetryUploadReplay}
+                      disabled={retryingUpload || loading}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#2A0E3D]/5 text-[#1E0F2B] text-sm font-bold hover:bg-[#2A0E3D]/10 transition-colors disabled:opacity-50"
+                    >
+                      {retryingUpload ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RotateCcw className="w-4 h-4" />
+                      )}
+                      Réessayer l&apos;upload
+                    </button>
+                    <button
+                      onClick={handleDeleteLocalReplay}
+                      disabled={downloadingReplay || retryingUpload}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-[#1E0F2B]/50 hover:text-red-500 text-sm font-medium transition-colors disabled:opacity-40"
+                      title="Supprimer la copie locale de cet appareil"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Source mode selector — Webcam vs Encodeur externe (OBS) */}
           <div className="bg-white rounded-xl p-3 border border-[#8A8378]/15">
