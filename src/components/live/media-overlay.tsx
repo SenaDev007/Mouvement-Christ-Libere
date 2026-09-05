@@ -13,9 +13,18 @@ interface MediaOverlayProps {
   isLive: boolean;
   isPaused?: boolean;
   mirror?: boolean;
+  // ⭐ V3.33 — Restauration de l'état au rechargement de la page :
+  // l'overlay ne se désactive plus seul après une coupure de connexion.
+  initialShowOverlay?: boolean;
+  initialImages?: OverlayImage[];
+  initialSlides?: Slide[];
+  initialCurrentSlide?: number;
+  initialTextOverlay?: TextOverlay | null;
+  // ⭐ V3.33 — Persistance (appelée avec débounce côté composant).
+  onPersist?: (payload: MediaOverlayPersistPayload) => void;
 }
 
-interface OverlayImage {
+export interface OverlayImage {
   id: string;
   src: string;
   x: number;
@@ -25,18 +34,27 @@ interface OverlayImage {
   visible: boolean;
 }
 
-interface Slide {
+export interface Slide {
   id: string;
   src: string;
 }
 
-interface TextOverlay {
+export interface TextOverlay {
   text: string;
   x: number;
   y: number;
   visible: boolean;
   size: number;
   color: string;
+}
+
+/** ⭐ V3.33 — Charge utile persistée de l'overlay (table dédiée via /api/live/[id]/overlay). */
+export interface MediaOverlayPersistPayload {
+  showOverlay: boolean;
+  overlayImages: OverlayImage[];
+  slides: Slide[];
+  currentSlide: number;
+  textOverlay: TextOverlay;
 }
 
 const imageCache = new Map<string, HTMLImageElement>();
@@ -52,16 +70,19 @@ function getCachedImage(src: string): HTMLImageElement | null {
 
 export function MediaOverlay({
   canvasRef, videoSourceRef, onCanvasStream, isLive, isPaused = false, mirror = false,
+  initialShowOverlay = false, initialImages, initialSlides, initialCurrentSlide,
+  initialTextOverlay, onPersist,
 }: MediaOverlayProps) {
   const [showPanel, setShowPanel] = useState(false);
   const [activeTab, setActiveTab] = useState<"images" | "slides" | "text">("images");
-  const [overlayImages, setOverlayImages] = useState<OverlayImage[]>([]);
-  const [slides, setSlides] = useState<Slide[]>([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [textOverlay, setTextOverlay] = useState<TextOverlay>({
-    text: "", x: 50, y: 50, visible: false, size: 32, color: "#C9A227",
-  });
-  const [showOverlay, setShowOverlay] = useState(false);
+  // ⭐ V3.33 — État initial restauré depuis la persistance serveur.
+  const [overlayImages, setOverlayImages] = useState<OverlayImage[]>(initialImages || []);
+  const [slides, setSlides] = useState<Slide[]>(initialSlides || []);
+  const [currentSlide, setCurrentSlide] = useState(initialCurrentSlide || 0);
+  const [textOverlay, setTextOverlay] = useState<TextOverlay>(
+    initialTextOverlay || { text: "", x: 50, y: 50, visible: false, size: 32, color: "#C9A227" }
+  );
+  const [showOverlay, setShowOverlay] = useState(initialShowOverlay ?? false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const slideInputRef = useRef<HTMLInputElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -503,6 +524,38 @@ export function MediaOverlay({
     return () => { onCanvasStream(null); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ═══ ⭐ V3.33 — PERSISTANCE DE L'ÉTAT OVERLAY ═══
+  // Le pasteur constatait que l'overlay se désactivait SEUL quand la page
+  // se rechargeait (coupure de connexion) : tout l'état (ON/OFF, images,
+  // slides, texte) était purement local React. Désormais chaque modification est
+  // envoyée au serveur (débounce 900 ms — les drags/resize ne martèlent
+  // pas l'API) et restaurée à l'ouverture du studio.
+  const lastPersistedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!onPersist) return;
+    const payload: MediaOverlayPersistPayload = {
+      showOverlay,
+      overlayImages,
+      slides,
+      currentSlide,
+      textOverlay,
+    };
+    const serialized = JSON.stringify(payload);
+    if (lastPersistedRef.current === null) {
+      // Premier calcul (état initial restauré ou défaut) : mémorisé comme
+      // référence — on ne RÉ-ÉMET pas l'état initial, seulement les VRAIES
+      // modifications ultérieures.
+      lastPersistedRef.current = serialized;
+      return;
+    }
+    if (serialized === lastPersistedRef.current) return;
+    const timer = setTimeout(() => {
+      lastPersistedRef.current = serialized;
+      onPersist(payload);
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [showOverlay, overlayImages, slides, currentSlide, textOverlay, onPersist]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

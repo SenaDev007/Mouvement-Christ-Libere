@@ -119,6 +119,13 @@ export async function GET(
       status: live.status,
       startedAt: live.startedAt?.toISOString() ?? null,
       endedAt: live.endedAt?.toISOString() ?? null,
+      // ⭐ V3.33 — youtubeUrl : le viewer public ne le connaît qu'au rendu
+      // SSR initial (null s'il a ouvert la page AVANT le début du direct).
+      // Sans cette valeur fraîche, il ne basculait JAMAIS sur l'embed
+      // YouTube et restait sur « En attente du diffuseur » alors que le
+      // broadcast était pourtant lancé (anomalie « préparation du flux »
+      // éternelle côté site public).
+      youtubeUrl: live.youtubeUrl,
       isPaused: live.isPaused,
       pausedAt: live.pausedAt?.toISOString() ?? null,
       viewerCount,

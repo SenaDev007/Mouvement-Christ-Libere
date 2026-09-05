@@ -10,6 +10,13 @@ import { uploadToR2, generateKey, isR2Configured } from "@/lib/r2";
  * Upload un replay vidéo (webm) enregistré côté client via MediaRecorder.
  * Le fichier est reçu en multipart/form-data (champ "file").
  *
+ * ⭐ V3.33 — NOUVEAU mode JSON : { recordingUrl } (Content-Type:
+ * application/json) — utilisé par le studio APRÈS l'arrêt du live quand le
+ * replay volumineux a été uploadé DIRECTEMENT vers R2 via URL pré-signée
+ * (PUT navigateur). Ce mode ne re-transfère rien : il se contente de
+ * persister l'URL sur le LiveStream et sur la vidéo (Replay) déjà archivée
+ * par /api/live/stop.
+ *
  * Stockage : Backblaze B2 (compatible S3). URL publique retournée et stockée en DB.
  * Fallback : si B2 n'est pas configuré, stockage base64 en DB (limite ~4MB).
  */
@@ -25,6 +32,40 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    // ─── ⭐ V3.33 — Mode JSON : persister une URL R2 déjà uploadée ───
+    const contentType = req.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const body = await req.json().catch(() => ({}));
+      const recordingUrl = typeof body.recordingUrl === "string" ? body.recordingUrl.trim() : "";
+      if (!recordingUrl) {
+        return NextResponse.json({ error: "recordingUrl requis" }, { status: 400 });
+      }
+      await db.liveStream.update({
+        where: { id },
+        data: { recordingUrl },
+      });
+      const liveMeta = await db.liveStream.findUnique({
+        where: { id },
+        select: { title: true, servantId: true },
+      });
+      if (liveMeta) {
+        const existingReplay = await db.video.findFirst({
+          where: {
+            servantId: liveMeta.servantId,
+            title: { startsWith: `${liveMeta.title} (Replay)` },
+          },
+        });
+        if (existingReplay) {
+          await db.video.update({
+            where: { id: existingReplay.id },
+            data: { videoUrl: recordingUrl, hlsUrl: recordingUrl },
+          });
+        }
+      }
+      return NextResponse.json({ success: true, recordingUrl, storage: "r2-direct" });
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 

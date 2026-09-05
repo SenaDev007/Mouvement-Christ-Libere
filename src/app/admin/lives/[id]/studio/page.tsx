@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { LiveStudioClient } from "@/components/admin/live-studio-client";
+import { getLiveOverlayState } from "@/lib/live-overlay-state";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,12 @@ export default async function LiveStudioPage({
     });
   }
 
+  // ⭐ V3.33 — Restaurer l'état de l'overlay persisté : l'overlay ne se
+  // désactive plus seul au rechargement de la page (coupure de connexion,
+  // etc.). Best-effort : en cas d'échec de lecture, le studio démarre
+  // simplement avec l'overlay OFF (comportement historique).
+  const overlayPersisted = await getLiveOverlayState(live.id).catch(() => null);
+
   return (
     <LiveStudioClient
       liveId={live.id}
@@ -49,6 +56,9 @@ export default async function LiveStudioPage({
       initialIsPaused={live.isPaused}
       initialStartedAt={live.startedAt ? live.startedAt.toISOString() : null}
       initialPausedAt={live.pausedAt ? live.pausedAt.toISOString() : null}
+      // ⭐ V3.33 — État de l'overlay restauré (persistance serveur).
+      initialOverlayEnabled={overlayPersisted?.enabled ?? false}
+      initialOverlayState={overlayPersisted?.state ?? null}
       multistream={{
         enabled: live.multistreamEnabled,
         youtube: live.streamToYoutube,

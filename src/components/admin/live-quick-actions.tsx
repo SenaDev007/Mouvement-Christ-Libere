@@ -40,15 +40,39 @@ export function LiveQuickActions({ liveId, status }: LiveQuickActionsProps) {
     if (!confirm("Terminer ce live ? Le replay sera archivé si disponible.")) return;
     setLoading(true);
     setError("");
-    try {
-      const res = await apiFetch("/api/live/stop", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ liveId }),
-      });
-      if (!res.ok) {
+    // ⭐ V3.33 — /api/live/stop fait un nettoyage complet (LiveKit + YouTube
+    // + archivage replay) qui dépasse légitimement les 8 s du timeout par
+    // défaut d'apiFetch — d'où « API fetch timeout 8000 ms » en boucle.
+    // Timeout relevé (25 s) + une relance : la route marque ENDED en base
+    // EN PREMIER, donc un 2ᵉ appel est purement idempotent.
+    const stopOnce = async () => {
+      try {
+        const res = await apiFetch("/api/live/stop", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ liveId }),
+          timeoutMs: 25_000,
+        });
+        if (res.ok) return;
         const data = await res.json();
         throw new Error(data.error || "Erreur");
+      } catch (err) {
+        // Vérifier l'état réel : l'arrêt a souvent déjà eu lieu.
+        try {
+          const statsRes = await apiFetch(`/api/live/${liveId}/stats`);
+          if (statsRes.ok) {
+            const stats = await statsRes.json();
+            if (stats.status === "ENDED") return;
+          }
+        } catch {}
+        throw err;
+      }
+    };
+    try {
+      try {
+        await stopOnce();
+      } catch {
+        await stopOnce(); // une relance (idempotent côté serveur)
       }
       window.location.reload();
     } catch (err) {

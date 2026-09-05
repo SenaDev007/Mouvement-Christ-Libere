@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
 import { LiveReactions } from "@/components/live/live-reactions";
-import { MediaOverlay } from "@/components/live/media-overlay";
+import { MediaOverlay, type MediaOverlayPersistPayload } from "@/components/live/media-overlay";
 
 interface LiveStudioClientProps {
   liveId: string;
@@ -31,6 +31,10 @@ interface LiveStudioClientProps {
   initialIsPaused?: boolean;
   initialStartedAt?: string | null;
   initialPausedAt?: string | null;
+  // ⭐ V3.33 — État de l'overlay PERSISTÉ (restauration après rechargement
+  // de page / perte de connexion : l'overlay ne se désactive plus seul).
+  initialOverlayEnabled?: boolean;
+  initialOverlayState?: MediaOverlayPersistPayload | null;
   multistream: {
     enabled: boolean;
     youtube: boolean;
@@ -118,6 +122,7 @@ export function LiveStudioClient({
   liveId, roomName, title, servantName, servantPortraitUrl, thumbnailUrl,
   status: initialStatus, multistream, scheduledAt = null,
   initialIsPaused = false, initialStartedAt = null, initialPausedAt = null,
+  initialOverlayEnabled = false, initialOverlayState = null,
 }: LiveStudioClientProps) {
   const [status, setStatus] = useState(initialStatus);
   const [isLive, setIsLive] = useState(initialStatus === "LIVE");
@@ -1068,6 +1073,48 @@ export function LiveStudioClient({
     }
   };
 
+  // ⭐ V3.33 — Appel /api/live/stop RÉSILIENT : timeout relevé (25 s) +
+  // retries + vérification du statut réel entre chaque tentative. Avant,
+  // un unique appel plafonné à 8 s échouait en boucle (« API fetch timeout
+  // 8000 milliseconds ») alors que l'arrêt avait souvent DÉJÀ eu lieu côté
+  // serveur — et le studio restait bloqué « EN DIRECT ».
+  const stopLiveServerSide = async (): Promise<void> => {
+    const MAX_ATTEMPTS = 3;
+    let lastErr: unknown = null;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const res = await apiFetch("/api/live/stop", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ liveId }),
+          // ⭐ V3.33 — le nettoyage serveur (LiveKit + YouTube + archivage)
+          // dépasse légitimement les 8 s par défaut → plafond relevé pour
+          // CET appel uniquement (les autres appels restent à 8 s).
+          timeoutMs: 25_000,
+        });
+        if (res.ok) return;
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Erreur arrêt (HTTP ${res.status})`);
+      } catch (err) {
+        lastErr = err;
+        // L'arrêt a peut-être DÉJÀ eu lieu (la route marque ENDED en base
+        // EN PREMIER) : vérifier le statut réel avant de re-tenter.
+        try {
+          const statsRes = await apiFetch(`/api/live/${liveId}/stats`);
+          if (statsRes.ok) {
+            const stats = await statsRes.json();
+            if (stats.status === "ENDED") return;
+          }
+        } catch { /* stats indisponible — on retente */ }
+        if (attempt < MAX_ATTEMPTS) {
+          setInfo(`Arrêt de la diffusion… (tentative ${attempt + 1}/${MAX_ATTEMPTS})`);
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+      }
+    }
+    throw lastErr instanceof Error ? lastErr : new Error("Arrêt impossible");
+  };
+
   const confirmStopLive = async () => {
     // ─── Si l'admin a collé une URL YouTube, la persister avant le stop ───
     if (youtubeReplayUrl.trim()) {
@@ -1082,7 +1129,7 @@ export function LiveStudioClient({
     setShowStopModal(false);
     setLoading(true);
     setError("");
-    setInfo("Arrêt de l'enregistrement et archivage du replay...");
+    setInfo("Arrêt de la diffusion...");
     try {
       // ⭐ V3.27 — Si l'egress RTMP est encore en configuration en
       // arrière-plan (Go Live rapide), attendre qu'il se termine (≤ 12 s)
@@ -1124,15 +1171,39 @@ export function LiveStudioClient({
       // doit couper TOUTES les formes de diffusion, comme pour LiveKit.
       disconnectAltProviders();
 
-      // ─── Uploader le replay si disponible ───
+      // ─── ⭐ V3.33 — ARRÊTER LA DIFFUSION SERVEUR AVANT TOUT UPLOAD ───
+      // Anomalie remontée par le pasteur : « je clique Terminer → API fetch
+      // timeout 8000 ms /api/live/stop → ça ne s'arrête pas ». AVANT :
+      // l'upload du replay (plusieurs minutes pour un long direct) se
+      // faisait AVANT /api/live/stop → YouTube continuait de diffuser
+      // pendant TOUT l'upload ; puis le /stop (nettoyage LiveKit +
+      // transition YouTube + archivage) dépassait le timeout client de 8 s
+      // → erreur en boucle, impossible d'arrêter le live. NOUVEL ORDRE :
+      //   1. /api/live/stop D'ABORD — le serveur marque ENDED en base
+      //      immédiatement (viewers coupés net, YouTube voit l'ingest
+      //      disparaître) ;
+      //   2. upload du replay ENSUITE (le direct est déjà terminé) ;
+      //   3. l'URL du replay est persistée sur le live + la vidéo (Replay)
+      //      via /api/live/[id]/recording.
+      await stopLiveServerSide();
+      setIsLive(false);
+      setStatus("ENDED");
+      if (durationTimerRef.current) clearInterval(durationTimerRef.current);
+      if (statsTimerRef.current) clearInterval(statsTimerRef.current);
+      if (viewerPollRef.current) clearInterval(viewerPollRef.current);
+      // ⭐ V2.9 — Poll de stats temps réel
+      if (statsPollRef.current) clearInterval(statsPollRef.current);
+
+      // ─── Uploader le replay APRÈS l'arrêt (best effort) ───
       let recordingUrl: string | null = null;
       if (recordingBlob && recordingBlob.size > 0) {
         const sizeMB = recordingBlob.size / 1024 / 1024;
-        setInfo(`Upload du replay (${Math.round(sizeMB)}MB)...`);
+        setInfo(`Direct arrêté ✓ — Upload du replay (${Math.round(sizeMB)}MB)...`);
 
         try {
           if (sizeMB <= 4) {
-            // Petit fichier : upload direct via API (FormData)
+            // Petit fichier : upload direct via API (FormData) — la route
+            // met à jour le live ET la vidéo (Replay) déjà archivée par /stop.
             const formData = new FormData();
             formData.append("file", recordingBlob, "replay.webm");
             formData.append("liveId", liveId);
@@ -1168,7 +1239,7 @@ export function LiveStudioClient({
             // désormais les règles CORS AVANT de délivrer l'URL
             // (ensureR2CorsConfig dans /api/live/[id]/presign) ; on garde
             // un retry pour survivre à une coupure réseau brève.
-            setInfo(`Upload du replay vers R2 (${Math.round(sizeMB)}MB) — patientez...`);
+            setInfo(`Direct arrêté ✓ — Upload du replay vers R2 (${Math.round(sizeMB)}MB) — patientez...`);
             let uploadOk = false;
             let uploadErrMsg = "";
             for (let attempt = 1; attempt <= 2 && !uploadOk; attempt++) {
@@ -1197,6 +1268,17 @@ export function LiveStudioClient({
             recordingUrl = publicUrl;
             console.log("[studio] Replay uploadé (R2 direct):", recordingUrl);
             setInfo(`✓ Replay uploadé vers R2 (${Math.round(sizeMB)}MB)`);
+            // ⭐ V3.33 — Persister l'URL R2 sur le live + la vidéo (Replay)
+            // archivée par /stop (mode JSON de /recording — zéro re-transfert).
+            try {
+              await apiFetch(`/api/live/${liveId}/recording`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ recordingUrl: publicUrl }),
+              });
+            } catch (persistErr) {
+              console.error("[studio] Persistance recordingUrl R2 échouée:", persistErr);
+            }
           }
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : "erreur inconnue";
@@ -1215,27 +1297,46 @@ export function LiveStudioClient({
         }
       }
 
-      const res = await apiFetch("/api/live/stop", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ liveId, recordingUrl }),
-      });
-      if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Erreur arrêt"); }
-      setIsLive(false);
-      setStatus("ENDED");
       setInfo("Live terminé. Le replay a été archivé.");
       setTimeout(() => { window.location.href = "/admin/videos"; }, 2000);
-      if (durationTimerRef.current) clearInterval(durationTimerRef.current);
-      if (statsTimerRef.current) clearInterval(statsTimerRef.current);
-      if (viewerPollRef.current) clearInterval(viewerPollRef.current);
-      // ⭐ V2.9 — Poll de stats temps réel
-      if (statsPollRef.current) clearInterval(statsPollRef.current);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      // ⭐ V3.33 — Message explicite : l'arrêt est idempotent — un nouveau
+      // clic « Terminer » re-tentera proprement (le serveur marque ENDED en
+      // base en premier, un 2ᵉ appel ne fait que du best-effort).
+      const errMsg = err instanceof Error ? err.message : "Erreur inconnue";
+      setError(
+        `Arrêt de la diffusion échoué : ${errMsg}. ` +
+        "Le live est peut-être déjà marqué terminé côté serveur — patientez quelques secondes puis recliquez « Terminer » si le voyant EN DIRECT est toujours actif."
+      );
     } finally {
       setLoading(false);
     }
   };
+
+  // ⭐ V3.33 — PERSISTANCE DE L'ÉTAT OVERLAY : le pasteur constatait que
+  // l'overlay se désactivait SEUL au rechargement de la page (coupure de
+  // connexion, etc.). L'état (actif ON/OFF, images, slides, texte, slide
+  // courante) est désormais envoyé au serveur (débounce côté MediaOverlay)
+  // et restauré à l'ouverture du studio. Best-effort : la persistance ne
+  // doit JAMAIS bloquer ni casser la diffusion.
+  const persistOverlayState = useCallback((payload: MediaOverlayPersistPayload) => {
+    try {
+      const body = JSON.stringify({ enabled: payload.showOverlay, state: payload });
+      // Garde-fou : les images sont des data-URL parfois lourdes — au-delà
+      // de ~4,5 Mo on ne persiste plus (l'overlay reste actif localement).
+      if (body.length > 4_500_000) {
+        console.warn("[studio] État overlay trop volumineux — persistance ignorée");
+        return;
+      }
+      apiFetch(`/api/live/${liveId}/overlay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      }).catch((persistErr) => {
+        console.error("[studio] Persistance overlay échouée (non bloquant) :", persistErr);
+      });
+    } catch {}
+  }, [liveId]);
 
   const formatDuration = (s: number) => {
     const h = Math.floor(s / 3600);
@@ -1608,6 +1709,13 @@ export function LiveStudioClient({
                 isPaused={isPaused}
                 mirror={cameraOn && !screenSharing}
                 onCanvasStream={(stream) => { overlayStreamRef.current = stream; }}
+                // ⭐ V3.33 — Restauration + persistance de l'overlay
+                initialShowOverlay={initialOverlayEnabled}
+                initialImages={initialOverlayState?.overlayImages}
+                initialSlides={initialOverlayState?.slides}
+                initialCurrentSlide={initialOverlayState?.currentSlide}
+                initialTextOverlay={initialOverlayState?.textOverlay}
+                onPersist={persistOverlayState}
               />
 
               {isLive && (

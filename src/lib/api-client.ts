@@ -37,13 +37,21 @@ function shouldUseBackend(): boolean {
  */
 const LOCAL_FETCH_TIMEOUT_MS = 8000;
 
+/**
+ * ⭐ V3.33 — Options étendues : un appel peut relever le plafond de timeout
+ * via `timeoutMs` (ex. /api/live/stop, dont le nettoyage LiveKit + YouTube
+ * dépasse largement 8 s). Par défaut : 8 s, inchangé pour tous les autres.
+ */
+export type ApiFetchOptions = RequestInit & { timeoutMs?: number };
+
 export async function apiFetch(
   path: string,
-  options: RequestInit = {},
+  options: ApiFetchOptions = {},
 ): Promise<Response> {
-  const isFormData = options.body instanceof FormData;
+  const { timeoutMs, ...fetchInit } = options;
+  const isFormData = fetchInit.body instanceof FormData;
   const headers: Record<string, string> = {
-    ...options.headers as Record<string, string>,
+    ...fetchInit.headers as Record<string, string>,
   };
 
   if (isFormData) {
@@ -59,16 +67,17 @@ export async function apiFetch(
     // Si un caller passe déjà son propre `signal`, on respecte ce signal
     // (les deux AbortControllers sont combinés).
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), LOCAL_FETCH_TIMEOUT_MS);
+    const effectiveTimeoutMs = timeoutMs && timeoutMs > 0 ? timeoutMs : LOCAL_FETCH_TIMEOUT_MS;
+    const timeoutId = setTimeout(() => controller.abort(), effectiveTimeoutMs);
     // Si le caller a passé un signal externe, le propager vers notre controller
-    const externalSignal = options.signal;
+    const externalSignal = fetchInit.signal;
     if (externalSignal) {
       if (externalSignal.aborted) controller.abort();
       else externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
     }
     try {
       const response = await fetch(path, {
-        ...options,
+        ...fetchInit,
         headers,
         signal: controller.signal,
       });
@@ -79,7 +88,7 @@ export async function apiFetch(
       // Si c'est notre timeout qui a déclenché l'abort, on lève une erreur
       // explicite pour que l'UI puisse afficher un message clair.
       if (controller.signal.aborted && (!externalSignal || !externalSignal.aborted)) {
-        throw new DOMException(`apiFetch timeout (${LOCAL_FETCH_TIMEOUT_MS}ms): ${path}`, "TimeoutError");
+        throw new DOMException(`apiFetch timeout (${effectiveTimeoutMs}ms): ${path}`, "TimeoutError");
       }
       throw err;
     }
@@ -91,7 +100,7 @@ export async function apiFetch(
   }
 
   const fetchOptions: RequestInit = {
-    ...options,
+    ...fetchInit,
     credentials: "include",
     headers,
   };

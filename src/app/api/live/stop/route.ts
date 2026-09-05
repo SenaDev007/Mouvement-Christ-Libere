@@ -29,6 +29,59 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Live introuvable" }, { status: 404 });
     }
 
+    // ─── ⭐ V3.33 — ARRÊT IMMÉDIAT EN BASE, AVANT TOUT LE RESTE ───
+    // Anomalie remontée par le pasteur : « je clique Terminer, API fetch
+    // timeout 8000 ms /api/live/stop, et ça ne s'arrête pas ». Causes :
+    //  1) le client uploadait le replay (parfois long) AVANT d'appeler /stop
+    //    → YouTube continuait de diffuser pendant tout l'upload (corrigé
+    //    côté studio : le /stop est désormais appelé AVANT l'upload) ;
+    //  2) le nettoyage (LiveKit + YouTube + archivage replay) peut dépasser
+    //    le timeout client — si la fonction serverless mourait avant
+    //    l'update DB, le live restait « LIVE » à jamais.
+    // Désormais : statut ENDED + endedAt + reset pause POSÉS IMMÉDIATEMENT
+    // (une seule écriture rapide) → viewers et studio voient l'arrêt
+    // instantanément, et le /stop devient idempotent (un 2ᵉ appel ne
+    // re-parcourt que du best-effort déjà protégé par try/catch).
+    //
+    // Calculer la durée du live
+    const now = new Date();
+    let durationStr = "";
+    // (C7) Si startedAt est null (par ex. /api/live/start a échoué), estimer
+    // la durée avec scheduledAt comme point de départ. Si aucune estimation
+    // n'est possible ou si la durée calculée est négative, mettre "0:00" au
+    // lieu de laisser une chaîne vide.
+    const startForDuration = live.startedAt || live.scheduledAt;
+    if (startForDuration) {
+      const durationMs = now.getTime() - new Date(startForDuration).getTime();
+      if (durationMs > 0) {
+        const h = Math.floor(durationMs / 3600000);
+        const m = Math.floor((durationMs % 3600000) / 60000);
+        const s = Math.floor((durationMs % 60000) / 1000);
+        durationStr = h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}` : `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+      } else {
+        durationStr = "0:00";
+      }
+    } else {
+      durationStr = "0:00";
+    }
+
+    // Mettre à jour le live : statut ENDED + endedAt
+    // (YT-pause) Réinitialiser isPaused/pausedAt pour éviter qu'un viewer
+    // arrivant sur la page après l'arrêt ne voie un écran "en pause".
+    await db.liveStream.update({
+      where: { id: liveId },
+      data: {
+        status: "ENDED",
+        endedAt: now,
+        isPaused: false,
+        pausedAt: null,
+        // (V3.33) Si un recordingUrl est fourni dans l'appel (flux
+        // historique), le persister — sans jamais ÉCRASER un replay déjà
+        // posé par /api/live/[id]/recording avec null.
+        ...(recordingUrl ? { recordingUrl } : {}),
+      },
+    });
+
     // ─── ⭐ V2.9 — FERMETURE FORCÉE DE LA DIFFUSION (cause racine du
     //     « YouTube continuait de streamer après l'arrêt dans le
     //     back-office » : seul l'egress était arrêté "best effort", mais
@@ -93,42 +146,6 @@ export async function POST(req: NextRequest) {
     } catch (e) {
       console.error("[live/stop] LiveKit SDK indisponible:", e);
     }
-
-    // Calculer la durée du live
-    const now = new Date();
-    let durationStr = "";
-    // (C7) Si startedAt est null (par ex. /api/live/start a échoué), estimer
-    // la durée avec scheduledAt comme point de départ. Si aucune estimation
-    // n'est possible ou si la durée calculée est négative, mettre "0:00" au
-    // lieu de laisser une chaîne vide.
-    const startForDuration = live.startedAt || live.scheduledAt;
-    if (startForDuration) {
-      const durationMs = now.getTime() - new Date(startForDuration).getTime();
-      if (durationMs > 0) {
-        const h = Math.floor(durationMs / 3600000);
-        const m = Math.floor((durationMs % 3600000) / 60000);
-        const s = Math.floor((durationMs % 60000) / 1000);
-        durationStr = h > 0 ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}` : `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-      } else {
-        durationStr = "0:00";
-      }
-    } else {
-      durationStr = "0:00";
-    }
-
-    // Mettre à jour le live : statut ENDED + endedAt
-    // (YT-pause) Réinitialiser isPaused/pausedAt pour éviter qu'un viewer
-    // arrivant sur la page après l'arrêt ne voie un écran "en pause".
-    await db.liveStream.update({
-      where: { id: liveId },
-      data: {
-        status: "ENDED",
-        endedAt: new Date(),
-        recordingUrl: recordingUrl || null,
-        isPaused: false,
-        pausedAt: null,
-      },
-    });
 
     // ─── Toujours archiver le replay en tant que vidéo ───
     // Même sans recordingUrl, on crée l'entrée pour qu'elle apparaisse dans le module vidéo

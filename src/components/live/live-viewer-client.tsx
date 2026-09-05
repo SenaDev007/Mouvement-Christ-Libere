@@ -41,6 +41,13 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const { data: session, status } = useSession();
   const [countdown, setCountdown] = useState("");
   const [isLive, setIsLive] = useState(live.status === "LIVE");
+  // ⭐ V3.33 — URL YouTube FRAÎCHE (poll /stats) : la prop SSR
+  // live.youtubeUrl est PÉRIMÉE si le viewer a ouvert la page avant le
+  // démarrage du direct (broadcast YouTube pré-créé au /start → URL connue
+  // seulement APRÈS). Sans mise à jour, le viewer restait sur l'écran
+  // « En attente du diffuseur » (préparation du flux) alors que YouTube
+  // diffusait déjà — c'est l'anomalie remontée par le pasteur.
+  const [liveYoutubeUrl, setLiveYoutubeUrl] = useState<string | null>(live.youtubeUrl);
   // ⭐ V2.9 — Le direct vient d'être arrêté pendant qu'on le regardait :
   // l'écran « coupe » (écran de fin + déconnexion), plutôt que de rester
   // sur un lecteur figé « en attente ».
@@ -187,7 +194,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   // puis « direct terminé », faux). On interroge désormais /api/live/[id]/stats
   // qui renvoie le VRAI statut de CE live (public, pas d'auth).
   useEffect(() => {
-    const isYoutubeLive = !!live.youtubeUrl;
+    const isYoutubeLive = !!liveYoutubeUrl;
     // Poller tant que :
     //  - le live est SCHEDULED (attente du démarrage), OU
     //  - le live est LIVE mais startedAt n'est pas encore connu, OU
@@ -201,6 +208,12 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         if (data.status === "LIVE") {
           setIsLive(true);
         }
+        // ⭐ V3.33 — Basculer vers l'embed YouTube dès que l'URL du broadcast
+        // est connue (Tier C : pré-créée au démarrage). Le viewer passe
+        // alors du mode WebRTC/HLS à l'embed — exactement comme YouTube.
+        if (data.youtubeUrl && data.youtubeUrl !== liveYoutubeUrl) {
+          setLiveYoutubeUrl(data.youtubeUrl);
+        }
         // ⭐ V2.9 — Le direct vient d'être ARRÊTÉ côté back-office :
         // couper l'écran du viewer.
         else if (data.status === "ENDED" || data.status === "CANCELLED") {
@@ -210,6 +223,14 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
             // Couper TOUTES les formes de lecture (room LiveKit, hls.js,
             // Agora, Daily) — arrête la lecture et les pistes.
             try { roomRef.current?.disconnect(); roomRef.current = null; } catch {}
+            try { hlsRef.current?.destroy(); } catch {}
+            hlsRef.current = null;
+            const video = videoRef.current;
+            if (video) {
+              try { video.pause(); } catch {}
+              video.removeAttribute("src");
+              try { video.srcObject = null; } catch {}
+            }
           }
           return;
         }
@@ -233,7 +254,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     const intervalMs = isLive ? (isYoutubeLive ? 3000 : 10000) : 30000;
     const interval = setInterval(checkStatus, intervalMs);
     return () => clearInterval(interval);
-  }, [live.status, live.id, live.youtubeUrl, isLive, liveStartedAt]);
+  }, [live.status, live.id, liveYoutubeUrl, isLive, liveStartedAt]);
 
   // Compteur viewers réel depuis l'API
   useEffect(() => {
@@ -338,7 +359,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   // de fournisseur décidée par le studio (la source) — reconnexion auto.
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
-    if (!isLive || !live.livekitRoomName || live.youtubeUrl) return;
+    if (!isLive || !live.livekitRoomName || liveYoutubeUrl) return;
     if (!hasJoined) return; // Ne se connecte que si le viewer a rejoint
     // (C1) Éviter les reconnexions inutiles si l'effet se ré-exécute
     if (hasConnectedRef.current) return;
@@ -745,12 +766,16 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
       // Réinitialiser pour permettre une reconnexion future si l'effet re-démarre
       hasConnectedRef.current = false;
     };
-  }, [isLive, live.id, live.livekitRoomName, live.youtubeUrl, hasJoined]);
+  }, [isLive, live.id, live.livekitRoomName, liveYoutubeUrl, hasJoined]);
 
   const accentColor = live.servantCode === "pam" ? "#C9A227" : "#8C5FA8";
+  // ⭐ V3.33 — Regex étendue (embed/, live/, shorts/ comme /stats) +
+  // autoplay muet : les navigateurs bloquent l'autoplay non muet — le
+  // lecteur démarre ainsi systématiquement et le viewer active le son
+  // d'un clic (comportement standard des embeds de direct).
   const getYouTubeEmbedUrl = (url: string) => {
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-    return match ? `https://www.youtube.com/embed/${match[1]}?autoplay=1` : url;
+    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return match ? `https://www.youtube.com/embed/${match[1]}?autoplay=1&mute=1&rel=0` : url;
   };
 
   const handleLike = () => {
@@ -857,11 +882,15 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                   </div>
                 </div>
               )}
-              {isLive && live.youtubeUrl && hasJoined && !viewerPaused && (
-                <iframe src={getYouTubeEmbedUrl(live.youtubeUrl)} className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+              {isLive && liveYoutubeUrl && hasJoined && !viewerPaused && (
+                <iframe
+                  key={liveYoutubeUrl}
+                  src={getYouTubeEmbedUrl(liveYoutubeUrl)}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen
+                />
               )}
-              {isLive && !live.youtubeUrl && hasJoined && (
+              {isLive && !liveYoutubeUrl && hasJoined && (
                 <VideoPlayerPro
                   videoRef={videoRef}
                   isLive={isLive}
@@ -874,7 +903,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
               {/* ⭐ V3.22 — Badge du mode de livraison (YouTube-like / repli).
                   Discret, coin haut-droit : informe sans gêner la lecture. */}
-              {isLive && !live.youtubeUrl && hasJoined && !connecting && streamBadge && (
+              {isLive && !liveYoutubeUrl && hasJoined && !connecting && streamBadge && (
                 <div className="absolute top-2 right-2 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/10 pointer-events-none">
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
@@ -890,7 +919,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               {/* (S5) Overlay "En attente du diffuseur" — quand connecté à LiveKit
                   mais qu'aucun track vidéo n'est reçu (le studio n'est pas encore
                   connecté, ou le flux RTMP vers YouTube n'est pas encore actif). */}
-              {isLive && !live.youtubeUrl && hasJoined && waitingForStream && !streamReceived && !connecting && (
+              {isLive && !liveYoutubeUrl && hasJoined && waitingForStream && !streamReceived && !connecting && (
                 <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#1A0826]">
                   {/* Miniature en fond si disponible */}
                   {live.thumbnailUrl && (
@@ -1107,7 +1136,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               )}
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#8A8378]/10">
                 <span className="text-xs text-[#8A8378]">Regarder sur :</span>
-                {live.youtubeUrl && <a href={live.youtubeUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-red-600/10 text-red-600 text-xs font-bold hover:bg-red-600/20 transition-colors">YouTube</a>}
+                {liveYoutubeUrl && <a href={liveYoutubeUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-red-600/10 text-red-600 text-xs font-bold hover:bg-red-600/20 transition-colors">YouTube</a>}
                 {live.facebookUrl && <a href={live.facebookUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-blue-600/10 text-blue-600 text-xs font-bold hover:bg-blue-600/20 transition-colors">Facebook</a>}
                 {live.tiktokUrl && <a href={live.tiktokUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#1E0F2B]/10 text-[#1E0F2B] text-xs font-bold hover:bg-[#1E0F2B]/20 transition-colors">TikTok</a>}
               </div>
