@@ -164,8 +164,11 @@ async function assurerUtilisateurSysteme(): Promise<{ id: string } | null> {
  * En mode REPROGRAMME, l'en-tête et les libellés signalent clairement que
  * la date/heure précédente est REMPLACÉE (les membres ne doivent pas se
  * présenter à l'ancienne heure).
+ * ⭐ V3.40 — exporté pour la route /admin/api/lives/[id]/annonce (rejeu
+ * manuel + diagnostic) : le rejeu produit EXACTEMENT le même message que
+ * le relay automatique.
  */
-function formaterMessageAnnonce(l: LiveProgrammeAnnonce, mode: ModeAnnonce): string {
+export function formaterMessageAnnonce(l: LiveProgrammeAnnonce, mode: ModeAnnonce): string {
   const date = new Date(l.scheduledAt);
   const jour = date.toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -207,8 +210,9 @@ function formaterMessageAnnonce(l: LiveProgrammeAnnonce, mode: ModeAnnonce): str
 /**
  * Message d'annulation : thème, animateur et créneau prévu, pour que les
  * membres ne se connectent pas pour rien.
+ * ⭐ V3.40 — exporté (cf. formaterMessageAnnonce).
  */
-function formaterMessageAnnulation(l: LiveAnnuleAnnonce): string {
+export function formaterMessageAnnulation(l: LiveAnnuleAnnonce): string {
   const date = new Date(l.scheduledAt);
   const jour = date.toLocaleDateString("fr-FR", {
     weekday: "long",
