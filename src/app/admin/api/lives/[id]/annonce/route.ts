@@ -75,6 +75,80 @@ function decrireErreur(e: unknown): { erreur: string; codeErreur?: string } {
   return { erreur: String(e) };
 }
 
+/**
+ * GET /admin/api/lives/[id]/annonce — DIAGNOSTIC en lecture seule.
+ *
+ * Compte les messages du canal d'annonces et retourne les derniers avec
+ * leur `isDeleted` BRUT : permet de vérifier en production, sans accès
+ * aux logs ni à la base, que les messages publiés par le relay sont bien
+ * en base et avec quel état `isDeleted` (la route publique des messages
+ * filtre `isDeleted = false` — un défaut SQL absent fait disparaître les
+ * annonces du canal alors que la sidebar les voit encore).
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // 🔒 Authentification back-office.
+  const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (!sessionToken || !verifySessionToken(sessionToken)) {
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+  const { id } = await params;
+  try {
+    // Canal d'annonces (même sélection que le relay).
+    const existants = await db.channel.findMany({
+      where: { type: "ANNOUNCEMENT" },
+      orderBy: [{ createdAt: "asc" }],
+      select: { id: true, name: true },
+    });
+    const nomme = existants.find((c) => /annonce/i.test(c.name || ""));
+    const canal = nomme ?? existants[0] ?? null;
+    if (!canal) {
+      return NextResponse.json({ canal: null, total: 0, message: "Aucun canal ANNOUNCEMENT" });
+    }
+
+    // Comptages par état isDeleted (NULL compris).
+    const parEtat = await db.message.groupBy({
+      by: ["isDeleted"],
+      where: { channelId: canal.id },
+      _count: { _all: true },
+    });
+
+    // Les 3 derniers messages, isDeleted brut inclus.
+    const derniers = await db.message.findMany({
+      where: { channelId: canal.id },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 3,
+      select: {
+        id: true,
+        content: true,
+        type: true,
+        isDeleted: true,
+        createdAt: true,
+        userId: true,
+      },
+    });
+
+    return NextResponse.json({
+      canal: { id: canal.id, nom: canal.name },
+      total: parEtat.reduce((s, g) => s + g._count._all, 0),
+      parEtat: parEtat.map((g) => ({ isDeleted: g.isDeleted, count: g._count._all })),
+      derniers: derniers.map((m) => ({
+        id: m.id,
+        type: m.type,
+        isDeleted: m.isDeleted,
+        createdAt: m.createdAt,
+        auteurId: m.userId,
+        contenu: m.content?.substring(0, 120) ?? null,
+      })),
+    });
+  } catch (error) {
+    const { erreur, codeErreur } = decrireErreur(error);
+    return NextResponse.json({ error: erreur, codeErreur }, { status: 500 });
+  }
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
