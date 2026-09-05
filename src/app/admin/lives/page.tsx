@@ -5,6 +5,9 @@ import { DeleteButton } from "@/components/admin/delete-button";
 import { NewLiveButton } from "@/components/admin/new-live-modal";
 import { EditLiveModal } from "@/components/admin/edit-live-modal";
 import { LiveQuickActions } from "@/components/admin/live-quick-actions";
+// ⭐ V3.40 — Filet de sécurité visible : relancer l'annonce d'un live
+// (diagnostic complet en cas d'échec, sans passer par les logs Vercel).
+import { AnnonceLiveButton } from "@/components/admin/annonce-live-button";
 
 export const dynamic = "force-dynamic";
 
@@ -164,6 +167,8 @@ export default async function AdminLivesPage() {
                       </Link>
                     )}
                     <LiveQuickActions liveId={l.id} status={l.status} />
+                    {/* ⭐ V3.40 — Annonce manuelle de secours + diagnostic */}
+                    <AnnonceLiveButton liveId={l.id} status={l.status} />
                     <EditLiveModal liveId={l.id} servants={servants} />
                     <DeleteButton entity="lives" id={l.id} />
                   </div>
