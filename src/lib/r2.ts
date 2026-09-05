@@ -61,20 +61,66 @@ function getClient(): S3Client {
     // https://{bucket}.{accountId}.r2.cloudflarestorage.com
     // NE PAS mettre forcePathStyle: true (cause Access Denied sur R2)
     //
-    // ⭐ V3.34 — GEL DU COMPORTEMENT CHECKSUM (défensif) : depuis AWS SDK
-    // v3.729, les clients calculent par défaut des checksums CRC32
-    // ("WHEN_SUPPORTED"). Selon la version du SDK et la commande, ces
-    // en-têtes (x-amz-checksum-crc32) peuvent être inclus dans les en-têtes
-    // SIGNÉS des URL pré-signées — or le navigateur ne les renvoie jamais
-    // lors du PUT direct → 403 AccessDenied systématique (problème connu
-    // R2/MinIO, contournement officiel : WHEN_REQUIRED). Vérifié
-    // empiriquement sur la v3.1121 installée (les URL générées ne signent
-    // que « host ») : cette config est un no-op aujourd'hui qui protège
-    // contre les montées de version futures du SDK.
+    // ⭐ V3.34/V3.35 — CHECKSUM : les uploads SERVEUR (intercession, replays
+    // ≤ 4 Mo, rendu post-production) passent très bien AVEC ou SANS ces
+    // options — le SDK y envoie lui-même le checksum du VRAI corps, la
+    // signature correspond. Ces options sont conservées par cohérence avec
+    // le client dédié au pré-signage (voir getPresignClient).
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED",
   });
   return s3Client;
+}
+
+/**
+ * ⭐ V3.35 — CLIENT DÉDIÉ AU PRÉ-SIGNAGE des URL d'upload navigateur.
+ *
+ * CAUSE RACINE CONFIRMÉE (empirique, test local SDK 3.1121) du « Upload R2
+ * échoue : access denied » sur les replays de live : SANS l'option
+ * requestChecksumCalculation="WHEN_REQUIRED", le SDK (≥ v3.729) ajoute
+ * DEUX paramètres de query à l'URL pré-signée d'un PutObject :
+ *
+ *   x-amz-checksum-crc32=AAAAAA==      ← CRC32 du corps… VIDE (la commande
+ *                                          n'a pas de Body au pré-signage)
+ *   x-amz-sdk-checksum-algorithm=CRC32
+ *
+ * Ces paramètres font partie de la requête canonique signée (signature
+ * valide !) — mais lorsque le NAVIGATEUR PUT ensuite le VRAI corps vidéo,
+ * R2 valide le checksum déclaré (celui d'un corps vide) contre le corps
+ * réel → mismatch → **403 AccessDenied systématique**.
+ *
+ * C'est pourquoi : les audios d'intercession s'enregistrent parfaitement
+ * (upload 100 % serveur — le SDK envoie le checksum du vrai corps), tandis
+ * que le replay du live (> 4 Mo, PUT navigateur direct) échouait TOUJOURS.
+ *
+ * Ce client est SÉPARÉ du client partagé : même si quelqu'un modifie
+ * getClient() plus tard, le pré-signage restera propre. Un garde-fou
+ * supplémentaire (voir getPresignedUploadUrl) vérifie l'URL générée.
+ */
+let presignClient: S3Client | null = null;
+
+function getPresignClient(): S3Client {
+  if (presignClient) return presignClient;
+  const cfg = getConfig();
+  if (!cfg.accountId || !cfg.accessKeyId || !cfg.secretAccessKey || !cfg.bucket) {
+    throw new Error(
+      "Cloudflare R2 non configuré. Variables requises : R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME"
+    );
+  }
+  presignClient = new S3Client({
+    region: "auto",
+    endpoint: `https://${cfg.accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: cfg.accessKeyId,
+      secretAccessKey: cfg.secretAccessKey,
+    },
+    // ⭐ V3.35 — OBLIGATOIRE pour les URL pré-signées utilisables par le
+    // navigateur (voir commentaire de bloc ci-dessus). Contournement
+    // documenté par Cloudflare pour R2 + AWS SDK ≥ v3.729.
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
+  });
+  return presignClient;
 }
 
 export function isR2Configured(): boolean {
@@ -206,21 +252,81 @@ export function generateKey(prefix: string, id: string, ext: string): string {
 }
 
 /**
+ * Détecte les paramètres de checksum dans une URL pré-signée — un PUT
+ * navigateur vers une telle URL est REJETÉ par R2 (403 AccessDenied, cf.
+ * getPresignClient). Retourne la liste des paramètres fautifs.
+ */
+function parametresChecksum(url: string): string[] {
+  try {
+    return [...new URL(url).searchParams.keys()].filter((k) =>
+      /x-amz-(sdk-)?checksum/i.test(k)
+    );
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Génère une URL pré-signée pour upload direct depuis le navigateur vers R2.
+ *
+ * ⭐ V3.35 — GARDE-FOU : après génération, on VÉRIFIE que l'URL ne contient
+ * aucun paramètre checksum (x-amz-checksum-*, x-amz-sdk-checksum-*). Si le
+ * SDK (montée de version future, autre chemin de code) en produisait une,
+ * on régénère avec un client éphémère configuré WHEN_REQUIRED ; si elle
+ * restait polluée, on REFUSE de la délivrer (erreur explicite) plutôt que
+ * de laisser le navigateur échouer avec un 403 « access denied » opaque.
  */
 export async function getPresignedUploadUrl(
   key: string,
   contentType: string,
   expiresIn = 3600
 ): Promise<string> {
-  const client = getClient();
   const cfg = getConfig();
+  const client = getPresignClient();
   const command = new PutObjectCommand({
     Bucket: cfg.bucket,
     Key: key,
     ContentType: contentType,
   });
-  return getSignedUrl(client, command, { expiresIn });
+  let url = await getSignedUrl(client, command, { expiresIn });
+
+  const suspects = parametresChecksum(url);
+  if (suspects.length > 0) {
+    console.error(
+      `[r2] ⚠️ URL pré-signée polluée par des paramètres checksum (${suspects.join(
+        ", "
+      )}) — régénération avec un client éphémère WHEN_REQUIRED…`
+    );
+    const secours = new S3Client({
+      region: "auto",
+      endpoint: `https://${cfg.accountId}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: cfg.accessKeyId,
+        secretAccessKey: cfg.secretAccessKey,
+      },
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
+    });
+    try {
+      const cmdSecours = new PutObjectCommand({
+        Bucket: cfg.bucket,
+        Key: key,
+        ContentType: contentType,
+      });
+      url = await getSignedUrl(secours, cmdSecours, { expiresIn });
+    } finally {
+      secours.destroy();
+    }
+    const suspectsRestants = parametresChecksum(url);
+    if (suspectsRestants.length > 0) {
+      throw new Error(
+        `URL pré-signée R2 inutilisable : le SDK AWS y inclut des paramètres checksum (${suspectsRestants.join(
+          ", "
+        )}) que le navigateur ne peut pas satisfaire. Signalez cette erreur — le comportement du SDK AWS a changé.`
+      );
+    }
+  }
+  return url;
 }
 
 /**

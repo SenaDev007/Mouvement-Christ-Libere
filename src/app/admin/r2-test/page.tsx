@@ -2,7 +2,7 @@
 
 import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, Loader2, Cloud, TestTube } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Cloud, TestTube, Globe } from "lucide-react";
 import Link from "next/link";
 
 interface R2Status {
@@ -28,15 +28,31 @@ interface R2TestResult {
   details?: string[];
 }
 
+/** ⭐ V3.35 — Résultat du test PUT depuis LE NAVIGATEUR (vrai chemin du replay). */
+interface BrowserTestResult {
+  ok: boolean;
+  status?: number;
+  xmlCode?: string;
+  message: string;
+  durationMs?: number;
+  urlClean?: boolean;
+  checksumParams?: string[];
+}
+
 export default function R2TestPage() {
   const [status, setStatus] = useState<R2Status | null>(null);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<R2TestResult | null>(null);
+  const [browserTesting, setBrowserTesting] = useState(false);
+  const [browserResult, setBrowserResult] = useState<BrowserTestResult | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiFetch("/api/live/r2-test?action=status")
+    // ⭐ V3.35 — RÉPARATION : la page appelait /api/live/r2-test qui
+    // N'EXISTE PAS (404 au chargement → page inutilisable, impossible de
+    // diagnostiquer quoi que ce soit). La bonne route est /api/admin/r2-test.
+    apiFetch("/api/admin/r2-test?action=status")
       .then((r) => r.json())
       .then((data) => {
         if (data.error) {
@@ -54,7 +70,7 @@ export default function R2TestPage() {
     setTestResult(null);
     setError("");
     try {
-      const res = await apiFetch("/api/live/r2-test?action=test");
+      const res = await apiFetch("/api/admin/r2-test?action=test");
       const data = await res.json();
       // La réponse peut être 200 (success) ou 500/503 (erreur) avec details
       setTestResult(data);
@@ -65,6 +81,93 @@ export default function R2TestPage() {
       setError(err instanceof Error ? err.message : "Erreur");
     } finally {
       setTesting(false);
+    }
+  };
+
+  // ⭐ V3.35 — Test PUT depuis LE NAVIGATEUR, exactement le chemin du replay
+  // de live (> 4 Mo) : 1) demande une URL pré-signée au serveur, 2) PUT le
+  // petit blob DIRECTEMENT vers R2 (preflight CORS inclus — video/webm),
+  // 3) affiche le statut et le code XML exact en cas de refus.
+  // Un PUT serveur réussit toujours, même quand le PUT navigateur échoue :
+  // seul ce test détecte le vrai problème (ex. le 403 « AccessDenied » du
+  // checksum SDK qui bloquait TOUS les replays).
+  const runBrowserTest = async () => {
+    setBrowserTesting(true);
+    setBrowserResult(null);
+    setError("");
+    try {
+      const presignRes = await apiFetch("/api/admin/r2-test?action=presign");
+      const presign = await presignRes.json();
+      if (!presignRes.ok || !presign.uploadUrl) {
+        setBrowserResult({
+          ok: false,
+          message: presign.error || "Impossible de générer l'URL pré-signée",
+        });
+        return;
+      }
+      if (!presign.urlClean) {
+        setBrowserResult({
+          ok: false,
+          urlClean: false,
+          checksumParams: presign.checksumParams || [],
+          message:
+            "L'URL pré-signée contient des paramètres checksum (" +
+            (presign.checksumParams || []).join(", ") +
+            ") — le PUT navigateur sera refusé (403). Signalez cette erreur.",
+        });
+        return;
+      }
+      const debut = Date.now();
+      try {
+        const blob = new Blob(
+          ["Test presign navigateur V3.35 — upload direct navigateur vers R2, même chemin que le replay du live."],
+          { type: "video/webm" }
+        );
+        const putRes = await fetch(presign.uploadUrl, {
+          method: "PUT",
+          body: blob,
+          headers: { "Content-Type": "video/webm" },
+        });
+        const dureeMs = Date.now() - debut;
+        if (putRes.ok) {
+          setBrowserResult({
+            ok: true,
+            status: putRes.status,
+            urlClean: true,
+            durationMs: dureeMs,
+            message: "PUT navigateur accepté par R2 (HTTP " + putRes.status + ") — le chemin d'upload du replay fonctionne depuis ce navigateur.",
+          });
+        } else {
+          const errBody = await putRes.text().catch(() => "");
+          const xmlCode = errBody.match(/<Code>([^<]{1,60})<\/Code>/)?.[1];
+          setBrowserResult({
+            ok: false,
+            status: putRes.status,
+            xmlCode,
+            urlClean: true,
+            durationMs: dureeMs,
+            message:
+              "PUT navigateur refusé : " +
+              (xmlCode || "HTTP " + putRes.status) +
+              (putRes.status === 403
+                ? " — refus R2 : vérifiez le token (règles IP ?) et envoyez ce code à l'équipe technique."
+                : ""),
+          });
+        }
+      } catch (err) {
+        setBrowserResult({
+          ok: false,
+          urlClean: true,
+          message:
+            "Échec réseau (" +
+            (err instanceof TypeError ? "Failed to fetch" : err instanceof Error ? err.message : "erreur") +
+            ") — CORS du bucket ou réseau : le preflight OPTIONS vers R2 est bloqué.",
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setBrowserTesting(false);
     }
   };
 
@@ -163,10 +266,11 @@ export default function R2TestPage() {
         <div className="bg-white rounded-xl p-5 border border-[#8A8378]/15 mb-4">
           <h2 className="text-sm font-bold mb-3 flex items-center gap-2">
             <TestTube className="w-4 h-4 text-[#C9A227]" />
-            Test d'upload
+            Test d'upload serveur
           </h2>
           <p className="text-xs text-[#8A8378] mb-3">
-            Uploade un petit fichier texte de test vers R2 pour vérifier que l'écriture fonctionne.
+            Uploade un petit fichier texte vers R2 DEPUIS LE SERVEUR (même mécanisme que les notes
+            vocales d'intercession). Ce test peut réussir alors que l'upload navigateur échoue.
           </p>
           <button
             onClick={runTest}
@@ -174,7 +278,7 @@ export default function R2TestPage() {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
-            {testing ? "Test en cours..." : "Lancer le test"}
+            {testing ? "Test en cours..." : "Lancer le test serveur"}
           </button>
 
           {testResult && (
@@ -243,6 +347,69 @@ export default function R2TestPage() {
                   </ul>
                 </div>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* ⭐ V3.35 — Test d'upload NAVIGATEUR (le vrai chemin du replay de live) */}
+        <div className="bg-white rounded-xl p-5 border border-[#C9A227]/40 mb-4">
+          <h2 className="text-sm font-bold mb-3 flex items-center gap-2">
+            <Globe className="w-4 h-4 text-[#C9A227]" />
+            Test d&apos;upload navigateur — le chemin exact du replay
+          </h2>
+          <p className="text-xs text-[#8A8378] mb-3">
+            C&apos;est LE test décisif pour les replays de live : votre navigateur uploade un petit
+            fichier DIRECTEMENT vers R2 via une URL pré-signée, exactement comme le replay après un
+            direct (preflight CORS inclus). Le test serveur peut réussir alors que celui-ci échoue —
+            c&apos;est ce qui expliquait le « access denied » des replays.
+          </p>
+          <button
+            onClick={runBrowserTest}
+            disabled={!status?.configured || browserTesting}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#C9A227] font-bold text-sm hover:bg-[#3A1E4D] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {browserTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
+            {browserTesting ? "Test navigateur en cours..." : "Lancer le test navigateur"}
+          </button>
+
+          {browserResult && (
+            <div className={`mt-4 p-4 rounded-lg border ${browserResult.ok ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}>
+              <p className={`text-sm font-bold mb-2 flex items-start gap-2 ${browserResult.ok ? "text-emerald-700" : "text-red-700"}`}>
+                {browserResult.ok ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <XCircle className="w-4 h-4 shrink-0 mt-0.5" />}
+                {browserResult.message}
+              </p>
+              <div className="space-y-1.5 text-xs">
+                {browserResult.status !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A8378] w-40">Statut HTTP :</span>
+                    <span className={`font-mono font-bold ${browserResult.ok ? "text-emerald-600" : "text-red-600"}`}>
+                      {browserResult.status} {browserResult.ok ? "(accepté)" : "(refusé)"}
+                    </span>
+                  </div>
+                )}
+                {browserResult.xmlCode && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A8378] w-40">Code d&apos;erreur R2 :</span>
+                    <span className="text-red-600 font-mono font-bold">{browserResult.xmlCode}</span>
+                  </div>
+                )}
+                {browserResult.durationMs !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A8378] w-40">Durée :</span>
+                    <span className="text-[#1E0F2B] font-mono">{browserResult.durationMs} ms</span>
+                  </div>
+                )}
+                {browserResult.urlClean !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A8378] w-40">URL pré-signée :</span>
+                    {browserResult.urlClean ? (
+                      <span className="text-emerald-600 font-bold">✓ sans paramètres checksum</span>
+                    ) : (
+                      <span className="text-red-600 font-bold">✗ polluée par checksum : {(browserResult.checksumParams || []).join(", ")}</span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

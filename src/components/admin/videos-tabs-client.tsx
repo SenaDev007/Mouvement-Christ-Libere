@@ -21,6 +21,11 @@ interface VideosTabsClientProps {
    *  un bandeau s'affiche et la page se rafraîchit automatiquement jusqu'à
    *  ce que la vidéo du dernier live apparaisse. */
   pendingReplayCount?: number;
+  /** ⭐ V3.35 — true quand des lives attendent leur replay YouTube MAIS que
+   *  l'OAuth YouTube n'est pas configuré : la récupération auto ne peut
+   *  JAMAIS aboutir — on affiche un bandeau de configuration explicite au
+   *  lieu du faux « récupération en cours » (et pas d'auto-refresh). */
+  youtubeOauthMissing?: boolean;
 }
 
 // Catégorisation (même logique que la page /videos publique)
@@ -52,7 +57,7 @@ function categorize(title: string, servant: string): string {
   return "Paroles & Exhortations";
 }
 
-export function VideosTabsClient({ videos, servants, pendingReplayCount = 0 }: VideosTabsClientProps) {
+export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, youtubeOauthMissing = false }: VideosTabsClientProps) {
   const router = useRouter();
   const initialServant =
     typeof window !== "undefined"
@@ -129,7 +134,9 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0 }: V
   // live) protège le quota YouTube (liveBroadcasts.list, 1 unité/appel).
   const nbRafraichissements = useRef(0);
   useEffect(() => {
-    if (pendingReplayCount <= 0) return;
+    // ⭐ V3.35 — pas d'auto-refresh quand l'OAuth YouTube manque : la
+    // récupération ne peut aboutir seule, rafraîchir ne sert à rien.
+    if (pendingReplayCount <= 0 || youtubeOauthMissing) return;
     const interval = setInterval(() => {
       if (nbRafraichissements.current >= 18) {
         // ~3,5 min sans succès : on arrête l'auto-refresh (le bandeau
@@ -141,12 +148,39 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0 }: V
       router.refresh();
     }, 12_000);
     return () => clearInterval(interval);
-  }, [pendingReplayCount, router]);
+  }, [pendingReplayCount, youtubeOauthMissing, router]);
 
   return (
     <div className="space-y-6">
+      {/* ⭐ V3.35 — bandeau de CONFIGURATION : des lives attendent leur replay
+          YouTube mais l'OAuth n'est pas configuré → l'identifiant YouTube ne
+          sera JAMAIS récupéré automatiquement (c'est le cas « l'identifiant
+          YouTube n'est pas disponible » remonté par le pasteur). */}
+      {youtubeOauthMissing && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+          <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-amber-900">
+              Récupération automatique YouTube inactive — configuration manquante
+            </p>
+            <p className="text-xs text-amber-800/80 mt-0.5">
+              {pendingReplayCount > 1
+                ? `${pendingReplayCount} lives sont terminés sans replay récupéré, et `
+                : "Un live est terminé sans replay récupéré, et "}
+              l&apos;identifiant YouTube ne peut pas être retrouvé automatiquement : les variables
+              d&apos;environnement <span className="font-mono">YOUTUBE_CLIENT_ID</span>,{" "}
+              <span className="font-mono">YOUTUBE_CLIENT_SECRET</span> et{" "}
+              <span className="font-mono">YOUTUBE_REFRESH_TOKEN</span> ne sont pas définies sur
+              Vercel. Ajoutez-les (Paramètres → Environment Variables) puis redéployez — la
+              récupération reprendra toute seule. En attendant : le replay R2 reste le chemin
+              principal, et l&apos;URL YouTube peut être collée manuellement sur le live dans le
+              studio avant l&apos;arrêt.
+            </p>
+          </div>
+        </div>
+      )}
       {/* ⭐ V3.34 — bandeau de récupération des replays YouTube en cours */}
-      {pendingReplayCount > 0 && (
+      {pendingReplayCount > 0 && !youtubeOauthMissing && (
         <div className="flex items-start gap-3 rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10 px-4 py-3">
           <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#C9A227] mt-0.5" />
           <div className="min-w-0">

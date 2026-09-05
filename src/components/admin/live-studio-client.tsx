@@ -1234,15 +1234,18 @@ export function LiveStudioClient({
             const { uploadUrl, publicUrl } = await presignRes.json();
 
             // Upload direct vers R2
-            // ⭐ V3.26/V3.34 — RETRY + diagnostic réel : un échec sur ce PUT
-            // est soit réseau/CORS (TypeError « Failed to fetch », CORS
-            // appliqué au bucket par /presign avant de délivrer l'URL), soit
-            // un refus R2 (403 « AccessDenied » = credentials/permissions du
-            // token — le vrai code d'erreur est dans le corps XML de la
-            // réponse, on l'extrait pour l'afficher au pasteur au lieu d'un
-            // « HTTP 403 » opaque). Un 3ᵉ essai laisse une chance aux erreurs
-            // transitoires ; si l'upload échoue définitivement, le replay
-            // YouTube est récupéré automatiquement (V3.34, module Vidéos).
+            // ⭐ V3.26/V3.35 — RETRY + diagnostic réel : un échec sur ce PUT
+            // est soit réseau/CORS (TypeError « Failed to fetch »), soit un
+            // refus R2 (403 « AccessDenied »). ⭐ V3.35 : la cause historique
+            // du 403 (paramètres checksum x-amz-checksum-crc32 signés dans
+            // l'URL par le SDK ≥ 3.729 — checksum d'un corps VIDE opposé au
+            // vrai corps uploadé) est corrigée à la source (client de
+            // pré-signage dédié + garde-fou dans lib/r2.ts). Le vrai code
+            // d'erreur XML est extrait du corps de la réponse. Un 3ᵉ essai
+            // laisse une chance aux erreurs transitoires ; si l'upload
+            // échoue définitivement, le replay YouTube est récupéré
+            // automatiquement (V3.34, module Vidéos) et le replay local est
+            // téléchargé en secours.
             setInfo(`Direct arrêté ✓ — Upload du replay vers R2 (${Math.round(sizeMB)}MB) — patientez...`);
             let uploadOk = false;
             let uploadErrMsg = "";
@@ -1263,12 +1266,13 @@ export function LiveStudioClient({
                   ? `${xmlCode} (HTTP ${uploadRes.status})`
                   : `HTTP ${uploadRes.status}`;
                 if (uploadRes.status === 403 || uploadRes.status === 401) {
-                  uploadErrMsg += " — exécutez /admin/r2-test pour le diagnostic exact (token R2 sans permission d'écriture ?)";
+                  uploadErrMsg +=
+                    " — ouvrez /admin/r2-test et lancez le « Test d'upload navigateur » (le vrai chemin du replay) pour voir la cause exacte";
                 }
               } catch (err) {
                 uploadErrMsg =
                   err instanceof TypeError
-                    ? "Failed to fetch (réseau ou CORS du bucket R2 — exécutez /admin/r2-test pour le diagnostic exact)"
+                    ? "Failed to fetch (réseau ou CORS du bucket R2 — ouvrez /admin/r2-test et lancez le « Test d'upload navigateur » pour le diagnostic exact)"
                     : err instanceof Error ? err.message : "erreur réseau";
               }
               if (attempt < 3) {

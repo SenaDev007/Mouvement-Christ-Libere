@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { VideosTabsClient } from "@/components/admin/videos-tabs-client";
-import { recupererReplaysManquants, compterReplaysEnAttente } from "@/lib/live-replay-recovery";
+import { recupererReplaysManquants, statutRecuperationReplays } from "@/lib/live-replay-recovery";
 
 export const dynamic = "force-dynamic";
 
@@ -67,15 +67,22 @@ export default async function AdminVideosPage() {
     };
   });
 
-  // ⭐ V3.34 — lives ENDED encore récupérables (bandeau + auto-refresh côté
-  // client). 0 si l'OAuth YouTube n'est pas configuré ou si rien ne manque.
-  const replaysEnAttente = await compterReplaysEnAttente().catch(() => 0);
+  // ⭐ V3.34/V3.35 — lives ENDED encore récupérables (bandeau + auto-refresh
+  // côté client) + OAuth YouTube configuré ou non. Quand l'OAuth manque, la
+  // récupération auto ne peut JAMAIS aboutir : le bandeau affiché est alors
+  // un bandeau de CONFIGURATION explicite (variables à poser sur Vercel) au
+  // lieu du faux « récupération en cours » qui faisait attendre pour rien.
+  const statutRecovery = await statutRecuperationReplays().catch(() => ({
+    enAttente: 0,
+    oauthConfigures: true,
+  }));
 
   return (
     <VideosTabsClient
       videos={safeVideos}
       servants={servants}
-      pendingReplayCount={replaysEnAttente}
+      pendingReplayCount={statutRecovery.enAttente}
+      youtubeOauthMissing={!statutRecovery.oauthConfigures && statutRecovery.enAttente > 0}
     />
   );
 }

@@ -215,6 +215,51 @@ export async function compterReplaysEnAttente(): Promise<number> {
 }
 
 /**
+ * ⭐ V3.35 — Statut complet de la récupération pour le back-office Vidéos :
+ * lives en attente + OAuth configuré ou non.
+ *
+ * Contexte (pasteur) : « on avait prévu la récupération automatique de l'ID
+ * de la vidéo YouTube… ça ne marche pas, l'identifiant YouTube n'est pas
+ * disponible ». Quand des lives attendent MAIS que l'OAuth YouTube est
+ * absent, la récupération auto ne peut JAMAIS aboutir (broadcast non
+ * pré-créé au départ + impossible d'interroger l'API) — le bandeau
+ * « récupération en cours » avec auto-refresh mentait alors au pasteur.
+ * Désormais le back-office affiche un bandeau de CONFIGURATION explicite
+ * (variables manquantes) au lieu de faire attendre indéfiniment.
+ */
+export async function statutRecuperationReplays(): Promise<{
+  enAttente: number;
+  oauthConfigures: boolean;
+}> {
+  const { isYouTubeOAuthConfigured } = await import("@/lib/youtube");
+  const oauthConfigures = isYouTubeOAuthConfigured();
+  const enAttente = oauthConfigures
+    ? await compterReplaysEnAttente().catch(() => 0)
+    : await compterLivesEndedSansUrl().catch(() => 0);
+  return { enAttente, oauthConfigures };
+}
+
+/** Variante «sans OAuth» du comptage : lives ENDED diffusés vers YouTube
+ * sans URL — utilisée uniquement pour AFFICHER le bandeau de configuration
+ * (aucune tentative de récupération n'aura lieu tant que l'OAuth manque). */
+async function compterLivesEndedSansUrl(): Promise<number> {
+  try {
+    const rows = await db.$queryRawUnsafe<Array<{ n: number }>>(
+      `SELECT COUNT(*)::int AS n
+         FROM "LiveStream"
+        WHERE "status" = 'ENDED'
+          AND "streamToYoutube" = true
+          AND ("youtubeUrl" IS NULL OR "youtubeUrl" = '')
+          AND "startedAt" IS NOT NULL
+          AND COALESCE("endedAt", "startedAt") >= now() - interval '${FENETRE_RECOVERY}'`
+    );
+    return rows[0]?.n ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
  * Passage de récupération (mémoïsé : un seul à la fois par process — les
  * appels simultanés attendent le même passage).
  *

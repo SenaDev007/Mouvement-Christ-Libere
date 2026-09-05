@@ -135,8 +135,27 @@ export async function findLatestBroadcastVideoId(
       return null;
     }
 
-    // Prendre le plus récent
-    const latest = completedBroadcasts[0];
+    // ⭐ V3.35 — liveBroadcasts.list NE GARANTIT AUCUN tri par date de fin :
+    // l'ordre de retour est celui du backend YouTube (souvent par création).
+    // Prendre completedBroadcasts[0] pouvait donc retourner un VIEUX replay
+    // plutôt que celui du live qui vient de se terminer → l'ID récupéré ne
+    // correspondait pas au live → « l'identifiant YouTube n'est pas
+    // disponible » (ou pire : le mauvais replay était associé). On trie
+    // désormais explicitement par actualEndTime décroissante.
+    const tri = completedBroadcasts
+      .slice()
+      .sort((a, b) => {
+        const ea = a.snippet?.actualEndTime
+          ? new Date(a.snippet.actualEndTime).getTime()
+          : 0;
+        const eb = b.snippet?.actualEndTime
+          ? new Date(b.snippet.actualEndTime).getTime()
+          : 0;
+        return eb - ea;
+      });
+
+    // Prendre le plus récent (fin la plus tardive)
+    const latest = tri[0];
     const videoId = latest.id;
     if (!videoId) {
       console.warn("[youtube] Broadcast trouvé sans ID vidéo");

@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { isR2Configured, diagnoseR2 } from "@/lib/r2";
+import { isR2Configured, diagnoseR2, getPresignedUploadUrl, getPublicUrl } from "@/lib/r2";
 
 /**
  * GET /api/admin/r2-test
  *
  * Vérifie la configuration Cloudflare R2 et teste un upload.
- * Action "diagnose" : diagnostic complet (credentials + bucket + permissions)
+ * Actions :
+ *  - "status"   : état de la configuration (variables présentes ?)
+ *  - "test"/"diagnose" : diagnostic complet (credentials + bucket +
+ *                 permissions + URL publique) — 100 % côté SERVEUR.
+ *  - "presign"  : ⭐ V3.35 — génère une URL pré-signée pour un PUT DEPUIS
+ *                 LE NAVIGATEUR (le vrai chemin du replay de live > 4 Mo).
+ *                 La page effectue ensuite le PUT elle-même et affiche le
+ *                 résultat — c'est le seul moyen de tester CE qui échouait
+ *                 (un PUT serveur réussit toujours, même quand le PUT
+ *                 navigateur est refusé — cf. checksum, V3.35).
  */
 export async function GET(req: NextRequest) {
   try {
@@ -79,7 +88,41 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ error: "Action inconnue (status, test, diagnose)" }, { status: 400 });
+    // ─── ⭐ V3.35 — Presign : URL pré-signée pour le PUT navigateur ───
+    if (action === "presign") {
+      if (!isR2Configured()) {
+        return NextResponse.json(
+          { error: "R2 non configuré — variables d'environnement manquantes" },
+          { status: 503 }
+        );
+      }
+      try {
+        const key = `test/presign-navigateur-${Date.now()}.txt`;
+        // Content-Type video/webm : reproduit EXACTEMENT le chemin du replay
+        // (y compris le preflight CORS, car video/webm n'est pas un type
+        // « simple »). Un test en text/plain éviterait le preflight et
+        // pourrait passer là où le replay échouerait.
+        const uploadUrl = await getPresignedUploadUrl(key, "video/webm", 600);
+        const suspects = [...new URL(uploadUrl).searchParams.keys()].filter((k) =>
+          /x-amz-(sdk-)?checksum/i.test(k)
+        );
+        return NextResponse.json({
+          success: true,
+          uploadUrl,
+          publicUrl: getPublicUrl(key),
+          key,
+          urlClean: suspects.length === 0,
+          checksumParams: suspects,
+        });
+      } catch (error) {
+        return NextResponse.json(
+          { error: error instanceof Error ? error.message : "Erreur génération URL pré-signée" },
+          { status: 500 }
+        );
+      }
+    }
+
+    return NextResponse.json({ error: "Action inconnue (status, test, diagnose, presign)" }, { status: 400 });
   } catch (error) {
     console.error("[r2-test] Error:", error);
     // Capturer les détails de l'erreur S3
