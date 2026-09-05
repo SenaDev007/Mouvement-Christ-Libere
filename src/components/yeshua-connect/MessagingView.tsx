@@ -1964,6 +1964,49 @@ export function MessagingView() {
   //  TYPING INDICATOR + @MENTIONS — emit typing + detect mention query
   // ═════════════════════════════════════════════════════════════════════
 
+  // ═════════════════════════════════════════════════════════════════
+  // ⭐ V3.41 — CLAVIER MOBILE (cause racine « quand j'écris, je ne vois
+  // plus mon texte ni les boutons ») : 100dvh suit la barre d'adresse
+  // mais JAMAIS le clavier (Android Chrome = « resizes-visual » par
+  // défaut, iOS Safari ignore interactive-widget) → le composer restait
+  // recouvert PAR le clavier. On mesure le viewport VISIBLE
+  // (visualViewport) pendant qu'un champ de saisie a le focus : la
+  // hauteur du module passe alors en pixels réels (viewport visible −
+  // navbar) et le composer remonte au-dessus du clavier. Le pinch-zoom
+  // est ignoré (focus non saisie à ce moment-là).
+  // ═════════════════════════════════════════════════════════════════
+  const [hauteurVisibleClavier, setHauteurVisibleClavier] = useState<number | null>(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const saisieActive = () => {
+      const el = document.activeElement;
+      return el instanceof HTMLInputElement
+        || el instanceof HTMLTextAreaElement
+        || (el instanceof HTMLElement && el.isContentEditable);
+    };
+    const mesurer = () => {
+      // Clavier considéré ouvert si le viewport visible perd > 150px
+      // (barre d'adresse seule : 60-100px ; clavier : 200-400px) ET qu'un
+      // champ de saisie a le focus (sinon = pinch-zoom → ne rien changer).
+      const navOffset = mq.matches ? 80 : 64; // 4rem mobile / 5rem md+
+      const clavierOuvert = window.innerHeight - vv.height > 150 && saisieActive();
+      setHauteurVisibleClavier(clavierOuvert
+        ? Math.max(240, Math.round(vv.height) - navOffset)
+        : null);
+    };
+    vv.addEventListener("resize", mesurer);
+    mesurer();
+    return () => vv.removeEventListener("resize", mesurer);
+  }, []);
+  // Clavier ouvert → montrer les DERNIERS messages + le composer ensemble
+  useEffect(() => {
+    if (hauteurVisibleClavier && messagesScrollRef.current) {
+      messagesScrollRef.current.scrollTop = messagesScrollRef.current.scrollHeight;
+    }
+  }, [hauteurVisibleClavier]);
+
   // ⭐ V2.8 — AUTO-GRANDISSEMENT du champ de saisie : la hauteur suit le
   // contenu (de 1 ligne jusqu'à ~6 lignes / 160 px), puis scroll interne.
   // Corrige « quand le texte devient long, on n'arrive pas à voir tout ce
@@ -3694,7 +3737,13 @@ export function MessagingView() {
     // le composer passait SOUS l'écran sur mobile (« zone de texte figée,
     // trop restreinte »). dvh = viewport dynamique (barres d'adresse iOS).
     // ⭐ V3.0 — `relative` : ancre l'overlay mobile de la sidebar dépliée.
-    <div className="relative flex h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)] bg-[#FAF6EF] overflow-hidden">
+    // ⭐ V3.41 — style inline QUAND le clavier mobile est ouvert : hauteur
+    // = viewport visible − navbar (dvh ne suit pas le clavier — voir le
+    // hook plus haut). Sinon undefined → les classes dvh s'appliquent.
+    <div
+      className="relative flex h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)] bg-[#FAF6EF] overflow-hidden"
+      style={hauteurVisibleClavier ? { height: hauteurVisibleClavier } : undefined}
+    >
       {/* ⭐ V2.9 — Conteneur INVISIBLE des <audio> distants du canal vocal.
           Les éléments sont créés imperativement (attachRemoteAudio) — c'est
           CE qui manquait : sans eux, on ne s'entendait pas. */}
@@ -3906,7 +3955,7 @@ export function MessagingView() {
               value={convSearchQuery}
               onChange={(e) => setConvSearchQuery(e.target.value)}
               placeholder="Rechercher une conversation..."
-              className="w-full pl-9 pr-3 py-2 bg-white/10 border border-white/10 rounded-lg text-xs text-[#FAF6EF] placeholder:text-[#FAF6EF]/40 outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+              className="w-full pl-9 pr-3 py-2 bg-white/10 border border-white/10 rounded-lg text-base md:text-xs text-[#FAF6EF] placeholder:text-[#FAF6EF]/40 outline-none focus:ring-2 focus:ring-[#C9A227]/30"
             />
           </div>
         </div>
@@ -3982,8 +4031,13 @@ export function MessagingView() {
       </div>
 
       {/* ═════ CHAT ZONE ═════ */}
+      {/* ⭐ V3.41 — min-w-0 OBLIGATOIRE : sans lui, le min-content de la
+          zone (header à nom de canal truncate = nowrap, sondage, audio…)
+          forçait la zone à ~387px sur un écran de 360px → le root
+          (overflow-hidden) CLIPPAIT le bouton Envoyer et la moitié du
+          champ de saisie (« on ne voit pas le texte ni les boutons »). */}
       <div
-        className="relative flex-1 flex flex-col bg-stone-50/30"
+        className="relative flex-1 min-w-0 flex flex-col bg-stone-50/30"
         style={getYeshuaWatermarkStyle({ opacity: 0.1 })}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
@@ -4013,8 +4067,11 @@ export function MessagingView() {
           )}
         </AnimatePresence>
         {/* Chat header */}
+        {/* ⭐ V3.41 — min-w-0 : le header est un item de la colonne chat ;
+            sans lui son min-content (nom truncate = nowrap) interdisait
+            à la zone de chat de rétrécir → clip latéral sur mobile. */}
         {activeConv ? (
-          <div className="p-3 border-b border-[#C9A227]/15 bg-white/95 backdrop-blur-sm flex items-center justify-between gap-2 flex-wrap">
+          <div className="p-3 border-b border-[#C9A227]/15 bg-white/95 backdrop-blur-sm flex items-center justify-between gap-2 flex-wrap min-w-0">
             <div className="flex items-center gap-3 min-w-0">
               {/* ⭐ V3.0 — Retour mobile : DÉPLIE la sidebar (liste complète)
                   au lieu de vider le chat. Le rail d'icônes reste visible,
@@ -4181,7 +4238,7 @@ export function MessagingView() {
             <input
               autoFocus
               placeholder="Rechercher dans cette conversation..."
-              className="flex-1 text-sm outline-none"
+              className="flex-1 min-w-0 text-base md:text-sm outline-none"
             />
             <button onClick={() => setShowConvSearch(false)} className="text-stone-400 hover:text-stone-600">
               <X className="w-4 h-4" />
@@ -4524,7 +4581,7 @@ export function MessagingView() {
                           ) : msg.type === "FILE" && msg.attachmentUrl ? (
                             <a href={msg.attachmentUrl} download={msg.attachmentName}
                               className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors min-w-[200px]",
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors min-w-0",
                                 usePurpleBubble
                                   ? "bg-[#2A0E3D]/40 hover:bg-[#2A0E3D]/60"
                                   : "bg-[#1E0F2B]/10 hover:bg-[#1E0F2B]/20"
@@ -4716,7 +4773,7 @@ export function MessagingView() {
         {/* ⭐ V3.0 — Padding mobile resserré (p-2) pour offrir plus de hauteur
             utile à la zone de saisie ; desktop inchangé (p-3). */}
         {activeConv && activeConv.type !== "VOICE" && (
-          <div className="p-2 md:p-3 border-t border-[#C9A227]/15 bg-white">
+          <div className="p-2 md:p-3 border-t border-[#C9A227]/15 bg-white min-w-0">
             {/* ⭐ V2.8 — COMPOSER DE PIÈCES JOINTES (façon WhatsApp) :
                 aperçu des fichiers EN ATTENTE (collage Ctrl+V, « Joindre »,
                 drag & drop) avec suppression individuelle + envoi explicite.
@@ -4795,8 +4852,8 @@ export function MessagingView() {
               </div>
             ) : recordingState === "preview" ? (
               /* (S5) Preview du vocal avec lecture + envoi/annulation */
-              <div className="flex items-center gap-2 w-full">
-                <audio src={recordedBlobUrlRef.current || undefined} controls className="flex-1 h-10" style={{ maxWidth: "100%" }} />
+              <div className="flex items-center gap-2 w-full min-w-0">
+                <audio src={recordedBlobUrlRef.current || undefined} controls className="flex-1 min-w-0 h-10" style={{ maxWidth: "100%" }} />
                 <button
                   onClick={sendRecording}
                   disabled={sendingVoice}
@@ -4815,7 +4872,7 @@ export function MessagingView() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
                 {/* ⭐ V2.5 — Bouton « Joindre » unique (façon WhatsApp) :
                     ouvre le modal regroupant Document, Image, GIF, Sondage
                     et Programmé. Remplace les 5 boutons séparés
@@ -4860,7 +4917,10 @@ export function MessagingView() {
                 {/* (⭐ V2.5) Le popover GIF a été déplacé dans le modal « Joindre »
                     (panneau GIF) — plus de bouton GIF séparé dans la barre. */}
                 {/* ⭐ V2.1 — Wrap textarea + popovers (SlashCommands + Mention autocomplete) */}
-                <div className="relative flex-1">
+                {/* ⭐ V3.41 — min-w-0 : sans lui le textarea (largeur
+                    intrinsèque cols=20 ≈ 180px) empêchait la rangée de
+                    rétrécir sous les écrans étroits → boutons clippés. */}
+                <div className="relative flex-1 min-w-0">
                   {/* SlashCommands popover : visible quand l'input commence par "/" */}
                   {inputText.startsWith("/") && inputText.length > 0 && (
                     <SlashCommands
@@ -5000,7 +5060,7 @@ export function MessagingView() {
           <input
             autoFocus value={globalSearchQuery} onChange={(e) => handleGlobalSearch(e.target.value)}
             placeholder="Rechercher messages, canaux, membres..."
-            className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20 mb-4"
+            className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20 mb-4"
           />
           {globalSearchResults && (
             <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -5384,7 +5444,7 @@ export function MessagingView() {
                 onChange={(e) => setPollQuestion(e.target.value)}
                 placeholder="Posez votre question..."
                 maxLength={200}
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
               />
               {pollOptions.map((opt, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -5400,7 +5460,7 @@ export function MessagingView() {
                     }}
                     placeholder={`Option ${i + 1}`}
                     maxLength={100}
-                    className="flex-1 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
+                    className="flex-1 min-w-0 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
                   />
                   {pollOptions.length > 2 && (
                     <button
@@ -5482,13 +5542,13 @@ export function MessagingView() {
                 onChange={(e) => setScheduleContent(e.target.value)}
                 placeholder="Votre message..."
                 rows={3}
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
               />
               <input
                 type="datetime-local"
                 value={scheduleAt}
                 onChange={(e) => setScheduleAt(e.target.value)}
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
               />
               <button
                 onClick={async () => {
@@ -5910,8 +5970,10 @@ function PollMessage({
     }
   };
 
+  // ⭐ V3.41 — min-w-[240px] retiré : sur un écran de 320-360px la bulle
+  // fait ~180-250px → le sondage débordait de la bulle. w-full suffit.
   return (
-    <div className="w-full min-w-[240px] max-w-[320px]">
+    <div className="w-full max-w-[320px]">
       {/* En-tête du sondage — ⭐ V2.8 : couleurs adaptées à la bulle */}
       <div className="flex items-center gap-2 mb-2">
         <BarChart3 className={cn("w-3.5 h-3.5 flex-shrink-0", purple ? "text-[#FAF6EF]" : "text-[#1E0F2B]")} />
@@ -6038,7 +6100,10 @@ function AudioPlayer({ src, duration, attachmentName, variant = "gold" }: { src:
     // bouton lecture rond + waveform cliquable + durée + VRAIE icône
     // de téléchargement (Download, remplace l'icône « document » FileText).
     // ⭐ V2.8 — Couleurs adaptées à la bulle hôte (or ou violet).
-    <div className="flex items-center gap-3 py-1.5 pl-1 pr-1.5 min-w-[260px]">
+    // ⭐ V3.41 — min-w-[260px] retiré : sur mobile la zone de chat fait
+    // 252-292px → la bulle audio débordait (clip). min-w-0 la laisse
+    // rétrécir, le waveform reste cliquable.
+    <div className="flex items-center gap-3 py-1.5 pl-1 pr-1.5 min-w-0">
       <audio
         ref={audioRef}
         src={src}
@@ -6188,8 +6253,8 @@ function NewChannelModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <button onClick={() => setType("GROUP")} className={cn("flex-1 py-2 rounded-xl text-sm font-semibold", type === "GROUP" ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-stone-100 text-stone-600")}>Groupe</button>
           <button onClick={() => setType("CHANNEL")} className={cn("flex-1 py-2 rounded-xl text-sm font-semibold", type === "CHANNEL" ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-stone-100 text-stone-600")}>Canal</button>
         </div>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Nom..." className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20" />
-        <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description..." className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" rows={2} />
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Nom..." className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20" />
+        <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description..." className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none" rows={2} />
         <label className="flex items-center gap-2 p-2 bg-stone-50 rounded-xl cursor-pointer">
           <input type="checkbox" checked={isEncrypted} onChange={e => setIsEncrypted(e.target.checked)} className="w-5 h-5" />
           <span className="text-sm">🔒 Chiffré E2E (canal restreint)</span>
@@ -6653,7 +6718,7 @@ function MembersPanel({
                     : "Rechercher à inviter (communauté)…"
                   : "Rechercher un membre…"
               }
-              className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20 focus:border-[#C9A227]/40"
+              className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20 focus:border-[#C9A227]/40"
             />
             {(tab === "invite" ? inviteQuery : query) && (
               <button
@@ -7709,7 +7774,7 @@ function GifPicker({
           value={query}
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Rechercher un GIF..."
-          className="flex-1 bg-transparent text-sm outline-none placeholder:text-stone-400"
+          className="flex-1 min-w-0 bg-transparent text-base md:text-sm outline-none placeholder:text-stone-400"
         />
         {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-400 flex-shrink-0" />}
       </div>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -50,6 +50,20 @@ export const metadata: Metadata = {
     description:
       "Enseignements, témoignements et vie de communauté. Un espace de foi centralisé.",
   },
+};
+
+// ⭐ V3.41 — CLAVIER MOBILE (Yeshua Connect + tous les formulaires du
+// site) : par défaut, Android Chrome fait « resizes-visual » — le clavier
+// recouvre la mise en page sans la redimensionner (dvh ne suit pas le
+// clavier). `interactiveWidget: "resizes-content"` fait redimensionner le
+// LAYOUT (et les unités dvh) à l'ouverture du clavier → la zone de saisie
+// remonte au-dessus du clavier au lieu d'être recouverte. iOS Safari
+// ignore cette option (le hook visualViewport de MessagingView prend le
+// relais). Aucun effet sur desktop.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
