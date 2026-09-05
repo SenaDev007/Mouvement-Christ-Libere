@@ -63,6 +63,12 @@ const MAX_TENTATIVES = 60;
 /** Intervalles SQL (PostgreSQL) — throttle et fenêtre de récupération. */
 const DELAI_MIN_ENTRE_TENTATIVES = "30 seconds";
 const FENETRE_RECOVERY = "7 days";
+// ⭐ V3.36 — Passe 2bis (vérification des URL déjà stockées) : moins
+// prioritaire que la récupération d'URL manquantes → throttle plus espacé
+// et lot plus petit (chaque candidat coûte 2 appels API : stats de l'URL
+// stockée + éventuellement re-résolution).
+const MAX_VERIFICATIONS_PAR_PASSAGE = 2;
+const DELAI_MIN_ENTRE_VERIFICATIONS = "5 minutes";
 
 let colonnesOk = false;
 let passageEnCours: Promise<number> | null = null;
@@ -81,8 +87,12 @@ async function assurerColonnesRecovery(): Promise<void> {
   await db.$executeRawUnsafe(
     'ALTER TABLE "LiveStream" ADD COLUMN IF NOT EXISTS "youtubeRecoveryLastAt" TIMESTAMP'
   );
+  // ⭐ V3.36 — throttle de la passe de VÉRIFICATION des URL déjà stockées.
+  await db.$executeRawUnsafe(
+    'ALTER TABLE "LiveStream" ADD COLUMN IF NOT EXISTS "youtubeVerifyLastAt" TIMESTAMP'
+  );
   colonnesOk = true;
-  console.log("[replay-recovery] Colonnes LiveStream.youtubeRecovery* vérifiées/créées ✓");
+  console.log("[replay-recovery] Colonnes LiveStream.youtubeRecovery* / youtubeVerifyLastAt vérifiées/créées ✓");
 }
 
 /** Durée lisible (h:mm:ss ou mm:ss) entre deux dates — même format que
@@ -314,6 +324,74 @@ async function passerRecovery(): Promise<number> {
     }
   } catch (e) {
     console.warn("[replay-recovery] Passe 1 impossible :", e instanceof Error ? e.message : e);
+  }
+
+  // ─── Passe 2bis (⭐ V3.36 — API YouTube, throttlée 5 min) : lives ENDED
+  //     diffusés vers YouTube AVEC une URL stockée, mais dont la vidéo
+  //     N'EXISTE PAS (broadcast « zombie » jamais alimenté — anomalie
+  //     « vidéo non disponible / supprimée » dans le module Vidéos alors
+  //     que la vraie vidéo est bien sur YouTube). On vérifie l'ID (stats
+  //     récupérables ?) et, s'il est mort, on RETROUVE la vraie vidéo du
+  //     direct (broadcast terminé le plus récent après startedAt) et on
+  //     remplace l'URL sur le LiveStream ET l'entrée Vidéo (Replay). ───
+  //     Les vues/likes suivent : la passe est la même que le /stop, elle
+  //     guérit les replays déjà cassés en base (anomalie passée).
+  try {
+    const { isYouTubeOAuthConfigured } = await import("@/lib/youtube");
+    if (isYouTubeOAuthConfigured()) {
+      const aVerifier = await db.$queryRawUnsafe<
+        Array<{ id: string; youtubeUrl: string; startedAt: Date }>
+      >(
+        `SELECT "id", "youtubeUrl", "startedAt"
+           FROM "LiveStream"
+          WHERE "status" = 'ENDED'
+            AND "streamToYoutube" = true
+            AND "youtubeUrl" IS NOT NULL
+            AND "youtubeUrl" <> ''
+            AND "startedAt" IS NOT NULL
+            AND COALESCE("endedAt", "startedAt") >= now() - interval '${FENETRE_RECOVERY}'
+            AND ("youtubeVerifyLastAt" IS NULL
+                 OR "youtubeVerifyLastAt" <= now() - interval '${DELAI_MIN_ENTRE_VERIFICATIONS}')
+          ORDER BY "endedAt" DESC NULLS LAST
+          LIMIT ${MAX_VERIFICATIONS_PAR_PASSAGE}`
+      );
+
+      for (const c of aVerifier) {
+        // Marquer la vérification AVANT les appels API (throttle même en
+        // cas de crash).
+        await db.$executeRawUnsafe(
+          `UPDATE "LiveStream" SET "youtubeVerifyLastAt" = now() WHERE "id" = $1`,
+          c.id
+        );
+        try {
+          const idStocke = extraireIdYoutube(c.youtubeUrl);
+          if (!idStocke) continue;
+          const { fetchYouTubeStats } = await import("@/lib/youtube-live-chat");
+          const stats = await fetchYouTubeStats(idStocke);
+          if (stats) continue; // L'URL est bonne — rien à faire.
+          // URL morte (broadcast zombie) → retrouver la vraie vidéo.
+          const { findLatestBroadcastVideoId, getYoutubeVideoUrl } = await import("@/lib/youtube");
+          const vrai = await findLatestBroadcastVideoId(new Date(c.startedAt));
+          if (vrai && vrai.videoId !== idStocke) {
+            // Ne proposer QUE une vidéo qui existe réellement.
+            const statsVrai = await fetchYouTubeStats(vrai.videoId);
+            if (statsVrai) {
+              await appliquerUrlReplaySurLiveEtVideo(c.id, getYoutubeVideoUrl(vrai.videoId));
+              recuperees++;
+              console.log(
+                `[replay-recovery] Replay GUÉRI pour ${c.id} : ${idStocke} (zombie) → ${vrai.videoId}`
+              );
+            }
+          }
+        } catch (e) {
+          console.warn(
+            "[replay-recovery] Passe 2bis : live", c.id, "→", e instanceof Error ? e.message : e
+          );
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[replay-recovery] Passe 2bis impossible :", e instanceof Error ? e.message : e);
   }
 
   // ─── Passe 2 (API YouTube, throttlée en base) : lives diffusés vers

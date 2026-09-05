@@ -20,7 +20,8 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
  *   likesTotal,           // somme des likeCount des messages
  *   youtube: { viewCount, likeCount, commentCount } | null
  *                          // si OAuth YouTube configuré + youtubeUrl
- *   youtubeConfigured: boolean
+ *   youtubeConfigured: boolean,
+ *   youtubeUrl            // ⭐ V3.33 — fraîche (bascule embed viewer)
  * }
  */
 
@@ -39,6 +40,29 @@ const ytStatsGlobal = globalThis as unknown as {
 };
 if (!ytStatsGlobal.__ytStatsCache) ytStatsGlobal.__ytStatsCache = new Map();
 const ytStatsCache: NonNullable<typeof ytStatsGlobal.__ytStatsCache> = ytStatsGlobal.__ytStatsCache;
+
+// ─── ⭐ V3.36 — RÉCONCILIATION DE L'ID YOUTUBE PENDANT LE DIRECT ───
+// Anomalie pasteur : « le live est bien en direct sur YouTube, mais le
+// viewer public affiche un écran noir — vidéo supprimée par l'utilisateur ».
+// Cause racine : le broadcast pré-créé au /start (Tier C) n'était PAS celui
+// alimenté par l'egress (qui poussait vers la clé RTMP du serviteur) →
+// l'URL stockée pointait sur un broadcast « zombie » jamais diffusé.
+// La réconciliation : pendant le LIVE, si les stats YouTube de l'ID stocké
+// sont INTROUVABLES (vidéo inexistante) ou si aucune URL n'est connue, on
+// interroge la chaîne (liveBroadcasts.list, 1 unité) pour trouver le
+// broadcast réellement EN DIRECT et on corrige LiveStream.youtubeUrl.
+// Le viewer, qui poll cette route toutes les 3 s, bascule alors
+// automatiquement sur le VRAI embed (logique V3.33).
+//
+// Throttle mémoire (30 s par live) : même si studio + N viewers pollent
+// toutes les 3-5 s, une seule tentative de réconciliation par demi-minute
+// et par instance serverless — le budget quota YouTube reste maîtrisé.
+const RECONCILE_THROTTLE_MS = 30_000;
+const reconcileGlobal = globalThis as unknown as {
+  __liveYtReconcile?: Map<string, number>;
+};
+if (!reconcileGlobal.__liveYtReconcile) reconcileGlobal.__liveYtReconcile = new Map();
+const reconcileLastAt: Map<string, number> = reconcileGlobal.__liveYtReconcile;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,6 +84,7 @@ export async function GET(
         isPaused: true,
         pausedAt: true,
         youtubeUrl: true,
+        streamToYoutube: true,
       },
     });
     if (!live) {
@@ -83,35 +108,87 @@ export async function GET(
     // ─── Stats YouTube (si OAuth configuré) — ⭐ V3.26 via cache 30 s ───
     let youtube: { viewCount: number; likeCount: number; commentCount: number } | null = null;
     let youtubeConfigured = false;
-    if (live.youtubeUrl) {
+    let youtubeUrlOut = live.youtubeUrl;
+
+    const storedVideoId = live.youtubeUrl?.match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+    )?.[1] ?? null;
+
+    if (live.youtubeUrl && storedVideoId) {
       try {
-        const videoId = live.youtubeUrl.match(
-          /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
-        )?.[1];
-        if (videoId) {
-          const { isYouTubeOAuthConfigured } = await import("@/lib/youtube");
-          youtubeConfigured = isYouTubeOAuthConfigured();
-          if (youtubeConfigured) {
-            const cached = ytStatsCache.get(videoId);
-            if (cached && Date.now() - cached.fetchedAt < YOUTUBE_STATS_TTL_MS) {
-              youtube = cached.stats;
-            } else {
-              const { fetchYouTubeStats } = await import("@/lib/youtube-live-chat");
-              youtube = await fetchYouTubeStats(videoId);
-              ytStatsCache.set(videoId, { stats: youtube, fetchedAt: Date.now() });
-              // Persister sur le LiveStream (page d'accueil, archives) —
-              // au rythme du cache, plus à chaque poll.
-              if (youtube) {
-                await db.liveStream.update({
-                  where: { id },
-                  data: { viewerCount: youtube.viewCount },
-                }).catch(() => {});
-              }
+        const { isYouTubeOAuthConfigured } = await import("@/lib/youtube");
+        youtubeConfigured = isYouTubeOAuthConfigured();
+        if (youtubeConfigured) {
+          const cached = ytStatsCache.get(storedVideoId);
+          if (cached && Date.now() - cached.fetchedAt < YOUTUBE_STATS_TTL_MS) {
+            youtube = cached.stats;
+          } else {
+            const { fetchYouTubeStats } = await import("@/lib/youtube-live-chat");
+            youtube = await fetchYouTubeStats(storedVideoId);
+            ytStatsCache.set(storedVideoId, { stats: youtube, fetchedAt: Date.now() });
+            // Persister sur le LiveStream (page d'accueil, archives) —
+            // au rythme du cache, plus à chaque poll.
+            if (youtube) {
+              await db.liveStream.update({
+                where: { id },
+                data: { viewerCount: youtube.viewCount },
+              }).catch(() => {});
             }
           }
         }
       } catch (e) {
         console.warn("[live/stats] YouTube indisponible:", e instanceof Error ? e.message : e);
+      }
+    }
+
+    // ─── ⭐ V3.36 — RÉCONCILIATION pendant le direct ───
+    // Déclenchée UNIQUEMENT si le live est LIVE, diffusé vers YouTube, que
+    // l'OAuth est configuré, ET que (a) aucune URL n'est connue, ou (b) les
+    // stats de l'ID stocké sont introuvables (broadcast zombie → la vidéo
+    // n'existe pas). La vraie vidéo du direct (clé du serviteur ou ingest
+    // Tier C) est alors retrouvée sur la chaîne et propagée aux viewers.
+    if (live.status === "LIVE" && live.streamToYoutube && (!storedVideoId || youtube === null)) {
+      // NB : isYouTubeOAuthConfigured() est un simple contrôle de variables
+      // d'environnement (zéro appel réseau) — on le réévalue ici car il
+      // n'est rempli ci-dessus QUE lorsqu'une URL était déjà connue.
+      let oauthOk = youtubeConfigured;
+      if (!oauthOk) {
+        const { isYouTubeOAuthConfigured } = await import("@/lib/youtube");
+        oauthOk = isYouTubeOAuthConfigured();
+      }
+      if (oauthOk) {
+        const last = reconcileLastAt.get(live.id) ?? 0;
+        if (Date.now() - last > RECONCILE_THROTTLE_MS) {
+          reconcileLastAt.set(live.id, Date.now());
+          try {
+            const { findActiveBroadcastVideoId, getYoutubeVideoUrl } = await import("@/lib/youtube");
+            const activeId = await findActiveBroadcastVideoId();
+            if (activeId && activeId !== storedVideoId) {
+              const nouvelleUrl = getYoutubeVideoUrl(activeId);
+              console.log(
+                `[live/stats] Réconciliation YouTube : ${storedVideoId ?? "(aucun)"} → ${activeId} (le viewer va basculer sur le VRAI direct)`
+              );
+              await db.liveStream
+                .update({ where: { id }, data: { youtubeUrl: nouvelleUrl } })
+                .catch(() => {});
+              youtubeUrlOut = nouvelleUrl;
+              // Invalider le cache de stats de l'ancien ID et pré-charger les
+              // stats du vrai (le prochain poll les affichera immédiatement).
+              if (storedVideoId) ytStatsCache.delete(storedVideoId);
+              try {
+                const { fetchYouTubeStats } = await import("@/lib/youtube-live-chat");
+                const stats = await fetchYouTubeStats(activeId);
+                ytStatsCache.set(activeId, { stats, fetchedAt: Date.now() });
+                if (stats) youtube = stats;
+              } catch {}
+            }
+          } catch (e) {
+            console.warn(
+              "[live/stats] Réconciliation YouTube impossible :",
+              e instanceof Error ? e.message : e
+            );
+          }
+        }
       }
     }
 
@@ -125,7 +202,9 @@ export async function GET(
       // YouTube et restait sur « En attente du diffuseur » alors que le
       // broadcast était pourtant lancé (anomalie « préparation du flux »
       // éternelle côté site public).
-      youtubeUrl: live.youtubeUrl,
+      // ⭐ V3.36 — peut être CORRIGÉE en direct par la réconciliation
+      // ci-dessus (broadcast zombie → vraie vidéo du direct).
+      youtubeUrl: youtubeUrlOut,
       isPaused: live.isPaused,
       pausedAt: live.pausedAt?.toISOString() ?? null,
       viewerCount,

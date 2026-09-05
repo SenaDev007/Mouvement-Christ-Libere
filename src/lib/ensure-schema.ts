@@ -923,3 +923,53 @@ export function ensureChannelIsIntercessionColumn(): Promise<void> {
   }
   return inflightChannelIsIntercession;
 }
+
+let liveIngestOk = false;
+let inflightLiveIngest: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.36 — S'assure que les colonnes RUNTIME du flux Tier C existent sur
+ * `LiveStream` :
+ *  - `youtubeIngestUrl` (TEXT) : l'adresse RTMP complète du broadcast
+ *    pré-créé (ingestionAddress + streamKey). L'egress l'utilise comme
+ *    destination YouTube pour que le flux parte VERS le broadcast créé par
+ *    l'API — sinon le site embarque un ID « zombie » jamais alimenté
+ *    (anomalie « vidéo supprimée par l'utilisateur » pendant le direct).
+ *  - `youtubeVerifyLastAt` (TIMESTAMP) : throttle de la passe de
+ *    vérification/guérison des replays (live-replay-recovery).
+ *
+ * ⚠️ Écrites et lues UNIQUEMENT en SQL brut (jamais via le client Prisma) :
+ * le modèle Prisma de LiveStream n'est PAS modifié, zéro risque pour les
+ * requêtes existantes (les SELECT Prisma ignorent les colonnes non
+ * modélisées).
+ *
+ * Mêmes garanties que les autres helpers : idempotent, mémoïsé,
+ * concurrentiel, échec DDL purement loggué.
+ */
+export function ensureLiveYoutubeIngestColumn(): Promise<void> {
+  if (liveIngestOk) return Promise.resolve();
+  if (!inflightLiveIngest) {
+    inflightLiveIngest = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "LiveStream" ADD COLUMN IF NOT EXISTS "youtubeIngestUrl" TEXT'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "LiveStream" ADD COLUMN IF NOT EXISTS "youtubeVerifyLastAt" TIMESTAMP'
+      );
+    })()
+      .then(() => {
+        liveIngestOk = true;
+        console.log("[ensure-schema] V3.36 : colonnes LiveStream.youtubeIngestUrl/youtubeVerifyLastAt vérifiées/créées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE LiveStream.youtubeIngest* impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightLiveIngest = null;
+      });
+  }
+  return inflightLiveIngest;
+}

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 
 /**
@@ -107,28 +107,38 @@ export async function POST(
       },
     });
 
-    // (S5) Sync vers YouTube Live Chat si le live est sur YouTube
-    // Best-effort : on ne bloque pas si YouTube échoue.
-    if (live.youtubeUrl && live.status === "LIVE") {
-      try {
-        const { getLiveChatId, sendToYouTubeLiveChat, sendReactionToYouTube } = await import("@/lib/youtube-live-chat");
-        const videoId = live.youtubeUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)?.[1];
-        if (videoId) {
-          const liveChatId = await getLiveChatId(videoId);
-          if (liveChatId) {
-            if (type === "reaction" && emoji) {
-              await sendReactionToYouTube(liveChatId, emoji, userName);
-            } else {
-              // Préfixer avec le nom pour le contexte YouTube
-              const ytMessage = `${userName}: ${trimmedContent}`;
-              await sendToYouTubeLiveChat(liveChatId, ytMessage);
+    // (S5) Sync vers YouTube Live Chat si le live est sur YouTube.
+    // ⭐ V3.36 — ANOMALIE « Envoyer ne répond pas » : cette sync était
+    // AWAITÉE avant la réponse — or elle importe googleapis (très lourd :
+    // plusieurs secondes sur une fonction serverless froide) puis enchaîne
+    // refresh token + videos.list + liveChatMessages.insert. Le POST
+    // dépassait alors le timeout client de 8 s → le viewer cliquait
+    // « Envoyer » sans AUCUNE réponse visible. Désormais le message est
+    // créé et la réponse part IMMÉDIATEMENT ; la sync YouTube tourne APRÈS
+    // la réponse (after) et ne peut plus bloquer l'envoi.
+    const syncYouTubeChat = async () => {
+      if (live.youtubeUrl && live.status === "LIVE") {
+        try {
+          const { getLiveChatId, sendToYouTubeLiveChat, sendReactionToYouTube } = await import("@/lib/youtube-live-chat");
+          const videoId = live.youtubeUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)?.[1];
+          if (videoId) {
+            const liveChatId = await getLiveChatId(videoId);
+            if (liveChatId) {
+              if (type === "reaction" && emoji) {
+                await sendReactionToYouTube(liveChatId, emoji, userName);
+              } else {
+                // Préfixer avec le nom pour le contexte YouTube
+                const ytMessage = `${userName}: ${trimmedContent}`;
+                await sendToYouTubeLiveChat(liveChatId, ytMessage);
+              }
             }
           }
+        } catch (ytError) {
+          console.error("[chat] YouTube sync error (après réponse, non bloquant) :", ytError);
         }
-      } catch (ytError) {
-        console.error("[chat] YouTube sync error:", ytError);
       }
-    }
+    };
+    after(syncYouTubeChat);
 
     return NextResponse.json({
       success: true,

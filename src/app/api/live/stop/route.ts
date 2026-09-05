@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { getLiveKitConfig } from "@/lib/livekit-config";
+import { ensureLiveYoutubeIngestColumn } from "@/lib/ensure-schema";
 
 // ⭐ V3.34 — le nettoyage LiveKit (éjections + egress + room) peut prendre
 // plusieurs dizaines de secondes : sans cette marge, la fonction était tuée
@@ -27,7 +28,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "liveId requis" }, { status: 400 });
     }
 
-    const live = await db.liveStream.findUnique({
+    // ⭐ V3.36 — `let` : l'URL YouTube peut être réconciliée plus bas
+    // (broadcast zombie → vraie vidéo) AVANT l'archivage du replay.
+    let live = await db.liveStream.findUnique({
       where: { id: liveId },
       include: { servant: true },
     });
@@ -88,6 +91,100 @@ export async function POST(req: NextRequest) {
         ...(recordingUrl ? { recordingUrl } : {}),
       },
     });
+
+    // ─── ⭐ V3.36 — VÉRIFICATION / RÉCONCILIATION DE L'URL YOUTUBE (AVANT
+    //     l'archivage du replay) ───
+    // Anomalie pasteur : après l'arrêt du live, le replay publié dans
+    // Vidéos affichait « vidéo non disponible / supprimée par
+    // l'utilisateur » alors que la VRAIE vidéo est bien sur YouTube — et le
+    // compteur de vues restait à zéro. Cause racine : l'URL stockée
+    // (broadcast Tier C pré-créé) n'était PAS celle de la vraie vidéo
+    // (l'egress poussait vers la clé du serviteur). On VÉRIFIE donc que
+    // l'ID stocké correspond à une vidéo EXISTANTE (stats YouTube
+    // récupérables) ; sinon on RETROUVE la vraie vidéo (broadcast terminé
+    // le plus récent, démarré après startedAt) et on corrige le LiveStream
+    // AVANT que le replay ne soit archivé avec l'URL.
+    // ⭐ V3.36-bis : le broadcast zombie est SUPPRIMÉ de la chaîne YouTube
+    // (best-effort) pour ne pas polluer les recherches futures.
+    // ⭐ V3.36-ter : l'ingest Tier C (clé à usage unique) est nettoyé.
+    let zombieBroadcastId: string | null = null;
+    if (live.streamToYoutube && !recordingUrl) {
+      try {
+        const { isYouTubeOAuthConfigured, extractYoutubeId, findLatestBroadcastVideoId, getYoutubeVideoUrl } =
+          await import("@/lib/youtube");
+        if (isYouTubeOAuthConfigured()) {
+          const idStocke = extractYoutubeId(live.youtubeUrl);
+          let urlValide = false;
+          if (idStocke) {
+            const { fetchYouTubeStats } = await import("@/lib/youtube-live-chat");
+            const stats = await fetchYouTubeStats(idStocke);
+            urlValide = !!stats;
+          }
+          if (!urlValide) {
+            // L'URL stockée est absente OU pointe sur un broadcast zombie
+            // → retrouver la VRAIE vidéo du direct.
+            if (idStocke) {
+              console.warn(`[live/stop] URL YouTube stockée invalide (broadcast zombie ${idStocke}) — récupération de la vraie vidéo`);
+              zombieBroadcastId = idStocke;
+            } else {
+              console.log("[live/stop] Pas d'URL YouTube connue — récupération de la vidéo du direct");
+            }
+            if (live.startedAt) {
+              // NB : à CET instant, le teardown LiveKit n'a pas encore coupé
+              // l'egress → la vraie vidéo du direct est ENCORE « live »
+              // côté YouTube : findLatestBroadcastVideoId (broadcasts
+              // COMPLETS seulement) peut donc ne pas la trouver. On essaie
+              // d'abord les terminés, puis le broadcast TOUJOURS EN DIRECT
+              // (signal le plus fiable à l'instant de l'arrêt).
+              const { findActiveBroadcastVideoId } = await import("@/lib/youtube");
+              const vrai =
+                (await findLatestBroadcastVideoId(new Date(live.startedAt))) ??
+                (await findActiveBroadcastVideoId().then((idActif) =>
+                  idActif && idActif !== idStocke
+                    ? { videoId: idActif, url: getYoutubeVideoUrl(idActif) }
+                    : null,
+                ));
+              if (vrai) {
+                const nouvelleUrl = getYoutubeVideoUrl(vrai.videoId);
+                if (nouvelleUrl !== live.youtubeUrl) {
+                  await db.liveStream.update({
+                    where: { id: liveId },
+                    data: { youtubeUrl: nouvelleUrl },
+                  });
+                  live = { ...live, youtubeUrl: nouvelleUrl } as typeof live;
+                  console.log(`[live/stop] URL YouTube réconciliée : ${nouvelleUrl}`);
+                }
+              } else {
+                console.log("[live/stop] Vraie vidéo introuvée pour l'instant — la récupération différée (module Vidéos) s'en chargera");
+              }
+            }
+          }
+        }
+      } catch (ytError) {
+        console.error("[live/stop] Erreur réconciliation YouTube (non bloquant) :", ytError);
+      }
+    }
+
+    // Nettoyer l'ingest Tier C (clé RTMP à usage unique — consommée).
+    try {
+      await ensureLiveYoutubeIngestColumn();
+      await db.$executeRawUnsafe(
+        `UPDATE "LiveStream" SET "youtubeIngestUrl" = NULL WHERE "id" = $1`,
+        liveId
+      );
+    } catch { /* best effort */ }
+
+    // Supprimer le broadcast zombie (APRÈS réponse via after, pour ne pas
+    // ralentir le stop — best-effort strict).
+    if (zombieBroadcastId) {
+      const zombie = zombieBroadcastId;
+      after(async () => {
+        try {
+          const { deleteBroadcast } = await import("@/lib/youtube");
+          await deleteBroadcast(zombie);
+        } catch { /* best effort */ }
+      });
+    }
 
     // ─── ⭐ V3.34 — ARCHIVER LE REPLAY IMMÉDIATEMENT, AVANT LE NETTOYAGE ───
     // Anomalie remontée par le pasteur : « la vidéo est bien enregistrée au
@@ -229,6 +326,9 @@ export async function POST(req: NextRequest) {
     // YouTube — un échec ici ne retire JAMAIS la vidéo du module Vidéos.
     let youtubeReplayUrl = live.youtubeUrl;
 
+    // ⭐ V3.36 — le Tier B ci-dessous ne doit RETENTER la récupération QUE
+    // si l'URL reste inconnue APRÈS la réconciliation effectuée plus haut.
+
     // ─── Tier C : Transitionner le broadcast vers "complete" si pré-créé ───
     // Si le broadcast a été pré-créé au démarrage (Tier C), youtubeUrl est déjà
     // connu. On appelle transitionBroadcastToComplete pour dire à YouTube de
@@ -282,6 +382,48 @@ export async function POST(req: NextRequest) {
         console.error("[live/stop] Erreur récupération YouTube replay:", ytError);
         // Ne pas faire échouer le stop pour autant
       }
+    }
+
+    // ─── ⭐ V3.36 — SYNC IMMÉDIATE DES VUES/STATS (après réponse) ───
+    // Anomalie « vues = 0 » au back-office après le live : les stats
+    // n'étaient synchronisées que par le cron (30 min). On lance une passe
+    // immédiate (best-effort, after) — YouTube publie les stats du replay
+    // sous quelques minutes ; le cron et la consultation du module Vidéos
+    // prendront le relais.
+    if (live.streamToYoutube && !recordingUrl && live.youtubeUrl) {
+      const urlStats = live.youtubeUrl;
+      const liveIdStats = liveId;
+      const titreStats = live.title;
+      const servantIdStats = live.servantId;
+      after(async () => {
+        try {
+          const { isYouTubeOAuthConfigured } = await import("@/lib/youtube");
+          if (!isYouTubeOAuthConfigured()) return;
+          // Pas d'attente : videos.list?part=statistics répond dès la fin du
+          // broadcast (même pendant le post-traitement du replay), et le
+          // budget serverless (maxDuration 60 s) doit rester confortable.
+          const replayVideo = await db.video.findFirst({
+            where: {
+              servantId: servantIdStats,
+              title: { startsWith: `${titreStats} (Replay)` },
+            },
+            select: { id: true },
+          });
+          const { syncYouTubeStatsToVideo } = await import("@/lib/youtube-live-chat");
+          const resultat = await syncYouTubeStatsToVideo(
+            urlStats,
+            replayVideo?.id || liveIdStats,
+            liveIdStats
+          );
+          if (resultat) {
+            console.log(
+              `[live/stop] Stats sync immédiate : ${resultat.viewCount} vues, ${resultat.likeCount} likes`
+            );
+          }
+        } catch (e) {
+          console.warn("[live/stop] Stats sync immédiate impossible (le cron prendra le relais) :", e instanceof Error ? e.message : e);
+        }
+      });
     }
 
     return NextResponse.json({

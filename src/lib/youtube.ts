@@ -443,6 +443,94 @@ export async function transitionBroadcastToComplete(
 }
 
 /**
+ * ⭐ V3.36 — Trouve l'ID vidéo du broadcast ACTUELLEMENT en direct sur la
+ * chaîne (lifeCycleStatus "live").
+ *
+ * Contexte (anomalie pasteur) : le viewer public affichait « Cette vidéo a
+ * été supprimée par l'utilisateur » pendant un direct pourtant bien lancé
+ * sur YouTube. Cause racine : le broadcast pré-créé par l'API (Tier C) était
+ * archivé comme youtubeUrl, mais l'egress RTMP poussait vers la clé du
+ * SERVITEUR → la VRAIE vidéo live (créée par YouTube Studio) avait un
+ * autre ID, et l'ID stocké pointait sur un broadcast jamais alimenté
+ * (zombie → « supprimée »).
+ *
+ * Cette fonction permet la RÉCONCILIATION pendant le direct : interroger
+ * liveBroadcasts.list (1 unité), trouver le broadcast dont le cycle est
+ * "live", et corriger LiveStream.youtubeUrl → le viewer bascule
+ * automatiquement sur le VRAI direct (poll /stats, logique V3.33).
+ *
+ * @returns le videoId du broadcast en direct, ou null.
+ */
+export async function findActiveBroadcastVideoId(): Promise<string | null> {
+  if (!isYouTubeOAuthConfigured()) return null;
+
+  try {
+    const auth = getYouTubeOAuthClient();
+    const youtube = google.youtube({ version: "v3", auth });
+
+    const response = await youtube.liveBroadcasts.list({
+      part: ["snippet,status"],
+      broadcastType: "all",
+      mine: true,
+      maxResults: 25,
+    });
+
+    const broadcasts = response.data.items || [];
+    const enDirect = broadcasts.filter(
+      (b) => b.status?.lifeCycleStatus === "live" || b.status?.lifeCycleStatus === "testing",
+    );
+    if (enDirect.length === 0) return null;
+
+    // Le plus récemment démarré (plusieurs streams simultanés = rare).
+    const trie = enDirect.sort((a, b) => {
+      const da = a.snippet?.actualStartTime
+        ? new Date(a.snippet.actualStartTime).getTime()
+        : 0;
+      const dbb = b.snippet?.actualStartTime
+        ? new Date(b.snippet.actualStartTime).getTime()
+        : 0;
+      return dbb - da;
+    });
+
+    const videoId = trie[0].id;
+    if (!videoId) return null;
+    console.log(`[youtube] Broadcast EN DIRECT trouvé: ${trie[0].snippet?.title} → ${videoId}`);
+    return videoId;
+  } catch (error) {
+    console.error("[youtube] Erreur findActiveBroadcastVideoId:", error);
+    return null;
+  }
+}
+
+/**
+ * ⭐ V3.36 — Supprime un broadcast jamais alimenté (zombie) créé par erreur
+ * via l'API Tier C. Best-effort : un broadcast déjà supprimé ou en cours
+ * renvoie une erreur 404/400 qui est simplement logguée.
+ *
+ * Utilisé au /stop quand la réconciliation a montré que l'URL stockée ne
+ * pointait pas sur la vraie vidéo : on nettoie la chaîne YouTube pour ne
+ * pas accumuler des broadcasts fantômes (qui polluent aussi
+ * findLatestBroadcastVideoId).
+ */
+export async function deleteBroadcast(broadcastId: string): Promise<boolean> {
+  if (!isYouTubeOAuthConfigured()) return false;
+
+  try {
+    const auth = getYouTubeOAuthClient();
+    const youtube = google.youtube({ version: "v3", auth });
+    await youtube.liveBroadcasts.delete({ id: broadcastId });
+    console.log(`[youtube] Broadcast zombie supprimé: ${broadcastId}`);
+    return true;
+  } catch (error) {
+    console.warn(
+      "[youtube] deleteBroadcast (ignoré, broadcast probablement déjà parti) :",
+      error instanceof Error ? error.message : error,
+    );
+    return false;
+  }
+}
+
+/**
  * Transitionne un broadcast vers l'état "testing" (démarrage du live).
  *
  * Note : avec enableAutoStart=true, YouTube fait cette transition

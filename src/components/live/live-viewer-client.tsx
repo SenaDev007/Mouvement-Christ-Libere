@@ -1098,7 +1098,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                 </button>
 
                 {/* Partager avec icônes officielles */}
-                <ShareButton url={currentUrl} title={live.title} />
+                <ShareButton url={currentUrl} title={live.title} thumbnailUrl={live.thumbnailUrl} />
 
                 {/* Enregistrer */}
                 <button onClick={() => setSaved(!saved)}

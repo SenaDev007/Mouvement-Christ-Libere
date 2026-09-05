@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { ensureLiveYoutubeIngestColumn } from "@/lib/ensure-schema";
 
 /**
  * POST /api/live/start
@@ -103,6 +104,39 @@ export async function POST(req: NextRequest) {
         ...(youtubeBroadcastInfo ? { youtubeUrl: youtubeBroadcastInfo.url } : {}),
       },
     });
+
+    // ─── ⭐ V3.36 — PERSISTER L'ADRESSE RTMP DU BROADCAST TIER C ───
+    // Anomalie « vidéo supprimée par l'utilisateur » pendant le direct :
+    // le broadcast était pré-créé (youtubeUrl connu) mais l'egress poussait
+    // le flux vers la clé RTMP du SERVITEUR → le broadcast API restait
+    // vide (zombie) et la vraie vidéo avait un AUTRE ID. On stocke
+    // désormais l'adresse d'ingest du broadcast : /api/live/[id]/egress
+    // l'utilisera comme destination YouTube (le flux part VERS le
+    // broadcast pré-créé → ID connu, embed viewer + replay + stats
+    // cohérents).
+    // ⚠️ Colonne RUNTIME posée hors Prisma → SQL brut uniquement.
+    try {
+      await ensureLiveYoutubeIngestColumn();
+      if (youtubeBroadcastInfo?.ingestAddress) {
+        await db.$executeRawUnsafe(
+          `UPDATE "LiveStream" SET "youtubeIngestUrl" = $1 WHERE "id" = $2`,
+          youtubeBroadcastInfo.ingestAddress,
+          liveId
+        );
+        console.log("[live/start] Ingest Tier C persisté (l'egress YouTube l'utilisera)");
+      } else {
+        // Pas de nouveau broadcast (redémarrage, ou URL déjà connue) →
+        // nettoyer un éventuel ingest PÉRIMÉ (clé à usage unique, déjà
+        // consommée par une session précédente) pour que l'egress retombe
+        // proprement sur la clé du serviteur.
+        await db.$executeRawUnsafe(
+          `UPDATE "LiveStream" SET "youtubeIngestUrl" = NULL WHERE "id" = $1`,
+          liveId
+        );
+      }
+    } catch (ingestErr) {
+      console.warn("[live/start] Persistance ingest Tier C impossible (non bloquant) :", ingestErr instanceof Error ? ingestErr.message : ingestErr);
+    }
 
     // Nettoyer les messages de chat du live précédent
     await db.liveChatMessage.deleteMany({

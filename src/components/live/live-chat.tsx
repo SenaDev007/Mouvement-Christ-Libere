@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Send, MessageCircle, Users, X, ChevronDown, Pin, Heart,
-  Crown, Info, MoreVertical, Shield, Loader2,
+  Crown, Info, MoreVertical, Shield, Loader2, AlertCircle,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -76,6 +76,12 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
   const [xpPoints, setXpPoints] = useState(0);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [slowMode, setSlowMode] = useState(false);
+  // ⭐ V3.36 — Feedback d'envoi : avant, un échec du POST (timeout 8 s,
+  // erreur serveur) était avalé SILENCIEUSEMENT — le viewer cliquait
+  // « Envoyer » et « ça ne répondait pas ». On affiche désormais un message
+  // d'erreur honnête sous le champ, auto-effacé après quelques secondes.
+  const [sendError, setSendError] = useState("");
+  const sendErrorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // ⭐ V2.9 — État de connexion du polling chat : si le serveur ne répond
   // plus (serverless saturé, réseau…), on l'affiche honnêtement au lieu
   // de laisser croire que « le chat ne marche pas » sans explication.
@@ -255,11 +261,17 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
     }
 
     setSending(true);
+    // ⭐ V3.36 — effacer l'éventuelle erreur précédente (et son timer).
+    setSendError("");
+    if (sendErrorTimerRef.current) clearTimeout(sendErrorTimerRef.current);
     try {
+      // ⭐ V3.36 — timeoutMs 12 s : marge confortable au-dessus des 8 s par
+      // défaut (fonction serverless froide + DB) sans spinner infini.
       const res = await apiFetch(`/api/live/${liveId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userName, content: input.trim(), type: "message" }),
+        timeoutMs: 12000,
       });
       if (res.ok) {
         setInput("");
@@ -282,8 +294,18 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
             }
           } catch {}
         }
+      } else {
+        // ⭐ V3.36 — réponse d'erreur serveur : l'afficher honnêtement.
+        const data = await res.json().catch(() => ({}));
+        setSendError(data.error || "Envoi impossible — réessayez");
+        sendErrorTimerRef.current = setTimeout(() => setSendError(""), 4000);
       }
-    } catch {} finally { setSending(false); }
+    } catch {
+      // Timeout / réseau : le serveur peut avoir ENREGISTRÉ le message
+      // malgré tout — le poll de 2 s l'affichera s'il est passé.
+      setSendError("Connexion lente — le message sera affiché d'un instant à l'autre");
+      sendErrorTimerRef.current = setTimeout(() => setSendError(""), 4000);
+    } finally { setSending(false); }
   };
 
   // Filtrer messages selon le mode
@@ -542,21 +564,32 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
                   >
                     {getInitials(userName)}
                   </div>
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={slowMode ? "Mode lent activé (5s entre messages)..." : "Écrivez un message..."}
-                    maxLength={500}
-                    className="flex-1 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-[#1E0F2B] text-sm placeholder:text-[#1E0F2B]/30 focus:outline-none focus:bg-[#2A0E3D]/10 border border-[#8A8378]/15"
-                  />
-                  <button
-                    type="submit"
-                    disabled={sending || !input.trim()}
-                    className="p-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder={slowMode ? "Mode lent activé (5s entre messages)..." : "Écrivez un message..."}
+                        maxLength={500}
+                        className="flex-1 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-[#1E0F2B] text-sm placeholder:text-[#1E0F2B]/30 focus:outline-none focus:bg-[#2A0E3D]/10 border border-[#8A8378]/15"
+                      />
+                      <button
+                        type="submit"
+                        disabled={sending || !input.trim()}
+                        className="p-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {/* ⭐ V3.36 — Erreur d'envoi VISIBLE (fini le silence) */}
+                    {sendError && (
+                      <p className="mt-1.5 px-1 text-[10px] font-semibold text-red-600 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                        {sendError}
+                      </p>
+                    )}
+                  </div>
                 </form>
                 {/* Barre statut (façon YouTube) */}
                 <div className="flex items-center justify-between mt-2 px-1">

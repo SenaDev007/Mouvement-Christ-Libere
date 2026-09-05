@@ -6,9 +6,10 @@
  *   POST   /admin/api/[entity]          — création
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns } from "@/lib/ensure-schema";
+import { annoncerLiveProgramme } from "@/lib/live-announcement-relay";
 
 // Force runtime Node.js (pas edge) pour Prisma
 export const runtime = "nodejs";
@@ -108,6 +109,44 @@ export async function POST(
     }
     const delegate = getDelegate(entity as EntityName);
     const created = await delegate.create({ data: body });
+
+    // ⭐ V3.36 — ANNONCE AUTOMATIQUE DANS YESHUA CONNECT : quand un admin
+    // programme un live depuis le back-office (bouton « Programmer un live »
+    // ou formulaire complet), l'information est relayée dans le canal
+    // d'annonces (canal ANNOUNCEMENT) — message structuré (qui anime, thème,
+    // jour, heure) + miniature intacte + push aux membres qui suivent les
+    // lives. Best-effort APRÈS la réponse (after) : la programmation ne doit
+    // jamais être ralentie ni échouer à cause de l'annonce.
+    if (entity === "lives") {
+      try {
+        const liveCree = created as unknown as {
+          id: string; title: string; description?: string | null;
+          scheduledAt: string | Date; servantId: string;
+          status?: string | null; thumbnailUrl?: string | null;
+        };
+        const statut = (liveCree.status || "SCHEDULED").toUpperCase();
+        if (statut === "SCHEDULED" && liveCree.servantId) {
+          const servant = await db.servant.findUnique({
+            where: { id: liveCree.servantId },
+            select: { shortName: true },
+          });
+          const annonce = {
+            liveId: liveCree.id,
+            titre: liveCree.title || "Live",
+            description: liveCree.description ?? null,
+            scheduledAt: new Date(liveCree.scheduledAt),
+            servantNom: servant?.shortName || "Serviteur de Dieu",
+            thumbnailUrl: liveCree.thumbnailUrl ?? null,
+          };
+          after(() => {
+            annoncerLiveProgramme(annonce).catch(() => {});
+          });
+        }
+      } catch (e) {
+        console.warn("[admin/api/lives] Annonce Yeshua Connect impossible :", e instanceof Error ? e.message : e);
+      }
+    }
+
     return NextResponse.json({ item: created }, { status: 201 });
   } catch (error) {
     console.error(`[admin/api/${entity}] POST error:`, error);

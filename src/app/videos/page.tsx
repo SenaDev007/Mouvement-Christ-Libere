@@ -8,10 +8,10 @@ import Image from "next/image";
 import {
   Play, Eye, ChevronRight, ChevronDown, ChevronLeft,
   Calendar, Video as VideoIcon, Heart, Share2, Search,
-  X, Check, Link2, Clock,
+  X, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { WhatsAppIcon, FacebookIcon, XIcon, InstagramIcon } from "@/components/videos/social-icons";
+import { ShareModal } from "@/components/videos/share-modal";
 import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 
 interface VideoItem {
@@ -329,7 +329,6 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
   // désormais la vraie colonne likes (0 par défaut).
   const [likeCount, setLikeCount] = useState(video.likes || 0);
   const [showShare, setShowShare] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const servantName = video.servant === "pam" ? "Pam" : "Pasteur Kongo";
   const servantPhoto = video.servant === "pam" ? "/pam.jpeg" : "/pasteur-kongo.jpeg";
@@ -369,23 +368,8 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
     } catch {}
   };
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(`https://mouvement-christ-libere.vercel.app/videos?v=${video.id}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {}
-  };
-
-  const shareUrl = encodeURIComponent(`https://mouvement-christ-libere.vercel.app/videos?v=${video.id}`);
-  const shareTitle = encodeURIComponent(video.title);
-
-  const shareLinks = [
-    { name: "WhatsApp", Icon: WhatsAppIcon, href: `https://wa.me/?text=${shareTitle}%20${shareUrl}` },
-    { name: "Facebook", Icon: FacebookIcon, href: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}` },
-    { name: "X", Icon: XIcon, href: `https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}` },
-    { name: "Instagram", Icon: InstagramIcon, href: `https://www.instagram.com/` },
-  ];
+  // ⭐ V3.36 — URL de partage publique de cette vidéo.
+  const publicShareUrl = `https://mouvement-christ-libere.vercel.app/videos?v=${video.id}`;
 
   return (
     <div className="min-h-screen bg-[#FAF6EF] pt-16 md:pt-20">
@@ -490,35 +474,14 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                   {likeCount > 0 ? likeCount.toLocaleString("fr-FR") : "J'aime"}
                 </button>
 
-                {/* Partager */}
+                {/* ⭐ V3.36 — Partager : GRAND modal complet (plateformes
+                    toutes visibles d'un coup, clic extérieur / Échap pour
+                    fermer) — remplace le petit popover tronqué. */}
                 <div className="relative">
                   <button onClick={() => setShowShare(!showShare)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 text-[#1E0F2B] text-xs font-semibold transition-colors">
                     <Share2 className="w-3.5 h-3.5" style={{ color: "#C9A227" }} />
                     Partager
                   </button>
-                  {showShare && (
-                    <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-[#8A8378]/15 p-3 z-50 min-w-[200px]">
-                      <p className="text-xs font-bold text-[#8A8378] uppercase tracking-wider mb-2">Partager sur</p>
-                      <div className="flex items-center gap-2 mb-2">
-                        {shareLinks.map((link) => {
-                          const Icon = link.Icon;
-                          return (
-                            <a key={link.name} href={link.href} target="_blank" rel="noopener noreferrer" title={link.name}
-                              className="flex items-center justify-center w-9 h-9 rounded-lg border border-[#8A8378]/15 hover:scale-110 transition-transform">
-                              <Icon size={18} />
-                            </a>
-                          );
-                        })}
-                      </div>
-                      <button onClick={handleCopy} className={cn(
-                        "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors",
-                        copied ? "bg-[#5B7052] text-white" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 text-[#1E0F2B]"
-                      )}>
-                        {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
-                        {copied ? "Lien copié !" : "Copier le lien"}
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -560,6 +523,15 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
           </div>
         </div>
       </div>
+
+      {/* ⭐ V3.36 — Modal de partage complet (clic extérieur / Échap ferme) */}
+      <ShareModal
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        url={publicShareUrl}
+        title={video.title}
+        thumbnailUrl={video.thumbnailUrl || (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg` : null)}
+      />
     </div>
   );
 }

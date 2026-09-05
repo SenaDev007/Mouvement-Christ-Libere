@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { ensureLiveYoutubeIngestColumn } from "@/lib/ensure-schema";
 import {
   EgressClient,
   StreamOutput,
@@ -89,8 +90,38 @@ export async function POST(
     const streamToTiktok = (live as Record<string, unknown>).streamToTiktok as boolean;
     const streamToInstagram = (live as Record<string, unknown>).streamToInstagram as boolean;
 
-    if (streamToYoutube && config.youtubeRtmpUrl && config.youtubeRtmpKey) {
-      destinations.push({ url: `${config.youtubeRtmpUrl}/${config.youtubeRtmpKey}`, name: "youtube" });
+    // ─── ⭐ V3.36 — YOUTUBE : BROADCAST TIER C D'ABORD ───
+    // Anomalie « vidéo supprimée par l'utilisateur » pendant le direct : le
+    // broadcast YouTube est pré-créé au /start (ID stocké dans
+    // youtubeUrl) mais le flux RTMP partait vers la clé du SERVITEUR → la
+    // VRAIE vidéo avait un autre ID et l'embed du viewer pointait sur un
+    // broadcast zombie. Si un ingest Tier C est disponible, c'est LUI la
+    // destination YouTube : le flux alimente le broadcast pré-créé →
+    // viewer, replay et stats tombent juste. Sinon (pas de broadcast créé,
+    // OAuth absent…) on garde la clé du serviteur.
+    let tierCIngestUrl: string | null = null;
+    if (streamToYoutube) {
+      try {
+        await ensureLiveYoutubeIngestColumn();
+        const rows = await db.$queryRawUnsafe<Array<{ youtubeIngestUrl: string | null }>>(
+          `SELECT "youtubeIngestUrl" FROM "LiveStream" WHERE "id" = $1 LIMIT 1`,
+          id
+        );
+        tierCIngestUrl = rows[0]?.youtubeIngestUrl ?? null;
+        if (tierCIngestUrl) {
+          console.log("[egress] Destination YouTube = ingest Tier C (broadcast pré-créé)");
+        }
+      } catch (e) {
+        console.warn("[egress] Lecture ingest Tier C impossible (repli clé serviteur) :", e instanceof Error ? e.message : e);
+      }
+    }
+
+    if (streamToYoutube) {
+      if (tierCIngestUrl) {
+        destinations.push({ url: tierCIngestUrl, name: "youtube" });
+      } else if (config.youtubeRtmpUrl && config.youtubeRtmpKey) {
+        destinations.push({ url: `${config.youtubeRtmpUrl}/${config.youtubeRtmpKey}`, name: "youtube" });
+      }
     }
     if (streamToFacebook && config.facebookRtmpUrl && config.facebookRtmpKey) {
       destinations.push({ url: `${config.facebookRtmpUrl}/${config.facebookRtmpKey}`, name: "facebook" });
@@ -221,6 +252,36 @@ export async function POST(
         console.log(`[egress] RTMP started for ${dest.name}: ${egressId}`);
       } catch (err) {
         const rawMsg = err instanceof Error ? err.message : "Erreur inconnue";
+        // ⭐ V3.36 — REPLI INGEST TIER C → CLÉ SERVITEUR : la clé RTMP du
+        // broadcast pré-créé est à usage unique ; si elle a déjà servi
+        // (redémarrage du live) ou est refusée, on retombe sur la clé du
+        // serviteur pour ne JAMAIS couper la diffusion YouTube.
+        if (dest.name === "youtube" && dest.url === tierCIngestUrl && config.youtubeRtmpUrl && config.youtubeRtmpKey) {
+          const fallbackUrl = `${config.youtubeRtmpUrl}/${config.youtubeRtmpKey}`;
+          console.warn(`[egress] Ingest Tier C refusé (${rawMsg}) — repli sur la clé du serviteur`);
+          try {
+            const streamOutput = new StreamOutput({ urls: [fallbackUrl] });
+            const encoding = new EncodingOptions({
+              audioCodec: AudioCodec.AAC,
+              audioBitrate: 128_000,
+              videoCodec: VideoCodec.H264_MAIN,
+              videoBitrate: 4_500_000,
+              framerate: 30,
+              width: 1280,
+              height: 720,
+            });
+            const egressInfo = await egressClient.startRoomCompositeEgress(
+              roomName,
+              streamOutput,
+              { layout: "speaker", encodingOptions: encoding },
+            );
+            results.push({ name: dest.name, egressId: egressInfo.egressId || null });
+            console.log(`[egress] RTMP started for ${dest.name} (clé serviteur): ${egressInfo.egressId}`);
+            continue;
+          } catch (fallbackErr) {
+            console.error(`[egress] Repli clé serviteur échoué :`, fallbackErr instanceof Error ? fallbackErr.message : fallbackErr);
+          }
+        }
         const translated = translateEgressError(rawMsg);
         results.push({
           name: dest.name,
