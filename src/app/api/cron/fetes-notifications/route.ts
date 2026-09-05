@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendPushNotification } from "@/app/api/push/vapid/route";
 import { calculerEvenementsShofar } from "@/lib/calendrier/evenements-shofar";
+import { autoriserCron } from "@/lib/cron-auth";
 
 /**
  * GET /api/cron/fetes-notifications
@@ -24,7 +25,14 @@ import { calculerEvenementsShofar } from "@/lib/calendrier/evenements-shofar";
 
 const JOUR_MS = 24 * 60 * 60 * 1000;
 
-export async function GET() {
+export async function GET(req: Request) {
+  // ⭐ V3.39 — Cette route cron n'était protégée par AUCUN secret : n'importe
+  // qui pouvait déclencher des push à toute la communauté. Désormais protégée
+  // par CRON_SECRET si configuré (Bearer Vercel OU X-Cron-Secret ; sans
+  // secret configuré = autorisé, même règle que le backend Railway).
+  if (!autoriserCron(req)) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
   try {
     const maintenant = new Date();
     const evenements = calculerEvenementsShofar(maintenant);

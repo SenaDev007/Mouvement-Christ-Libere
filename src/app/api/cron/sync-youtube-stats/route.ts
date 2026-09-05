@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { syncYouTubeStatsToVideo } from "@/lib/youtube-live-chat";
+import { autoriserCron } from "@/lib/cron-auth";
 
 /**
  * GET /api/cron/sync-youtube-stats
@@ -8,7 +9,10 @@ import { syncYouTubeStatsToVideo } from "@/lib/youtube-live-chat";
  * Cron automatique (toutes les 30 min) qui synchronise les stats YouTube
  * pour tous les lives en cours ou récemment terminés (24h).
  *
- * Sécurité : header X-Cron-Secret requis (configuré sur Vercel Cron).
+ * Sécurité : ⭐ V3.39 — Authorization Bearer (Vercel Cron) OU X-Cron-Secret
+ * (manuel). AVANT : seul X-Cron-Secret était accepté — Vercel Cron envoie
+ * Bearer → 401 systématique → la synchro des stats/vues ne tournait jamais.
+ * Sécurité (suite) : CRON_SECRET non configuré (dev) → autorisé.
  *
  * Pour chaque live YouTube :
  *  - Récupère viewCount, likeCount, commentCount depuis YouTube
@@ -20,9 +24,8 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export async function GET(req: NextRequest) {
-  // Vérifier le secret cron
-  const cronSecret = req.headers.get("x-cron-secret");
-  if (cronSecret !== process.env.CRON_SECRET) {
+  // ⭐ V3.39 — Vérifier le secret cron (Bearer Vercel OU X-Cron-Secret)
+  if (!autoriserCron(req)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 

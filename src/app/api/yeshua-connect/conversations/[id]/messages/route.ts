@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { ensureChannelIsDirectColumn, ensureChannelIsIntercessionColumn, ensureMessageTypeEnum, ensureUserBlockTable } from "@/lib/ensure-schema";
 import { sendPushToUser } from "@/lib/push-notifications";
+import { dispatchDueScheduledMessages } from "@/lib/dispatch-scheduled-messages";
 
 /** Rôles pouvant modérer (et donc lire) tous les canaux même sans y être membre. */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -54,6 +55,19 @@ export async function GET(
     const url = new URL(_req.url);
     const limit = parseInt(url.searchParams.get("limit") || "50", 10);
     const beforeMessageId = url.searchParams.get("before");
+
+    // ⭐ V3.39 — DISPATCH OPPORTUNISTE DES MESSAGES PROGRAMMÉS : avant de
+    // renvoyer les messages du canal, on envoie ceux dont l'heure est
+    // arrivée (si le cron ne tourne pas — plan Hobby = 1×/jour). Le poll
+    // 3 s du canal actif + ce hook font apparaître le message programmé
+    // à la minute prévue, sous les yeux de l'utilisateur. Throttle 10 s
+    // par instance + réclamation atomique anti-double-envoi (cf. lib).
+    // Best-effort : un échec n'entrave jamais la lecture du canal.
+    if (!beforeMessageId) {
+      try {
+        await dispatchDueScheduledMessages(id);
+      } catch {}
+    }
 
     // ⭐ V3.20 — Colonne isDirect lue ci-dessous : auto-réparation d'abord.
     await ensureChannelIsDirectColumn();

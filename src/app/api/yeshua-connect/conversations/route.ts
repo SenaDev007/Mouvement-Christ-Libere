@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureChannelIsIntercessionColumn, ensureVoiceVideoColumns, ensureV29Schema, ensureUserBlockTable } from "@/lib/ensure-schema";
+import { dispatchDueScheduledMessages } from "@/lib/dispatch-scheduled-messages";
 
 /** Rôles pouvant voir les canaux RESTRICTED (pasteurs / modération). */
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
@@ -69,6 +70,16 @@ export async function GET(_req: NextRequest) {
     // ⭐ V2.9 — Présence (User.lastSeenAt) : sans Socket.io déployé, le
     // « N en ligne » et les badges de présence reposent sur cette colonne.
     await ensureV29Schema();
+
+    // ⭐ V3.39 — DISPATCH OPPORTUNISTE DES MESSAGES PROGRAMMÉS (tous
+    // canaux) : cette route tourne au chargement de la sidebar et toutes
+    // les 10 s (poll conversations). Si un message programmé est dû, il
+    // part ICI même sans cron (plan Hobby = cron 1×/jour) → le canal
+    // concerné remonte dans la sidebar avec le bon aperçu. Throttle 10 s
+    // par instance + réclamation atomique (cf. lib) ; best-effort.
+    try {
+      await dispatchDueScheduledMessages();
+    } catch {}
     // ⭐ V3.5 — Blocage des membres : sans la table UserBlock, les requêtes
     // ci-dessous échoueraient — l'auto-réparation la crée au premier appel.
     // (échec DDL purement loggué → l'application retombe sur « aucun bloc »)

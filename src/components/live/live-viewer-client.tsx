@@ -8,6 +8,7 @@ import {
   Radio, Eye, Calendar, AlertCircle,
   Heart, Bookmark, MoreHorizontal,
   CheckCircle2, ChevronDown, ChevronUp, Clock, Users, X,
+  Share2, Link2, ExternalLink, Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { LiveChat } from "@/components/live/live-chat";
@@ -15,6 +16,7 @@ import { LiveReactions } from "@/components/live/live-reactions";
 import { VideoPlayerPro } from "@/components/live/video-player-pro";
 import { LiveJoinModal } from "@/components/live/live-join-modal";
 import { ShareButton } from "@/components/live/share-button";
+import { ShareModal } from "@/components/videos/share-modal";
 
 interface LiveViewerClientProps {
   live: {
@@ -65,6 +67,12 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   const [livePausedAt, setLivePausedAt] = useState<string | null>(null);
   const [likeCount, setLikeCount] = useState(0);
   const [saved, setSaved] = useState(false);
+  // ⭐ V3.39 — Menu trois points (AVANT : bouton SANS onClick, totalement
+  // inerte), modal de partage réutilisable et toast de confirmation
+  // (« Live enregistré », « Lien copié »…).
+  const [menuOuvert, setMenuOuvert] = useState(false);
+  const [partageOuvert, setPartageOuvert] = useState(false);
+  const [toast, setToast] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [hasJoined, setHasJoined] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -778,12 +786,113 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     return match ? `https://www.youtube.com/embed/${match[1]}?autoplay=1&mute=1&rel=0` : url;
   };
 
-  const handleLike = () => {
-    if (liked) { setLiked(false); setLikeCount((c) => Math.max(0, c - 1)); }
-    else { setLiked(true); setLikeCount((c) => c + 1); }
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+
+  // (rétabli) Notification « Créez un compte » pour les viewers anonymes.
+  const [showAccountPrompt, setShowAccountPrompt] = useState(false);
+
+  // ⭐ V3.39 — PERSISTANCE « J'aime » / « Enregistrer » : AVANT, ces deux
+  // boutons ne basculaient qu'un état React local — rien n'était envoyé au
+  // serveur, et tout était PERDU au rechargement de la page (anomalie
+  // remontée par le pasteur : « on ne retrouve plus la mention J'aime »).
+  // Désormais : état du viewer mémorisé SUR L'APPAREIL (localStorage, comme
+  // les vidéos — les viewers sont souvent anonymes) + compteur réel du
+  // serveur (colonne LiveStream.likes via /api/live/[id]/like).
+  useEffect(() => {
+    try {
+      const likes = JSON.parse(localStorage.getItem("likedLives") || "{}");
+      if (likes[live.id]) setLiked(true);
+      const saves = JSON.parse(localStorage.getItem("savedLives") || "{}");
+      if (saves[live.id]) setSaved(true);
+    } catch {}
+    let annule = false;
+    apiFetch(`/api/live/${live.id}/like`)
+      .then(async (r) => {
+        if (!r.ok) return;
+        const d = await r.json().catch(() => ({}));
+        if (!annule && typeof d.likes === "number") setLikeCount(d.likes);
+      })
+      .catch(() => {});
+    return () => {
+      annule = true;
+    };
+  }, [live.id]);
+
+  // ⭐ V3.39 — Échap ferme le menu trois points.
+  useEffect(() => {
+    if (!menuOuvert) return;
+    const fermer = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOuvert(false);
+    };
+    window.addEventListener("keydown", fermer);
+    return () => window.removeEventListener("keydown", fermer);
+  }, [menuOuvert]);
+
+  /** Toast éphémère de confirmation (2,6 s), bas d'écran. */
+  const afficherToast = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(""), 2600);
   };
 
-  const [showAccountPrompt, setShowAccountPrompt] = useState(false);
+  const handleLike = async () => {
+    const nouveau = !liked;
+    setLiked(nouveau);
+    setLikeCount((c) => (nouveau ? c + 1 : Math.max(0, c - 1)));
+    // Persistance sur l'appareil : le like du viewer SURVIT au rechargement.
+    try {
+      const likes = JSON.parse(localStorage.getItem("likedLives") || "{}");
+      if (nouveau) likes[live.id] = true;
+      else delete likes[live.id];
+      localStorage.setItem("likedLives", JSON.stringify(likes));
+    } catch {}
+    // Compteur réel côté serveur (colonne dédiée, incrément atomique).
+    try {
+      const r = await apiFetch(`/api/live/${live.id}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: nouveau ? "like" : "unlike" }),
+      });
+      if (r.ok) {
+        const d = await r.json().catch(() => ({}));
+        if (typeof d.likes === "number") setLikeCount(d.likes);
+      }
+    } catch {}
+  };
+
+  /** ⭐ V3.39 — « Enregistrer » PERSISTE (avant : état local fantôme). */
+  const handleSave = () => {
+    const nouveau = !saved;
+    setSaved(nouveau);
+    try {
+      const saves = JSON.parse(localStorage.getItem("savedLives") || "{}");
+      if (nouveau) {
+        saves[live.id] = {
+          title: live.title,
+          scheduledAt: live.scheduledAt,
+          thumbnail: live.thumbnailUrl,
+        };
+      } else {
+        delete saves[live.id];
+      }
+      localStorage.setItem("savedLives", JSON.stringify(saves));
+    } catch {}
+    afficherToast(
+      nouveau
+        ? "Live enregistré — il restera marqué sur cet appareil"
+        : "Live retiré de vos enregistrements",
+    );
+  };
+
+  /** Copier le lien public du live (menu trois points). */
+  const copierLien = async () => {
+    setMenuOuvert(false);
+    try {
+      await navigator.clipboard.writeText(currentUrl);
+      afficherToast("Lien copié dans le presse-papiers");
+    } catch {
+      afficherToast("Copie impossible — copiez l'adresse du navigateur");
+    }
+  };
 
   const handleRegistered = (member: { id: string; firstName: string; isAnonymous: boolean }) => {
     setMemberId(member.id);
@@ -797,8 +906,6 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     }
   };
 
-  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
       {/* Modal d'inscription unique */}
@@ -808,6 +915,23 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
         onRegistered={handleRegistered}
         liveTitle={live.title}
       />
+
+      {/* ⭐ V3.39 — Modal de partage complet (ouvert depuis le menu trois
+          points — même composant que le bouton Partager). */}
+      <ShareModal
+        open={partageOuvert}
+        onClose={() => setPartageOuvert(false)}
+        url={currentUrl}
+        title={live.title}
+        thumbnailUrl={live.thumbnailUrl}
+      />
+
+      {/* ⭐ V3.39 — Toast de confirmation (enregistrer / copier). */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[95] px-4 py-2.5 rounded-full bg-[#1E0F2B] text-white text-xs font-bold shadow-2xl pointer-events-none">
+          {toast}
+        </div>
+      )}
 
       {/* Notification "Créez un compte" (façon YouTube) */}
       {showAccountPrompt && (
@@ -1090,8 +1214,9 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               </div>
 
               <div className="flex items-center gap-1">
-                {/* Bouton cœur rouge */}
-                <button onClick={handleLike}
+                {/* Bouton cœur rouge — ⭐ V3.39 : like PERSISTANT (appareil +
+                    compteur serveur réel, survit au rechargement). */}
+                <button onClick={handleLike} aria-label="J'aime" aria-pressed={liked}
                   className="flex items-center gap-1.5 px-3 py-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors">
                   <Heart className={`w-4 h-4 ${liked ? "text-red-500 fill-red-500" : "text-[#1E0F2B]"}`} />
                   {likeCount > 0 && <span className="text-xs font-medium text-[#1E0F2B]">{likeCount}</span>}
@@ -1100,16 +1225,86 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                 {/* Partager avec icônes officielles */}
                 <ShareButton url={currentUrl} title={live.title} thumbnailUrl={live.thumbnailUrl} />
 
-                {/* Enregistrer */}
-                <button onClick={() => setSaved(!saved)}
+                {/* Enregistrer — ⭐ V3.39 : PERSISTE sur l'appareil (avant :
+                    état React local perdu au rechargement) + confirmation. */}
+                <button onClick={handleSave} aria-label="Enregistrer le live" aria-pressed={saved}
                   className="flex items-center gap-1.5 px-3 py-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors">
                   <Bookmark className={`w-4 h-4 ${saved ? "text-[#C9A227] fill-[#C9A227]" : "text-[#1E0F2B]"}`} />
                   <span className="text-xs font-medium text-[#1E0F2B] hidden sm:inline">Enregistrer</span>
                 </button>
 
-                <button className="p-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors">
-                  <MoreHorizontal className="w-4 h-4 text-[#1E0F2B]" />
-                </button>
+                {/* ⭐ V3.39 — Menu trois points : AVANT ce bouton n'avait
+                    AUCUN onClick (totalement inerte, anomalie remontée par
+                    le pasteur). Désormais un vrai menu : partager, copier
+                    le lien, regarder sur YouTube, enregistrer. Fermeture par
+                    clic extérieur (backdrop) OU touche Échap. */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-label="Plus d'actions"
+                    aria-expanded={menuOuvert}
+                    onClick={() => setMenuOuvert((o) => !o)}
+                    className="p-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors"
+                  >
+                    <MoreHorizontal className="w-4 h-4 text-[#1E0F2B]" />
+                  </button>
+                  {menuOuvert && (
+                    <>
+                      {/* Clic extérieur → fermeture */}
+                      <div
+                        className="fixed inset-0 z-[60]"
+                        onClick={() => setMenuOuvert(false)}
+                        aria-hidden="true"
+                      />
+                      <div className="absolute right-0 top-full mt-2 z-[70] w-60 bg-white rounded-xl shadow-2xl border border-[#8A8378]/20 py-1.5 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPartageOuvert(true);
+                            setMenuOuvert(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 transition-colors"
+                        >
+                          <Share2 className="w-4 h-4 text-[#8A8378]" />
+                          Partager le live
+                        </button>
+                        <button
+                          type="button"
+                          onClick={copierLien}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 transition-colors"
+                        >
+                          <Link2 className="w-4 h-4 text-[#8A8378]" />
+                          Copier le lien
+                        </button>
+                        {(liveYoutubeUrl || live.youtubeUrl) && (
+                          <a
+                            href={liveYoutubeUrl || live.youtubeUrl || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setMenuOuvert(false)}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 transition-colors"
+                          >
+                            <ExternalLink className="w-4 h-4 text-[#8A8378]" />
+                            Regarder sur YouTube
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuOuvert(false);
+                            handleSave();
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 transition-colors border-t border-[#8A8378]/10 mt-1"
+                        >
+                          <Bookmark
+                            className={`w-4 h-4 ${saved ? "text-[#C9A227] fill-[#C9A227]" : "text-[#8A8378]"}`}
+                          />
+                          {saved ? "Ne plus enregistrer" : "Enregistrer le live"}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 

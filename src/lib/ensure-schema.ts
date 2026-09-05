@@ -774,6 +774,49 @@ export function ensureVideoLikesColumn(): Promise<void> {
   return inflightVideoLikes;
 }
 
+let liveLikesOk = false;
+let inflightLiveLikes: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.39 — S'assure que la colonne `LiveStream.likes` (INTEGER, défaut 0)
+ * existe.
+ *
+ * Contexte : sur la page publique d'un live, le bouton « J'aime » ne
+ * faisait que basculer un état React local — aucune persistance serveur, et
+ * le like disparaissait au rechargement de la page. Désormais le compteur
+ * de likes des lives vit dans une vraie colonne dédiée (même règle que
+ * Video.likes en V3.26), lue et incrémentée ATOMIQUEMENT par
+ * /api/live/[id]/like (SQL brut : la colonne est hors modèle Prisma, cf.
+ * pattern youtubeIngestUrl V3.36).
+ *
+ * Mêmes garanties que les autres helpers : idempotent, mémoïsé,
+ * concurrentiel, échec DDL purement loggué.
+ */
+export function ensureLiveLikesColumn(): Promise<void> {
+  if (liveLikesOk) return Promise.resolve();
+  if (!inflightLiveLikes) {
+    inflightLiveLikes = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "LiveStream" ADD COLUMN IF NOT EXISTS "likes" INTEGER NOT NULL DEFAULT 0'
+      );
+    })()
+      .then(() => {
+        liveLikesOk = true;
+        console.log("[ensure-schema] V3.39 : colonne LiveStream.likes vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE LiveStream.likes impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightLiveLikes = null;
+      });
+  }
+  return inflightLiveLikes;
+}
+
 let intercessionAudioOk = false;
 let inflightIntercessionAudio: Promise<void> | null = null;
 
