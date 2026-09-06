@@ -4521,13 +4521,26 @@ export function MessagingView() {
                             // (violet = moi ; palette stable pour les autres),
                             // queue effilée côté expéditeur, texte adapté.
                             // Clic sur la bulle = afficher/masquer les actions (mobile).
-                            "w-fit rounded-2xl px-3.5 py-2 shadow-sm cursor-pointer",
+                            // ⭐ V3.42 — min-w-0 + max-w-full OBLIGATOIRES :
+                            // w-fit seul n'est PAS borné par le max-w du wrapper
+                            // (flex-col items-end) — la bulle prenait la largeur
+                            // du min-content de son contenu (citation truncate =
+                            // nowrap ≈ 444px, nom de fichier audio…) → 303-490px →
+                            // alignée à droite elle DÉBORDAIT À GAUCHE sous le rail
+                            // (mesuré left:-76 en prod, mobile 430px : « ça déborde
+                            // à gauche sous la sidebar »). max-w-full = plafond dur
+                            // à la largeur du wrapper (82%/640px).
+                            "w-fit min-w-0 max-w-full rounded-2xl px-3.5 py-2 shadow-sm cursor-pointer",
                             isMine ? "rounded-br-md" : "rounded-bl-md"
                           )}>
                           {/* Reply quote — ⭐ V2.8 : couleurs adaptées à la bulle */}
                           {msg.replyTo && (
                             <div className={cn(
-                              "mb-1.5 px-2 py-1 rounded-lg text-xs border-l-2 max-w-full",
+                              // ⭐ V3.42 — min-w-0 + overflow-hidden : le P
+                              // truncate (nowrap) doit avoir une boîte BORNÉE
+                              // pour que l'ellipsis fonctionne — sans cela son
+                              // min-content gonflait la bulle w-fit.
+                              "mb-1.5 px-2 py-1 rounded-lg text-xs border-l-2 max-w-full min-w-0 overflow-hidden",
                               usePurpleBubble
                                 ? "bg-[#FAF6EF]/15 border-[#FAF6EF] text-[#FAF6EF]"
                                 : "bg-[#1E0F2B]/10 border-[#1E0F2B] text-[#1E0F2B]"
@@ -4598,7 +4611,11 @@ export function MessagingView() {
                           ) : (
                             // ⭐ V2.1 — Rendu du contenu texte avec mentions surlignées
                             // ⭐ V2.2 — + code blocks ```...``` + spoilers ||...||
-                            <div className="text-sm whitespace-pre-wrap break-words">
+                            // ⭐ V3.42 — [overflow-wrap:anywhere] (remplace
+                            // break-words) : « anywhere » compte pour le
+                            // min-content → une longue URL ne peut plus faire
+                            // gonfler la bulle w-fit au-delà de ses bornes.
+                            <div className="text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">
                               <RichMessageContent content={msg.content || ""} memberNames={channelMembers.map(m => m.name)} isMine={isMine} variant={usePurpleBubble ? "purple" : "gold"} />
                             </div>
                           )}
@@ -6121,7 +6138,10 @@ function AudioPlayer({ src, duration, attachmentName, variant = "gold" }: { src:
       </button>
       <div className="flex-1 flex flex-col gap-1 min-w-0">
         <div
-          className="flex items-center gap-[2px] h-8 cursor-pointer"
+          // ⭐ V3.42 — min-w-0 : la rangée de barres est un item du waveform
+          // (flex-col) — sans min-w-0 son min-content (gaps × nb barres)
+          // participait au gonflement de la bulle w-fit.
+          className="flex items-center gap-[2px] h-8 cursor-pointer min-w-0"
           onClick={handleSeek}
           title="Cliquer pour avancer dans l'audio"
         >
@@ -6138,7 +6158,9 @@ function AudioPlayer({ src, duration, attachmentName, variant = "gold" }: { src:
             />
           ))}
         </div>
-        <div className={cn("flex items-center justify-between text-[11px] tabular-nums px-0.5", purple ? "text-[#FAF6EF]/80" : "text-[#1E0F2B]/70")}>
+        {/* ⭐ V3.42 — min-w-0 : les durées + nom de fichier (truncate, nowrap)
+            doivent pouvoir rétrécir — sinon min-content ~200px+. */}
+        <div className={cn("flex items-center justify-between min-w-0 text-[11px] tabular-nums px-0.5", purple ? "text-[#FAF6EF]/80" : "text-[#1E0F2B]/70")}>
           <span>{formatSec(currentTime)}</span>
           {attachmentName && (
             <span className="truncate max-w-[120px] text-[10px] opacity-70">{attachmentName}</span>
