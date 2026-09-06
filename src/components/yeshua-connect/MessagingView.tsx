@@ -4191,7 +4191,7 @@ export function MessagingView() {
               {/* ⭐ V2.3 — Galerie médias du canal */}
               <button
                 onClick={openGallery}
-                className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 hidden sm:block"
+                className="p-2 rounded-lg hover:bg-stone-100 text-stone-500"
                 title="Galerie médias"
               >
                 <ImageIcon className="w-4 h-4" />
@@ -4201,7 +4201,7 @@ export function MessagingView() {
                   modération ? mieux vaut l'enlever »). Le journal continue
                   d'être ENREGISTRÉ côté serveur (API audit-log) — seules les
                   entrées UI sont supprimées. */}
-              <button onClick={() => setShowConvSearch(!showConvSearch)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 hidden sm:block" title="Rechercher">
+              <button onClick={() => setShowConvSearch(!showConvSearch)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Rechercher">
                 <Search className="w-4 h-4" />
               </button>
               <button
@@ -4220,7 +4220,7 @@ export function MessagingView() {
               >
                 <Calendar className="w-4 h-4" />
               </button>
-              <button onClick={() => handleMute(activeConv.id)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500 hidden sm:block" title="Muet">
+              <button onClick={() => handleMute(activeConv.id)} className="p-2 rounded-lg hover:bg-stone-100 text-stone-500" title="Muet">
                 {mutedConversations.has(activeConv.id) ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
               </button>
             </div>
@@ -4582,7 +4582,7 @@ export function MessagingView() {
                             <div className="relative group/img">
                               <img src={msg.attachmentUrl} alt={msg.attachmentName || "image"} className="rounded-xl max-w-full max-h-64" />
                               <a href={msg.attachmentUrl} download={msg.attachmentName}
-                                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 text-white opacity-100 lg:opacity-0 group-hover/img:opacity-100 transition-opacity"
                                 title="Télécharger">
                                 <Download className="w-3.5 h-3.5" />
                               </a>
@@ -5677,7 +5677,7 @@ export function MessagingView() {
                       </a>
                     )}
                     {/* Sender info overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1 py-0.5 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                       <p className="text-[8px] text-white truncate font-medium" style={{ color: getRoleColor(m.senderRole) }}>
                         <span className="bg-black/40 rounded px-0.5">{m.senderName}</span>
                       </p>

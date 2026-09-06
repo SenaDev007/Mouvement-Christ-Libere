@@ -110,7 +110,7 @@ export function MessageThreads({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
             placeholder="Répondre dans le thread..."
-            className="flex-1 px-4 py-2.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/20 text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+            className="flex-1 px-4 py-2.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/20 text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
           />
           <button
             onClick={handleSend}

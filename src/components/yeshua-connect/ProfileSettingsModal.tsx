@@ -215,7 +215,7 @@ export function ProfileSettingsModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={60}
-                  className="mt-1 w-full px-3.5 py-2.5 bg-[#FAF6EF] border border-[#8A8378]/20 rounded-xl text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/40"
+                  className="mt-1 w-full px-3.5 py-2.5 bg-[#FAF6EF] border border-[#8A8378]/20 rounded-xl text-base md:text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                   placeholder="Votre nom"
                 />
               </label>
@@ -226,7 +226,7 @@ export function ProfileSettingsModal({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     maxLength={20}
-                    className="mt-1 w-full px-3.5 py-2.5 bg-[#FAF6EF] border border-[#8A8378]/20 rounded-xl text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/40"
+                    className="mt-1 w-full px-3.5 py-2.5 bg-[#FAF6EF] border border-[#8A8378]/20 rounded-xl text-base md:text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                     placeholder="+229 …"
                   />
                 </label>
@@ -236,7 +236,7 @@ export function ProfileSettingsModal({
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     maxLength={60}
-                    className="mt-1 w-full px-3.5 py-2.5 bg-[#FAF6EF] border border-[#8A8378]/20 rounded-xl text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/40"
+                    className="mt-1 w-full px-3.5 py-2.5 bg-[#FAF6EF] border border-[#8A8378]/20 rounded-xl text-base md:text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                     placeholder="Cotonou…"
                   />
                 </label>
@@ -247,7 +247,7 @@ export function ProfileSettingsModal({
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
                   maxLength={60}
-                  className="mt-1 w-full px-3.5 py-2.5 bg-[#FAF6EF] border border-[#8A8378]/20 rounded-xl text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/40"
+                  className="mt-1 w-full px-3.5 py-2.5 bg-[#FAF6EF] border border-[#8A8378]/20 rounded-xl text-base md:text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                   placeholder="Bénin…"
                 />
               </label>
@@ -258,7 +258,7 @@ export function ProfileSettingsModal({
                   onChange={(e) => setBio(e.target.value)}
                   maxLength={280}
                   rows={3}
-                  className="mt-1 w-full px-3.5 py-2.5 bg-[#FAF6EF] border border-[#8A8378]/20 rounded-xl text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/40 resize-none"
+                  className="mt-1 w-full px-3.5 py-2.5 bg-[#FAF6EF] border border-[#8A8378]/20 rounded-xl text-base md:text-sm text-[#1E0F2B] outline-none focus:ring-2 focus:ring-[#C9A227]/40 resize-none"
                   placeholder="Quelques mots sur vous (visibles par la communauté)…"
                 />
                 <span className="text-[10px] text-[#8A8378]/70">{bio.length}/280</span>
