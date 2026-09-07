@@ -61,6 +61,14 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // ⭐ V3.44 — Le back-office servi via admin.mouvementchristlibere.com ne
+        // doit JAMAIS apparaître dans les moteurs de recherche (login + données
+        // internes). La condition "host" ne filtre QUE le sous-domaine admin.
+        source: "/:path*",
+        has: [{ type: "host", value: "admin.mouvementchristlibere.com" }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
         source: "/_next/static/(.*)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },

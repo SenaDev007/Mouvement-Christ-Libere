@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,6 +11,23 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "/admin/dashboard";
+
+  // ⭐ V3.44 — Sur le sous-domaine admin, « Retour à l'accueil » doit revenir
+  // au site PUBLIC (mouvementchristlibere.com) et non au back-office réécrit
+  // à la racine de ce même hôte. Calcul côté client uniquement (état initial
+  // "/" identique serveur/client → pas de décalage d'hydratation).
+  const [accueilPublicUrl, setAccueilPublicUrl] = useState("/");
+  useEffect(() => {
+    try {
+      if (/^admin\./i.test(window.location.hostname)) {
+        const url = new URL(window.location.origin);
+        url.hostname = window.location.hostname.replace(/^admin\./i, "");
+        setAccueilPublicUrl(url.origin);
+      }
+    } catch {
+      // window indisponible ou origin invalide — comportement par défaut ("/")
+    }
+  }, []);
 
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -154,7 +171,7 @@ export default function AdminLoginPage() {
 
         {/* Retour à l'accueil */}
         <p className="text-center text-xs text-[#FAF6EF]/60 mt-4">
-          <Link href="/" className="hover:text-[#C9A227] transition-colors">
+          <Link href={accueilPublicUrl} className="hover:text-[#C9A227] transition-colors">
             ← Retour à l&apos;accueil
           </Link>
         </p>

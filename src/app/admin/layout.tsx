@@ -23,7 +23,7 @@ import {
   Youtube,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const NAV_SECTIONS = [
   {
@@ -84,6 +84,23 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // ⭐ V3.44 — Sur le sous-domaine admin (admin.mouvementchristlibere.com),
+  // « Voir le site » doit ouvrir le site PUBLIC et non le back-office réécrit
+  // à la racine de ce même hôte. Calcul côté client uniquement (pas de
+  // décalage d'hydratation : l'état initial "/" reste identique serveur/client).
+  const [sitePublicUrl, setSitePublicUrl] = useState("/");
+  useEffect(() => {
+    try {
+      if (/^admin\./i.test(window.location.hostname)) {
+        const url = new URL(window.location.origin);
+        url.hostname = window.location.hostname.replace(/^admin\./i, "");
+        setSitePublicUrl(url.origin);
+      }
+    } catch {
+      // window indisponible ou origin invalide — comportement par défaut ("/")
+    }
+  }, []);
 
   // ⚠️ Sur /admin/login : pas de sidebar, pas de topbar, juste le contenu plein écran.
   // On ne doit rien afficher de l'interface d'administration tant que l'utilisateur
@@ -182,7 +199,7 @@ export default function AdminLayout({
           {/* Footer sidebar */}
           <div className="px-5 py-4 border-t border-[#C9A227]/15 space-y-1">
             <Link
-              href="/"
+              href={sitePublicUrl}
               target="_blank"
               className="flex items-center gap-2 text-xs text-[#FAF6EF]/60 hover:text-[#C9A227] transition-colors py-1.5"
             >
