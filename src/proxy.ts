@@ -22,54 +22,47 @@ export function proxy(request: NextRequest) {
   const hoteAdmin = ADMIN_HOSTS.has(hostname);
 
   // ------------------------------------------------------------------
-  // ⭐ V3.44 — Sous-domaine admin : la racine et les chemins « propres »
-  // servent le BACK-OFFICE via réécriture INTERNE vers /admin/* :
+  // ⭐ V3.44.1 — Sous-domaine admin : REDIRECTION vers les VRAIES routes
+  // /admin/* (et non plus réécriture interne — V3.44 l'avait fait, mais
+  // usePathname() côté client voyait « /login » : le layout back-office
+  // croyait ne pas être sur la page de connexion et affichait la SIDEBAR
+  // autour du formulaire de login).
+  // Avec la redirection, l'URL devient réellement /admin/login → la page de
+  // connexion s'affiche SEULE (plein écran, fond violet profond — comportement
+  // historique), et après identification → back-office + sidebar normalement.
   //   admin.mouvementchristlibere.com/        → /admin/dashboard
   //   admin.mouvementchristlibere.com/login   → /admin/login
   //   admin.mouvementchristlibere.com/videos  → /admin/videos
-  // Les URLs en /admin/... continuent de fonctionner en direct (liens de la
-  // sidebar, appels /admin/api/*…) — aucune réécriture pour elles.
-  // Les autres hôtes (www, apex, vercel.app, localhost) restent inchangés.
+  // 307 (non mis en cache par les navigateurs — ajustable à tout moment).
+  // Les URLs /admin/... et appels /admin/api/* restent inchangés.
   // ------------------------------------------------------------------
-  let cheminInterne = pathname;
-  let reecrire = false;
-
   if (hoteAdmin && !pathname.startsWith("/_next")) {
+    let cible: string | null = null;
     if (
       pathname === "/" ||
       pathname === "" ||
       pathname === "/admin" ||
       pathname === "/admin/"
     ) {
-      cheminInterne = "/admin/dashboard";
-      reecrire = pathname !== "/admin/dashboard";
+      cible = "/admin/dashboard";
     } else if (!pathname.startsWith("/admin") && !FICHIER_STATIQUE.test(pathname)) {
-      cheminInterne = `/admin${pathname}`;
-      reecrire = true;
+      cible = `/admin${pathname}`;
+    }
+    if (cible) {
+      const url = request.nextUrl.clone();
+      url.pathname = cible;
+      return NextResponse.redirect(url, 307);
     }
   }
 
-  // --- Garde d'authentification back-office (appliquée au chemin INTERNE,
-  //    donc aussi aux chemins « propres » du sous-domaine admin) ---
-  if (
-    cheminInterne.startsWith("/admin") &&
-    !PUBLIC_ADMIN_PATHS.some((p) => cheminInterne.startsWith(p))
-  ) {
+  // --- Garde d'authentification back-office (comportement historique) ---
+  if (pathname.startsWith("/admin") && !PUBLIC_ADMIN_PATHS.some((p) => pathname.startsWith(p))) {
     const session = request.cookies.get("admin_session");
     if (!session) {
-      // Sur le sous-domaine admin, on renvoie vers le login « propre » (/login)
-      // qui sera réécrit vers /admin/login ; ailleurs : comportement inchangé.
-      const loginUrl = new URL(hoteAdmin ? "/login" : "/admin/login", request.url);
+      const loginUrl = new URL("/admin/login", request.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
     }
-  }
-
-  // --- Réécriture interne (la query string est préservée par .clone()) ---
-  if (reecrire) {
-    const cible = request.nextUrl.clone();
-    cible.pathname = cheminInterne;
-    return NextResponse.rewrite(cible);
   }
 
   if (
