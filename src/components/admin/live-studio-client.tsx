@@ -27,6 +27,9 @@ import {
   type LocalReplayMeta,
 } from "@/lib/local-replay-store";
 import Link from "next/link";
+// ⭐ V3.49 — Plugin obs-multi-rtmp : guide multidiffusion intégré au mode OBS,
+// avec URL + clé d'ingress DU LIVE en cours transmises au guide.
+import { ObsMultiRtmpGuide } from "@/components/admin/obs-multi-rtmp-guide";
 import { LiveChat } from "@/components/live/live-chat";
 import { LiveReactions } from "@/components/live/live-reactions";
 import { MediaOverlay, type MediaOverlayPersistPayload } from "@/components/live/media-overlay";
@@ -2014,6 +2017,13 @@ export function LiveStudioClient({
                     ))}
                   </ol>
                 </div>
+                {/* ⭐ V3.49 — Plugin obs-multi-rtmp : multidiffusion (site + plateformes)
+                    avec les clés d'ingress de CE live pré-remplies dans le guide. */}
+                <ObsMultiRtmpGuide
+                  variant="inline"
+                  ingressUrl={ingressInfo.rtmpUrl}
+                  ingressKey={ingressInfo.streamKey}
+                />
               </div>
             )}
             {sourceMode === "encoder" && !ingressInfo && (

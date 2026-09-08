@@ -6,6 +6,8 @@ import { estRubrique } from "@/lib/video-rubrics";
 import { ensureLiveCategoryColumn } from "@/lib/ensure-schema";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { NewLiveButton } from "@/components/admin/new-live-modal";
+// ⭐ V3.49 — Guide du plugin obs-multi-rtmp (multidiffusion depuis OBS Studio).
+import { ObsMultiRtmpGuide } from "@/components/admin/obs-multi-rtmp-guide";
 import { EditLiveModal } from "@/components/admin/edit-live-modal";
 import { LiveQuickActions } from "@/components/admin/live-quick-actions";
 // ⭐ V3.40 — Filet de sécurité visible : relancer l'annonce d'un live
@@ -60,7 +62,11 @@ export default async function AdminLivesPage() {
             Sessions programmées et passées.
           </p>
         </div>
-        <NewLiveButton servants={servants} accentColor="#C9A227" />
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* ⭐ V3.49 — Guide plugin obs-multi-rtmp (multidiffusion OBS) */}
+          <ObsMultiRtmpGuide />
+          <NewLiveButton servants={servants} accentColor="#C9A227" />
+        </div>
       </div>
 
       {/* Stats */}

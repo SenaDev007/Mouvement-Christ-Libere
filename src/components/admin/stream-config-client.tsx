@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Loader2, AlertCircle, Youtube, Facebook, Music2, Video } from "lucide-react";
+// ⭐ V3.49 — Plugin obs-multi-rtmp : guide multidiffusion (clés copiables dans le plugin).
+import { ObsMultiRtmpGuide } from "@/components/admin/obs-multi-rtmp-guide";
 
 interface StreamConfigClientProps {
   servantId: string;
@@ -124,6 +126,10 @@ export function StreamConfigClient({ servantId, servantName, initialConfig }: St
           Clés de streaming pour {servantName} — utilisées pour le multistreaming automatique
         </p>
       </div>
+
+      {/* ⭐ V3.49 — Plugin obs-multi-rtmp : ces clés alimentent aussi le plugin
+          d'OBS Studio (multidiffusion simultanée depuis l'ordinateur). */}
+      <ObsMultiRtmpGuide variant="banner" />
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {platforms.map((platform) => {
