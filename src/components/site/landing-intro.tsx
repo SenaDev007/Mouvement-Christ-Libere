@@ -51,13 +51,24 @@
  *     (toucher, clic, touche du clavier — capture) et achève ses 30 s ;
  *     chaque visite où il retentit nourrit l'indice d'engagement (MEI) →
  *     les visites suivantes démarrent SEULES, sans geste.
+ *
+ * ⭐ V3.54 — DIRECTIVE DU PASTEUR : l'invite « Touchez l'écran pour activer
+ * le son » est SUPPRIMÉE (plus AUCUN élément à taper). Le déblocage au
+ * premier geste quelconque (toucher/clic/touche, en capture, INVISIBLE)
+ * reste en place, une nouvelle tentative silencieuse part dès que le média
+ * est prêt (onCanPlay), et le geste « click » est ajouté aux événements de
+ * déblocage. Sur le navigateur du pasteur, l'autoplay deviendra définitif
+ * par les réglages décrits dans le worklog V3.54 : autorisation « Son » du
+ * site dans les paramètres du navigateur, installation du site comme app
+ * (PWA), ou mémoire d'engagement Chrome (MEI) qui se reconstitue après
+ * quelques visites.
  * ============================================================================
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { Volume2, FastForward } from "lucide-react";
+import { FastForward } from "lucide-react";
 
 /**
  * Drapeau de runtime : true dès que l'intro s'est jouée dans CE cycle de
@@ -74,22 +85,25 @@ const FONDE_SORTIE_MS = 500;
 
 // ⭐ V3.53 — Gestes qui débloquent l'audio quand le navigateur refuse la
 // lecture automatique (politique anti-autoplay sonore) : pointerdown
-// (souris + tactile moderne), touchend (iOS ancien), keydown (clavier).
-// Écouteurs posés sur window en phase de CAPTURE → le geste compte même
-// s'il est consommé par un autre élément de la page : N'IMPORTE QUEL
-// premier geste démarre le shofar (aucun bouton dédié à viser).
+// (souris + tactile moderne), touchend (iOS ancien), keydown (clavier),
+// click (V3.54 — couverture maximale, tous navigateurs). Écouteurs posés
+// sur window en phase de CAPTURE → le geste compte même s'il est consommé
+// par un autre élément de la page : N'IMPORTE QUEL premier geste démarre
+// le shofar, de façon invisible (invite supprimée en V3.54).
 const ECOUTE_CAPTURE: AddEventListenerOptions = { capture: true };
 
 function ecouterPremierGeste(handler: EventListener): void {
   window.addEventListener("pointerdown", handler, ECOUTE_CAPTURE);
   window.addEventListener("touchend", handler, ECOUTE_CAPTURE);
   window.addEventListener("keydown", handler, ECOUTE_CAPTURE);
+  window.addEventListener("click", handler, ECOUTE_CAPTURE);
 }
 
 function nePlusEcouterLeGeste(handler: EventListener): void {
   window.removeEventListener("pointerdown", handler, ECOUTE_CAPTURE);
   window.removeEventListener("touchend", handler, ECOUTE_CAPTURE);
   window.removeEventListener("keydown", handler, ECOUTE_CAPTURE);
+  window.removeEventListener("click", handler, ECOUTE_CAPTURE);
 }
 
 export function LandingIntro() {
@@ -104,7 +118,6 @@ export function LandingIntro() {
   // « Passer » — pour que sa lecture traverse la fermeture de l'écran.
   const [audioVivant, setAudioVivant] = useState(() => !introDejaJoueeAuRuntime);
   const [enFonduSortie, setEnFonduSortie] = useState(false);
-  const [sonBloque, setSonBloque] = useState(false);
   const [restantMs, setRestantMs] = useState(DUREE_MS);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -171,31 +184,26 @@ export function LandingIntro() {
       if (audio.paused && !audio.ended) {
         audio
           .play()
-          .then(() => setSonBloque(false))
           .catch(() => {
-            // Lecture automatique refusée par le navigateur (première
-            // visite à froid — politique anti-autoplay SONORE, aucune page
-            // web ne peut la contourner) : le shofar démarre alors au
-            // PREMIER geste quelconque (toucher, clic, touche — capture)
-            // et finit ses 30 s, même sous le site.
-            setSonBloque(true);
+            // ⭐ V3.54 — Lecture automatique refusée par le navigateur
+            // (première visite à froid — politique anti-autoplay SONORE,
+            // aucune page web ne peut la contourner : c'est une règle DU
+            // NAVIGATEUR). SANS AUCUNE INVITE (supprimée à la demande du
+            // pasteur) : le shofar démarre en silence au PREMIER geste
+            // quelconque (toucher, clic, touche — capture) et achève ses
+            // 30 s, même sous le site.
             const surPremierGeste: EventListener = () => {
               nePlusEcouterLeGeste(surPremierGeste);
-              audio
-                .play()
-                .then(() => setSonBloque(false))
-                .catch(() => {
-                  /* reste silencieux : l'écran se poursuit sans son */
-                });
+              audio.play().catch(() => {
+                /* reste silencieux : l'écran se poursuit sans son */
+              });
             };
             debloquer = surPremierGeste;
             ecouterPremierGeste(surPremierGeste);
           });
-      } else {
-        // L'autoPlay natif (SSR) a déjà démarré la lecture : rien à
-        // débloquer, aucune invite à afficher.
-        setSonBloque(false);
       }
+      // (autoPlay natif déjà démarré → rien à faire ; sinon le premier
+      // geste enregistré ci-dessus démarre le shofar en silence.)
     }
 
     // 5 secondes de chargement (barre 0 → 100 %), puis ouverture du site
@@ -242,6 +250,14 @@ export function LandingIntro() {
           autoPlay
           preload="auto"
           onEnded={() => setAudioVivant(false)}
+          onCanPlay={() => {
+            // ⭐ V3.54 — nouvelle chance silencieuse dès que le média est
+            // prêt (si la tentative initiale est partie avant le
+            // chargement du fichier) : play() est sans effet sur un audio
+            // déjà lancé, et un échec est ignoré (règle navigateur).
+            const a = audioRef.current;
+            if (a && a.paused && !a.ended) a.play().catch(() => {});
+          }}
           aria-hidden="true"
         />
       )}
@@ -340,18 +356,6 @@ export function LandingIntro() {
                   </span>
                 </div>
               </div>
-
-              {/* Lecture auto bloquée → inviter au premier geste */}
-              {sonBloque && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#C9A227]/40 bg-[#C9A227]/10 text-[#C9A227] text-xs font-semibold"
-                >
-                  <Volume2 className="w-3.5 h-3.5" />
-                  Touchez l&apos;écran pour activer le son du shofar
-                </motion.div>
-              )}
 
               {/* Verset */}
               <p className="text-[11px] text-[#FAF6EF]/40 mt-8 leading-relaxed italic">
