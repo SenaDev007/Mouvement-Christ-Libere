@@ -672,7 +672,7 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                 <div className="relative w-40 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-[#1A0826]">
                   {/* ⭐ V3.28 — <img> brut -> next/image (optimisée + lazy) */}
                   <ThumbWithFallback
-                    src={rec.thumbnailUrl || (rec.youtubeId ? `https://img.youtube.com/vi/${rec.youtubeId}/mqdefault.jpg` : "/logo-christ-libere.png")}
+                    src={rec.thumbnailUrl || (rec.youtubeId ? `https://img.youtube.com/vi/${rec.youtubeId}/mqdefault.jpg` : "/logo-christ-libere-v2.png")}
                     title={rec.title}
                     sizes="160px"
                   />
@@ -710,7 +710,7 @@ function ThumbWithFallback({ src, title, sizes, className }: { src: string; titl
   const [failed, setFailed] = useState(false);
   return (
     <Image
-      src={failed ? "/logo-christ-libere.png" : src}
+      src={failed ? "/logo-christ-libere-v2.png" : src}
       alt={title}
       fill
       sizes={sizes}
@@ -728,7 +728,7 @@ function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () =>
           {/* ⭐ V3.28 — <img> brut -> next/image : AVIF/WebP dimensionné,
               lazy loading natif, plus de miniatures 480px chargées sur mobile. */}
           <ThumbWithFallback
-            src={video.thumbnailUrl || (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg` : "/logo-christ-libere.png")}
+            src={video.thumbnailUrl || (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg` : "/logo-christ-libere-v2.png")}
             title={video.title}
             sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 300px"
             className="object-cover group-hover:scale-105 transition-transform duration-500"

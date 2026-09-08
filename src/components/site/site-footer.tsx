@@ -52,7 +52,7 @@ export function SiteFooter() {
           <div className="md:col-span-1">
             <div className="flex items-center gap-1 mb-2">
               <Image
-                src="/logo-christ-libere.png"
+                src="/logo-christ-libere-v2.png"
                 alt="Christ Libère"
                 width={28}
                 height={28}

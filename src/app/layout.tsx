@@ -24,6 +24,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  // ⭐ V3.50 — Domaine canonique pour résoudre les URLs relatives des
+  // métadonnées (og:image, twitter:image) en URLs absolues.
+  metadataBase: new URL("https://www.mouvementchristlibere.com"),
   title: "Afrika Alkebulane Pamela Dali & Pasteur Kongo — Témoignages, enseignements",
   description:
     "Biographies, témoignages, enseignements et communauté de foi autour du ministère de Pam et du Pasteur Kongo.",
@@ -37,18 +40,45 @@ export const metadata: Metadata = {
     "communauté de foi",
   ],
   authors: [{ name: "Mouvement Christ Libère" }],
+  // ⭐ V3.50 — NOUVEAU LOGO (2026) : favicon + icônes PWA + manifest ENFIN
+  // LIÉS. Le suffixe ?v=2026-09 force le re-téléchargement par les navigateurs
+  // qui avaient mis en cache l'ancienne icône (cache immutable 1 an de la
+  // config précédente) : le lien <link rel="icon"> émis par Next.js prend le
+  // pas sur la requête conventionnelle /favicon.ico.
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico?v=2026-09", sizes: "48x48", type: "image/x-icon" },
+      { url: "/icon-32.png?v=2026-09", sizes: "96x96", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png?v=2026-09", sizes: "180x180", type: "image/png" },
+    ],
+  },
   openGraph: {
     title: "Pam & Pasteur Kongo — Au son du chofar",
     description:
       "Enseignements, témoignages et vie de communauté. Un espace de foi centralisé.",
     type: "website",
     locale: "fr_FR",
+    siteName: "Mouvement Christ Libère",
+    // ⭐ V3.50 — Image de partage (WhatsApp / Facebook / X) : 1200x630
+    // régénérée avec le nouveau logo (avant : og-image.png jamais référencé).
+    images: [
+      {
+        url: "/og-image.png?v=2026-09",
+        width: 1200,
+        height: 630,
+        alt: "Mouvement Christ Libère — Pam & Pasteur Kongo",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Pam & Pasteur Kongo — Au son du chofar",
     description:
-      "Enseignements, témoignements et vie de communauté. Un espace de foi centralisé.",
+      "Enseignements, témoignages et vie de communauté. Un espace de foi centralisé.",
+    images: ["/og-image.png?v=2026-09"],
   },
 };
 
@@ -64,6 +94,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   interactiveWidget: "resizes-content",
+  // ⭐ V3.50 — Couleur de la barre d'outils du navigateur mobile (Android
+  // Chrome / Windows Phone) : pourpre profond du Mouvement, aligné sur le
+  // theme_color du manifest PWA.
+  themeColor: "#2A0E3D",
 };
 
 export default function RootLayout({

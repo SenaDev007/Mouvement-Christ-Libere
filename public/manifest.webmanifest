@@ -2,7 +2,14 @@
   "name": "Christ Libère",
   "short_name": "Christ Libère",
   "description": "Christ Libère — Pam & Pasteur Kongo : témoignages, enseignements et communauté de foi.",
+  "id": "/",
   "icons": [
+    {
+      "src": "/manifest-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/manifest-192.png",
       "sizes": "192x192",
@@ -13,12 +20,13 @@
       "src": "/manifest-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any"
     },
     {
-      "src": "/apple-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
+      "src": "/manifest-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "theme_color": "#2A0E3D",

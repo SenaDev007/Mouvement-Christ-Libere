@@ -334,7 +334,7 @@ export function ContextualNav() {
               logo + wordmark + icône connexion tiennent sur iPhone SE (320px) */}
           <Link href="/" className="flex items-center gap-1 group/logo">
             <Image
-              src="/logo-christ-libere.png"
+              src="/logo-christ-libere-v2.png"
               alt="Christ Libère"
               width={56}
               height={56}

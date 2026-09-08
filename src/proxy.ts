@@ -11,7 +11,7 @@ const ADMIN_HOSTS = new Set(["admin.mouvementchristlibere.com", "admin.localhost
 
 // Fichiers servis depuis /public (logo du back-office, manifest, sons…) et
 // assets divers : ils restent accessibles TELS QUELS sur le sous-domaine admin —
-// jamais réécrits vers /admin/* (sinon /logo-christ-libere.png renverrait 404).
+// jamais réécrits vers /admin/* (sinon /logo-christ-libere-v2.png renverrait 404).
 const FICHIER_STATIQUE =
   /\.(png|jpe?g|gif|svg|webp|avif|ico|bmp|heic|mp3|wav|ogg|m4a|mp4|webm|js|mjs|css|json|txt|xml|webmanifest|woff2?|ttf|otf|eot|map|wasm|pdf|dat)$/i;
 

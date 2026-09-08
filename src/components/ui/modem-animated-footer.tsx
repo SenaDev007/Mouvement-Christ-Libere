@@ -50,7 +50,7 @@ export const Footer = ({
                 {/* Logo + nom — sans frame, sans halo */}
                 <div className="flex items-center gap-1 group/logo">
                   <Image
-                    src="/logo-christ-libere.png"
+                    src="/logo-christ-libere-v2.png"
                     alt="Christ Libère"
                     width={72}
                     height={72}

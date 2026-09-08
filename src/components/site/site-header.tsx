@@ -120,7 +120,7 @@ export function SiteHeader() {
           {/* Logo — espacement serré */}
           <Link href="/" className="flex items-center gap-1 group" onClick={() => handleSwitch("commun")}>
             <Image
-              src="/logo-christ-libere.png"
+              src="/logo-christ-libere-v2.png"
               alt="Christ Libère"
               width={28}
               height={28}

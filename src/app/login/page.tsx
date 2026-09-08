@@ -57,7 +57,7 @@ export default function LoginPage() {
         {/* En-tête : logo Christ Libère + nom */}
         <div className="flex flex-col items-center mb-8">
           <Image
-            src="/logo-christ-libere.png"
+            src="/logo-christ-libere-v2.png"
             alt="Christ Libère"
             width={80}
             height={80}

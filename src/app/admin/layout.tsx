@@ -134,7 +134,7 @@ export default function AdminLayout({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Image
-                  src="/logo-christ-libere.png"
+                  src="/logo-christ-libere-v2.png"
                   alt="Christ Libère"
                   width={40}
                   height={40}
@@ -242,7 +242,7 @@ export default function AdminLayout({
           </button>
           <div className="flex items-center gap-2">
             <Image
-              src="/logo-christ-libere.png"
+              src="/logo-christ-libere-v2.png"
               alt="Christ Libère"
               width={24}
               height={24}

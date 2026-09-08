@@ -75,10 +75,23 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // ⭐ Cache longue durée pour les assets statiques (logo, photos, favicons)
-        source: "/(logo-christ-libere.png|pam.jpeg|pasteur-kongo.jpeg|favicon.ico|apple-icon.png|icon-32.png|manifest-192.png|manifest-512.png|shofar.png)",
+        // ⭐ V3.50 — Photos & logo versionné : cache immuable 1 an (le nom de
+        // fichier change à chaque mise à jour du logo → pas de souci de cache).
+        source: "/(logo-christ-libere-v2.png|pam.jpeg|pasteur-kongo.jpeg|shofar.png|icons/icon-192.png|icons/badge-72.png)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // ⭐ V3.50 — Icônes de MARQUE (favicon, apple-icon, manifest, og-image)
+        // remplacées À MÊME URL lors du changement de logo : cache court 1 h
+        // + revalidation pour que les mises à jour futures se propagent vite.
+        // (Avant : max-age=1 an immutable sur ces fichiers — les visiteurs
+        // auraient gardé l'ancien logo un an entier.) Le suffixe ?v=2026-09
+        // dans les <link> des métadonnées gère la transition immédiate.
+        source: "/(favicon.ico|apple-icon.png|apple-touch-icon.png|icon-32.png|icon.png|manifest-192.png|manifest-512.png|manifest.webmanifest|og-image.png)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=3600, must-revalidate" },
         ],
       },
     ];
