@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getCrossReferences, getLivreNom } from "@/lib/bible/cross-references";
+import { IsololeText, isololePlain } from "@/lib/isolole";
 
 // ============================================================
 // CONSTANTES — Couleurs du royaume
@@ -495,7 +496,8 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
     const text = nums
       .map((n) => {
         const v = data.versets.find((x) => x.numero === n);
-        return v ? `${n}. ${v.texte}` : "";
+        // ⭐ V3.45 — copie : « Israël » → « Isolélé (Israël) » (texte brut)
+        return v ? `${n}. ${isololePlain(v.texte)}` : "";
       })
       .filter(Boolean)
       .join("\n");
@@ -767,9 +769,10 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                           {v.numero}
                         </button>
 
-                        {/* Texte du verset */}
+                        {/* Texte du verset — ⭐ V3.45 : « Israël » s'affiche
+                            « Isolélé (Israël) », Isolélé en gras */}
                         <span className="font-serif leading-relaxed text-[#1E0F2B]" style={{ fontSize: `${fontSize}px` }}>
-                          {v.texte}
+                          <IsololeText>{v.texte}</IsololeText>
                         </span>
 
                         {/* Actions au survol — ⭐ V2.8 : boutons qui MARCHENT
@@ -825,7 +828,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                             <span className="text-[10px] uppercase tracking-wider font-bold text-[#C9A227] mr-2">
                               {VERSIONS.find((v) => v.code === parallelVersion)?.shortLabel}
                             </span>
-                            {parallelVerset.texte}
+                            <IsololeText>{parallelVerset.texte}</IsololeText>
                           </div>
                         )}
 
@@ -1319,7 +1322,7 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
               {p.loading ? (
                 <Loader2 className="w-3 h-3 animate-spin text-[#8A8378]" />
               ) : p.texte ? (
-                <p className="text-[#1E0F2B] font-serif italic">{p.texte}</p>
+                <p className="text-[#1E0F2B] font-serif italic"><IsololeText>{p.texte}</IsololeText></p>
               ) : (
                 <p className="text-[#8A8378] italic">Non disponible</p>
               )}
@@ -1439,7 +1442,7 @@ function OngletRecherche({ embedded = false }: { embedded?: boolean }) {
                   {r.livre} {r.chapitre}:{r.verset}
                 </p>
                 <p className="text-sm text-[#1E0F2B] font-serif leading-relaxed">
-                  {r.texte}
+                  <IsololeText>{r.texte}</IsololeText>
                 </p>
               </div>
             ))}
@@ -2016,7 +2019,7 @@ function OngletComparatif({ embedded = false }: { embedded?: boolean }) {
                   <>
                     <p className="text-[10px] text-[#8A8378] mb-2 font-mono">{data.livre} {chapitre}:{verset}</p>
                     <p className="text-sm text-[#1E0F2B] font-serif leading-relaxed italic">
-                      « {data.texte} »
+                      « <IsololeText>{data.texte}</IsololeText> »
                     </p>
                   </>
                 ) : (
@@ -2031,7 +2034,7 @@ function OngletComparatif({ embedded = false }: { embedded?: boolean }) {
       <div className="mt-6 p-4 rounded-md bg-[#2A0E3D]/5 border border-[#C9A227]/20">
         <p className="text-xs text-[#8A8378] leading-relaxed">
           <strong className="text-[#1E0F2B]">Étude comparative</strong> — Lisez le même verset dans plusieurs langues côte à côte.
-          Sélectionnez jusqu&apos;à 6 versions. Idéal pour les dispersés d&apos;Israël qui parlent différentes langues
+          Sélectionnez jusqu&apos;à 6 versions. Idéal pour les dispersés d&apos;<strong className="text-[#1E0F2B]">Isolélé</strong> (Israël) qui parlent différentes langues
           et pour l&apos;étude comparative des traductions.
         </p>
       </div>

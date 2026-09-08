@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
+import { getHero } from "@/lib/heroes";
 import { PageHero } from "@/components/site/page-hero";
 import { ChannelCard, SecureBanner } from "@/components/premium/channel-card";
 import { QuoteBlock } from "@/components/premium/section-divider";
@@ -11,6 +12,10 @@ export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-rend
 export default async function CommunautePage() {
   // ⭐ V3.20 — Auto-réparation colonne isDirect (findMany sans select).
   await ensureChannelIsDirectColumn();
+
+  // ⭐ V3.45 — Section hero paramétrable (back-office /admin/heroes)
+  const hero = await getHero("communaute");
+
   const channels = await db.channel.findMany({
     orderBy: [{ communityId: "asc" }, { order: "asc" }],
     include: {
@@ -28,11 +33,12 @@ export default async function CommunautePage() {
   return (
     <div className="min-h-screen">
       <PageHero
-        imageSrc="https://images.unsplash.com/photo-1511632765486-a0a80de485a5?q=80&w=1920&auto=format&fit=crop"
-        kicker="Espaces d'échange"
-        title="Communauté"
-        subtitle="Des espaces d'échange organisés par thème, modérés avec attention, pour grandir ensemble dans la foi. Canaux ouverts, canaux restreints chiffrés, intercession — à chacun son rythme."
-        primaryCta={{ label: "Ouvrir Yeshua Connect", href: "/yeshua-connect" }}
+        imageSrc={hero.backgroundImage}
+        kicker={hero.kicker}
+        title={hero.title}
+        subtitle={hero.subtitle}
+        primaryCta={hero.ctaLabel ? { label: hero.ctaLabel, href: hero.ctaHref } : undefined}
+        secondaryCta={hero.cta2Label ? { label: hero.cta2Label, href: hero.cta2Href } : undefined}
       />
 
       {/* Rôles */}

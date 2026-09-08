@@ -12,7 +12,7 @@ import {
   FileText,
   Play,
 } from "lucide-react";
-import { PageHero } from "@/components/site/page-hero";
+import { ClientPageHero } from "@/components/site/client-page-hero";
 import { AuroraBackground } from "@/components/magic/aurora-background";
 import { ParticleField } from "@/components/magic/particle-field";
 import { QuoteBlock, SectionDivider } from "@/components/premium/section-divider";
@@ -109,13 +109,7 @@ export default function SousTitragePage() {
 
   return (
     <div>
-      <PageHero
-        imageSrc="https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?q=80&w=1920&auto=format&fit=crop"
-        kicker="Sous-titrage IA multilingue"
-        title="Sous-titres automatiques"
-        subtitle="Génération de sous-titres multilingues via Whisper (OpenAI). Pour que la Parole atteigne les dispersés d'Israël partout où ils se trouvent, dans leur langue."
-        primaryCta={{ label: "Générer des sous-titres", href: "#generateur" }}
-      />
+      <ClientPageHero page="soustitrage" />
 
       <section id="generateur" className="bg-[#FAF6EF] py-16 md:py-20">
         <div className="container mx-auto max-w-4xl px-4">

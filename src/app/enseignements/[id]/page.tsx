@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronRight, Clock, BookOpen, GraduationCap, Calendar, User } from "lucide-react";
 import { MarkdownText } from "@/components/site/markdown-text";
 import { ShareButtons } from "@/components/site/share-buttons";
+import { IsololeText } from "@/lib/isolole";
 
 export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
@@ -79,12 +80,12 @@ export default async function TeachingDetailPage({ params }: PageProps) {
 
           {/* Titre */}
           <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-[#FAF6EF] leading-tight mb-6 drop-shadow-lg">
-            {teaching.title}
+            <IsololeText>{teaching.title}</IsololeText>
           </h1>
 
           {/* Résumé */}
           <p className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-8 drop-shadow">
-            {teaching.excerpt}
+            <IsololeText>{teaching.excerpt}</IsololeText>
           </p>
 
           {/* Métadonnées */}
@@ -145,7 +146,7 @@ export default async function TeachingDetailPage({ params }: PageProps) {
               {teaching.excerpt && (
                 <div className="mb-8 pb-6 border-b border-[#8A8378]/12">
                   <p className="font-serif text-lg md:text-xl italic text-[#2A0E3D] leading-relaxed">
-                    « {teaching.excerpt} »
+                    « <IsololeText>{teaching.excerpt}</IsololeText> »
                   </p>
                 </div>
               )}

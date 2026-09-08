@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Clock, BookOpen, Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { IsololeText } from "@/lib/isolole";
 
 interface TestimonyCardProps {
   title: string;
@@ -50,14 +51,14 @@ export function TestimonyCard({ title, short, themes, bookRef, servantName, read
                 key={theme}
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#8C5FA8]/8 text-[#7C4A9A] border border-[#8C5FA8]/15"
               >
-                {theme}
+                <IsololeText>{theme}</IsololeText>
               </span>
             ))}
           </div>
 
           {/* Titre */}
           <h3 className="font-serif text-lg md:text-xl font-bold text-[#1E0F2B] leading-snug mb-3 group-hover:text-[#C9A227] transition-colors line-clamp-2 break-words">
-            {title}
+            <IsololeText>{title}</IsololeText>
           </h3>
 
           {/* Trait de séparation élégant */}
@@ -65,7 +66,7 @@ export function TestimonyCard({ title, short, themes, bookRef, servantName, read
 
           {/* Résumé */}
           <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-5 line-clamp-3 flex-1">
-            {short}
+            <IsololeText>{short}</IsololeText>
           </p>
 
           {/* Référence biblique */}

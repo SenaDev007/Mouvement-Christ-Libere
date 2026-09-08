@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getHero } from "@/lib/heroes";
 import { PageHero } from "@/components/site/page-hero";
 import { TestimonyCard } from "@/components/premium/testimony-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
@@ -14,6 +15,9 @@ interface PageProps {
 
 export default async function TemoignagesPage({ searchParams }: PageProps) {
   const { theme, servant } = await searchParams;
+
+  // ⭐ V3.45 — Section hero paramétrable (back-office /admin/heroes)
+  const hero = await getHero("temoignages");
 
   const where: Record<string, unknown> = {};
   if (theme && theme !== "Tous") {
@@ -41,11 +45,12 @@ export default async function TemoignagesPage({ searchParams }: PageProps) {
     <div>
       <AutoRefresh intervalMs={30000} />
       <PageHero
-        imageSrc="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop"
-        kicker="Récits rapportés"
-        title="Témoignages"
-        subtitle="Des récits d'expériences spirituelles authentiques, rapportés tels qu'ils ont été vécus et confiés à la communauté. Chaque témoignage est confronté à la Parole écrite."
-        primaryCta={{ label: "Voir les enseignements", href: "/enseignements" }}
+        imageSrc={hero.backgroundImage}
+        kicker={hero.kicker}
+        title={hero.title}
+        subtitle={hero.subtitle}
+        primaryCta={hero.ctaLabel ? { label: hero.ctaLabel, href: hero.ctaHref } : undefined}
+        secondaryCta={hero.cta2Label ? { label: hero.cta2Label, href: hero.cta2Href } : undefined}
       />
 
       {/* Filtres */}

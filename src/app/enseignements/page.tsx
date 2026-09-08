@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getHero } from "@/lib/heroes";
 import { PageHero } from "@/components/site/page-hero";
 import { TeachingCard } from "@/components/premium/teaching-card";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
@@ -14,6 +15,9 @@ interface PageProps {
 
 export default async function EnseignementsPage({ searchParams }: PageProps) {
   const { q, level, servant } = await searchParams;
+
+  // ⭐ V3.45 — Section hero paramétrable (back-office /admin/heroes)
+  const hero = await getHero("enseignements");
 
   const where: Record<string, unknown> = {};
   if (q) {
@@ -44,11 +48,12 @@ export default async function EnseignementsPage({ searchParams }: PageProps) {
     <div>
       <AutoRefresh intervalMs={30000} />
       <PageHero
-        imageSrc="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1920&auto=format&fit=crop"
-        kicker="Études bibliques"
-        title="Enseignements"
-        subtitle="Des études bibliques classées par thème, par livre et par niveau, pour approfondir à votre rythme. Transmis avec rigueur, confrontés à la Parole."
-        primaryCta={{ label: "Voir les témoignages", href: "/temoignages" }}
+        imageSrc={hero.backgroundImage}
+        kicker={hero.kicker}
+        title={hero.title}
+        subtitle={hero.subtitle}
+        primaryCta={hero.ctaLabel ? { label: hero.ctaLabel, href: hero.ctaHref } : undefined}
+        secondaryCta={hero.cta2Label ? { label: hero.cta2Label, href: hero.cta2Href } : undefined}
       />
 
       {/* Recherche + filtres */}

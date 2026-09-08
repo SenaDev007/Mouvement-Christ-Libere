@@ -1016,3 +1016,99 @@ export function ensureLiveYoutubeIngestColumn(): Promise<void> {
   }
   return inflightLiveIngest;
 }
+
+// ============================================================
+// ⭐ V3.45 — TABLE HeroSection (sections hero paramétrables)
+// ============================================================
+
+let heroSectionOk = false;
+let inflightHeroSection: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.45 — S'assure que la table `HeroSection` existe (une ligne par
+ * page publique : landing, pam, pasteur-kongo, temoignages, …) puis
+ * SÈME les lignes manquantes avec les valeurs par défaut du code
+ * (src/lib/hero-defaults.ts — import sans dépendance Prisma).
+ *
+ * Le back-office /admin/heroes peut ensuite modifier image
+ * d'arrière-plan, accroches, titres, sous-titres, boutons, photos de
+ * biographie et textes complets de chaque hero SANS toucher au code.
+ *
+ * Mêmes garanties que les autres helpers : idempotent (CREATE TABLE IF
+ * NOT EXISTS + ON CONFLICT DO NOTHING), mémoïsé, concurrentiel, échec
+ * DDL purement loggué (les pages publiques retombent alors sur les
+ * valeurs par défaut du code — aucun crash).
+ *
+ * NB : les ids sont générés par Prisma (cuid) côté application ; les
+ * graines utilisent gen_random_uuid() disponible sur PostgreSQL ≥ 13
+ * (extension pgcrypto incluse par défaut sur Neon/Railway).
+ */
+export function ensureHeroSectionsTable(): Promise<void> {
+  if (heroSectionOk) return Promise.resolve();
+  if (!inflightHeroSection) {
+    inflightHeroSection = (async () => {
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "HeroSection" (
+          "id" TEXT NOT NULL,
+          "page" TEXT NOT NULL,
+          "kicker" TEXT,
+          "title" TEXT,
+          "titleAccent" TEXT,
+          "titleSuffix" TEXT,
+          "subtitle" TEXT,
+          "backgroundImage" TEXT,
+          "ctaLabel" TEXT,
+          "ctaHref" TEXT,
+          "cta2Label" TEXT,
+          "cta2Href" TEXT,
+          "dataJson" TEXT,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "HeroSection_pkey" PRIMARY KEY ("id")
+        )
+      `);
+      await db.$executeRawUnsafe(
+        `CREATE UNIQUE INDEX IF NOT EXISTS "HeroSection_page_key" ON "HeroSection"("page")`
+      );
+
+      // ── Semis des pages connues (idempotent) ──────────────────────
+      const { DEFAULT_HEROES } = await import("@/lib/hero-defaults");
+      for (const def of Object.values(DEFAULT_HEROES)) {
+        await db.$executeRawUnsafe(
+          `INSERT INTO "HeroSection"
+             ("id", "page", "kicker", "title", "titleAccent", "titleSuffix",
+              "subtitle", "backgroundImage", "ctaLabel", "ctaHref",
+              "cta2Label", "cta2Href", "dataJson")
+           VALUES (gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+           ON CONFLICT ("page") DO NOTHING`,
+          def.page,
+          def.kicker || null,
+          def.title || null,
+          def.titleAccent || null,
+          def.titleSuffix || null,
+          def.subtitle || null,
+          def.backgroundImage || null,
+          def.ctaLabel || null,
+          def.ctaHref || null,
+          def.cta2Label || null,
+          def.cta2Href || null,
+          JSON.stringify(def.data ?? {}),
+        );
+      }
+    })()
+      .then(() => {
+        heroSectionOk = true;
+        console.log("[ensure-schema] V3.45 : table HeroSection vérifiée/créée + pages semées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] CREATE TABLE HeroSection impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightHeroSection = null;
+      });
+  }
+  return inflightHeroSection;
+}

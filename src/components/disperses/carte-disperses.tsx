@@ -6,6 +6,7 @@ import DottedMap from "dotted-map";
 import Image from "next/image";
 import { MapPin, Users, Globe, X, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { IsololeText } from "@/lib/isolole";
 import { flagFromCountryCode } from "@/lib/data/flags";
 
 export interface MembreDisperse {
@@ -230,7 +231,7 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
             {/* Fond dotted-map */}
             <Image
               src={`data:image/svg+xml;utf8,${encodeURIComponent(svgMap)}`}
-              alt="Carte du monde — Dispersés d'Israël"
+              alt="Carte du monde — Dispersés d'Isolélé (Israël)"
               fill
               unoptimized
               sizes="(max-width: 1024px) 100vw, 75vw"
@@ -367,7 +368,7 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
               Prophétie
             </p>
             <p className="font-serif italic text-sm text-[#FAF6EF]/90 leading-relaxed mb-2">
-              « Il rassemblera les exilés d'Israël, et il recueillera les dispersés de Juda des quatre extrémités de la terre. »
+              « <IsololeText>Il rassemblera les exilés d'Israël, et il recueillera les dispersés de Juda des quatre extrémités de la terre.</IsololeText> »
             </p>
             <p className="text-xs text-[#DDBE55]/70 font-semibold">Ésaïe 11:12</p>
           </div>
@@ -493,7 +494,7 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
                 {membreSelectionne.message && (
                   <div className="p-4 bg-[#2A0E3D]/5 rounded-md border border-[#C9A227]/20 mb-4">
                     <p className="font-serif italic text-sm text-[#1E0F2B]/80 leading-relaxed">
-                      « {membreSelectionne.message} »
+                      « <IsololeText>{membreSelectionne.message}</IsololeText> »
                     </p>
                   </div>
                 )}

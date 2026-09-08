@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import { isololeMarkdown } from "@/lib/isolole";
 
 /**
  * MarkdownText — rendu Markdown propre pour les contenus de Christ Libère.
@@ -10,6 +11,11 @@ import { cn } from "@/lib/utils";
  * sans afficher les astérisques bruts.
  *
  * Styles alignés sur le design system (violet impérial + or).
+ *
+ * ⭐ V3.45 — ISOLÉLÉ : le markdown source est pré-transformé — tout mot
+ * « Israël » s'affiche « **Isolélé** (Israël) » (Isolélé en gras).
+ * Couvre TOUS les contenus de la base affichés via ce composant :
+ * biographies, enseignements, témoignages, pages serviteurs…
  */
 
 interface MarkdownTextProps {
@@ -66,7 +72,7 @@ export function MarkdownText({ children, className, variant = "light" }: Markdow
         className,
       )}
     >
-      <ReactMarkdown>{children}</ReactMarkdown>
+      <ReactMarkdown>{isololeMarkdown(children)}</ReactMarkdown>
     </div>
   );
 }

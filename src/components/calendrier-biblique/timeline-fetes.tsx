@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Clock, BookOpen, Calendar, ChevronRight } from "lucide-react";
 import type { Fete } from "./calendrier-app";
 import { cn } from "@/lib/utils";
+import { IsololeText } from "@/lib/isolole";
 
 interface TimelineFetesProps {
   fetes: Fete[];
@@ -115,7 +116,7 @@ export function TimelineFetes({ fetes }: TimelineFetesProps) {
                 </div>
 
                 <p className="text-sm text-ink/75 leading-relaxed mb-3">
-                  {fete.description}
+                  <IsololeText>{fete.description}</IsololeText>
                 </p>
 
                 <div className="flex items-center gap-4 text-xs text-stone">

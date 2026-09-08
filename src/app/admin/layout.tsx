@@ -21,6 +21,7 @@ import {
   ShieldAlert,
   Cloud,
   Youtube,
+  Image as ImageIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -39,6 +40,9 @@ const NAV_SECTIONS = [
       { label: "Biographies", href: "/admin/biographies", icon: BookOpen },
       { label: "Témoignages", href: "/admin/testimonies", icon: FileText },
       { label: "Enseignements", href: "/admin/teachings", icon: BookOpen },
+      // ⭐ V3.45 — Sections hero paramétrables (photos + textes de
+      // toutes les bannières du site public)
+      { label: "Sections Hero", href: "/admin/heroes", icon: ImageIcon },
     ],
   },
   {

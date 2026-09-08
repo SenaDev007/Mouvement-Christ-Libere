@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronRight, Clock, BookOpen, Quote, Calendar, User } from "lucide-react";
 import { MarkdownText } from "@/components/site/markdown-text";
 import { ShareButtons } from "@/components/site/share-buttons";
+import { IsololeText } from "@/lib/isolole";
 
 export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
@@ -74,19 +75,19 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
                 key={theme}
                 className="inline-flex items-center px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#C9A227]/15 text-[#C9A227] border border-[#C9A227]/30 backdrop-blur-sm"
               >
-                {theme}
+                <IsololeText>{theme}</IsololeText>
               </span>
             ))}
           </div>
 
           {/* Titre */}
           <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-[#FAF6EF] leading-tight mb-6 drop-shadow-lg">
-            {testimony.title}
+            <IsololeText>{testimony.title}</IsololeText>
           </h1>
 
           {/* Résumé */}
           <p className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-8 drop-shadow">
-            {testimony.short}
+            <IsololeText>{testimony.short}</IsololeText>
           </p>
 
           {/* Métadonnées */}

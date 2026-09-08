@@ -53,7 +53,7 @@ const DISPERSSES_MOCK: MembreDisperseApi[] = [
   { id: "13", pseudonyme: "Yael de Tel Aviv", pays: "IL", ville: "Tel Aviv", latitude: 32.1, longitude: 34.8, langue: "HE", niveau: "disciple", message: "Veillons et prions." },
   { id: "14", pseudonyme: "Siméon de Douala", pays: "CM", ville: "Douala", latitude: 4.1, longitude: 9.7, langue: "FR", niveau: "disciple", message: "Prêt pour le rassemblement." },
   { id: "15", pseudonyme: "Anne de Bruxelles", pays: "BE", ville: "Bruxelles", latitude: 50.8, longitude: 4.4, langue: "FR", niveau: "croyant", message: undefined },
-  { id: "16", pseudonyme: "Ruben de Mexico", pays: "MX", ville: "Mexico", latitude: 19.4, longitude: -99.1, langue: "ES", niveau: "croyant", message: "Béni soit le Dieu d'Israël." },
+  { id: "16", pseudonyme: "Ruben de Mexico", pays: "MX", ville: "Mexico", latitude: 19.4, longitude: -99.1, langue: "ES", niveau: "croyant", message: "Béni soit le Dieu d'Isolélé (Israël)." },
   { id: "17", pseudonyme: "Tamar de Addis Abeba", pays: "ET", ville: "Addis Abeba", latitude: 9.0, longitude: 38.7, langue: "AM", niveau: "disciple", message: "L'Éthiopie se lève." },
   { id: "18", pseudonyme: "Ephraïm de Johannesburg", pays: "ZA", ville: "Johannesburg", latitude: -26.2, longitude: 28.0, langue: "EN", niveau: "chercheur", message: undefined },
   { id: "19", pseudonyme: "Hannah de Sydney", pays: "AU", ville: "Sydney", latitude: -33.9, longitude: 151.2, langue: "EN", niveau: "croyant", message: "Même aux extrémités de la terre." },

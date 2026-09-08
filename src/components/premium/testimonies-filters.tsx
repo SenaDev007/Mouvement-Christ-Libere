@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { IsololeText } from "@/lib/isolole";
 
 interface TestimoniesFiltersProps {
   themes: string[];
@@ -91,7 +92,7 @@ export function TestimoniesFilters({
                     : "border border-[#8A8378]/30 text-[#8A8378] hover:border-[#C9A227]/50"
                 )}
               >
-                {t}
+                <IsololeText>{t}</IsololeText>
               </Link>
             ))}
           </div>

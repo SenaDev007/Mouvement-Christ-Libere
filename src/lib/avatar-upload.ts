@@ -179,3 +179,93 @@ export async function compressAvatar(file: File, size = 256): Promise<string> {
   }
   return out;
 }
+
+// ============================================================
+// ⭐ V3.45 — IMAGES DES SECTIONS HERO (back-office /admin/heroes)
+// ============================================================
+
+/**
+ * Compresse une image de section hero SANS recadrage carré (le ratio
+ * d'origine est préservé : bannières paysage OU portraits 3/4).
+ *
+ * Pipeline : File → (décodage robuste partagé avec compressAvatar :
+ * détection octets magiques + HEIC + EXIF) → canvas ≤ 1920px de large
+ * (hauteur proportionnelle, plafond 1600px) → JPEG qualité adaptative
+ * ≤ 150 Ko → data URL stockable en base (HeroSection.backgroundImage /
+ * data.bioPhoto / data.pamPhoto…).
+ *
+ * 150 Ko : assez pour une bannière derrière un dégradé violet (opacité
+ * 20-40 %), assez léger pour la sérialisation RSC (une data URL de
+ * 150 Ko ≈ 200 Ko en base64 — cf. note V3.26 des miniatures 80 Ko).
+ */
+export async function compressHeroImage(file: File): Promise<string> {
+  // ─── Garde-fou taille ───
+  if (file.size > 40 * 1024 * 1024) {
+    throw new Error("Image trop volumineuse (plus de 40 Mo). Choisissez une image plus légère.");
+  }
+
+  // ─── Détection du format réel (MIME parfois vide) + HEIC ───
+  const mimeLooksImage = (file.type || "").startsWith("image/");
+  const kind = await detectImageKind(file);
+  const isHeic = kind === "heic" || ((file.type === "image/heic" || file.type === "image/heif"));
+
+  if (kind === "unknown" && !mimeLooksImage) {
+    throw new Error("Format non reconnu. Utilisez une image JPG, PNG ou WEBP.");
+  }
+
+  let source: Blob = file;
+  if (isHeic) {
+    try {
+      source = await convertHeicToJpeg(file);
+    } catch {
+      throw new Error(
+        "Photo iPhone (HEIC) non lisible par votre navigateur. " +
+        "Ouvrez-la et enregistrez-la en JPG (ou envoyez-la par WhatsApp puis réenregistrez) avant de la choisir ici."
+      );
+    }
+  }
+
+  // ─── Décodage (EXIF corrigé) ───
+  let image: DecodedImage;
+  try {
+    image = await decodeImage(source);
+  } catch {
+    throw new Error("Image illisible par le navigateur. Essayez une image JPG ou PNG.");
+  }
+  if (!image.width || !image.height) {
+    throw new Error("Image vide ou corrompue.");
+  }
+
+  // ─── Redimensionnement RATIO PRÉSERVÉ (≤ 1920 × 1600) ───
+  const MAX_W = 1920;
+  const MAX_H = 1600;
+  let width = image.width;
+  let height = image.height;
+  if (width > MAX_W || height > MAX_H) {
+    const ratio = Math.min(MAX_W / width, MAX_H / height);
+    width = Math.max(1, Math.round(width * ratio));
+    height = Math.max(1, Math.round(height * ratio));
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas non supporté par votre navigateur.");
+  // Fond sombre (transparences PNG → harmonisé au violet impérial)
+  ctx.fillStyle = "#2A0E3D";
+  ctx.fillRect(0, 0, width, height);
+  image.draw(ctx, 0, 0, image.width, image.height, 0, 0, width, height);
+
+  // ─── Compression adaptative ≤ 150 Ko ───
+  const MAX_KB = 150;
+  let quality = 0.85;
+  let out = canvas.toDataURL("image/jpeg", quality);
+  let kb = Math.round((out.length * 3) / 4 / 1024);
+  while (kb > MAX_KB && quality > 0.3) {
+    quality -= 0.1;
+    out = canvas.toDataURL("image/jpeg", quality);
+    kb = Math.round((out.length * 3) / 4 / 1024);
+  }
+  return out;
+}

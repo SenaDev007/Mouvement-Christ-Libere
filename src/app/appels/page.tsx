@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getHero } from "@/lib/heroes";
 import { PageHero } from "@/components/site/page-hero";
 import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
@@ -9,6 +10,9 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
 export default async function AppelsPage() {
+  // ⭐ V3.45 — Section hero paramétrable (back-office /admin/heroes)
+  const hero = await getHero("appels");
+
   // Pour la démo, on simule un historique d'appels
   // En production, ces données viendraient de la table Call
   const mockHistory = [
@@ -30,11 +34,12 @@ export default async function AppelsPage() {
   return (
     <div>
       <PageHero
-        imageSrc="https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=1920&auto=format&fit=crop"
-        kicker="Appels audio & vidéo"
-        title="Appeler Pam ou le Pasteur Kongo"
-        subtitle="Appels audio et vidéo chiffrés de bout en bout, style Telegram et WhatsApp. En cas d'indisponibilité, le contact recevra une notification d'appel manqué."
-        primaryCta={{ label: "Démarrer un appel", href: "#start" }}
+        imageSrc={hero.backgroundImage}
+        kicker={hero.kicker}
+        title={hero.title}
+        subtitle={hero.subtitle}
+        primaryCta={hero.ctaLabel ? { label: hero.ctaLabel, href: hero.ctaHref } : undefined}
+        secondaryCta={hero.cta2Label ? { label: hero.cta2Label, href: hero.cta2Href } : undefined}
       />
 
       {/* Interface d'appel */}

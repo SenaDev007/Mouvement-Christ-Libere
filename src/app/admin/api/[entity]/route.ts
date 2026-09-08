@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme } from "@/lib/live-announcement-relay";
 
 // Force runtime Node.js (pas edge) pour Prisma
@@ -30,6 +30,8 @@ const ENTITY_MAP = {
   donations: "donation",
   communities: "community",
   calendar: "liturgicalEvent",
+  // ⭐ V3.45 — Sections hero paramétrables (/admin/heroes)
+  heroes: "heroSection",
 } as const;
 
 type EntityName = keyof typeof ENTITY_MAP;
@@ -61,6 +63,8 @@ export async function GET(
       // ⭐ V3.32 — colonnes pays/ville/telephone/email (même garde)
       await ensureIntercessionContactColumns();
     }
+    // ⭐ V3.45 — Table des sections hero (création + semis idempotents)
+    if (entity === "heroes") await ensureHeroSectionsTable();
 
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get("limit") || "50");
@@ -107,6 +111,8 @@ export async function POST(
       // ⭐ V3.32 — colonnes pays/ville/telephone/email (même garde)
       await ensureIntercessionContactColumns();
     }
+    // ⭐ V3.45 — Table des sections hero (création + semis idempotents)
+    if (entity === "heroes") await ensureHeroSectionsTable();
     const delegate = getDelegate(entity as EntityName);
     const created = await delegate.create({ data: body });
 

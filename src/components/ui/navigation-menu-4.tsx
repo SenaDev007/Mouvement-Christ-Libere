@@ -19,6 +19,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { IsololeText } from "@/lib/isolole";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api-client";
 import {
@@ -35,8 +36,11 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // Navigation links — contextualisés pour Christ Libère
+// ⭐ V3.45 — Accueil SUPPRIMÉ (directive : « supprimer le bouton Accueil
+// sans déplacer les autres boutons » — les liens suivants gardent leur
+// ordre). NB : les libellés bruts continuent d'écrire « Israël » — c'est
+// le rendu (IsololeText) qui affiche « Isolélé (Israël) » en gras.
 const navigationLinks = [
-  { href: "/", label: "Accueil" },
   {
     label: "Serviteurs",
     submenu: true,
@@ -247,7 +251,7 @@ export function ContextualNav() {
                       {link.submenu ? (
                         <>
                           <div className="text-[#C9A227] px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">
-                            {link.label}
+                            <IsololeText>{link.label}</IsololeText>
                           </div>
                           <ul>
                             {link.items.map((item, itemIndex) => (
@@ -257,7 +261,7 @@ export function ContextualNav() {
                                   className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
                                   onClick={() => setMobileOpen(false)}
                                 >
-                                  {item.label}
+                                  <IsololeText>{item.label}</IsololeText>
                                 </NavigationMenuLink>
                               </li>
                             ))}
@@ -269,7 +273,7 @@ export function ContextualNav() {
                           className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
                           onClick={() => setMobileOpen(false)}
                         >
-                          {link.label}
+                          <IsololeText>{link.label}</IsololeText>
                         </NavigationMenuLink>
                       )}
                       {index < navigationLinks.length - 1 &&
@@ -380,7 +384,7 @@ export function ContextualNav() {
                         : "text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#C9A227]/10"
                     )}
                   >
-                    {link.label}
+                    <IsololeText>{link.label}</IsololeText>
                     <ChevronDown
                       aria-hidden="true"
                       className={cn(
@@ -435,14 +439,14 @@ export function ContextualNav() {
                               <span className="min-w-0">
                                 {/* ⭐ Libellé TOUJOURS sur une seule ligne */}
                                 <span className="block text-sm font-medium leading-5 whitespace-nowrap">
-                                  {item.label}
+                                  <IsololeText>{item.label}</IsololeText>
                                 </span>
                                 {/* Description (type description) — texte
                                     secondaire, peut se plier sur 2 lignes */}
                                 {link.type === "description" &&
                                   "description" in item && (
                                     <span className="block text-xs leading-snug text-[#FAF6EF]/50 mt-0.5 whitespace-normal line-clamp-2">
-                                      {item.description}
+                                      <IsololeText>{item.description}</IsololeText>
                                     </span>
                                   )}
                               </span>
@@ -459,7 +463,7 @@ export function ContextualNav() {
                   href={link.href!}
                   className="px-2 py-1.5 rounded-md text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors whitespace-nowrap"
                 >
-                  {link.label}
+                  <IsololeText>{link.label}</IsololeText>
                 </Link>
               )
             )}

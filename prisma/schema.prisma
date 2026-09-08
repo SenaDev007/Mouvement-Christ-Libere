@@ -871,3 +871,31 @@ model BibleBookmark {
   @@unique([userId, version, livreId, chapitre, verset])
   @@index([userId])
 }
+
+// --- Sections Hero paramétrables (back-office /admin/heroes) ---
+
+// ⭐ V3.45 — Chaque page publique du site possède une section « hero »
+// (grande image d'arrière-plan + accroche + titre + sous-titre + boutons).
+// Ce modèle permet au back-office de les modifier SANS toucher au code :
+// une ligne par page (clé unique), valeurs NULL = retomber sur les
+// valeurs par défaut du code (src/lib/hero-defaults.ts).
+model HeroSection {
+  id              String   @id @default(cuid())
+  page            String   @unique // "landing", "pam", "pasteur-kongo", "temoignages", …
+  kicker          String?  // petit texte doré au-dessus du titre
+  title           String?  // titre principal
+  titleAccent     String?  // partie dorée/accent du titre
+  titleSuffix     String?  // texte APRÈS la partie dorée (ex. « d'Isolélé (Israël) »)
+  subtitle        String?
+  backgroundImage String?  @db.Text // data URL (≤ 150 Ko, compressée côté client) ou URL http
+  ctaLabel        String?  // bouton principal — libellé
+  ctaHref         String?  // bouton principal — lien
+  cta2Label       String?  // bouton secondaire — libellé
+  cta2Href        String?  // bouton secondaire — lien
+  // Champs spécifiques par page (photo de biographie, badges, texte
+  // markdown complet, photos Pam/Kongo de la landing…) — JSON libre :
+  // { bioText, bioPhoto, badge1, badge2, … }
+  dataJson        String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Clock, BookOpen, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { IsololeText } from "@/lib/isolole";
 
 interface TeachingCardProps {
   title: string;
@@ -46,13 +47,13 @@ export function TeachingCard({ title, excerpt, theme, book, level, readingTime, 
           {/* Thème */}
           <div className="flex flex-wrap items-center gap-1.5 mb-3">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#C9A227]/10 text-[#9C7E1E] border border-[#C9A227]/20">
-              {theme}
+              <IsololeText>{theme}</IsololeText>
             </span>
           </div>
 
           {/* Titre */}
           <h3 className="font-serif text-lg md:text-xl font-bold text-[#1E0F2B] leading-snug mb-3 group-hover:text-[#C9A227] transition-colors line-clamp-2 break-words">
-            {title}
+            <IsololeText>{title}</IsololeText>
           </h3>
 
           {/* Trait de séparation élégant */}
@@ -60,7 +61,7 @@ export function TeachingCard({ title, excerpt, theme, book, level, readingTime, 
 
           {/* Résumé */}
           <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-5 line-clamp-3 flex-1">
-            {excerpt}
+            <IsololeText>{excerpt}</IsololeText>
           </p>
 
           {/* Référence biblique */}
