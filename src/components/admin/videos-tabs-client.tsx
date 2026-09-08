@@ -7,8 +7,16 @@ import Image from "next/image";
 import {
   Plus, Pencil, Video as VideoIcon, Radio, Eye, Clock, Crown,
   X, Loader2, AlertCircle, Save, Tag, ChevronDown,
-  Download, Trash2, FolderDown,
+  Download, Trash2, FolderDown, Star,
 } from "lucide-react";
+// ⭐ V3.46 — Rubriques signatures (partagées site public ↔ back-office) :
+// « Saint-Esprit réponds-moi » (Pam), « Rhema du matin »/« Rhema du soir »
+// (Pasteur Kongo). La rubrique EXPLICITE (Video.category) prime sur le
+// devin historique par mots-clés du titre.
+import {
+  categorizeVideo, estRubrique, RUBRIQUE_OPTIONS,
+  TOUTES_RUBRIQUES, categoryOrder,
+} from "@/lib/video-rubrics";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { AdminModal, ModalField, ModalSubmit, ModalError, modalInputClass } from "@/components/admin/admin-modal";
 import type { Video, Servant } from "@prisma/client";
@@ -41,34 +49,9 @@ interface VideosTabsClientProps {
   youtubeOauthMissing?: boolean;
 }
 
-// Catégorisation (même logique que la page /videos publique)
-const CATEGORY_ORDER = [
-  "Paroles & Exhortations",
-  "Lives & Directs",
-  "Prière & Délivrance",
-  "Enseignements & Prédications",
-  "Témoignages & Visions",
-  "Fêtes & Shabbat",
-  "Discernement Spirituel",
-  "Vie Pastorale",
-];
-
-function categorize(title: string, servant: string): string {
-  const t = title.toLowerCase();
-  if (servant === "kongo") {
-    if (t.includes("prière") || t.includes("délivrance")) return "Prière & Délivrance";
-    if (t.includes("enseignement") || t.includes("prédication")) return "Enseignements & Prédications";
-    if (t.includes("fête") || t.includes("shabbat")) return "Fêtes & Shabbat";
-    if (t.includes("discernement") || t.includes("occult")) return "Discernement Spirituel";
-    return "Paroles & Exhortations";
-  }
-  if (t.includes("direct") || t.includes("en direct")) return "Lives & Directs";
-  if (t.includes("prière") || t.includes("délivrance")) return "Prière & Délivrance";
-  if (t.includes("enseignement") || t.includes("prédication")) return "Enseignements & Prédications";
-  if (t.includes("témoignage") || t.includes("vision")) return "Témoignages & Visions";
-  if (t.includes("shabbat") || t.includes("fête")) return "Fêtes & Shabbat";
-  return "Paroles & Exhortations";
-}
+// ⭐ V3.46 — Ordre/labels des catégories et catégorisation désormais
+// importés depuis src/lib/video-rubrics.ts (SEUL point de vérité, partagé
+// avec la page publique /videos et l'API /api/videos).
 
 export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, youtubeOauthMissing = false }: VideosTabsClientProps) {
   const router = useRouter();
@@ -81,37 +64,58 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [modalOpen, setModalOpen] = useState(false);
 
+  // ⭐ V3.46 — Copie locale des vidéos : le sélecteur de rubrique en ligne
+  // PATCH l'API puis met à jour CET état (retour visuel instantané) ;
+  // router.refresh() recharge les props serveur juste après.
+  const [videosLocal, setVideosLocal] = useState<VideoWithServant[]>(videos);
+  useEffect(() => setVideosLocal(videos), [videos]);
+
   // Filtrer par serviteur
   const videosByServant = useMemo(() => {
     return activeTab === "all"
-      ? videos
-      : videos.filter((v) => v.servant.code === activeTab);
-  }, [videos, activeTab]);
+      ? videosLocal
+      : videosLocal.filter((v) => v.servant.code === activeTab);
+  }, [videosLocal, activeTab]);
 
-  // Catégoriser les vidéos
+  // Ordre d'affichage selon l'onglet : rubriques signatures en tête.
+  const ordreCategories = useMemo(() => {
+    if (activeTab === "kongo") return categoryOrder("kongo");
+    if (activeTab === "pam") return categoryOrder("pam");
+    // « Toutes » : rubriques signatures (tous serviteurs) puis catégories
+    // historiques (fusion sans doublons).
+    return [
+      ...TOUTES_RUBRIQUES,
+      ...categoryOrder("pam").filter((c) => !estRubrique(c)),
+      ...categoryOrder("kongo").filter(
+        (c) => !estRubrique(c) && !categoryOrder("pam").includes(c)
+      ),
+    ];
+  }, [activeTab]);
+
+  // Catégoriser les vidéos — ⭐ V3.46 : rubrique EXPLICITE (back-office)
+  // prioritaire sur le devin par mots-clés (comportement historique sinon).
   const categories = useMemo(() => {
     const catsMap = new Map<string, VideoWithServant[]>();
     for (const v of videosByServant) {
-      const servantCode = v.servant.code;
-      const cat = categorize(v.title, servantCode);
+      const cat = categorizeVideo(v.title, v.servant.code, v.category);
       if (!catsMap.has(cat)) catsMap.set(cat, []);
       catsMap.get(cat)!.push(v);
     }
-    // Trier selon l'ordre fixe
+    // Trier selon l'ordre (rubriques signatures en tête)
     const result: Array<{ name: string; videos: VideoWithServant[] }> = [];
-    for (const catName of CATEGORY_ORDER) {
+    for (const catName of ordreCategories) {
       if (catsMap.has(catName)) {
         result.push({ name: catName, videos: catsMap.get(catName)! });
       }
     }
     // Ajouter les catégories non listées
     for (const [name, vids] of catsMap) {
-      if (!CATEGORY_ORDER.includes(name)) {
+      if (!ordreCategories.includes(name)) {
         result.push({ name, videos: vids });
       }
     }
     return result;
-  }, [videosByServant]);
+  }, [videosByServant, ordreCategories]);
 
   // Filtrer par catégorie
   const filteredVideos = useMemo(() => {
@@ -121,9 +125,9 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
   }, [videosByServant, activeCategory, categories]);
 
   const counts = {
-    all: videos.length,
-    pam: videos.filter((v) => v.servant.code === "pam").length,
-    kongo: videos.filter((v) => v.servant.code === "kongo").length,
+    all: videosLocal.length,
+    pam: videosLocal.filter((v) => v.servant.code === "pam").length,
+    kongo: videosLocal.filter((v) => v.servant.code === "kongo").length,
   };
 
   const tabs = [
@@ -135,6 +139,30 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
   // Ouvrir le modal (avec serviteur pré-sélectionné si onglet actif)
   const openNewVideoModal = () => {
     setModalOpen(true);
+  };
+
+  // ⭐ V3.46 — Changement de rubrique EN LIGNE : PATCH immédiat de
+  // Video.category, mise à jour optimiste de l'état local (badge + filtre
+  // instantanés) puis router.refresh() pour resynchroniser les props
+  // serveur. Sélecteur présent sur CHAQUE carte du module Vidéos.
+  const changerRubrique = async (videoId: string, category: string | null) => {
+    setVideosLocal((prev) =>
+      prev.map((v) => (v.id === videoId ? { ...v, category } : v))
+    );
+    try {
+      const res = await fetch(`/admin/api/videos/${videoId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category }),
+      });
+      if (!res.ok) throw new Error("PATCH échoué");
+      router.refresh();
+    } catch {
+      // Échec : revenir à la valeur serveur (le refresh la réaffiche).
+      setVideosLocal((prev) =>
+        prev.map((v) => (v.id === videoId ? { ...v, category: v.category } : v))
+      );
+    }
   };
 
   // ─── ⭐ V3.34 — AUTO-REFRESH PENDANT LA RÉCUPÉRATION YOUTUBE ───
@@ -406,12 +434,15 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
             <button
               key={cat.name}
               onClick={() => setActiveCategory(cat.name)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 activeCategory === cat.name
                   ? "bg-[#C9A227] text-[#1E0F2B]"
-                  : "bg-[#8A8378]/10 text-[#8A8378] hover:bg-[#8A8378]/20"
+                  : estRubrique(cat.name)
+                    ? "bg-[#C9A227]/15 text-[#A3821C] hover:bg-[#C9A227]/25"
+                    : "bg-[#8A8378]/10 text-[#8A8378] hover:bg-[#8A8378]/20"
               }`}
             >
+              {estRubrique(cat.name) && <Star className="w-3 h-3" />}
               {cat.name} ({cat.videos.length})
             </button>
           ))}
@@ -467,9 +498,19 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                       {v.servant.shortName}
                     </span>
                     {activeCategory === "all" && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-black/70 text-white backdrop-blur-sm">
-                        {categorize(v.title, v.servant.code)}
-                      </span>
+                      (() => {
+                        const cat = categorizeVideo(v.title, v.servant.code, v.category);
+                        return estRubrique(cat) ? (
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#C9A227] text-[#1E0F2B] backdrop-blur-sm">
+                            <Star className="w-2.5 h-2.5" />
+                            {cat}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold bg-black/70 text-white backdrop-blur-sm">
+                            {cat}
+                          </span>
+                        );
+                      })()
                     )}
                   </div>
 
@@ -496,6 +537,15 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                   <h3 className="font-semibold text-sm text-[#1E0F2B] line-clamp-2 leading-tight">
                     {v.title}
                   </h3>
+
+                  {/* ⭐ V3.46 — Rubrique de la vidéo, modifiable EN LIGNE :
+                      un seul clic pour ranger la vidéo dans « Saint-Esprit
+                      réponds-moi », « Rhema du matin », « Rhema du soir »…
+                      Enregistrement immédiat (PATCH), badge doré si rubrique
+                      signature. */}
+                  <div className="mt-2">
+                    <RubricSelect video={v} onChange={changerRubrique} />
+                  </div>
 
                   <div className="flex items-center gap-3 mt-2 text-[11px] text-[#8A8378]">
                     <span className="flex items-center gap-1">
@@ -538,6 +588,71 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
   );
 }
 
+// ============ ⭐ V3.46 — Sélecteur de rubrique en ligne ============
+interface RubricSelectProps {
+  video: VideoWithServant;
+  onChange: (videoId: string, category: string | null) => void | Promise<void>;
+}
+
+function RubricSelect({ video, onChange }: RubricSelectProps) {
+  const [value, setValue] = useState<string>(video.category || "");
+  const [saving, setSaving] = useState(false);
+  const [erreur, setErreur] = useState(false);
+
+  // Resynchroniser si la prop change (refresh serveur)
+  useEffect(() => {
+    setValue(video.category || "");
+  }, [video.category]);
+
+  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const v = e.target.value;
+    setValue(v);
+    setErreur(false);
+    setSaving(true);
+    try {
+      await onChange(video.id, v || null);
+    } catch {
+      setErreur(true);
+      setValue(video.category || "");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const estSignature = estRubrique(value);
+
+  return (
+    <div className="relative">
+      <label className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-[#8A8378] mb-1">
+        <Tag className="w-2.5 h-2.5" />
+        Rubrique
+      </label>
+      <select
+        value={value}
+        onChange={handleChange}
+        disabled={saving}
+        title="Rubrique de la vidéo — visible sur la page publique /videos"
+        className={`w-full px-2 py-1.5 rounded-lg border text-xs font-semibold focus:outline-none focus:ring-1 transition-colors cursor-pointer disabled:opacity-60 ${
+          erreur
+            ? "border-red-400 bg-red-50 text-red-700"
+            : estSignature
+              ? "border-[#C9A227]/60 bg-[#C9A227]/10 text-[#A3821C] focus:border-[#C9A227]"
+              : "border-[#8A8378]/25 bg-[#FAF6EF] text-[#1E0F2B]/80 focus:border-[#C9A227]"
+        }`}
+      >
+        {RUBRIQUE_OPTIONS.map((opt) => (
+          <option key={opt.value || "auto"} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      {saving && (
+        <Loader2 className="w-3 h-3 animate-spin text-[#C9A227] absolute right-2 bottom-2 pointer-events-none" />
+      )}
+    </div>
+  );
+}
+
 // ============ Modal Nouvelle Vidéo ============
 interface NewVideoModalProps {
   open: boolean;
@@ -556,6 +671,8 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
     thumbnailUrl: "",
     isLive: false,
     views: 0,
+    // ⭐ V3.46 — rubrique signature (vide = catégorisation automatique).
+    category: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -599,6 +716,8 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
         body: JSON.stringify({
           ...form,
           views: Number(form.views) || 0,
+          // ⭐ V3.46 — rubrique explicite (null = automatique).
+          category: form.category || null,
         }),
       });
 
@@ -617,6 +736,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
         thumbnailUrl: "",
         isLive: false,
         views: 0,
+        category: "",
       });
       onClose();
       // Refresh page to show new video
@@ -681,6 +801,22 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
             placeholder="Titre de la vidéo"
             className={modalInputClass()}
           />
+        </ModalField>
+
+        {/* ⭐ V3.46 — Rubrique signature de la vidéo */}
+        <ModalField label="Rubrique" fullWidth>
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className={modalInputClass()}
+            title="Rubrique dans laquelle la vidéo apparaîtra sur la page publique /videos"
+          >
+            {RUBRIQUE_OPTIONS.map((opt) => (
+              <option key={opt.value || "auto"} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </ModalField>
 
         {/* Description */}

@@ -1112,3 +1112,92 @@ export function ensureHeroSectionsTable(): Promise<void> {
   }
   return inflightHeroSection;
 }
+
+let videoCategoryOk = false;
+let inflightVideoCategory: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.46 — S'assure que la colonne `Video.category` (TEXT, nullable)
+ * existe.
+ *
+ * Contexte : rubriques signatures des vidéos — « Saint-Esprit réponds-moi »
+ * (Pam), « Rhema du matin » / « Rhema du soir » (Pasteur Kongo). La
+ * rubrique est assignée depuis le back-office (module Vidéos) ou héritée
+ * du live (LiveStream.category) à l'archivage du replay. NULL = technique
+ * historique de catégorisation par mots-clés du titre (aucune régression
+ * pour le contenu existant).
+ *
+ * Mêmes garanties que les autres helpers : idempotent (ADD COLUMN IF NOT
+ * EXISTS), mémoïsé, concurrentiel, échec DDL purement loggué.
+ */
+export function ensureVideoCategoryColumn(): Promise<void> {
+  if (videoCategoryOk) return Promise.resolve();
+  if (!inflightVideoCategory) {
+    inflightVideoCategory = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "category" TEXT'
+      );
+    })()
+      .then(() => {
+        videoCategoryOk = true;
+        console.log("[ensure-schema] V3.46 : colonne Video.category vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE Video.category impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightVideoCategory = null;
+      });
+  }
+  return inflightVideoCategory;
+}
+
+let liveCategoryOk = false;
+let inflightLiveCategory: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.46 — S'assure que la colonne `LiveStream.category` (TEXT,
+ * nullable) existe.
+ *
+ * Contexte : rubrique posée à la programmation d'un live (back-office,
+ * module Lives) — le replay créé à l'arrêt du live HÉRITE de cette
+ * rubrique (Video.category). NULL = replay auto-catégorisé par
+ * mots-clés (comportement historique).
+ */
+export function ensureLiveCategoryColumn(): Promise<void> {
+  if (liveCategoryOk) return Promise.resolve();
+  if (!inflightLiveCategory) {
+    inflightLiveCategory = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "LiveStream" ADD COLUMN IF NOT EXISTS "category" TEXT'
+      );
+    })()
+      .then(() => {
+        liveCategoryOk = true;
+        console.log("[ensure-schema] V3.46 : colonne LiveStream.category vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE LiveStream.category impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightLiveCategory = null;
+      });
+  }
+  return inflightLiveCategory;
+}
+
+/**
+ * ⭐ V3.46 — Garde combinée : colonnes rubrique Video + LiveStream.
+ * À appeler en tête de toute route qui LIT ou ÉCRIT ces modèles via le
+ * client Prisma (le modèle généré sélectionne désormais ces colonnes →
+ * P2022 si la colonne manque sur une base froide).
+ */
+export function ensureRubriquesColumns(): Promise<void> {
+  return Promise.all([ensureVideoCategoryColumn(), ensureLiveCategoryColumn()]).then(() => {});
+}

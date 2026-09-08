@@ -6,6 +6,8 @@ import {
   AdminModal, ModalField, ModalSubmit, ModalError, modalInputClass,
 } from "@/components/admin/admin-modal";
 import { ThumbnailUploader } from "@/components/live/thumbnail-uploader";
+// ⭐ V3.46 — Rubriques signatures (le replay du live hérite de la rubrique).
+import { RUBRIQUE_OPTIONS } from "@/lib/video-rubrics";
 
 interface ServantLite { id: string; shortName: string; code: string; }
 
@@ -21,6 +23,8 @@ export function NewLiveButton({ servants, accentColor = "#C9A227" }: NewLiveButt
     scheduledAt: "",
     title: "",
     description: "",
+    // ⭐ V3.46 — rubrique du live (vide = replay auto-catégorisé).
+    category: "",
     thumbnailUrl: "" as string | null,
     streamToYoutube: true,
     streamToFacebook: false,
@@ -46,6 +50,8 @@ export function NewLiveButton({ servants, accentColor = "#C9A227" }: NewLiveButt
         ...form,
         scheduledAt: new Date(form.scheduledAt).toISOString(),
         thumbnailUrl: form.thumbnailUrl || null,
+        // ⭐ V3.46 — rubrique explicite (null = automatique).
+        category: form.category || null,
       };
 
       const res = await fetch("/admin/api/lives", {
@@ -129,6 +135,23 @@ export function NewLiveButton({ servants, accentColor = "#C9A227" }: NewLiveButt
               placeholder="Ex: Enseignement sur l'horloge céleste"
               className={modalInputClass()}
             />
+          </ModalField>
+
+          {/* ⭐ V3.46 — Rubrique du live : le replay sera automatiquement
+              classé dans cette rubrique sur la page publique /videos. */}
+          <ModalField label="Rubrique du live" fullWidth>
+            <select
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              className={modalInputClass()}
+              title="Le replay du live sera automatiquement classé dans cette rubrique"
+            >
+              {RUBRIQUE_OPTIONS.map((opt) => (
+                <option key={opt.value || "auto"} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </ModalField>
 
           {/* Description */}

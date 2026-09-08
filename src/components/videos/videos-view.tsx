@@ -8,7 +8,7 @@ import Image from "next/image";
 import {
   Play, Eye, ChevronRight, ChevronDown, ChevronLeft,
   Calendar, Video as VideoIcon, Heart, Share2, Search,
-  X, Clock,
+  X, Clock, Star, Wind, Sunrise, MoonStar, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ShareModal } from "@/components/videos/share-modal";
@@ -16,6 +16,14 @@ import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 import { HeroBackgroundImage } from "@/components/site/page-hero";
 import { IsololeText } from "@/lib/isolole";
 import type { HeroConfig } from "@/lib/hero-defaults";
+// ⭐ V3.46 — Rubriques signatures (partagées avec le back-office) :
+// « Saint-Esprit réponds-moi » (Pam), « Rhema du matin »/« Rhema du soir »
+// (Pasteur Kongo). La rubrique EXPLICITE (assignée en back-office, ou
+// héritée du live pour les replays) prime sur la catégorisation
+// automatique par mots-clés du titre.
+import {
+  categoryOrder, estRubrique, rubriquesDe,
+} from "@/lib/video-rubrics";
 
 interface VideoItem {
   id: string;
@@ -37,44 +45,51 @@ interface VideoItem {
   hasNativeVideo?: boolean;
 }
 
-// Ordre fixe des catégories
-const CATEGORY_ORDER = [
-  "Paroles & Exhortations",
-  "Lives & Directs",
-  "Prière & Délivrance",
-  "Enseignements & Prédications",
-  "Témoignages & Visions",
-  "Fêtes & Shabbat",
-  "Discernement Spirituel",
-  "Vie Pastorale",
-];
-
 type ServantTab = "pam" | "kongo";
 
-function getSortedCategories(videos: VideoItem[], servant: ServantTab) {
+/**
+ * Icône de chaque rubrique signature (bandeau + catégories épinglées).
+ */
+function rubricIcon(name: string) {
+  if (name === "Saint-Esprit réponds-moi") return Wind;
+  if (name === "Rhema du matin") return Sunrise;
+  if (name === "Rhema du soir") return MoonStar;
+  return Sparkles;
+}
+
+/**
+ * ⭐ V3.46 — Catégories triées PAR SERVITEUR : les rubriques signatures
+ * (« Saint-Esprit réponds-moi » Pam ; « Rhema du matin »/« Rhema du soir »
+ * Pasteur Kongo) sont ÉPINGLÉES EN TÊTE et restent visibles MÊME VIDES
+ * (les croyants peuvent les suivre et voir les prochains épisodes
+ * apparaître) — sauf en mode recherche (données pures). Les catégories
+ * historiques suivent leur ordre d'origine ; les catégories inconnues
+ * sont ajoutées à la fin (comportement historique).
+ */
+function getSortedCategories(
+  videos: VideoItem[],
+  servant: ServantTab,
+  options?: { pinRubriques?: boolean }
+) {
   const filtered = videos.filter(v => v.servant === servant);
   const catsMap = new Map<string, VideoItem[]>();
   for (const v of filtered) {
     if (!catsMap.has(v.category)) catsMap.set(v.category, []);
     catsMap.get(v.category)!.push(v);
   }
-  // Trier selon l'ordre fixe
+  const pin = options?.pinRubriques !== false;
   const result: Array<{ id: string; name: string; servant: ServantTab; videos: VideoItem[] }> = [];
-  for (const catName of CATEGORY_ORDER) {
-    if (catsMap.has(catName)) {
-      result.push({
-        id: `${servant}-${catName}`,
-        name: catName,
-        servant,
-        videos: catsMap.get(catName)!,
-      });
+  for (const catName of categoryOrder(servant)) {
+    const vids = catsMap.get(catName) || [];
+    const epinglee = pin && estRubrique(catName) && rubriquesDe(servant).includes(catName);
+    if (vids.length > 0 || epinglee) {
+      result.push({ id: `${servant}-${catName}`, name: catName, servant, videos: vids });
+      catsMap.delete(catName);
     }
   }
-  // Ajouter les catégories non listées
+  // Ajouter les catégories non listées (ayant des vidéos)
   for (const [name, vids] of catsMap) {
-    if (!CATEGORY_ORDER.includes(name)) {
-      result.push({ id: `${servant}-${name}`, name, servant, videos: vids });
-    }
+    result.push({ id: `${servant}-${name}`, name, servant, videos: vids });
   }
   return result;
 }
@@ -132,8 +147,28 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
     return sorted;
   }, [allVideos, searchQuery, sortOrder]);
 
-  const categories = useMemo(() => getSortedCategories(filteredVideos, activeTab), [filteredVideos, activeTab]);
+  // ⭐ V3.46 — hors recherche, les rubriques signatures sont épinglées
+  // (visibles même vides) ; en recherche, catégories 100 % données.
+  const categories = useMemo(
+    () => getSortedCategories(filteredVideos, activeTab, { pinRubriques: !searchQuery.trim() }),
+    [filteredVideos, activeTab, searchQuery]
+  );
   const currentVideos = filteredVideos.filter(v => v.servant === activeTab);
+
+  // ─── ⭐ V3.46 — RUBRIQUES DU SERVITEUR (bandeau « à suivre ») ───
+  // « Saint-Esprit réponds-moi » (Pam) / « Rhema du matin » + « Rhema du
+  // soir » (Pasteur Kongo) : cartes mises en avant sous le hero, avec le
+  // nombre d'épisodes et le dernier épisode publié.
+  const rubriquesServant = rubriquesDe(activeTab);
+  const rubriquesCards = useMemo(() => {
+    return rubriquesServant.map((name) => {
+      const vids = currentVideos
+        .filter(v => v.category === name)
+        .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+      return { name, count: vids.length, latest: vids[0] || null };
+    });
+    // rubriquesServant = référence stable du module (par code serviteur).
+  }, [rubriquesServant, currentVideos]);
 
   // Vidéos récentes (8 plus récentes du serviteur actuel)
   const recentVideos = useMemo(() => {
@@ -198,6 +233,75 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
         </div>
       </section>
 
+      {/* ─── ⭐ V3.46 — RUBRIQUES SIGNATURES « À SUIVRE » ───
+          Saint-Esprit réponds-moi (Pam) · Rhema du matin / Rhema du soir
+          (Pasteur Kongo) : cartes mises en avant pour que les croyants
+          suivent ces rendez-vous réguliers. Caché pendant la recherche. */}
+      {!searchQuery.trim() && rubriquesCards.length > 0 && (
+        <section className="bg-[#FAF6EF] pt-6 pb-2 border-b border-[#8A8378]/10" aria-label="Rubriques à suivre">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Star className="w-4 h-4 text-[#C9A227]" />
+              <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#C9A227]">
+                Les rubriques de {activeTab === "pam" ? "Pam" : "Pasteur Kongo"}
+              </span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {rubriquesCards.map(({ name, count, latest }) => {
+                const Icon = rubricIcon(name);
+                const actif = activeCategory === `${activeTab}-${name}`;
+                return (
+                  <button
+                    key={name}
+                    onClick={() => {
+                      setActiveCategory(`${activeTab}-${name}`);
+                      // Défiler jusqu'à la catégorie sélectionnée
+                      requestAnimationFrame(() => {
+                        document.getElementById("categorie-active")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      });
+                    }}
+                    className={cn(
+                      "group relative text-left rounded-2xl overflow-hidden p-4 transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#C9A227]",
+                      actif ? "ring-2 ring-[#C9A227]" : ""
+                    )}
+                    aria-label={`Voir la rubrique ${name}`}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#2A0E3D] via-[#2A0E3D]/95 to-[#C9A227]/20" />
+                    <div className="relative flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-5 h-5 text-[#C9A227]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-sm text-[#FAF6EF] leading-tight">
+                          <IsololeText>{name}</IsololeText>
+                        </div>
+                        {count > 0 ? (
+                          <>
+                            <div className="text-[11px] text-[#C9A227] font-bold mt-1">
+                              {count} épisode{count > 1 ? "s" : ""}
+                            </div>
+                            {latest && (
+                              <div className="text-[11px] text-[#FAF6EF]/60 truncate mt-0.5">
+                                Dernier : {latest.title}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="text-[11px] text-[#FAF6EF]/70 mt-1 italic">
+                            Prochainement — restez connectés
+                          </div>
+                        )}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-[#C9A227]/60 flex-shrink-0 self-center group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* BARRE DE RECHERCHE + ONGLETS */}
       <section className="sticky top-16 md:top-20 z-30 bg-[#FAF6EF] border-b border-[#8A8378]/15 py-2 md:py-3">
         <div className="max-w-7xl mx-auto px-3 md:px-4">
@@ -237,7 +341,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
             <div className="flex items-center justify-center py-20">
               <div className="w-8 h-8 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : filteredVideos.length === 0 ? (
+          ) : searchQuery.trim() && filteredVideos.length === 0 ? (
             <div className="text-center py-20"><p className="text-[#8A8378]">Aucune vidéo ne correspond à votre recherche.</p></div>
           ) : (
             <>
@@ -252,9 +356,12 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                       "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0",
                       activeCategory === cat.id
                         ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                        : "bg-white text-[#1E0F2B] border border-[#8A8378]/20"
+                        : estRubrique(cat.name)
+                          ? "bg-[#C9A227]/15 text-[#A3821C] border border-[#C9A227]/40"
+                          : "bg-white text-[#1E0F2B] border border-[#8A8378]/20"
                     )}
                   >
+                    {estRubrique(cat.name) && <Star className="w-3 h-3" />}
                     {cat.name}
                     <span className={cn("text-[10px]", activeCategory === cat.id ? "text-[#C9A227]" : "text-[#8A8378]")}>{cat.videos.length}</span>
                   </button>
@@ -266,7 +373,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
               {/* Colonne principale : vidéos récentes + catégorie active */}
               <div className="min-w-0">
                 {/* Section Vidéos récentes */}
-                {!searchQuery && (
+                {!searchQuery && recentVideos.length > 0 && (
                   <div className="mb-8">
                     <div className="flex items-center gap-2 mb-4">
                       <Clock className="w-5 h-5 text-[#C9A227]" />
@@ -283,17 +390,42 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
 
                 {/* Vidéos de la catégorie active */}
                 {activeCat && (
-                  <>
-                    <div className="flex items-center gap-2 mb-4">
+                  <div id="categorie-active" className="scroll-mt-32">
+                    <div className="flex items-center gap-2 mb-4 flex-wrap">
+                      {estRubrique(activeCat.name) && (
+                        <span className="w-7 h-7 rounded-lg bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
+                          {(() => { const RubIcon = rubricIcon(activeCat.name); return <RubIcon className="w-4 h-4 text-[#C9A227]" />; })()}
+                        </span>
+                      )}
                       <h2 className="font-bold text-base md:text-lg text-[#1E0F2B]">{activeCat.name}</h2>
-                      <span className="text-xs text-[#8A8378]">{activeCat.videos.length} vidéo{activeCat.videos.length > 1 ? "s" : ""}</span>
+                      {activeCat.videos.length > 0 && (
+                        <span className="text-xs text-[#8A8378]">{activeCat.videos.length} vidéo{activeCat.videos.length > 1 ? "s" : ""}</span>
+                      )}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                      {activeCat.videos.map((video) => (
-                        <YouTubeStyleCard key={video.id} video={video} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
-                      ))}
-                    </div>
-                  </>
+
+                    {activeCat.videos.length === 0 && estRubrique(activeCat.name) ? (
+                      /* ⭐ V3.46 — rubrique signature encore vide : rendez-vous
+                         régulier à venir, pas une erreur. */
+                      <div className="rounded-2xl border-2 border-dashed border-[#C9A227]/40 bg-[#C9A227]/5 p-8 md:p-10 text-center max-w-xl mx-auto">
+                        <div className="w-12 h-12 rounded-full bg-[#C9A227]/15 flex items-center justify-center mx-auto mb-3">
+                          {(() => { const EmptyIcon = rubricIcon(activeCat.name); return <EmptyIcon className="w-6 h-6 text-[#C9A227]" />; })()}
+                        </div>
+                        <p className="font-bold text-[#1E0F2B] text-sm md:text-base">
+                          Les épisodes de « {activeCat.name} » arrivent bientôt
+                        </p>
+                        <p className="text-xs md:text-sm text-[#8A8378] mt-1.5 leading-relaxed">
+                          Restez connectés — chaque nouvel épisode de cette rubrique sera publié ici,
+                          au service du rassemblement des fils d&#39;Isolélé (Israël) dispersés.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                        {activeCat.videos.map((video) => (
+                          <YouTubeStyleCard key={video.id} video={video} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -305,15 +437,20 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id)}
                     className={cn(
-                      "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-semibold transition-all",
+                      "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
                       activeCategory === cat.id
                         ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                        : "text-[#1E0F2B] hover:bg-[#2A0E3D]/5"
+                        : estRubrique(cat.name)
+                          ? "text-[#A3821C] bg-[#C9A227]/10 hover:bg-[#C9A227]/20"
+                          : "text-[#1E0F2B] hover:bg-[#2A0E3D]/5"
                     )}
                   >
-                    <span className="truncate">{cat.name}</span>
+                    <span className="truncate flex items-center gap-1.5">
+                      {estRubrique(cat.name) && <Star className="w-3.5 h-3.5 flex-shrink-0" />}
+                      {cat.name}
+                    </span>
                     <span className={cn(
-                      "text-xs ml-2 flex-shrink-0",
+                      "text-xs flex-shrink-0",
                       activeCategory === cat.id ? "text-[#C9A227]" : "text-[#8A8378]"
                     )}>{cat.videos.length}</span>
                   </button>

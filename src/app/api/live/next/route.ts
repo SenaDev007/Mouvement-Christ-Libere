@@ -1,12 +1,16 @@
 /** GET /api/live/next — Prochain direct programmé */
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+// ⭐ V3.46 — colonne LiveStream.category (rubriques) : le findFirst la
+// sélectionne → garde avant lecture (auto-création idempotente).
+import { ensureLiveCategoryColumn } from "@/lib/ensure-schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    await ensureLiveCategoryColumn().catch(() => {});
     // ⭐ V3.26 — PRIORITÉ AU DIRECT EN COURS : avant, un simple findFirst
     // orderBy scheduledAt ASC sur {SCHEDULED, LIVE} — si un AUTRE live
     // programmé plus tôt existait en base, la route renvoyait CE live-là

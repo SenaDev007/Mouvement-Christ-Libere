@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { getLiveKitConfig } from "@/lib/livekit-config";
-import { ensureLiveYoutubeIngestColumn } from "@/lib/ensure-schema";
+import { ensureLiveYoutubeIngestColumn, ensureRubriquesColumns } from "@/lib/ensure-schema";
 
 // ⭐ V3.34 — le nettoyage LiveKit (éjections + egress + room) peut prendre
 // plusieurs dizaines de secondes : sans cette marge, la fonction était tuée
@@ -27,6 +27,11 @@ export async function POST(req: NextRequest) {
     if (!liveId) {
       return NextResponse.json({ error: "liveId requis" }, { status: 400 });
     }
+
+    // ⭐ V3.46 — colonnes rubrique (Video/LiveStream.category) : le client
+    // Prisma les sélectionne désormais → garde avant la lecture du live,
+    // et avant l'archivage du replay (qui hérite de la rubrique du live).
+    await ensureRubriquesColumns();
 
     // ⭐ V3.36 — `let` : l'URL YouTube peut être réconciliée plus bas
     // (broadcast zombie → vraie vidéo) AVANT l'archivage du replay.
@@ -228,6 +233,10 @@ export async function POST(req: NextRequest) {
             duration: durationStr,
             views: 0,
             isLive: false,
+            // ⭐ V3.46 — le replay HÉRITE de la rubrique du live (posée à la
+            // programmation) : les croyants le retrouvent dans la rubrique
+            // suivie sur /videos (ex. « Rhema du matin »).
+            category: live.category || null,
             videoUrl: replayUrl,
             hlsUrl: recordingUrl || null,
             thumbnailUrl: live.thumbnailUrl || (live.youtubeUrl ? `https://img.youtube.com/vi/${extractYoutubeId(live.youtubeUrl)}/hqdefault.jpg` : null),

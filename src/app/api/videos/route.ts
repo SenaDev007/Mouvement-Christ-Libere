@@ -1,8 +1,9 @@
 /** GET /api/videos — Liste des vidéos depuis la DB */
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ensureVideoLikesColumn } from "@/lib/ensure-schema";
+import { ensureVideoLikesColumn, ensureVideoCategoryColumn } from "@/lib/ensure-schema";
 import { recupererReplaysManquants } from "@/lib/live-replay-recovery";
+import { categorizeVideo, estRubrique } from "@/lib/video-rubrics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,9 @@ export async function GET(request: NextRequest) {
     // ⭐ V3.26 — colonne Video.likes (compteur de likes RÉEL, distinct de
     // views) créée à la volée si absente (idempotent, mémoïsé).
     await ensureVideoLikesColumn();
+    // ⭐ V3.46 — colonne Video.category (rubrique signature) : le client
+    // Prisma généré la sélectionne → P2022 sur base froide sans cette garde.
+    await ensureVideoCategoryColumn();
 
     // ⭐ V3.34 — récupération opportuniste des replays YouTube manquants
     // (≤ 3 s pour ne pas ralentir la page publique) : chaque visite aide à
@@ -73,7 +77,12 @@ export async function GET(request: NextRequest) {
         // fraîchement publié affichait « 5 likes » = ses viewers live).
         likes: (v as unknown as { likes?: number }).likes ?? 0,
         publishedAt: v.publishedAt?.toISOString() || "",
-        category: categorize(v.title, v.servant.code),
+        // ⭐ V3.46 — rubrique EXPLICITE (back-office) prioritaire sur le
+        // devin par mots-clés (comportement historique préservé si null).
+        category: categorizeVideo(v.title, v.servant.code, v.category),
+        // Rubrique signature ? — la page publique met ces rubriques en
+        // avant (bandeau + catégories épinglées, visibles même vides).
+        isRubric: estRubrique(v.category),
         servant: v.servant.code,
         servantName: v.servant.shortName,
         thumbnailUrl: v.thumbnailUrl || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : ""),
@@ -87,23 +96,4 @@ export async function GET(request: NextRequest) {
     console.error("[api/videos]", error);
     return NextResponse.json({ videos: [] });
   }
-}
-
-function categorize(title: string, servant: string): string {
-  const t = title.toLowerCase();
-  // Les replays de lives vont dans "Lives & Directs"
-  if (t.includes("replay") || t.includes("(live)")) return "Lives & Directs";
-  if (servant === "kongo") {
-    if (t.includes("prière") || t.includes("délivrance")) return "Prière & Délivrance";
-    if (t.includes("enseignement") || t.includes("prédication")) return "Enseignements & Prédications";
-    if (t.includes("fête") || t.includes("shabbat")) return "Fêtes & Shabbat";
-    if (t.includes("discernement") || t.includes("occult")) return "Discernement Spirituel";
-    return "Paroles & Exhortations";
-  }
-  if (t.includes("direct") || t.includes("en direct")) return "Lives & Directs";
-  if (t.includes("prière") || t.includes("délivrance")) return "Prière & Délivrance";
-  if (t.includes("enseignement") || t.includes("prédication")) return "Enseignements & Prédications";
-  if (t.includes("témoignage") || t.includes("vision")) return "Témoignages & Visions";
-  if (t.includes("shabbat") || t.includes("fête")) return "Fêtes & Shabbat";
-  return "Paroles & Exhortations";
 }

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { AdminForm, type FieldDef } from "@/components/admin/admin-form";
+import { RUBRIQUE_OPTIONS } from "@/lib/video-rubrics";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,17 @@ export default async function NewVideoPage({
       type: "select",
       options: servants.map((s) => ({ value: s.id, label: s.shortName })),
       required: true,
+    },
+    {
+      // ⭐ V3.46 — Rubrique signature de la vidéo (« Saint-Esprit réponds-moi »
+      // Pam, « Rhema du matin »/« Rhema du soir » Pasteur Kongo…). Vide =
+      // catégorisation automatique par mots-clés du titre (historique).
+      name: "category",
+      label: "Rubrique",
+      type: "select",
+      options: RUBRIQUE_OPTIONS,
+      fullWidth: true,
+      help: "Les rubriques ★ sont mises en avant sur la page publique /videos",
     },
     { name: "title", label: "Titre", type: "text", required: true, fullWidth: true },
     { name: "description", label: "Description", type: "textarea", fullWidth: true },

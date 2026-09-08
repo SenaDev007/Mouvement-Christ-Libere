@@ -211,6 +211,14 @@ model Video {
   likes       Int      @default(0)
   isLive      Boolean  @default(false)
   publishedAt DateTime?
+  // ⭐ V3.46 — Rubrique/catégorie EXPLICITE (null = catégorisation
+  // automatique par mots-clés du titre, comportement historique).
+  // Rubriques signatures : « Saint-Esprit réponds-moi » (Pam), « Rhema du
+  // matin » / « Rhema du soir » (Pasteur Kongo) — définies dans
+  // src/lib/video-rubrics.ts. Assignée depuis le back-office (module
+  // Vidéos : sélecteur en ligne + formulaires) ou HÉRITÉE du live
+  // (LiveStream.category) quand le replay est archivé.
+  category    String?
   // ─── Post-production cloud sync ───
   // Stocke l'état complet du projet (timeline, overlays, filtres, etc.)
   // en JSON pour permettre la sauvegarde/chargement et le partage.
@@ -290,6 +298,11 @@ model LiveStream {
   // (calculée = pausedAt - startedAt).
   isPaused          Boolean  @default(false)
   pausedAt          DateTime?
+  // ⭐ V3.46 — Rubrique du live (null = replay auto-catégorisé par
+  // mots-clés). Assignée à la programmation (back-office) : quand le live
+  // s'arrête, l'entrée Vidéo du replay HÉRITE de cette rubrique → les
+  // croyants retrouvent le replay dans la rubrique suivie sur /videos.
+  category          String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

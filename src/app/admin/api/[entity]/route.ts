@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme } from "@/lib/live-announcement-relay";
 
 // Force runtime Node.js (pas edge) pour Prisma
@@ -65,6 +65,10 @@ export async function GET(
     }
     // ⭐ V3.45 — Table des sections hero (création + semis idempotents)
     if (entity === "heroes") await ensureHeroSectionsTable();
+    // ⭐ V3.46 — colonnes rubrique (Video/LiveStream.category) : le client
+    // Prisma les sélectionne désormais → garde avant TOUTE lecture/écriture.
+    if (entity === "videos") await ensureVideoCategoryColumn();
+    if (entity === "lives") await ensureLiveCategoryColumn();
 
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get("limit") || "50");
@@ -113,6 +117,10 @@ export async function POST(
     }
     // ⭐ V3.45 — Table des sections hero (création + semis idempotents)
     if (entity === "heroes") await ensureHeroSectionsTable();
+    // ⭐ V3.46 — colonnes rubrique : le create() peut recevoir Video.category
+    // / LiveStream.category depuis les formulaires du back-office.
+    if (entity === "videos") await ensureVideoCategoryColumn();
+    if (entity === "lives") await ensureLiveCategoryColumn();
     const delegate = getDelegate(entity as EntityName);
     const created = await delegate.create({ data: body });
 

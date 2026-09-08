@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { AdminForm, type FieldDef } from "@/components/admin/admin-form";
+import { RUBRIQUE_OPTIONS } from "@/lib/video-rubrics";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,16 @@ export default async function NewLivePage() {
       type: "select",
       options: servants.map((s) => ({ value: s.id, label: s.shortName })),
       required: true,
+    },
+    {
+      // ⭐ V3.46 — Rubrique du live : le replay hérite automatiquement de
+      // cette rubrique à l'arrêt du direct (visible sur /videos).
+      name: "category",
+      label: "Rubrique",
+      type: "select",
+      options: RUBRIQUE_OPTIONS,
+      fullWidth: true,
+      help: "Le replay du live sera automatiquement classé dans cette rubrique",
     },
     { name: "title", label: "Titre", type: "text", required: true, fullWidth: true },
     { name: "description", label: "Description", type: "textarea", fullWidth: true },

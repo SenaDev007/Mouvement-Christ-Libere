@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { Plus, Radio, Calendar, Clock, Video, Crown, ExternalLink } from "lucide-react";
+import { Plus, Radio, Calendar, Clock, Video, Crown, ExternalLink, Star } from "lucide-react";
+// ⭐ V3.46 — rubrique du live (badge) + colonne LiveStream.category (garde).
+import { estRubrique } from "@/lib/video-rubrics";
+import { ensureLiveCategoryColumn } from "@/lib/ensure-schema";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { NewLiveButton } from "@/components/admin/new-live-modal";
 import { EditLiveModal } from "@/components/admin/edit-live-modal";
@@ -19,6 +22,8 @@ const STATUS_CONFIG = {
 };
 
 export default async function AdminLivesPage() {
+  // ⭐ V3.46 — colonne rubrique : le findMany ci-dessous la sélectionne.
+  await ensureLiveCategoryColumn().catch(() => {});
   const [lives, servants] = await Promise.all([
     db.liveStream.findMany({
       orderBy: { scheduledAt: "desc" },
@@ -123,6 +128,18 @@ export default async function AdminLivesPage() {
                       <span className="font-bold uppercase tracking-wider" style={{ color: accentColor }}>
                         {l.servant.shortName}
                       </span>
+                      {estRubrique(l.category) && (
+                        <>
+                          <span className="text-[#8A8378]/40">·</span>
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C9A227]/15 text-[#A3821C] font-bold"
+                            title="Le replay du live sera classé dans cette rubrique sur /videos"
+                          >
+                            <Star className="w-2.5 h-2.5" />
+                            {l.category}
+                          </span>
+                        </>
+                      )}
                       <span className="text-[#8A8378]/40">·</span>
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />

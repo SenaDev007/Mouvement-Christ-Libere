@@ -1,10 +1,14 @@
 import { db } from "@/lib/db";
 import { VideosTabsClient } from "@/components/admin/videos-tabs-client";
 import { recupererReplaysManquants, statutRecuperationReplays } from "@/lib/live-replay-recovery";
+// ⭐ V3.46 — colonnes rubrique (Video/LiveStream.category) : le findMany
+// ci-dessous sélectionne toutes les colonnes → garde avant lecture.
+import { ensureRubriquesColumns } from "@/lib/ensure-schema";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminVideosPage() {
+  await ensureRubriquesColumns().catch(() => {});
   // ┌───────────────────────────────────────────────────────────────────────────┐
   // │ ⭐ V3.34 — RÉCUPÉRATION DES REPLAYS YOUTUBE AVANT LE CHARGEMENT (≤ 8 s)  │
   // ├───────────────────────────────────────────────────────────────────────────┤
@@ -59,6 +63,9 @@ export default async function AdminVideosPage() {
       hlsUrl: v.hlsUrl,
       views: v.views,
       isLive: v.isLive,
+      // ⭐ V3.46 — rubrique explicite (null = catégorisation automatique) :
+      // le sélecteur en ligne du module Vidéos lit/écrit ce champ.
+      category: v.category ?? null,
       publishedAt: v.publishedAt,
       createdAt: v.createdAt,
       updatedAt: v.updatedAt,

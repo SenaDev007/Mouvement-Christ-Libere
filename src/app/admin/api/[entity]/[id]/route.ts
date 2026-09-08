@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme, annoncerLiveAnnule } from "@/lib/live-announcement-relay";
 
 const ENTITY_MAP = {
@@ -126,6 +126,11 @@ export async function GET(
     }
     // ⭐ V3.45 — Table des sections hero (création + semis idempotents)
     if (entity === "heroes") await ensureHeroSectionsTable();
+    // ⭐ V3.46 — colonnes rubrique Video/LiveStream.category : le client
+    // Prisma les sélectionne (GET) et le PATCH peut les écrire (sélecteur
+    // de rubrique en ligne du module Vidéos) → garde systématique.
+    if (entity === "videos") await ensureVideoCategoryColumn();
+    if (entity === "lives") await ensureLiveCategoryColumn();
     const delegate = getDelegate(entity as EntityName);
     const item = await delegate.findUnique({ where: { id } });
     if (!item) {
@@ -167,6 +172,11 @@ export async function PATCH(
     }
     // ⭐ V3.45 — Table des sections hero (création + semis idempotents)
     if (entity === "heroes") await ensureHeroSectionsTable();
+    // ⭐ V3.46 — colonnes rubrique Video/LiveStream.category : le client
+    // Prisma les sélectionne (GET) et le PATCH peut les écrire (sélecteur
+    // de rubrique en ligne du module Vidéos) → garde systématique.
+    if (entity === "videos") await ensureVideoCategoryColumn();
+    if (entity === "lives") await ensureLiveCategoryColumn();
 
     // ⭐ V2.7 — SYNCHRO PHOTO serviteur ↔ compte utilisateur : on capture
     // les infos de correspondance AVANT l'écriture (le code/nom/email peut
@@ -341,6 +351,11 @@ export async function DELETE(
     }
     // ⭐ V3.45 — Table des sections hero (création + semis idempotents)
     if (entity === "heroes") await ensureHeroSectionsTable();
+    // ⭐ V3.46 — colonnes rubrique Video/LiveStream.category : le client
+    // Prisma les sélectionne (GET) et le PATCH peut les écrire (sélecteur
+    // de rubrique en ligne du module Vidéos) → garde systématique.
+    if (entity === "videos") await ensureVideoCategoryColumn();
+    if (entity === "lives") await ensureLiveCategoryColumn();
     const delegate = getDelegate(entity as EntityName);
     await delegate.delete({ where: { id } });
     return NextResponse.json({ success: true });

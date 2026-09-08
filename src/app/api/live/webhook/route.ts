@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { ensureRubriquesColumns } from "@/lib/ensure-schema";
 
 /**
  * POST /api/live/webhook
@@ -31,6 +32,10 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`[live/webhook] Event: ${event}, Room: ${roomName}`);
+
+    // ⭐ V3.46 — colonnes rubrique (Video/LiveStream.category) : le client
+    // Prisma les sélectionne désormais → garde avant la lecture.
+    await ensureRubriquesColumns().catch(() => {});
 
     // Trouver le live correspondant
     const live = await db.liveStream.findFirst({
@@ -81,6 +86,8 @@ export async function POST(req: NextRequest) {
               duration: "",
               views: 0,
               isLive: false,
+              // ⭐ V3.46 — le replay HÉRITE de la rubrique du live.
+              category: live.category || null,
               videoUrl: recordingUrl,
               publishedAt: new Date(),
             },

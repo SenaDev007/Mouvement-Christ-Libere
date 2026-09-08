@@ -1,12 +1,16 @@
 /** GET /api/live/active — Direct en cours (status LIVE) */
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+// ⭐ V3.46 — colonne LiveStream.category (rubriques) : le findFirst la
+// sélectionne → garde avant lecture (auto-création idempotente).
+import { ensureLiveCategoryColumn } from "@/lib/ensure-schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    await ensureLiveCategoryColumn().catch(() => {});
     const activeLive = await db.liveStream.findFirst({
       where: { status: "LIVE" },
       include: { servant: true },

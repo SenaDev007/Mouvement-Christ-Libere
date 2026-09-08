@@ -48,6 +48,7 @@
  * YouTube sont importées dynamiquement à l'usage.
  */
 import { db } from "@/lib/db";
+import { ensureRubriquesColumns } from "@/lib/ensure-schema";
 
 /** Regex locale — identique à extractYoutubeId de lib/youtube.ts, sans
  *  l'import googleapis. */
@@ -125,6 +126,10 @@ export async function appliquerUrlReplaySurLiveEtVideo(
   liveId: string,
   youtubeUrl: string
 ): Promise<boolean> {
+  // ⭐ V3.46 — garde : la création du replay ci-dessous écrit Video.category
+  // (rubrique héritée du live) → colonne requise.
+  await ensureRubriquesColumns().catch(() => {});
+
   const live = await db.liveStream.findUnique({
     where: { id: liveId },
     select: {
@@ -135,6 +140,7 @@ export async function appliquerUrlReplaySurLiveEtVideo(
       startedAt: true,
       endedAt: true,
       thumbnailUrl: true,
+      category: true,
     },
   });
   if (!live) return false;
@@ -181,6 +187,8 @@ export async function appliquerUrlReplaySurLiveEtVideo(
         duration: dureeLisible(live.startedAt, live.endedAt),
         views: 0,
         isLive: false,
+        // ⭐ V3.46 — le replay HÉRITE de la rubrique du live.
+        category: live.category || null,
         videoUrl: youtubeUrl,
         thumbnailUrl: live.thumbnailUrl || miniatureYoutube,
         publishedAt: live.endedAt || new Date(),
