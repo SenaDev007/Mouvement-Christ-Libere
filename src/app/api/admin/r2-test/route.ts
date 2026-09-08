@@ -69,17 +69,33 @@ export async function GET(req: NextRequest) {
 
       const diag = await diagnoseR2();
 
+      // ⭐ V3.52 — message serveur PINCÉ selon le verdict du diagnostic :
+      // lecture OK + écriture refusée = token « Object Read only » ;
+      // lecture refusée aussi = portée erronée ou token expiré/révoqué.
+      let message: string;
+      if (diag.canWrite) {
+        message =
+          diag.publicUrlOk === false
+            ? "Upload OK MAIS l'URL publique est inaccessible — les fichiers sont stockés mais ne se chargeront jamais (voir détails)"
+            : "Upload test réussi — R2 fonctionne correctement";
+      } else if (diag.errorCode === "AccessDenied" || diag.errorCode === "HTTP 403") {
+        message = diag.canRead
+          ? "Écriture refusée (AccessDenied) : le token peut LIRE mais pas ÉCRIRE — passez sa permission en « Object Read & Write » (voir la procédure ci-dessous)."
+          : "Accès refusé (AccessDenied) en lecture ET écriture — token expiré/révoqué ou scoped à un autre bucket : recréez-le (voir la procédure ci-dessous).";
+      } else {
+        message = diag.error || "Échec du test R2";
+      }
+
       return NextResponse.json({
         success: diag.canWrite,
-        message: diag.canWrite
-          ? diag.publicUrlOk === false
-            ? "Upload OK MAIS l'URL publique est inaccessible — les fichiers sont stockés mais ne se chargeront jamais (voir détails)"
-            : "Upload test réussi — R2 fonctionne correctement"
-          : diag.error || "Échec du test R2",
+        message,
         credentialsValid: diag.credentialsValid,
         bucketsAccessible: diag.bucketsAccessible,
         bucketExists: diag.bucketExists,
+        canRead: diag.canRead,
+        readErrorCode: diag.readErrorCode,
         canWrite: diag.canWrite,
+        canMultipart: diag.canMultipart,
         publicUrl: diag.publicUrl,
         publicUrlOk: diag.publicUrlOk,
         error: diag.error,

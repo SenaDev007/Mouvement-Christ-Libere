@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListBucketsCommand, PutBucketCorsCommand, CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListBucketsCommand, PutBucketCorsCommand, HeadObjectCommand, CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -162,6 +162,18 @@ export async function ensureR2CorsConfig(): Promise<void> {
     );
     console.log("[r2] CORS configuration applied successfully");
   } catch (error) {
+    // ⭐ V3.52 — PutBucketCors exige une permission admin : refusé
+    // (AccessDenied) pour un token « Object Read & Write » scoped au
+    // bucket — ce n'est PAS bloquant (le CORS du bucket a été appliqué
+    // historiquement / via le Dashboard). Message explicite au lieu d'une
+    // erreur brute répétée dans les logs Vercel à chaque upload.
+    if (estAccesRefuse(error)) {
+      console.warn(
+        "[r2] PutBucketCors refusé (AccessDenied) — normal pour un token scoped Object Read & Write. " +
+          "Si les PUT navigateur échouent avec « Failed to fetch », appliquez le CORS du bucket via le Dashboard Cloudflare (R2 → bucket → Settings → CORS)."
+      );
+      return;
+    }
     console.error("[r2] Failed to apply CORS configuration:", error);
   }
 }
@@ -507,7 +519,13 @@ export async function diagnoseR2(): Promise<{
   credentialsValid: boolean;
   bucketsAccessible: string[];
   bucketExists: boolean;
+  /** ⭐ V3.52 — le token peut-il LIRE le bucket (HeadObject, clé factice) ? */
+  canRead?: boolean;
+  /** ⭐ V3.52 — code d'erreur renvoyé par la sonde de lecture. */
+  readErrorCode?: string;
   canWrite: boolean;
+  /** ⭐ V3.52 — CreateMultipartUpload (upload vidéo séquentiel V3.51) OK ? */
+  canMultipart?: boolean;
   /** URL publique du fichier test (remplie si l'upload a réussi). */
   publicUrl?: string;
   /** ⭐ V3.25 — true si l'URL publique répond (HEAD 2xx). */
@@ -522,7 +540,10 @@ export async function diagnoseR2(): Promise<{
     credentialsValid: false,
     bucketsAccessible: [] as string[],
     bucketExists: false,
+    canRead: undefined as boolean | undefined,
+    readErrorCode: undefined as string | undefined,
     canWrite: false,
+    canMultipart: undefined as boolean | undefined,
     publicUrl: undefined as string | undefined,
     publicUrlOk: undefined as boolean | undefined,
     error: undefined as string | undefined,
@@ -580,6 +601,40 @@ export async function diagnoseR2(): Promise<{
     }
   }
 
+  // ─── Test 1bis (⭐ V3.52) : sonde de LECTURE (HeadObject, clé factice) ───
+  // 404 (NotFound/NoSuchKey) = le token a le droit de LIRE ce bucket
+  // (portée correcte) ; 403 = il ne peut même pas lire → portée erronée
+  // (autre bucket) ou token expiré/révoqué. C'est CE QUI DISTINGUE :
+  //   - lecture OK + écriture refusée → permission « Object Read only »
+  //     → éditer le token → « Object Read & Write »
+  //   - lecture ET écriture refusées → portée/expiry → recréer le token
+  try {
+    await getClient().send(
+      new HeadObjectCommand({
+        Bucket: cfg.bucket,
+        Key: `test/sonde-lecture-${Date.now()}.txt`,
+      })
+    );
+    // Objet existant (improbable) → lecture OK de toute façon.
+    result.canRead = true;
+    details.push("✓ Sonde lecture : le token peut lire le bucket (HeadObject OK)");
+  } catch (err) {
+    const code = extractErrorCode(err);
+    result.readErrorCode = code;
+    if (code === "NoSuchKey" || code === "NotFound" || code === "HTTP 404") {
+      result.canRead = true;
+      details.push(
+        "✓ Sonde lecture : le token peut lire le bucket (404 = clé absente mais lecture autorisée)"
+      );
+    } else {
+      result.canRead = false;
+      details.push(`✗ Sonde lecture refusée : ${code}`);
+      details.push(
+        "  → Le token ne peut même pas LIRE ce bucket : portée erronée (autre bucket ?) ou token expiré/révoqué."
+      );
+    }
+  }
+
   // ─── Test 2 : Upload test (vérifie les permissions d'écriture sur le bucket) ───
   const testKey = `test/diagnostic-${Date.now()}.txt`;
   try {
@@ -596,9 +651,16 @@ export async function diagnoseR2(): Promise<{
 
     // Messages spécifiques selon le code d'erreur
     if (code === "AccessDenied" || code === "HTTP 403") {
-      details.push("  → Le token n'a pas la permission 'Object Write' sur ce bucket");
-      details.push("  → Dashboard Cloudflare → R2 → Manage R2 API Tokens → éditer le token");
-      details.push("  → Cocher 'Object Read & Write' pour le bucket concerné");
+      details.push("  → ⭐ V3.52 — CAUSE CONFIRMÉE : le token n'a pas (ou plus) la permission d'écrire dans ce bucket.");
+      if (result.canRead === true) {
+        details.push("  → Le token PEUT lire mais PAS écrire → sa permission est probablement « Object Read only ».");
+        details.push("  → RÉPARATION : Dashboard Cloudflare → R2 → Manage R2 API Tokens → éditer le token → permission « Object Read & Write » sur le bucket « " + cfg.bucket + " ».");
+      } else {
+        details.push("  → Le token ne peut NI lire NI écrire → portée erronée (token scoped à un autre bucket) ou token expiré/révoqué.");
+        details.push("  → RÉPARATION : Dashboard Cloudflare → R2 → Manage R2 API Tokens → créer un NOUVEAU token (Object Read & Write, bucket « " + cfg.bucket + " ») → copier Access Key ID + Secret → Vercel → Settings → Environment Variables → mettre à jour R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY → Redeploy.");
+      }
+      details.push("  → Vérifier AUSSI dans le Dashboard Cloudflare (R2) qu'aucune alerte de facturation ne bloque les écritures (free tier 10 Go dépassé sans moyen de paiement).");
+      details.push("  → Après réparation : revenir sur /admin/r2-test et relancer le test (« Permission écriture » doit passer à ✓).");
     } else if (code === "NoSuchBucket") {
       details.push(`  → Le bucket "${cfg.bucket}" n'existe pas sur ce compte R2`);
       details.push("  → Vérifiez R2_BUCKET_NAME (sensible à la casse)");
@@ -606,6 +668,26 @@ export async function diagnoseR2(): Promise<{
       details.push("  → R2_ACCESS_KEY_ID invalide");
     } else if (code === "SignatureDoesNotMatch") {
       details.push("  → R2_SECRET_ACCESS_KEY invalide (la signature ne correspond pas)");
+    }
+  }
+
+  // ─── Test 2bis (⭐ V3.52) : sonde MULTIPART (l'upload vidéo V3.51) ───
+  // CreateMultipartUpload + Abort immédiat : exactement l'opération qui
+  // échouait dans le modal « Nouvelle vidéo » (« Création de la session
+  // d'upload impossible : Access Denied »). Confirmée OK = tout le flux
+  // vidéo pourra ouvrir ses sessions.
+  if (result.canWrite) {
+    const multipartKey = `test/sonde-multipart-${Date.now()}.bin`;
+    try {
+      const uploadId = await creerMultipartR2(multipartKey, "application/octet-stream");
+      await annulerMultipartR2(multipartKey, uploadId); // nettoyage immédiat
+      result.canMultipart = true;
+      details.push("✓ Sonde multipart : CreateMultipartUpload + Abort OK — l'upload vidéo séquentiel peut ouvrir ses sessions");
+    } catch (err) {
+      const code = extractErrorCode(err);
+      result.canMultipart = false;
+      details.push(`✗ Sonde multipart refusée : ${err instanceof Error ? err.message : code}`);
+      details.push("  → L'upload vidéo par morceaux échouera tant que ce n'est pas réparé (voir réparations ci-dessus).");
     }
   }
 
@@ -644,6 +726,29 @@ export async function diagnoseR2(): Promise<{
   }
 
   return result;
+}
+
+/**
+ * ⭐ V3.52 — Détecte une erreur R2/S3 de refus d'autorisation (403).
+ *
+ * EMPIRIQUEMENT CONFIRMÉ en production (V3.52) : le token R2 configuré
+ * n'a PAS (ou plus) la permission d'ÉCRIRE dans le bucket — PutObject
+ * (test serveur), CreateMultipartUpload (upload vidéo V3.51) et le PUT
+ * pré-signé navigateur renvoient TOUS « 403 AccessDenied » alors que la
+ * signature est valide (sinon : SignatureDoesNotMatch/InvalidAccessKeyId).
+ * Ce n'est donc PAS un bug de code (la requête du SDK 3.1121.0 a été
+ * capturée : elle est PROPRE, aucun paramètre checksum — contrairement au
+ * bug V3.35) : la réparation se fait dans le Cloudflare Dashboard du
+ * pasteur (permission du token), pas dans le code.
+ */
+export function estAccesRefuse(err: unknown): boolean {
+  if (err && typeof err === "object") {
+    const e = err as Record<string, unknown>;
+    if (e.name === "AccessDenied" || e.Code === "AccessDenied") return true;
+    const metadata = e.$metadata as Record<string, number> | undefined;
+    if (metadata?.httpStatusCode === 403) return true;
+  }
+  return false;
 }
 
 /**

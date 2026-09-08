@@ -8,6 +8,7 @@ import {
   getPresignedPartUrl,
   completerMultipartR2,
   annulerMultipartR2,
+  estAccesRefuse,
   type MorceauR2,
 } from "@/lib/r2";
 
@@ -125,6 +126,20 @@ export async function traiterRequeteMultipart(opts: {
         });
       } catch (error) {
         console.error("[multipart/create] Erreur R2 :", error);
+        // ⭐ V3.52 — AccessDenied = le token R2 n'a pas (ou plus) la
+        // permission d'écrire (confirmé en production : PutObject ET
+        // multipart refusés, signature valide). Ce n'est PAS transitoire :
+        // on ne renvoie PAS 500 (le client réessaierait 3× pour rien) mais
+        // 403 (échec immédiat) avec un message ACTIONNABLE.
+        if (estAccesRefuse(error)) {
+          return reponseErreur(
+            "Écriture refusée par le stockage cloud (AccessDenied) : le token Cloudflare R2 n'a pas (ou plus) la permission d'écrire dans le bucket. " +
+              "Réparation (2 min) : Cloudflare Dashboard → R2 → Manage R2 API Tokens → token avec permission « Object Read & Write » sur le bucket ; " +
+              "si le token a été recréé, mettre à jour R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY sur Vercel puis Redéployer. " +
+              "Diagnostic détaillé : /admin/r2-test → « Lancer le test serveur ».",
+            403
+          );
+        }
         return reponseErreur(
           error instanceof Error
             ? `Création de la session d'upload impossible : ${error.message}`

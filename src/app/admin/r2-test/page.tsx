@@ -2,7 +2,7 @@
 
 import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, Loader2, Cloud, TestTube, Globe } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Cloud, TestTube, Globe, KeyRound } from "lucide-react";
 import Link from "next/link";
 
 interface R2Status {
@@ -22,7 +22,13 @@ interface R2TestResult {
   credentialsValid?: boolean;
   bucketsAccessible?: string[];
   bucketExists?: boolean;
+  /** ⭐ V3.52 — le token peut-il lire le bucket ? */
+  canRead?: boolean;
+  /** ⭐ V3.52 — code d'erreur de la sonde de lecture (si refusée). */
+  readErrorCode?: string;
   canWrite?: boolean;
+  /** ⭐ V3.52 — CreateMultipartUpload (upload vidéo V3.51) OK ? */
+  canMultipart?: boolean;
   error?: string;
   errorCode?: string;
   details?: string[];
@@ -269,8 +275,11 @@ export default function R2TestPage() {
             Test d'upload serveur
           </h2>
           <p className="text-xs text-[#8A8378] mb-3">
-            Uploade un petit fichier texte vers R2 DEPUIS LE SERVEUR (même mécanisme que les notes
-            vocales d'intercession). Ce test peut réussir alors que l'upload navigateur échoue.
+            Diagnostic complet côté serveur (⭐ V3.52) : sonde de <b>lecture</b> (le token
+            peut-il lire le bucket ?), test d&apos;<b>écriture</b> (même mécanisme que les notes
+            vocales d&apos;intercession) et sonde <b>multipart</b> (exactement l&apos;opération
+            de l&apos;upload des vidéos par morceaux). Ce test peut réussir alors que
+            l&apos;upload navigateur échoue — lancez les deux.
           </p>
           <button
             onClick={runTest}
@@ -316,6 +325,16 @@ export default function R2TestPage() {
                     )}
                   </div>
                 )}
+                {testResult.canRead !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A8378] w-40">Permission lecture :</span>
+                    {testResult.canRead ? (
+                      <span className="text-emerald-600 font-bold">✓ OK</span>
+                    ) : (
+                      <span className="text-red-600 font-bold">✗ Refusée{testResult.readErrorCode ? ` (${testResult.readErrorCode})` : ""}</span>
+                    )}
+                  </div>
+                )}
                 {testResult.canWrite !== undefined && (
                   <div className="flex items-center gap-2">
                     <span className="text-[#8A8378] w-40">Permission écriture :</span>
@@ -323,6 +342,16 @@ export default function R2TestPage() {
                       <span className="text-emerald-600 font-bold">✓ OK</span>
                     ) : (
                       <span className="text-red-600 font-bold">✗ Refusée</span>
+                    )}
+                  </div>
+                )}
+                {testResult.canMultipart !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A8378] w-40">Upload vidéo (multipart) :</span>
+                    {testResult.canMultipart ? (
+                      <span className="text-emerald-600 font-bold">✓ OK</span>
+                    ) : (
+                      <span className="text-red-600 font-bold">✗ Refusé</span>
                     )}
                   </div>
                 )}
@@ -345,6 +374,71 @@ export default function R2TestPage() {
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* ⭐ V3.52 — PANNEAU DE RÉPARATION GUIDÉE : écriture refusée */}
+              {testResult.canWrite === false && testResult.errorCode === "AccessDenied" && (
+                <div className="mt-4 pt-3 border-t border-[#8A8378]/20">
+                  <div className="bg-red-50 border border-red-300 rounded-lg p-4">
+                    <h3 className="text-sm font-bold text-red-800 mb-2 flex items-center gap-2">
+                      <KeyRound className="w-4 h-4" />
+                      Réparation requise dans le Cloudflare Dashboard (2 min)
+                    </h3>
+                    <p className="text-xs text-red-700 mb-3">
+                      Le token R2 de ce site n&apos;a pas (ou plus) la permission d&apos;écrire dans le bucket
+                      « {status?.bucket} ». La signature est valide (les clés sont correctes) — c&apos;est
+                      uniquement la <b>permission du token</b> qui manque. Tant que ce n&apos;est pas réparé,
+                      l&apos;upload des vidéos, des replays de live et des notes d&apos;intercession échouera.
+                    </p>
+                    {testResult.canRead === false ? (
+                      <p className="text-xs text-red-800 bg-red-100/60 rounded p-2 mb-3">
+                        <b>Votre cas :</b> le token ne peut même pas <b>lire</b> le bucket → il est
+                        probablement <b>expiré, révoqué ou scoped à un autre bucket</b> → suivez la
+                        <b> procédure A (recréer le token)</b> ci-dessous, puis mettez à jour les
+                        variables sur Vercel.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-red-800 bg-red-100/60 rounded p-2 mb-3">
+                        <b>Votre cas :</b> le token peut <b>lire</b> mais pas <b>écrire</b> → sa
+                        permission est probablement <b>« Object Read only »</b> → suivez la
+                        <b> procédure B (changer la permission)</b> ci-dessous — aucune mise à jour
+                        de variables Vercel nécessaire.
+                      </p>
+                    )}
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[10px] font-bold text-red-900 uppercase tracking-wider mb-1">
+                          Procédure A — Recréer le token (si expiré/scoped à un autre bucket)
+                        </p>
+                        <ol className="text-[11px] text-red-800 list-decimal list-inside space-y-1">
+                          <li>Dashboard Cloudflare → <b>R2</b> → <b>Manage R2 API Tokens</b> (bouton en haut à droite de la page R2)</li>
+                          <li><b>Créez un nouveau token</b> : nom « christ-libere-site », <b>Object Read &amp; Write</b>, appliqué <b>uniquement au bucket « {status?.bucket} »</b></li>
+                          <li>Copiez l&apos;<b>Access Key ID</b> et le <b>Secret Access Key</b> affichés (une seule fois !)</li>
+                          <li>Vercel → votre projet → <b>Settings → Environment Variables</b> → remplacer <b>R2_ACCESS_KEY_ID</b> et <b>R2_SECRET_ACCESS_KEY</b> par les nouvelles valeurs</li>
+                          <li>Vercel → <b>Deployments</b> → menu du dernier déploiement → <b>Redeploy</b></li>
+                          <li>Revenez sur cette page et relancez le test — tout doit passer au ✓ vert</li>
+                        </ol>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-red-900 uppercase tracking-wider mb-1">
+                          Procédure B — Changer la permission (si « Object Read only »)
+                        </p>
+                        <ol className="text-[11px] text-red-800 list-decimal list-inside space-y-1">
+                          <li>Dashboard Cloudflare → <b>R2</b> → <b>Manage R2 API Tokens</b></li>
+                          <li>Éditez le token correspondant à l&apos;Access Key ID <b>{status?.accessKeyId}</b></li>
+                          <li>Permission : <b>Object Read &amp; Write</b> — appliqué au bucket <b>« {status?.bucket} »</b> (vérifiez aussi qu&apos;il n&apos;est pas expiré)</li>
+                          <li>Enregistrez, puis revenez ici et relancez le test — « Permission écriture » doit passer au ✓ vert</li>
+                        </ol>
+                      </div>
+                      <p className="text-[10px] text-red-700 bg-red-100/40 rounded p-2">
+                        Si la permission semble déjà correcte mais que l&apos;accès reste refusé : vérifiez
+                        dans le Dashboard Cloudflare → <b>Billing</b> qu&apos;aucune alerte de paiement ne
+                        bloque le compte (le palier gratuit de R2 est de 10 Go de stockage — au-delà
+                        sans moyen de paiement, les écritures sont bloquées).
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
