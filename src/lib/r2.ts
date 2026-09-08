@@ -757,9 +757,16 @@ export function estAccesRefuse(err: unknown): boolean {
 function extractErrorCode(err: unknown): string {
   if (err && typeof err === "object") {
     const e = err as Record<string, unknown>;
+    const metadata = e.$metadata as Record<string, number> | undefined;
+    // ⭐ V3.52 — R2 ne renvoie PAS de corps d'erreur sur les requêtes HEAD
+    // (sémantique S3) → le SDK synthétise name="Unknown"/message=
+    // "UnknownError" et le VRAI statut (403/404) n'est que dans
+    // $metadata.httpStatusCode — le remonter au lieu de « Unknown ».
+    if ((e.name === "Unknown" || e.name === "UnknownError") && metadata?.httpStatusCode) {
+      return `HTTP ${metadata.httpStatusCode}`;
+    }
     if (e.name) return String(e.name);
     if (e.Code) return String(e.Code);
-    const metadata = e.$metadata as Record<string, unknown> | undefined;
     if (metadata?.httpStatusCode) return `HTTP ${metadata.httpStatusCode}`;
   }
   return "Unknown";
