@@ -32,6 +32,25 @@
  * site. Un simple drapeau module suffit : il distingue le rechargement
  * complet (nouveau runtime JS → l'intro se rejoue) de la navigation
  * interne (module déjà chargé → pas de re-sonnerie).
+ *
+ * ⭐ V3.53 — LE SHOFAR DÈS LE PREMIER INSTANT, SÉCURITÉ RENFORCÉE :
+ *   · AVANT : le son était créé en JS (`new Audio`) APRÈS l'hydratation →
+ *     la tentative d'autoplay partait TARD (1-3 s) et échouait dès que le
+ *     navigateur appliquait strictement sa politique anti-autoplay SONORE.
+ *   · MAINTENANT : l'élément `<audio autoPlay preload="auto">` est rendu
+ *     dans le HTML INITIAL (SSR) → le navigateur tente la lecture au PARSE
+ *     de la page, bien avant le JS : c'est la tentative la plus PRÉCOCE
+ *     possible, celle que les navigateurs honorent dès qu'une dérogation
+ *     existe (interaction déjà eue avec le domaine dans la session, indice
+ *     d'engagement médiatique Chrome/MEI, site installé comme app PWA).
+ *   · L'élément vit HORS de l'overlay (état audioVivant) : ses 30 s
+ *     continuent de retentir sous le site après l'ouverture (V3.14).
+ *   · Si le navigateur refuse (première visite À FROID — aucun site web
+ *     ne peut forcer un son avant le tout premier geste, c'est une règle
+ *     des navigateurs) : le shofar démarre au PREMIER geste QUELCONQUE
+ *     (toucher, clic, touche du clavier — capture) et achève ses 30 s ;
+ *     chaque visite où il retentit nourrit l'indice d'engagement (MEI) →
+ *     les visites suivantes démarrent SEULES, sans geste.
  * ============================================================================
  */
 
@@ -53,12 +72,37 @@ const DUREE_MS = 5_000; // ⭐ V3.14 — 5 secondes MAXIMUM (barre 0 → 100 %)
 const FICHIER = "/sounds/shofar.mp3"; // 30 s — continue après l'ouverture
 const FONDE_SORTIE_MS = 500;
 
+// ⭐ V3.53 — Gestes qui débloquent l'audio quand le navigateur refuse la
+// lecture automatique (politique anti-autoplay sonore) : pointerdown
+// (souris + tactile moderne), touchend (iOS ancien), keydown (clavier).
+// Écouteurs posés sur window en phase de CAPTURE → le geste compte même
+// s'il est consommé par un autre élément de la page : N'IMPORTE QUEL
+// premier geste démarre le shofar (aucun bouton dédié à viser).
+const ECOUTE_CAPTURE: AddEventListenerOptions = { capture: true };
+
+function ecouterPremierGeste(handler: EventListener): void {
+  window.addEventListener("pointerdown", handler, ECOUTE_CAPTURE);
+  window.addEventListener("touchend", handler, ECOUTE_CAPTURE);
+  window.addEventListener("keydown", handler, ECOUTE_CAPTURE);
+}
+
+function nePlusEcouterLeGeste(handler: EventListener): void {
+  window.removeEventListener("pointerdown", handler, ECOUTE_CAPTURE);
+  window.removeEventListener("touchend", handler, ECOUTE_CAPTURE);
+  window.removeEventListener("keydown", handler, ECOUTE_CAPTURE);
+}
+
 export function LandingIntro() {
   // ⭐ V3.14 — État initial calculé au PREMIER rendu : l'écran est VISIBLE
   // dès le premier paint (HTML serveur inclus) → le landing ne s'affiche
   // JAMAIS avant la page de loading. Hydratation identique (même valeur
   // initiale côté serveur et client) → aucun flash, aucun écart.
   const [actif, setActif] = useState(() => !introDejaJoueeAuRuntime);
+  // ⭐ V3.53 — l'élément <audio> reste rendu TANT QUE le shofar doit
+  // retentir (intro + 30 s sous le site) : il vit HORS de l'overlay
+  // conditionnel — retiré seulement à sa fin naturelle (onEnded) ou au
+  // « Passer » — pour que sa lecture traverse la fermeture de l'écran.
+  const [audioVivant, setAudioVivant] = useState(() => !introDejaJoueeAuRuntime);
   const [enFonduSortie, setEnFonduSortie] = useState(false);
   const [sonBloque, setSonBloque] = useState(false);
   const [restantMs, setRestantMs] = useState(DUREE_MS);
@@ -91,16 +135,13 @@ export function LandingIntro() {
     }
 
     const audio = audioRef.current;
-    if (audio) {
-      if (naturel) {
-        // ⭐ V3.14 — LE SHOFAR CONTINUE : l'écran s'ouvre à 5 s mais le son
-        // retentit jusqu'à ses 30 secondes naturelles sous le site affiché
-        // (il s'éteint de lui-même à la fin du média).
-        audio.onended = () => audio.pause();
-      } else {
-        // « Passer »/Échap : on coupe aussi le son.
-        audio.pause();
-      }
+    if (audio && !naturel) {
+      // « Passer »/Échap : on coupe aussi le son et l'on retire l'élément.
+      // (Ouverture NATURELLE : le shofar CONTINUE ses 30 s sous le site —
+      // l'élément reste dans le DOM (audioVivant) et s'éteint de lui-même
+      // à la fin du média, voir onEnded sur le <audio>.)
+      audio.pause();
+      setAudioVivant(false);
     }
 
     document.body.style.overflow = "";
@@ -116,31 +157,46 @@ export function LandingIntro() {
     document.body.style.overflow = "hidden"; // pas de défilement pendant l'écran
     debutRef.current = Date.now();
 
-    // Le shofar réel — 30 s qui DÉPASSENT l'écran de chargement (5 s) :
-    // la lecture démarre ici et n'est pas interrompue à l'ouverture.
-    const audio = new Audio(FICHIER);
-    audio.preload = "auto";
-    audio.volume = 0.9;
-    audioRef.current = audio;
+    // ⭐ V3.53 — Le shofar réel : l'élément <audio autoPlay> est déjà dans
+    // le HTML INITIAL (SSR) → le navigateur a pu démarrer la lecture au
+    // PARSE de la page (dérogations : interaction déjà eue avec le domaine
+    // dans la session, indice d'engagement médiatique Chrome, PWA
+    // installée). Au montage, on GARANTIT la tentative (élément inséré
+    // côté client lors d'une navigation interne, ou autoPlay différé) :
+    const audio = audioRef.current;
+    let debloquer: EventListener | null = null;
 
-    let debloquer: (() => void) | null = null;
-    const tentative = audio.play();
-    tentative
-      .then(() => setSonBloque(false))
-      .catch(() => {
-        // Autoplay bloqué par le navigateur → inviter au premier geste
-        // (le son démarre alors et finit ses 30 s, même sous le site).
-        setSonBloque(true);
-        debloquer = () => {
-          audio
-            .play()
-            .then(() => setSonBloque(false))
-            .catch(() => {
-              /* reste silencieux : l'écran se poursuit sans son */
-            });
-        };
-        window.addEventListener("pointerdown", debloquer, { once: true, capture: true });
-      });
+    if (audio) {
+      audio.volume = 0.9;
+      if (audio.paused && !audio.ended) {
+        audio
+          .play()
+          .then(() => setSonBloque(false))
+          .catch(() => {
+            // Lecture automatique refusée par le navigateur (première
+            // visite à froid — politique anti-autoplay SONORE, aucune page
+            // web ne peut la contourner) : le shofar démarre alors au
+            // PREMIER geste quelconque (toucher, clic, touche — capture)
+            // et finit ses 30 s, même sous le site.
+            setSonBloque(true);
+            const surPremierGeste: EventListener = () => {
+              nePlusEcouterLeGeste(surPremierGeste);
+              audio
+                .play()
+                .then(() => setSonBloque(false))
+                .catch(() => {
+                  /* reste silencieux : l'écran se poursuit sans son */
+                });
+            };
+            debloquer = surPremierGeste;
+            ecouterPremierGeste(surPremierGeste);
+          });
+      } else {
+        // L'autoPlay natif (SSR) a déjà démarré la lecture : rien à
+        // débloquer, aucune invite à afficher.
+        setSonBloque(false);
+      }
+    }
 
     // 5 secondes de chargement (barre 0 → 100 %), puis ouverture du site
     // — le shofar, lui, continue jusqu'à 30 s.
@@ -161,9 +217,7 @@ export function LandingIntro() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (minuteurSortieRef.current) clearTimeout(minuteurSortieRef.current);
-      if (debloquer) {
-        window.removeEventListener("pointerdown", debloquer, { capture: true } as AddEventListenerOptions);
-      }
+      if (debloquer) nePlusEcouterLeGeste(debloquer);
       window.removeEventListener("keydown", onEchap);
       const a = audioRef.current;
       if (a && !termineRef.current) a.pause();
@@ -174,7 +228,25 @@ export function LandingIntro() {
   // ── Rendu : la page de loading du Mouvement ───────────────────────────
 
   return (
-    <AnimatePresence>
+    <>
+      {/* ⭐ V3.53 — LE SHOFAR DANS LE HTML INITIAL : <audio autoPlay> rendu
+          côté serveur → le navigateur tente la lecture DÈS LE PARSE de la
+          page (avant le JS) — l'instant le plus précoce que les navigateurs
+          puissent autoriser. L'élément vit HORS de l'overlay : sa lecture
+          de 30 s continue sous le site après l'ouverture ; il est retiré à
+          sa fin naturelle (onEnded) ou au « Passer ». */}
+      {audioVivant && (
+        <audio
+          ref={audioRef}
+          src={FICHIER}
+          autoPlay
+          preload="auto"
+          onEnded={() => setAudioVivant(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <AnimatePresence>
       {actif && (
         <motion.div
           key="landing-intro"
@@ -300,6 +372,7 @@ export function LandingIntro() {
           </button>
         </motion.div>
       )}
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 }
