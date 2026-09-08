@@ -1,9 +1,12 @@
 import { db } from "@/lib/db";
 import { AdminForm, type FieldDef } from "@/components/admin/admin-form";
+// ⭐ V3.47 — colonne Biography.photoUrl sélectionnée ci-dessous.
+import { ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewBiographyPage() {
+  await ensureBiographyPhotoColumn().catch(() => {});
   const servants = await db.servant.findMany({ where: { isActive: true } });
 
   const FIELDS: FieldDef[] = [
@@ -47,6 +50,14 @@ export default async function NewBiographyPage() {
       label: "Texte du verset",
       type: "textarea",
       placeholder: "« Et Hénoch marcha avec Dieu... »",
+      fullWidth: true,
+    },
+    {
+      name: "photoUrl",
+      label: "Photo du jalon (page publique)",
+      // ⭐ V3.47 — image rectangulaire, ratio d'origine préservé.
+      type: "image",
+      help: "Illustration de cette étape sur la frise chronologique publique — facultative",
       fullWidth: true,
     },
     {

@@ -1,12 +1,18 @@
 import { db } from "@/lib/db";
-import Link from "next/link";
-import { Pencil, BookOpen, Calendar, Quote, Crown } from "lucide-react";
+import { BookOpen, Calendar, Quote, Crown, Image as ImageIcon } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { NewBiographyButton } from "@/components/admin/create-buttons";
+// ⭐ V3.47 — bouton stylo → MODAL professionnel (photo du jalon + photo de
+// biographie publique incluses) au lieu de la page /edit.
+import { BiographyEditButton } from "@/components/admin/biography-modal";
+// ⭐ V3.47 — colonne Biography.photoUrl : le findMany ci-dessous la
+// sélectionne → garde avant lecture (pattern V3.46).
+import { ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminBiographiesPage() {
+  await ensureBiographyPhotoColumn().catch(() => {});
   const [biographies, servants] = await Promise.all([
     db.biography.findMany({
       orderBy: [{ servantId: "asc" }, { order: "asc" }],
@@ -96,37 +102,60 @@ export default async function AdminBiographiesPage() {
 
                       {/* Contenu */}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Calendar className="w-3 h-3 text-[#8A8378]" />
-                          <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: accentColor }}>
-                            {b.date}
-                          </span>
-                        </div>
-                        <p className="font-bold text-sm text-[#1E0F2B] leading-tight">
-                          {b.title}
-                        </p>
-                        {b.description && (
-                          <p className="text-xs text-[#1E0F2B]/70 mt-1 line-clamp-2 leading-relaxed">
-                            {b.description}
-                          </p>
-                        )}
-                        {b.verseRef && (
-                          <div className="flex items-center gap-1.5 mt-2 text-[11px] text-[#8A8378] italic">
-                            <Quote className="w-3 h-3 flex-shrink-0" />
-                            <span>{b.verseRef}</span>
+                        <div className="flex items-start gap-3">
+                          {/* ⭐ V3.47 — miniature de la photo du jalon (si présente) */}
+                          {b.photoUrl && (
+                            <div className="w-20 h-[50px] rounded-lg border-2 flex-shrink-0 overflow-hidden bg-[#2A0E3D] shadow-sm" style={{ borderColor: `${accentColor}55` }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={b.photoUrl} alt={b.title} className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Calendar className="w-3 h-3 text-[#8A8378]" />
+                              <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: accentColor }}>
+                                {b.date}
+                              </span>
+                              {b.photoUrl && (
+                                <ImageIcon className="w-3 h-3 text-[#C9A227]" aria-label="Jalon illustré" />
+                              )}
+                            </div>
+                            <p className="font-bold text-sm text-[#1E0F2B] leading-tight">
+                              {b.title}
+                            </p>
+                            {b.description && (
+                              <p className="text-xs text-[#1E0F2B]/70 mt-1 line-clamp-2 leading-relaxed">
+                                {b.description}
+                              </p>
+                            )}
+                            {b.verseRef && (
+                              <div className="flex items-center gap-1.5 mt-2 text-[11px] text-[#8A8378] italic">
+                                <Quote className="w-3 h-3 flex-shrink-0" />
+                                <span>{b.verseRef}</span>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
 
                       {/* Actions */}
                       <div className="flex items-center gap-1 ">
-                        <Link
-                          href={`/admin/biographies/${b.id}/edit`}
-                          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
-                          aria-label="Modifier"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Link>
+                        {/* ⭐ V3.47 — stylo → modal professionnel (plus de page /edit) */}
+                        <BiographyEditButton
+                          biography={{
+                            id: b.id,
+                            servantId: b.servantId,
+                            date: b.date,
+                            title: b.title,
+                            description: b.description,
+                            verseRef: b.verseRef,
+                            verseText: b.verseText,
+                            photoUrl: b.photoUrl,
+                            order: b.order,
+                          }}
+                          servants={servants}
+                          accentColor={accentColor}
+                        />
                         <DeleteButton entity="biographies" id={b.id} />
                       </div>
                     </div>

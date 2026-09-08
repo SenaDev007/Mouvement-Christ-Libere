@@ -17,11 +17,13 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { MarkdownText } from "@/components/site/markdown-text";
 import { HeroBackgroundImage } from "@/components/site/page-hero";
+// ⭐ V3.47 — frise chronologique publique (jalons + photos).
+import { BioTimeline, type BioMilestone } from "@/components/site/bio-timeline";
 import { IsololeText } from "@/lib/isolole";
 import type { HeroConfig } from "@/lib/hero-defaults";
 import { ChevronRight, FileText, BookOpen, Video, Sparkles, MapPin, Calendar, Quote } from "lucide-react";
 
-export function PamView({ hero }: { hero: HeroConfig }) {
+export function PamView({ hero, milestones = [] }: { hero: HeroConfig; milestones?: BioMilestone[] }) {
   const d = hero.data;
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -260,6 +262,14 @@ export function PamView({ hero }: { hero: HeroConfig }) {
           </div>
         </div>
       </article>
+
+      {/* ═══ ⭐ V3.47 — FRISE CHRONOLOGIQUE (jalons du module Biographies,
+          photos incluses — masquée si aucun jalon) ═══ */}
+      <BioTimeline
+        milestones={milestones}
+        accentColor="#C9A227"
+        title="Les étapes du parcours de Pam"
+      />
 
       {/* ═══ LIENS VERS AUTRES CONTENUS ═══ */}
       <section className="py-16 bg-[#2A0E3D]">

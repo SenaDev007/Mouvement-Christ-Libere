@@ -8,6 +8,8 @@ import {
   Plus, Pencil, Video as VideoIcon, Radio, Eye, Clock, Crown,
   X, Loader2, AlertCircle, Save, Tag, ChevronDown,
   Download, Trash2, FolderDown, Star,
+  // ⭐ V3.47 — upload direct de fichiers vidéo dans le modal « Nouvelle vidéo »
+  Upload, FileVideo, Link as LinkIcon, Camera,
 } from "lucide-react";
 // ⭐ V3.46 — Rubriques signatures (partagées site public ↔ back-office) :
 // « Saint-Esprit réponds-moi » (Pam), « Rhema du matin »/« Rhema du soir »
@@ -18,7 +20,7 @@ import {
   TOUTES_RUBRIQUES, categoryOrder,
 } from "@/lib/video-rubrics";
 import { DeleteButton } from "@/components/admin/delete-button";
-import { AdminModal, ModalField, ModalSubmit, ModalError, modalInputClass } from "@/components/admin/admin-modal";
+import { AdminModal, ModalField, ModalError, modalInputClass } from "@/components/admin/admin-modal";
 import type { Video, Servant } from "@prisma/client";
 // ⭐ V3.37 — Copies locales de secours des replays (IndexedDB, propres à
 // CET appareil) : quand l'upload R2 a échoué à l'arrêt d'un live, la vidéo
@@ -661,7 +663,115 @@ interface NewVideoModalProps {
   preselectedServantCode: string | null;
 }
 
+/** Formate une durée en secondes → « 1:24:30 » ou « 24:30 ». */
+function formaterDuree(secondes: number): string {
+  if (!isFinite(secondes) || secondes <= 0) return "";
+  const h = Math.floor(secondes / 3600);
+  const m = Math.floor((secondes % 3600) / 60);
+  const s = Math.floor(secondes % 60);
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+    : `${m}:${String(s).padStart(2, "0")}`;
+}
+
+/** Taille lisible d'un fichier (« 128 Mo », « 1,2 Go »). */
+function tailleLisibleFichier(octets: number): string {
+  if (octets >= 1024 * 1024 * 1024) return `${(octets / 1024 / 1024 / 1024).toFixed(1).replace(".", ",")} Go`;
+  if (octets >= 1024 * 1024) return `${Math.round(octets / 1024 / 1024)} Mo`;
+  return `${Math.max(1, Math.round(octets / 1024))} Ko`;
+}
+
+/**
+ * ⭐ V3.47 — Miniature + durée auto-extraites du fichier vidéo côté client :
+ * lecture <video>, seek ~20 %, capture canvas 480 px → JPEG ≤ 60 Ko.
+ * Best-effort : renvoie null si le navigateur ne peut pas décoder (la
+ * miniature reste alors vide — l'admin peut coller une URL manuellement).
+ */
+async function extraireMiniatureEtDuree(file: File): Promise<{ thumb: string; duration: string } | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    let termine = false;
+    const fin = (result: { thumb: string; duration: string } | null) => {
+      if (termine) return;
+      termine = true;
+      URL.revokeObjectURL(url);
+      resolve(result);
+    };
+    // Sécurité : certains WebM ne déclenchent jamais onseeked → timeout 6 s.
+    const timeout = setTimeout(() => fin(null), 6000);
+    video.addEventListener("loadeddata", () => {
+      try {
+        video.currentTime = Math.min(Math.max(video.duration * 0.2, 1), 60);
+      } catch {
+        /* reste sur la frame 0 */
+      }
+    });
+    video.addEventListener("seeked", () => {
+      try {
+        const largeur = Math.min(video.videoWidth || 480, 480);
+        const ratio = video.videoHeight && video.videoWidth ? video.videoHeight / video.videoWidth : 0.5625;
+        const canvas = document.createElement("canvas");
+        canvas.width = largeur;
+        canvas.height = Math.round(largeur * ratio);
+        const ctx = canvas.getContext("2d");
+        if (!ctx || !video.videoWidth) throw new Error("canvas");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        let qualite = 0.8;
+        let out = canvas.toDataURL("image/jpeg", qualite);
+        let kb = Math.round((out.length * 3) / 4 / 1024);
+        while (kb > 60 && qualite > 0.3) {
+          qualite -= 0.1;
+          out = canvas.toDataURL("image/jpeg", qualite);
+          kb = Math.round((out.length * 3) / 4 / 1024);
+        }
+        clearTimeout(timeout);
+        fin({ thumb: out, duration: formaterDuree(video.duration) });
+      } catch {
+        clearTimeout(timeout);
+        fin(null);
+      }
+    });
+    video.addEventListener("error", () => {
+      clearTimeout(timeout);
+      fin(null);
+    });
+    video.src = url;
+  });
+}
+
+/** PUT XHR vers R2 avec progression (bypass total du body Vercel). */
+function uploaderVersR2(
+  file: File,
+  uploadUrl: string,
+  contentType: string,
+  onProgress: (pourcent: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener("progress", (ev) => {
+      if (ev.lengthComputable) onProgress(Math.round((ev.loaded / ev.total) * 100));
+    });
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`Envoi vers le stockage échoué (HTTP ${xhr.status})`));
+    });
+    xhr.addEventListener("error", () => reject(new Error("Erreur réseau pendant l'envoi")));
+    xhr.addEventListener("abort", () => reject(new Error("Envoi annulé")));
+    xhr.open("PUT", uploadUrl);
+    xhr.setRequestHeader("Content-Type", contentType);
+    xhr.send(file);
+  });
+}
+
+type PhaseUpload = "repos" | "fiche" | "envoi" | "finalisation" | "erreur";
+
 function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewVideoModalProps) {
+  // ⭐ V3.47 — source de la vidéo : lien (YouTube…) OU FICHIER (upload direct).
+  const [source, setSource] = useState<"lien" | "fichier">("lien");
   const [form, setForm] = useState({
     servantId: "",
     title: "",
@@ -676,6 +786,16 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ─── ⭐ V3.47 — état de l'upload direct ───
+  const [fichier, setFichier] = useState<File | null>(null);
+  const [miniatureAuto, setMiniatureAuto] = useState<string | null>(null);
+  const [dureeAuto, setDureeAuto] = useState("");
+  const [extractionEnCours, setExtractionEnCours] = useState(false);
+  const [phase, setPhase] = useState<PhaseUpload>("repos");
+  const [progression, setProgression] = useState(0);
+  // Fiche déjà créée après un échec d'envoi → bouton « Réessayer l'envoi ».
+  const [ficheCreeeId, setFicheCreeeId] = useState<string | null>(null);
 
   // Pré-remplir le serviteur quand le modal s'ouvre
   useEffect(() => {
@@ -699,31 +819,147 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
     }
   };
 
+  // ─── Sélection du fichier vidéo ───
+  const handleFichierChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setFichier(file);
+    setMiniatureAuto(null);
+    setDureeAuto("");
+    setError("");
+    // Best-effort : miniature + durée auto (peut échouer selon le navigateur).
+    setExtractionEnCours(true);
+    const extrait = await extraireMiniatureEtDuree(file);
+    setExtractionEnCours(false);
+    if (extrait) {
+      setMiniatureAuto(extrait.thumb);
+      if (extrait.duration) {
+        setDureeAuto(extrait.duration);
+        setForm((f) => (f.duration ? f : { ...f, duration: extrait.duration }));
+      }
+    }
+  };
+
+  // ─── Soumission ───
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await envoyer(false);
+  };
+
+  const envoyer = async (estReessai: boolean) => {
     if (!form.servantId || !form.title) {
       setError("Serviteur et titre sont requis");
+      return;
+    }
+    if (source === "fichier" && !fichier && !estReessai) {
+      setError("Choisissez le fichier vidéo à envoyer");
       return;
     }
 
     setLoading(true);
     setError("");
+    setProgression(0);
 
     try {
-      const res = await fetch("/admin/api/videos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          views: Number(form.views) || 0,
-          // ⭐ V3.46 — rubrique explicite (null = automatique).
-          category: form.category || null,
-        }),
-      });
+      let videoId = ficheCreeeId;
 
-      if (!res.ok) {
+      // ① Créer (ou réutiliser) la fiche vidéo
+      if (!videoId) {
+        setPhase("fiche");
+        const thumbnailFinal = form.thumbnailUrl.trim() || miniatureAuto || "";
+        const res = await fetch("/admin/api/videos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            servantId: form.servantId,
+            title: form.title,
+            description: form.description,
+            duration: form.duration || dureeAuto || "",
+            // ⭐ V3.47 — mode lien : URL ; mode fichier : null (l'URL du
+            // stockage est posée par l'étape d'upload ci-dessous).
+            videoUrl: source === "lien" ? form.videoUrl : null,
+            thumbnailUrl: thumbnailFinal,
+            isLive: form.isLive,
+            views: Number(form.views) || 0,
+            // ⭐ V3.46 — rubrique explicite (null = automatique) : la vidéo
+            // apparaîtra dans la section du serviteur ET sa rubrique sur la
+            // page publique /videos.
+            category: form.category || null,
+            // ⭐ V3.47 — publiée maintenant (sinon null → reléguée en fin de
+            // liste, tri publishedAt desc côté public).
+            publishedAt: new Date().toISOString(),
+          }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Erreur lors de la création");
+        }
         const data = await res.json();
-        throw new Error(data.error || "Erreur lors de la création");
+        videoId = data.item?.id as string | undefined;
+        if (!videoId) throw new Error("Identifiant vidéo manquant dans la réponse");
+        setFicheCreeeId(videoId);
+      }
+
+      // ② Envoyer le fichier (mode fichier uniquement)
+      if (source === "fichier" && fichier) {
+        const contentType = fichier.type || "video/mp4";
+        setPhase("envoi");
+        let envoye = false;
+
+        // Chemin prioritaire : upload DIRECT vers R2 via URL pré-signée
+        // (aucune limite de taille — contourne le body Vercel, cf. V2.9).
+        try {
+          const presignRes = await fetch(`/api/videos/${videoId}/presign`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contentType, filename: fichier.name }),
+          });
+          if (presignRes.ok) {
+            const { uploadUrl, publicUrl } = await presignRes.json();
+            await uploaderVersR2(fichier, uploadUrl, contentType, setProgression);
+            setPhase("finalisation");
+            const commit = await fetch(`/api/videos/${videoId}/upload`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ r2Url: publicUrl }),
+            });
+            if (!commit.ok) {
+              const d = await commit.json().catch(() => ({}));
+              throw new Error(d.error || "Confirmation de l'envoi impossible");
+            }
+            envoye = true;
+          } else if (presignRes.status !== 503) {
+            const d = await presignRes.json().catch(() => ({}));
+            console.warn("[Nouvelle vidéo] presign indisponible :", d.error);
+          }
+        } catch (err) {
+          // On tente le repli FormData ci-dessous ; si la taille dépasse la
+          // limite, l'erreur explicite est levée là.
+          if (err instanceof Error && err.message === "Envoi annulé") throw err;
+          console.warn("[Nouvelle vidéo] upload R2 direct a échoué :", err);
+        }
+
+        // Repli : FormData via la fonction serveur (limite ~4,5 Mo Vercel).
+        if (!envoye) {
+          if (fichier.size > 4 * 1024 * 1024) {
+            setPhase("erreur");
+            throw new Error(
+              `Ce fichier (${tailleLisibleFichier(fichier.size)}) dépasse 4 Mo et l'envoi direct vers le stockage cloud est indisponible. ` +
+              "Réessayez dans quelques instants (bouton « Réessayer l'envoi ») ou vérifiez la configuration Cloudflare R2.",
+            );
+          }
+          setPhase("envoi");
+          const fd = new FormData();
+          fd.append("file", fichier);
+          const up = await fetch(`/api/videos/${videoId}/upload`, { method: "POST", body: fd });
+          if (!up.ok) {
+            const d = await up.json().catch(() => ({}));
+            setPhase("erreur");
+            throw new Error(d.error || "Échec de l'envoi du fichier");
+          }
+        }
       }
 
       // Reset + close
@@ -738,14 +974,31 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
         views: 0,
         category: "",
       });
+      setFichier(null);
+      setMiniatureAuto(null);
+      setDureeAuto("");
+      setFicheCreeeId(null);
+      setPhase("repos");
       onClose();
       // Refresh page to show new video
       window.location.reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      setPhase("erreur");
+      setError(
+        (err instanceof Error ? err.message : "Erreur inconnue") +
+        (ficheCreeeId ? " — la fiche vidéo a été créée : « Réessayer l'envoi » ci-dessous reprendra l'envoi du fichier." : ""),
+      );
     } finally {
       setLoading(false);
     }
+  };
+
+  const phaseLabel: Record<PhaseUpload, string> = {
+    repos: "",
+    fiche: "Création de la fiche vidéo…",
+    envoi: `Envoi du fichier… ${progression}%`,
+    finalisation: "Finalisation…",
+    erreur: "",
   };
 
   return (
@@ -761,6 +1014,36 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* ⭐ V3.47 — Sélecteur de source : Lien (YouTube…) OU Fichier */}
+        <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#FAF6EF] border-2 border-[#8A8378]/15">
+          <button
+            type="button"
+            onClick={() => { setSource("lien"); setError(""); }}
+            disabled={loading}
+            className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors disabled:opacity-50 ${
+              source === "lien"
+                ? "bg-white text-[#1E0F2B] shadow-md border border-[#C9A227]/40"
+                : "text-[#8A8378] hover:text-[#1E0F2B]"
+            }`}
+          >
+            <LinkIcon className="w-4 h-4" />
+            Lien YouTube
+          </button>
+          <button
+            type="button"
+            onClick={() => { setSource("fichier"); setError(""); }}
+            disabled={loading}
+            className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors disabled:opacity-50 ${
+              source === "fichier"
+                ? "bg-white text-[#1E0F2B] shadow-md border border-[#C9A227]/40"
+                : "text-[#8A8378] hover:text-[#1E0F2B]"
+            }`}
+          >
+            <Upload className="w-4 h-4" />
+            Fichier vidéo
+          </button>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           {/* Serviteur */}
           <ModalField label="Serviteur" required>
@@ -780,12 +1063,12 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
           </ModalField>
 
           {/* Durée */}
-          <ModalField label="Durée">
+          <ModalField label="Durée" help={source === "fichier" ? "Auto-détectée depuis le fichier" : undefined}>
             <input
               type="text"
               value={form.duration}
               onChange={(e) => setForm({ ...form, duration: e.target.value })}
-              placeholder="1:24:30 ou EN DIRECT"
+              placeholder={source === "fichier" && dureeAuto ? dureeAuto : "1:24:30 ou EN DIRECT"}
               className={modalInputClass()}
             />
           </ModalField>
@@ -830,29 +1113,114 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
           />
         </ModalField>
 
-        <div className="grid grid-cols-2 gap-4">
-          {/* URL vidéo */}
-          <ModalField label="URL vidéo" help="YouTube, Vimeo, etc.">
-            <input
-              type="text"
-              value={form.videoUrl}
-              onChange={(e) => handleUrlChange(e.target.value)}
-              placeholder="https://youtube.com/watch?v=..."
-              className={modalInputClass()}
-            />
-          </ModalField>
+        {source === "lien" ? (
+          <div className="grid grid-cols-2 gap-4">
+            {/* URL vidéo */}
+            <ModalField label="URL vidéo" help="YouTube, Vimeo, etc.">
+              <input
+                type="text"
+                value={form.videoUrl}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                placeholder="https://youtube.com/watch?v=..."
+                className={modalInputClass()}
+              />
+            </ModalField>
 
-          {/* Thumbnail */}
-          <ModalField label="URL miniature" help="Auto-rempli depuis YouTube">
-            <input
-              type="text"
-              value={form.thumbnailUrl}
-              onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
-              placeholder="https://..."
-              className={modalInputClass()}
-            />
-          </ModalField>
-        </div>
+            {/* Thumbnail */}
+            <ModalField label="URL miniature" help="Auto-rempli depuis YouTube">
+              <input
+                type="text"
+                value={form.thumbnailUrl}
+                onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
+                placeholder="https://..."
+                className={modalInputClass()}
+              />
+            </ModalField>
+          </div>
+        ) : (
+          /* ⭐ V3.47 — Zone fichier vidéo (upload direct) */
+          <div className="space-y-3">
+            {!fichier ? (
+              <label
+                className="flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-xl border-2 border-dashed border-[#C9A227]/50 bg-[#C9A227]/5 cursor-pointer hover:bg-[#C9A227]/10 transition-colors"
+                title="Choisir le fichier vidéo à envoyer"
+              >
+                <FileVideo className="w-10 h-10 text-[#C9A227]" />
+                <div className="text-center">
+                  <p className="text-sm font-bold text-[#1E0F2B]">
+                    Choisir le fichier vidéo
+                  </p>
+                  <p className="text-xs text-[#8A8378] mt-1">
+                    MP4, WebM, MOV — envoyé directement sur le site, sans passer par YouTube.
+                    <br />
+                    La miniature et la durée sont détectées automatiquement.
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime,video/x-matroska,video/*"
+                  onChange={handleFichierChange}
+                  className="hidden"
+                  disabled={loading}
+                  aria-label="Fichier vidéo"
+                />
+              </label>
+            ) : (
+              <div className="flex items-start gap-4 p-4 rounded-xl border-2 border-[#C9A227]/40 bg-[#FAF6EF]">
+                {/* Aperçu miniature auto-capturée */}
+                <div className="w-36 h-[81px] rounded-lg overflow-hidden bg-[#2A0E3D] flex items-center justify-center flex-shrink-0 border border-[#8A8378]/15">
+                  {extractionEnCours ? (
+                    <Loader2 className="w-5 h-5 text-[#C9A227] animate-spin" />
+                  ) : miniatureAuto ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={miniatureAuto} alt="Miniature détectée" className="w-full h-full object-cover" />
+                  ) : (
+                    <FileVideo className="w-6 h-6 text-[#C9A227]/60" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-[#1E0F2B] truncate" title={fichier.name}>
+                    {fichier.name}
+                  </p>
+                  <p className="text-xs text-[#8A8378] mt-0.5">
+                    {tailleLisibleFichier(fichier.size)}
+                    {dureeAuto ? ` · durée ${dureeAuto}` : ""}
+                    {extractionEnCours ? " · analyse en cours…" : ""}
+                  </p>
+                  {miniatureAuto && (
+                    <p className="text-[10px] text-[#8A8378]/80 mt-1 flex items-center gap-1">
+                      <Camera className="w-3 h-3" /> Miniature capturée automatiquement
+                    </p>
+                  )}
+                  {!loading && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFichier(null);
+                        setMiniatureAuto(null);
+                        setDureeAuto("");
+                      }}
+                      className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" /> Choisir un autre fichier
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Miniature personnalisée (facultatif — prime sur l'auto) */}
+            <ModalField label="URL miniature personnalisée" help="Facultatif — si vide, la miniature détectée ci-dessus est utilisée" fullWidth>
+              <input
+                type="text"
+                value={form.thumbnailUrl}
+                onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
+                placeholder="https://… (facultatif)"
+                className={modalInputClass()}
+              />
+            </ModalField>
+          </div>
+        )}
 
         {/* Checkbox Live */}
         <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
@@ -870,16 +1238,69 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
 
         <ModalError error={error} />
 
+        {/* ⭐ V3.47 — Progression de l'envoi */}
+        {loading && (phase === "envoi" || phase === "fiche" || phase === "finalisation") && (
+          <div className="px-4 py-3 rounded-xl bg-[#2A0E3D]/5 border border-[#C9A227]/30">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-[#1E0F2B] flex items-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9A227]" />
+                {phaseLabel[phase]}
+              </p>
+              {phase === "envoi" && (
+                <span className="text-xs font-bold text-[#A3821C]">{progression}%</span>
+              )}
+            </div>
+            <div className="h-2 rounded-full bg-[#8A8378]/15 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#C9A227] to-[#DDBE55] transition-all duration-300"
+                style={{ width: `${phase === "envoi" ? progression : phase === "finalisation" ? 100 : 8}%` }}
+              />
+            </div>
+            {fichier && phase === "envoi" && (
+              <p className="text-[10px] text-[#8A8378] mt-1.5">
+                {tailleLisibleFichier(fichier.size)} — ne fermez pas cette fenêtre pendant l&apos;envoi.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A8378]/10">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
+            disabled={loading}
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8A8378] hover:text-[#1E0F2B] transition-colors disabled:opacity-40"
           >
             Annuler
           </button>
-          <ModalSubmit loading={loading} label="Créer la vidéo" />
+          <button
+            type="submit"
+            disabled={loading || extractionEnCours}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {phase === "envoi" ? "Envoi en cours…" : "Création…"}
+              </>
+            ) : (
+              <>
+                {source === "fichier" ? <Upload className="w-4 h-4" /> : null}
+                {source === "fichier" ? "Créer et envoyer la vidéo" : "Créer la vidéo"}
+              </>
+            )}
+          </button>
+          {/* Fiche créée mais envoi échoué → reprise directe */}
+          {ficheCreeeId && phase === "erreur" && fichier && !loading && (
+            <button
+              type="button"
+              onClick={() => envoyer(true)}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+            >
+              <Upload className="w-4 h-4" /> Réessayer l&apos;envoi
+            </button>
+          )}
         </div>
       </form>
     </AdminModal>

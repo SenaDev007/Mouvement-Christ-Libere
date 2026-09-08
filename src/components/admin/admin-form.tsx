@@ -2,14 +2,14 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, AlertCircle, Camera } from "lucide-react";
-import { compressAvatar } from "@/lib/avatar-upload";
+import { Loader2, Save, AlertCircle, Camera, ArrowLeft } from "lucide-react";
+import { compressAvatar, compressHeroImage } from "@/lib/avatar-upload";
 import { semanticInputProps } from "@/lib/form-semantics";
 
 export interface FieldDef {
   name: string;
   label: string;
-  type: "text" | "textarea" | "select" | "number" | "date" | "datetime-local" | "checkbox" | "tags" | "photo";
+  type: "text" | "textarea" | "select" | "number" | "date" | "datetime-local" | "checkbox" | "tags" | "photo" | "image";
   options?: { value: string; label: string }[];
   placeholder?: string;
   help?: string;
@@ -40,22 +40,25 @@ export function AdminForm({
 
   // ⭐ V2.7 — Champs « photo » : valeur gérée hors FormData (data URL
   // compressée côté client, impossible via un <input type=text> classique)
+  // ⭐ V3.47 — Champs « image » : même mécanique mais compression À RATIO
+  // PRÉSERVÉ (compressHeroImage ≤ 150 Ko) pour les photos rectangulaires
+  // (photo d'un jalon biographique…).
   const photoFileRef = useRef<Record<string, HTMLInputElement | null>>({});
   const [photoValues, setPhotoValues] = useState<Record<string, string | null>>(() => {
     const initial: Record<string, string | null> = {};
     for (const f of fields) {
-      if (f.type === "photo") initial[f.name] = (initialData?.[f.name] as string | null) ?? null;
+      if (f.type === "photo" || f.type === "image") initial[f.name] = (initialData?.[f.name] as string | null) ?? null;
     }
     return initial;
   });
   const [photoProcessing, setPhotoProcessing] = useState<string | null>(null);
 
-  const handlePhotoChange = async (fieldName: string, file: File | undefined) => {
+  const handlePhotoChange = async (fieldName: string, file: File | undefined, kind: "photo" | "image") => {
     if (!file) return;
     setPhotoProcessing(fieldName);
     setError("");
     try {
-      const dataUrl = await compressAvatar(file);
+      const dataUrl = kind === "image" ? await compressHeroImage(file) : await compressAvatar(file);
       setPhotoValues((prev) => ({ ...prev, [fieldName]: dataUrl }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Image invalide");
@@ -76,7 +79,7 @@ export function AdminForm({
       const data: Record<string, unknown> = {};
 
       for (const field of fields) {
-        if (field.type === "photo") {
+        if (field.type === "photo" || field.type === "image") {
           // ⭐ V2.7 — Valeur photo gérée en React state (data URL ou null)
           data[field.name] = photoValues[field.name] ?? null;
           continue;
@@ -145,6 +148,18 @@ export function AdminForm({
 
   return (
     <div className="space-y-6 max-w-3xl">
+      {/* ⭐ V3.47 — BOUTON RETOUR (remonté par le pasteur : « en mode
+          édition, il n'y a pas de bouton retour »). Toujours visible,
+          avant le titre ; le bouton Annuler du formulaire reste en bas. */}
+      <button
+        type="button"
+        onClick={() => router.push(redirectTo)}
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-stone hover:text-ink transition-colors -mt-2"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Retour à la liste
+      </button>
+
       <div>
         <h1 className="font-serif text-3xl font-semibold text-ink mb-1">{title}</h1>
         {subtitle && <p className="text-sm text-stone">{subtitle}</p>}
@@ -162,9 +177,15 @@ export function AdminForm({
                 {field.required && <span className="text-state-danger ml-1">*</span>}
               </label>
 
-              {field.type === "photo" ? (
+              {field.type === "photo" || field.type === "image" ? (
                 <div className="flex items-center gap-4">
-                  <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[#C9A227] to-[#A3821C] flex items-center justify-center text-white font-bold text-2xl overflow-hidden border-2 border-[#C9A227]/30 flex-shrink-0">
+                  <div
+                    className={
+                      field.type === "image"
+                        ? "relative w-40 h-[100px] rounded-xl bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] flex items-center justify-center text-[#C9A227] overflow-hidden border-2 border-[#C9A227]/30 flex-shrink-0 shadow-md"
+                        : "relative w-20 h-20 rounded-full bg-gradient-to-br from-[#C9A227] to-[#A3821C] flex items-center justify-center text-white font-bold text-2xl overflow-hidden border-2 border-[#C9A227]/30 flex-shrink-0"
+                    }
+                  >
                     {photoValues[field.name] ? (
                       <img src={photoValues[field.name] as string} alt={field.label} className="w-full h-full object-cover" />
                     ) : (
@@ -181,7 +202,7 @@ export function AdminForm({
                       ref={(el) => { photoFileRef.current[field.name] = el; }}
                       type="file"
                       accept="image/*"
-                      onChange={(e) => handlePhotoChange(field.name, e.target.files?.[0])}
+                      onChange={(e) => handlePhotoChange(field.name, e.target.files?.[0], field.type as "photo" | "image")}
                       className="hidden"
                       id={`photo-${field.name}`}
                     />
@@ -203,7 +224,11 @@ export function AdminForm({
                         Retirer la photo
                       </button>
                     )}
-                    <p className="text-[10px] text-stone">JPG/PNG · carré · compressée ≤ 60 KB</p>
+                    <p className="text-[10px] text-stone">
+                      {field.type === "image"
+                        ? "JPG/PNG · ratio d'origine préservé · compressée ≤ 150 KB"
+                        : "JPG/PNG · carré · compressée ≤ 60 KB"}
+                    </p>
                   </div>
                 </div>
               ) : field.type === "textarea" ? (

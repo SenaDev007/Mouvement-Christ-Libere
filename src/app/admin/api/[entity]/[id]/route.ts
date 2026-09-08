@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme, annoncerLiveAnnule } from "@/lib/live-announcement-relay";
 
 const ENTITY_MAP = {
@@ -131,6 +131,9 @@ export async function GET(
     // de rubrique en ligne du module Vidéos) → garde systématique.
     if (entity === "videos") await ensureVideoCategoryColumn();
     if (entity === "lives") await ensureLiveCategoryColumn();
+    // ⭐ V3.47 — colonne photo des jalons biographiques (GET/PATCH/DELETE
+    // retournent l'objet complet → P2022 sur base froide sinon).
+    if (entity === "biographies") await ensureBiographyPhotoColumn();
     const delegate = getDelegate(entity as EntityName);
     const item = await delegate.findUnique({ where: { id } });
     if (!item) {
@@ -177,6 +180,8 @@ export async function PATCH(
     // de rubrique en ligne du module Vidéos) → garde systématique.
     if (entity === "videos") await ensureVideoCategoryColumn();
     if (entity === "lives") await ensureLiveCategoryColumn();
+    // ⭐ V3.47 — colonne photo des jalons biographiques (même pattern).
+    if (entity === "biographies") await ensureBiographyPhotoColumn();
 
     // ⭐ V2.7 — SYNCHRO PHOTO serviteur ↔ compte utilisateur : on capture
     // les infos de correspondance AVANT l'écriture (le code/nom/email peut
@@ -356,6 +361,9 @@ export async function DELETE(
     // de rubrique en ligne du module Vidéos) → garde systématique.
     if (entity === "videos") await ensureVideoCategoryColumn();
     if (entity === "lives") await ensureLiveCategoryColumn();
+    // ⭐ V3.47 — colonne photo des jalons biographiques (le delete retourne
+    // l'objet supprimé complet → P2022 sinon).
+    if (entity === "biographies") await ensureBiographyPhotoColumn();
     const delegate = getDelegate(entity as EntityName);
     await delegate.delete({ where: { id } });
     return NextResponse.json({ success: true });

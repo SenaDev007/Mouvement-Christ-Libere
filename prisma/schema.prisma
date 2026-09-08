@@ -116,6 +116,11 @@ model Biography {
   description String
   verseRef    String?
   verseText   String?
+  // ⭐ V3.47 — Photo du jalon affichée sur la page publique du serviteur
+  // (frise chronologique /pam et /pasteur-kongo) : uploadée depuis le modal
+  // biographique du back-office (/admin/biographies), compressée côté
+  // client (ratio préservé, ≤ 150 Ko — cf. compressHeroImage).
+  photoUrl    String?
   order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

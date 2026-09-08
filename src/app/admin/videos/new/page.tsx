@@ -54,14 +54,28 @@ export default async function NewVideoPage({
   const initialData = preselectedServant ? { servantId: preselectedServant.id } : undefined;
 
   return (
-    <AdminForm
-      entity="videos"
-      fields={FIELDS}
-      initialData={initialData}
-      redirectTo="/admin/videos"
-      title="Nouvelle vidéo"
-      subtitle={subtitle}
-    />
+    <div className="space-y-4">
+      {/* ⭐ V3.47 — Upload direct de fichier : disponible dans le modal
+          « Nouvelle vidéo » de la page Vidéos (barre de progression,
+          miniature et durée auto-détectées). */}
+      <div className="rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10 px-4 py-3 text-sm text-[#1E0F2B]/80">
+        <strong className="font-bold">Pour envoyer directement un fichier vidéo</strong> (sans
+        passer par YouTube), utilisez le bouton «&nbsp;Nouvelle vidéo&nbsp;» de la page{" "}
+        <a href="/admin/videos" className="font-bold underline hover:text-[#C9A227]">
+          Vidéos
+        </a>{" "}
+        puis l&apos;onglet «&nbsp;Fichier vidéo&nbsp;» — l&apos;envoi, la miniature et la durée
+        sont gérés automatiquement.
+      </div>
+      <AdminForm
+        entity="videos"
+        fields={FIELDS}
+        initialData={initialData}
+        redirectTo="/admin/videos"
+        title="Nouvelle vidéo (formulaire complet)"
+        subtitle={subtitle}
+      />
+    </div>
   );
 }
 

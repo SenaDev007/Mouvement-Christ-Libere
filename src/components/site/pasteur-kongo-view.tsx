@@ -16,11 +16,13 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { MarkdownText } from "@/components/site/markdown-text";
 import { HeroBackgroundImage } from "@/components/site/page-hero";
+// ⭐ V3.47 — frise chronologique publique (jalons + photos).
+import { BioTimeline, type BioMilestone } from "@/components/site/bio-timeline";
 import { IsololeText } from "@/lib/isolole";
 import type { HeroConfig } from "@/lib/hero-defaults";
 import { ChevronRight, BookOpen, Video, Sparkles, Calendar, Quote, Users } from "lucide-react";
 
-export function PasteurKongoView({ hero }: { hero: HeroConfig }) {
+export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; milestones?: BioMilestone[] }) {
   const d = hero.data;
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -259,6 +261,14 @@ export function PasteurKongoView({ hero }: { hero: HeroConfig }) {
           </div>
         </div>
       </article>
+
+      {/* ═══ ⭐ V3.47 — FRISE CHRONOLOGIQUE (jalons du module Biographies,
+          photos incluses — masquée si aucun jalon) ═══ */}
+      <BioTimeline
+        milestones={milestones}
+        accentColor="#8C5FA8"
+        title="Les étapes du parcours du Pasteur Kongo"
+      />
 
       {/* ═══ LIENS VERS AUTRES CONTENUS ═══ */}
       <section className="py-16 bg-[#2A0E3D]">

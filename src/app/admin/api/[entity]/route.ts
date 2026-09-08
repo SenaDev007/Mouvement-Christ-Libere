@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme } from "@/lib/live-announcement-relay";
 
 // Force runtime Node.js (pas edge) pour Prisma
@@ -69,6 +69,8 @@ export async function GET(
     // Prisma les sélectionne désormais → garde avant TOUTE lecture/écriture.
     if (entity === "videos") await ensureVideoCategoryColumn();
     if (entity === "lives") await ensureLiveCategoryColumn();
+    // ⭐ V3.47 — colonne photo des jalons biographiques (même pattern).
+    if (entity === "biographies") await ensureBiographyPhotoColumn();
 
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get("limit") || "50");
@@ -121,6 +123,8 @@ export async function POST(
     // / LiveStream.category depuis les formulaires du back-office.
     if (entity === "videos") await ensureVideoCategoryColumn();
     if (entity === "lives") await ensureLiveCategoryColumn();
+    // ⭐ V3.47 — colonne photo des jalons biographiques (même pattern).
+    if (entity === "biographies") await ensureBiographyPhotoColumn();
     const delegate = getDelegate(entity as EntityName);
     const created = await delegate.create({ data: body });
 

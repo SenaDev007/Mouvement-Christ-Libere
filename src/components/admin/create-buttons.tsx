@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { CreateEntityModal, type CreateField } from "@/components/admin/create-entity-modal";
-import type { Servant } from "@prisma/client";
+// ⭐ V3.47 — Modal biographique dédié (photos incluses).
+import { BiographyModal } from "@/components/admin/biography-modal";
 
 interface ServantLite {
   id: string;
@@ -113,60 +114,6 @@ interface NewBiographyButtonProps {
 export function NewBiographyButton({ servants, accentColor = "#C9A227" }: NewBiographyButtonProps) {
   const [open, setOpen] = useState(false);
 
-  const fields: CreateField[] = [
-    {
-      name: "servantId",
-      label: "Serviteur",
-      type: "select",
-      options: servants.map((s) => ({ value: s.id, label: s.shortName })),
-      required: true,
-    },
-    {
-      name: "order",
-      label: "Ordre",
-      type: "number",
-      help: "Plus petit = plus tôt",
-      defaultValue: 1,
-    },
-    {
-      name: "date",
-      label: "Date / Période",
-      type: "text",
-      placeholder: "Enfance, 2024-03, etc.",
-      required: true,
-      fullWidth: true,
-    },
-    {
-      name: "title",
-      label: "Titre court",
-      type: "text",
-      placeholder: "Le premier appel",
-      required: true,
-      fullWidth: true,
-    },
-    {
-      name: "description",
-      label: "Récit",
-      type: "textarea",
-      placeholder: "2 à 4 phrases de récit, ton sobre...",
-      required: true,
-      fullWidth: true,
-    },
-    {
-      name: "verseRef",
-      label: "Référence biblique",
-      type: "text",
-      placeholder: "Genèse 5:24",
-    },
-    {
-      name: "verseText",
-      label: "Texte du verset",
-      type: "textarea",
-      placeholder: "« Et Hénoch marcha avec Dieu... »",
-      fullWidth: true,
-    },
-  ];
-
   return (
     <>
       <button
@@ -178,15 +125,13 @@ export function NewBiographyButton({ servants, accentColor = "#C9A227" }: NewBio
         <Plus className="w-4 h-4" />
         Nouveau jalon
       </button>
-      <CreateEntityModal
+      {/* ⭐ V3.47 — Modal dédié (photo du jalon + photo de biographie de la
+          page publique, upload compressé) — remplace le modal générique. */}
+      <BiographyModal
         open={open}
         onClose={() => setOpen(false)}
-        entity="biographies"
-        title="Nouveau jalon biographique"
-        subtitle="Ajouter un événement à la frise chronologique"
-        fields={fields}
+        servants={servants}
         accentColor={accentColor}
-        size="lg"
       />
     </>
   );

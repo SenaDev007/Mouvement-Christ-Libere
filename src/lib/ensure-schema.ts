@@ -1201,3 +1201,42 @@ export function ensureLiveCategoryColumn(): Promise<void> {
 export function ensureRubriquesColumns(): Promise<void> {
   return Promise.all([ensureVideoCategoryColumn(), ensureLiveCategoryColumn()]).then(() => {});
 }
+
+let biographyPhotoOk = false;
+let inflightBiographyPhoto: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.47 — S'assure que la colonne `Biography.photoUrl` (TEXT,
+ * nullable) existe.
+ *
+ * Contexte : photo de chaque jalon de la frise biographique, uploadée
+ * depuis le modal du back-office (/admin/biographies) et affichée sur
+ * les pages publiques /pam et /pasteur-kongo. NULL = jalon sans photo.
+ * Le client Prisma généré sélectionne désormais cette colonne (findMany
+ * / findUnique / create / update) → P2022 sur une base froide sans
+ * cette garde (même pattern que Video.category, V3.46).
+ */
+export function ensureBiographyPhotoColumn(): Promise<void> {
+  if (biographyPhotoOk) return Promise.resolve();
+  if (!inflightBiographyPhoto) {
+    inflightBiographyPhoto = (async () => {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "Biography" ADD COLUMN IF NOT EXISTS "photoUrl" TEXT'
+      );
+    })()
+      .then(() => {
+        biographyPhotoOk = true;
+        console.log("[ensure-schema] V3.47 : colonne Biography.photoUrl vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE Biography.photoUrl impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightBiographyPhoto = null;
+      });
+  }
+  return inflightBiographyPhoto;
+}
