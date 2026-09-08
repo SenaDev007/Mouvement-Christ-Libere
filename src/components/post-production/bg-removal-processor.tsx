@@ -2,6 +2,9 @@
 
 import { useRef, useState, useCallback } from "react";
 import { Loader2, Eraser, CheckCircle2 } from "lucide-react";
+// ⭐ V3.51 — Upload SÉQUENTIEL par morceaux vers R2 (remplace le PUT
+// monolithique du résultat : reprise individuelle par morceau).
+import { uploaderSequentielVersR2 } from "@/lib/upload-sequentiel";
 
 interface BgRemovalProcessorProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -164,28 +167,17 @@ export function BgRemovalProcessor({ videoRef, videoId, onProcessed }: BgRemoval
       setStage("Upload du résultat...");
       const blob = new Blob(chunks, { type: "video/webm" });
 
-      // Uploader via presigned R2
-      const presignRes = await fetch(`/api/videos/${videoId}/presign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentType: "video/webm", filename: "bg-removed.webm" }),
-      });
-
-      if (!presignRes.ok) throw new Error("Impossible de générer l'URL d'upload");
-
-      const { uploadUrl, publicUrl } = await presignRes.json();
-
-      // Upload direct vers R2
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve();
-          else reject(new Error(`Upload échoué: HTTP ${xhr.status}`));
-        });
-        xhr.addEventListener("error", () => reject(new Error("Erreur réseau")));
-        xhr.open("PUT", uploadUrl);
-        xhr.setRequestHeader("Content-Type", "video/webm");
-        xhr.send(blob);
+      // ⭐ V3.51 — Upload SÉQUENTIEL par morceaux vers R2 (remplace le PUT
+      // monolithique : chaque morceau ~8 Mo est envoyé séparément avec
+      // réessai individuel — un hoquet réseau ne redémarre plus tout).
+      const { publicUrl } = await uploaderSequentielVersR2({
+        endpoint: `/api/videos/${videoId}/multipart`,
+        fichier: blob,
+        contentType: "video/webm",
+        onProgression: (pourcent) => {
+          setStage(`Upload du résultat... ${pourcent}%`);
+          setProgress(Math.min(99, Math.round((70 + pourcent * 0.3) / 1)));
+        },
       });
 
       // Commit en base

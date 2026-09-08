@@ -33,6 +33,10 @@ import { ObsMultiRtmpGuide } from "@/components/admin/obs-multi-rtmp-guide";
 import { LiveChat } from "@/components/live/live-chat";
 import { LiveReactions } from "@/components/live/live-reactions";
 import { MediaOverlay, type MediaOverlayPersistPayload } from "@/components/live/media-overlay";
+// ⭐ V3.51 — Upload SÉQUENTIEL du replay par morceaux vers R2 (remplace le
+// PUT monolithique : reprise individuelle de chaque morceau, plus de
+// « tout recommencer » sur un hoquet réseau en fin de gros upload).
+import { uploaderSequentielVersR2 } from "@/lib/upload-sequentiel";
 
 interface LiveStudioClientProps {
   liveId: string;
@@ -1218,62 +1222,32 @@ export function LiveStudioClient({
         throw new Error(errData.error || `HTTP ${uploadRes.status}`);
       }
 
-      // Gros fichier : upload direct vers R2 via URL pré-signée.
-      // ⭐ V3.26/V3.35 — RETRY + diagnostic réel : un échec sur ce PUT est
-      // soit réseau/CORS (TypeError « Failed to fetch »), soit un refus R2
-      // (403 « AccessDenied »). Le vrai code d'erreur XML est extrait du
-      // corps de la réponse. Un 3ᵉ essai laisse une chance aux erreurs
-      // transitoires ; en cas d'échec définitif, le filet de sécurité local
-      // V3.37 prend le relais (téléchargement + copie IndexedDB).
-      const presignRes = await apiFetch(`/api/live/${liveId}/presign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentType: mimeType }),
+      // Gros fichier : ⭐ V3.51 — Upload SÉQUENTIEL PAR MORCEAUX vers R2.
+      // Remplace le PUT monolithique (fichier entier en une requête) : un
+      // hoquet réseau en fin d'envoi d'un replay de 500 Mo ne redémarre
+      // plus TOUT l'upload. Chaque morceau (~8 Mo) part avec une URL
+      // pré-signée FRAÎCHE, est réessayé individuellement (3 tentatives) ;
+      // l'assemblage final est fait par R2 (action « complete »). En cas
+      // d'échec définitif, le filet de sécurité local V3.37 prend le
+      // relais (téléchargement + copie IndexedDB).
+      setInfo(
+        `Direct arrêté ✓ — Upload séquentiel du replay (${Math.round(sizeMB)} Mo, ${
+          Math.ceil(blob.size / (8 * 1024 * 1024))
+        } morceaux) — patientez...`
+      );
+      const { publicUrl } = await uploaderSequentielVersR2({
+        endpoint: `/api/live/${liveId}/multipart`,
+        fichier: blob,
+        contentType: mimeType,
+        onProgression: (pourcent, details) => {
+          setInfo(
+            `Upload du replay… ${pourcent}%${
+              details ? ` · partie ${details.partie}/${details.total}` : ""
+            }`
+          );
+        },
       });
-      if (!presignRes.ok) {
-        const errData = await presignRes.json().catch(() => ({}));
-        throw new Error(errData.error || "Impossible de générer l'URL d'upload R2");
-      }
-      const { uploadUrl, publicUrl } = await presignRes.json();
-
-      setInfo(`Direct arrêté ✓ — Upload du replay vers R2 (${Math.round(sizeMB)} Mo) — patientez...`);
-      let uploadOk = false;
-      let uploadErrMsg = "";
-      for (let attempt = 1; attempt <= 3 && !uploadOk; attempt++) {
-        try {
-          const uploadRes = await fetch(uploadUrl, {
-            method: "PUT",
-            body: blob,
-            headers: { "Content-Type": mimeType },
-          });
-          if (uploadRes.ok) { uploadOk = true; break; }
-          // ⭐ V3.34 — extraire le VRAI code d'erreur du corps XML R2
-          // (ex. « AccessDenied », « SignatureDoesNotMatch ») au lieu d'un
-          // « HTTP 403 » qui ne dit rien de la cause.
-          const errBody = await uploadRes.text().catch(() => "");
-          const xmlCode = errBody.match(/<Code>([^<]{1,60})<\/Code>/)?.[1];
-          uploadErrMsg = xmlCode
-            ? `${xmlCode} (HTTP ${uploadRes.status})`
-            : `HTTP ${uploadRes.status}`;
-          if (uploadRes.status === 403 || uploadRes.status === 401) {
-            uploadErrMsg +=
-              " — ouvrez /admin/r2-test et lancez le « Test d'upload navigateur » (le vrai chemin du replay) pour voir la cause exacte";
-          }
-        } catch (err) {
-          uploadErrMsg =
-            err instanceof TypeError
-              ? "Failed to fetch (réseau ou CORS du bucket R2 — ouvrez /admin/r2-test et lancez le « Test d'upload navigateur » pour le diagnostic exact)"
-              : err instanceof Error ? err.message : "erreur réseau";
-        }
-        if (attempt < 3) {
-          console.warn(`[studio] Upload R2 tentative ${attempt} échouée (${uploadErrMsg}) — nouvelle tentative...`);
-          await new Promise((r) => setTimeout(r, 1500));
-        }
-      }
-      if (!uploadOk) {
-        throw new Error(`Upload R2 échoué: ${uploadErrMsg}`);
-      }
-      console.log("[studio] Replay uploadé (R2 direct):", publicUrl);
+      console.log("[studio] Replay uploadé (R2 séquentiel):", publicUrl);
       // ⭐ V3.33 — Persister l'URL R2 sur le live + la vidéo (Replay)
       // archivée par /stop (mode JSON de /recording — zéro re-transfert).
       try {

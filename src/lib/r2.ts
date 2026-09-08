@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListBucketsCommand, PutBucketCorsCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListBucketsCommand, PutBucketCorsCommand, CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -339,6 +339,164 @@ export async function listBucketsR2(): Promise<{ name: string; creationDate?: st
     name: b.Name || "",
     creationDate: b.CreationDate?.toISOString(),
   }));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ⭐ V3.51 — UPLOAD MULTIPART SÉQUENTIEL (morceau par morceau)
+//
+// Le PUT monolithique (fichier ENTIER en une seule requête) échoue sur les
+// connexions lentes/instables : un hoquet réseau à 95 % tuait tout l'envoi
+// et repartait de zéro. R2 supporte l'API S3 multipart :
+//   1. CreateMultipartUpload  → uploadId
+//   2. UploadPart × N         → chaque morceau (~8 Mo) via URL pré-signée
+//                               FRAÎCHE, envoyé SÉQUENTIELLEMENT, avec
+//                               reprise par morceau en cas d'échec
+//   3. CompleteMultipartUpload→ R2 assemble les morceaux → objet final
+//   4. AbortMultipartUpload   → nettoyage (sinon les morceaux orphelins
+//                               restent facturables sur le bucket !)
+//
+// Le même garde-fou anti-checksum que getPresignedUploadUrl s'applique aux
+// URL de morceaux (UploadPart pré-signé) : un x-amz-checksum-* dans l'URL
+// serait validé par R2 contre le corps réel → 403 systématique.
+// ═══════════════════════════════════════════════════════════════════════
+
+/** Morceau assemblé : numéro + ETag renvoyé par R2 à la réception du PUT. */
+export interface MorceauR2 {
+  partNumber: number;
+  etag: string;
+}
+
+/**
+ * Ouvre une session d'upload multipart sur R2. Retourne l'uploadId.
+ * Le ContentType est posé ici (l'objet final le portera après assemblage).
+ */
+export async function creerMultipartR2(
+  key: string,
+  contentType: string
+): Promise<string> {
+  const client = getClient();
+  const cfg = getConfig();
+  const res = await client.send(
+    new CreateMultipartUploadCommand({
+      Bucket: cfg.bucket,
+      Key: key,
+      ContentType: contentType,
+    })
+  );
+  if (!res.UploadId) {
+    throw new Error("R2 n'a pas renvoyé d'uploadId pour l'upload multipart");
+  }
+  return res.UploadId;
+}
+
+/**
+ * URL pré-signée pour uploader UN morceau (UploadPart) directement depuis
+ * le navigateur. Générée À LA DEMANDE (toujours fraîche — aucune expiration
+ * possible sur les uploads longs) via le client de pré-signage dédié
+ * WHEN_REQUIRED + garde-fou checksum (cf. getPresignClient).
+ */
+export async function getPresignedPartUrl(
+  key: string,
+  uploadId: string,
+  partNumber: number,
+  expiresIn = 3600
+): Promise<string> {
+  const cfg = getConfig();
+  const client = getPresignClient();
+  const command = new UploadPartCommand({
+    Bucket: cfg.bucket,
+    Key: key,
+    UploadId: uploadId,
+    PartNumber: partNumber,
+  });
+  let url = await getSignedUrl(client, command, { expiresIn });
+
+  const suspects = parametresChecksum(url);
+  if (suspects.length > 0) {
+    console.error(
+      `[r2] ⚠️ URL de morceau polluée par des paramètres checksum (${suspects.join(", ")}) — régénération…`
+    );
+    const secours = new S3Client({
+      region: "auto",
+      endpoint: `https://${cfg.accountId}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: cfg.accessKeyId,
+        secretAccessKey: cfg.secretAccessKey,
+      },
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
+    });
+    try {
+      const cmdSecours = new UploadPartCommand({
+        Bucket: cfg.bucket,
+        Key: key,
+        UploadId: uploadId,
+        PartNumber: partNumber,
+      });
+      url = await getSignedUrl(secours, cmdSecours, { expiresIn });
+    } finally {
+      secours.destroy();
+    }
+    const restants = parametresChecksum(url);
+    if (restants.length > 0) {
+      throw new Error(
+        `URL de morceau R2 inutilisable : paramètres checksum (${restants.join(", ")}) injectés par le SDK AWS. Signalez cette erreur.`
+      );
+    }
+  }
+  return url;
+}
+
+/**
+ * Demande à R2 d'assembler les morceaux en l'objet final.
+ * `morceaux` doit être ordonné par partNumber croissant avec les ETag EXACTS
+ * renvoyés par R2 (reçus par le navigateur dans l'en-tête ETag de chaque PUT).
+ */
+export async function completerMultipartR2(
+  key: string,
+  uploadId: string,
+  morceaux: MorceauR2[]
+): Promise<void> {
+  const client = getClient();
+  const cfg = getConfig();
+  await client.send(
+    new CompleteMultipartUploadCommand({
+      Bucket: cfg.bucket,
+      Key: key,
+      UploadId: uploadId,
+      MultipartUpload: {
+        Parts: morceaux.map((m) => ({
+          PartNumber: m.partNumber,
+          ETag: m.etag,
+        })),
+      },
+    })
+  );
+}
+
+/**
+ * Annule une session multipart (best-effort). IMPORTANT : sans abort, les
+ * morceaux déjà envoyés restent stockés sur R2 (facturables) jusqu'à ~7 j.
+ */
+export async function annulerMultipartR2(
+  key: string,
+  uploadId: string
+): Promise<void> {
+  try {
+    const client = getClient();
+    const cfg = getConfig();
+    await client.send(
+      new AbortMultipartUploadCommand({
+        Bucket: cfg.bucket,
+        Key: key,
+        UploadId: uploadId,
+      })
+    );
+  } catch (err) {
+    // Best-effort : l'échec de l'abort ne doit jamais masquer l'erreur
+    // d'origine ni bloquer l'utilisateur.
+    console.warn("[r2] Abort multipart impossible (best-effort) :", err);
+  }
 }
 
 /**

@@ -1,6 +1,12 @@
 "use client";
 
 import { apiFetch } from "@/lib/api-client";
+// ⭐ V3.51 — Upload SÉQUENTIEL par morceaux vers R2 (remplace le PUT
+// monolithique : reprise individuelle par morceau).
+import {
+  uploaderSequentielVersR2,
+  ErreurR2NonConfigure,
+} from "@/lib/upload-sequentiel";
 import { useState, useRef, useEffect } from "react";
 import {
   Scissors, Upload, Download, Play, Pause, SkipBack, SkipForward,
@@ -157,48 +163,48 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     setUploadStage("Demande d'URL d'upload...");
 
     try {
-      // ─── Étape 1 : Demander une URL pré-signée pour upload direct vers R2 ───
-      // Le fichier ne transite PAS par le body Vercel → pas de limite de taille,
-      // pas de timeout de fonction. Le navigateur uploade directement vers R2.
-      const presignRes = await apiFetch(`/api/videos/${videoId}/presign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentType: file.type, filename: file.name }),
-      });
-
-      if (presignRes.ok) {
-        const { uploadUrl, publicUrl } = await presignRes.json();
-        setUploadStage(`Upload direct vers R2 (${fileSizeMB} MB)...`);
-
-        // ─── Étape 2 : Upload direct vers R2 via XMLHttpRequest ───
-        // XHR (pas fetch) car seul XHR expose xhr.upload.onprogress pour
-        // suivre la progression réelle de l'upload.
-        await new Promise<void>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.upload.addEventListener("progress", (ev) => {
-            if (ev.lengthComputable) {
-              const percent = Math.round((ev.loaded / ev.total) * 100);
-              setUploadProgress(percent);
+      // ─── Étape 1+2 (⭐ V3.51) : R2 SÉQUENTIEL par morceaux ───
+      // Le fichier est découpé en morceaux (~8 Mo) envoyés UN PAR UN avec
+      // URL pré-signée fraîche et réessai individuel (3 tentatives par
+      // morceau) — un hoquet réseau ne redémarre plus tout l'envoi.
+      // Si R2 n'est pas configuré → repli FormData ≤ 4 Mo ci-dessous.
+      let publicUrlR2: string | null = null;
+      try {
+        setUploadStage(`Upload séquentiel vers R2 (${fileSizeMB} Mo)...`);
+        const resultat = await uploaderSequentielVersR2({
+          endpoint: `/api/videos/${videoId}/multipart`,
+          fichier: file,
+          contentType: file.type || "video/mp4",
+          onProgression: (pourcent, details) => {
+            setUploadProgress(pourcent);
+            if (details && details.total > 1) {
+              setUploadStage(
+                `Upload vers R2 · partie ${details.partie}/${details.total}${
+                  details.tentatives > 1 ? ` (tentative ${details.tentatives})` : ""
+                }...`
+              );
             }
-          });
-          xhr.addEventListener("load", () => {
-            if (xhr.status >= 200 && xhr.status < 300) resolve();
-            else reject(new Error(`Upload R2 échoué: HTTP ${xhr.status}`));
-          });
-          xhr.addEventListener("error", () => reject(new Error("Erreur réseau lors de l'upload vers R2")));
-          xhr.addEventListener("abort", () => reject(new Error("Upload annulé")));
-          xhr.open("PUT", uploadUrl);
-          xhr.setRequestHeader("Content-Type", file.type);
-          xhr.send(file);
+          },
         });
+        publicUrlR2 = resultat.publicUrl;
+      } catch (err) {
+        if (err instanceof ErreurR2NonConfigure) {
+          console.warn("[live/post-production] R2 non configuré :", err.message);
+        } else {
+          // Erreur réelle (réseau, CORS, refus R2…) — remonter le diagnostic
+          // complet de l'uploader plutôt qu'un message générique.
+          throw err;
+        }
+      }
 
+      if (publicUrlR2) {
         // ─── Étape 3 : Commit — persister l'URL R2 en base ───
-        setUploadStage("Finalisation...");
+        setUploadStage("Assemblage final...");
         setUploadProgress(100);
         const commitRes = await apiFetch(`/api/videos/${videoId}/upload`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ r2Url: publicUrl }),
+          body: JSON.stringify({ r2Url: publicUrlR2 }),
         });
         if (!commitRes.ok) {
           const data = await commitRes.json().catch(() => ({}));
@@ -211,10 +217,10 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
       }
 
       // ─── Fallback : R2 non configuré → FormData classique (limite 4 MB) ───
-      // Ce chemin ne devrait être utilisé qu'en dev sans R2.
-      const fallbackData = await presignRes.json().catch(() => ({}));
-      if (fallbackData.r2NotConfigured) {
-        setUploadStage(`Upload via serveur (${fileSizeMB} MB)...`);
+      // Ce chemin ne devrait être utilisé qu'en dev sans R2 (les erreurs
+      // réelles de l'upload séquentiel sont remontées directement).
+      {
+        setUploadStage(`Upload via serveur (${fileSizeMB} Mo)...`);
         const result = await new Promise<{ videoUrl: string; storage: string }>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           const formData = new FormData();
@@ -244,9 +250,6 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         setTimeout(() => window.location.reload(), 1500);
         return;
       }
-
-      // presign a échoué pour une autre raison
-      throw new Error(fallbackData.error || "Impossible de générer l'URL d'upload");
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Erreur");
     } finally {

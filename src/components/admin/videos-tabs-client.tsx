@@ -40,6 +40,13 @@ import {
   tailleLisible,
   type LocalReplayMeta,
 } from "@/lib/local-replay-store";
+// ⭐ V3.51 — Upload SÉQUENTIEL par morceaux vers R2 (remplace le PUT
+// monolithique du fichier entier — un hoquet réseau ne redémarre plus
+// tout l'envoi, chaque morceau est réessayé individuellement).
+import {
+  uploaderSequentielVersR2,
+  ErreurR2NonConfigure,
+} from "@/lib/upload-sequentiel";
 
 type VideoWithServant = Video & { servant: Servant };
 
@@ -749,29 +756,9 @@ async function extraireMiniatureEtDuree(file: File): Promise<{ thumb: string; du
   });
 }
 
-/** PUT XHR vers R2 avec progression (bypass total du body Vercel). */
-function uploaderVersR2(
-  file: File,
-  uploadUrl: string,
-  contentType: string,
-  onProgress: (pourcent: number) => void,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.upload.addEventListener("progress", (ev) => {
-      if (ev.lengthComputable) onProgress(Math.round((ev.loaded / ev.total) * 100));
-    });
-    xhr.addEventListener("load", () => {
-      if (xhr.status >= 200 && xhr.status < 300) resolve();
-      else reject(new Error(`Envoi vers le stockage échoué (HTTP ${xhr.status})`));
-    });
-    xhr.addEventListener("error", () => reject(new Error("Erreur réseau pendant l'envoi")));
-    xhr.addEventListener("abort", () => reject(new Error("Envoi annulé")));
-    xhr.open("PUT", uploadUrl);
-    xhr.setRequestHeader("Content-Type", contentType);
-    xhr.send(file);
-  });
-}
+// ⭐ V3.51 — uploaderVersR2 (PUT monolithique du fichier entier) SUPPRIMÉ :
+// remplacé par uploaderSequentielVersR2 (src/lib/upload-sequentiel.ts) —
+// upload par morceaux avec reprise individuelle.
 
 type PhaseUpload = "repos" | "fiche" | "envoi" | "finalisation" | "erreur";
 
@@ -906,6 +893,8 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
   const [extractionEnCours, setExtractionEnCours] = useState(false);
   const [phase, setPhase] = useState<PhaseUpload>("repos");
   const [progression, setProgression] = useState(0);
+  // ⭐ V3.51 — détails de l'upload séquentiel : « partie 3/6 » + tentatives.
+  const [detailsProgression, setDetailsProgression] = useState<{ partie: number; total: number; tentatives: number } | null>(null);
   // Fiche déjà créée après un échec d'envoi → bouton « Réessayer l'envoi ».
   const [ficheCreeeId, setFicheCreeeId] = useState<string | null>(null);
 
@@ -1041,48 +1030,67 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
       if (source === "fichier" && fichier) {
         const contentType = fichier.type || "video/mp4";
         setPhase("envoi");
-        let envoye = false;
+        setProgression(0);
+        setDetailsProgression(null);
+        let urlPublique: string | null = null;
+        let r2NonConfigure = false;
 
-        // Chemin prioritaire : upload DIRECT vers R2 via URL pré-signée
-        // (aucune limite de taille — contourne le body Vercel, cf. V2.9).
+        // ⭐ V3.51 — Upload SÉQUENTIEL PAR MORCEAUX (~8 Mo) vers R2 : le
+        // fichier n'est plus envoyé en bloc (un hoquet réseau à 95 % tuait
+        // TOUT l'envoi — « crash » du modal Nouvelle vidéo sur les gros
+        // fichiers). Chaque morceau part avec une URL pré-signée FRAÎCHE et
+        // est réessayé individuellement (3 tentatives) — l'envoi ne repart
+        // jamais de zéro à cause d'un hoquet réseau passager.
         try {
-          const presignRes = await fetch(`/api/videos/${videoId}/presign`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contentType, filename: fichier.name }),
+          const { publicUrl } = await uploaderSequentielVersR2({
+            endpoint: `/api/videos/${videoId}/multipart`,
+            fichier,
+            contentType,
+            onPhase: (p) => {
+              if (p === "assemblage") setPhase("finalisation");
+              else if (p === "preparation") setPhase("fiche");
+              else setPhase("envoi");
+            },
+            onProgression: (pourcent, details) => {
+              setProgression(pourcent);
+              setDetailsProgression(details ?? null);
+            },
           });
-          if (presignRes.ok) {
-            const { uploadUrl, publicUrl } = await presignRes.json();
-            await uploaderVersR2(fichier, uploadUrl, contentType, setProgression);
-            setPhase("finalisation");
-            const commit = await fetch(`/api/videos/${videoId}/upload`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ r2Url: publicUrl }),
-            });
-            if (!commit.ok) {
-              const d = await commit.json().catch(() => ({}));
-              throw new Error(d.error || "Confirmation de l'envoi impossible");
-            }
-            envoye = true;
-          } else if (presignRes.status !== 503) {
-            const d = await presignRes.json().catch(() => ({}));
-            console.warn("[Nouvelle vidéo] presign indisponible :", d.error);
-          }
+          urlPublique = publicUrl;
         } catch (err) {
-          // On tente le repli FormData ci-dessous ; si la taille dépasse la
-          // limite, l'erreur explicite est levée là.
-          if (err instanceof Error && err.message === "Envoi annulé") throw err;
-          console.warn("[Nouvelle vidéo] upload R2 direct a échoué :", err);
+          if (err instanceof ErreurR2NonConfigure) {
+            // R2 absent de ce déploiement → repli FormData ≤ 4 Mo ci-dessous.
+            r2NonConfigure = true;
+            console.warn("[Nouvelle vidéo] R2 non configuré :", err.message);
+          } else {
+            // Erreur RÉELLE remontée par l'uploader (quel morceau, quelle
+            // cause, quoi faire) — remplace le message générique qui
+            // masquait le vrai problème.
+            throw err;
+          }
         }
 
-        // Repli : FormData via la fonction serveur (limite ~4,5 Mo Vercel).
-        if (!envoye) {
+        // Confirmation : persister l'URL R2 en base (mode JSON — le
+        // fichier est déjà sur R2, zéro re-transfert).
+        if (urlPublique) {
+          setPhase("finalisation");
+          const commit = await fetch(`/api/videos/${videoId}/upload`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ r2Url: urlPublique }),
+          });
+          if (!commit.ok) {
+            const d = await commit.json().catch(() => ({}));
+            throw new Error(d.error || "Confirmation de l'envoi impossible");
+          }
+        } else if (r2NonConfigure) {
+          // Repli FormData (uniquement si R2 n'est pas configuré) : limite
+          // ~4,5 Mo du body Vercel.
           if (fichier.size > 4 * 1024 * 1024) {
             setPhase("erreur");
             throw new Error(
-              `Ce fichier (${tailleLisibleFichier(fichier.size)}) dépasse 4 Mo et l'envoi direct vers le stockage cloud est indisponible. ` +
-              "Réessayez dans quelques instants (bouton « Réessayer l'envoi ») ou vérifiez la configuration Cloudflare R2.",
+              `Ce fichier (${tailleLisibleFichier(fichier.size)}) dépasse 4 Mo et le stockage cloud R2 ` +
+                "n'est pas configuré sur ce déploiement (variables R2_…). Ouvrez /admin/r2-test pour le diagnostic complet.",
             );
           }
           setPhase("envoi");
@@ -1114,6 +1122,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
       setMiniaturePerso(null);
       setDureeAuto("");
       setFicheCreeeId(null);
+      setDetailsProgression(null);
       setPhase("repos");
       onClose();
       // Refresh page to show new video
@@ -1132,8 +1141,16 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
   const phaseLabel: Record<PhaseUpload, string> = {
     repos: "",
     fiche: "Création de la fiche vidéo…",
-    envoi: `Envoi du fichier… ${progression}%`,
-    finalisation: "Finalisation…",
+    envoi: `Envoi du fichier… ${progression}%${
+      detailsProgression
+        ? ` · partie ${detailsProgression.partie}/${detailsProgression.total}${
+            detailsProgression.tentatives > 1
+              ? ` (tentative ${detailsProgression.tentatives})`
+              : ""
+          }`
+        : ""
+    }`,
+    finalisation: "Assemblage des morceaux sur le stockage cloud…",
     erreur: "",
   };
 

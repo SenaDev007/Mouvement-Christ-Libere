@@ -1,6 +1,12 @@
 "use client";
 
 import { apiFetch } from "@/lib/api-client";
+// ⭐ V3.51 — Upload SÉQUENTIEL par morceaux vers R2 (remplace le PUT
+// monolithique de la vidéo source : reprise individuelle par morceau).
+import {
+  uploaderSequentielVersR2,
+  ErreurR2NonConfigure,
+} from "@/lib/upload-sequentiel";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
@@ -520,65 +526,76 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     setUploadStage("Demande d'URL d'upload...");
 
     try {
-      // ─── Chemin 1 : R2 pré-signé (si configuré) — bypass total du serveur ───
-      const presignRes = await apiFetch(`/api/videos/${videoId}/presign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentType: file.type, filename: file.name }),
-      });
+      // ─── Chemin 1 (⭐ V3.51) : R2 SÉQUENTIEL par morceaux — si configuré ───
+      // Le fichier est envoyé morceau par morceau (~8 Mo, URL pré-signée
+      // fraîche à chaque envoi, 3 tentatives PAR morceau) : un hoquet réseau
+      // ne redémarre plus tout l'upload, contrairement à l'ancien PUT
+      // monolithique. Si R2 échoue (non configuré ou erreur réelle), on
+      // bascule sur l'upload par blocs serveur ci-dessous.
+      let publicUrlR2: string | null = null;
+      let noteBascule = "";
+      try {
+        setUploadStage(`Upload séquentiel vers R2 (${fileSizeMB} Mo)...`);
+        const resultat = await uploaderSequentielVersR2({
+          endpoint: `/api/videos/${videoId}/multipart`,
+          fichier: file,
+          contentType: file.type || "video/mp4",
+          onProgression: (pourcent, details) => {
+            setUploadProgress(pourcent);
+            if (details && details.total > 1) {
+              setUploadStage(
+                `Upload vers R2 · partie ${details.partie}/${details.total}${
+                  details.tentatives > 1 ? ` (tentative ${details.tentatives})` : ""
+                }...`
+              );
+            }
+          },
+        });
+        publicUrlR2 = resultat.publicUrl;
+      } catch (err) {
+        // R2 indisponible (non configuré OU erreur réelle — CORS, refus R2…) :
+        // on bascule sur l'upload par blocs serveur ci-dessous, en signalant
+        // la raison dans l'interface (le diagnostic n'est plus silencieux).
+        noteBascule =
+          err instanceof ErreurR2NonConfigure
+            ? "R2 non configuré"
+            : err instanceof Error
+              ? err.message
+              : "upload R2 indisponible";
+        console.warn("[post-production] Upload R2 séquentiel indisponible, bascule blocs :", err);
+      }
 
-      if (presignRes.ok) {
-        const { uploadUrl, publicUrl } = await presignRes.json();
-        setUploadStage(`Upload direct vers R2 (${fileSizeMB} MB)...`);
-
-        try {
-          await new Promise<void>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.upload.addEventListener("progress", (ev) => {
-              if (ev.lengthComputable) {
-                setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
-              }
-            });
-            xhr.addEventListener("load", () => {
-              if (xhr.status >= 200 && xhr.status < 300) resolve();
-              else reject(new Error(`Upload R2 échoué: HTTP ${xhr.status}`));
-            });
-            xhr.addEventListener("error", () => reject(new Error("Erreur réseau CORS")));
-            xhr.addEventListener("abort", () => reject(new Error("Upload annulé")));
-            xhr.open("PUT", uploadUrl);
-            xhr.setRequestHeader("Content-Type", file.type);
-            xhr.send(file);
-          });
-
-          setUploadStage("Finalisation...");
-          setUploadProgress(100);
-          const commitRes = await apiFetch(`/api/videos/${videoId}/upload`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ r2Url: publicUrl }),
-          });
-          if (!commitRes.ok) {
-            const data = await commitRes.json().catch(() => ({}));
-            throw new Error(data.error || "Erreur lors de la finalisation");
-          }
-          const result = await commitRes.json();
-          // ⭐ V3.16 — PLUS DE window.location.reload() : le rechargement
-          // perdait TOUS les réglages et laissait un écran vide de longues
-          // secondes (« rien ne s'affiche, ça a pris trop de temps »).
-          // La vidéo s'affiche immédiatement, l'éditeur reste intact.
-          setCurrentVideoUrl(result.videoUrl);
-          setTrimStart(0);
-          setTrimEnd(0);
-          setSelectedOverlayId(null);
-          setUploadProgress(100);
-          setUploadStage("Terminé ✓ — la vidéo remplace la source");
-          setTimeout(() => setUploadStage(""), 2500);
-          return;
-        } catch (putError) {
-          // PUT R2 échoué (CORS…) → basculer sur l'upload par blocs.
-          console.warn("[post-production] Upload R2 direct échoué, bascule blocs:", putError);
-          setUploadProgress(0);
+      if (publicUrlR2) {
+        setUploadStage("Assemblage final...");
+        setUploadProgress(100);
+        const commitRes = await apiFetch(`/api/videos/${videoId}/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ r2Url: publicUrlR2 }),
+        });
+        if (!commitRes.ok) {
+          const data = await commitRes.json().catch(() => ({}));
+          throw new Error(data.error || "Erreur lors de la finalisation");
         }
+        const result = await commitRes.json();
+        // ⭐ V3.16 — PLUS DE window.location.reload() : le rechargement
+        // perdait TOUS les réglages et laissait un écran vide de longues
+        // secondes (« rien ne s'affiche, ça a pris trop de temps »).
+        // La vidéo s'affiche immédiatement, l'éditeur reste intact.
+        setCurrentVideoUrl(result.videoUrl);
+        setTrimStart(0);
+        setTrimEnd(0);
+        setSelectedOverlayId(null);
+        setUploadProgress(100);
+        setUploadStage("Terminé ✓ — la vidéo remplace la source");
+        setTimeout(() => setUploadStage(""), 2500);
+        return;
+      }
+
+      // Bascule visible : la raison du repli vers les blocs serveur est
+      // affichée (fini le repli silencieux — le diagnostic se voit).
+      if (noteBascule) {
+        setUploadStage(`R2 indisponible (${noteBascule}) — envoi par blocs serveur...`);
       }
 
       // ─── Chemin 2 (⭐ V2.9) : UPLOAD PAR BLOCS via le serveur ───
