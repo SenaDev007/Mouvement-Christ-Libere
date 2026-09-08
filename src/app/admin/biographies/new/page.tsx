@@ -1,80 +1,17 @@
 import { db } from "@/lib/db";
-import { AdminForm, type FieldDef } from "@/components/admin/admin-form";
-// ⭐ V3.47 — colonne Biography.photoUrl sélectionnée ci-dessous.
-import { ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
+// ⭐ V3.48 — la route /new elle-même ouvre le MODAL professionnel de création
+// (photo du jalon + photo de biographie publique) — cohérent avec le bouton
+// « Nouveau jalon » de la liste ET avec la route /[id]/edit (V3.48).
+import { BiographyAutoModal } from "@/components/admin/biography-modal";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewBiographyPage() {
-  await ensureBiographyPhotoColumn().catch(() => {});
-  const servants = await db.servant.findMany({ where: { isActive: true } });
+  const servants = await db.servant.findMany({
+    where: { isActive: true },
+    select: { id: true, shortName: true, code: true },
+    orderBy: { code: "asc" },
+  });
 
-  const FIELDS: FieldDef[] = [
-    {
-      name: "servantId",
-      label: "Serviteur",
-      type: "select",
-      options: servants.map((s) => ({ value: s.id, label: s.shortName })),
-      required: true,
-    },
-    {
-      name: "date",
-      label: "Date / Période",
-      type: "text",
-      placeholder: "Enfance, 2024-03, etc.",
-      required: true,
-    },
-    {
-      name: "title",
-      label: "Titre court",
-      type: "text",
-      placeholder: "Le premier appel",
-      required: true,
-    },
-    {
-      name: "description",
-      label: "Récit",
-      type: "textarea",
-      placeholder: "2 à 4 phrases de récit, ton sobre...",
-      fullWidth: true,
-      required: true,
-    },
-    {
-      name: "verseRef",
-      label: "Référence biblique",
-      type: "text",
-      placeholder: "Genèse 5:24",
-    },
-    {
-      name: "verseText",
-      label: "Texte du verset",
-      type: "textarea",
-      placeholder: "« Et Hénoch marcha avec Dieu... »",
-      fullWidth: true,
-    },
-    {
-      name: "photoUrl",
-      label: "Photo du jalon (page publique)",
-      // ⭐ V3.47 — image rectangulaire, ratio d'origine préservé.
-      type: "image",
-      help: "Illustration de cette étape sur la frise chronologique publique — facultative",
-      fullWidth: true,
-    },
-    {
-      name: "order",
-      label: "Ordre d'affichage",
-      type: "number",
-      help: "Plus petit = plus tôt dans la frise",
-    },
-  ];
-
-  return (
-    <AdminForm
-      entity="biographies"
-      fields={FIELDS}
-      redirectTo="/admin/biographies"
-      title="Nouveau jalon biographique"
-      subtitle="Ajouter une étape à la frise chronologique d'un serviteur."
-    />
-  );
+  return <BiographyAutoModal servants={servants} accentColor="#C9A227" />;
 }

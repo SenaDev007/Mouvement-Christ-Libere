@@ -565,3 +565,42 @@ export function BiographyEditButton({ biography, servants, accentColor }: Biogra
     </>
   );
 }
+
+// ============ ⭐ V3.48 — Routes /new et /[id]/edit : le modal s'ouvre D'EMBLÉE ============
+//
+// Le pasteur a signalé que « le stylo ouvre toujours /edit » : son onglet avait
+// été chargé AVANT le déploiement V3.47 (l'ancien JS y naviguait vers /edit),
+// et la page /edit affichait encore l'ancien formulaire plein écran. Désormais
+// les ROUTES elles-mêmes (/admin/biographies/new et /admin/biographies/[id]/edit)
+// rendent le MODAL professionnel ouvert d'emblée — quel que soit le chemin
+// d'accès (stylo frais, onglet obsolète, bookmark, historique), le pasteur voit
+// TOUJOURS le même modal que la création. Fermer le modal revient à la liste.
+
+interface BiographyAutoModalProps {
+  servants: ServantLiteBio[];
+  /** null/undefined = mode création (route /new). */
+  biography?: BiographyLite | null;
+  accentColor?: string;
+}
+
+export function BiographyAutoModal({ servants, biography, accentColor = "#C9A227" }: BiographyAutoModalProps) {
+  const router = useRouter();
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 px-4 text-center">
+      <BookOpen className="w-10 h-10 text-[#C9A227]/30" aria-hidden />
+      <p className="text-sm text-[#8A8378] font-medium">
+        {biography ? `Jalon « ${biography.title} »` : "Nouveau jalon biographique"}
+      </p>
+      <p className="text-xs text-[#8A8378]/70 max-w-sm">
+        La fenêtre d&apos;édition est ouverte — fermez-la pour revenir à la liste des biographies.
+      </p>
+      <BiographyModal
+        open={true}
+        onClose={() => router.push("/admin/biographies")}
+        servants={servants}
+        biography={biography ?? null}
+        accentColor={accentColor}
+      />
+    </div>
+  );
+}

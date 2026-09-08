@@ -41,7 +41,16 @@ export default async function NewVideoPage({
     { name: "duration", label: "Durée", type: "text", placeholder: "1:24:30 ou EN DIRECT" },
     { name: "videoUrl", label: "URL vidéo", type: "text", placeholder: "https://..." },
     { name: "hlsUrl", label: "URL HLS (streaming)", type: "text" },
-    { name: "thumbnailUrl", label: "URL miniature", type: "text" },
+    // ⭐ V3.48 — miniature PAR UPLOAD (plus de champ « URL miniature ») :
+    // même mécanique que le modal « Nouvelle vidéo » — image compressée
+    // côté client (ratio préservé, ≤ 150 Ko), affichée sur la page publique.
+    {
+      name: "thumbnailUrl",
+      label: "Miniature de la vidéo",
+      type: "image",
+      fullWidth: true,
+      help: "Affichée sur la page publique /videos — facultative (détectée automatiquement via le bouton « Nouvelle vidéo »)",
+    },
     { name: "views", label: "Vues initiales", type: "number" },
     { name: "isLive", label: "En direct maintenant", type: "checkbox" },
   ];

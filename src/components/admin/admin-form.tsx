@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, AlertCircle, Camera, ArrowLeft } from "lucide-react";
+import { Loader2, Save, AlertCircle, Camera, ArrowLeft, Image as ImageIcon } from "lucide-react";
 import { compressAvatar, compressHeroImage } from "@/lib/avatar-upload";
 import { semanticInputProps } from "@/lib/form-semantics";
 
@@ -188,8 +188,14 @@ export function AdminForm({
                   >
                     {photoValues[field.name] ? (
                       <img src={photoValues[field.name] as string} alt={field.label} className="w-full h-full object-cover" />
+                    ) : field.type === "image" ? (
+                      // ⭐ V3.48 — icône professionnelle (plus d'emoji) pour les
+                      // champs « image » rectangulaires (photo de jalon, miniature…)
+                      <ImageIcon className="w-7 h-7 text-[#C9A227]/60" aria-hidden />
                     ) : (
-                      "📷"
+                      // ⭐ V3.48 — icône professionnelle (plus d'emoji) pour les
+                      // champs « photo » carrés (avatars)
+                      <Camera className="w-7 h-7 text-white/85" aria-hidden />
                     )}
                     {photoProcessing === field.name && (
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">

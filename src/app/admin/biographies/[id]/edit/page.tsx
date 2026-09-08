@@ -1,7 +1,12 @@
 import { db } from "@/lib/db";
-import { AdminForm, type FieldDef } from "@/components/admin/admin-form";
 import { notFound } from "next/navigation";
-// ⭐ V3.47 — colonne Biography.photoUrl sélectionnée ci-dessous.
+// ⭐ V3.48 — la route /edit elle-même ouvre le MODAL professionnel (photo du
+// jalon + photo de biographie publique) : quel que soit le chemin d'accès —
+// stylo de la liste (V3.47), onglet encore chargé sur l'ancien JS qui
+// naviguait ici, bookmark ou historique — le pasteur voit toujours le modal.
+import { BiographyAutoModal } from "@/components/admin/biography-modal";
+// ⭐ V3.47 — colonne Biography.photoUrl : le findUnique ci-dessous la
+// sélectionne → garde avant lecture (pattern V3.46).
 import { ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
 
 export const dynamic = "force-dynamic";
@@ -13,37 +18,37 @@ export default async function EditBiographyPage({
 }) {
   await ensureBiographyPhotoColumn().catch(() => {});
   const { id } = await params;
-  const biography = await db.biography.findUnique({ where: { id } });
+  // Le serviteur du jalon est inclus (code) pour l'accent doré/violet ET
+  // pour rester robuste si le serviteur a été désactivé depuis.
+  const [biography, servants] = await Promise.all([
+    db.biography.findUnique({
+      where: { id },
+      include: { servant: { select: { code: true } } },
+    }),
+    db.servant.findMany({
+      select: { id: true, shortName: true, code: true },
+      orderBy: { code: "asc" },
+    }),
+  ]);
   if (!biography) notFound();
 
-  const servants = await db.servant.findMany();
-
-  const FIELDS: FieldDef[] = [
-    {
-      name: "servantId",
-      label: "Serviteur",
-      type: "select",
-      options: servants.map((s) => ({ value: s.id, label: s.shortName })),
-      required: true,
-    },
-    { name: "date", label: "Date / Période", type: "text", required: true },
-    { name: "title", label: "Titre court", type: "text", required: true },
-    { name: "description", label: "Récit", type: "textarea", fullWidth: true, required: true },
-    { name: "verseRef", label: "Référence biblique", type: "text" },
-    { name: "verseText", label: "Texte du verset", type: "textarea", fullWidth: true },
-    // ⭐ V3.47 — photo du jalon (image rectangulaire, ratio préservé).
-    { name: "photoUrl", label: "Photo du jalon (page publique)", type: "image", help: "Illustration de cette étape sur la frise chronologique publique — facultative", fullWidth: true },
-    { name: "order", label: "Ordre", type: "number" },
-  ];
+  const accentColor = biography.servant?.code === "pam" ? "#C9A227" : "#8C5FA8";
 
   return (
-    <AdminForm
-      entity="biographies"
-      initialData={biography as unknown as Record<string, unknown>}
-      fields={FIELDS}
-      redirectTo="/admin/biographies"
-      title="Modifier le jalon"
-      subtitle={biography.title}
+    <BiographyAutoModal
+      servants={servants}
+      biography={{
+        id: biography.id,
+        servantId: biography.servantId,
+        date: biography.date,
+        title: biography.title,
+        description: biography.description,
+        verseRef: biography.verseRef,
+        verseText: biography.verseText,
+        photoUrl: biography.photoUrl,
+        order: biography.order,
+      }}
+      accentColor={accentColor}
     />
   );
 }

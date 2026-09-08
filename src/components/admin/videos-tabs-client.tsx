@@ -10,6 +10,8 @@ import {
   Download, Trash2, FolderDown, Star,
   // ⭐ V3.47 — upload direct de fichiers vidéo dans le modal « Nouvelle vidéo »
   Upload, FileVideo, Link as LinkIcon, Camera,
+  // ⭐ V3.48 — champ d'upload de la miniature (remplace le champ « URL miniature »)
+  Image as ImageIcon,
 } from "lucide-react";
 // ⭐ V3.46 — Rubriques signatures (partagées site public ↔ back-office) :
 // « Saint-Esprit réponds-moi » (Pam), « Rhema du matin »/« Rhema du soir »
@@ -22,6 +24,10 @@ import {
 import { DeleteButton } from "@/components/admin/delete-button";
 import { AdminModal, ModalField, ModalError, modalInputClass } from "@/components/admin/admin-modal";
 import type { Video, Servant } from "@prisma/client";
+// ⭐ V3.48 — compression côté client de la miniature uploadée (ratio
+// préservé, ≤ 150 Ko, HEIC/EXIF robustes — même mécanique que les photos de
+// jalons et les sections hero).
+import { compressHeroImage } from "@/lib/avatar-upload";
 // ⭐ V3.37 — Copies locales de secours des replays (IndexedDB, propres à
 // CET appareil) : quand l'upload R2 a échoué à l'arrêt d'un live, la vidéo
 // complète reste récupérable ici, même après avoir quitté le studio.
@@ -769,6 +775,103 @@ function uploaderVersR2(
 
 type PhaseUpload = "repos" | "fiche" | "envoi" | "finalisation" | "erreur";
 
+/**
+ * ⭐ V3.48 — Champ MINIATURE PAR UPLOAD (remplace les champs « URL miniature »).
+ *
+ * Le pasteur ne veut PAS saisir une URL de miniature : il veut CHOISIR un
+ * fichier image. Ce champ professionnel (même pattern que la photo du jalon
+ * biographique) affiche :
+ *   - la miniature PERSONNALISÉE uploadée si présente (elle prime),
+ *   - sinon la miniature AUTOMATIQUE (capturée depuis le fichier vidéo en
+ *     mode upload, ou détectée depuis l'ID YouTube en mode lien),
+ *   - sinon un professionnel pictogramme (icône Lucide, AUCUN emoji).
+ *
+ * L'image est compressée côté client (compressHeroImage : ratio préservé,
+ * ≤ 150 Ko, HEIC iPhone accepté) et enregistrée avec la fiche vidéo.
+ */
+function MiniatureField({
+  perso,
+  auto,
+  processing,
+  onUpload,
+  onRetirer,
+  autoLabel,
+}: {
+  perso: string | null;
+  auto: string | null;
+  processing: boolean;
+  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRetirer: () => void;
+  autoLabel: string;
+}) {
+  const affichee = perso || auto;
+  return (
+    <div className="rounded-xl border-2 border-[#8A8378]/15 bg-[#FAF6EF]/60 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <ImageIcon className="w-4 h-4 text-[#C9A227]" aria-hidden />
+        <p className="text-xs font-bold text-[#1E0F2B] uppercase tracking-wider">
+          Miniature de la vidéo
+        </p>
+        <span className="text-[10px] text-[#8A8378] font-medium">
+          (affichée sur la page publique)
+        </span>
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="relative flex-shrink-0">
+          <div className="w-36 h-[81px] rounded-lg border-2 border-[#C9A227]/30 overflow-hidden bg-[#2A0E3D] flex items-center justify-center shadow-md">
+            {affichee ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={affichee} alt="Miniature de la vidéo" className="w-full h-full object-cover" />
+            ) : (
+              <ImageIcon className="w-7 h-7 text-[#C9A227]/50" aria-hidden />
+            )}
+            {processing && (
+              <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 text-white animate-spin" />
+              </div>
+            )}
+          </div>
+          <label
+            className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#1E0F2B] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
+            title="Choisir une miniature personnalisée (image)"
+          >
+            {processing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Camera className="w-3.5 h-3.5" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={onUpload}
+              className="hidden"
+              aria-label="Miniature personnalisée"
+            />
+          </label>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] text-[#1E0F2B]/70 leading-relaxed">
+            {perso
+              ? "Miniature personnalisée — c'est elle qui sera affichée sur la page publique."
+              : auto
+                ? `${autoLabel} — utilisée par défaut. Cliquez sur l'appareil photo pour la remplacer par votre propre image.`
+                : `${autoLabel} — elle apparaîtra ici automatiquement. Vous pouvez aussi cliquer sur l'appareil photo pour choisir votre propre image.`}
+          </p>
+          {perso && (
+            <button
+              type="button"
+              onClick={onRetirer}
+              className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
+            >
+              <Trash2 className="w-3 h-3" /> {auto ? "Revenir à la miniature automatique" : "Retirer la miniature"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewVideoModalProps) {
   // ⭐ V3.47 — source de la vidéo : lien (YouTube…) OU FICHIER (upload direct).
   const [source, setSource] = useState<"lien" | "fichier">("lien");
@@ -778,7 +881,6 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
     description: "",
     duration: "",
     videoUrl: "",
-    thumbnailUrl: "",
     isLive: false,
     views: 0,
     // ⭐ V3.46 — rubrique signature (vide = catégorisation automatique).
@@ -786,6 +888,16 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ⭐ V3.48 — MINIATURE PAR UPLOAD (plus de champ « URL miniature ») :
+  //  - miniatureYouTube : détectée automatiquement depuis l'ID de l'URL
+  //    YouTube collée (mode lien) — utilisée par défaut ;
+  //  - miniatureAuto : capturée depuis le fichier vidéo (mode fichier — V3.47) ;
+  //  - miniaturePerso : image CHOISIE par le pasteur via le champ d'upload —
+  //    elle PRIME sur toutes les automatiques.
+  const [miniatureYouTube, setMiniatureYouTube] = useState<string | null>(null);
+  const [miniaturePerso, setMiniaturePerso] = useState<string | null>(null);
+  const [miniatureProcessing, setMiniatureProcessing] = useState(false);
 
   // ─── ⭐ V3.47 — état de l'upload direct ───
   const [fichier, setFichier] = useState<File | null>(null);
@@ -805,17 +917,31 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
     }
   }, [open, preselectedServantCode, servants]);
 
-  // Auto-extract YouTube ID + thumbnail from URL
+  // Auto-extract YouTube ID + miniature depuis l'URL (⭐ V3.48 : la miniature
+  // détectée est un DÉFAUT visible dans le champ d'upload — plus de champ
+  // « URL miniature » à remplir manuellement).
   const handleUrlChange = (url: string) => {
     setForm((f) => ({ ...f, videoUrl: url }));
-    // Extract YouTube ID
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-    if (match && !form.thumbnailUrl) {
-      const ytId = match[1];
-      setForm((f) => ({
-        ...f,
-        thumbnailUrl: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`,
-      }));
+    if (match) {
+      setMiniatureYouTube(`https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`);
+    }
+  };
+
+  // ─── ⭐ V3.48 — Upload d'une miniature personnalisée (image) ───
+  const handleMiniaturePersoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMiniatureProcessing(true);
+    setError("");
+    try {
+      const dataUrl = await compressHeroImage(file);
+      setMiniaturePerso(dataUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Image invalide");
+    } finally {
+      setMiniatureProcessing(false);
+      e.target.value = "";
     }
   };
 
@@ -827,6 +953,9 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
     setFichier(file);
     setMiniatureAuto(null);
     setDureeAuto("");
+    // ⭐ V3.48 — nouvelle vidéo = nouvelle miniature : la personnalisée
+    // choisie pour l'ancien fichier est retirée (l'auto sera capturée).
+    setMiniaturePerso(null);
     setError("");
     // Best-effort : miniature + durée auto (peut échouer selon le navigateur).
     setExtractionEnCours(true);
@@ -867,7 +996,13 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
       // ① Créer (ou réutiliser) la fiche vidéo
       if (!videoId) {
         setPhase("fiche");
-        const thumbnailFinal = form.thumbnailUrl.trim() || miniatureAuto || "";
+        // ⭐ V3.48 — la miniature est la personnalisée uploadée (champ
+        // d'upload), sinon l'automatique du mode : capturée depuis le fichier
+        // (mode fichier) ou détectée depuis l'ID YouTube (mode lien).
+        const thumbnailFinal =
+          miniaturePerso ||
+          (source === "fichier" ? miniatureAuto : miniatureYouTube) ||
+          "";
         const res = await fetch("/admin/api/videos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -969,13 +1104,14 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
         description: "",
         duration: "",
         videoUrl: "",
-        thumbnailUrl: "",
         isLive: false,
         views: 0,
         category: "",
       });
       setFichier(null);
       setMiniatureAuto(null);
+      setMiniatureYouTube(null);
+      setMiniaturePerso(null);
       setDureeAuto("");
       setFicheCreeeId(null);
       setPhase("repos");
@@ -1114,9 +1250,9 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
         </ModalField>
 
         {source === "lien" ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
             {/* URL vidéo */}
-            <ModalField label="URL vidéo" help="YouTube, Vimeo, etc.">
+            <ModalField label="URL vidéo" help="YouTube, Vimeo, etc." fullWidth>
               <input
                 type="text"
                 value={form.videoUrl}
@@ -1126,16 +1262,17 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
               />
             </ModalField>
 
-            {/* Thumbnail */}
-            <ModalField label="URL miniature" help="Auto-rempli depuis YouTube">
-              <input
-                type="text"
-                value={form.thumbnailUrl}
-                onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
-                placeholder="https://..."
-                className={modalInputClass()}
-              />
-            </ModalField>
+            {/* ⭐ V3.48 — MINIATURE PAR UPLOAD (remplace « URL miniature ») :
+                la miniature YouTube détectée sert de DÉFAUT, le pasteur peut
+                en choisir une autre via l'appareil photo (image compressée). */}
+            <MiniatureField
+              perso={miniaturePerso}
+              auto={miniatureYouTube}
+              processing={miniatureProcessing}
+              onUpload={handleMiniaturePersoChange}
+              onRetirer={() => setMiniaturePerso(null)}
+              autoLabel="Miniature YouTube détectée automatiquement"
+            />
           </div>
         ) : (
           /* ⭐ V3.47 — Zone fichier vidéo (upload direct) */
@@ -1199,6 +1336,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
                         setFichier(null);
                         setMiniatureAuto(null);
                         setDureeAuto("");
+                        setMiniaturePerso(null);
                       }}
                       className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
                     >
@@ -1209,16 +1347,17 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
               </div>
             )}
 
-            {/* Miniature personnalisée (facultatif — prime sur l'auto) */}
-            <ModalField label="URL miniature personnalisée" help="Facultatif — si vide, la miniature détectée ci-dessus est utilisée" fullWidth>
-              <input
-                type="text"
-                value={form.thumbnailUrl}
-                onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
-                placeholder="https://… (facultatif)"
-                className={modalInputClass()}
-              />
-            </ModalField>
+            {/* ⭐ V3.48 — MINIATURE PAR UPLOAD (remplace « URL miniature
+                personnalisée ») : la miniature capturée depuis le fichier sert
+                de DÉFAUT, le pasteur peut en choisir une autre (image). */}
+            <MiniatureField
+              perso={miniaturePerso}
+              auto={miniatureAuto}
+              processing={miniatureProcessing}
+              onUpload={handleMiniaturePersoChange}
+              onRetirer={() => setMiniaturePerso(null)}
+              autoLabel="Miniature capturée depuis le fichier"
+            />
           </div>
         )}
 
@@ -1276,7 +1415,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
           </button>
           <button
             type="submit"
-            disabled={loading || extractionEnCours}
+            disabled={loading || extractionEnCours || miniatureProcessing}
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? (
