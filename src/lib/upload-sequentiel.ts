@@ -99,10 +99,17 @@ interface ReponseCreate {
   partSize: number;
   partCount: number;
   publicUrl: string;
-  /** ⭐ V3.55 — origine (virtual-hosted) du bucket pour la sonde CORS navigateur. */
+  /** ⭐ V3.55 — origine (virtual-hosted) du bucket (information). */
   r2Origin?: string;
-  /** ⭐ V3.55 — état CORS constaté côté serveur : "ok" | "absent" | "inverifiable". */
+  /** ⭐ V3.55 — état CORS lu côté serveur via GetBucketCors (information). */
   corsEtat?: string;
+  /** ⭐ V3.57 — verdict du preflight CORS testé PAR LE SERVEUR avec
+   * l'origine de la requête create : "ok" (la règle du bucket couvre ce
+   * navigateur — les morceaux signés partent directement) ou "inconnu"
+   * (test serveur impossible — on tranche sur échec réel d'un morceau).
+   * NB : "absent" ne parvient JAMAIS ici : le serveur refuse create en 403
+   * immédiat avec le message de réparation. */
+  corsPreflight?: "ok" | "inconnu" | "absent";
 }
 
 const ATTENTE_REESSAI_MS = [1200, 3000]; // entre tentatives de morceau
@@ -246,40 +253,25 @@ function envoyerMorceau(
 }
 
 /**
- * ⭐ V3.55 — Sonde le preflight CORS du bucket DEPUIS LE NAVIGATEUR.
+ * ⭐ V3.57 — RAPPEL (pourquoi il n'y a PLUS de sonde navigateur préalable).
  *
- * Un PUT (non signé, sans corps) vers l'ORIGINE du bucket déclenche le
- * préflight OPTIONS exact des PUT de morceaux : si une règle CORS existe
- * et couvre cette origine, le préflight passe et R2 répond (statut
- * quelconque — peu importe, on n'est pas authentifié) → "ok". Sinon le
- * navigateur bloque la réponse → TypeError → "bloque".
+ * La sonde V3.55 (fetch PUT non signé vers l'origine du bucket) était
+ * structurellement fausse : R2 rejette toute requête NON SIGNÉE par un 400
+ * « InvalidArgument / Authorization » SANS en-têtes CORS (rejet AVANT
+ * l'évaluation CORS) → le navigateur bloque la réponse → fetch rejette →
+ * verdict « bloqué » PERPÉTUEL, même bucket correctement configuré.
+ * Constaté en production le 2026-09-09 : règle appliquée et vérifiée
+ * (preflight 204, PUT signés 200 + ETag exposé) mais l'upload restait
+ * bloqué par la propre sonde de l'application.
  *
- * C'est la réplique EXACTE du test serveur (curl -X OPTIONS) qui a établi
- * le diagnostic : le bucket répond « CORS not configured for this bucket ».
+ * Désormais : le SERVEUR teste le preflight (OPTIONS + Origin de la requête
+ * — il lit la réponse brute, lui n'est pas filtré par le navigateur) et
+ * tranche à la création de la session : règle absente → 403 immédiat avec
+ * la réparation guidée ; règle présente → corsPreflight "ok" et les
+ * morceaux SIGNÉS partent directement. Le seul test navigateur qui vaille
+ * est l'envoi RÉEL d'un morceau signé — et son échec est classé avec le
+ * verdict serveur en poche (message honnête, plus jamais « CORS » à tort).
  */
-async function sonderCorsR2(r2Origin: string): Promise<"ok" | "bloque"> {
-  try {
-    await fetch(`${r2Origin}/`, { method: "PUT", cache: "no-store" });
-    return "ok"; // préflight accepté — le statut HTTP final est sans importance
-  } catch {
-    return "bloque"; // préflight refusé (TypeError: Failed to fetch)
-  }
-}
-
-/** ⭐ V3.55 — Le serveur d'upload répond-il ? (distingue « CORS bloqué » de « réseau coupé »). */
-async function serveurJoinable(endpoint: string): Promise<boolean> {
-  try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "{}",
-      cache: "no-store",
-    });
-    return res.status > 0; // toute réponse HTTP (même 400) = serveur joignable
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Upload séquentiel complet d'un fichier/Blob vers R2 par morceaux.
@@ -318,33 +310,19 @@ export async function uploaderSequentielVersR2(
   const { uploadId, key, partSize, partCount, publicUrl } = session;
   const octetsTotal = fichier.size;
 
-  // ─── ⭐ V3.55 ①bis — Sonde CORS du bucket AVANT tout morceau ──────────
-  // La session vient d'être créée via le serveur (le réseau vient donc de
-  // fonctionner). Si l'état CORS n'a pas pu être vérifié côté serveur
-  // (token scoped — cas normal) ou n'est pas « ok », le NAVIGATEUR sonde
-  // lui-même le préflight : un bucket sans règle CORS rejette TOUT PUT
-  // navigateur de façon DÉTERMINISTE — réessayer 3 fois ne peut que
-  // répéter le même refus. On échoue donc IMMÉDIATEMENT avec la cause
-  // exacte et la réparation guidée, au lieu de marteler le bucket et
-  // d'accuser à tort la connexion du pasteur.
-  if (session.r2Origin && session.corsEtat !== "ok") {
-    const verdict = await sonderCorsR2(session.r2Origin);
-    if (verdict === "bloque") {
-      // Double contrôle avant de rendre un verdict CORS : si le serveur
-      // d'upload ne répond PLUS non plus, c'est le réseau qui est tombé
-      // (pas le CORS) → message réseau, réessai légitime.
-      if (!(await serveurJoinable(endpoint))) {
-        throw new Error(
-          "Connexion perdue avec le serveur pendant la préparation de l'envoi — " +
-            "vérifiez votre connexion puis cliquez sur « Réessayer l'envoi »."
-        );
-      }
-      // Session ouverte pour rien → nettoyage immédiat (morceaux orphelins facturables).
-      await appelMultipart(endpoint, { action: "abort", uploadId, key }, undefined, 1).catch(
-        () => undefined
-      );
-      throw new ErreurCorsBucket(MESSAGE_CORS_BUCKET);
-    }
+  // ─── ⭐ V3.57 ①bis — Verdict CORS DU SERVEUR (plus de sonde navigateur) ─
+  // Le serveur a testé le preflight du bucket AVEC l'origine de cette
+  // session au moment du create : "absent" → il refuse create en 403 avec
+  // le message de réparation (l'appelMultipart ci-dessus l'a déjà remonté —
+  // la branche ci-dessous n'est qu'un filet de sécurité entre versions).
+  // "ok" → la règle couvre ce navigateur : les morceaux SIGNÉS partent
+  // directement — c'est leur échec réel (après tentatives) qui parle,
+  // avec un message HONNÊTE guidé par ce verdict (cf. ②).
+  if (session.corsPreflight === "absent") {
+    await appelMultipart(endpoint, { action: "abort", uploadId, key }, undefined, 1).catch(
+      () => undefined
+    );
+    throw new ErreurCorsBucket(MESSAGE_CORS_BUCKET);
   }
 
   // ─── ② Envoi SÉQUENTIEL des morceaux ─────────────────────────────────
@@ -416,14 +394,23 @@ export async function uploaderSequentielVersR2(
 
     if (!etag) {
       // Échec définitif du morceau → abort (nettoie les morceaux envoyés)
-      // + erreur ACTIONNABLE (quel morceau, quelle cause, quoi faire).
+      // + erreur ACTIONNABLE guidée par le verdict CORS SERVEUR (V3.57) :
+      //  • preflight "ok" → la configuration du stockage est SANE (vérifiée
+      //    par le serveur au create) → si le morceau échoue quand même au
+      //    niveau réseau, c'est le CHEMIN navigateur→stockage qui est coupé
+      //    (extension, antivirus, filtre réseau) — on le dit, sans accuser
+      //    la « connexion instable » ni le CORS à tort.
+      //  • verdict inconnu → message neutre, réessai légitime.
       await appelMultipart(endpoint, { action: "abort", uploadId, key }, undefined, 1).catch(
         () => undefined
       );
+      const suite =
+        session.corsPreflight === "ok"
+          ? " La configuration du stockage a été vérifiée saine par le serveur : c'est le trajet entre votre navigateur et le stockage cloud qui est interrompu (extension de navigateur, antivirus ou filtre réseau ?) — essayez un autre navigateur ou une autre connexion, puis « Réessayer l'envoi » (reprise depuis le début du fichier, morceau par morceau)."
+          : " Votre connexion semble instable — cliquez sur « Réessayer l'envoi » : l'envoi reprendra depuis le début du fichier, morceau par morceau.";
       throw new Error(
-        `Le morceau ${partNumber}/${partCount} n'a pas pu être envoyé après ${tentativesMax} tentatives ` +
-          `(${derniereErreur}). Votre connexion semble instable — cliquez sur « Réessayer l'envoi » : ` +
-          "l'envoi reprendra depuis le début du fichier, morceau par morceau."
+        `Le morceau ${partNumber}/${partCount} n'a pas pu être envoyé après ${tentativesMax} tentatives (${derniereErreur}).` +
+          suite
       );
     }
 

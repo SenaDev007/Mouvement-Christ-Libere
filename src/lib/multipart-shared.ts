@@ -3,6 +3,7 @@ import {
   isR2Configured,
   ensureR2CorsConfig,
   lireCorsBucketR2,
+  sonderPreflightCorsR2,
   getR2Origin,
   generateKey,
   getPublicUrl,
@@ -28,11 +29,18 @@ import {
  *
  * PROTOCOLE (4 actions, même URL) :
  *   POST { action: "create",   contentType, filename? }
- *        → { uploadId, key, partSize, partCount, publicUrl, r2Origin, corsEtat }
- *        ⭐ V3.55 — r2Origin/corsEtat : le client sonde le preflight CORS du
- *        bucket AVANT d'envoyer le moindre morceau (un refus CORS est
- *        DÉTERMINISTE : 3 tentatives = 3 échecs identiques, autant échouer
- *        immédiatement avec la cause exacte).
+ *        → { uploadId, key, partSize, partCount, publicUrl, r2Origin, corsEtat, corsPreflight }
+ *        ⭐ V3.55 — r2Origin/corsEtat exposés au client.
+ *        ⭐ V3.57 — corsPreflight : verdict du preflight CORS testé PAR LE
+ *        SERVEUR (OPTIONS + Origin de la requête) — "ok" (la règle couvre
+ *        l'origine du navigateur), "inconnu" (test impossible), ou refus
+ *        403 IMMÉDIAT si "absent" (règle manquante/origine non couverte).
+ *        L'ancienne sonde cliente (PUT NON SIGNÉ vers l'origine du bucket)
+ *        était structurellement fausse : R2 rejette les requêtes non signées
+ *        par un 400 SANS en-têtes CORS (rejet pré-CORS) → le navigateur
+ *        bloquait la réponse → verdict « bloqué » PERPÉTUEL, même règle
+ *        correctement appliquée (constaté en production 2026-09-09 : le
+ *        pasteur avait réparé le bucket mais l'upload restait bloqué).
  *   POST { action: "part",     uploadId, key, partNumber }
  *        → { url } (URL pré-signée du morceau, valable 1 h, à la demande)
  *   POST { action: "complete", uploadId, key, parts: [{ partNumber, etag }] }
@@ -121,22 +129,29 @@ export async function traiterRequeteMultipart(opts: {
         );
       }
 
-      // ⭐ V3.55 — SONDE RÉELLE de l'état CORS AVANT d'ouvrir la session
-      // (uniquement sur create : les actions part/complete/abort n'en ont
-      // pas besoin — le CORS ne peut pas « disparaître » en cours d'envoi).
-      // Établi en production le 2026-09-09 : le bucket répond littéralement
-      // « CORS not configured for this bucket » au preflight.
-      //   • « absent » → refus DÉTERMINISTE de tout PUT navigateur → échec
-      //     IMMÉDIAT et actionnable (403 : le client n'essaie même pas un
-      //     seul morceau — trois tentatives sur un refus déterministe sont
-      //     trois échecs identiques).
-      //   • « ok » → vérifie en plus que l'ORIGINE de la requête est couverte
-      //     par une règle (sinon même verdict, cause exacte indiquée).
-      //   • « inverifiable » (token scoped Object Read & Write, cas normal) →
-      //     la réponse porte r2Origin + corsEtat : le CLIENT sonde le
-      //     preflight lui-même — le navigateur est l'autorité finale,
-      //     puisque c'est lui qui envoie les PUT.
+      // ⭐ V3.55 — SONDE de l'état CORS AVANT d'ouvrir la session (uniquement
+      // sur create : les actions part/complete/abort n'en ont pas besoin —
+      // le CORS ne peut pas « disparaître » en cours d'envoi).
+      //   • « absent » (GetBucketCors) → refus DÉTERMINISTE → 403 IMMÉDIAT.
+      //   • « ok » (GetBucketCors) → vérifie en plus que l'ORIGINE de la
+      //     requête est couverte par la règle.
+      //   • « inverifiable » (token scoped Object Read & Write, cas normal en
+      //     production) → ⭐ V3.57 : le SERVEUR sonde le preflight lui-même
+      //     (OPTIONS + Origin) — il lit la réponse BRUTE et distingue ce que
+      //     le navigateur ne peut pas voir (R2 renvoie 403 sans en-têtes CORS
+      //     quand la règle manque, 204 + ACAO quand elle couvre l'origine).
+      //     « absent » → 403 IMMÉDIAT ; « ok » → corsPreflight: "ok" dans la
+      //     réponse (le client n'a PLUS de sonde préalable — les morceaux
+      //     signés partent directement) ; « inconnu » → corsPreflight:
+      //     "inconnu" (le client tranche sur échec RÉEL d'un morceau).
       const sondeCors = await lireCorsBucketR2();
+      let preflightVerdict: "ok" | "inconnu" = "inconnu";
+      const messageReparationCors =
+        "Le stockage Cloudflare R2 refuse les envois depuis le navigateur : la politique CORS du bucket « " +
+        process.env.R2_BUCKET_NAME +
+        " » n'est pas configurée ou n'inclut pas ce site (vérifié par test direct côté serveur — ce n'est PAS votre connexion). " +
+        "Réparation guidée (2 minutes, une seule fois) : Test R2 (/admin/r2-test) → section « CORS du bucket ». " +
+        "Aucun réessai d'envoi ne peut aboutir tant que la règle n'est pas appliquée.";
       if (sondeCors.etat === "absent") {
         return reponseErreur(
           "Le stockage Cloudflare R2 refuse les envois depuis le navigateur : la politique CORS du bucket « " +
@@ -162,6 +177,16 @@ export async function traiterRequeteMultipart(opts: {
             403
           );
         }
+        preflightVerdict = "ok";
+      } else {
+        // ⭐ V3.57 — « inverifiable » : le SERVEUR teste le preflight avec
+        // l'ORIGINE EXACTE du navigateur qui va envoyer les morceaux.
+        const origineRequete = req.headers.get("origin") || "";
+        const verdict = await sonderPreflightCorsR2(origineRequete);
+        if (verdict === "absent") {
+          return reponseErreur(messageReparationCors, 403);
+        }
+        if (verdict === "ok") preflightVerdict = "ok";
       }
 
       try {
@@ -172,9 +197,13 @@ export async function traiterRequeteMultipart(opts: {
           partSize,
           partCount,
           publicUrl: getPublicUrl(key),
-          // ⭐ V3.55 — pour la sonde CORS côté navigateur (cf. en-tête).
+          // ⭐ V3.55 — informations CORS pour le client.
           r2Origin: getR2Origin(),
           corsEtat: sondeCors.etat,
+          // ⭐ V3.57 — verdict du preflight testé PAR LE SERVEUR avec
+          // l'origine de CETTE requête : "ok" = la règle couvre ce
+          // navigateur, les morceaux signés peuvent partir directement.
+          corsPreflight: preflightVerdict,
         });
       } catch (error) {
         console.error("[multipart/create] Erreur R2 :", error);

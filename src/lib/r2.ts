@@ -229,6 +229,53 @@ export function reglesCorsR2Json(): string {
 
 export type EtatCorsR2 = "ok" | "absent" | "inverifiable";
 
+/** ⭐ V3.57 — Verdict du preflight CORS testé DEPUIS LE SERVEUR. */
+export type VerdictPreflightR2 = "ok" | "absent" | "inconnu";
+
+/**
+ * ⭐ V3.57 — Sonde le preflight CORS du bucket DEPUIS LE SERVEUR (autorité).
+ *
+ * POURQUOI (établi en production le 2026-09-09) : R2 rejette toute requête
+ * NON SIGNÉE par un 400 « InvalidArgument / Authorization » SANS joindre les
+ * en-têtes CORS (rejet AVANT l'évaluation CORS) → dans un navigateur, une
+ * requête non signée vers le bucket échoue TOUJOURS (fetch → TypeError),
+ * même quand la règle CORS est parfaitement appliquée. L'ancienne sonde
+ * cliente (PUT non signé vers l'origine du bucket) produisait donc un
+ * verdict « bloqué » PERPÉTUEL — y compris après la réparation du pasteur
+ * (règle appliquée et vérifiée : preflight 204, PUT signés 200 + ETag exposé).
+ *
+ * Le SERVEUR, lui, sait distinguer : il envoie le preflight OPTIONS (avec
+ * Origin + Access-Control-Request-Method) et lit la réponse BRUTE :
+ *   • 2xx + Access-Control-Allow-Origin → "ok"   (la règle couvre l'origine)
+ *   • 403 (sans ACAO)                    → "absent" (pas de règle, ou origine non couverte)
+ *   • réseau injoignable / imprévu       → "inconnu" (le client tranche sur échec réel)
+ *
+ * @param origine Origine EXACTE du navigateur qui va envoyer les morceaux
+ *                (en-tête Origin de la requête create) — c'est ELLE que la
+ *                règle du bucket doit couvrir.
+ */
+export async function sonderPreflightCorsR2(origine: string): Promise<VerdictPreflightR2> {
+  const cible = getR2Origin();
+  if (!cible || !origine) return "inconnu";
+  try {
+    const res = await fetch(`${cible}/test/sonde-preflight.txt`, {
+      method: "OPTIONS",
+      headers: {
+        Origin: origine,
+        "Access-Control-Request-Method": "PUT",
+        "Access-Control-Request-Headers": "content-type",
+      },
+      // 5 s max : le preflight est léger, pas de raison de bloquer create.
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.ok && res.headers.get("access-control-allow-origin")) return "ok";
+    if (res.status === 403) return "absent";
+    return "inconnu";
+  } catch {
+    return "inconnu";
+  }
+}
+
 /**
  * ⭐ V3.55 — Lit l'état CORS RÉEL du bucket (GetBucketCors) avec le token de
  * l'application. Best-effort : un token « Object Read & Write » scoped est

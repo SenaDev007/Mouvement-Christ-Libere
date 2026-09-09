@@ -7,6 +7,7 @@ import {
   getPresignedUploadUrl,
   getPublicUrl,
   lireCorsBucketR2,
+  sonderPreflightCorsR2,
   appliquerCorsR2AvecIdentifiants,
   getR2Origin,
 } from "@/lib/r2";
@@ -28,6 +29,10 @@ import {
  *  - "cors-status" : ⭐ V3.55 — lit l'état CORS RÉEL du bucket (GetBucketCors,
  *                 best-effort avec le token de l'app) + renvoie l'origine du
  *                 bucket pour la sonde navigateur.
+ *                 ⭐ V3.57 — renvoie AUSSI le verdict du preflight testé PAR
+ *                 LE SERVEUR avec l'origine de CETTE requête (le navigateur
+ *                 ne peut pas tester lui-même : R2 rejette les requêtes non
+ *                 signées sans en-têtes CORS → faussement « bloqué »).
  * POST (body JSON):
  *  - "cors-apply" : ⭐ V3.55 — applique la règle CORS du bucket avec des
  *                 identifiants TEMPORAIRES « Admin Read & Write » fournis
@@ -166,11 +171,19 @@ export async function GET(req: NextRequest) {
         );
       }
       const cors = await lireCorsBucketR2();
+      // ⭐ V3.57 — preflight testé PAR LE SERVEUR avec l'origine EXACTE de
+      // cette requête (celle du navigateur admin) : 204+ACAO = règle
+      // présente et couvrante ; 403 = absente/non couvrante. C'est ce que le
+      // navigateur ne peut PAS déterminer seul (requêtes non signées = 400
+      // sans en-têtes CORS = faussement « bloqué »).
+      const origine = req.headers.get("origin") || "";
+      const preflight = origine ? await sonderPreflightCorsR2(origine) : "inconnu";
       return NextResponse.json({
         etat: cors.etat,
         regles: cors.regles ?? [],
         detail: cors.detail ?? "",
         r2Origin: getR2Origin(),
+        preflight,
       });
     }
 

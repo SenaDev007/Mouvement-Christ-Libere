@@ -63,6 +63,9 @@ interface CorsServeurEtat {
   etat: "ok" | "absent" | "inverifiable";
   regles: { origins: string[]; methods: string[] }[];
   detail: string;
+  /** ⭐ V3.57 — verdict du preflight testé PAR LE SERVEUR avec l'origine de
+   * cette page : "ok" (règle présente et couvrante), "absent", "inconnu". */
+  preflight?: "ok" | "absent" | "inconnu";
 }
 
 /** ⭐ V3.55 — Résultat de l'application de la règle CORS (token temporaire). */
@@ -134,37 +137,48 @@ export default function R2TestPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // ⭐ V3.55 — Sonde CORS du bucket DEPUIS CE NAVIGATEUR : un PUT non signé
-  // vers l'origine du bucket déclenche le préflight OPTIONS EXACT des PUT de
-  // morceaux d'upload. C'est LE test décisif (le diagnostic du 2026-09-09 :
-  // le bucket répond « CORS not configured for this bucket » — toutes les
-  // requêtes navigateur étaient rejetées d'office, cause des « Le morceau
-  // 1/4 n'a pas pu être envoyé après 3 tentatives »).
-  const sonderCors = async (origineCible?: string) => {
-    const origine = origineCible || status?.r2EndpointOrigin;
-    if (!origine || origine === "(non défini)") return;
+  // ⭐ V3.57 — Sonde CORS du bucket DEPUIS CE NAVIGATEUR : envoi RÉEL d'un
+  // micro-fichier vers R2 via une URL pré-signée — le chemin EXACT des
+  // morceaux d'upload (mêmes en-têtes, même signature). C'est le seul test
+  // navigateur VALIDE : l'ancienne sonde (PUT NON SIGNÉ vers l'origine du
+  // bucket, V3.55) échouait TOUJOURS — R2 rejette les requêtes non signées
+  // par un 400 SANS en-têtes CORS (rejet pré-CORS) → le navigateur bloque
+  // la réponse → verdict « REFUSÉ » perpétuel, même règle correctement
+  // appliquée (constaté en production 2026-09-09).
+  const sonderCors = async () => {
     setCorsProbing(true);
     try {
-      await fetch(`${origine}/`, { method: "PUT", cache: "no-store" });
-      setCorsVerdict("ok"); // préflight accepté (statut final sans importance)
+      const res = await apiFetch("/api/admin/r2-test?action=presign");
+      const data = await res.json().catch(() => ({} as { uploadUrl?: string }));
+      if (!data.uploadUrl) {
+        setCorsVerdict("bloque");
+        return;
+      }
+      // PUT signé d'un micro-corps — si la règle CORS du bucket est absente
+      // ou ne couvre pas ce site, le navigateur bloque et on passe au catch.
+      await fetch(data.uploadUrl, {
+        method: "PUT",
+        body: new Blob(["sonde-cors"], { type: "video/webm" }),
+      });
+      setCorsVerdict("ok"); // requête signée acceptée (statut final lu par fetch)
     } catch {
-      setCorsVerdict("bloque"); // préflight refusé par le bucket
+      setCorsVerdict("bloque"); // bloqué par le navigateur (CORS) ou réseau coupé
     } finally {
       setCorsProbing(false);
     }
   };
 
   // ⭐ V3.55 — Sonde automatique dès que la configuration est chargée :
-  // verdict navigateur (le vrai) + état lu côté serveur (best-effort).
+  // verdict navigateur (envoi réel signé) + preflight testé côté serveur.
   useEffect(() => {
-    if (!status?.configured || !status.r2EndpointOrigin || status.r2EndpointOrigin === "(non défini)") return;
+    if (!status?.configured) return;
     apiFetch("/api/admin/r2-test?action=cors-status")
       .then((r) => r.json())
       .then((d) => setCorsServeur(d))
       .catch(() => undefined);
-    sonderCors(status.r2EndpointOrigin);
+    sonderCors();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status?.configured, status?.r2EndpointOrigin]);
+  }, [status?.configured]);
 
   // ⭐ V3.56 — Copie de la règle JSON (option A : onglet JSON du Dashboard).
   const copierRegle = async () => {
@@ -669,13 +683,12 @@ export default function R2TestPage() {
               </button>
             </div>
             <p className="text-xs text-[#8A8378] mb-3">
-              Test automatique à l&apos;ouverture de la page : votre navigateur envoie la requête de
-              pré-vol EXACTE des uploads de vidéos par morceaux (PUT vers l&apos;origine du bucket).
-              Sans règle CORS, Cloudflare R2 refuse TOUT envoi direct du navigateur — c&apos;est la
-              cause exacte des « Le morceau 1/4 n&apos;a pas pu être envoyé après 3 tentatives » :
-              le bucket répond « CORS not configured for this bucket », aucun réessai ne peut y
-              rien changer. La réparation est unique et définitive (une règle à appliquer une
-              seule fois sur le bucket).
+              Test automatique à l&apos;ouverture de la page : votre navigateur envoie RÉELLEMENT un
+              micro-fichier vers R2 par une URL pré-signée — le chemin EXACT des uploads de vidéos
+              par morceaux. Sans règle CORS, Cloudflare R2 refuse TOUT envoi direct du navigateur
+              — c&apos;était la cause exacte des « Le morceau 1/4 n&apos;a pas pu être envoyé » : le bucket
+              répondait « CORS not configured for this bucket ». La réparation est unique et
+              définitive (une règle à appliquer une seule fois sur le bucket).
             </p>
 
             {/* Verdict navigateur (l'autorité) + état serveur (best-effort) */}
@@ -703,31 +716,55 @@ export default function R2TestPage() {
                   <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 )}
                 {corsProbing
-                  ? "Test du pré-vol en cours..."
+                  ? "Envoi du micro-fichier de test vers le stockage..."
                   : corsVerdict === "ok"
-                    ? "CORS accepté — le bucket autorise les envois de ce navigateur."
+                    ? "ACCEPTÉ — le stockage autorise les envois de ce navigateur (envoi réel vérifié : les uploads de vidéos/replays fonctionnent)."
                     : corsVerdict === "bloque"
-                      ? "REFUSÉ — la politique CORS du bucket n'est pas configurée (ou n'inclut pas ce site). Les uploads de vidéos/replays ne peuvent pas fonctionner tant que la règle ci-dessous n'est pas appliquée."
+                      ? corsServeur?.preflight === "ok"
+                        ? "BLOQUÉ — la règle du bucket est correcte (vérifiée côté serveur) mais CE navigateur n'arrive pas à joindre le stockage : extension de navigateur, antivirus ou filtre réseau. Essayez un autre navigateur ou une autre connexion."
+                        : "REFUSÉ — la politique CORS du bucket n'est pas configurée (ou n'inclut pas ce site). Les uploads de vidéos/replays ne peuvent pas fonctionner tant que la règle ci-dessous n'est pas appliquée."
                       : "En attente du test..."}
               </p>
-              {corsServeur && corsVerdict === "bloque" && (
-                <p className="text-[11px] text-red-600 bg-red-100/60 rounded p-2">
-                  {corsServeur.etat === "absent"
-                    ? "Confirmé aussi côté serveur : aucune règle CORS sur le bucket."
-                    : corsServeur.etat === "inverifiable"
-                      ? "Lecture serveur impossible (le token de l'application ne peut pas lire la configuration du bucket) — le verdict du navigateur ci-dessus fait foi."
-                      : "Une règle existe côté serveur mais elle ne couvre pas l'origine de ce site."}
-                </p>
-              )}
-              {corsServeur && corsServeur.etat === "ok" && corsVerdict !== "bloque" && (
-                <p className="text-[11px] text-emerald-700">
-                  Règle lue côté serveur : {corsServeur.regles.flatMap((r) => r.origins).join(", ")}
+              {corsServeur && (
+                <p
+                  className={`text-[11px] rounded p-2 ${
+                    corsServeur.preflight === "ok"
+                      ? "text-emerald-700 bg-emerald-100/60"
+                      : corsServeur.preflight === "absent"
+                        ? "text-red-600 bg-red-100/60"
+                        : "text-[#8A8378] bg-[#2A0E3D]/5"
+                  }`}
+                >
+                  {corsServeur.preflight === "ok"
+                    ? "Règle du bucket vérifiée PAR LE SERVEUR (pré-vol vers l'origine du bucket) : présente et couvrante pour ce site."
+                    : corsServeur.preflight === "absent"
+                      ? "Confirmé aussi côté serveur : pas de règle CORS (ou origine non couverte) sur le bucket."
+                      : corsServeur.etat === "ok"
+                        ? "Règle lue côté serveur : " +
+                          corsServeur.regles.flatMap((r) => r.origins).join(", ")
+                        : "Test serveur impossible (le token de l'application ne peut pas lire la configuration du bucket) — l'envoi réel ci-dessus fait foi."}
                 </p>
               )}
             </div>
 
-            {/* Panneau de réparation (uniquement si refusé) */}
-            {corsVerdict === "bloque" && (
+            {/* ⭐ V3.57 — Panneau RÉSEAU (règle correcte MAIS navigateur bloqué) */}
+            {corsVerdict === "bloque" && corsServeur?.preflight === "ok" && (
+              <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
+                <h3 className="text-sm font-bold text-amber-800 mb-2 flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4" />
+                  La règle du bucket est CORRECTE — le blocage vient de ce navigateur ou de ce réseau
+                </h3>
+                <ul className="text-[11px] text-amber-800 list-disc list-inside space-y-1">
+                  <li>Essayez un <b>autre navigateur</b> (Chrome, Edge, Firefox) — une extension peut bloquer le domaine du stockage.</li>
+                  <li>Désactivez temporairement l&apos;<b>antivirus</b> ou son filtrage HTTPS, et tout filtre DNS/réseau.</li>
+                  <li>Essayez le <b>partage de connexion mobile</b> — si l&apos;envoi passe, le filtre est sur le réseau actuel.</li>
+                  <li>Une fois l&apos;envoi réussi sur un autre chemin, prévenez l&apos;administrateur avec ce constat.</li>
+                </ul>
+              </div>
+            )}
+
+            {/* Panneau de réparation (si refusé pour cause de règle) */}
+            {corsVerdict === "bloque" && corsServeur?.preflight !== "ok" && (
               <div className="mt-4 space-y-4">
                 <div className="bg-red-50 border border-red-300 rounded-lg p-4">
                   <h3 className="text-sm font-bold text-red-800 mb-2 flex items-center gap-2">
