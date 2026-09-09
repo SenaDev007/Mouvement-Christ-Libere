@@ -105,7 +105,15 @@ export interface SubtitleConfig {
 }
 
 export interface TransitionConfig {
-  type: "fade" | "slideleft" | "slideright" | "slideup" | "slidedown" | "circleopen" | "circleclose" | "dissolve" | "pixelize";
+  type:
+    | "fade" | "slideleft" | "slideright" | "slideup" | "slidedown"
+    | "circleopen" | "circleclose" | "dissolve" | "pixelize"
+    // ⭐ V3.60 — transitions PRO (toutes = noms xfade valides, sauf glitch → distance)
+    | "wiperight" | "wipeleft" | "wipeup" | "wipedown"
+    | "zoomin" | "hblur" | "smoothleft" | "smoothright"
+    | "circlecrop" | "fadewhite" | "fadeblack" | "radial"
+    | "diagtl" | "diagbr" | "squeezeh" | "squeezev"
+    | "fadefast" | "fadeslow" | "glitch";
   duration: number; // secondes
 }
 
@@ -218,7 +226,11 @@ export interface BackgroundRemovalConfig {
 
 export type VideoFilter =
   | "none" | "vintage" | "noir" | "sepia"
-  | "cool" | "warm" | "dramatic" | "fade" | "vivid";
+  | "cool" | "warm" | "dramatic" | "fade" | "vivid"
+  // ⭐ V3.60 — filtres CINÉMA (miroir de types.ts côté client)
+  | "tealorange" | "film35" | "golden" | "bleach" | "dreamy"
+  | "hdr" | "muted" | "bluenight" | "cyberpunk" | "pastel"
+  | "vhs" | "noirbleu";
 
 // ─── Types internes ───
 
@@ -337,6 +349,44 @@ function buildVideoFilterPreset(filter: VideoFilter): string {
     case "vivid":
       // Couleurs vives + contraste
       return "eq=contrast=1.2:saturation=1.5:brightness=0.02";
+    // ─── ⭐ V3.60 — FILTRES CINÉMA (chaînes testées localement sur
+    // ffmpeg-static : colorbalance / curves / eq / gblur / noise, toutes OK) ───
+    case "tealorange":
+      // Teal & Orange blockbuster : ombres bleutées + hautes lumières dorées
+      return "colorbalance=rs=-0.08:bs=0.12:rh=0.10:bh=-0.12,eq=contrast=1.15:saturation=1.2";
+    case "film35":
+      // Film 35 mm : tirage doux, noirs remontés, vignettage léger
+      return "eq=contrast=1.08:saturation=0.92:gamma=1.05,curves=r='0/0.03 0.5/0.52 1/0.97':g='0/0.02 0.5/0.5 1/0.98':b='0/0.05 0.5/0.53 1/0.95',vignette=PI/7";
+    case "golden":
+      // Heure dorée : lumière miel
+      return "colorbalance=rs=0.12:gs=0.05:bs=-0.10:rh=0.15:bh=-0.15,eq=saturation=1.15:brightness=0.05:contrast=1.05";
+    case "bleach":
+      // Bleach bypass : contraste dur, couleurs presque désaturées
+      return "eq=contrast=1.35:saturation=0.45:brightness=0.05";
+    case "dreamy":
+      // Onirique : voile lumineux + halo doux
+      return "eq=contrast=0.95:saturation=1.1:brightness=0.08,curves=all='0/0.05 0.5/0.55 1/0.95',gblur=sigma=1.0";
+    case "hdr":
+      // HDR Punch : micro-contraste + saturation percutante
+      return "eq=contrast=1.25:saturation=1.35:gamma=0.92,curves=all='0/0.06 0.25/0.28 0.75/0.78 1/0.96'";
+    case "muted":
+      // Cinéma sourd : palette sobre
+      return "eq=contrast=1.05:saturation=0.65:gamma=1.02,curves=r='0/0.06 0.5/0.5 1/0.94':g='0/0.06 0.5/0.52 1/0.95':b='0/0.08 0.5/0.55 1/0.97'";
+    case "bluenight":
+      // Nuit bleue
+      return "colorbalance=rs=-0.10:bs=0.18:rh=-0.05:bh=0.08,eq=contrast=1.15:saturation=0.9:brightness=-0.04";
+    case "cyberpunk":
+      // Cyberpunk : magenta / bleu électrique
+      return "colorbalance=rs=-0.05:bs=0.15:rh=0.10:gh=0.03:bh=-0.10,eq=contrast=1.3:saturation=1.5,curves=b='0/0.12 0.5/0.55 1/0.9'";
+    case "pastel":
+      // Pastel doux
+      return "eq=contrast=0.9:saturation=0.8:brightness=0.12,curves=all='0/0.1 0.5/0.55 1/0.92'";
+    case "vhs":
+      // VHS rétro : dérive chromatique + grain
+      return "eq=saturation=1.3:contrast=1.05,curves=r='0/0.1 0.5/0.55 1/0.9':b='0/0.1 0.5/0.5 1/0.95',noise=alls=8:allf=t,vignette=PI/6";
+    case "noirbleu":
+      // Acier bleu : monochrome bleuté contrasté
+      return "format=gray,eq=contrast=1.4,colorbalance=bs=0.15:rs=-0.05";
     default:
       return "";
   }
@@ -459,6 +509,11 @@ export async function buildRenderPlan(
   const targetHeight = probedInfo[0]?.height || 1080;
   const targetFps = probedInfo[0]?.fps || 30;
 
+  // ⭐ V3.60 — xfade/acrossfade exige que CHAQUE segment ait un flux audio :
+  // les segments sans audio reçoivent une piste silencieuse (anullsrc).
+  const transitionsDemandees =
+    (project.transitions?.length || 0) > 0 && project.segments.length > 1;
+
   for (let i = 0; i < segmentFiles.length; i++) {
     const seg = project.segments[i];
     const normFile = path.join(tmpDir, `norm-${i}.mp4`);
@@ -468,14 +523,24 @@ export async function buildRenderPlan(
     const t = seg.trimEnd && seg.trimStart ? `-t ${seg.trimEnd - seg.trimStart}` : seg.trimEnd ? `-t ${seg.trimEnd}` : "";
 
     // Normaliser : H.264, AAC, même résolution, même fps, SAR 1:1
-    const cmd = `"${getFfmpegPath()}" -y ${ss} -i "${segmentFiles[i]}" ${t} ` +
-      `-vf "scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=${targetFps}" ` +
-      `-c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -ar 44100 -ac 2 ` +
-      `"${normFile}"`;
+    // ⭐ V3.60 — avec transitions : piste silencieuse ajoutée si le segment
+    // n'a pas d'audio (mapping 0:v + 1:a, -shortest borne l'anullsrc infinie)
+    const sansAudio = transitionsDemandees && !probedInfo[i]?.hasAudio;
+    const cmd = sansAudio
+      ? `"${getFfmpegPath()}" -y ${ss} -i "${segmentFiles[i]}" ${t} ` +
+        `-f lavfi -i "anullsrc=channel_layout=stereo:sample_rate=44100" ` +
+        `-vf "scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=${targetFps}" ` +
+        `-map 0:v:0 -map 1:a:0 -shortest ` +
+        `-c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -ar 44100 -ac 2 ` +
+        `"${normFile}"`
+      : `"${getFfmpegPath()}" -y ${ss} -i "${segmentFiles[i]}" ${t} ` +
+        `-vf "scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=${targetFps}" ` +
+        `-c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -ar 44100 -ac 2 ` +
+        `"${normFile}"`;
 
     await execCmd(cmd);
     normalizedFiles.push(normFile);
-    steps.push(`Normalisation segment ${i + 1}`);
+    steps.push(`Normalisation segment ${i + 1}${sansAudio ? " (silence ajouté)" : ""}`);
   }
 
   // ─── 3. Concaténer les segments normalisés ───
@@ -486,16 +551,78 @@ export async function buildRenderPlan(
     await fs.writeFile(listFile, listContent);
     tempFiles.push(listFile);
 
-    if (project.transitions && project.transitions.length > 0) {
-      // Concat avec transitions xfade — plus complexe, on fait un concat simple
-      // puis on applique les transitions en post ( limitation de xfade qui ne chaîne que 2 flux)
-      // Pour simplicité: concat simple d'abord, les transitions seront appliquées plus tard
-      concatFile = path.join(tmpDir, "concat.mp4");
-      tempFiles.push(concatFile);
-      const cmd = `"${getFfmpegPath()}" -y -f concat -safe 0 -i "${listFile}" -c copy "${concatFile}"`;
-      await execCmd(cmd);
-      steps.push(`Concaténation de ${normalizedFiles.length} segments`);
-    } else {
+    // ⭐ V3.60 — TRANSITIONS RÉELLEMENT RENDUES via xfade/acrossfade.
+    // Avant, le commentaire disait « les transitions seront appliquées plus
+    // tard » : elles n'étaient JAMAIS rendues. Désormais :
+    //   ① re-probe de chaque segment NORMALISÉ (durées exactes) ;
+    //   ② chaîne xfade pairwise (vidéo) + acrossfade (audio) ;
+    //   ③ durée de transition bornée (jamais plus longue qu'un segment) ;
+    //   ④ TOUT échec → repli concat simple (comportement d'avant).
+    let xfadeReussi = false;
+    if (transitionsDemandees) {
+      try {
+        // ① durées exactes des fichiers normalisés
+        const durees: number[] = [];
+        for (const f of normalizedFiles) {
+          const p = await probeFile(f);
+          durees.push(p.duration);
+        }
+        if (durees.every((d) => d > 0.2)) {
+          // ② construction de la chaîne
+          // type du client → nom xfade (glitch → distance : déchirure glitchy)
+          const nomXfade = (t: string) => (t === "glitch" ? "distance" : t);
+          const inputs = normalizedFiles.map((f) => `-i "${f}"`).join(" ");
+          const vfParts: string[] = [];
+          const afParts: string[] = [];
+          let cumul = durees[0];
+          let vLabel = "[0:v]";
+          let aLabel = "[0:a]";
+          for (let i = 1; i < normalizedFiles.length; i++) {
+            const cfg = project.transitions?.[i - 1];
+            // ③ borner la durée : ≤ 90 % du flux accumulé ET ≤ 90 % du segment
+            const d = Math.max(
+              0.1,
+              Math.min(cfg?.duration ?? 0.5, cumul * 0.9, durees[i] * 0.9),
+            );
+            const offset = Math.max(0, cumul - d);
+            const type = nomXfade(cfg?.type ?? "fade");
+            const vOut = i === normalizedFiles.length - 1 ? "[vout]" : `[v${i}]`;
+            const aOut = i === normalizedFiles.length - 1 ? "[aout]" : `[a${i}]`;
+            vfParts.push(
+              `${vLabel}[${i}:v]xfade=transition=${type}:duration=${d.toFixed(3)}:offset=${offset.toFixed(3)}${vOut}`,
+            );
+            afParts.push(`${aLabel}[${i}:a]acrossfade=d=${d.toFixed(3)}${aOut}`);
+            vLabel = vOut;
+            aLabel = aOut;
+            cumul = cumul + durees[i] - d;
+          }
+          const xfadeFile = path.join(tmpDir, "xfade.mp4");
+          tempFiles.push(xfadeFile);
+          const cmd =
+            `"${getFfmpegPath()}" -y ${inputs} ` +
+            `-filter_complex "${vfParts.join(";")};${afParts.join(";")}" ` +
+            `-map "[vout]" -map "[aout]" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k ` +
+            `"${xfadeFile}"`;
+          await execCmd(cmd);
+          concatFile = xfadeFile;
+          xfadeReussi = true;
+          steps.push(
+            `Transitions xfade RÉELLES : ${normalizedFiles.length - 1} transition(s) appliquée(s)`,
+          );
+        } else {
+          steps.push("Transitions ignorées (durée d'un segment illisible) — concat simple");
+        }
+      } catch (xfadeErr) {
+        // ④ repli silencieux : concat simple, le rendu continue
+        console.warn(
+          "[render] xfade impossible, repli concat simple :",
+          xfadeErr instanceof Error ? xfadeErr.message : xfadeErr,
+        );
+        steps.push("Transitions impossibles (xfade) — concat simple appliqué");
+      }
+    }
+
+    if (!xfadeReussi) {
       concatFile = path.join(tmpDir, "concat.mp4");
       tempFiles.push(concatFile);
       const cmd = `"${getFfmpegPath()}" -y -f concat -safe 0 -i "${listFile}" -c copy "${concatFile}"`;

@@ -80,7 +80,15 @@ export interface SubtitleConfig {
 }
 
 export interface TransitionConfig {
-  type: "fade" | "slideleft" | "slideright" | "slideup" | "slidedown" | "circleopen" | "circleclose" | "dissolve" | "pixelize";
+  type:
+    | "fade" | "slideleft" | "slideright" | "slideup" | "slidedown"
+    | "circleopen" | "circleclose" | "dissolve" | "pixelize"
+    // ⭐ V3.60 — transitions PROFESSIONNELLES (rendues REELLEMENT via xfade à l'export)
+    | "wiperight" | "wipeleft" | "wipeup" | "wipedown"
+    | "zoomin" | "hblur" | "smoothleft" | "smoothright"
+    | "circlecrop" | "fadewhite" | "fadeblack" | "radial"
+    | "diagtl" | "diagbr" | "squeezeh" | "squeezev"
+    | "fadefast" | "fadeslow" | "glitch";
   duration: number;
 }
 
@@ -186,7 +194,20 @@ export type VideoFilter =
   | "warm"
   | "dramatic"
   | "fade"
-  | "vivid";
+  | "vivid"
+  // ⭐ V3.60 — filtres CINÉMA professionnels
+  | "tealorange"
+  | "film35"
+  | "golden"
+  | "bleach"
+  | "dreamy"
+  | "hdr"
+  | "muted"
+  | "bluenight"
+  | "cyberpunk"
+  | "pastel"
+  | "vhs"
+  | "noirbleu";
 
 // ─── Effets sonores ───
 
@@ -296,16 +317,36 @@ export const RESOLUTIONS: { value: ExportConfig["resolution"]; label: string }[]
   { value: "1080p", label: "1080p (Full HD)" },
 ];
 
-export const TRANSITION_TYPES: { value: TransitionConfig["type"]; label: string }[] = [
-  { value: "fade", label: "Fondu" },
-  { value: "dissolve", label: "Dissoudre" },
-  { value: "slideleft", label: "Glisser ←" },
-  { value: "slideright", label: "Glisser →" },
-  { value: "slideup", label: "Glisser ↑" },
-  { value: "slidedown", label: "Glisser ↓" },
-  { value: "circleopen", label: "Cercle ouvert" },
-  { value: "circleclose", label: "Cercle fermé" },
-  { value: "pixelize", label: "Pixelisation" },
+export const TRANSITION_TYPES: { value: TransitionConfig["type"]; label: string; groupe: "classiques" | "pro" }[] = [
+  { value: "fade", label: "Fondu", groupe: "classiques" },
+  { value: "dissolve", label: "Dissoudre", groupe: "classiques" },
+  { value: "slideleft", label: "Glisser ←", groupe: "classiques" },
+  { value: "slideright", label: "Glisser →", groupe: "classiques" },
+  { value: "slideup", label: "Glisser ↑", groupe: "classiques" },
+  { value: "slidedown", label: "Glisser ↓", groupe: "classiques" },
+  { value: "circleopen", label: "Cercle ouvert", groupe: "classiques" },
+  { value: "circleclose", label: "Cercle fermé", groupe: "classiques" },
+  { value: "pixelize", label: "Pixelisation", groupe: "classiques" },
+  // ⭐ V3.60 — pack PRO
+  { value: "wiperight", label: "Balayage →", groupe: "pro" },
+  { value: "wipeleft", label: "Balayage ←", groupe: "pro" },
+  { value: "wipeup", label: "Balayage ↑", groupe: "pro" },
+  { value: "wipedown", label: "Balayage ↓", groupe: "pro" },
+  { value: "zoomin", label: "Zoom avant", groupe: "pro" },
+  { value: "hblur", label: "Flou mouvement", groupe: "pro" },
+  { value: "smoothleft", label: "Doux ←", groupe: "pro" },
+  { value: "smoothright", label: "Doux →", groupe: "pro" },
+  { value: "circlecrop", label: "Cercle crop", groupe: "pro" },
+  { value: "fadewhite", label: "Flash blanc", groupe: "pro" },
+  { value: "fadeblack", label: "Fondu noir", groupe: "pro" },
+  { value: "radial", label: "Radial", groupe: "pro" },
+  { value: "diagtl", label: "Diagonale ↘", groupe: "pro" },
+  { value: "diagbr", label: "Diagonale ↖", groupe: "pro" },
+  { value: "squeezeh", label: "Compression H", groupe: "pro" },
+  { value: "squeezev", label: "Compression V", groupe: "pro" },
+  { value: "fadefast", label: "Fondu rapide", groupe: "pro" },
+  { value: "fadeslow", label: "Fondu lent", groupe: "pro" },
+  { value: "glitch", label: "Glitch", groupe: "pro" },
 ];
 
 // ─── Données : stickers emoji ───
@@ -343,16 +384,49 @@ export const EMOJI_CATEGORIES: { name: string; emojis: string[] }[] = [
 
 // ─── Données : filtres vidéo ───
 
-export const VIDEO_FILTERS: { value: VideoFilter; label: string; icon: string }[] = [
-  { value: "none", label: "Aucun", icon: "⚪" },
-  { value: "vintage", label: "Vintage", icon: "📷" },
-  { value: "noir", label: "Noir", icon: "🖤" },
-  { value: "sepia", label: "Sépia", icon: "🟤" },
-  { value: "cool", label: "Froid", icon: "❄️" },
-  { value: "warm", label: "Chaud", icon: "🔥" },
-  { value: "dramatic", label: "Dramatique", icon: "🎭" },
-  { value: "fade", label: "Fondu", icon: "🌫️" },
-  { value: "vivid", label: "Vif", icon: "🌈" },
+export const VIDEO_FILTERS: {
+  value: VideoFilter;
+  label: string;
+  icon: string;
+  groupe: "classiques" | "cinema" | "ambiance";
+  /** Dégradé CSS du bouton-swatch (aperçu du rendu). */
+  swatch: string;
+}[] = [
+  { value: "none", label: "Aucun", icon: "⚪", groupe: "classiques", swatch: "linear-gradient(135deg, #d4d4d8, #a1a1aa)" },
+  { value: "vintage", label: "Vintage", icon: "📷", groupe: "classiques", swatch: "linear-gradient(135deg, #e8d5b7, #b9946a)" },
+  { value: "noir", label: "Noir", icon: "🖤", groupe: "classiques", swatch: "linear-gradient(135deg, #71717a, #18181b)" },
+  { value: "sepia", label: "Sépia", icon: "🟤", groupe: "classiques", swatch: "linear-gradient(135deg, #d9c39a, #8a6d46)" },
+  { value: "cool", label: "Froid", icon: "❄️", groupe: "classiques", swatch: "linear-gradient(135deg, #a5c8e4, #3f6ea8)" },
+  { value: "warm", label: "Chaud", icon: "🔥", groupe: "classiques", swatch: "linear-gradient(135deg, #f3c08a, #c05e2a)" },
+  { value: "dramatic", label: "Dramatique", icon: "🎭", groupe: "classiques", swatch: "linear-gradient(135deg, #8e8e99, #27272a)" },
+  { value: "fade", label: "Fondu", icon: "🌫️", groupe: "classiques", swatch: "linear-gradient(135deg, #e5e0da, #b9b2a7)" },
+  { value: "vivid", label: "Vif", icon: "🌈", groupe: "classiques", swatch: "linear-gradient(135deg, #ff9a8b, #a18cd1)" },
+  // ⭐ V3.60 — CINÉMA
+  { value: "tealorange", label: "Ciné Teal/Orange", icon: "🎬", groupe: "cinema", swatch: "linear-gradient(135deg, #2e8b8b, #e8853d)" },
+  { value: "film35", label: "Film 35 mm", icon: "🎞️", groupe: "cinema", swatch: "linear-gradient(135deg, #c9b89a, #6b5b45)" },
+  { value: "golden", label: "Heure dorée", icon: "🌅", groupe: "cinema", swatch: "linear-gradient(135deg, #ffd86b, #b8860b)" },
+  { value: "bleach", label: "Bleach Bypass", icon: "🧼", groupe: "cinema", swatch: "linear-gradient(135deg, #e8e8e8, #5a5a66)" },
+  { value: "hdr", label: "HDR Punch", icon: "⚡", groupe: "cinema", swatch: "linear-gradient(135deg, #89f7c5, #3c6ef7)" },
+  { value: "muted", label: "Cinéma sourd", icon: "🎥", groupe: "cinema", swatch: "linear-gradient(135deg, #9ca3af, #4b5563)" },
+  { value: "bluenight", label: "Nuit bleue", icon: "🌃", groupe: "ambiance", swatch: "linear-gradient(135deg, #2c5fa8, #0b1a3a)" },
+  { value: "cyberpunk", label: "Cyberpunk", icon: "🏙️", groupe: "ambiance", swatch: "linear-gradient(135deg, #ff2e97, #3b0fb5)" },
+  { value: "pastel", label: "Pastel doux", icon: "🍬", groupe: "ambiance", swatch: "linear-gradient(135deg, #fbc2eb, #a6c1ee)" },
+  { value: "dreamy", label: "Onirique", icon: "✨", groupe: "ambiance", swatch: "linear-gradient(135deg, #fdf3e7, #d8a7b1)" },
+  { value: "vhs", label: "VHS rétro", icon: "📼", groupe: "ambiance", swatch: "linear-gradient(135deg, #c084fc, #6d28d9)" },
+  { value: "noirbleu", label: "Acier bleu", icon: "🔵", groupe: "ambiance", swatch: "linear-gradient(135deg, #5b7fa6, #101b2d)" },
+];
+
+// ─── ⭐ V3.60 — Presets d'étalonnage COULEUR (un clic = réglages) ───
+
+export const COLOR_PRESETS: { name: string; swatch: string; values: ColorAdjust }[] = [
+  { name: "Neutre", swatch: "linear-gradient(135deg, #e4e4e7, #71717a)", values: { brightness: 0, contrast: 1, saturation: 1, gamma: 1 } },
+  { name: "Cinéma", swatch: "linear-gradient(135deg, #93c5fd, #1e3a8a)", values: { brightness: -0.02, contrast: 1.18, saturation: 0.88, gamma: 1.02 } },
+  { name: "Chaud", swatch: "linear-gradient(135deg, #fdba74, #c2410c)", values: { brightness: 0.05, contrast: 1.08, saturation: 1.15, gamma: 0.95 } },
+  { name: "Froid", swatch: "linear-gradient(135deg, #bae6fd, #0369a1)", values: { brightness: 0.02, contrast: 1.05, saturation: 0.95, gamma: 1.08 } },
+  { name: "HDR", swatch: "linear-gradient(135deg, #fde68a, #d97706)", values: { brightness: 0.04, contrast: 1.32, saturation: 1.28, gamma: 0.9 } },
+  { name: "Vintage", swatch: "linear-gradient(135deg, #d6d3d1, #78716c)", values: { brightness: 0.08, contrast: 0.9, saturation: 0.68, gamma: 1.05 } },
+  { name: "Nuit", swatch: "linear-gradient(135deg, #64748b, #0f172a)", values: { brightness: -0.12, contrast: 1.22, saturation: 0.9, gamma: 1.12 } },
+  { name: "Doré", swatch: "linear-gradient(135deg, #fcd34d, #b45309)", values: { brightness: 0.06, contrast: 1.1, saturation: 1.22, gamma: 0.92 } },
 ];
 
 // ─── Données : effets sonores ───

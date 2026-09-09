@@ -29,6 +29,7 @@ import {
   DEFAULT_COLOR_ADJUST, DEFAULT_SPEED, DEFAULT_TRANSFORM, DEFAULT_EXPORT,
   DEFAULT_SUBTITLE_STYLE, ASPECT_RATIOS, RESOLUTIONS, TRANSITION_TYPES,
   EMOJI_CATEGORIES, VIDEO_FILTERS, SOUND_EFFECTS, KEYBOARD_SHORTCUTS,
+  COLOR_PRESETS,
   type SoundEffect,
 } from "./types";
 import { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
@@ -38,6 +39,11 @@ import { CollaborationPanel, CollaboratorCursors } from "./collaboration-panel";
 import { OverlayView } from "./overlay-view";
 // ⭐ V3.59 — Bibliothèque Mixkit intégrée (sons, musiques, vidéos, templates)
 import { LibraryPanel, type AjoutAudio, type AjoutClipVideo } from "./library-panel";
+// ⭐ V3.60 — Stickers PROFESSIONNELS + boutons réseaux sociaux style CapCut
+import {
+  STICKER_CATEGORIES, stickersParCategorie, rasteriserStickerEnPng,
+  type StickerPro,
+} from "./sticker-catalog";
 
 interface PostProductionProps {
   videoId: string;
@@ -160,6 +166,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   // (fiable même après undo/redo : on compare l'index courant au dernier sauvé).
   const [savedHistoryIndex, setSavedHistoryIndex] = useState(-1);
   const [emojiCategory, setEmojiCategory] = useState(0);
+  // ⭐ V3.60 — vue courante du panneau Stickers : "emoji" ou catégorie pro
+  const [stickerVue, setStickerVue] = useState<"emoji" | StickerPro["category"]>("emoji");
   const [collabEnabled, setCollabEnabled] = useState(false);
   const [showCollabPanel, setShowCollabPanel] = useState(false);
   const [collabUserName] = useState(() => {
@@ -251,6 +259,20 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     dramatic: "contrast(1.45) saturate(1.15) brightness(0.88)",
     fade: "contrast(0.82) brightness(1.12) saturate(0.72)",
     vivid: "saturate(1.6) contrast(1.15)",
+    // ⭐ V3.60 — aperçus des filtres CINÉMA (l'export ffmpeg applique les
+    // chaînes équivalentes — voir buildVideoFilterPreset)
+    tealorange: "sepia(0.22) hue-rotate(-18deg) saturate(1.45) contrast(1.12)",
+    film35: "contrast(1.06) saturate(0.9) sepia(0.12) brightness(1.02)",
+    golden: "sepia(0.3) saturate(1.3) hue-rotate(-10deg) brightness(1.05)",
+    bleach: "contrast(1.35) saturate(0.5) brightness(1.05)",
+    dreamy: "brightness(1.1) contrast(0.95) saturate(1.15) blur(0.6px)",
+    hdr: "contrast(1.25) saturate(1.35) brightness(1.03)",
+    muted: "saturate(0.65) contrast(1.05) brightness(1.02)",
+    bluenight: "hue-rotate(15deg) saturate(0.9) contrast(1.15) brightness(0.95)",
+    cyberpunk: "contrast(1.3) saturate(1.6) hue-rotate(-20deg) brightness(1.02)",
+    pastel: "brightness(1.12) contrast(0.9) saturate(0.8)",
+    vhs: "sepia(0.15) saturate(1.4) contrast(1.05) hue-rotate(10deg)",
+    noirbleu: "grayscale(1) contrast(1.4) sepia(0.2) hue-rotate(180deg) saturate(1.5)",
   };
 
   const previewFilterCss = useMemo(() => {
@@ -751,6 +773,42 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     pushHistory();
   };
 
+  // ⭐ V3.60 — Ajouter un STICKER PRO (SVG → PNG data-URL → ImageOverlay).
+  // Le pipeline image existant donne : glisser / poignées de coin / opacité
+  // / fenêtre temporelle en preview + rendu à l'export (downloadToTemp
+  // sait télécharger les data: URLs).
+  const [ajoutStickerProEnCours, setAjoutStickerProEnCours] = useState(false);
+  const addProSticker = async (sticker: StickerPro) => {
+    if (ajoutStickerProEnCours) return; // anti double-clic
+    setAjoutStickerProEnCours(true);
+    try {
+      const png = await rasteriserStickerEnPng(sticker.svg, 512);
+      // Taille initiale raisonnable : ~30 % de la largeur d'export.
+      const exportW = exportConfig.resolution === "original"
+        ? (videoDims.w || 1920)
+        : (EXPORT_WIDTHS[exportConfig.resolution] || 1920);
+      const natW = 512; // la rasterisation borne le plus grand côté à 512
+      const scale = (exportW * 0.3) / natW;
+      const newOverlay: ImageOverlay = {
+        id: `stickerpro-${Date.now()}`,
+        type: "image",
+        url: png,
+        x: 50,
+        y: 50,
+        scale,
+        opacity: 1,
+        animation: "none",
+      };
+      setOverlays([...overlays, newOverlay]);
+      setSelectedOverlayId(newOverlay.id);
+      pushHistory();
+    } catch (e) {
+      console.warn("[post-production] sticker pro non ajouté", e);
+    } finally {
+      setAjoutStickerProEnCours(false);
+    }
+  };
+
   // ─── Ajouter effet sonore ───
   const addSoundEffect = (sfx: typeof SOUND_EFFECTS[0]) => {
     const newTrack: AudioTrack = {
@@ -1183,6 +1241,15 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               className="px-3 py-2 rounded-lg hover:bg-[#2A0E3D]/5 text-xs font-bold flex items-center gap-1.5 transition-colors">
               <Wand2 className="w-3.5 h-3.5" />Templates
             </button>
+            {/* ⭐ V3.60 — raccourci BIBLIOTHÈQUE dans l'en-tête (retour pasteur :
+                « je n'ai pas vu la bibliothèque » — 1 795 médias Mixkit +
+                stickers/filtres/presets V3.60) */}
+            <button onClick={() => { setActiveTab("library"); }}
+              className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${activeTab === "library" ? "bg-[#C9A227]/20 text-[#A3821C]" : "hover:bg-[#2A0E3D]/5"}`}
+              title="Bibliothèque : sons, musiques, vidéos, templates + stickers pro">
+              <LibraryIcon className="w-3.5 h-3.5" />Bibliothèque
+              <span className="w-1.5 h-1.5 rounded-full bg-[#E0245E] animate-pulse" />
+            </button>
             {/* Save project */}
             <button onClick={handleSaveProject}
               className="px-3 py-2 rounded-lg hover:bg-[#2A0E3D]/5 text-xs font-bold flex items-center gap-1.5 transition-colors"
@@ -1520,6 +1587,10 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   <Icon className="w-3.5 h-3.5 mx-auto mb-0.5" />
                   {tab.label}
                   {hasIndicator && <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#C9A227]" />}
+                  {/* ⭐ V3.60 — repère or PULSANT sur l'onglet Bibliothèque */}
+                  {tab.id === "library" && (
+                    <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-[#C9A227] animate-pulse" title="Nouveau : sons, musiques, vidéos, templates" />
+                  )}
                 </button>
               );
             })}
@@ -1676,29 +1747,74 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </Panel>
           )}
 
-          {/* ─── Panel: Stickers ─── */}
+          {/* ─── Panel: Stickers (⭐ V3.60 : emojis + stickers PRO + boutons réseaux sociaux) ─── */}
           {activeTab === "stickers" && (
             <Panel title="Stickers & Emoji">
               <div className="space-y-3">
-                {/* Catégories */}
+                {/* ⭐ V3.60 — vues : Emojis ou catégories de stickers pro */}
                 <div className="flex gap-1 flex-wrap">
-                  {EMOJI_CATEGORIES.map((cat, i) => (
-                    <button key={cat.name} onClick={() => setEmojiCategory(i)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${emojiCategory === i ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                  <button onClick={() => setStickerVue("emoji")}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${stickerVue === "emoji" ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                    Emojis
+                  </button>
+                  {STICKER_CATEGORIES.map((cat) => (
+                    <button key={cat.id} onClick={() => setStickerVue(cat.id)}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1 ${stickerVue === cat.id ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                      {cat.id === "social" && <span className="w-1.5 h-1.5 rounded-full bg-[#E0245E] animate-pulse" />}
                       {cat.name}
                     </button>
                   ))}
                 </div>
-                {/* Grille d'emojis */}
-                <div className="grid grid-cols-8 gap-1 max-h-[300px] overflow-y-auto">
-                  {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji, i) => (
-                    <button key={i} onClick={() => addSticker(emoji)}
-                      className="aspect-square flex items-center justify-center text-xl hover:bg-[#2A0E3D]/5 rounded-lg transition-colors">
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-                {/* Stickers actifs */}
+
+                {stickerVue === "emoji" ? (
+                  <>
+                    {/* Catégories d'emojis */}
+                    <div className="flex gap-1 flex-wrap">
+                      {EMOJI_CATEGORIES.map((cat, i) => (
+                        <button key={cat.name} onClick={() => setEmojiCategory(i)}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${emojiCategory === i ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                    {/* Grille d'emojis */}
+                    <div className="grid grid-cols-8 gap-1 max-h-[300px] overflow-y-auto">
+                      {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji, i) => (
+                        <button key={i} onClick={() => addSticker(emoji)}
+                          className="aspect-square flex items-center justify-center text-xl hover:bg-[#2A0E3D]/5 rounded-lg transition-colors">
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  /* ⭐ V3.60 — grille de stickers PROFESSIONNELS (SVG vectoriel,
+                     rastérisés en 512 px à l'ajout → pipeline ImageOverlay) */
+                  <div className="grid grid-cols-3 gap-2 max-h-[340px] overflow-y-auto">
+                    {stickersParCategorie(stickerVue).map((sticker) => (
+                      <button key={sticker.id}
+                        onClick={() => addProSticker(sticker)}
+                        disabled={ajoutStickerProEnCours}
+                        title={`${sticker.name} — cliquer pour ajouter sur la vidéo`}
+                        className="group relative aspect-square flex items-center justify-center rounded-lg border border-[#8A8378]/20 hover:border-[#C9A227] hover:shadow-md transition-all disabled:opacity-40 overflow-hidden"
+                        style={{
+                          backgroundColor: "#ffffff",
+                          backgroundImage:
+                            "linear-gradient(45deg, #f4f4f5 25%, transparent 25%, transparent 75%, #f4f4f5 75%), linear-gradient(45deg, #f4f4f5 25%, transparent 25%, transparent 75%, #f4f4f5 75%)",
+                          backgroundSize: "16px 16px",
+                          backgroundPosition: "0 0, 8px 8px",
+                        }}>
+                        <div className="w-full h-full flex items-center justify-center p-1 [&>svg]:max-w-full [&>svg]:max-h-full"
+                          dangerouslySetInnerHTML={{ __html: sticker.svg }} />
+                        <span className="absolute bottom-0 left-0 right-0 bg-[#2A0E3D]/75 text-white text-[8px] font-bold text-center py-0.5 px-1 truncate opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          {sticker.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Stickers emoji actifs */}
                 {overlays.filter((o) => o.type === "sticker").length > 0 && (
                   <div className="space-y-2 border-t border-[#8A8378]/15 pt-3">
                     <p className="text-[10px] text-[#8A8378] uppercase font-bold">Stickers actifs</p>
@@ -1727,6 +1843,35 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                           <div>
                             <label className="text-[10px] text-[#8A8378]">Rotation: {s.rotation}°</label>
                             <input type="range" min="0" max="360" value={s.rotation} onChange={(e) => updateOverlay(s.id, { rotation: parseInt(e.target.value) })} className="w-full accent-[#C9A227]" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* ⭐ V3.60 — stickers PRO actifs (pipeline image : glisser et
+                    poignées dans le preview ; réglages fins dans l'onglet Images) */}
+                {overlays.filter((o) => o.type === "image" && o.id.startsWith("stickerpro-")).length > 0 && (
+                  <div className="space-y-2 border-t border-[#8A8378]/15 pt-3">
+                    <p className="text-[10px] text-[#8A8378] uppercase font-bold">Stickers pro actifs</p>
+                    {overlays.filter((o) => o.type === "image" && o.id.startsWith("stickerpro-")).map((overlay) => {
+                      const p = overlay as ImageOverlay;
+                      return (
+                        <div key={p.id} className="bg-[#C9A227]/10 rounded-lg p-2 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <img src={p.url} alt="" className="w-10 h-10 object-contain rounded bg-white" />
+                            <button onClick={() => deleteOverlay(p.id)} className="ml-auto p-1 rounded hover:bg-red-600/20 text-red-500"><Trash2 className="w-3 h-3" /></button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] text-[#8A8378]">Taille: {p.scale.toFixed(1)}x</label>
+                              <input type="range" min="0.1" max="5" step="0.1" value={p.scale} onChange={(e) => updateOverlay(p.id, { scale: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-[#8A8378]">Opacité: {Math.round(p.opacity * 100)}%</label>
+                              <input type="range" min="0" max="1" step="0.05" value={p.opacity} onChange={(e) => updateOverlay(p.id, { opacity: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
+                            </div>
                           </div>
                         </div>
                       );
@@ -1812,7 +1957,13 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           {/* ─── Panel: Transitions ─── */}
           {activeTab === "transitions" && (
             <Panel title="Transitions">
-              <p className="text-xs text-[#1E0F2B]/70 mb-3">Ajoutez des transitions entre les segments de la timeline.</p>
+              <p className="text-xs text-[#1E0F2B]/70 mb-2">Ajoutez des transitions entre les segments de la timeline.</p>
+              {/* ⭐ V3.60 — info : transitions réellement rendues (xfade ffmpeg) */}
+              <p className="text-[10px] text-[#8A8378] leading-relaxed bg-[#C9A227]/10 rounded-lg p-2 mb-2">
+                ⭐ V3.60 — {TRANSITION_TYPES.length} transitions, y compris un pack PRO (balayages,
+                zoom, flash, glitch…) : elles sont désormais RÉELLEMENT rendues à l'export
+                (fondu croisé vidéo + audio ffmpeg), plus seulement en preview.
+              </p>
               {timeline.length <= 1 ? (
                 <p className="text-xs text-[#8A8378] text-center py-4">Ajoutez d'abord une intro ou un outro.</p>
               ) : (
@@ -1828,7 +1979,17 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                           pushHistory();
                         }}
                         className="w-full px-2 py-1 rounded-lg border border-[#8A8378]/20 bg-white text-xs">
-                        {TRANSITION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                        {/* ⭐ V3.60 — options groupées : Classiques / Pack PRO */}
+                        <optgroup label="— Classiques —">
+                          {TRANSITION_TYPES.filter((t) => t.groupe === "classiques").map((t) => (
+                            <option key={t.value} value={t.value}>{t.label}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="— Pack PRO ⭐ —">
+                          {TRANSITION_TYPES.filter((t) => t.groupe === "pro").map((t) => (
+                            <option key={t.value} value={t.value}>{t.label}</option>
+                          ))}
+                        </optgroup>
                       </select>
                       <div>
                         <label className="text-[10px] text-[#8A8378]">Durée: {transitions[i]?.duration || 0.5}s</label>
@@ -1847,13 +2008,35 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </Panel>
           )}
 
-          {/* ─── Panel: Couleur ─── */}
+          {/* ─── Panel: Couleur (⭐ V3.60 : presets + réglages fins) ─── */}
           {activeTab === "color" && (
             <Panel title="Étalonnage couleur">
               <p className="text-[10px] text-[#8A8378] leading-relaxed bg-[#C9A227]/10 rounded-lg p-2 mb-1">
                 ⭐ Les réglages s'appliquent EN DIRECT sur le preview (et à l'export).
               </p>
               <div className="space-y-3">
+                {/* ⭐ V3.60 — PRESETS d'un clic (Cinéma, Chaud, Froid, HDR…) */}
+                <div>
+                  <p className="text-[10px] text-[#8A8378] uppercase font-bold mb-1.5">Presets d'un clic</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {COLOR_PRESETS.map((preset) => {
+                      const actif =
+                        colorAdjust.brightness === preset.values.brightness &&
+                        colorAdjust.contrast === preset.values.contrast &&
+                        colorAdjust.saturation === preset.values.saturation &&
+                        colorAdjust.gamma === preset.values.gamma;
+                      return (
+                        <button key={preset.name}
+                          onClick={() => { setColorAdjust({ ...preset.values }); pushHistory(); }}
+                          title={`${preset.name} — applique luminosité/contraste/saturation/gamma`}
+                          className={`rounded-lg overflow-hidden border transition-all ${actif ? "border-[#C9A227] ring-1 ring-[#C9A227]" : "border-[#8A8378]/20 hover:border-[#C9A227]/60"}`}>
+                          <div className="h-7" style={{ background: preset.swatch }} />
+                          <p className="text-[8px] font-bold text-center py-1 bg-white text-[#1E0F2B] truncate px-0.5">{preset.name}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <Slider label="Luminosité" min={-1} max={1} step={0.05} value={colorAdjust.brightness}
                   onChange={(v) => setColorAdjust({ ...colorAdjust, brightness: v })} format={(v) => v.toFixed(2)} />
                 <Slider label="Contraste" min={0} max={3} step={0.05} value={colorAdjust.contrast}
@@ -1870,24 +2053,38 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </Panel>
           )}
 
-          {/* ─── Panel: Filtres ─── */}
+          {/* ─── Panel: Filtres (⭐ V3.60 : 21 filtres groupés avec swatches) ─── */}
           {activeTab === "filters" && (
             <Panel title="Filtres vidéo">
-              <div className="grid grid-cols-3 gap-2">
-                {VIDEO_FILTERS.map((f) => (
-                  <button key={f.value} onClick={() => { setVideoFilter(f.value); pushHistory(); }}
-                    className={`flex flex-col items-center gap-1 py-3 rounded-lg transition-colors ${videoFilter === f.value ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
-                    <span className="text-2xl">{f.icon}</span>
-                    <span className="text-[10px] font-bold">{f.label}</span>
-                  </button>
-                ))}
-              </div>
+              {([
+                { id: "classiques", label: "Classiques" },
+                { id: "cinema", label: "Cinéma" },
+                { id: "ambiance", label: "Ambiance" },
+              ] as const).map((grp) => (
+                <div key={grp.id} className="mb-3">
+                  <p className="text-[10px] text-[#8A8378] uppercase font-bold mb-1.5">{grp.label}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {VIDEO_FILTERS.filter((f) => f.groupe === grp.id).map((f) => (
+                      <button key={f.value} onClick={() => { setVideoFilter(f.value); pushHistory(); }}
+                        title={`${f.label}${f.value !== "none" ? " — un clic applique le filtre au preview et à l'export" : " — retirer le filtre"}`}
+                        className={`flex flex-col items-center gap-1 rounded-lg overflow-hidden transition-all border ${videoFilter === f.value ? "border-[#C9A227] ring-1 ring-[#C9A227]" : "border-[#8A8378]/20 hover:border-[#C9A227]/60"}`}>
+                        <span className="w-full h-12 flex items-center justify-center text-xl" style={{ background: f.swatch }}>{f.icon}</span>
+                        <span className="text-[9px] font-bold text-[#1E0F2B] text-center pb-1 px-0.5 leading-tight">{f.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
               {videoFilter !== "none" && (
                 <button onClick={() => { setVideoFilter("none"); pushHistory(); }}
-                  className="w-full mt-3 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-xs font-bold hover:bg-[#2A0E3D]/10 transition-colors">
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-xs font-bold hover:bg-[#2A0E3D]/10 transition-colors">
                   Retirer le filtre
                 </button>
               )}
+              <p className="text-[9px] text-[#8A8378] leading-relaxed mt-2">
+                ⭐ V3.60 — le filtre appliqué est visible en direct sur le preview ET rendu par
+                ffmpeg à l'export (chaînes colorbalance / curves / eq équivalentes).
+              </p>
             </Panel>
           )}
 
