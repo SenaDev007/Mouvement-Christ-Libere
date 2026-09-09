@@ -62,6 +62,21 @@
  * site dans les paramètres du navigateur, installation du site comme app
  * (PWA), ou mémoire d'engagement Chrome (MEI) qui se reconstitue après
  * quelques visites.
+ *
+ * ⭐ V3.58 — BOUCLE DE RELANCE AUTOMATIQUE (retour pasteur sur 589f008) :
+ * le shofar doit retentir SANS geste, sur tout navigateur. Vérification
+ * factuelle faite : à 589f008 le son partait d'un `new Audio().play()`
+ * APRÈS l'hydratation — le mécanisme d'autoplay est STRICTEMENT le même
+ * qu'aujourd'hui (les navigateurs n'ont pas changé de règle) ; ce qui a
+ * changé, ce sont les NETTOYAGES DE CACHE du navigateur (logo V3.50, puis
+ * débogage CORS) : ils effacent la « mémoire d'autorisation » du domaine
+ * (interaction/MEI) accumulée par le navigateur. La boucle V3.58 comble
+ * le manque restant : toutes les 800 ms, pendant les 35 s de l'intro, une
+ * tentative play() est relancée TANT QUE le son n'a pas démarré — dès que
+ * le navigateur accorde le son (permission accordée, interaction sur un
+ * autre onglet du domaine, retour sur l'onglet), le shofar démarre À CET
+ * INSTANT, même en cours d'intro, et file ses 30 s sous le site comme
+ * toujours.
  * ============================================================================
  */
 
@@ -82,6 +97,14 @@ let introDejaJoueeAuRuntime = false;
 const DUREE_MS = 5_000; // ⭐ V3.14 — 5 secondes MAXIMUM (barre 0 → 100 %)
 const FICHIER = "/sounds/shofar.mp3"; // 30 s — continue après l'ouverture
 const FONDE_SORTIE_MS = 500;
+
+// ⭐ V3.58 — BOUCLE DE RELANCE : tentative play() toutes les 800 ms pendant
+// toute la fenêtre du shofar (5 s d'écran + 30 s de son = 35 s). Dès que le
+// navigateur accorde l'autoplay (à froid il refuse TOUT site : YouTube
+// compris — c'est sa règle, pas un code), le son part À CET INSTANT ; avant
+// V3.58, un refus au chargement = silence garanti pour toute l'intro.
+const INTERVALLE_RELANCE_MS = 800;
+const FENETRE_RELANCE_MS = 35_000;
 
 // ⭐ V3.53 — Gestes qui débloquent l'audio quand le navigateur refuse la
 // lecture automatique (politique anti-autoplay sonore) : pointerdown
@@ -124,6 +147,9 @@ export function LandingIntro() {
   const debutRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const minuteurSortieRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ⭐ V3.58 — nettoyage de la boucle de relance (intervalle + minuteur de
+  // fin + écouteur « playing » sur l'élément audio).
+  const nettoyerRelanceRef = useRef<(() => void) | null>(null);
   const termineRef = useRef(false);
   // Capture de l'état initial AU MONTAGE : l'effet ne démarre ses
   // minuteurs/son que si ce montage joue réellement l'intro (navigation
@@ -202,6 +228,62 @@ export function LandingIntro() {
             ecouterPremierGeste(surPremierGeste);
           });
       }
+
+      // ⭐ V3.58 — BOUCLE DE RELANCE AUTOMATIQUE : toutes les 800 ms, tant
+      // que le shofar n'a pas démarré (et que la fenêtre de 35 s n'est pas
+      // écoulée), une tentative play() est relancée. Elle capture TOUS les
+      // instants où le navigateur FINIT par accorder le son : permission
+      // autoplay accordée entre-temps dans les réglages, interaction avec
+      // le domaine dans un AUTRE onglet (Chrome mémorise l'interaction au
+      // niveau du domaine), retour sur l'onglet. Un refus reste silencieux
+      // (catch vide — aucune trace console). Dès que ça joue : la boucle
+      // s'arrête (plus AUCUNE tentative inutile) et le shofar file ses 30 s
+      // sous le site comme toujours.
+      let intervalleRelance: ReturnType<typeof setInterval> | null = null;
+      let finRelance: ReturnType<typeof setTimeout> | null = null;
+      const surLecture = () => arreterBoucle();
+      const arreterBoucle = () => {
+        if (intervalleRelance) {
+          clearInterval(intervalleRelance);
+          intervalleRelance = null;
+        }
+        if (finRelance) {
+          clearTimeout(finRelance);
+          finRelance = null;
+        }
+        audio.removeEventListener("playing", surLecture);
+      };
+      const tenterRelance = () => {
+        if (audio.ended) {
+          arreterBoucle();
+          return;
+        }
+        if (audio.paused) {
+          audio
+            .play()
+            .then(arreterBoucle)
+            .catch(() => {
+              /* toujours refusé : nouvelle tentative dans 800 ms */
+            });
+        } else {
+          // déjà en train de jouer (autoplay natif ou geste) : arrêt.
+          arreterBoucle();
+        }
+      };
+      intervalleRelance = setInterval(tenterRelance, INTERVALLE_RELANCE_MS);
+      finRelance = setTimeout(arreterBoucle, FENETRE_RELANCE_MS);
+      audio.addEventListener("playing", surLecture);
+      // Retour sur l'onglet : tentative immédiate (l'intervalle la ferait
+      // attendre jusqu'à 800 ms — le shofar part dès le retour de l'œil).
+      const surRetourOnglet = () => {
+        if (document.visibilityState === "visible") tenterRelance();
+      };
+      document.addEventListener("visibilitychange", surRetourOnglet);
+      const nettoyerRelance = () => {
+        arreterBoucle();
+        document.removeEventListener("visibilitychange", surRetourOnglet);
+      };
+      nettoyerRelanceRef.current = nettoyerRelance;
       // (autoPlay natif déjà démarré → rien à faire ; sinon le premier
       // geste enregistré ci-dessus démarre le shofar en silence.)
     }
@@ -226,6 +308,12 @@ export function LandingIntro() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (minuteurSortieRef.current) clearTimeout(minuteurSortieRef.current);
       if (debloquer) nePlusEcouterLeGeste(debloquer);
+      // ⭐ V3.58 — boucle de relance éteinte au démontage (l'élément audio
+      // est retiré : plus aucune tentative play() ne doit partir).
+      if (nettoyerRelanceRef.current) {
+        nettoyerRelanceRef.current();
+        nettoyerRelanceRef.current = null;
+      }
       window.removeEventListener("keydown", onEchap);
       const a = audioRef.current;
       if (a && !termineRef.current) a.pause();

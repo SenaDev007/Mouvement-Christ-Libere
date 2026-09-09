@@ -56,6 +56,29 @@ import {
 
 export const TAILLE_MORCEAU = 8 * 1024 * 1024; // 8 Mo (min R2/S3 : 5 Mo, sauf dernier)
 export const MAX_MORCEAUX = 10000; // limite S3/R2
+// ⭐ V3.58 — Plafond ABSOLU du stockage R2 : un objet multipart ne peut
+// excéder 5 To (5 497 558 138 880 octets). Aucun navigateur n'atteint
+// cette valeur ; le message est néanmoins explicite si cela arrivait.
+export const TAILLE_MAX_ABSOLUE_R2 = 5_497_558_138_880;
+
+/**
+ * ⭐ V3.58 — Taille de morceau ADAPTATIVE : « sans limite de taille ».
+ *
+ * AVANT : partSize fixe (8 Mo) + plafond 10 000 morceaux → refus 413
+ * au-delà de 80 Go. MAINTENANT : tant que le fichier tient en ≤ 10 000
+ * morceaux de 8 Mo, rien ne change (réseau fragile du pasteur : petits
+ * morceaux, reprise fine). Au-delà, la taille des morceaux GRANDIT
+ * (alignée au Mo) pour rester sous la limite S3/R2 de 10 000 morceaux :
+ * plus aucun plafond artificiel — seul le plafond physique de R2 (5 To
+ * par objet) demeure, renvoyé avec un message clair.
+ */
+export function calculerTailleMorceaux(tailleFichier: number): number {
+  if (!Number.isFinite(tailleFichier) || tailleFichier <= 0) return TAILLE_MORCEAU;
+  const MO = 1024 * 1024;
+  if (tailleFichier <= TAILLE_MORCEAU * MAX_MORCEAUX) return TAILLE_MORCEAU;
+  // Morceaux agrandis, alignés au Mo, jamais plus petits que 8 Mo.
+  return Math.max(TAILLE_MORCEAU, Math.ceil(tailleFichier / MAX_MORCEAUX / MO) * MO);
+}
 
 /** Réponse standard des erreurs de la route multipart. */
 export function reponseErreur(message: string, statut: number) {
@@ -120,14 +143,28 @@ export async function traiterRequeteMultipart(opts: {
       const ext = (extNom || extMime).replace(/[^a-z0-9]/g, "") || "mp4";
 
       const key = generateKey(prefixeKey, idEnregistrement, ext);
-      const partSize = TAILLE_MORCEAU;
-      const partCount = Math.max(1, Math.ceil(Number(body.fileSize) / partSize) || 1);
-      if (partCount > MAX_MORCEAUX) {
+
+      // ⭐ V3.58 — taille de morceaux ADAPTATIVE : le fichier n'est plus
+      // limité à 80 Go. Tant qu'il tient en ≤ 10 000 morceaux de 8 Mo, la
+      // taille reste 8 Mo (réseau fragile : reprise fine). Au-delà, les
+      // morceaux grandissent (alignés au Mo) — la seule limite restante
+      // est le plafond PHYSIQUE de R2 (5 To par objet), refusé avec un
+      // message explicite. La réponse create porte partSize/partCount :
+      // le client découpe le fichier D'après ces valeurs (aucune limite
+      // codée en dur côté navigateur).
+      const tailleFichier = Number(body.fileSize);
+      if (
+        Number.isFinite(tailleFichier) &&
+        tailleFichier > 0 &&
+        tailleFichier > TAILLE_MAX_ABSOLUE_R2
+      ) {
         return reponseErreur(
-          `Fichier trop volumineux (${partCount} morceaux > ${MAX_MORCEAUX} maximum).`,
+          `Fichier de ${(tailleFichier / 1024 ** 4).toFixed(1)} To : le stockage Cloudflare R2 ne peut pas contenir un objet de plus de 5 téraoctets (limite physique du stockage, pas du site). Découpez le fichier ou compressez-le.`,
           413
         );
       }
+      const partSize = calculerTailleMorceaux(tailleFichier);
+      const partCount = Math.max(1, Math.ceil(tailleFichier / partSize) || 1);
 
       // ⭐ V3.55 — SONDE de l'état CORS AVANT d'ouvrir la session (uniquement
       // sur create : les actions part/complete/abort n'en ont pas besoin —

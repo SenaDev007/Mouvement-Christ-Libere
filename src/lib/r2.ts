@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListBucketsCommand, PutBucketCorsCommand, GetBucketCorsCommand, HeadObjectCommand, CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, ListBucketsCommand, PutBucketCorsCommand, GetBucketCorsCommand, HeadObjectCommand, CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -463,6 +463,147 @@ export function extractKeyFromUrl(url: string): string | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * ⭐ V3.58 — Extrait le key R2 d'une URL UNIQUEMENT si elle pointe vers NOS
+ * hôtes R2 (domaine public personnalisé, URL pub-<hash>.r2.dev du bucket,
+ * endpoint S3 du compte). Une URL externe (YouTube, img.youtube.com, un
+ * data: URL base64…) retourne null : JAMAIS touchée par la purge.
+ *
+ * Utilisé par la suppression back-office : supprimer une vidéo (ou un live,
+ * ou une demande d'intercession) supprime désormais AUSSI ses fichiers sur
+ * le stockage Cloudflare R2 — mais uniquement les NÔTRES.
+ */
+export function extraireCleR2(url: string): string | null {
+  if (!url || typeof url !== "string" || !/^https?:\/\//i.test(url)) return null;
+  try {
+    const u = new URL(url);
+    const cfg = getConfig();
+    const hotes: string[] = [];
+    for (const base of [cfg.publicUrl, cfg.publicDevUrl]) {
+      if (base) {
+        try {
+          hotes.push(new URL(base).hostname.toLowerCase());
+        } catch {
+          /* base mal formée : ignorée */
+        }
+      }
+    }
+    if (cfg.accountId) hotes.push(`${cfg.accountId}.r2.cloudflarestorage.com`);
+
+    const hote = u.hostname.toLowerCase();
+    const estNotreStockage =
+      hotes.includes(hote) ||
+      (hote.endsWith(".r2.cloudflarestorage.com") && hote.split(".").length >= 3) ||
+      (hote.startsWith("pub-") && hote.endsWith(".r2.dev"));
+    if (!estNotreStockage) return null;
+
+    return u.pathname.split("/").filter(Boolean).join("/") || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * ⭐ V3.58 — Liste les keys R2 sous un préfixe (pagination ContinuationToken
+ * gérée). Ex. `videos/video-abc123` → tous les artefacts de CETTE vidéo
+ * (fichier principal, sources et rendus de la post-production…).
+ *
+ * SÛRETÉ DU PRÉFIXE : les ids (cuid, 25 caractères) ont TOUS la même
+ * longueur et le key est `<prefixe>/<id>-<horodatage>…` → un id ne peut
+ * jamais être préfixe strict d'un autre id : le listing ne peut attraper
+ * que les fichiers de CET enregistrement.
+ */
+export async function listerClesPrefixeR2(prefixe: string): Promise<string[]> {
+  const client = getClient();
+  const cfg = getConfig();
+  const cles: string[] = [];
+  let suite: string | undefined;
+  do {
+    const res = await client.send(
+      new ListObjectsV2Command({
+        Bucket: cfg.bucket,
+        Prefix: prefixe,
+        ContinuationToken: suite,
+      })
+    );
+    for (const objet of res.Contents ?? []) {
+      if (objet.Key) cles.push(objet.Key);
+    }
+    suite = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (suite);
+  return cles;
+}
+
+/**
+ * ⭐ V3.58 — PURGE R2 d'un enregistrement supprimé du back-office.
+ *
+ * Supprime une vidéo (un live, une intercession) du back-office doit
+ * supprimer AUSSI les fichiers sur le stockage Cloudflare R2 — sinon le
+ * fichier reste orphelin dans le bucket (facturé, invisible, invérifiable
+ * depuis le site).
+ *
+ *   · urls      : URLs des champs de l'enregistrement (videoUrl, recordingUrl,
+ *                 thumbnailUrl, hlsUrl, audioUrl…) — seules celles pointant
+ *                 vers NOS hôtes R2 sont converties en keys (extraireCleR2).
+ *   · prefixes  : préfixes à vider par listing (attrapent TOUS les artefacts
+ *                 de l'enregistrement : fichier principal, rendus
+ *                 post-production, replays, miniatures…).
+ *
+ * Best-effort : la suppression en base a déjà réussi ; une key récalcitrante
+ * est signalée (erreurs + console.error) mais ne casse jamais la requête.
+ * Retourne le rapport exact (trouvés / supprimés / keys / erreurs).
+ */
+export async function purgerArtefactsR2(opts: {
+  urls?: (string | null | undefined)[];
+  prefixes?: string[];
+}): Promise<{
+  trouves: number;
+  supprimes: number;
+  cles: string[];
+  erreurs: string[];
+}> {
+  const client = getClient();
+  const cfg = getConfig();
+  const cles = new Set<string>();
+  const erreurs: string[] = [];
+
+  for (const u of opts.urls ?? []) {
+    if (!u) continue;
+    const cle = extraireCleR2(u);
+    if (cle) cles.add(cle);
+  }
+
+  for (const prefixe of opts.prefixes ?? []) {
+    try {
+      for (const cle of await listerClesPrefixeR2(prefixe)) cles.add(cle);
+    } catch (e) {
+      erreurs.push(
+        `listing ${prefixe} : ${e instanceof Error ? e.message : "erreur inconnue"}`
+      );
+    }
+  }
+
+  let supprimes = 0;
+  for (const cle of cles) {
+    try {
+      await client.send(new DeleteObjectCommand({ Bucket: cfg.bucket, Key: cle }));
+      supprimes++;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "erreur inconnue";
+      erreurs.push(`${cle} : ${message}`);
+      console.error(`[r2/purge] Suppression impossible de « ${cle} » :`, message);
+    }
+  }
+
+  if (erreurs.length > 0) {
+    console.error(
+      `[r2/purge] Purge partielle : ${supprimes}/${cles.size} supprimés — ${erreurs.join(" ; ")}`
+    );
+  }
+
+  return { trouves: cles.size, supprimes, cles: [...cles], erreurs };
 }
 
 /**

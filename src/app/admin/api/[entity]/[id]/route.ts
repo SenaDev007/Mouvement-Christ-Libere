@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
+import { isR2Configured, purgerArtefactsR2 } from "@/lib/r2";
 import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme, annoncerLiveAnnule } from "@/lib/live-announcement-relay";
 
@@ -364,9 +365,75 @@ export async function DELETE(
     // ⭐ V3.47 — colonne photo des jalons biographiques (le delete retourne
     // l'objet supprimé complet → P2022 sinon).
     if (entity === "biographies") await ensureBiographyPhotoColumn();
+
+    // ⭐ V3.58 — PURGE R2 SYNCHRONISÉE : supprimer une vidéo / un live /
+    // une demande d'intercession du back-office supprime AUSSI ses fichiers
+    // sur le stockage Cloudflare R2 (directive du pasteur : « quand on
+    // supprime une vidéo uploadée sur R2, la vidéo doit se supprimer
+    // également sur R2 »).
+    //   ① AVANT la suppression en base : capture des URLs et PRÉFIXES
+    //      d'artefacts (fichier principal, rendus post-production, replays,
+    //      miniatures) — la ligne doit encore exister pour être lue.
+    //   ② SUPPRESSION en base (source de vérité).
+    //   ③ APRÈS : purge R2 best-effort — une erreur R2 ne bloque JAMAIS la
+    //      suppression (le fichier resterait orphelin, signalé dans les logs
+    //      serveur, pas la fiche) ; les préfixes sont scellés sur l'id de CET
+    //      enregistrement → aucun fichier d'un autre enregistrement n'est
+    //      concerné.
+    let urlsPurge: (string | null | undefined)[] = [];
+    let prefixesPurge: string[] = [];
+    let purgeR2: Awaited<ReturnType<typeof purgerArtefactsR2>> | null = null;
+    if (isR2Configured()) {
+      if (entity === "videos") {
+        const v = await db.video.findUnique({
+          where: { id },
+          select: { videoUrl: true, hlsUrl: true, thumbnailUrl: true },
+        });
+        if (v) {
+          urlsPurge = [v.videoUrl, v.hlsUrl, v.thumbnailUrl];
+          // Fichier principal + rendus post-production (rendered-videos/…).
+          prefixesPurge = [`videos/video-${id}`, `rendered-videos/video-${id}`];
+        }
+      } else if (entity === "lives") {
+        const l = await db.liveStream.findUnique({
+          where: { id },
+          select: { recordingUrl: true, hlsUrl: true, thumbnailUrl: true },
+        });
+        if (l) {
+          urlsPurge = [l.recordingUrl, l.hlsUrl, l.thumbnailUrl];
+          // Replay + miniature du live.
+          prefixesPurge = [`replays/${id}`, `thumbnails/live-${id}`];
+        }
+      } else if (entity === "intercessionrequests") {
+        const r = await db.intercessionRequest.findUnique({
+          where: { id },
+          select: { audioUrl: true },
+        });
+        if (r) {
+          // Note vocale : key exacte depuis l'URL (pas de préfixe — les
+          // audios d'intercession partagent le préfixe intercession/).
+          urlsPurge = [r.audioUrl];
+        }
+      }
+    }
+
     const delegate = getDelegate(entity as EntityName);
     await delegate.delete({ where: { id } });
-    return NextResponse.json({ success: true });
+
+    if (urlsPurge.length > 0 || prefixesPurge.length > 0) {
+      try {
+        purgeR2 = await purgerArtefactsR2({ urls: urlsPurge, prefixes: prefixesPurge });
+        console.log(
+          `[admin/api/${entity}/${id}] Purge R2 : ${purgeR2.supprimes}/${purgeR2.trouves} fichier(s) supprimé(s) du stockage` +
+            (purgeR2.erreurs.length > 0 ? ` — erreurs : ${purgeR2.erreurs.join(" ; ")}` : "")
+        );
+      } catch (e) {
+        // La purge ne doit JAMAIS faire échouer une suppression déjà réussie.
+        console.error(`[admin/api/${entity}/${id}] Purge R2 impossible :`, e);
+      }
+    }
+
+    return NextResponse.json({ success: true, purgeR2 });
   } catch (error) {
     console.error(`[admin/api/${entity}/${id}] DELETE error:`, error);
     return NextResponse.json(

@@ -357,7 +357,11 @@ export async function uploaderSequentielVersR2(
         etag = await envoyerMorceau(
           morceau,
           url,
-          5 * 60 * 1000, // 5 min par morceau (connexions lentes)
+          // ⭐ V3.58 — délai PROPORTIONNEL à la taille du morceau : 5 min par
+          // 8 Mo (minimum 5 min). Les fichiers géants ont des morceaux plus
+          // gros (partSize adaptatif du serveur) — un morceau de 500 Mo sur
+          // une connexion lente ne doit pas mourir au bout de 5 minutes.
+          Math.max(5 * 60 * 1000, Math.ceil(morceau.size / (8 * 1024 * 1024)) * 5 * 60 * 1000),
           (octetsMorceau) => {
             const total = octetsTermines + Math.min(octetsMorceau, morceau.size);
             onProgression?.(Math.round((total / octetsTotal) * 100), {
