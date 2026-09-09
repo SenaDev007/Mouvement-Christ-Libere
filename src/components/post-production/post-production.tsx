@@ -1543,9 +1543,17 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
       )}
 
       {/* ─── Main layout ─── */}
+      {/* ⭐ V3.62 — ANTI « ÉCRAN QUI S'ÉLARGIT » : min-w-0 sur les DEUX
+          colonnes. Sans lui, un item de grille a min-width:auto → la piste
+          1fr ne peut pas rétrécir sous le min-content de son contenu : la
+          largeur explicite du contenu timeline (durée × px/s, jusqu'à des
+          dizaines de milliers de px) REMONTAIT la chaîne de dimensionnement
+          intrinsèque et élargissait TOUTE la page (scrollWidth ~19 864 px
+          mesuré en production). min-w-0 casse cette remontée : la timeline
+          défile DANS son conteneur, comme dans Premiere Pro / CapCut. */}
       <div className="grid lg:grid-cols-[1fr_360px] gap-4 p-4">
         {/* ─── Colonne gauche : Preview + Timeline ─── */}
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           {/* Preview — ⭐ V3.16 : le format du preview suit le format
               d'export (16:9, 9:16 Reels, 1:1…) : ce que l'on voit est ce
               que l'on exporte. */}
@@ -1750,7 +1758,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         </div>
 
         {/* ─── Colonne droite : Tabs + Panels ─── */}
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           {/* Tab bar */}
           <div className="grid grid-cols-5 gap-1 bg-white rounded-xl p-1 border border-[#8A8378]/15">
             {TABS.map((tab) => {

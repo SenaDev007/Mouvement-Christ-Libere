@@ -135,7 +135,10 @@ export function TimelinePro(props: TimelineProProps) {
   } = props;
 
   const conteneurRef = useRef<HTMLDivElement>(null);
-  const [largeur, setLargeur] = useState(900);
+  // ⭐ V3.62 — 0 = « pas encore mesuré » : le premier auto-fit doit attendre
+  // la LARGEUR RÉELLE du conteneur (ResizeObserver) et non un placeholder
+  // (avant : 900 → zoom initial faux dès le montage).
+  const [largeur, setLargeur] = useState(0);
   const [pxParSec, setPxParSec] = useState(40);
   const [drag, setDrag] = useState<DragInterne>(null);
   const [dropCible, setDropCible] = useState<"audio" | "video" | null>(null);
@@ -167,12 +170,51 @@ export function TimelinePro(props: TimelineProProps) {
     return Math.max(fin + 8, 15);
   }, [totalDuration, clips, audioTracks, overlays]);
 
+  // ⭐ V3.62 — ANTI « ÉCRAN QUI S'ÉLARGIT » (zoom) : l'auto-fit doit se
+  // caler sur la largeur RÉELLE (mesurée) ET se RECALER quand la durée réelle
+  // de la vidéo arrive (métadonnées). Avant : ajuster() tournait UNE fois au
+  // montage avec la largeur placeholder 900 et une durée ~18 s (métadonnées
+  // pas encore chargées) → 43 px/s ; quand les ~443 s réelles arrivaient,
+  // RIEN ne se recalait → contenu de 19 049 px. Désormais : l'utilisateur
+  // qui touche le zoom prend la main (plus aucun auto-fit), et l'auto-fit
+  // se relance si la durée change fortement (jamais pendant un glisser).
+  const zoomManuelRef = useRef(false);   // l'utilisateur a pris la main
+  const ajustementsAutoRef = useRef(0);  // borne les auto-fits (max 3)
+  const dureeAjusteeRef = useRef<number | null>(null);
+
   const ajuster = useCallback(() => {
+    if (largeur < 200) return; // pas encore de mesure réelle → ne rien casser
     const utile = Math.max(1, largeur - GOUTTERE - 24);
     setPxParSec(Math.max(2, Math.min(400, utile / dureeAffichee)));
   }, [largeur, dureeAffichee]);
 
-  useEffect(() => { ajuster(); /* zoom initial */ }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Zoom modifié PAR L'UTILISATEUR → stoppe tout auto-fit futur. */
+  const zoomer = useCallback((v: number) => {
+    zoomManuelRef.current = true;
+    setPxParSec(Math.max(2, Math.min(400, Number.isFinite(v) ? v : 40)));
+  }, []);
+
+  // ① premier ajustement dès que la largeur RÉELLE est mesurée
+  const premiereMesureRef = useRef(false);
+  useEffect(() => {
+    if (premiereMesureRef.current || largeur < 200) return;
+    premiereMesureRef.current = true;
+    if (!zoomManuelRef.current) ajuster();
+  }, [largeur, ajuster]);
+
+  // ② recalage quand la durée affichée change fortement (métadonnées vidéo,
+  // drop d'un clip long…) — jamais pendant un glisser, jamais après un zoom
+  // manuel, max 3 fois (le bouton « Ajuster » reste toujours disponible).
+  useEffect(() => {
+    if (zoomManuelRef.current || dragRef.current) return;
+    if (ajustementsAutoRef.current >= 3) return;
+    if (dureeAjusteeRef.current === null) { dureeAjusteeRef.current = dureeAffichee; return; }
+    const prec = dureeAjusteeRef.current;
+    if (Math.abs(dureeAffichee - prec) / Math.max(1, prec) < 0.2) return;
+    dureeAjusteeRef.current = dureeAffichee;
+    ajustementsAutoRef.current += 1;
+    if (premiereMesureRef.current) ajuster();
+  }, [dureeAffichee, ajuster]);
 
   const largeurContenu = Math.max(dureeAffichee * pxParSec, 320);
 
@@ -304,20 +346,20 @@ export function TimelinePro(props: TimelineProProps) {
           {clips.length} clip(s) · {overlays.length} élément(s) · {audioTracks.length} piste(s) audio
         </span>
         <div className="ml-auto flex items-center gap-1">
-          <button onClick={() => setPxParSec((v) => Math.max(2, v / 1.35))}
+          <button onClick={() => zoomer(pxParSec / 1.35)}
             className="p-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10" title="Zoom arrière">
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
           <input
             type="range" min={2} max={400} step={1} value={Math.round(pxParSec)}
-            onChange={(e) => setPxParSec(parseFloat(e.target.value))}
+            onChange={(e) => zoomer(parseFloat(e.target.value))}
             className="w-24 accent-[#C9A227]" title="Zoom (pixels/seconde)"
           />
-          <button onClick={() => setPxParSec((v) => Math.min(400, v * 1.35))}
+          <button onClick={() => zoomer(pxParSec * 1.35)}
             className="p-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10" title="Zoom avant">
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
-          <button onClick={ajuster}
+          <button onClick={() => { zoomManuelRef.current = true; ajuster(); }}
             className="p-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10" title="Ajuster à la fenêtre">
             <Maximize2 className="w-3.5 h-3.5" />
           </button>
@@ -370,7 +412,11 @@ export function TimelinePro(props: TimelineProProps) {
           </div>
 
           {/* Zone scrollable des pistes */}
-          <div className="flex-1 overflow-x-auto overflow-y-hidden" data-scroller>
+          {/* ⭐ V3.62 — min-w-0 : le scroller doit RÉTRÉCIR à la place
+              restante (flex-1) et laisser le contenu défiler à l'intérieur ;
+              sans lui son min-content (largeur explicite du contenu) pouvait
+              dilater le conteneur flex lui-même. */}
+          <div className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden" data-scroller>
             <div style={{ width: largeurContenu, position: "relative" }}>
               {/* Règle temporelle (scrub) */}
               <div
