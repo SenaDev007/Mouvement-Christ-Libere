@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/components/post-production/library-panel.tsx",
+    "src/lib/data/mixkit-library/index.ts",
+    "src/app/api/post-production/assets/import/route.ts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

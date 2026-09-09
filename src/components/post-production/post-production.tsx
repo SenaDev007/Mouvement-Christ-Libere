@@ -17,6 +17,7 @@ import {
   Subtitles, Wand2, Undo2, Redo2, Save, Eye, RefreshCw,
   Smile, Sparkles, Cloud, Users, Keyboard, Sticker as StickerIcon,
   Wind, Shield, Eraser, CheckCircle2, Youtube, Square,
+  Library as LibraryIcon,
 } from "lucide-react";
 import type {
   Overlay, TextOverlay, ImageOverlay, Segment, RenderProject,
@@ -35,6 +36,8 @@ import { BgRemovalProcessor } from "./bg-removal-processor";
 import { useCollaboration } from "./use-collaboration";
 import { CollaborationPanel, CollaboratorCursors } from "./collaboration-panel";
 import { OverlayView } from "./overlay-view";
+// ⭐ V3.59 — Bibliothèque Mixkit intégrée (sons, musiques, vidéos, templates)
+import { LibraryPanel, type AjoutAudio, type AjoutClipVideo } from "./library-panel";
 
 interface PostProductionProps {
   videoId: string;
@@ -43,7 +46,7 @@ interface PostProductionProps {
   servantName: string;
 }
 
-type TabType = "trim" | "text" | "image" | "stickers" | "subtitles" | "transitions" | "color" | "speed" | "transform" | "filters" | "advanced" | "audio" | "sfx" | "export";
+type TabType = "trim" | "text" | "image" | "stickers" | "subtitles" | "transitions" | "color" | "speed" | "transform" | "filters" | "advanced" | "audio" | "sfx" | "library" | "export";
 
 interface TimelineClip {
   id: string;
@@ -762,6 +765,52 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     pushHistory();
   };
 
+  // ⭐ V3.59 — Ajout depuis la Bibliothèque Mixkit (son/musique).
+  // L'URL peut être le CDN Mixkit (immédiat) ou notre R2 (après import).
+  const handleAddLibraryAudio = (a: AjoutAudio) => {
+    const newTrack: AudioTrack = {
+      id: `lib-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      url: a.url,
+      volume: a.volume ?? 0.4,
+      name: a.name,
+      loop: a.loop,
+      fadeIn: a.fadeIn ?? 0.5,
+      fadeOut: a.fadeOut ?? 0.5,
+    };
+    setAudioTracks((prev) => [...prev, newTrack]);
+    pushHistory();
+  };
+
+  // ⭐ V3.59 — Ajout d'un clip vidéo depuis la Bibliothèque (Mixkit/R2/URL).
+  // La durée est mesurée si absente (métadonnées <video>) pour un bloc de
+  // timeline correctement dimensionné.
+  const handleAddLibraryVideoClip = (c: AjoutClipVideo) => {
+    const creerClip = (duree: number) => {
+      const newClip: TimelineClip = {
+        id: `clip-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        type: "clip",
+        label: c.name.length > 22 ? c.name.slice(0, 20) + "…" : c.name,
+        duration: duree || 5,
+        src: c.url,
+        url: c.url,
+        color: "#4A9E8F", // teal — distinct de l'intro (or) et de l'outro (violet)
+      };
+      setTimeline((prev) => [...prev, newClip]);
+      setTotalDuration((prev) => prev + (duree || 5));
+      pushHistory();
+    };
+    if (c.duration && c.duration > 0) {
+      creerClip(c.duration);
+    } else {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.src = c.url;
+      video.onloadedmetadata = () => creerClip(video.duration);
+      video.onerror = () => creerClip(0); // dégradé : clip de repli de 5 s
+      // ⚠ onerror → creerClip(0) → durée de repli 5 s (voir creerClip)
+    }
+  };
+
   // ⭐ V3.17 — Retour à la page Vidéos du back-office
   // (flèche retour dans l'en-tête : plus besoin de repasser par la sidebar).
   // Garde-fou : si des modifications existent et n'ont pas été sauvegardées
@@ -1083,6 +1132,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     { id: "advanced", label: "Avancé", icon: Wind },
     { id: "audio", label: "Audio", icon: Volume2 },
     { id: "sfx", label: "SFX", icon: Music },
+    { id: "library", label: "Bibliothèque", icon: LibraryIcon },
     { id: "export", label: "Export", icon: Download },
   ];
 
@@ -2085,6 +2135,14 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 ))}
               </div>
             </Panel>
+          )}
+
+          {/* ─── Panel: Bibliothèque Mixkit (V3.59) ─── */}
+          {activeTab === "library" && (
+            <LibraryPanel
+              onAddAudio={handleAddLibraryAudio}
+              onAddVideoClip={handleAddLibraryVideoClip}
+            />
           )}
 
           {/* ─── Panel: Export ─── */}
