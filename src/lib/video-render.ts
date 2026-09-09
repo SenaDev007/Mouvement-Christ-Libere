@@ -143,7 +143,6 @@ export interface AudioTrack {
   fadeOut?: number; // secondes
   loop?: boolean; // boucler pour couvrir toute la vidéo
 }
-
 export interface ExportConfig {
   aspectRatio?: "16:9" | "9:16" | "1:1" | "4:5" | "original";
   resolution?: "480p" | "720p" | "1080p" | "original";
@@ -698,11 +697,20 @@ export async function buildRenderPlan(
     }
 
     // Ajouter les inputs pour les pistes audio
+    // ⭐ V3.61 — on SONDE chaque piste : durée exacte (pour caler le fondu de
+    // sortie AVANT la fin réelle, plus le st=9999 « magique » d'avant).
+    const audioDurees: number[] = [];
     if (project.audioTracks) {
       for (let i = 0; i < project.audioTracks.length; i++) {
         const audioFile = path.join(tmpDir, `audio-track-${i}.mp3`);
         await downloadToTemp(project.audioTracks[i].url, audioFile);
         tempFiles.push(audioFile);
+        try {
+          const p = await probeFile(audioFile);
+          audioDurees[i] = p.duration;
+        } catch {
+          audioDurees[i] = 0; // inconnu → repli ancien comportement
+        }
         inputs.push(`-i "${audioFile}"`);
         inputCount++;
       }
@@ -875,10 +883,23 @@ export async function buildRenderPlan(
         const vol = project.audioTracks[i].volume;
         const fadeIn = project.audioTracks[i].fadeIn || 0;
         const fadeOut = project.audioTracks[i].fadeOut || 0;
+        // ⭐ V3.61 — startTime ENFIN honoré à l'export : adelay décale la
+        // piste à sa position sur la timeline (conforme au preview et à la
+        // timeline multi-pistes). Avant ce jour, TOUT partait à 0 s.
+        // ⚠️ ORDRE CRUCIAL : les afade/volume s'appliquent AVANT adelay —
+        // une fois adelay passé, le flux commence par 2 s de silence et les
+        // timestamps de fondu ne correspondraient plus à la piste réelle.
+        const startMs = Math.round(Math.max(0, project.audioTracks[i].startTime || 0) * 1000);
+        // ⭐ V3.61 — fondu de sortie calé sur la durée RÉELLE de la piste
+        // (durée sondée à l'étape 2 ; repli : ancien comportement st=9999).
+        const duree = audioDurees[i] || 0;
+        const fadeOutSt = duree > 0 ? Math.max(0, duree - fadeOut) : 9999;
         let aFilter = `[${audioIdx}:a]`;
         if (fadeIn > 0) aFilter += `afade=t=in:st=0:d=${fadeIn},`;
-        if (fadeOut > 0) aFilter += `afade=t=out:st=9999:d=${fadeOut},`;
-        aFilter += `volume=${vol}[a${audioIdx}]`;
+        if (fadeOut > 0) aFilter += `afade=t=out:st=${fadeOutSt.toFixed(3)}:d=${fadeOut},`;
+        aFilter += `volume=${vol}`;
+        if (startMs > 0) aFilter += `,adelay=${startMs}:all=1`;
+        aFilter += `[a${audioIdx}]`;
         audioChains.push(aFilter);
         mixLabels.push(`[a${audioIdx}]`);
         audioIdx++;

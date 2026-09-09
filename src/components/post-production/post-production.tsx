@@ -12,7 +12,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   ArrowLeft, Scissors, Upload, Download, Play, Pause, SkipBack, SkipForward,
   Image as ImageIcon, Type, Film, Plus, Trash2, Loader2,
-  Layers, Video as VideoIcon, Volume2, Music, Mic, Palette,
+  Video as VideoIcon, Volume2, Music, Mic, Palette,
   Zap, Crop, RotateCw, FlipHorizontal, FlipVertical,
   Subtitles, Wand2, Undo2, Redo2, Save, Eye, RefreshCw,
   Smile, Sparkles, Cloud, Users, Keyboard, Sticker as StickerIcon,
@@ -44,6 +44,10 @@ import {
   STICKER_CATEGORIES, stickersParCategorie, rasteriserStickerEnPng,
   type StickerPro,
 } from "./sticker-catalog";
+// ⭐ V3.61 — Timeline PRO multi-pistes (style CapCut / Premiere Pro)
+import { TimelinePro, type DropAudioData, type DropVideoData } from "./timeline-pro";
+// ⭐ V3.61 — Templates intégrés 100 % personnalisables (style CapCut)
+import { TEMPLATES_INTEGRES } from "./templates-integres";
 
 interface PostProductionProps {
   videoId: string;
@@ -64,6 +68,9 @@ interface TimelineClip {
   trimStart?: number;
   trimEnd?: number;
   url?: string;
+  /** ⭐ V3.61 — durée SOURCE complète (avant rognage) : permet de rogner
+   *  plusieurs fois sans perdre la longueur d'origine. */
+  dureeSource?: number;
 }
 
 // ─── Templates prédéfinis ───
@@ -993,6 +1000,178 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     }
   };
 
+  // ═══════════════════════════════════════════════════════════════════
+  // ⭐ V3.61 — TIMELINE PRO MULTI-PISTES : handlers dédiés
+  // ═══════════════════════════════════════════════════════════════════
+
+  /** Réordonner un clip vidéo (glisser-déposer dans la piste V1). */
+  const reordonnerClip = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0 || from >= timeline.length || to >= timeline.length) return;
+    setTimeline((prev) => {
+      const next = [...prev];
+      const [deplace] = next.splice(from, 1);
+      next.splice(to, 0, deplace);
+      return next;
+    });
+    pushHistory();
+  };
+
+  /** Rogner un clip (poignées V1) — la durée affichée suit le rognage.
+   *  dureeSource conserve la longueur d'origine pour rogner en plusieurs fois. */
+  const majTrimClip = (id: string, trimStart: number | undefined, trimEnd: number | undefined) => {
+    setTimeline((prev) => {
+      const next = prev.map((c) => {
+        if (c.id !== id || c.type === "main") return c;
+        const source = c.dureeSource ?? c.duration + (c.trimStart || 0);
+        const ts = Math.max(0, trimStart ?? c.trimStart ?? 0);
+        const te = Math.min(source, Math.max(ts + 0.3, trimEnd ?? c.trimEnd ?? source));
+        return { ...c, dureeSource: source, trimStart: ts, trimEnd: te, duration: Math.max(0.3, te - ts) };
+      });
+      setTotalDuration(next.reduce((acc, c) => acc + c.duration, 0));
+      return next;
+    });
+    pushHistory();
+  };
+
+  /** Rogner la vidéo principale (poignées du bloc « main » = trim global). */
+  const majTrimPrincipal = (start: number, end: number) => {
+    setTrimStart(Math.max(0, start));
+    setTrimEnd(Math.max(start + 0.3, end));
+  };
+
+  /** Déplacer / régler une piste audio (drag horizontal, mute…). */
+  const majPisteAudio = (id: string, patch: Partial<AudioTrack>) => {
+    setAudioTracks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  };
+
+  const supprimerPisteAudio = (id: string) => {
+    setAudioTracks((prev) => prev.filter((t) => t.id !== id));
+    pushHistory();
+  };
+
+  /** DROP bibliothèque → piste audio : créé À LA POSITION où on lâche. */
+  const deposerAudio = (data: DropAudioData, startTime: number) => {
+    const nouvelle: AudioTrack = {
+      id: `lib-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      url: data.url,
+      volume: data.volume ?? 0.4,
+      name: data.name,
+      loop: data.loop,
+      fadeIn: data.fadeIn ?? 0.5,
+      fadeOut: data.fadeOut ?? 0.5,
+      startTime: Math.max(0, startTime),
+    };
+    setAudioTracks((prev) => [...prev, nouvelle]);
+    pushHistory();
+  };
+
+  /** DROP bibliothèque → piste V1 : insère le clip à la position temporelle. */
+  const deposerVideo = (data: DropVideoData, atSeconds: number) => {
+    const creerClip = (duree: number) => {
+      const newClip: TimelineClip = {
+        id: `clip-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        type: "clip",
+        label: data.name.length > 22 ? data.name.slice(0, 20) + "…" : data.name,
+        duration: duree || 5,
+        dureeSource: duree || 5,
+        src: data.url,
+        url: data.url,
+        color: "#4A9E8F",
+      };
+      // insérer à l'endroit du dépôt (après le clip couvrant atSeconds)
+      let index = timeline.length;
+      let cumul = 0;
+      for (let i = 0; i < timeline.length; i++) {
+        cumul += timeline[i].duration;
+        if (atSeconds < cumul) { index = i + 1; break; }
+      }
+      setTimeline((prev) => {
+        const next = [...prev];
+        next.splice(index, 0, newClip);
+        setTotalDuration(next.reduce((acc, c) => acc + c.duration, 0));
+        return next;
+      });
+      pushHistory();
+    };
+    if (data.duration && data.duration > 0) {
+      creerClip(data.duration);
+    } else {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.src = data.url;
+      video.onloadedmetadata = () => creerClip(video.duration);
+      video.onerror = () => creerClip(5);
+    }
+  };
+
+  /** ⭐ V3.61 — Mesurer la durée des pistes audio sans durée (métadonnées). */
+  useEffect(() => {
+    const sansDuree = audioTracks.filter((t) => !t.duration);
+    if (sansDuree.length === 0) return;
+    let annule = false;
+    for (const t of sansDuree) {
+      const audio = document.createElement("audio");
+      audio.preload = "metadata";
+      audio.src = t.url;
+      const promesse = new Promise<number>((resolve) => {
+        audio.onloadedmetadata = () => resolve(isFinite(audio.duration) ? audio.duration : 0);
+        audio.onerror = () => resolve(0);
+      });
+      promesse.then((d) => {
+        if (!annule && d > 0) majPisteAudio(t.id, { duration: d });
+      });
+    }
+    return () => { annule = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioTracks.length, audioTracks.map((t) => t.url).join("|")]);
+
+  /** ⭐ V3.61 — Appliquer un TEMPLATE INTÉGRÉ (style CapCut) : composition
+   *  entièrement éditable — textes, stickers, transitions, filtre. */
+  const [templateEnCours, setTemplateEnCours] = useState<string | null>(null);
+  const appliquerTemplateIntegre = async (tplId: string) => {
+    const tpl = TEMPLATES_INTEGRES.find((t) => t.id === tplId);
+    if (!tpl || templateEnCours) return;
+    setTemplateEnCours(tplId);
+    try {
+      const dureeVideo = totalDuration || trimEnd || 30;
+      const resultat = tpl.build(dureeVideo);
+      // ① stickers SVG → PNG (pipeline existant V3.60)
+      const stickersPng: ImageOverlay[] = [];
+      for (const s of resultat.stickersSvg) {
+        try {
+          const png = await rasteriserStickerEnPng(s.sticker.svg, 512);
+          const exportW = exportConfig.resolution === "original"
+            ? (videoDims.w || 1920)
+            : (EXPORT_WIDTHS[exportConfig.resolution] || 1920);
+          stickersPng.push({
+            id: `stickerpro-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            type: "image",
+            url: png,
+            x: s.x, y: s.y,
+            // s.scale = fraction de la largeur d'export → facteur ImageOverlay
+            scale: (exportW * s.scale) / 512,
+            opacity: 1,
+            animation: s.animation ?? "none",
+            startTime: s.startTime,
+            endTime: s.endTime,
+          });
+        } catch (e) {
+          console.warn("[template] sticker non rastérisé", e);
+        }
+      }
+      // ② appliquer tout
+      setOverlays((prev) => [...(prev as Overlay[]), ...(resultat.overlays as Overlay[]), ...stickersPng]);
+      if (resultat.transitions) setTransitions(resultat.transitions);
+      if (resultat.videoFilter) setVideoFilter(resultat.videoFilter);
+      if (resultat.colorAdjust) setColorAdjust(resultat.colorAdjust);
+      if (resultat.mainVolume !== undefined) setMainVolume(resultat.mainVolume);
+      pushHistory();
+      setShowTemplates(false);
+    } finally {
+      setTemplateEnCours(null);
+    }
+  };
+
   // ─── Audio : upload musique de fond ───
   const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1300,8 +1479,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
         {/* Templates dropdown */}
         {showTemplates && (
-          <div className="absolute top-full right-6 mt-1 bg-white rounded-xl shadow-2xl border border-[#8A8378]/15 p-2 w-64 z-40">
-            <p className="text-xs font-bold text-[#8A8378] uppercase tracking-wider px-2 py-1">Templates</p>
+          <div className="absolute top-full right-6 mt-1 bg-white rounded-xl shadow-2xl border border-[#8A8378]/15 p-2 w-72 z-40 max-h-[70vh] overflow-y-auto">
+            <p className="text-xs font-bold text-[#8A8378] uppercase tracking-wider px-2 py-1">Formats d'export</p>
             {TEMPLATES.map((t) => (
               <button key={t.id} onClick={() => applyTemplate(t.id)}
                 className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors">
@@ -1309,6 +1488,34 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 <p className="text-xs text-[#8A8378]">{t.description}</p>
               </button>
             ))}
+            <div className="border-t border-[#8A8378]/15 my-1" />
+            <p className="text-xs font-bold text-[#C9A227] uppercase tracking-wider px-2 py-1">
+              ⭐ Templates intégrés — 100 % personnalisables
+            </p>
+            <p className="text-[9px] text-[#8A8378] leading-relaxed px-2 pb-1">
+              Compositions prêtes (textes animés + stickers + transitions + filtre) que vous
+              modifiez APRÈS application : texte, position, durée — tout est éditable dans l'app,
+              comme dans CapCut.
+            </p>
+            {TEMPLATES_INTEGRES.map((t) => (
+              <button key={t.id} onClick={() => appliquerTemplateIntegre(t.id)} disabled={templateEnCours !== null}
+                className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#C9A227]/10 transition-colors disabled:opacity-50">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-lg" style={{ background: t.swatch }}>{t.emoji}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-[#1E0F2B] truncate">{t.nom}</p>
+                    <p className="text-[10px] text-[#8A8378] leading-tight line-clamp-2">{t.description}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+            <div className="border-t border-[#8A8378]/15 my-1" />
+            <p className="text-[9px] text-[#8A8378] leading-relaxed px-2">
+              📦 Les templates <strong>Premiere Pro / After Effects / Final Cut / DaVinci</strong>
+              (Bibliothèque → Templates) sont des fichiers de projet pour logiciels de bureau :
+              téléchargez-les et ouvrez-les dans ces logiciels — c'est leur format propriétaire.
+              Les templates intégrés ci-dessus, eux, vivent ENTIÈREMENT dans l'application.
+            </p>
           </div>
         )}
       </div>
@@ -1512,55 +1719,34 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           </div>
           )}
 
-          {/* Timeline */}
-          <div className="bg-white rounded-xl p-4 border border-[#8A8378]/15">
-            <div className="flex items-center gap-2 mb-3">
-              <Layers className="w-4 h-4 text-[#C9A227]" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#1E0F2B]">Timeline</span>
-            </div>
-            <div className="relative h-16 bg-[#2A0E3D]/10 rounded-lg overflow-hidden flex">
-              {timeline.map((clip) => {
-                const widthPercent = totalDuration > 0 ? (clip.duration / totalDuration) * 100 : 100;
-                return (
-                  <div key={clip.id} className="relative h-full flex items-center justify-center text-xs font-bold text-white border-r border-black/30 group"
-                    style={{ width: `${widthPercent}%`, backgroundColor: clip.color }}>
-                    <span className="px-2 truncate">{clip.label}</span>
-                    <span className="absolute bottom-1 right-1 text-[9px] text-white/60">{formatTime(clip.duration)}</span>
-                    {clip.type !== "main" && (
-                      <button onClick={() => deleteClip(clip.id)} className="absolute top-1 right-1 p-0.5 rounded bg-red-600/80 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Trash2 className="w-2.5 h-2.5" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-              {totalDuration > 0 && (
-                <div className="absolute top-0 bottom-0 w-0.5 bg-[#C9A227] pointer-events-none" style={{ left: `${(currentTime / totalDuration) * 100}%` }}>
-                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#C9A227]" />
-                </div>
-              )}
-              {totalDuration > 0 && (
-                <>
-                  <div className="absolute top-0 bottom-0 left-0 bg-red-900/30 pointer-events-none" style={{ width: `${(trimStart / totalDuration) * 100}%` }} />
-                  <div className="absolute top-0 bottom-0 right-0 bg-red-900/30 pointer-events-none" style={{ width: `${((totalDuration - trimEnd) / totalDuration) * 100}%` }} />
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-4 mt-3">
-              <div className="flex-1">
-                <label className="text-[10px] text-[#8A8378] uppercase font-bold">Début : {formatTime(trimStart)}</label>
-                <input type="range" min="0" max={totalDuration} step="0.1" value={trimStart}
-                  onChange={(e) => setTrimStart(Math.min(parseFloat(e.target.value), trimEnd))}
-                  className="w-full accent-[#C9A227]" disabled={!currentVideoUrl} />
-              </div>
-              <div className="flex-1">
-                <label className="text-[10px] text-[#8A8378] uppercase font-bold">Fin : {formatTime(trimEnd)}</label>
-                <input type="range" min="0" max={totalDuration} step="0.1" value={trimEnd}
-                  onChange={(e) => setTrimEnd(Math.max(parseFloat(e.target.value), trimStart))}
-                  className="w-full accent-[#C9A227]" disabled={!currentVideoUrl} />
-              </div>
-            </div>
-          </div>
+          {/* ⭐ V3.61 — TIMELINE PRO MULTI-PISTES (style CapCut / Premiere Pro) :
+              V1 vidéo (+ transitions) · TX textes · IMG images/stickers ·
+              A1..An audio — glisser, rogner, déplacer dans le temps, déposer
+              depuis la Bibliothèque. */}
+          <TimelinePro
+            clips={timeline}
+            overlays={overlays}
+            audioTracks={audioTracks}
+            transitions={transitions}
+            currentTime={currentTime}
+            totalDuration={totalDuration}
+            trimStart={trimStart}
+            trimEnd={trimEnd}
+            selectedOverlayId={selectedOverlayId}
+            onSeek={handleSeek}
+            onReorderClip={reordonnerClip}
+            onUpdateClipTrim={majTrimClip}
+            onSetMainTrim={majTrimPrincipal}
+            onDeleteClip={deleteClip}
+            onUpdateAudio={majPisteAudio}
+            onDeleteAudio={supprimerPisteAudio}
+            onUpdateOverlayTime={(id, patch) => updateOverlay(id, patch as Partial<Overlay>)}
+            onDeleteOverlay={deleteOverlay}
+            onSelectOverlay={setSelectedOverlayId}
+            onOpenTransitions={() => setActiveTab("transitions")}
+            onDropAudio={deposerAudio}
+            onDropVideo={deposerVideo}
+          />
         </div>
 
         {/* ─── Colonne droite : Tabs + Panels ─── */}

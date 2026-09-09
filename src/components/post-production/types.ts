@@ -119,6 +119,9 @@ export interface AudioTrack {
   fadeOut?: number;
   loop?: boolean;
   name: string;
+  /** ⭐ V3.61 — durée (s) mesurée via métadonnées : dimensionne le bloc
+   *  dans la timeline multi-pistes. Optionnelle (repli ~12 s à l'affichage). */
+  duration?: number;
 }
 
 export interface ExportConfig {

@@ -432,7 +432,16 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
             <ListeAffichee total={sfxFiltres.length}>
               {sfxFiltres.slice(0, nbAffiches).map((s) => (
                 <div key={s.id}>
-                  <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors">
+                  <div
+                    draggable
+                    onDragStart={(e) => {
+                      // ⭐ V3.61 — glisser-déposer vers la timeline multi-pistes
+                      e.dataTransfer.setData("application/x-pp-audio", JSON.stringify({
+                        url: s.p, name: s.n, volume: 0.5, fadeIn: 0.1, fadeOut: 0.3,
+                      }));
+                      e.dataTransfer.effectAllowed = "copy";
+                    }}
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors cursor-grab active:cursor-grabbing">
                     <button onClick={() => toggleLecture(`sfx-${s.id}`, s.p)}
                       title={lectureEnCours === `sfx-${s.id}` ? "Arrêter" : "Écouter"}
                       className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
@@ -470,7 +479,16 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
             <ListeAffichee total={musiquesFiltrees.length}>
               {musiquesFiltrees.slice(0, nbAffiches).map((m) => (
                 <div key={m.id}>
-                  <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors">
+                  <div
+                    draggable
+                    onDragStart={(e) => {
+                      // ⭐ V3.61 — glisser-déposer vers la timeline multi-pistes
+                      e.dataTransfer.setData("application/x-pp-audio", JSON.stringify({
+                        url: m.p, name: m.n, volume: 0.3, loop: true, fadeIn: 1, fadeOut: 2,
+                      }));
+                      e.dataTransfer.effectAllowed = "copy";
+                    }}
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors cursor-grab active:cursor-grabbing">
                     <button onClick={() => toggleLecture(`music-${m.id}`, m.p)}
                       title={lectureEnCours === `music-${m.id}` ? "Arrêter" : "Écouter"}
                       className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
@@ -510,7 +528,18 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
           ) : (
             <ListeAffichee total={videosFiltrees.length}>
               {videosFiltrees.slice(0, nbAffiches).map((v) => (
-                <div key={v.id} className="rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors overflow-hidden">
+                <div
+                  key={v.id}
+                  draggable
+                  onDragStart={(e) => {
+                    // ⭐ V3.61 — glisser-déposer vers la piste V1 de la timeline
+                    // (durée mesurée automatiquement à l'ajout via <video> metadata)
+                    e.dataTransfer.setData("application/x-pp-video", JSON.stringify({
+                      url: v.p, name: v.n,
+                    }));
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
+                  className="rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors overflow-hidden cursor-grab active:cursor-grabbing">
                   <div className="relative">
                     {videoApercue === v.id ? (
                       <video src={v.p} controls autoPlay muted={false} className="w-full aspect-video bg-black" />
