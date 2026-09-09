@@ -211,25 +211,20 @@ export function reglesCorsR2() {
   };
 }
 
-/** ⭐ V3.55 — Même règle, au format XML S3 (à coller dans le Dashboard Cloudflare). */
-export function reglesCorsR2Xml(): string {
-  return [
-    "<CORSConfiguration>",
-    "  <CORSRule>",
-    "    <AllowedOrigin>https://www.mouvementchristlibere.com</AllowedOrigin>",
-    "    <AllowedOrigin>https://mouvementchristlibere.com</AllowedOrigin>",
-    "    <AllowedOrigin>https://admin.mouvementchristlibere.com</AllowedOrigin>",
-    "    <AllowedOrigin>http://localhost:3000</AllowedOrigin>",
-    "    <AllowedMethod>PUT</AllowedMethod>",
-    "    <AllowedMethod>GET</AllowedMethod>",
-    "    <AllowedMethod>HEAD</AllowedMethod>",
-    "    <AllowedHeader>*</AllowedHeader>",
-    "    <ExposeHeader>ETag</ExposeHeader>",
-    "    <ExposeHeader>x-amz-request-id</ExposeHeader>",
-    "    <MaxAgeSeconds>3600</MaxAgeSeconds>",
-    "  </CORSRule>",
-    "</CORSConfiguration>",
-  ].join("\n");
+/**
+ * ⭐ V3.56 — Même règle, au format JSON à COLLER dans le Dashboard Cloudflare
+ * (R2 → bucket → Settings → CORS Policy → onglet JSON).
+ *
+ * CONSTAT 2026-09-09 (retour pasteur) : l'éditeur « CORS Policy » du Dashboard
+ * R2 n'accepte PLUS le XML S3 — coller du XML renvoie « This policy is not
+ * valid » ; la doc officielle (developers.cloudflare.com/r2/buckets/cors,
+ * màj 2026-07) ne documente plus QUE le JSON pour le Dashboard (onglet JSON,
+ * tableau de règles). Le XML reste le format de l'API S3 (PutBucketCors) :
+ * c'est ce que construit le SDK pour l'option B (token temporaire) à partir
+ * de reglesCorsR2() — inchangée.
+ */
+export function reglesCorsR2Json(): string {
+  return JSON.stringify(reglesCorsR2().CORSRules, null, 2);
 }
 
 export type EtatCorsR2 = "ok" | "absent" | "inverifiable";

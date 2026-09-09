@@ -74,28 +74,29 @@ interface AppliCorsResultat {
 }
 
 /**
- * ⭐ V3.55 — Règle CORS du bucket, au format XML S3 (Dashboard Cloudflare →
- * R2 → bucket → Settings → CORS Policy). ATTENTION : à maintenir en cohérence avec
- * reglesCorsR2() de src/lib/r2.ts (le serveur applique la même règle via
- * l'option B — token temporaire).
+ * ⭐ V3.56 — Règle CORS du bucket, au FORMAT JSON (Dashboard Cloudflare →
+ * R2 → bucket → Settings → CORS Policy → onglet JSON). ⚠️ CONSTAT 2026-09-09
+ * (retour pasteur) : l'éditeur « CORS Policy » du Dashboard N'ACCEPTE PLUS
+ * LE XML S3 — coller du XML répond « This policy is not valid » ; la doc
+ * officielle (developers.cloudflare.com/r2/buckets/cors) ne documente plus
+ * QUE du JSON (onglet JSON, tableau de règles). ATTENTION : à maintenir en
+ * cohérence avec reglesCorsR2() / reglesCorsR2Json() de src/lib/r2.ts (le
+ * serveur applique la même règle via l'option B — token temporaire).
  */
-const REGLE_CORS_XML = [
-  "<CORSConfiguration>",
-  "  <CORSRule>",
-  "    <AllowedOrigin>https://www.mouvementchristlibere.com</AllowedOrigin>",
-  "    <AllowedOrigin>https://mouvementchristlibere.com</AllowedOrigin>",
-  "    <AllowedOrigin>https://admin.mouvementchristlibere.com</AllowedOrigin>",
-  "    <AllowedOrigin>http://localhost:3000</AllowedOrigin>",
-  "    <AllowedMethod>PUT</AllowedMethod>",
-  "    <AllowedMethod>GET</AllowedMethod>",
-  "    <AllowedMethod>HEAD</AllowedMethod>",
-  "    <AllowedHeader>*</AllowedHeader>",
-  "    <ExposeHeader>ETag</ExposeHeader>",
-  "    <ExposeHeader>x-amz-request-id</ExposeHeader>",
-  "    <MaxAgeSeconds>3600</MaxAgeSeconds>",
-  "  </CORSRule>",
-  "</CORSConfiguration>",
-].join("\n");
+const REGLE_CORS_JSON = `[
+  {
+    "AllowedOrigins": [
+      "https://www.mouvementchristlibere.com",
+      "https://mouvementchristlibere.com",
+      "https://admin.mouvementchristlibere.com",
+      "http://localhost:3000"
+    ],
+    "AllowedMethods": ["PUT", "GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag", "x-amz-request-id"],
+    "MaxAgeSeconds": 3600
+  }
+]`;
 
 export default function R2TestPage() {
   const [status, setStatus] = useState<R2Status | null>(null);
@@ -110,7 +111,7 @@ export default function R2TestPage() {
   const [corsProbing, setCorsProbing] = useState(false);
   const [corsVerdict, setCorsVerdict] = useState<"ok" | "bloque" | null>(null);
   const [corsServeur, setCorsServeur] = useState<CorsServeurEtat | null>(null);
-  const [copieXml, setCopieXml] = useState(false);
+  const [copieJson, setCopieJson] = useState(false);
   const [tempKeyId, setTempKeyId] = useState("");
   const [tempSecret, setTempSecret] = useState("");
   const [appliquant, setAppliquant] = useState(false);
@@ -165,12 +166,12 @@ export default function R2TestPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status?.configured, status?.r2EndpointOrigin]);
 
-  // ⭐ V3.55 — Copie de la règle XML (option A : coller dans le Dashboard).
+  // ⭐ V3.56 — Copie de la règle JSON (option A : onglet JSON du Dashboard).
   const copierRegle = async () => {
     try {
-      await navigator.clipboard.writeText(REGLE_CORS_XML);
-      setCopieXml(true);
-      setTimeout(() => setCopieXml(false), 2000);
+      await navigator.clipboard.writeText(REGLE_CORS_JSON);
+      setCopieJson(true);
+      setTimeout(() => setCopieJson(false), 2000);
     } catch {
       // presse-papiers indisponible → l'utilisateur sélectionne/copie à la main
     }
@@ -747,24 +748,24 @@ export default function R2TestPage() {
                     </p>
                     <ol className="text-[11px] text-red-800 list-decimal list-inside space-y-1 mb-3">
                       <li>Ouvrez le <b>Dashboard Cloudflare</b> → <b>R2</b> → bucket « {status.bucket} » → <b>Settings</b></li>
-                      <li>Section <b>CORS Policy</b> → <b>Edit CORS policy</b></li>
-                      <li>Collez la règle ci-dessous (bouton Copier) puis <b>Enregistrer</b></li>
+                      <li>Section <b>CORS Policy</b> → <b>Add CORS policy</b> (ou <b>Edit</b>) → onglet <b>JSON</b></li>
+                      <li>Sélectionnez TOUT le contenu de la zone, collez la règle ci-dessous (bouton Copier — du <b>JSON</b>, le Dashboard refuse le XML), puis <b>Enregistrer</b></li>
                       <li>Revenez ici → le verdict doit passer au ✓ vert (bouton « Re-tester »)</li>
                     </ol>
                     <div className="relative">
                       <pre className="text-[10px] bg-[#1E0F2B] text-[#C9A227] p-3 pr-24 rounded-lg overflow-x-auto whitespace-pre">
-{REGLE_CORS_XML}
+{REGLE_CORS_JSON}
                       </pre>
                       <button
                         onClick={copierRegle}
                         className="absolute top-2 right-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold hover:bg-[#DDBE55] transition-colors"
                       >
                         <Copy className="w-3 h-3" />
-                        {copieXml ? "Copié !" : "Copier"}
+                        {copieJson ? "Copié !" : "Copier"}
                       </button>
                     </div>
                     <p className="text-[10px] text-red-700 mt-2">
-                      Astuce : en cas d&apos;enregistrement impossible dans le Dashboard, utilisez l&apos;option B ci-dessous — elle applique exactement la même règle.
+                      Astuce : si le Dashboard refuse encore l&apos;enregistrement, utilisez l&apos;option B ci-dessous — elle applique exactement la même règle.
                     </p>
                   </div>
 
