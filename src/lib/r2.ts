@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListBucketsCommand, PutBucketCorsCommand, HeadObjectCommand, CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListBucketsCommand, PutBucketCorsCommand, GetBucketCorsCommand, HeadObjectCommand, CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -143,38 +143,207 @@ export async function ensureR2CorsConfig(): Promise<void> {
   try {
     const client = getClient();
     const cfg = getConfig();
-    const corsRules = {
-      CORSRules: [
-        {
-          AllowedOrigins: ["*"],
-          AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
-          AllowedHeaders: ["*"],
-          ExposeHeaders: ["ETag", "x-amz-request-id"],
-          MaxAgeSeconds: 3600,
-        },
-      ],
-    };
     await client.send(
       new PutBucketCorsCommand({
         Bucket: cfg.bucket,
-        CORSConfiguration: corsRules,
+        CORSConfiguration: reglesCorsR2(),
       })
     );
     console.log("[r2] CORS configuration applied successfully");
   } catch (error) {
     // ⭐ V3.52 — PutBucketCors exige une permission admin : refusé
     // (AccessDenied) pour un token « Object Read & Write » scoped au
-    // bucket — ce n'est PAS bloquant (le CORS du bucket a été appliqué
-    // historiquement / via le Dashboard). Message explicite au lieu d'une
-    // erreur brute répétée dans les logs Vercel à chaque upload.
+    // bucket — ce n'est PAS bloquant en soi (la règle peut être posée via
+    // le Dashboard ou un token temporaire).
+    // ⭐ V3.55 — CONSTATÉ EN PRODUCTION : le bucket N'A JAMAIS eu de règle
+    // CORS (R2 répond « CORS not configured for this bucket » au preflight)
+    // → TOUT PUT navigateur était rejeté d'office et les 3 tentatives du
+    // client martelaient un refus déterministe. Réparation guidée :
+    // /admin/r2-test → section « CORS du bucket ».
     if (estAccesRefuse(error)) {
       console.warn(
         "[r2] PutBucketCors refusé (AccessDenied) — normal pour un token scoped Object Read & Write. " +
-          "Si les PUT navigateur échouent avec « Failed to fetch », appliquez le CORS du bucket via le Dashboard Cloudflare (R2 → bucket → Settings → CORS)."
+          "Si les PUT navigateur échouent, appliquez la règle CORS via /admin/r2-test (section « CORS du bucket ») " +
+          "ou le Dashboard Cloudflare (R2 → bucket → Settings → CORS Policy)."
       );
       return;
     }
     console.error("[r2] Failed to apply CORS configuration:", error);
+  }
+}
+
+/** ⭐ V3.55 — Origine (virtual-hosted) du bucket R2, celle des URL pré-signées.
+ * Le navigateur envoie ses PUT de morceaux vers https://{bucket}.{account}.r2.cloudflarestorage.com —
+ * c'est CETTE origine que la sonde CORS du client doit interroger. */
+export function getR2Origin(): string {
+  const cfg = getConfig();
+  if (!cfg.accountId || !cfg.bucket) return "";
+  return `https://${cfg.bucket}.${cfg.accountId}.r2.cloudflarestorage.com`;
+}
+
+/**
+ * ⭐ V3.55 — Règle CORS UNIQUE et centralisée du bucket (plus de « * » éparpillé).
+ *
+ * Origines : UNIQUEMENT la plateforme (site public, apex, back-office, dev
+ * local) — pas de joker : un site tiers ne peut pas réutiliser une URL
+ * pré-signée fuïtée depuis son propre domaine.
+ * PUT = UploadPart (morceaux) ; GET/HEAD = diagnostics navigateur.
+ * ETag exposé = INDISPENSABLE : chaque morceau renvoie son ETag, sans lui
+ * l'assemblage final (complete) est impossible.
+ * MaxAge 3600 = le preflight OPTIONS n'est refait qu'une fois par heure.
+ */
+export function reglesCorsR2() {
+  return {
+    CORSRules: [
+      {
+        AllowedOrigins: [
+          "https://www.mouvementchristlibere.com",
+          "https://mouvementchristlibere.com",
+          "https://admin.mouvementchristlibere.com",
+          "http://localhost:3000",
+        ],
+        AllowedMethods: ["PUT", "GET", "HEAD"],
+        AllowedHeaders: ["*"],
+        ExposeHeaders: ["ETag", "x-amz-request-id"],
+        MaxAgeSeconds: 3600,
+      },
+    ],
+  };
+}
+
+/** ⭐ V3.55 — Même règle, au format XML S3 (à coller dans le Dashboard Cloudflare). */
+export function reglesCorsR2Xml(): string {
+  return [
+    "<CORSConfiguration>",
+    "  <CORSRule>",
+    "    <AllowedOrigin>https://www.mouvementchristlibere.com</AllowedOrigin>",
+    "    <AllowedOrigin>https://mouvementchristlibere.com</AllowedOrigin>",
+    "    <AllowedOrigin>https://admin.mouvementchristlibere.com</AllowedOrigin>",
+    "    <AllowedOrigin>http://localhost:3000</AllowedOrigin>",
+    "    <AllowedMethod>PUT</AllowedMethod>",
+    "    <AllowedMethod>GET</AllowedMethod>",
+    "    <AllowedMethod>HEAD</AllowedMethod>",
+    "    <AllowedHeader>*</AllowedHeader>",
+    "    <ExposeHeader>ETag</ExposeHeader>",
+    "    <ExposeHeader>x-amz-request-id</ExposeHeader>",
+    "    <MaxAgeSeconds>3600</MaxAgeSeconds>",
+    "  </CORSRule>",
+    "</CORSConfiguration>",
+  ].join("\n");
+}
+
+export type EtatCorsR2 = "ok" | "absent" | "inverifiable";
+
+/**
+ * ⭐ V3.55 — Lit l'état CORS RÉEL du bucket (GetBucketCors) avec le token de
+ * l'application. Best-effort : un token « Object Read & Write » scoped est
+ * refusé sur les opérations de configuration du bucket (AccessDenied) →
+ * « inverifiable » — dans ce cas c'est le NAVIGATEUR qui sonde le preflight
+ * (autorité finale, puisque c'est lui qui envoie les PUT).
+ *
+ * Établi en production le 2026-09-09 : le bucket « christ-libere » répond
+ * « CORS not configured for this bucket » → etat = "absent".
+ */
+export async function lireCorsBucketR2(): Promise<{
+  etat: EtatCorsR2;
+  regles?: { origins: string[]; methods: string[] }[];
+  detail?: string;
+}> {
+  const cfg = getConfig();
+  if (!isR2Configured()) return { etat: "inverifiable", detail: "R2 non configuré" };
+  try {
+    const client = getClient();
+    const res = await client.send(new GetBucketCorsCommand({ Bucket: cfg.bucket }));
+    const regles = (res.CORSRules ?? []).map((r) => ({
+      origins: (r.AllowedOrigins ?? []) as string[],
+      methods: (r.AllowedMethods ?? []) as string[],
+    }));
+    return {
+      etat: regles.length > 0 ? "ok" : "absent",
+      regles,
+    };
+  } catch (error) {
+    if (estAccesRefuse(error)) {
+      return {
+        etat: "inverifiable",
+        detail:
+          "Le token de l'application (Object Read & Write) ne peut pas lire la configuration du bucket — vérification faite par le navigateur lui-même.",
+      };
+    }
+    const code = extractErrorCode(error);
+    // NoSuchCORSConfiguration (sémantique S3) → jamais configuré.
+    if (/NoSuchCORS/i.test(code)) return { etat: "absent" };
+    return { etat: "inverifiable", detail: code };
+  }
+}
+
+/**
+ * ⭐ V3.55 — Applique la règle CORS du bucket avec des identifiants
+ * TEMPORAIRES fournis par l'administrateur (token Cloudflare « Admin Read &
+ * Write »), puis relit la règle pour VÉRIFIER. Les identifiants transitent
+ * une seule fois en mémoire (HTTPS) — jamais stockés, jamais journalisés,
+ * et le token temporaire est à supprimer dans Cloudflare juste après.
+ *
+ * C'est la seule façon pour l'APPLICATION de réparer le CORS : le token de
+ * prod (Object Read & Write) est structurellement privé de PutBucketCors.
+ */
+export async function appliquerCorsR2AvecIdentifiants(
+  accessKeyId: string,
+  secretAccessKey: string
+): Promise<{ success: boolean; message: string; origins?: string[] }> {
+  const cfg = getConfig();
+  if (!cfg.accountId || !cfg.bucket) {
+    return { success: false, message: "R2_ACCOUNT_ID / R2_BUCKET_NAME manquants sur le serveur." };
+  }
+  // Client S3 ÉPHÉMÈRE monté sur les identifiants fournis (pas ceux de prod).
+  const client = new S3Client({
+    region: "auto",
+    endpoint: `https://${cfg.accountId}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId, secretAccessKey },
+  });
+  try {
+    await client.send(
+      new PutBucketCorsCommand({
+        Bucket: cfg.bucket,
+        CORSConfiguration: reglesCorsR2(),
+      })
+    );
+    // Vérification immédiate avec les MÊMES identifiants.
+    const res = await client.send(new GetBucketCorsCommand({ Bucket: cfg.bucket }));
+    const origins = (res.CORSRules?.[0]?.AllowedOrigins ?? []) as string[];
+    return {
+      success: true,
+      origins,
+      message:
+        "Règle CORS appliquée et vérifiée sur le bucket « " +
+        cfg.bucket +
+        " » — les envois du navigateur vers le stockage cloud sont désormais acceptés. " +
+        "Supprimez MAINTENANT le token temporaire dans Cloudflare (R2 → Manage R2 API Tokens), puis relancez le test navigateur.",
+    };
+  } catch (error) {
+    // ⚠️ Ne JAMAIS inclure les identifiants dans le message d'erreur.
+    if (estAccesRefuse(error)) {
+      return {
+        success: false,
+        message:
+          "Ce token n'a pas la permission de modifier le bucket (AccessDenied) — il faut un token avec la permission « Admin Read & Write » (créé au niveau du compte ou scoped au bucket « " +
+          cfg.bucket +
+          " » avec cette permission).",
+      };
+    }
+    if (error instanceof Error && /credentials|signature|sign/i.test(error.message)) {
+      return {
+        success: false,
+        message:
+          "Identifiants invalides (SignatureDoesNotMatch / InvalidAccessKeyId) — revérifiez l'Access Key ID et le Secret Access Key copiés dans Cloudflare.",
+      };
+    }
+    return {
+      success: false,
+      message:
+        "Échec : " +
+        (extractErrorCode(error) || (error instanceof Error ? error.message : "erreur inconnue")),
+    };
   }
 }
 

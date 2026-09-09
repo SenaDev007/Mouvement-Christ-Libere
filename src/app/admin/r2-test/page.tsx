@@ -2,7 +2,18 @@
 
 import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, Loader2, Cloud, TestTube, Globe, KeyRound } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Cloud,
+  TestTube,
+  Globe,
+  KeyRound,
+  ShieldAlert,
+  Copy,
+  RefreshCw,
+} from "lucide-react";
 import Link from "next/link";
 
 interface R2Status {
@@ -14,6 +25,8 @@ interface R2Status {
   accessKeyId: string;
   secretAccessKey: string;
   envCheck?: Record<string, boolean>;
+  /** ⭐ V3.55 — origine (virtual-hosted) du bucket pour la sonde CORS navigateur. */
+  r2EndpointOrigin?: string;
 }
 
 interface R2TestResult {
@@ -45,6 +58,45 @@ interface BrowserTestResult {
   checksumParams?: string[];
 }
 
+/** ⭐ V3.55 — État CORS du bucket lu côté serveur (GetBucketCors best-effort). */
+interface CorsServeurEtat {
+  etat: "ok" | "absent" | "inverifiable";
+  regles: { origins: string[]; methods: string[] }[];
+  detail: string;
+}
+
+/** ⭐ V3.55 — Résultat de l'application de la règle CORS (token temporaire). */
+interface AppliCorsResultat {
+  success: boolean;
+  message: string;
+  origins?: string[];
+  error?: string;
+}
+
+/**
+ * ⭐ V3.55 — Règle CORS du bucket, au format XML S3 (Dashboard Cloudflare →
+ * R2 → bucket → Settings → CORS Policy). ATTENTION : à maintenir en cohérence avec
+ * reglesCorsR2() de src/lib/r2.ts (le serveur applique la même règle via
+ * l'option B — token temporaire).
+ */
+const REGLE_CORS_XML = [
+  "<CORSConfiguration>",
+  "  <CORSRule>",
+  "    <AllowedOrigin>https://www.mouvementchristlibere.com</AllowedOrigin>",
+  "    <AllowedOrigin>https://mouvementchristlibere.com</AllowedOrigin>",
+  "    <AllowedOrigin>https://admin.mouvementchristlibere.com</AllowedOrigin>",
+  "    <AllowedOrigin>http://localhost:3000</AllowedOrigin>",
+  "    <AllowedMethod>PUT</AllowedMethod>",
+  "    <AllowedMethod>GET</AllowedMethod>",
+  "    <AllowedMethod>HEAD</AllowedMethod>",
+  "    <AllowedHeader>*</AllowedHeader>",
+  "    <ExposeHeader>ETag</ExposeHeader>",
+  "    <ExposeHeader>x-amz-request-id</ExposeHeader>",
+  "    <MaxAgeSeconds>3600</MaxAgeSeconds>",
+  "  </CORSRule>",
+  "</CORSConfiguration>",
+].join("\n");
+
 export default function R2TestPage() {
   const [status, setStatus] = useState<R2Status | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,6 +105,16 @@ export default function R2TestPage() {
   const [browserTesting, setBrowserTesting] = useState(false);
   const [browserResult, setBrowserResult] = useState<BrowserTestResult | null>(null);
   const [error, setError] = useState("");
+
+  // ⭐ V3.55 — Section CORS du bucket
+  const [corsProbing, setCorsProbing] = useState(false);
+  const [corsVerdict, setCorsVerdict] = useState<"ok" | "bloque" | null>(null);
+  const [corsServeur, setCorsServeur] = useState<CorsServeurEtat | null>(null);
+  const [copieXml, setCopieXml] = useState(false);
+  const [tempKeyId, setTempKeyId] = useState("");
+  const [tempSecret, setTempSecret] = useState("");
+  const [appliquant, setAppliquant] = useState(false);
+  const [appliResultat, setAppliResultat] = useState<AppliCorsResultat | null>(null);
 
   useEffect(() => {
     // ⭐ V3.35 — RÉPARATION : la page appelait /api/live/r2-test qui
@@ -70,6 +132,86 @@ export default function R2TestPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  // ⭐ V3.55 — Sonde CORS du bucket DEPUIS CE NAVIGATEUR : un PUT non signé
+  // vers l'origine du bucket déclenche le préflight OPTIONS EXACT des PUT de
+  // morceaux d'upload. C'est LE test décisif (le diagnostic du 2026-09-09 :
+  // le bucket répond « CORS not configured for this bucket » — toutes les
+  // requêtes navigateur étaient rejetées d'office, cause des « Le morceau
+  // 1/4 n'a pas pu être envoyé après 3 tentatives »).
+  const sonderCors = async (origineCible?: string) => {
+    const origine = origineCible || status?.r2EndpointOrigin;
+    if (!origine || origine === "(non défini)") return;
+    setCorsProbing(true);
+    try {
+      await fetch(`${origine}/`, { method: "PUT", cache: "no-store" });
+      setCorsVerdict("ok"); // préflight accepté (statut final sans importance)
+    } catch {
+      setCorsVerdict("bloque"); // préflight refusé par le bucket
+    } finally {
+      setCorsProbing(false);
+    }
+  };
+
+  // ⭐ V3.55 — Sonde automatique dès que la configuration est chargée :
+  // verdict navigateur (le vrai) + état lu côté serveur (best-effort).
+  useEffect(() => {
+    if (!status?.configured || !status.r2EndpointOrigin || status.r2EndpointOrigin === "(non défini)") return;
+    apiFetch("/api/admin/r2-test?action=cors-status")
+      .then((r) => r.json())
+      .then((d) => setCorsServeur(d))
+      .catch(() => undefined);
+    sonderCors(status.r2EndpointOrigin);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status?.configured, status?.r2EndpointOrigin]);
+
+  // ⭐ V3.55 — Copie de la règle XML (option A : coller dans le Dashboard).
+  const copierRegle = async () => {
+    try {
+      await navigator.clipboard.writeText(REGLE_CORS_XML);
+      setCopieXml(true);
+      setTimeout(() => setCopieXml(false), 2000);
+    } catch {
+      // presse-papiers indisponible → l'utilisateur sélectionne/copie à la main
+    }
+  };
+
+  // ⭐ V3.55 — Option B : applique la règle avec un token TEMPORAIRE
+  // « Admin Read & Write » (les identifiants ne sont jamais stockés — effacés
+  // du formulaire dès la réussite, le token est à supprimer dans Cloudflare).
+  const appliquerCors = async () => {
+    if (!tempKeyId.trim() || !tempSecret.trim()) {
+      setAppliResultat({
+        success: false,
+        message: "Renseignez l'Access Key ID et le Secret Access Key du token temporaire.",
+      });
+      return;
+    }
+    setAppliquant(true);
+    setAppliResultat(null);
+    try {
+      const res = await apiFetch("/api/admin/r2-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accessKeyId: tempKeyId.trim(),
+          secretAccessKey: tempSecret.trim(),
+        }),
+        timeoutMs: 30000,
+      });
+      const data = await res.json();
+      setAppliResultat(data);
+      if (data.success) {
+        setTempKeyId("");
+        setTempSecret("");
+        await sonderCors(); // re-sonde immédiatement : doit passer au vert
+      }
+    } catch (err) {
+      setAppliResultat({ success: false, message: err instanceof Error ? err.message : "Erreur" });
+    } finally {
+      setAppliquant(false);
+    }
+  };
 
   const runTest = async () => {
     setTesting(true);
@@ -167,7 +309,7 @@ export default function R2TestPage() {
           message:
             "Échec réseau (" +
             (err instanceof TypeError ? "Failed to fetch" : err instanceof Error ? err.message : "erreur") +
-            ") — CORS du bucket ou réseau : le preflight OPTIONS vers R2 est bloqué.",
+            ") — le préflight OPTIONS vers R2 est bloqué : voir la section « CORS du bucket » ci-dessus.",
         });
       }
     } catch (err) {
@@ -507,6 +649,208 @@ export default function R2TestPage() {
             </div>
           )}
         </div>
+
+        {/* ⭐ V3.55 — CORS du bucket : verdict automatique + réparation guidée */}
+        {status?.configured && (
+          <div className="bg-white rounded-xl p-5 border border-[#C9A227]/40 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-[#C9A227]" />
+                CORS du bucket — envoi du navigateur vers R2
+              </h2>
+              <button
+                onClick={() => sonderCors()}
+                disabled={corsProbing}
+                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#8A8378] hover:text-[#C9A227] disabled:opacity-40"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${corsProbing ? "animate-spin" : ""}`} />
+                Re-tester
+              </button>
+            </div>
+            <p className="text-xs text-[#8A8378] mb-3">
+              Test automatique à l&apos;ouverture de la page : votre navigateur envoie la requête de
+              pré-vol EXACTE des uploads de vidéos par morceaux (PUT vers l&apos;origine du bucket).
+              Sans règle CORS, Cloudflare R2 refuse TOUT envoi direct du navigateur — c&apos;est la
+              cause exacte des « Le morceau 1/4 n&apos;a pas pu être envoyé après 3 tentatives » :
+              le bucket répond « CORS not configured for this bucket », aucun réessai ne peut y
+              rien changer. La réparation est unique et définitive (une règle à appliquer une
+              seule fois sur le bucket).
+            </p>
+
+            {/* Verdict navigateur (l'autorité) + état serveur (best-effort) */}
+            <div
+              className={`p-4 rounded-lg border ${
+                corsProbing
+                  ? "bg-[#2A0E3D]/5 border-[#8A8378]/20"
+                  : corsVerdict === "ok"
+                    ? "bg-emerald-50 border-emerald-200"
+                    : corsVerdict === "bloque"
+                      ? "bg-red-50 border-red-200"
+                      : "bg-[#2A0E3D]/5 border-[#8A8378]/20"
+              }`}
+            >
+              <p
+                className={`text-sm font-bold mb-2 flex items-start gap-2 ${
+                  corsVerdict === "ok" ? "text-emerald-700" : corsVerdict === "bloque" ? "text-red-700" : "text-[#1E0F2B]"
+                }`}
+              >
+                {corsProbing ? (
+                  <Loader2 className="w-4 h-4 shrink-0 mt-0.5 animate-spin text-[#C9A227]" />
+                ) : corsVerdict === "ok" ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                ) : (
+                  <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                )}
+                {corsProbing
+                  ? "Test du pré-vol en cours..."
+                  : corsVerdict === "ok"
+                    ? "CORS accepté — le bucket autorise les envois de ce navigateur."
+                    : corsVerdict === "bloque"
+                      ? "REFUSÉ — la politique CORS du bucket n'est pas configurée (ou n'inclut pas ce site). Les uploads de vidéos/replays ne peuvent pas fonctionner tant que la règle ci-dessous n'est pas appliquée."
+                      : "En attente du test..."}
+              </p>
+              {corsServeur && corsVerdict === "bloque" && (
+                <p className="text-[11px] text-red-600 bg-red-100/60 rounded p-2">
+                  {corsServeur.etat === "absent"
+                    ? "Confirmé aussi côté serveur : aucune règle CORS sur le bucket."
+                    : corsServeur.etat === "inverifiable"
+                      ? "Lecture serveur impossible (le token de l'application ne peut pas lire la configuration du bucket) — le verdict du navigateur ci-dessus fait foi."
+                      : "Une règle existe côté serveur mais elle ne couvre pas l'origine de ce site."}
+                </p>
+              )}
+              {corsServeur && corsServeur.etat === "ok" && corsVerdict !== "bloque" && (
+                <p className="text-[11px] text-emerald-700">
+                  Règle lue côté serveur : {corsServeur.regles.flatMap((r) => r.origins).join(", ")}
+                </p>
+              )}
+            </div>
+
+            {/* Panneau de réparation (uniquement si refusé) */}
+            {corsVerdict === "bloque" && (
+              <div className="mt-4 space-y-4">
+                <div className="bg-red-50 border border-red-300 rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-red-800 mb-2 flex items-center gap-2">
+                    <KeyRound className="w-4 h-4" />
+                    Réparation (2 minutes, UNE SEULE FOIS) — au choix
+                  </h3>
+                  <p className="text-xs text-red-700 mb-4">
+                    Le bucket « {status.bucket} » doit porter une règle CORS qui autorise ce site à
+                    lui envoyer des fichiers directement. Le token actuel du site (Object Read &amp;
+                    Write) n&apos;a pas le droit de modifier cette règle — d&apos;où les deux options
+                    ci-dessous, qui utilisent VOS droits de propriétaire du compte Cloudflare.
+                  </p>
+
+                  {/* Option A — coller dans le Dashboard */}
+                  <div className="bg-white/70 border border-red-200 rounded-lg p-3 mb-3">
+                    <p className="text-[10px] font-bold text-red-900 uppercase tracking-wider mb-2">
+                      Option A — Coller la règle dans le Dashboard Cloudflare (recommandée)
+                    </p>
+                    <ol className="text-[11px] text-red-800 list-decimal list-inside space-y-1 mb-3">
+                      <li>Ouvrez le <b>Dashboard Cloudflare</b> → <b>R2</b> → bucket « {status.bucket} » → <b>Settings</b></li>
+                      <li>Section <b>CORS Policy</b> → <b>Edit CORS policy</b></li>
+                      <li>Collez la règle ci-dessous (bouton Copier) puis <b>Enregistrer</b></li>
+                      <li>Revenez ici → le verdict doit passer au ✓ vert (bouton « Re-tester »)</li>
+                    </ol>
+                    <div className="relative">
+                      <pre className="text-[10px] bg-[#1E0F2B] text-[#C9A227] p-3 pr-24 rounded-lg overflow-x-auto whitespace-pre">
+{REGLE_CORS_XML}
+                      </pre>
+                      <button
+                        onClick={copierRegle}
+                        className="absolute top-2 right-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold hover:bg-[#DDBE55] transition-colors"
+                      >
+                        <Copy className="w-3 h-3" />
+                        {copieXml ? "Copié !" : "Copier"}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-red-700 mt-2">
+                      Astuce : en cas d&apos;enregistrement impossible dans le Dashboard, utilisez l&apos;option B ci-dessous — elle applique exactement la même règle.
+                    </p>
+                  </div>
+
+                  {/* Option B — token temporaire */}
+                  <div className="bg-white/70 border border-red-200 rounded-lg p-3">
+                    <p className="text-[10px] font-bold text-red-900 uppercase tracking-wider mb-2">
+                      Option B — Laisser le site appliquer la règle (token temporaire)
+                    </p>
+                    <ol className="text-[11px] text-red-800 list-decimal list-inside space-y-1 mb-3">
+                      <li>Dashboard Cloudflare → <b>R2</b> → <b>Manage R2 API Tokens</b> → <b>Créer un token</b></li>
+                      <li>Nom : <b>temp-cors-repair</b> — permission : <b>Admin Read &amp; Write</b> (compte, ou scoped au bucket « {status.bucket} »)</li>
+                      <li>Copiez l&apos;<b>Access Key ID</b> et le <b>Secret Access Key</b> affichés, collez-les ci-dessous</li>
+                      <li>Après le ✓ vert : <b>SUPPRIMEZ ce token</b> dans Cloudflare (il n&apos;a plus d&apos;utilité)</li>
+                    </ol>
+                    <div className="grid grid-cols-1 gap-2 mb-3">
+                      <input
+                        type="text"
+                        value={tempKeyId}
+                        onChange={(e) => setTempKeyId(e.target.value)}
+                        placeholder="Access Key ID du token temporaire"
+                        autoComplete="off"
+                        spellCheck={false}
+                        className="px-3 py-2 rounded-lg border border-[#8A8378]/30 text-xs font-mono text-[#1E0F2B] bg-white focus:outline-none focus:border-[#C9A227]"
+                      />
+                      <input
+                        type="password"
+                        value={tempSecret}
+                        onChange={(e) => setTempSecret(e.target.value)}
+                        placeholder="Secret Access Key du token temporaire"
+                        autoComplete="off"
+                        className="px-3 py-2 rounded-lg border border-[#8A8378]/30 text-xs font-mono text-[#1E0F2B] bg-white focus:outline-none focus:border-[#C9A227]"
+                      />
+                    </div>
+                    <button
+                      onClick={appliquerCors}
+                      disabled={appliquant}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {appliquant ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
+                      {appliquant ? "Application en cours..." : "Appliquer la règle et vérifier"}
+                    </button>
+                    <p className="text-[10px] text-red-700 mt-2">
+                      Sécurité : ces identifiants servent UNE fois, en mémoire, uniquement pour
+                      écrire la règle — ils ne sont jamais enregistrés ni journalisés, et le
+                      formulaire les efface dès la réussite. Le token temporaire est ensuite à
+                      supprimer (étape 4).
+                    </p>
+
+                    {appliResultat && (
+                      <div
+                        className={`mt-3 p-3 rounded-lg border text-xs ${
+                          appliResultat.success
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                            : "bg-red-100 border-red-300 text-red-800"
+                        }`}
+                      >
+                        <p className="font-bold mb-1 flex items-center gap-2">
+                          {appliResultat.success ? (
+                            <CheckCircle2 className="w-4 h-4" />
+                          ) : (
+                            <XCircle className="w-4 h-4" />
+                          )}
+                          {appliResultat.success ? "Règle appliquée" : "Échec"}
+                        </p>
+                        <p>{appliResultat.message}</p>
+                        {appliResultat.origins && appliResultat.origins.length > 0 && (
+                          <p className="text-[10px] mt-1 font-mono">
+                            Origines autorisées : {appliResultat.origins.join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-[#8A8378] bg-[#2A0E3D]/5 rounded-lg p-3">
+                  Après réparation : revenez au module Vidéos → « Nouvelle vidéo » → l&apos;envoi
+                  reprendra et fonctionnera. La progression affiche « Envoi du fichier… X% ·
+                  partie N/M » morceau par morceau, chaque morceau étant réessayé individuellement
+                  en cas de véritable hoquet réseau (ce qui devient alors rare et réparable par
+                  un simple « Réessayer l&apos;envoi »).
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Error */}
         {error && (

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   isR2Configured,
   ensureR2CorsConfig,
+  lireCorsBucketR2,
+  getR2Origin,
   generateKey,
   getPublicUrl,
   creerMultipartR2,
@@ -26,7 +28,11 @@ import {
  *
  * PROTOCOLE (4 actions, même URL) :
  *   POST { action: "create",   contentType, filename? }
- *        → { uploadId, key, partSize, partCount, publicUrl }
+ *        → { uploadId, key, partSize, partCount, publicUrl, r2Origin, corsEtat }
+ *        ⭐ V3.55 — r2Origin/corsEtat : le client sonde le preflight CORS du
+ *        bucket AVANT d'envoyer le moindre morceau (un refus CORS est
+ *        DÉTERMINISTE : 3 tentatives = 3 échecs identiques, autant échouer
+ *        immédiatement avec la cause exacte).
  *   POST { action: "part",     uploadId, key, partNumber }
  *        → { url } (URL pré-signée du morceau, valable 1 h, à la demande)
  *   POST { action: "complete", uploadId, key, parts: [{ partNumber, etag }] }
@@ -115,6 +121,49 @@ export async function traiterRequeteMultipart(opts: {
         );
       }
 
+      // ⭐ V3.55 — SONDE RÉELLE de l'état CORS AVANT d'ouvrir la session
+      // (uniquement sur create : les actions part/complete/abort n'en ont
+      // pas besoin — le CORS ne peut pas « disparaître » en cours d'envoi).
+      // Établi en production le 2026-09-09 : le bucket répond littéralement
+      // « CORS not configured for this bucket » au preflight.
+      //   • « absent » → refus DÉTERMINISTE de tout PUT navigateur → échec
+      //     IMMÉDIAT et actionnable (403 : le client n'essaie même pas un
+      //     seul morceau — trois tentatives sur un refus déterministe sont
+      //     trois échecs identiques).
+      //   • « ok » → vérifie en plus que l'ORIGINE de la requête est couverte
+      //     par une règle (sinon même verdict, cause exacte indiquée).
+      //   • « inverifiable » (token scoped Object Read & Write, cas normal) →
+      //     la réponse porte r2Origin + corsEtat : le CLIENT sonde le
+      //     preflight lui-même — le navigateur est l'autorité finale,
+      //     puisque c'est lui qui envoie les PUT.
+      const sondeCors = await lireCorsBucketR2();
+      if (sondeCors.etat === "absent") {
+        return reponseErreur(
+          "Le stockage Cloudflare R2 refuse les envois depuis le navigateur : la politique CORS du bucket « " +
+            process.env.R2_BUCKET_NAME +
+            " » n'est pas configurée (vérifié côté serveur — ce n'est PAS votre connexion). " +
+            "Réparation guidée (2 minutes, une seule fois) : Test R2 (/admin/r2-test) → section « CORS du bucket ». " +
+            "Aucun réessai d'envoi ne peut aboutir tant que la règle n'est pas appliquée.",
+          403
+        );
+      }
+      if (sondeCors.etat === "ok") {
+        const origineRequete = req.headers.get("origin") || "";
+        if (
+          origineRequete &&
+          !sondeCors.regles?.some(
+            (r) => r.origins.includes("*") || r.origins.includes(origineRequete)
+          )
+        ) {
+          return reponseErreur(
+            "Le bucket R2 a une politique CORS mais elle n'inclut pas l'origine « " +
+              origineRequete +
+              " » — ajoutez cette origine à la règle du bucket (Test R2 → section « CORS du bucket »).",
+            403
+          );
+        }
+      }
+
       try {
         const uploadId = await creerMultipartR2(key, contentType);
         return NextResponse.json({
@@ -123,6 +172,9 @@ export async function traiterRequeteMultipart(opts: {
           partSize,
           partCount,
           publicUrl: getPublicUrl(key),
+          // ⭐ V3.55 — pour la sonde CORS côté navigateur (cf. en-tête).
+          r2Origin: getR2Origin(),
+          corsEtat: sondeCors.etat,
         });
       } catch (error) {
         console.error("[multipart/create] Erreur R2 :", error);
@@ -191,7 +243,7 @@ export async function traiterRequeteMultipart(opts: {
             typeof p === "object" &&
             Number.isInteger((p as { partNumber?: unknown }).partNumber) &&
             typeof (p as { etag?: unknown }).etag === "string" &&
-            (p as { etag?: unknown }).etag!.length > 0
+            ((p as { etag?: unknown }).etag as string).length > 0
         )
         .sort((a: { partNumber: number }, b: { partNumber: number }) => a.partNumber - b.partNumber);
       if (morceaux.length === 0) {
