@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/lib/tiktok.ts",
+    "src/components/tiktok/lecteur-tiktok.tsx",
+    "src/components/tiktok/tiktok-note-icon.tsx",
+    "src/app/api/tiktok/oembed/route.ts",
+    "src/app/api/tiktok/backfill/route.ts",
+    "src/app/api/videos/route.ts",
+    "src/components/videos/videos-view.tsx",
+    "src/components/admin/videos-tabs-client.tsx",
+    "src/components/post-production/post-production.tsx",
+    "src/components/post-production/timeline-pro.tsx",
+    "src/components/post-production/types.ts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

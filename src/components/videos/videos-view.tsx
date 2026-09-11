@@ -8,10 +8,14 @@ import Image from "next/image";
 import {
   Play, Eye, ChevronRight, ChevronDown, ChevronLeft,
   Calendar, Video as VideoIcon, Heart, Share2, Search,
-  X, Clock, Star, Wind, Sunrise, MoonStar, Sparkles, ExternalLink,
+  X, Clock, Star, Wind, Sunrise, MoonStar, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ShareModal } from "@/components/videos/share-modal";
+// ⭐ V3.64 — Lecteur TikTok à dimension exacte (zéro scrollbar, zéro texte
+// tronqué, poster = vraie miniature) + icône/badge TikTok partagés.
+import { LecteurTikTok } from "@/components/tiktok/lecteur-tiktok";
+import { TiktokNoteIcon, BadgeTikTok } from "@/components/tiktok/tiktok-note-icon";
 import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 import { HeroBackgroundImage } from "@/components/site/page-hero";
 import { IsololeText } from "@/lib/isolole";
@@ -576,33 +580,20 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
             </div>
 
             {/* Lecteur vidéo : YouTube iframe SI youtubeId, lecteur natif
-                <video>, ou ⭐ V3.63 TIKTOK (embed officiel portrait 9:16 —
-                même schéma que YouTube : l'URL est en videoUrl, l'id extrait
-                par l'API). Une carte « Ouvrir sur TikTok » accompagne toujours
-                l'embed : si l'embed est indisponible dans un pays, la vidéo
-                reste atteignable en un clic. */}
+                <video>, ou ⭐ V3.64 TIKTOK — LecteurTikTok : iframe à la
+                TAILLE LOGIQUE de TikTok (325 × hauteur oEmbed exacte —
+                vidéo + légende + bouton entiers, PLUS de scrollbar ni de
+                textes tronqués), poster = VRAIE miniature (R2 permanente
+                via backfill) visible instantanément pendant que le lecteur
+                TikTok charge, fondu enchaîné à l'arrivée. */}
             {video.tiktokId ? (
               <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-2xl">
-                <div className="flex flex-col items-center py-4 px-3">
-                  <div className="relative rounded-lg overflow-hidden bg-[#111118] ring-1 ring-white/10 shadow-inner" style={{ height: "min(72vh, 760px)", aspectRatio: "9 / 16" }}>
-                    <iframe
-                      src={`https://www.tiktok.com/embed/v2/${video.tiktokId}`}
-                      title={video.title}
-                      allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                      allowFullScreen
-                      className="absolute inset-0 w-full h-full"
-                    />
-                  </div>
-                  <a
-                    href={video.videoUrl || `https://www.tiktok.com/@pamela.dali7/video/${video.tiktokId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 text-[#1E0F2B] text-xs font-semibold transition-colors"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" style={{ color: "#C9A227" }} />
-                    Ouvrir sur TikTok
-                  </a>
-                </div>
+                <LecteurTikTok
+                  tiktokId={video.tiktokId}
+                  videoUrl={video.videoUrl || null}
+                  titre={video.title}
+                  miniature={video.thumbnailUrl || null}
+                />
               </div>
             ) : (
             <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-2xl" style={{ aspectRatio: "16 / 9" }}>
@@ -737,40 +728,29 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
   );
 }
 
-// ⭐ V3.63 — Miniature TikTok de marque : les vidéos TikTok sont PORTRAIT
-// (9:16) — dans une grille de cartes paysage, on rend un « écran mobile »
-// centré avec le glyph TikTok. Zéro requête réseau : jamais d'image cassée,
-// jamais de miniatures expirées (les URL oEmbed TikTok sont signées et
-// périment) — si thumbnailUrl existe il est essayé EN PREMIER, le style de
-// marque sert de repli.
-function TiktokNoteIcon({ size = 28 }: { size?: number }) {
-  // Glyphe croche (note de musique) avec double ombre de marque
-  // cyan #25F4EE / rose #FE2C55 — logo TikTok reconnaissable.
-  const k = size / 48;
-  return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden>
-      <g transform={`translate(${3 * k} ${3 * k}) scale(${k})`}>
-        <path d="M22 6h7c.5 5.5 4.3 9.5 9.8 10v7c-3.7.1-7.1-1-9.9-3.1v13.6c0 6.3-4.7 10.5-10.6 10.5-5.5 0-9.6-3.9-9.6-9 0-5 4-8.8 9.3-8.8 1 0 2 .1 3 .4v7.4c-.8-.3-1.7-.5-2.6-.5-2.3 0-4 1.5-4 3.5s1.8 3.6 4.1 3.6c2.6 0 4.5-1.9 4.5-4.7V6z" fill="#25F4EE"/>
-        <path d="M22 6h7c.5 5.5 4.3 9.5 9.8 10v7c-3.7.1-7.1-1-9.9-3.1v13.6c0 6.3-4.7 10.5-10.6 10.5-5.5 0-9.6-3.9-9.6-9 0-5 4-8.8 9.3-8.8 1 0 2 .1 3 .4v7.4c-.8-.3-1.7-.5-2.6-.5-2.3 0-4 1.5-4 3.5s1.8 3.6 4.1 3.6c2.6 0 4.5-1.9 4.5-4.7V6z" fill="#FE2C55" transform="translate(-6 -6)"/>
-        <path d="M22 6h7c.5 5.5 4.3 9.5 9.8 10v7c-3.7.1-7.1-1-9.9-3.1v13.6c0 6.3-4.7 10.5-10.6 10.5-5.5 0-9.6-3.9-9.6-9 0-5 4-8.8 9.3-8.8 1 0 2 .1 3 .4v7.4c-.8-.3-1.7-.5-2.6-.5-2.3 0-4 1.5-4 3.5s1.8 3.6 4.1 3.6c2.6 0 4.5-1.9 4.5-4.7V6z" fill="currentColor"/>
-      </g>
-    </svg>
-  );
-}
-
+// ⭐ V3.64 — Miniature TikTok : VRAIE image (R2 permanente, via le
+// backfill /api/tiktok/backfill) remplissant la carte + badge TikTok —
+// même schéma visuel que les cartes YouTube (« comme on peut le voir
+// exactement sur YouTube et sur TikTok » — retour pasteur). Les miniatures
+// TikTok sont PORTRAIT : object-cover avec position biaisée vers le haut
+// (les visages occupent le tiers supérieur) ; repli automatique vers le
+// style de marque « écran mobile » si la miniature est absente/cassée.
 function TiktokMiniature({ src, title, className, compact = false }: { src?: string | null; title: string; className?: string; compact?: boolean }) {
   const [echec, setEchec] = useState(false);
   const afficheImage = !!src && !echec;
   if (afficheImage) {
     return (
-      <Image
-        src={src as string}
-        alt={title}
-        fill
-        sizes={compact ? "160px" : "(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 300px"}
-        className={className || "object-cover group-hover:scale-105 transition-transform duration-500"}
-        onError={() => setEchec(true)}
-      />
+      <>
+        <Image
+          src={src as string}
+          alt={title}
+          fill
+          sizes={compact ? "160px" : "(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 300px"}
+          className={(className || "object-cover group-hover:scale-105 transition-transform duration-500") + " object-[50%_30%]"}
+          onError={() => setEchec(true)}
+        />
+        <BadgeTikTok compact={compact} />
+      </>
     );
   }
   return (

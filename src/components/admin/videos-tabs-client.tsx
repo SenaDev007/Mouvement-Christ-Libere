@@ -23,6 +23,10 @@ import {
 } from "@/lib/video-rubrics";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { AdminModal, ModalField, ModalError, modalInputClass } from "@/components/admin/admin-modal";
+// ⭐ V3.64 — Miniatures TikTok dans la grille back-office : vraie image
+// (R2, backfill) + badge, repli de marque si absente.
+import { estUrlTiktok } from "@/lib/tiktok";
+import { TiktokNoteIcon, BadgeTikTok } from "@/components/tiktok/tiktok-note-icon";
 import type { Video, Servant } from "@prisma/client";
 // ⭐ V3.48 — compression côté client de la miniature uploadée (ratio
 // préservé, ≤ 150 Ko, HEIC/EXIF robustes — même mécanique que les photos de
@@ -487,10 +491,29 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                 key={v.id}
                 className="bg-white rounded-xl border border-[#8A8378]/15 overflow-hidden hover:shadow-lg transition-all group"
               >
-                {/* Thumbnail */}
+                {/* Thumbnail — ⭐ V3.64 : les vidéos TikTok montrent leur
+                    VRAIE miniature (R2 permanente) + badge TikTok, comme
+                    YouTube montre img.youtube.com ; repli de marque si la
+                    miniature est absente (backfill non encore passé). */}
                 <div className="relative aspect-video bg-[#1A0826] overflow-hidden">
-                  {v.thumbnailUrl ? (
-                     
+                  {estUrlTiktok(v.videoUrl) ? (
+                    v.thumbnailUrl ? (
+                      <>
+                        <img
+                          src={v.thumbnailUrl}
+                          alt={v.title}
+                          className="w-full h-full object-cover object-[50%_30%] group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                        <BadgeTikTok />
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-[#111118] via-[#16162a] to-[#0d0d16]">
+                        <TiktokNoteIcon size={26} />
+                        <span className="text-[8px] font-bold tracking-[0.18em] text-white/60 uppercase">TikTok</span>
+                      </div>
+                    )
+                  ) : v.thumbnailUrl ? (
                     <img
                       src={v.thumbnailUrl}
                       alt={v.title}
@@ -1021,7 +1044,11 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
           throw new Error(data.error || "Erreur lors de la création");
         }
         const data = await res.json();
-        videoId = data.item?.id as string | undefined;
+        // ⭐ V3.64 — cast corrigé : videoId est `string | null` (undefined
+        // interdit par le typage strict — erreur préexistante détectée par
+        // le typecheck V3.64, jamais vue car le fichier n'était pas dans
+        // les includes des checks précédents).
+        videoId = data.item?.id ?? null;
         if (!videoId) throw new Error("Identifiant vidéo manquant dans la réponse");
         setFicheCreeeId(videoId);
       }

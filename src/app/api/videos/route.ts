@@ -4,21 +4,13 @@ import { db } from "@/lib/db";
 import { ensureVideoLikesColumn, ensureVideoCategoryColumn } from "@/lib/ensure-schema";
 import { recupererReplaysManquants } from "@/lib/live-replay-recovery";
 import { categorizeVideo, estRubrique } from "@/lib/video-rubrics";
+// ⭐ V3.64 — Identifiant TikTok : helper partagé (lib/tiktok.ts) — la
+// détection TikTok vit désormais à UN seul endroit (routes API, lecteur
+// public, back-office, éditeur de post-production).
+import { extraireTiktokId } from "@/lib/tiktok";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-/**
- * ⭐ V3.63 — Identifiant TikTok depuis une URL videoUrl.
- * Formats : https://www.tiktok.com/@user/video/7683371620924230944
- *           (et /photo/<id> — diaporamas). Même schéma que YouTube :
- * l'URL COMPLÈTE est stockée en base, l'id est extrait à la lecture.
- */
-function extraireTiktokId(videoUrl?: string | null): string {
-  if (!videoUrl) return "";
-  const m = videoUrl.match(/tiktok\.com\/@[^/]+\/(?:video|photo)\/(\d{5,25})/);
-  return m?.[1] || "";
-}
 
 export async function GET(request: NextRequest) {
   try {

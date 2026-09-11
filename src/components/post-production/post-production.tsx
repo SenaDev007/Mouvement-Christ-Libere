@@ -1,6 +1,14 @@
 "use client";
 
 import { apiFetch } from "@/lib/api-client";
+// ⭐ V3.64 — Helpers TikTok partagés + lecteur à dimension exacte :
+// l'éditeur n'essaie PLUS de lire l'URL TikTok dans un <video> (échec
+// après timeout = « la vidéo prend du temps avant de jouer » en
+// back-office) — comme YouTube, un embed est affiché + bandeau
+// « uploadez le fichier source pour éditer ».
+import { estUrlTiktok, extraireTiktokId } from "@/lib/tiktok";
+import { LecteurTikTok } from "@/components/tiktok/lecteur-tiktok";
+import { TiktokNoteIcon } from "@/components/tiktok/tiktok-note-icon";
 // ⭐ V3.51 — Upload SÉQUENTIEL par morceaux vers R2 (remplace le PUT
 // monolithique de la vidéo source : reprise individuelle par morceau).
 import {
@@ -1491,7 +1499,13 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
     return match ? `https://www.youtube.com/embed/${match[1]}?enablejsapi=1&modestbranding=1&rel=0` : url;
   };
+  // ⭐ V3.64 — TikTok : même schéma que YouTube. Les URL TikTok ne sont pas
+  // lisibles dans un <video> HTML5 : l'éditeur affichait un lecteur muet
+  // qui « chargeait » indéfiniment (timeout navigateur) avant d'échouer.
   const youtubeMode = isYoutubeVideo(currentVideoUrl);
+  const tiktokMode = estUrlTiktok(currentVideoUrl);
+  // Mode embed générique : iframe au lieu de <video> + bannière d'upload.
+  const embedMode = youtubeMode || tiktokMode;
 
   const TABS: { id: TabType; label: string; icon: typeof Scissors }[] = [
     { id: "trim", label: "Couper", icon: Scissors },
@@ -1694,11 +1708,18 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         <div className="min-w-0 space-y-3">
           {/* Preview — ⭐ V3.16 : le format du preview suit le format
               d'export (16:9, 9:16 Reels, 1:1…) : ce que l'on voit est ce
-              que l'on exporte. */}
+              que l'on exporte. ⭐ V3.64 : une source TikTok impose le
+              portrait 9:16 (vidéo native TikTok) — même cap 420 px. */}
           <div
             ref={previewRef}
             className="relative bg-black rounded-xl overflow-hidden shadow-2xl mx-auto w-full"
-            style={{ aspectRatio: previewAspect, maxWidth: previewAspect.startsWith("9 / 16") || previewAspect.startsWith("4 / 5") || previewAspect.startsWith("1 /") ? "min(100%, 420px)" : undefined }}
+            style={{
+              aspectRatio: tiktokMode ? "9 / 16" : previewAspect,
+              maxWidth:
+                tiktokMode || previewAspect.startsWith("9 / 16") || previewAspect.startsWith("4 / 5") || previewAspect.startsWith("1 /")
+                  ? "min(100%, 420px)"
+                  : undefined,
+            }}
             onMouseMove={handleMouseMove}
             onPointerDown={(e) => { if (e.target === e.currentTarget) setSelectedOverlayId(null); }}
           >
@@ -1716,6 +1737,20 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     className="w-full h-full"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
+                  />
+                ) : tiktokMode ? (
+                  /* ⭐ V3.64 — TikTok : embed officiel via LecteurTikTok
+                     (dimension exacte, poster, mode boîte qui remplit la
+                     zone d'aperçu). AVANT : l'URL TikTok était donnée au
+                     <video> ci-dessous — le navigateur téléchargeait du
+                     HTML dans un lecteur vidéo et échouait après un long
+                     timeout (« prend du temps avant de jouer »). */
+                  <LecteurTikTok
+                    boite
+                    tiktokId={extraireTiktokId(currentVideoUrl)}
+                    videoUrl={currentVideoUrl}
+                    titre={title || "Vidéo TikTok"}
+                    afficherLien={false}
                   />
                 ) : (
                   <video
@@ -1757,7 +1792,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
                 {/* ⭐ V3.16 — PISTES AUDIO synchronisées (préécoute) : chaque
                     piste est un <audio> caché piloté par togglePlay. */}
-                {!youtubeMode && audioTracks.map((track) => (
+                {!embedMode && audioTracks.map((track) => (
                   <audio
                     key={track.id}
                     src={track.url}
@@ -1774,7 +1809,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     en plein cadre pendant sa fenêtre temporelle — synk lecture/
                     pause/seek avec la vidéo principale (muet : c'est un calque
                     de compositing, comme un B-roll dans CapCut). */}
-                {!youtubeMode && timeline.filter((c) => c.piste === 2).map((clip) => {
+                {!embedMode && timeline.filter((c) => c.piste === 2).map((clip) => {
                   const st = Math.max(0, clip.startTime || 0);
                   const actif = currentTime >= st && currentTime < st + clip.duration;
                   if (!actif || !clip.url) return null;
@@ -1797,7 +1832,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     déplacer, poignées de coin → redimensionner (images avec
                     bords, ratio préservé, qualité intacte). Visible seulement
                     dans sa fenêtre temporelle (startTime/endTime) comme avant. */}
-                {!youtubeMode && overlays.map((overlay) => {
+                {!embedMode && overlays.map((overlay) => {
                   const startTime = "startTime" in overlay ? overlay.startTime : undefined;
                   const endTime = "endTime" in overlay ? overlay.endTime : undefined;
                   const isActive = (!startTime || startTime <= currentTime) && (!endTime || endTime >= currentTime);
@@ -1817,7 +1852,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 })}
 
                 {/* Crop overlay preview — masqué en mode YouTube */}
-                {!youtubeMode && transform.crop && (
+                {!embedMode && transform.crop && (
                   <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute bg-black/50" style={{
                       left: 0, top: 0, width: "100%", height: `${(transform.crop.y / (videoRef.current?.videoHeight || 1080)) * 100}%`,
@@ -1825,15 +1860,21 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   </div>
                 )}
 
-                {/* Bannière mode YouTube — explique qu'il faut uploader
-                    le fichier source pour éditer (trim, overlays, etc.) */}
-                {youtubeMode && (
+                {/* Bannière mode embed (YouTube ⭐ V3.16 / TikTok ⭐ V3.64) —
+                    explique qu'il faut uploader le fichier source pour
+                    éditer (trim, overlays, etc.) */}
+                {embedMode && (
                   <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#2A0E3D]/90 backdrop-blur-sm px-4 py-2 border-t border-[#C9A227]/30">
                     <div className="flex items-center gap-2">
-                      <Youtube className="w-4 h-4 text-red-500 flex-shrink-0" />
+                      {tiktokMode ? (
+                        <TiktokNoteIcon size={16} className="flex-shrink-0" />
+                      ) : (
+                        <Youtube className="w-4 h-4 text-red-500 flex-shrink-0" />
+                      )}
                       <p className="text-[11px] text-[#FAF6EF]/80 flex-1 leading-tight">
-                        Vidéo YouTube en lecture. Pour éditer (découper, texte, filtres),
-                        uploadez le fichier source ci-dessous.
+                        {tiktokMode
+                          ? "Vidéo TikTok en lecture. Pour éditer (découper, texte, filtres), uploadez le fichier source ci-dessous."
+                          : "Vidéo YouTube en lecture. Pour éditer (découper, texte, filtres), uploadez le fichier source ci-dessous."}
                       </p>
                       <button
                         onClick={() => videoUploadRef.current?.click()}
@@ -1878,8 +1919,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             )}
           </div>
 
-          {/* Controls — masqués en mode YouTube (l'iframe a ses propres contrôles) */}
-          {!youtubeMode && (
+          {/* Controls — masqués en mode embed (l'iframe a ses propres contrôles) */}
+          {!embedMode && (
           <div className="flex items-center justify-center gap-3 bg-white rounded-xl p-3 border border-[#8A8378]/15">
             <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors" disabled={!currentVideoUrl}>
               <SkipBack className="w-5 h-5" />
