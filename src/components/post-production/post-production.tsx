@@ -1709,7 +1709,10 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           {/* Preview — ⭐ V3.16 : le format du preview suit le format
               d'export (16:9, 9:16 Reels, 1:1…) : ce que l'on voit est ce
               que l'on exporte. ⭐ V3.64 : une source TikTok impose le
-              portrait 9:16 (vidéo native TikTok) — même cap 420 px. */}
+              portrait 9:16 (vidéo native TikTok) — même cap 420 px.
+              ⭐ V3.65 : LecteurTikTok video-first — la vidéo TikTok
+              remplit TOUTE la zone 9:16 (420 × 747) ; avant, la légende
+              de l'embed mangeait 26 % de la hauteur (vidéo 312 px). */}
           <div
             ref={previewRef}
             className="relative bg-black rounded-xl overflow-hidden shadow-2xl mx-auto w-full"

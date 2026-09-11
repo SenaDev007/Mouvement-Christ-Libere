@@ -580,21 +580,20 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
             </div>
 
             {/* Lecteur vidéo : YouTube iframe SI youtubeId, lecteur natif
-                <video>, ou ⭐ V3.64 TIKTOK — LecteurTikTok : iframe à la
-                TAILLE LOGIQUE de TikTok (325 × hauteur oEmbed exacte —
-                vidéo + légende + bouton entiers, PLUS de scrollbar ni de
-                textes tronqués), poster = VRAIE miniature (R2 permanente
-                via backfill) visible instantanément pendant que le lecteur
-                TikTok charge, fondu enchaîné à l'arrivée. */}
+                <video>, ou ⭐ V3.64/V3.65 TIKTOK — LecteurTikTok.
+                ⭐ V3.65 : PLUS de conteneur noir pleine largeur autour du
+                lecteur TikTok (capture pasteur : embed 298 px centré dans
+                442 px de noir — bandes mortes). Le lecteur video-first
+                (vidéo 9:16 jusqu'à 486 px) se centre seul dans la colonne,
+                sa propre boîte arrondie fait le cadre ; le fond de page
+                (#FAF6EF) respire autour, comme pour une Short. */}
             {video.tiktokId ? (
-              <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-2xl">
-                <LecteurTikTok
-                  tiktokId={video.tiktokId}
-                  videoUrl={video.videoUrl || null}
-                  titre={video.title}
-                  miniature={video.thumbnailUrl || null}
-                />
-              </div>
+              <LecteurTikTok
+                tiktokId={video.tiktokId}
+                videoUrl={video.videoUrl || null}
+                titre={video.title}
+                miniature={video.thumbnailUrl || null}
+              />
             ) : (
             <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-2xl" style={{ aspectRatio: "16 / 9" }}>
               {video.youtubeId ? (
