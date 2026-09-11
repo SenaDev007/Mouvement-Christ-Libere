@@ -92,8 +92,16 @@ export async function oembedTiktok(url: string): Promise<OembedTikTok | null> {
   if (enCache && enCache.expire > Date.now()) return enCache.valeur;
 
   try {
+    // ⭐ Diaporamas /photo/ : l'oEmbed TikTok résout par ID — le chemin
+    // /video/ fonctionne aussi pour les ids de diaporamas ( miniature
+    // « photomode »), alors que /photo/ échoue. On normalise donc l'URL
+    // pour la requête oEmbed (la videoUrl d'origine reste inchangée en
+    // base — l'embed /embed/v2/<id> lit lui aussi par id).
+    const urlOembed = url.includes("/photo/")
+      ? url.replace("/photo/", "/video/")
+      : url;
     const res = await fetch(
-      `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`,
+      `https://www.tiktok.com/oembed?url=${encodeURIComponent(urlOembed)}`,
       {
         headers: {
           // Un User-Agent de navigateur évite les blocages grossiers.

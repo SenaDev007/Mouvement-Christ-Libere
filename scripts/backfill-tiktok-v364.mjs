@@ -63,7 +63,7 @@ function entetesJson() {
   return h;
 }
 
-function chargerEchecs(): string[] {
+function chargerEchecs() {
   try {
     const d = JSON.parse(fs.readFileSync(FICHIER_ECHECS, "utf8"));
     return Array.isArray(d) ? d.filter((x) => typeof x === "string") : [];
@@ -72,7 +72,7 @@ function chargerEchecs(): string[] {
   }
 }
 
-function sauverEchecs(ids: string[]) {
+function sauverEchecs(ids) {
   fs.writeFileSync(FICHIER_ECHECS, JSON.stringify([...new Set(ids)], null, 2));
 }
 
