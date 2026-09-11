@@ -45,7 +45,13 @@ function entetes(json = false) {
 }
 
 async function jsonFetch(url, opts = {}) {
-  const res = await fetch(url, opts);
+  // ⚠️ Le cookie de session est TOUJOURS envoyé (sans lui, l'API admin
+  // répond par une redirection HTML vers la page de connexion).
+  const headers = { ...(opts.headers || {}) };
+  if (cookieJar.size > 0 && !headers.cookie) {
+    headers.cookie = [...cookieJar.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
+  }
+  const res = await fetch(url, { ...opts, headers });
   retenirCookies(res);
   return res;
 }
