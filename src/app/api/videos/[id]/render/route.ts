@@ -89,6 +89,9 @@ export async function POST(
       project = {
         videoId: id,
         segments: body.segments,
+        // ⭐ V3.63 — incrustations vidéo (piste V2 de la timeline) :
+        // transmises telles quelles au moteur (superposées par ffmpeg).
+        videoOverlays: body.videoOverlays,
         overlays: body.overlays || [],
         subtitles: body.subtitles,
         transitions: body.transitions,

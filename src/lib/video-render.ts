@@ -161,9 +161,24 @@ export interface Segment {
   trimEnd?: number;
 }
 
+/** ⭐ V3.63 — INCRUSTATION VIDÉO (piste V2 de la timeline multi-pistes) :
+ *  clip vidéo superposé PLEIN CADRE par-dessus la séquence V1 pendant sa
+ *  fenêtre [startTime, startTime + duration] (coupe B-roll). L'audio propre
+ *  du clip est ignoré (calque de compositing). */
+export interface VideoOverlayClip {
+  id: string;
+  url: string;
+  startTime: number;
+  duration: number;
+  trimStart?: number;
+  trimEnd?: number;
+}
+
 export interface RenderProject {
   videoId: string;
-  segments: Segment[]; // dans l'ordre de la timeline
+  segments: Segment[]; // dans l'ordre de la timeline (piste V1)
+  /** ⭐ V3.63 — incrustations vidéo (piste V2) par-dessus la séquence V1. */
+  videoOverlays?: VideoOverlayClip[];
   overlays: (TextOverlay | ImageOverlay | StickerOverlay)[];
   subtitles?: SubtitleConfig;
   transitions?: TransitionConfig[]; // entre segments
@@ -637,6 +652,7 @@ export async function buildRenderPlan(
   // rendu sortait identique à la source. Ces réglages comptent désormais.
   const hasFilters =
     project.overlays.length > 0 ||
+    (project.videoOverlays?.length || 0) > 0 ||
     project.colorAdjust ||
     project.speed ||
     project.transform ||
@@ -661,7 +677,26 @@ export async function buildRenderPlan(
     //   - texte    → rendu @napi-rs/canvas (DejaVu embarquée) en PNG ;
     //   - sticker  → emoji CDN (OpenMoji 618 px) composé avec rotation.
     // Tout est ensuite superposé par le filtre overlay (disponible).
+    // ⭐ V3.63 — Les INCRUSTATIONS VIDÉO (piste V2) sont préparées EN PREMIER
+    // (elles se superposent SOUS les images/textes) : clip téléchargé, rogné
+    // par -ss/-t, plein cadre (coupe B-roll), fenêtre temporelle via enable.
     const overlayInputs: Array<{ index: number; overlay: (typeof project.overlays)[number] }> = [];
+    const videoOverlayInputs: Array<{ index: number; clip: VideoOverlayClip }> = [];
+    for (const clip of project.videoOverlays || []) {
+      try {
+        const vFile = path.join(tmpDir, `v2-clip-${inputCount}.mp4`);
+        await downloadToTemp(clip.url, vFile);
+        tempFiles.push(vFile);
+        const ts = Math.max(0, clip.trimStart || 0);
+        const te = clip.trimEnd ?? (ts + clip.duration);
+        const duree = Math.max(0.1, te - ts);
+        inputs.push(`-ss ${ts.toFixed(3)} -t ${duree.toFixed(3)} -i "${vFile}"`);
+        videoOverlayInputs.push({ index: inputCount, clip });
+        inputCount++;
+      } catch (vErr) {
+        console.warn("[render] incrustation V2 ignorée (téléchargement impossible) :", vErr);
+      }
+    }
     for (const overlay of project.overlays) {
       try {
         if (overlay.type === "image") {
@@ -699,8 +734,12 @@ export async function buildRenderPlan(
     // Ajouter les inputs pour les pistes audio
     // ⭐ V3.61 — on SONDE chaque piste : durée exacte (pour caler le fondu de
     // sortie AVANT la fin réelle, plus le st=9999 « magique » d'avant).
+    // ⭐ V3.63 — V2 d'abord, PUIS images/textes, PUIS audio : l'index du
+    // PREMIER input audio est mémorisé ici (les chaînes audio s'y réfèrent).
     const audioDurees: number[] = [];
+    let premierIndexAudio = -1;
     if (project.audioTracks) {
+      premierIndexAudio = inputCount;
       for (let i = 0; i < project.audioTracks.length; i++) {
         const audioFile = path.join(tmpDir, `audio-track-${i}.mp3`);
         await downloadToTemp(project.audioTracks[i].url, audioFile);
@@ -765,6 +804,30 @@ export async function buildRenderPlan(
     const overlayChains: string[] = [];
     let videoFlowLabel = "vbase";
     let ovIdx = 0;
+
+    // ⭐ V3.63 — INCRUSTATIONS VIDÉO V2 EN PREMIER (sous les images/textes) :
+    // chaque clip est normalisé PLEIN CADRE (coupe B-roll — comme le preview)
+    // puis superposé pendant sa fenêtre [startTime, startTime + duration].
+    // ⚠️ TEST RÉEL (scripts/test-v2-v363.sh) : les images V2 doivent être
+    // DÉCALÉES de startTime (setpts=PTS-STARTPTS+st/TB) — sans ce décalage,
+    // à l'instant où enable s'active les images V2 sont déjà ÉPUISÉES et
+    // eof_action=pass renvoie la base SANS incrustation. eof_action=pass
+    // gère la fin (la base reprend après la fenêtre V2).
+    for (const { index, clip } of videoOverlayInputs) {
+      const st = Math.max(0, clip.startTime || 0);
+      const en = st + Math.max(0.1, clip.duration);
+      imageChains.push(
+        `[${index}:v]fps=${targetFps},scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=increase,crop=${targetWidth}:${targetHeight},setsar=1,setpts=PTS-STARTPTS+${st.toFixed(3)}/TB[v2in${index}]`,
+      );
+      ovIdx++;
+      const outLabel = `ov${ovIdx}`;
+      overlayChains.push(
+        `[${videoFlowLabel}][v2in${index}]overlay=x=0:y=0:enable='between(t,${st.toFixed(3)},${en.toFixed(3)})':eof_action=pass[${outLabel}]`,
+      );
+      videoFlowLabel = outLabel;
+      steps.push(`Incrustation V2 « ${clip.id} » (${st.toFixed(1)} s → ${en.toFixed(1)} s)`);
+    }
+
     for (const { index, overlay } of overlayInputs) {
       const o = overlay as TextOverlay | ImageOverlay | StickerOverlay;
       const px = Math.round((o.x / 100) * targetWidth);
@@ -878,7 +941,7 @@ export async function buildRenderPlan(
       const mainVol = project.mainVolume !== undefined ? project.mainVolume : 1;
       audioChains.push(`[0:a]${mainAudioAtempo ? mainAudioAtempo + "," : ""}volume=${mainVol}[a0]`);
       const mixLabels = ["[a0]"];
-      let audioIdx = imgInputIdx; // les inputs audio suivent les inputs image
+      let audioIdx = premierIndexAudio > 0 ? premierIndexAudio : imgInputIdx; // inputs audio APRÈS V2 + images/textes
       for (let i = 0; i < project.audioTracks.length; i++) {
         const vol = project.audioTracks[i].volume;
         const fadeIn = project.audioTracks[i].fadeIn || 0;

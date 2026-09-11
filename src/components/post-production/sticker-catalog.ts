@@ -106,19 +106,200 @@ function bubbleShape(w: number, h: number, fill: string, stroke = "none"): strin
   return `<path d="M${r} 4 H${w - r} A${r} ${r} 0 0 1 ${w - 4} ${r + 4} V${h - r - 26} A${r} ${r} 0 0 1 ${w - r} ${h - 26} H${w * 0.38 + 22} L${w * 0.38} ${h - 2} L${w * 0.38 - 10} ${h - 26} H${r} A${r} ${r} 0 0 1 4 ${h - r - 26} V${r + 4} A${r} ${r} 0 0 1 ${r} 4 Z" fill="${fill}"${stroke !== "none" ? ` stroke="${stroke}" stroke-width="4"` : ""}/>`;
 }
 
-// ─── CATÉGORIE : RÉSEAUX SOCIAUX (style CapCut) ───
+// ─── CATÉGORIE : RÉSEAUX SOCIAUX (style CapCut — ⭐ V3.63 refonte PRO) ───
+//
+// AVANT (V3.60) : largeurs de pilules DEVINÉES à la main → les textes gras
+// larges (« MERCI DE PARTAGER », « S'ABONNER »…) DÉBORDAIENT et chevauchaient
+// les icônes — retour pasteur : « les boutons ne sont pas professionnels,
+// les textes et les icônes se chevauchent ».
+// MAINTENANT : fabrique `bouton()` à MISE EN PAGE MESURÉE — la largeur de la
+// pilule est CALCULÉE à partir du texte (largeur par caractère + espacement),
+// l'icône et le texte ont chacun leur zone garantie : plus AUCUN chevauchement
+// possible, quel que soit le libellé. + nombreuses variantes de styles.
+
+/** Largeur approximative d'un caractère en Arial Black (weight 900), × fontSize.
+ *  Estimation VOLONTAIREMENT généreuse : mieux vaut un peu plus de padding
+ *  qu'un chevauchement. */
+const LARGEUR_CAR: Record<string, number> = {
+  M: 1.05, W: 1.05, A: 0.85, B: 0.8, C: 0.82, D: 0.85, E: 0.78, F: 0.75,
+  G: 0.88, H: 0.85, I: 0.4, J: 0.45, K: 0.8, L: 0.7, N: 0.85, O: 0.88,
+  P: 0.78, Q: 0.88, R: 0.82, S: 0.78, T: 0.72, U: 0.85, V: 0.8, X: 0.8,
+  Y: 0.78, Z: 0.75, É: 0.78, À: 0.85, Ê: 0.78, Ô: 0.88, Ù: 0.85, Ç: 0.82,
+  "0": 0.68, "1": 0.45, "2": 0.65, "3": 0.65, "4": 0.68, "5": 0.65,
+  "6": 0.68, "7": 0.62, "8": 0.68, "9": 0.65, " ": 0.35, "!": 0.35,
+  "?": 0.6, ".": 0.32, ",": 0.32, "'": 0.25, "-": 0.42, "+": 0.6,
+  ":": 0.35, "/": 0.42, "→": 0.9, "★": 0.9, "✓": 0.8, "&": 0.75,
+};
+
+function mesurerTexte(texte: string, fontSize: number, letterSpacing: number): number {
+  let w = 0;
+  for (const ch of texte.toUpperCase()) {
+    w += (LARGEUR_CAR[ch] ?? 0.8) * fontSize;
+  }
+  w += Math.max(0, texte.length - 1) * letterSpacing;
+  return w;
+}
+
+type IconeBouton =
+  | "coeur" | "pouce" | "cloche" | "partage" | "commentaire" | "personne"
+  | "oeil" | "play" | "check" | "plus" | "lien" | "eclair" | "marquepage";
+
+/** Chemins d'icônes (boîte 24×24, dessinés centrés sur cx/cy, taille s). */
+function iconeBouton(kind: IconeBouton, cx: number, cy: number, s: number, fill: string): string {
+  const k = s / 24;
+  const t = (x: number, y: number) => `translate(${(cx - 12 * k).toFixed(1)},${(cy - 12 * k).toFixed(1)}) scale(${k.toFixed(3)})`;
+  switch (kind) {
+    case "coeur":
+      return heartPath(cx, cy, s, fill);
+    case "pouce":
+      return thumbPath(cx, cy, s, fill);
+    case "cloche":
+      return bellPath(cx, cy, s, fill);
+    case "personne":
+      return personPath(cx, cy, s, fill);
+    case "oeil":
+      return eyeIcon(cx, cy, s, fill);
+    case "play":
+      return `<path transform="${t(0, 0)}" d="M8 5.2 18.8 12 8 18.8z" fill="${fill}"/>`;
+    case "check":
+      return `<path transform="${t(0, 0)}" d="M4.5 12.6 9.4 17.5 19.5 7.4" stroke="${fill}" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    case "plus":
+      return `<path transform="${t(0, 0)}" d="M12 5v14M5 12h14" stroke="${fill}" stroke-width="3.2" stroke-linecap="round"/>`;
+    case "partage":
+      return `<g transform="${t(0, 0)}" fill="${fill}"><path d="M12 3.2 19.4 8.1 12 13z"/><path d="M8.2 10.4c.9 0 1.7.2 2.4.5l.9-1.4c-1-.4-2.1-.7-3.3-.7C4.9 8.8 2.2 11 2.2 11s1.2 3 2.9 5.1l1.4-2.1c-.7-.9-1.2-1.8-1.4-2.4.8-.7 1.9-1.2 3.1-1.2zm-1 1.9c.5.7 1.1 1.4 1.7 1.9l1.4-2.1c-.6-.4-1.2-.6-1.9-.6-.4 0-.8.1-1.2.2l0 0 1-1.3z" opacity="0"/><path d="M14.6 6.6v3.1c-5 .5-8 3.4-9.2 7.6 2.2-2.6 5.1-3.8 9.2-3.8v3.1L21 11.5z"/></g>`;
+    case "commentaire":
+      return `<path transform="${t(0, 0)}" d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm3 5.5a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8zm5 0a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8zm5 0a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z" fill="${fill}"/>`;
+    case "lien":
+      return `<g transform="${t(0, 0)}" fill="none" stroke="${fill}" stroke-width="2.4" stroke-linecap="round"><path d="M10.2 13.8a4.2 4.2 0 0 0 6 0l3.2-3.2a4.24 4.24 0 0 0-6-6l-1.4 1.4"/><path d="M13.8 10.2a4.2 4.2 0 0 0-6 0l-3.2 3.2a4.24 4.24 0 0 0 6 6l1.4-1.4"/></g>`;
+    case "eclair":
+      return `<path transform="${t(0, 0)}" d="M13.4 2 4.6 13.4h5.5L9.6 22l9.8-12.2h-6.1z" fill="${fill}"/>`;
+    case "marquepage":
+      return `<path transform="${t(0, 0)}" d="M6 2h12a1 1 0 0 1 1 1v18.2l-7-4.2-7 4.2V3a1 1 0 0 1 1-1z" fill="${fill}"/>`;
+  }
+}
+
+type StyleBouton = "blanc" | "rouge" | "noir" | "or" | "vert" | "violet" | "verre" | "gris";
+
+const STYLES_BOUTON: Record<StyleBouton, {
+  fond: string; stroke: string; texte: string; icone: string; suffixeId: string; nom: string;
+}> = {
+  blanc: { fond: "url(#gbtn-blanc)", stroke: "#dcdce2", texte: "#18181b", icone: "#E0245E", suffixeId: "blanc", nom: "blanc" },
+  rouge: { fond: "url(#gbtn-rouge)", stroke: "#a31212", texte: "#ffffff", icone: "#ffffff", suffixeId: "rouge", nom: "rouge" },
+  noir: { fond: "url(#gbtn-noir)", stroke: "#000000", texte: "#ffffff", icone: "#C9A227", suffixeId: "noir", nom: "noir" },
+  or: { fond: "url(#gbtn-or)", stroke: "#8a6a10", texte: "#221607", icone: "#7f1d1d", suffixeId: "or", nom: "doré" },
+  vert: { fond: "url(#gbtn-vert)", stroke: "#14532d", texte: "#ffffff", icone: "#ffffff", suffixeId: "vert", nom: "vert" },
+  violet: { fond: "url(#gbtn-violet)", stroke: "#4c1d95", texte: "#ffffff", icone: "#ffffff", suffixeId: "violet", nom: "violet" },
+  verre: { fond: "rgba(255,255,255,0.16)", stroke: "rgba(255,255,255,0.75)", texte: "#ffffff", icone: "#ffffff", suffixeId: "verre", nom: "verre" },
+  gris: { fond: "url(#gbtn-gris)", stroke: "#9ca3af", texte: "#52525b", icone: "#71717a", suffixeId: "gris", nom: "gris" },
+};
+
+/** DEFS communes aux boutons (dégradés + ombre) — un seul bloc par SVG. */
+const DEFS_BOUTON = `<defs>
+<linearGradient id="gbtn-blanc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ececf1"/></linearGradient>
+<linearGradient id="gbtn-rouge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff4d4d"/><stop offset="1" stop-color="#c81e1e"/></linearGradient>
+<linearGradient id="gbtn-noir" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2b33"/><stop offset="1" stop-color="#101014"/></linearGradient>
+<linearGradient id="gbtn-or" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d774"/><stop offset="1" stop-color="#d3a017"/></linearGradient>
+<linearGradient id="gbtn-vert" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#059669"/></linearGradient>
+<linearGradient id="gbtn-violet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+<linearGradient id="gbtn-gris" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4e4e7"/><stop offset="1" stop-color="#d4d4d8"/></linearGradient>
+<filter id="gbtn-shadow" x="-20%" y="-25%" width="140%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#000000" flood-opacity="0.32"/></filter>
+</defs>`;
+
+interface OptionsBouton {
+  texte: string;
+  icone?: IconeBouton;
+  style?: StyleBouton;
+  fontSize?: number;
+  letterSpacing?: number;
+  /** Icône à droite EN PLUS (ex. flèche après le texte). */
+  iconeDroite?: IconeBouton;
+}
+
+/** Fabrique un bouton professionnel à mise en page MESURÉE :
+ *  largeur = padding + icône + espace + TEXTE(mesuré) + [icône droite] + padding.
+ *  Baseline explicite (y = centre + 0.36×fontSize) — robuste y compris quand
+ *  le rasteriseur ignore dominant-baseline. */
+function bouton(opts: OptionsBouton): { svg: string; largeur: number; hauteur: number } {
+  const h = 150;
+  const fs = opts.fontSize ?? 56;
+  const ls = opts.letterSpacing ?? 3;
+  const st = STYLES_BOUTON[opts.style || "blanc"];
+  const texteL = mesurerTexte(opts.texte, fs, ls);
+  const iconeG = opts.icone ? 58 : 0;
+  const icoleD = opts.iconeDroite ? 46 : 0;
+  const gapG = opts.icone ? 30 : 0;
+  const gapD = opts.iconeDroite ? 24 : 0;
+  // libellés COURTS : padding renforcé (respiration visuelle pro)
+  const pad = opts.texte.length < 8 ? 82 : 68;
+  const w = Math.round(pad + iconeG + gapG + texteL + gapD + icoleD + pad);
+
+  const parts: string[] = [];
+  parts.push(DEFS_BOUTON);
+  parts.push(`<g filter="url(#gbtn-shadow)">`);
+  parts.push(`<rect x="3" y="3" width="${w - 6}" height="${h - 6}" rx="34" fill="${st.fond}"${st.stroke !== "none" ? ` stroke="${st.stroke}" stroke-width="2.5"` : ""}/>`);
+  // liseré intérieur subtil (finition pro)
+  parts.push(`<rect x="14" y="13" width="${w - 28}" height="${h - 26}" rx="24" fill="none" stroke="${opts.style === "verre" ? "rgba(255,255,255,0.35)" : "#ffffff"}" stroke-width="2" opacity="${opts.style === "verre" ? 0.4 : 0.35}"/>`);
+
+  let x = pad;
+  if (opts.icone) {
+    parts.push(iconeBouton(opts.icone, x + 29, h / 2, 58, st.icone));
+    x += iconeG + gapG;
+  }
+  // texte — baseline EXPLICITE (pas de dominant-baseline : robuste partout)
+  const yTexte = h / 2 + fs * 0.36;
+  parts.push(`<text x="${x.toFixed(1)}" y="${yTexte.toFixed(1)}" font-family="'Arial Black', Arial, 'Segoe UI', sans-serif" font-size="${fs}" font-weight="900" letter-spacing="${ls}" fill="${st.texte}">${opts.texte}</text>`);
+  x += texteL;
+  if (opts.iconeDroite) {
+    parts.push(iconeBouton(opts.iconeDroite, x + gapD + 23, h / 2, 46, st.icone));
+  }
+  parts.push(`</g>`);
+  return { svg: svgRoot(w, h, parts.join("\n")), largeur: w, hauteur: h };
+}
+
+/** Enregistre un bouton dans le catalogue (avec largeur/hauteur réelles). */
+function boutonSticker(id: string, name: string, opts: OptionsBouton): StickerPro {
+  const b = bouton(opts);
+  return { id, name, category: "social", svg: b.svg };
+}
 
 const SOCIAL: StickerPro[] = [
-  {
-    id: "like-btn",
-    name: "Bouton J'aime",
-    category: "social",
-    svg: svgRoot(
-      400, 140,
-      `<defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f1f1f4"/></linearGradient><filter id="sh1" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.28"/></filter></defs>
-      <g filter="url(#sh1)">${pill(400, 140, "url(#g1)", "#e0e0e6", 2)}${heartPath(92, 70, 64, "#E0245E")}${txt(240, 70, 52, "#18181b", "J'AIME")}</g>`,
-    ),
-  },
+  // ── Famille J'AIME ──
+  boutonSticker("like-blanc", "J'aime — blanc", { texte: "J'AIME", icone: "coeur", style: "blanc" }),
+  boutonSticker("like-rouge", "J'aime — rouge", { texte: "J'AIME", icone: "coeur", style: "rouge" }),
+  boutonSticker("like-or", "J'aime — doré", { texte: "J'AIME", icone: "coeur", style: "or" }),
+  // ── Famille S'ABONNER ──
+  boutonSticker("subscribe-rouge", "S'abonner — rouge", { texte: "S'ABONNER", icone: "cloche", style: "rouge" }),
+  boutonSticker("subscribe-noir", "S'abonner — noir", { texte: "S'ABONNER", icone: "cloche", style: "noir" }),
+  boutonSticker("subscribe-abonne", "Abonné ✓ (après clic)", { texte: "ABONNÉ", icone: "check", style: "gris" }),
+  boutonSticker("abonne-toi", "Abonne-toi ! (grand)", { texte: "ABONNE-TOI !", icone: "cloche", style: "rouge", fontSize: 62 }),
+  // ⭐ LE classique CapCut : double action
+  boutonSticker("like-subscribe", "J'aime + S'abonner", { texte: "J'AIME + S'ABONNER", icone: "coeur", style: "rouge", fontSize: 52 }),
+  // ── Famille PARTAGER ──
+  boutonSticker("share-blanc", "Partager — blanc", { texte: "PARTAGER", icone: "partage", style: "blanc" }),
+  boutonSticker("share-or", "Partager — doré", { texte: "PARTAGER", icone: "partage", style: "or" }),
+  boutonSticker("share-quelquun", "Partage à quelqu'un", { texte: "PARTAGE À QUELQU'UN", icone: "partage", style: "blanc", fontSize: 48 }),
+  boutonSticker("merci-partager", "Merci de partager", { texte: "MERCI DE PARTAGER", icone: "coeur", style: "or", fontSize: 48 }),
+  // ── Famille COMMENTER ──
+  boutonSticker("comment-blanc", "Commenter", { texte: "COMMENTER", icone: "commentaire", style: "blanc" }),
+  boutonSticker("dis-moi", "Dis-moi en commentaire", { texte: "DIS-MOI EN COMMENTAIRE", icone: "commentaire", style: "noir", fontSize: 44 }),
+  // ── Famille SUIVRE ──
+  boutonSticker("follow-vert", "Suivre — vert", { texte: "SUIVRE", icone: "personne", style: "vert" }),
+  boutonSticker("follow-or", "Suivre — doré", { texte: "SUIVRE", icone: "personne", style: "or" }),
+  // ── Famille ENREGISTRER ──
+  boutonSticker("enregistrer", "Enregistrer", { texte: "ENREGISTRER", icone: "marquepage", style: "blanc" }),
+  // ── Rendez-vous / accroches ──
+  boutonSticker("nouvelle-video", "Nouvelle vidéo", { texte: "NOUVELLE VIDÉO", icone: "play", style: "violet" }),
+  boutonSticker("chaque-dimanche", "Chaque dimanche", { texte: "CHAQUE DIMANCHE", icone: "eclair", style: "noir" }),
+  boutonSticker("regarde-fin", "Regarde jusqu'à la fin", { texte: "REGARDE JUSQU'À LA FIN", icone: "eclair", style: "or", fontSize: 44 }),
+  boutonSticker("lien-bio", "Lien en bio", { texte: "LIEN EN BIO", icone: "lien", style: "verre" }),
+  boutonSticker("gloire-dieu", "Gloire à Dieu", { texte: "GLOIRE À DIEU", icone: "coeur", style: "or" }),
+  boutonSticker("notif-activee", "Notifications activées", { texte: "NOTIFICATIONS ACTIVÉES", icone: "check", style: "vert", fontSize: 42 }),
+  // ── Compteurs (fond sombre) ──
+  boutonSticker("views-count", "Compteur de vues", { texte: "12 846 VUES", icone: "oeil", style: "noir", fontSize: 48 }),
+  boutonSticker("followers-count", "Compteur d'abonnés", { texte: "12 345 ABONNÉS", icone: "personne", style: "noir", fontSize: 46 }),
+  boutonSticker("likes-count", "Compteur de likes", { texte: "1,2K J'AIME", icone: "pouce", style: "noir", fontSize: 48 }),
+
+  // ── Stickers illustrés (conservés de la V3.60 — ils ne chevauchent rien) ──
   {
     id: "love-burst",
     name: "Cœur amoureux",
@@ -135,21 +316,8 @@ const SOCIAL: StickerPro[] = [
     ),
   },
   {
-    id: "subscribe-btn",
-    name: "Bouton S'abonner",
-    category: "social",
-    svg: svgRoot(
-      420, 140,
-      `<defs><linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff4d4d"/><stop offset="1" stop-color="#c81e1e"/></linearGradient><filter id="sh3" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/></filter></defs>
-      <g filter="url(#sh3)"><rect x="2" y="2" width="416" height="136" rx="22" fill="url(#g3)"/>
-      <rect x="14" y="14" width="392" height="112" rx="14" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.5"/>
-      <rect x="38" y="42" width="56" height="56" rx="10" fill="#ffffff"/><path d="M58 46 L86 70 L58 94 Z" fill="#c81e1e"/>
-      ${txt(248, 70, 50, "#ffffff", "S'ABONNER")}</g>`,
-    ),
-  },
-  {
     id: "bell-waves",
-    name: "Notification",
+    name: "Notification (cloche)",
     category: "social",
     svg: svgRoot(
       300, 300,
@@ -162,99 +330,6 @@ const SOCIAL: StickerPro[] = [
       ${bellPath(150, 140, 180, "url(#g4)")}
       <circle cx="150" cy="256" r="22" fill="#e8a70c"/>
       <path d="M142 256 l6 8 12-14" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
-    ),
-  },
-  {
-    id: "share-btn",
-    name: "Bouton Partager",
-    category: "social",
-    svg: svgRoot(
-      420, 140,
-      `<defs><linearGradient id="g5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ededf2"/></linearGradient><filter id="sh5" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.28"/></filter></defs>
-      <g filter="url(#sh5)">${pill(420, 140, "url(#g5)", "#e0e0e6", 2)}
-      <path d="M84 84 Q70 44 112 40 L112 24 L146 52 L112 80 L112 62 Q96 64 100 84 Z" fill="#1d9bf0"/>
-      <rect x="66" y="92" width="6" height="18" rx="3" fill="#1d9bf0" transform="rotate(-40 69 101)"/>
-      <rect x="76" y="102" width="6" height="18" rx="3" fill="#1d9bf0" transform="rotate(20 79 111)"/>
-      ${txt(266, 70, 50, "#18181b", "PARTAGER")}</g>`,
-    ),
-  },
-  {
-    id: "comment-btn",
-    name: "Bouton Commenter",
-    category: "social",
-    svg: svgRoot(
-      460, 140,
-      `<defs><linearGradient id="g6" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ededf2"/></linearGradient><filter id="sh6" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.28"/></filter></defs>
-      <g filter="url(#sh6)">${pill(460, 140, "url(#g6)", "#e0e0e6", 2)}
-      <path d="M78 36 h84 a14 14 0 0 1 14 14 v40 a14 14 0 0 1 -14 14 h-52 l-18 16 v-16 h-14 a14 14 0 0 1 -14 -14 v-40 a14 14 0 0 1 14 -14 z" fill="#7c3aed"/>
-      <circle cx="104" cy="70" r="6" fill="#ffffff"/><circle cx="124" cy="70" r="6" fill="#ffffff"/><circle cx="144" cy="70" r="6" fill="#ffffff"/>
-      ${txt(316, 70, 46, "#18181b", "COMMENTER")}</g>`,
-    ),
-  },
-  {
-    id: "views-count",
-    name: "Compteur de vues",
-    category: "social",
-    svg: svgRoot(
-      420, 130,
-      `<defs><filter id="sh7" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.35"/></filter></defs>
-      <g filter="url(#sh7)">${pill(420, 130, "rgba(16,16,20,0.88)")}
-      ${eyeIcon(84, 65, 62, "#ffffff")}
-      ${txt(252, 65, 48, "#ffffff", "12 846 VUES")}</g>`,
-    ),
-  },
-  {
-    id: "follow-plus",
-    name: "Bouton Suivre",
-    category: "social",
-    svg: svgRoot(
-      380, 140,
-      `<defs><linearGradient id="g8" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#0369a1"/></linearGradient><filter id="sh8" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/></filter></defs>
-      <g filter="url(#sh8)">${pill(380, 140, "url(#g8)")}
-      <circle cx="76" cy="52" r="22" fill="#ffffff"/><path d="M76 78 c-20 0-34 12-34 24 v6 h68 v-6 c0-12-14-24-34-24z" fill="#ffffff"/>
-      <circle cx="120" cy="42" r="17" fill="#0f172a"/><path d="M113 42 h14 M120 35 v14" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
-      ${txt(254, 70, 52, "#ffffff", "SUIVRE")}</g>`,
-    ),
-  },
-  {
-    id: "swipe-up",
-    name: "Swipe up",
-    category: "social",
-    svg: svgRoot(
-      300, 240,
-      `<defs><linearGradient id="g9" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs>
-      <rect x="10" y="128" width="280" height="100" rx="18" fill="url(#g9)"/>
-      ${txt(150, 180, 52, "#1e0f2b", "SWIPE UP")}
-      <g stroke="#fbbf24" stroke-width="16" stroke-linecap="round" fill="none">
-        <path d="M150 104 V30"/><path d="M110 62 L150 22 L190 62"/>
-      </g>
-      <circle cx="150" cy="18" r="10" fill="#fde68a"/>`,
-    ),
-  },
-  {
-    id: "tap-here",
-    name: "Appuyez ici",
-    category: "social",
-    svg: svgRoot(
-      340, 190,
-      `<defs><linearGradient id="g10" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#facc15"/><stop offset="1" stop-color="#a16207"/></linearGradient></defs>
-      <circle cx="170" cy="72" r="46" fill="none" stroke="#fde047" stroke-width="7" opacity="0.55"/>
-      <circle cx="170" cy="72" r="30" fill="none" stroke="#fde047" stroke-width="8" opacity="0.85"/>
-      <circle cx="170" cy="72" r="14" fill="#fde047"/>
-      <rect x="8" y="112" width="324" height="72" rx="16" fill="url(#g10)"/>
-      ${txt(170, 148, 48, "#1e0f2b", "APPUYEZ ICI")}`,
-    ),
-  },
-  {
-    id: "live-red",
-    name: "Badge EN DIRECT",
-    category: "social",
-    svg: svgRoot(
-      340, 120,
-      `<defs><linearGradient id="g11" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff4d4d"/><stop offset="1" stop-color="#b91c1c"/></linearGradient><filter id="sh11" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.35"/></filter></defs>
-      <g filter="url(#sh11)">${pill(340, 120, "url(#g11)")}
-      <circle cx="64" cy="60" r="14" fill="#ffffff"/><circle cx="64" cy="60" r="7" fill="#ff4d4d" opacity="0.35"/>
-      ${txt(210, 60, 50, "#ffffff", "EN DIRECT")}</g>`,
     ),
   },
   {
@@ -285,43 +360,44 @@ const SOCIAL: StickerPro[] = [
     ),
   },
   {
-    id: "followers-count",
-    name: "Compteur d'abonnés",
+    id: "live-red",
+    name: "Badge EN DIRECT",
     category: "social",
     svg: svgRoot(
-      460, 130,
-      `<defs><filter id="sh14" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.35"/></filter></defs>
-      <g filter="url(#sh14)">${pill(460, 130, "rgba(16,16,20,0.88)")}
-      ${personPath(80, 64, 66, "#f87171")}
-      ${txt(272, 65, 46, "#ffffff", "12 345 ABONNÉS")}</g>`,
+      340, 120,
+      `<defs><linearGradient id="g11" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff4d4d"/><stop offset="1" stop-color="#b91c1c"/></linearGradient><filter id="sh11" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.35"/></filter></defs>
+      <g filter="url(#sh11)">${pill(340, 120, "url(#g11)")}
+      <circle cx="64" cy="60" r="14" fill="#ffffff"/><circle cx="64" cy="60" r="7" fill="#ff4d4d" opacity="0.35"/>
+      ${txt(210, 60, 50, "#ffffff", "EN DIRECT")}</g>`,
     ),
   },
   {
-    id: "merci-partager",
-    name: "Merci de partager",
+    id: "swipe-up",
+    name: "Swipe up",
     category: "social",
     svg: svgRoot(
-      480, 130,
-      `<defs><linearGradient id="g15" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcd34d"/><stop offset="1" stop-color="#b45309"/></linearGradient><filter id="sh15" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/></filter></defs>
-      <g filter="url(#sh15)"><path d="M24 4 h432 q24 0 24 61 q0 61 -24 61 h-432 q-24 0 -24 -61 q0 -61 24 -61 z" fill="url(#g15)" transform="translate(0,0)"/>
-      ${heartPath(70, 65, 46, "#7f1d1d")}
-      ${txt(268, 65, 44, "#1e0f2b", "MERCI DE PARTAGER")}
-      ${heartPath(428, 65, 46, "#7f1d1d")}</g>`,
+      300, 240,
+      `<defs><linearGradient id="g9" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs>
+      <rect x="10" y="128" width="280" height="100" rx="18" fill="url(#g9)"/>
+      ${txt(150, 180, 52, "#1e0f2b", "SWIPE UP")}
+      <g stroke="#fbbf24" stroke-width="16" stroke-linecap="round" fill="none">
+        <path d="M150 104 V30"/><path d="M110 62 L150 22 L190 62"/>
+      </g>
+      <circle cx="150" cy="18" r="10" fill="#fde68a"/>`,
     ),
   },
   {
-    id: "abonne-toi",
-    name: "Abonne-toi !",
+    id: "tap-here",
+    name: "Appuyez ici",
     category: "social",
     svg: svgRoot(
-      480, 150,
-      `<defs><filter id="sh16" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#7f1d1d" flood-opacity="0.45"/></filter></defs>
-      <g filter="url(#sh16)">
-        <rect x="16" y="16" width="448" height="102" rx="20" fill="#dc2626"/>
-        <rect x="30" y="30" width="420" height="74" rx="12" fill="none" stroke="#ffffff" stroke-width="4" stroke-dasharray="18 12"/>
-        ${txt(240, 68, 58, "#ffffff", "ABONNE-TOI !")}
-        <path d="M36 140 Q240 108 444 140" stroke="#fbbf24" stroke-width="14" fill="none" stroke-linecap="round"/>
-      </g>`,
+      340, 190,
+      `<defs><linearGradient id="g10" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#facc15"/><stop offset="1" stop-color="#a16207"/></linearGradient></defs>
+      <circle cx="170" cy="72" r="46" fill="none" stroke="#fde047" stroke-width="7" opacity="0.55"/>
+      <circle cx="170" cy="72" r="30" fill="none" stroke="#fde047" stroke-width="8" opacity="0.85"/>
+      <circle cx="170" cy="72" r="14" fill="#fde047"/>
+      <rect x="8" y="112" width="324" height="72" rx="16" fill="url(#g10)"/>
+      ${txt(170, 148, 48, "#1e0f2b", "APPUYEZ ICI")}`,
     ),
   },
   {
@@ -717,7 +793,18 @@ export const stickersParCategorie = (cat: StickerPro["category"]): StickerPro[] 
  * @param maxCote  taille max en px du plus grand côté (512 par défaut)
  * @returns promesse du PNG data-URL
  */
-export function rasteriserStickerEnPng(svg: string, maxCote = 512): Promise<string> {
+/**
+ * ⭐ V3.60 → V3.63 — Rastériser un sticker SVG en PNG data-URL (côté
+ * navigateur). Le PNG passe dans le pipeline ImageOverlay EXISTANT :
+ *   - preview : <img> pleine résolution, glisser / poignées / opacité ;
+ *   - export  : downloadToTemp gère les data: URLs (ffmpeg overlay).
+ * ⭐ V3.63 — 2048 px (AVANT : 512) : les boutons restaient NETS une fois
+ * posés sur le canevas d'export 1920-2160 px — 512 px rastérisés étaient
+ * agrandis 3-4× → flous/pixelisés (« pas professionnel »). 2048 px couvre
+ * tous les usages courants (largeur pleine en 1080p) sans exploser le
+ * poids du PNG (200-400 Ko par sticker).
+ */
+export function rasteriserStickerEnPng(svg: string, maxCote = 2048): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {

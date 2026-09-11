@@ -154,10 +154,10 @@ export const TEMPLATES_INTEGRES: TemplateIntegre[] = [
           }),
         ],
         stickersSvg: [
-          { sticker: sticker("like-btn"), x: 26, y: 50, scale: 0.35, startTime: debut + 0.2, endTime: dureeVideo },
-          { sticker: sticker("subscribe-btn"), x: 50, y: 50, scale: 0.42, startTime: debut, endTime: dureeVideo },
+          { sticker: sticker("like-rouge"), x: 26, y: 50, scale: 0.35, startTime: debut + 0.2, endTime: dureeVideo },
+          { sticker: sticker("subscribe-rouge"), x: 50, y: 50, scale: 0.42, startTime: debut, endTime: dureeVideo },
           { sticker: sticker("bell-waves"), x: 74, y: 50, scale: 0.32, startTime: debut + 0.4, endTime: dureeVideo },
-          { sticker: sticker("share-btn"), x: 50, y: 70, scale: 0.34, startTime: debut + 0.6, endTime: dureeVideo },
+          { sticker: sticker("share-blanc"), x: 50, y: 70, scale: 0.34, startTime: debut + 0.6, endTime: dureeVideo },
         ],
       };
     },
@@ -286,8 +286,8 @@ export const TEMPLATES_INTEGRES: TemplateIntegre[] = [
           }),
         ],
         stickersSvg: [
-          { sticker: sticker("like-btn"), x: 88, y: 30, scale: 0.16, startTime: 0, endTime: fin },
-          { sticker: sticker("share-btn"), x: 88, y: 44, scale: 0.16, startTime: 0, endTime: fin },
+          { sticker: sticker("like-rouge"), x: 88, y: 30, scale: 0.16, startTime: 0, endTime: fin },
+          { sticker: sticker("share-blanc"), x: 88, y: 44, scale: 0.16, startTime: 0, endTime: fin },
           { sticker: sticker("views-count"), x: 88, y: 58, scale: 0.16, startTime: 0, endTime: fin },
         ],
       };

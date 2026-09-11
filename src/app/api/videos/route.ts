@@ -8,6 +8,18 @@ import { categorizeVideo, estRubrique } from "@/lib/video-rubrics";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/**
+ * ⭐ V3.63 — Identifiant TikTok depuis une URL videoUrl.
+ * Formats : https://www.tiktok.com/@user/video/7683371620924230944
+ *           (et /photo/<id> — diaporamas). Même schéma que YouTube :
+ * l'URL COMPLÈTE est stockée en base, l'id est extrait à la lecture.
+ */
+function extraireTiktokId(videoUrl?: string | null): string {
+  if (!videoUrl) return "";
+  const m = videoUrl.match(/tiktok\.com\/@[^/]+\/(?:video|photo)\/(\d{5,25})/);
+  return m?.[1] || "";
+}
+
 export async function GET(request: NextRequest) {
   try {
     // ⭐ V3.26 — colonne Video.likes (compteur de likes RÉEL, distinct de
@@ -49,6 +61,8 @@ export async function GET(request: NextRequest) {
       const youtubeId = v.videoUrl?.match(/v=([a-zA-Z0-9_-]{11})/)?.[1]
         || v.videoUrl?.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)?.[1]
         || "";
+      // ⭐ V3.63 — id TikTok (même schéma que YouTube — cf. extraireTiktokId)
+      const tiktokId = extraireTiktokId(v.videoUrl);
 
       // IMPORTANT : Ne pas renvoyer les data URLs base64 dans la liste
       // (ils font plusieurs MB et bloquent la sérialisation JSON)
@@ -61,11 +75,12 @@ export async function GET(request: NextRequest) {
         safeVideoUrl.endsWith(".mp4")
         || safeVideoUrl.startsWith("/rendered-videos/")
         || safeVideoUrl.startsWith("http")
-      ) && !youtubeId;
+      ) && !youtubeId && !tiktokId;
 
       return {
         id: v.id,
         youtubeId,
+        tiktokId,
         videoUrl: safeVideoUrl,
         hlsUrl: v.hlsUrl,
         title: v.title,

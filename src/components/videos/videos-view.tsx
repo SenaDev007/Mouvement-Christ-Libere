@@ -8,7 +8,7 @@ import Image from "next/image";
 import {
   Play, Eye, ChevronRight, ChevronDown, ChevronLeft,
   Calendar, Video as VideoIcon, Heart, Share2, Search,
-  X, Clock, Star, Wind, Sunrise, MoonStar, Sparkles,
+  X, Clock, Star, Wind, Sunrise, MoonStar, Sparkles, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ShareModal } from "@/components/videos/share-modal";
@@ -28,6 +28,9 @@ import {
 interface VideoItem {
   id: string;
   youtubeId: string;
+  // ⭐ V3.63 — id TikTok (extrait de videoUrl par /api/videos, même
+  // schéma que YouTube) : la vidéo TikTok se lit via l'embed officiel.
+  tiktokId: string;
   videoUrl?: string | null;
   hlsUrl?: string | null;
   title: string;
@@ -572,7 +575,36 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
               <span className="text-xs uppercase tracking-[0.15em] font-bold text-[#C9A227]">{video.category}</span>
             </div>
 
-            {/* Lecteur vidéo : YouTube iframe SI youtubeId, sinon lecteur natif <video> */}
+            {/* Lecteur vidéo : YouTube iframe SI youtubeId, lecteur natif
+                <video>, ou ⭐ V3.63 TIKTOK (embed officiel portrait 9:16 —
+                même schéma que YouTube : l'URL est en videoUrl, l'id extrait
+                par l'API). Une carte « Ouvrir sur TikTok » accompagne toujours
+                l'embed : si l'embed est indisponible dans un pays, la vidéo
+                reste atteignable en un clic. */}
+            {video.tiktokId ? (
+              <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-2xl">
+                <div className="flex flex-col items-center py-4 px-3">
+                  <div className="relative rounded-lg overflow-hidden bg-[#111118] ring-1 ring-white/10 shadow-inner" style={{ height: "min(72vh, 760px)", aspectRatio: "9 / 16" }}>
+                    <iframe
+                      src={`https://www.tiktok.com/embed/v2/${video.tiktokId}`}
+                      title={video.title}
+                      allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      className="absolute inset-0 w-full h-full"
+                    />
+                  </div>
+                  <a
+                    href={video.videoUrl || `https://www.tiktok.com/@pamela.dali7/video/${video.tiktokId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 text-[#1E0F2B] text-xs font-semibold transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" style={{ color: "#C9A227" }} />
+                    Ouvrir sur TikTok
+                  </a>
+                </div>
+              </div>
+            ) : (
             <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-2xl" style={{ aspectRatio: "16 / 9" }}>
               {video.youtubeId ? (
                 <iframe
@@ -612,6 +644,7 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                 </div>
               )}
             </div>
+            )}
 
             {/* Titre vidéo */}
             <h1 className="font-bold text-lg md:text-xl text-[#1E0F2B] leading-snug mt-3 mb-2">{video.title}</h1>
@@ -671,11 +704,15 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
               <button key={rec.id} onClick={() => onSelectVideo(rec)} className="group flex gap-2.5 w-full text-left hover:bg-[#2A0E3D]/5 rounded-lg p-1.5 transition-colors">
                 <div className="relative w-40 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-[#1A0826]">
                   {/* ⭐ V3.28 — <img> brut -> next/image (optimisée + lazy) */}
-                  <ThumbWithFallback
-                    src={rec.thumbnailUrl || (rec.youtubeId ? `https://img.youtube.com/vi/${rec.youtubeId}/mqdefault.jpg` : "/logo-christ-libere-v2.png")}
-                    title={rec.title}
-                    sizes="160px"
-                  />
+                  {rec.tiktokId ? (
+                    <TiktokMiniature src={rec.thumbnailUrl || null} title={rec.title} compact />
+                  ) : (
+                    <ThumbWithFallback
+                      src={rec.thumbnailUrl || (rec.youtubeId ? `https://img.youtube.com/vi/${rec.youtubeId}/mqdefault.jpg` : "/logo-christ-libere-v2.png")}
+                      title={rec.title}
+                      sizes="160px"
+                    />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-[#1E0F2B] line-clamp-2 group-hover:text-[#C9A227] transition-colors leading-snug mb-1">{rec.title}</p>
@@ -696,6 +733,62 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
         title={video.title}
         thumbnailUrl={video.thumbnailUrl || (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg` : null)}
       />
+    </div>
+  );
+}
+
+// ⭐ V3.63 — Miniature TikTok de marque : les vidéos TikTok sont PORTRAIT
+// (9:16) — dans une grille de cartes paysage, on rend un « écran mobile »
+// centré avec le glyph TikTok. Zéro requête réseau : jamais d'image cassée,
+// jamais de miniatures expirées (les URL oEmbed TikTok sont signées et
+// périment) — si thumbnailUrl existe il est essayé EN PREMIER, le style de
+// marque sert de repli.
+function TiktokNoteIcon({ size = 28 }: { size?: number }) {
+  // Glyphe croche (note de musique) avec double ombre de marque
+  // cyan #25F4EE / rose #FE2C55 — logo TikTok reconnaissable.
+  const k = size / 48;
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden>
+      <g transform={`translate(${3 * k} ${3 * k}) scale(${k})`}>
+        <path d="M22 6h7c.5 5.5 4.3 9.5 9.8 10v7c-3.7.1-7.1-1-9.9-3.1v13.6c0 6.3-4.7 10.5-10.6 10.5-5.5 0-9.6-3.9-9.6-9 0-5 4-8.8 9.3-8.8 1 0 2 .1 3 .4v7.4c-.8-.3-1.7-.5-2.6-.5-2.3 0-4 1.5-4 3.5s1.8 3.6 4.1 3.6c2.6 0 4.5-1.9 4.5-4.7V6z" fill="#25F4EE"/>
+        <path d="M22 6h7c.5 5.5 4.3 9.5 9.8 10v7c-3.7.1-7.1-1-9.9-3.1v13.6c0 6.3-4.7 10.5-10.6 10.5-5.5 0-9.6-3.9-9.6-9 0-5 4-8.8 9.3-8.8 1 0 2 .1 3 .4v7.4c-.8-.3-1.7-.5-2.6-.5-2.3 0-4 1.5-4 3.5s1.8 3.6 4.1 3.6c2.6 0 4.5-1.9 4.5-4.7V6z" fill="#FE2C55" transform="translate(-6 -6)"/>
+        <path d="M22 6h7c.5 5.5 4.3 9.5 9.8 10v7c-3.7.1-7.1-1-9.9-3.1v13.6c0 6.3-4.7 10.5-10.6 10.5-5.5 0-9.6-3.9-9.6-9 0-5 4-8.8 9.3-8.8 1 0 2 .1 3 .4v7.4c-.8-.3-1.7-.5-2.6-.5-2.3 0-4 1.5-4 3.5s1.8 3.6 4.1 3.6c2.6 0 4.5-1.9 4.5-4.7V6z" fill="currentColor"/>
+      </g>
+    </svg>
+  );
+}
+
+function TiktokMiniature({ src, title, className, compact = false }: { src?: string | null; title: string; className?: string; compact?: boolean }) {
+  const [echec, setEchec] = useState(false);
+  const afficheImage = !!src && !echec;
+  if (afficheImage) {
+    return (
+      <Image
+        src={src as string}
+        alt={title}
+        fill
+        sizes={compact ? "160px" : "(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 300px"}
+        className={className || "object-cover group-hover:scale-105 transition-transform duration-500"}
+        onError={() => setEchec(true)}
+      />
+    );
+  }
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#111118] via-[#16162a] to-[#0d0d16]">
+      <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "radial-gradient(circle at 30% 20%, #25F4EE 0%, transparent 45%), radial-gradient(circle at 75% 80%, #FE2C55 0%, transparent 45%)" }} />
+      {/* « Écran mobile » portrait centré */}
+      <div className={cn(
+        "relative rounded-xl bg-black/40 ring-1 ring-white/15 shadow-lg flex flex-col items-center justify-center gap-2",
+        compact ? "h-[86%]" : "h-[80%]"
+      )} style={{ aspectRatio: "9 / 16" }}>
+        <TiktokNoteIcon size={compact ? 20 : 30} />
+        {!compact && (
+          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#C9A227]/90 shadow-md">
+            <Play className="w-4 h-4 text-[#1E0F2B] ml-0.5" fill="currentColor" />
+          </div>
+        )}
+        <span className="text-[8px] font-bold tracking-[0.18em] text-white/70 uppercase">TikTok</span>
+      </div>
     </div>
   );
 }
@@ -726,13 +819,19 @@ function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () =>
       <button onClick={onClick} className="group block w-full text-left">
         <div className="relative aspect-video rounded-xl overflow-hidden bg-[#1A0826] mb-2.5">
           {/* ⭐ V3.28 — <img> brut -> next/image : AVIF/WebP dimensionné,
-              lazy loading natif, plus de miniatures 480px chargées sur mobile. */}
-          <ThumbWithFallback
-            src={video.thumbnailUrl || (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg` : "/logo-christ-libere-v2.png")}
-            title={video.title}
-            sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 300px"
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+              lazy loading natif, plus de miniatures 480px chargées sur mobile.
+              ⭐ V3.63 — TikTok : miniature de marque (repli automatique si
+              thumbnailUrl absent ou expiré). */}
+          {video.tiktokId ? (
+            <TiktokMiniature src={video.thumbnailUrl || null} title={video.title} />
+          ) : (
+            <ThumbWithFallback
+              src={video.thumbnailUrl || (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg` : "/logo-christ-libere-v2.png")}
+              title={video.title}
+              sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 300px"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="flex items-center justify-center w-11 h-11 rounded-full bg-[#C9A227] shadow-lg">

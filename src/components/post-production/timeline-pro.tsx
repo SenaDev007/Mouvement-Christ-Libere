@@ -1,37 +1,45 @@
 "use client";
 
 /**
- * ⭐ V3.61 — TIMELINE PRO MULTI-PISTES (style CapCut / Premiere Pro).
+ * ⭐ V3.61 → V3.63 — TIMELINE PRO MULTI-PISTES (style CapCut / Premiere Pro).
  * ============================================================================
  * Réponse à la demande pasteur : « la timeline ne ressemble pas à CapCut ou
  * Premiere Pro… on devrait avoir une piste audio, une piste pour les images,
- * une piste pour les transitions ».
+ * une piste pour les transitions » (V3.61), puis « je voudrais DEUX pistes
+ * vidéo, DEUX pistes texte, DEUX pistes audio, et qu'on puisse GLISSER les
+ * éléments sur les pistes en question » (V3.63).
  *
- * Structure (comme un NLE) :
+ * Structure (V3.63 — comme un NLE) :
  *   ┌──────┬────────────────────────────────────────────────┐
- *   │ V1   │ clips vidéo (réordonnables, poignées de trim)  │
- *   │      │ + badges TRANSITIONS entre clips               │
- *   │ TX   │ textes superposés (fenêtre temporelle)          │
+ *   │ règle │ graduations + tête de lecture (scrub)          │
+ *   │ V1   │ clips vidéo séquence (réordonnables, trim)      │
+ *   │ V2   │ 2ᵉ piste vidéo : incrustations à position libre │
+ *   │ TX1  │ textes — piste 1                                │
+ *   │ TX2  │ textes — piste 2 (superposée AU-DESSUS de TX1)  │
  *   │ IMG  │ images / stickers pro (fenêtre temporelle)      │
- *   │ A1.. │ pistes audio (une voie par piste, déplaçable)   │
+ *   │ A1   │ audio — voie 1                                  │
+ *   │ A2   │ audio — voie 2                                  │
  *   └──────┴────────────────────────────────────────────────┘
  *
  * Interactions :
- *   - règle temporelle + tête de lecture draggable (scrub) ;
- *   - zoom (pixels/seconde) + bouton « Ajuster » ;
- *   - glisser un CLIP vidéo horizontalement → réordonner ;
- *   - poignées de bord → trim (clips) / fenêtre (overlays) ;
- *   - glisser un bloc AUDIO / TEXTE / IMAGE → déplacer dans le temps
- *     (startTime honoré AUSSI à l'export V3.61 — adelay ffmpeg) ;
- *   - badges transitions → clic → ouvre l'onglet Transitions ;
- *   - DROP depuis la Bibliothèque (V3.59) : son/musique → piste audio,
- *     vidéo → piste V1 (dataTransfer application/x-pp-audio|video).
+ *  - règle temporelle + tête de lecture draggable (scrub) ;
+ *  - zoom (pixels/seconde) + bouton « Ajuster » (auto-fit V3.62) ;
+ *  - glisser un CLIP V1 horizontalement → réordonner ;
+ *  - glisser un CLIP V1 VERTICALEMENT sur V2 → incrustation à position
+ *    libre (glisser horizontalement ensuite = déplacer dans le temps ;
+ *    glisser V2 → V1 → retour dans la séquence) ;
+ *  - glisser un TEXTE verticalement TX1 ↔ TX2 (live) ;
+ *  - glisser une piste AUDIO verticalement A1 ↔ A2 (live) ;
+ *  - poignées de bord → trim (clips) / fenêtre (overlays) ;
+ *  - badges TRANSITIONS entre clips V1 → clic → onglet Transitions ;
+ *  - DROP depuis la Bibliothèque : son/musique → A1 ou A2 selon la voie
+ *    visée, vidéo → V1 (séquence) ou V2 (incrustation) selon la piste visée.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Film, Type, ImageIcon, Music2, Trash2, Plus, ZoomIn, ZoomOut,
-  Maximize2, GripVertical, ArrowLeftRight, Volume2, Layers,
+  Maximize2, GripVertical, ArrowLeftRight, Volume2, Layers, VolumeX,
 } from "lucide-react";
 import type { AudioTrack, Overlay, TransitionConfig, ImageOverlay, TextOverlay, StickerOverlay } from "./types";
 
@@ -47,6 +55,14 @@ export interface ClipTimeline {
   trimStart?: number;
   trimEnd?: number;
   url?: string;
+  /** ⭐ V3.61 — durée SOURCE complète (avant rognage). */
+  dureeSource?: number;
+  /** ⭐ V3.63 — piste VIDÉO : 1 = V1 séquence principale (défaut),
+   *  2 = V2 incrustation à position libre. */
+  piste?: 1 | 2;
+  /** ⭐ V3.63 — position (s) du clip sur la piste V2 (position libre,
+   *  comme un overlay). Ignoré sur V1 (la séquence se suit). */
+  startTime?: number;
 }
 
 export interface DropAudioData {
@@ -75,18 +91,30 @@ interface TimelineProProps {
   trimEnd: number;
   selectedOverlayId?: string | null;
   onSeek: (t: number) => void;
-  onReorderClip: (fromIndex: number, toIndex: number) => void;
+  /** ⭐ V3.63 — réordonnancement par IDENTIFIANTS (place `idDeplace` juste
+   *  après `idCible` ; null = tout au début) dans la séquence V1. */
+  onReorderClip: (idDeplace: string, idCible: string | null) => void;
   onUpdateClipTrim: (id: string, trimStart: number | undefined, trimEnd: number | undefined) => void;
   onSetMainTrim: (start: number, end: number) => void;
   onDeleteClip: (id: string) => void;
+  /** ⭐ V3.63 — changement de piste d'un clip (V1 ↔ V2). */
+  onMoveClipTrack: (id: string, piste: 1 | 2, startTime: number) => void;
+  /** ⭐ V3.63 — position libre d'un clip V2 (glisser horizontal, live). */
+  onUpdateClipStart: (id: string, startTime: number) => void;
   onUpdateAudio: (id: string, patch: Partial<AudioTrack>) => void;
   onDeleteAudio: (id: string) => void;
+  /** ⭐ V3.63 — changement de voie audio (A1 ↔ A2). */
+  onMoveAudioLane: (id: string, lane: 1 | 2) => void;
   onUpdateOverlayTime: (id: string, patch: { startTime?: number; endTime?: number }) => void;
   onDeleteOverlay: (id: string) => void;
   onSelectOverlay: (id: string) => void;
+  /** ⭐ V3.63 — changement de piste d'un TEXTE (TX1 ↔ TX2). */
+  onMoveTextTrack: (id: string, track: 1 | 2) => void;
   onOpenTransitions: () => void;
-  onDropAudio: (data: DropAudioData, startTime: number) => void;
-  onDropVideo: (data: DropVideoData, atSeconds: number) => void;
+  /** ⭐ V3.63 — la voie visée (A1/A2) est transmise au dépôt. */
+  onDropAudio: (data: DropAudioData, startTime: number, lane: 1 | 2) => void;
+  /** ⭐ V3.63 — la piste visée (V1 séquence / V2 incrustation) au dépôt. */
+  onDropVideo: (data: DropVideoData, atSeconds: number, piste: 1 | 2) => void;
 }
 
 // ─── Utilitaires ───
@@ -113,15 +141,49 @@ function pasRuler(pxParSec: number): number {
   return 900;
 }
 
-const HAUTEURS = { ruler: 26, v1: 54, tx: 26, img: 26, audio: 34 };
+// ⭐ V3.63 — RANGÉES DE LA TIMELINE (gouttière + zone scrollable).
+// L'ordre définit l'empilement visuel (comme un NLE) : V1 en bas de la
+// vidéo, V2 au-dessus, puis textes, images, audio en dessous.
+const HAUTEURS = { ruler: 26, v1: 56, v2: 44, tx: 30, img: 30, audio: 34 };
 const GOUTTERE = 108;
+
+const RANGEES: { id: string; h: number }[] = [
+  { id: "ruler", h: HAUTEURS.ruler },
+  { id: "v1", h: HAUTEURS.v1 },
+  { id: "v2", h: HAUTEURS.v2 },
+  { id: "tx1", h: HAUTEURS.tx },
+  { id: "tx2", h: HAUTEURS.tx },
+  { id: "img", h: HAUTEURS.img },
+  { id: "a1", h: HAUTEURS.audio },
+  { id: "a2", h: HAUTEURS.audio },
+];
+const OFFSETS_RANGEES: number[] = (() => {
+  const acc: number[] = [];
+  let y = 0;
+  for (const r of RANGEES) { acc.push(y); y += r.h; }
+  return acc;
+})();
+const HAUTEUR_TOTALE = RANGEES.reduce((s, r) => s + r.h, 0);
+
+type IdRangee = "ruler" | "v1" | "v2" | "tx1" | "tx2" | "img" | "a1" | "a2";
 
 type DragInterne =
   | { genre: "scrub" }
-  | { genre: "clip"; index: number }
-  | { genre: "audio"; id: string; deltaX: number }
-  | { genre: "overlay"; id: string; deltaX: number; longueur: number }
+  | { genre: "clip"; id: string; indexV1: number; piste: 1 | 2; departY: number; deltaX: number }
+  | { genre: "audio"; id: string; deltaX: number; departY: number; lane: 1 | 2 }
+  | { genre: "overlay"; id: string; deltaX: number; longueur: number; departY: number; nature: "texte" | "image" }
   | null;
+
+/** Pistes valides selon ce qu'on traîne (pour le surlignage + le dépôt). */
+function ciblesPourGenre(d: DragInterne): IdRangee[] {
+  if (!d) return [];
+  switch (d.genre) {
+    case "clip": return d.piste === 1 ? ["v1", "v2"] : ["v2", "v1"];
+    case "overlay": return d.nature === "texte" ? ["tx1", "tx2"] : ["img"];
+    case "audio": return ["a1", "a2"];
+    default: return [];
+  }
+}
 
 // ─── Composant ───
 
@@ -130,22 +192,27 @@ export function TimelinePro(props: TimelineProProps) {
     clips, overlays, audioTracks, transitions, currentTime, totalDuration,
     trimStart, trimEnd, selectedOverlayId,
     onSeek, onReorderClip, onUpdateClipTrim, onSetMainTrim, onDeleteClip,
-    onUpdateAudio, onDeleteAudio, onUpdateOverlayTime, onDeleteOverlay,
-    onSelectOverlay, onOpenTransitions, onDropAudio, onDropVideo,
+    onMoveClipTrack, onUpdateClipStart, onUpdateAudio, onDeleteAudio, onMoveAudioLane,
+    onUpdateOverlayTime, onDeleteOverlay, onSelectOverlay, onMoveTextTrack,
+    onOpenTransitions, onDropAudio, onDropVideo,
   } = props;
 
   const conteneurRef = useRef<HTMLDivElement>(null);
   // ⭐ V3.62 — 0 = « pas encore mesuré » : le premier auto-fit doit attendre
-  // la LARGEUR RÉELLE du conteneur (ResizeObserver) et non un placeholder
-  // (avant : 900 → zoom initial faux dès le montage).
+  // la LARGEUR RÉELLE du conteneur (ResizeObserver) et non un placeholder.
   const [largeur, setLargeur] = useState(0);
   const [pxParSec, setPxParSec] = useState(40);
   const [drag, setDrag] = useState<DragInterne>(null);
-  const [dropCible, setDropCible] = useState<"audio" | "video" | null>(null);
+  const [dropCible, setDropCible] = useState<"audio1" | "audio2" | "video1" | "video2" | null>(null);
   const [ghostX, setGhostX] = useState(0);
   const ghostXRef = useRef(0);
   const dragRef = useRef<DragInterne>(null);
   dragRef.current = drag;
+  // ⭐ V3.63 — décalage vertical du bloc traîné + rangée survolée.
+  const [dyDrag, setDyDrag] = useState(0);
+  const [rangeeSurvolee, setRangeeSurvolee] = useState<IdRangee | null>(null);
+  const rangeeRef = useRef<IdRangee | null>(null);
+  rangeeRef.current = rangeeSurvolee;
 
   // Largeur du conteneur (pour « Ajuster »)
   useLayoutEffect(() => {
@@ -158,9 +225,14 @@ export function TimelinePro(props: TimelineProProps) {
     return () => ro.disconnect();
   }, []);
 
-  // Durée totale visible : clips + audio + overlays (marge 8 s)
+  // ─── Clips par piste (⭐ V3.63) ───
+  const clipsV1 = useMemo(() => clips.filter((c) => (c.piste || 1) === 1), [clips]);
+  const clipsV2 = useMemo(() => clips.filter((c) => c.piste === 2), [clips]);
+
+  // Durée totale visible : séquence V1 + incrustations V2 + audio + overlays
   const dureeAffichee = useMemo(() => {
     let fin = totalDuration || 10;
+    for (const c of clipsV2) fin = Math.max(fin, (c.startTime || 0) + c.duration);
     for (const a of audioTracks) fin = Math.max(fin, (a.startTime || 0) + (a.duration || 12));
     for (const o of overlays) {
       const s = "startTime" in o ? o.startTime : undefined;
@@ -168,16 +240,13 @@ export function TimelinePro(props: TimelineProProps) {
       fin = Math.max(fin, e || (s !== undefined ? s + 4 : 0));
     }
     return Math.max(fin + 8, 15);
-  }, [totalDuration, clips, audioTracks, overlays]);
+  }, [totalDuration, clipsV2, audioTracks, overlays]);
 
   // ⭐ V3.62 — ANTI « ÉCRAN QUI S'ÉLARGIT » (zoom) : l'auto-fit doit se
   // caler sur la largeur RÉELLE (mesurée) ET se RECALER quand la durée réelle
-  // de la vidéo arrive (métadonnées). Avant : ajuster() tournait UNE fois au
-  // montage avec la largeur placeholder 900 et une durée ~18 s (métadonnées
-  // pas encore chargées) → 43 px/s ; quand les ~443 s réelles arrivaient,
-  // RIEN ne se recalait → contenu de 19 049 px. Désormais : l'utilisateur
-  // qui touche le zoom prend la main (plus aucun auto-fit), et l'auto-fit
-  // se relance si la durée change fortement (jamais pendant un glisser).
+  // de la vidéo arrive (métadonnées). L'utilisateur qui touche le zoom prend
+  // la main (plus aucun auto-fit), et l'auto-fit se relance si la durée
+  // change fortement (jamais pendant un glisser).
   const zoomManuelRef = useRef(false);   // l'utilisateur a pris la main
   const ajustementsAutoRef = useRef(0);  // borne les auto-fits (max 3)
   const dureeAjusteeRef = useRef<number | null>(null);
@@ -218,13 +287,13 @@ export function TimelinePro(props: TimelineProProps) {
 
   const largeurContenu = Math.max(dureeAffichee * pxParSec, 320);
 
-  // Offsets cumulés des clips V1
-  const offsetsClips = useMemo(() => {
+  // Offsets cumulés des clips V1 (séquence)
+  const offsetsV1 = useMemo(() => {
     const acc: number[] = [];
     let t = 0;
-    for (const c of clips) { acc.push(t); t += c.duration; }
+    for (const c of clipsV1) { acc.push(t); t += c.duration; }
     return acc;
-  }, [clips]);
+  }, [clipsV1]);
 
   // ─── Conversion pixel ↔ temps (via le scroller) ───
   const xVersTemps = useCallback((clientX: number) => {
@@ -234,6 +303,19 @@ export function TimelinePro(props: TimelineProProps) {
     const x = clientX - rect.left + sc.scrollLeft;
     return Math.max(0, x / Math.max(1, pxParSec));
   }, [pxParSec]);
+
+  // ─── ⭐ V3.63 — Rangée sous le pointeur (pour le glisser entre pistes) ───
+  const rangeeSousPointeur = useCallback((clientY: number): IdRangee | null => {
+    const sc = conteneurRef.current?.querySelector("[data-scroller]") as HTMLElement | null;
+    if (!sc) return null;
+    const rect = sc.getBoundingClientRect();
+    const y = clientY - rect.top + sc.scrollTop;
+    if (y < 0 || y > HAUTEUR_TOTALE) return null;
+    for (let i = RANGEES.length - 1; i >= 0; i--) {
+      if (y >= OFFSETS_RANGEES[i]) return RANGEES[i].id as IdRangee;
+    }
+    return null;
+  }, []);
 
   // ─── Interactions pointeur globales ───
   useEffect(() => {
@@ -245,43 +327,93 @@ export function TimelinePro(props: TimelineProProps) {
         onSeek(xVersTemps(e.clientX));
         return;
       }
+      // ⭐ V3.63 — suivi vertical + rangée survolée (cibles valides seules)
+      const cibles = ciblesPourGenre(d);
+      const r = rangeeSousPointeur(e.clientY);
+      const valide = cibles.includes(r as IdRangee) ? (r as IdRangee) : null;
+      if (rangeeRef.current !== valide) setRangeeSurvolee(valide);
+
       if (d.genre === "clip") {
-        ghostXRef.current = (ghostXRef.current || 0) + e.movementX;
-        setGhostX(ghostXRef.current);
+        if (d.piste === 1) {
+          // V1 : fantôme de réordonnancement horizontal
+          ghostXRef.current = (ghostXRef.current || 0) + e.movementX;
+          setGhostX(ghostXRef.current);
+        } else {
+          // V2 : position libre LIVE dans le temps
+          const t = Math.max(0, xVersTemps(e.clientX) - d.deltaX);
+          onUpdateClipStart(d.id, t);
+        }
+        setDyDrag(e.clientY - d.departY);
         return;
       }
       if (d.genre === "audio") {
         const t = xVersTemps(e.clientX) - d.deltaX;
         onUpdateAudio(d.id, { startTime: Math.max(0, t) });
+        // ⭐ V3.63 — changement de voie LIVE (A1 ↔ A2) : le bloc suit le doigt
+        if ((valide === "a1" || valide === "a2") && valide !== `a${d.lane}`) {
+          onMoveAudioLane(d.id, valide === "a1" ? 1 : 2);
+          d.lane = valide === "a1" ? 1 : 2;
+          d.departY = e.clientY; // la base a bougé → recaler le décalage
+          setDyDrag(0);
+          return;
+        }
+        setDyDrag(e.clientY - d.departY);
         return;
       }
       if (d.genre === "overlay") {
         const t = Math.max(0, xVersTemps(e.clientX) - d.deltaX);
         // déplacer la FENÊTRE ENTIÈRE (préserver la longueur)
         onUpdateOverlayTime(d.id, { startTime: t, endTime: t + d.longueur });
+        // ⭐ V3.63 — changement de piste TEXTE LIVE (TX1 ↔ TX2)
+        if (d.nature === "texte" && (valide === "tx1" || valide === "tx2")) {
+          const pisteTxt = valide === "tx1" ? 1 : 2;
+          onMoveTextTrack(d.id, pisteTxt as 1 | 2);
+        }
+        setDyDrag(d.nature === "texte" ? e.clientY - d.departY : 0);
         return;
       }
     };
-    const onUp = () => setDrag(null);
+    const onUp = (e: PointerEvent) => {
+      const d = dragRef.current;
+      if (d && d.genre === "clip") {
+        const cible = rangeeRef.current;
+        if (d.piste === 1 && cible === "v2") {
+          // ⭐ V3.63 — V1 → V2 : incrustation à la position du lâcher
+          const t = Math.max(0, xVersTemps(e.clientX) - (d.deltaX || 0));
+          onMoveClipTrack(d.id, 2, t);
+        } else if (d.piste === 2 && cible === "v1") {
+          // ⭐ V3.63 — V2 → V1 : retour dans la séquence
+          const t = Math.max(0, xVersTemps(e.clientX) - d.deltaX);
+          onMoveClipTrack(d.id, 1, t);
+        } else if (d.piste === 1 && Math.abs(ghostXRef.current) > 30) {
+          terminerReordre(d.id, e.clientX);
+        }
+      }
+      ghostXRef.current = 0; setGhostX(0);
+      setDyDrag(0); setRangeeSurvolee(null);
+      setDrag(null);
+    };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [drag, onSeek, onUpdateAudio, onUpdateOverlayTime, xVersTemps]);
+  }, [drag, onSeek, onUpdateAudio, onUpdateOverlayTime, onUpdateClipStart, onMoveClipTrack, onMoveAudioLane, onMoveTextTrack, xVersTemps, rangeeSousPointeur, onReorderClip]);
 
-  // Réordonnancement : à la relâche, calculer l'index de destination
-  const terminerReordre = useCallback((indexOrigine: number, clientX: number) => {
+  // Réordonnancement V1 : à la relâche, trouver le clip V1 de destination
+  const terminerReordre = useCallback((idDeplace: string, clientX: number) => {
     const t = xVersTemps(clientX);
-    let dest = 0;
-    for (let i = 0; i < clips.length; i++) {
-      const centre = offsetsClips[i] + clips[i].duration / 2;
-      if (t > centre) dest = i + 1;
+    let idCible: string | null = null;
+    let meilleur = Infinity;
+    for (let i = 0; i < clipsV1.length; i++) {
+      if (clipsV1[i].id === idDeplace) continue;
+      const centre = offsetsV1[i] + clipsV1[i].duration / 2;
+      const dist = Math.abs(t - centre);
+      if (t > centre && dist < meilleur) { meilleur = dist; idCible = clipsV1[i].id; }
     }
-    if (dest > indexOrigine) dest -= 1; // compensation du retrait
-    if (dest !== indexOrigine) onReorderClip(indexOrigine, dest);
-  }, [clips, offsetsClips, onReorderClip, xVersTemps]);
+    onReorderClip(idDeplace, idCible);
+  }, [clipsV1, offsetsV1, onReorderClip, xVersTemps]);
 
   // ─── Graduations de la règle ───
   const graduations = useMemo(() => {
@@ -291,9 +423,10 @@ export function TimelinePro(props: TimelineProProps) {
     return out;
   }, [pxParSec, dureeAffichee]);
 
-  // ─── Overlays groupés par type ───
-  const textes = overlays.filter((o): o is TextOverlay => o.type === "text");
+  // ─── Overlays groupés par type / piste / voie (⭐ V3.63) ───
   const imagesStickers = overlays.filter((o): o is ImageOverlay | StickerOverlay => o.type === "image" || o.type === "sticker");
+  const textesPiste = useCallback((p: 1 | 2) => overlays.filter((o): o is TextOverlay => o.type === "text" && (o.track || 1) === p), [overlays]);
+  const audioVoie = useCallback((l: 1 | 2) => audioTracks.filter((t) => (t.lane || 1) === l), [audioTracks]);
 
   // Fenêtre temporelle effective d'un overlay
   const fenetreOverlay = (o: Overlay): { debut: number; fin: number } => {
@@ -309,32 +442,46 @@ export function TimelinePro(props: TimelineProProps) {
     try { return JSON.parse(raw) as T; } catch { return null; }
   };
 
-  const surDropAudio = (e: React.DragEvent) => {
+  const surDropAudio = (e: React.DragEvent, voie: 1 | 2) => {
     e.preventDefault();
     setDropCible(null);
     const data = lireDrop<DropAudioData>(e, "application/x-pp-audio");
-    if (data?.url) onDropAudio(data, xVersTemps(e.clientX));
+    if (data?.url) onDropAudio(data, xVersTemps(e.clientX), voie);
   };
-
-  const surDropVideo = (e: React.DragEvent) => {
+  const surDropVideo = (e: React.DragEvent, piste: 1 | 2) => {
     e.preventDefault();
     setDropCible(null);
     const data = lireDrop<DropVideoData>(e, "application/x-pp-video");
-    if (data?.url) onDropVideo(data, xVersTemps(e.clientX));
+    if (data?.url) onDropVideo(data, xVersTemps(e.clientX), piste);
   };
-
-  const surDragOverAudio = (e: React.DragEvent) => {
+  const surDragOverAudio = (e: React.DragEvent, voie: 1 | 2) => {
     if (e.dataTransfer.types.includes("application/x-pp-audio")) {
-      e.preventDefault(); setDropCible("audio");
+      e.preventDefault(); setDropCible(voie === 1 ? "audio1" : "audio2");
     }
   };
-  const surDragOverVideo = (e: React.DragEvent) => {
+  const surDragOverVideo = (e: React.DragEvent, piste: 1 | 2) => {
     if (e.dataTransfer.types.includes("application/x-pp-video")) {
-      e.preventDefault(); setDropCible("video");
+      e.preventDefault(); setDropCible(piste === 1 ? "video1" : "video2");
     }
   };
 
   // ─── Rendu ───
+
+  const nbTextesT1 = textesPiste(1).length;
+  const nbTextesT2 = textesPiste(2).length;
+  const nbAudioA1 = audioVoie(1).length;
+  const nbAudioA2 = audioVoie(2).length;
+
+  // Bloc LIBELLÉ de la gouttière (une rangée)
+  const libelleRangee = (icon: React.ReactNode, titre: string, sousTitre: string, accent: string) => (
+    <div className="flex items-center gap-1.5 px-2 border-b border-[#8A8378]/15 min-w-0">
+      {icon}
+      <div className="min-w-0">
+        <p className="text-[10px] font-black text-[#1E0F2B] leading-tight truncate" style={{ color: accent }}>{titre}</p>
+        <p className="text-[8px] text-[#8A8378] leading-tight truncate">{sousTitre}</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="bg-white rounded-xl p-3 border border-[#8A8378]/15">
@@ -343,7 +490,7 @@ export function TimelinePro(props: TimelineProProps) {
         <Layers className="w-4 h-4 text-[#C9A227]" />
         <span className="text-xs font-bold uppercase tracking-wider text-[#1E0F2B]">Timeline multi-pistes</span>
         <span className="text-[10px] text-[#8A8378] truncate">
-          {clips.length} clip(s) · {overlays.length} élément(s) · {audioTracks.length} piste(s) audio
+          V1 {clipsV1.length} clip(s) · V2 {clipsV2.length} incrust. · TX {nbTextesT1 + nbTextesT2} · A {audioTracks.length}
         </span>
         <div className="ml-auto flex items-center gap-1">
           <button onClick={() => zoomer(pxParSec / 1.35)}
@@ -374,53 +521,37 @@ export function TimelinePro(props: TimelineProProps) {
             <div className="flex items-center px-2 border-b border-[#8A8378]/15 text-[9px] font-bold text-[#8A8378] tabular-nums" style={{ height: HAUTEURS.ruler }}>
               {formaterTempsFin(currentTime)}
             </div>
-            <div className="flex items-center gap-1.5 px-2 border-b border-[#8A8378]/15" style={{ height: HAUTEURS.v1 }}>
-              <Film className="w-3.5 h-3.5 text-[#2A0E3D]" />
-              <div className="min-w-0">
-                <p className="text-[10px] font-black text-[#1E0F2B] leading-tight">V1 · Vidéo</p>
-                <p className="text-[8px] text-[#8A8378] leading-tight truncate">clips + transitions</p>
-              </div>
+            <div style={{ height: HAUTEURS.v1 }}>
+              {libelleRangee(<Film className="w-3.5 h-3.5 text-[#2A0E3D] flex-shrink-0" />, "V1 · Vidéo", `séquence · ${clipsV1.length} clip(s)`, "#1E0F2B")}
             </div>
-            <div className="flex items-center gap-1.5 px-2 border-b border-[#8A8378]/15" style={{ height: HAUTEURS.tx }}>
-              <Type className="w-3 h-3 text-[#7C3AED]" />
-              <p className="text-[10px] font-bold text-[#1E0F2B]">TX · Textes</p>
-              <span className="text-[8px] text-[#8A8378] ml-auto">{textes.length}</span>
+            <div style={{ height: HAUTEURS.v2 }}>
+              {libelleRangee(<Film className="w-3 h-3 text-[#7C3AED] flex-shrink-0" />, "V2 · Incrustation", `calque vidéo · ${clipsV2.length}`, "#7C3AED")}
             </div>
-            <div className="flex items-center gap-1.5 px-2 border-b border-[#8A8378]/15" style={{ height: HAUTEURS.img }}>
-              <ImageIcon className="w-3 h-3 text-[#0D9488]" />
-              <p className="text-[10px] font-bold text-[#1E0F2B]">IMG · Images</p>
-              <span className="text-[8px] text-[#8A8378] ml-auto">{imagesStickers.length}</span>
+            <div style={{ height: HAUTEURS.tx }}>
+              {libelleRangee(<Type className="w-3 h-3 text-[#7C3AED] flex-shrink-0" />, "TX1 · Texte", `piste 1 · ${nbTextesT1}`, "#6D28D9")}
             </div>
-            {(audioTracks.length === 0 ? [null] : audioTracks).map((t, i) => (
-              <div key={t?.id || "vide"} className="flex items-center gap-1.5 px-2 border-b border-[#8A8378]/15" style={{ height: HAUTEURS.audio }}>
-                <Volume2 className={`w-3 h-3 flex-shrink-0 ${t && t.volume === 0 ? "text-red-400" : "text-[#15803D]"}`} />
-                <p className="text-[10px] font-bold text-[#1E0F2B] flex-shrink-0">A{i + 1}</p>
-                {t ? (
-                  <>
-                    <span className="text-[8px] text-[#8A8378] truncate flex-1">{t.name}</span>
-                    <button onClick={() => onUpdateAudio(t.id, { volume: t.volume > 0 ? 0 : 1 })}
-                      className={`p-0.5 rounded flex-shrink-0 ${t.volume > 0 ? "text-[#15803D] hover:bg-[#15803D]/10" : "text-red-500 hover:bg-red-500/10"}`}
-                      title={t.volume > 0 ? "Rendre muette (volume 0)" : "Rétablir le volume"}>
-                      <Volume2 className="w-3 h-3" />
-                    </button>
-                  </>
-                ) : (
-                  <span className="text-[8px] text-[#8A8378] truncate flex-1">— vide —</span>
-                )}
-              </div>
-            ))}
+            <div style={{ height: HAUTEURS.tx }}>
+              {libelleRangee(<Type className="w-3 h-3 text-[#A78BFA] flex-shrink-0" />, "TX2 · Texte", `piste 2 (dessus) · ${nbTextesT2}`, "#8B5CF6")}
+            </div>
+            <div style={{ height: HAUTEURS.img }}>
+              {libelleRangee(<ImageIcon className="w-3 h-3 text-[#0D9488] flex-shrink-0" />, "IMG · Images", `images & stickers · ${imagesStickers.length}`, "#0D9488")}
+            </div>
+            <div style={{ height: HAUTEURS.audio }}>
+              {libelleRangee(<Music2 className="w-3 h-3 text-[#15803D] flex-shrink-0" />, "A1 · Audio", `voie 1 · ${nbAudioA1}`, "#15803D")}
+            </div>
+            <div style={{ height: HAUTEURS.audio }}>
+              {libelleRangee(<Music2 className="w-3 h-3 text-[#4ADE80] flex-shrink-0" />, "A2 · Audio", `voie 2 · ${nbAudioA2}`, "#16A34A")}
+            </div>
           </div>
 
           {/* Zone scrollable des pistes */}
           {/* ⭐ V3.62 — min-w-0 : le scroller doit RÉTRÉCIR à la place
-              restante (flex-1) et laisser le contenu défiler à l'intérieur ;
-              sans lui son min-content (largeur explicite du contenu) pouvait
-              dilater le conteneur flex lui-même. */}
+              restante (flex-1) et laisser le contenu défiler à l'intérieur. */}
           <div className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden" data-scroller>
-            <div style={{ width: largeurContenu, position: "relative" }}>
-              {/* Règle temporelle (scrub) */}
+            <div style={{ width: largeurContenu, position: "relative", height: HAUTEUR_TOTALE }} data-contenu>
+              {/* ── Règle temporelle (scrub) ── */}
               <div
-                className="relative bg-[#F3F0E8] border-b border-[#8A8378]/15 cursor-ew-resize select-none"
+                className="absolute top-0 left-0 right-0 bg-[#F3F0E8] border-b border-[#8A8378]/15 cursor-ew-resize select-none"
                 style={{ height: HAUTEURS.ruler }}
                 onPointerDown={(e) => {
                   if (e.button !== 0) return;
@@ -438,26 +569,25 @@ export function TimelinePro(props: TimelineProProps) {
                 ))}
               </div>
 
-              {/* Piste V1 — vidéo */}
-              <div className="relative" style={{ height: HAUTEURS.v1 }}>
+              {/* ── Piste V1 — séquence vidéo principale ── */}
+              <div className="absolute left-0 right-0" style={{ top: OFFSETS_RANGEES[1], height: HAUTEURS.v1 }}>
                 <div
                   className="absolute inset-0"
-                  onDragOver={surDragOverVideo}
+                  onDragOver={(e) => surDragOverVideo(e, 1)}
                   onDragLeave={() => setDropCible(null)}
-                  onDrop={surDropVideo}
+                  onDrop={(e) => surDropVideo(e, 1)}
                 />
-                {dropCible === "video" && (
+                {dropCible === "video1" && (
                   <div className="absolute inset-0 bg-[#C9A227]/12 ring-1 ring-[#C9A227] ring-inset rounded-md pointer-events-none z-20 flex items-center justify-center">
                     <span className="px-3 py-1.5 rounded-full bg-[#C9A227] text-white text-[10px] font-bold shadow-lg flex items-center gap-1">
-                      <Plus className="w-3 h-3" /> Déposer la vidéo ici
+                      <Plus className="w-3 h-3" /> Ajouter à la séquence V1
                     </span>
                   </div>
                 )}
-                {clips.map((clip, i) => {
-                  const gauche = offsetsClips[i] * pxParSec;
+                {clipsV1.map((clip, i) => {
+                  const gauche = offsetsV1[i] * pxParSec;
                   const largeur = Math.max(34, clip.duration * pxParSec);
-                  const enDrag = drag?.genre === "clip" && drag.index === i;
-                  // zones de trim (rouge hachuré) pour le clip principal
+                  const enDrag = drag?.genre === "clip" && drag.id === clip.id;
                   const trimG = clip.type === "main" ? trimStart * pxParSec : (clip.trimStart || 0) * pxParSec;
                   const trimD = clip.type === "main"
                     ? Math.max(0, (clip.duration - trimEnd)) * pxParSec
@@ -468,7 +598,7 @@ export function TimelinePro(props: TimelineProProps) {
                       {i > 0 && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onOpenTransitions(); }}
-                          title={`Transition « ${transitions[i - 1]?.type || "aucune"} » entre « ${clips[i - 1].label} » et « ${clip.label} » — cliquer pour la régler`}
+                          title={`Transition « ${transitions[i - 1]?.type || "aucune"} » entre « ${clipsV1[i - 1].label} » et « ${clip.label} » — cliquer pour la régler`}
                           className="absolute z-30 flex items-center justify-center rounded-full border-2 shadow-sm transition-transform hover:scale-110"
                           style={{
                             left: gauche - 11, top: HAUTEURS.v1 / 2 - 11,
@@ -482,30 +612,23 @@ export function TimelinePro(props: TimelineProProps) {
                       )}
                       {/* Bloc clip */}
                       <div
-                        className={`absolute top-1 bottom-1 rounded-md overflow-hidden select-none group ${enDrag ? "opacity-50" : ""}`}
+                        className={`absolute top-1 bottom-1 rounded-md overflow-hidden select-none group ${enDrag ? "opacity-60 ring-2 ring-[#7C3AED]" : ""}`}
                         style={{
-                          left: gauche + (enDrag ? ghostX : 0), width: largeur,
+                          left: gauche + (enDrag && drag?.genre === "clip" && drag.piste === 1 ? ghostX : 0), width: largeur,
+                          transform: enDrag && dyDrag ? `translateY(${dyDrag}px)` : undefined,
                           background: `linear-gradient(180deg, ${clip.color}, ${clip.color}CC)`,
                           boxShadow: "inset 0 1px 0 rgba(255,255,255,.3)",
-                          zIndex: 5, cursor: "grab",
+                          zIndex: enDrag ? 25 : 5, cursor: "grab",
                         }}
                         onPointerDown={(e) => {
                           if (e.button !== 0 || largeur < 60) return;
                           e.stopPropagation();
                           ghostXRef.current = 0; setGhostX(0);
-                          setDrag({ genre: "clip", index: i });
-                          const onUpOnce = (ev: PointerEvent) => {
-                            window.removeEventListener("pointerup", onUpOnce);
-                            const deplacement = ghostXRef.current;
-                            if (Math.abs(deplacement) > 30) terminerReordre(i, ev.clientX);
-                            ghostXRef.current = 0; setGhostX(0);
-                            setDrag(null);
-                          };
-                          window.addEventListener("pointerup", onUpOnce);
+                          setDyDrag(0);
+                          setDrag({ genre: "clip", id: clip.id, indexV1: i, piste: 1, departY: e.clientY, deltaX: xVersTemps(e.clientX) - gauche });
                         }}
-                        title={`${clip.label} — glisser pour réordonner, poignées pour rogner`}
+                        title={`${clip.label} — glisser horizontalement pour réordonner · glisser VERTICALEMENT sur V2 pour en faire une incrustation`}
                       >
-                        {/* zones rognées (hachures rouges, comme l'ancienne timeline) */}
                         {trimG > 1 && (
                           <div className="absolute left-0 top-0 bottom-0 pointer-events-none" style={{
                             width: trimG,
@@ -590,46 +713,167 @@ export function TimelinePro(props: TimelineProProps) {
                 })}
               </div>
 
-              {/* Piste TX — textes */}
-              <div className="relative border-b border-[#8A8378]/15 bg-[#FAF8F4]" style={{ height: HAUTEURS.tx }}>
-                {textes.map((t) => {
-                  const { debut, fin } = fenetreOverlay(t);
-                  const sel = selectedOverlayId === t.id;
+              {/* ── Piste V2 — incrustations vidéo à position libre ── */}
+              <div className="absolute left-0 right-0 border-t border-b border-[#8A8378]/10" style={{ top: OFFSETS_RANGEES[2], height: HAUTEURS.v2, background: "rgba(124,58,237,0.04)" }}>
+                <div
+                  className="absolute inset-0"
+                  onDragOver={(e) => surDragOverVideo(e, 2)}
+                  onDragLeave={() => setDropCible(null)}
+                  onDrop={(e) => surDropVideo(e, 2)}
+                />
+                {dropCible === "video2" && (
+                  <div className="absolute inset-0 bg-[#7C3AED]/12 ring-1 ring-[#7C3AED] ring-inset rounded-md pointer-events-none z-20 flex items-center justify-center">
+                    <span className="px-3 py-1.5 rounded-full bg-[#7C3AED] text-white text-[10px] font-bold shadow-lg flex items-center gap-1">
+                      <Plus className="w-3 h-3" /> Incrustation sur V2
+                    </span>
+                  </div>
+                )}
+                {audioTracks.length === 0 && clipsV2.length === 0 && textesPiste(1).length === 0 && textesPiste(2).length === 0 && imagesStickers.length === 0 && clipsV1.length > 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-[9px] text-[#8A8378]/70 italic">Glisser un clip V1 ici (ou déposer une vidéo) → incrustation par-dessus</span>
+                  </div>
+                )}
+                {clipsV2.map((clip) => {
+                  const debut = Math.max(0, clip.startTime || 0);
+                  const gauche = debut * pxParSec;
+                  const largeur = Math.max(34, clip.duration * pxParSec);
+                  const enDrag = drag?.genre === "clip" && drag.id === clip.id;
+                  const trimG = (clip.trimStart || 0) * pxParSec;
+                  const trimD = Math.max(0, (clip.duration - (clip.trimEnd ?? clip.duration))) * pxParSec;
                   return (
-                    <div key={t.id}
-                      className="absolute top-0.5 bottom-0.5 rounded flex items-center px-1.5 overflow-hidden cursor-grab active:cursor-grabbing group select-none"
+                    <div
+                      key={clip.id}
+                      className={`absolute top-0.5 bottom-0.5 rounded-md overflow-hidden select-none group ${enDrag ? "opacity-60 ring-2 ring-[#C9A227]" : ""}`}
                       style={{
-                        left: debut * pxParSec, width: Math.max(30, (fin - debut) * pxParSec),
-                        background: "linear-gradient(180deg,#8B5CF6,#7C3AED)",
-                        outline: sel ? "2px solid #C9A227" : undefined,
-                        zIndex: 4,
+                        left: gauche, width: largeur,
+                        transform: enDrag && dyDrag ? `translateY(${dyDrag}px)` : undefined,
+                        background: "linear-gradient(180deg,#7C3AED,#5B21B6)",
+                        boxShadow: "inset 0 1px 0 rgba(255,255,255,.3)",
+                        zIndex: enDrag ? 25 : 5, cursor: "grab",
                       }}
                       onPointerDown={(e) => {
-                        if (e.button !== 0) return;
+                        if (e.button !== 0 || largeur < 40) return;
                         e.stopPropagation();
-                        onSelectOverlay(t.id);
-                        setDrag({ genre: "overlay", id: t.id, deltaX: xVersTemps(e.clientX) - debut, longueur: fin - debut });
+                        setDyDrag(0);
+                        setDrag({ genre: "clip", id: clip.id, indexV1: -1, piste: 2, departY: e.clientY, deltaX: xVersTemps(e.clientX) - debut });
                       }}
-                      title={`« ${t.content} » — glisser pour déplacer, poignées pour la fenêtre d'apparition`}
+                      title={`${clip.label} — incrustation V2 · glisser horizontalement pour la position · VERTICALEMENT sur V1 pour la remettre dans la séquence`}
                     >
-                      <Type className="w-2.5 h-2.5 text-white/90 flex-shrink-0" />
-                      <span className="text-[9px] font-bold text-white truncate ml-1">{t.content}</span>
-                      <button onClick={(e) => { e.stopPropagation(); onDeleteOverlay(t.id); }}
-                        className="absolute top-0 right-0 p-0.5 bg-black/30 rounded-bl text-white opacity-0 group-hover:opacity-100">
-                        <Trash2 className="w-2 h-2" />
+                      {trimG > 1 && (
+                        <div className="absolute left-0 top-0 bottom-0 pointer-events-none" style={{
+                          width: trimG,
+                          backgroundImage: "repeating-linear-gradient(45deg, rgba(153,27,27,.55) 0 4px, rgba(153,27,27,.15) 4px 8px)",
+                        }} />
+                      )}
+                      {trimD > 1 && (
+                        <div className="absolute right-0 top-0 bottom-0 pointer-events-none" style={{
+                          width: Math.min(trimD, largeur - trimG - 2),
+                          backgroundImage: "repeating-linear-gradient(45deg, rgba(153,27,27,.55) 0 4px, rgba(153,27,27,.15) 4px 8px)",
+                        }} />
+                      )}
+                      <div className="h-full flex items-center justify-center px-2 pointer-events-none gap-1.5">
+                        <Film className="w-3 h-3 text-white/80 flex-shrink-0" />
+                        <span className="text-[10px] font-bold text-white truncate">{clip.label}</span>
+                        <span className="text-[8px] text-white/70 flex-shrink-0">{formaterTemps(clip.duration)}</span>
+                      </div>
+                      {/* poignées de trim V2 */}
+                      <div
+                        className="absolute left-0 top-0 bottom-0 w-2.5 cursor-ew-resize bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center z-10"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          const depart = xVersTemps(e.clientX);
+                          const trimDep = clip.trimStart || 0;
+                          const onMoveTrim = (ev: PointerEvent) => {
+                            const nv = Math.max(0, trimDep + (xVersTemps(ev.clientX) - depart));
+                            const fin = clip.trimEnd ?? clip.duration;
+                            onUpdateClipTrim(clip.id, Math.min(nv, fin - 0.5), clip.trimEnd);
+                          };
+                          const onUpTrim = () => {
+                            window.removeEventListener("pointermove", onMoveTrim);
+                            window.removeEventListener("pointerup", onUpTrim);
+                          };
+                          window.addEventListener("pointermove", onMoveTrim);
+                          window.addEventListener("pointerup", onUpTrim);
+                        }}
+                        title="Rogner le début"
+                      ><GripVertical className="w-2.5 h-2.5 text-white/80" /></div>
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-2.5 cursor-ew-resize bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center z-10"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          const depart = xVersTemps(e.clientX);
+                          const trimDep = clip.trimEnd ?? clip.duration;
+                          const onMoveTrim = (ev: PointerEvent) => {
+                            const nv = Math.max(0.5, trimDep + (xVersTemps(ev.clientX) - depart));
+                            onUpdateClipTrim(clip.id, clip.trimStart, nv);
+                          };
+                          const onUpTrim = () => {
+                            window.removeEventListener("pointermove", onMoveTrim);
+                            window.removeEventListener("pointerup", onUpTrim);
+                          };
+                          window.addEventListener("pointermove", onMoveTrim);
+                          window.addEventListener("pointerup", onUpTrim);
+                        }}
+                        title="Rogner la fin"
+                      ><GripVertical className="w-2.5 h-2.5 text-white/80" /></div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDeleteClip(clip.id); }}
+                        className="absolute top-0.5 right-1 p-0.5 rounded bg-red-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        title="Supprimer cette incrustation"
+                      >
+                        <Trash2 className="w-2.5 h-2.5" />
                       </button>
-                      <PoigneesOverlay id={t.id} debut={debut} fin={fin} onUpdate={onUpdateOverlayTime} xVersTemps={xVersTemps} />
                     </div>
                   );
                 })}
               </div>
 
-              {/* Piste IMG — images & stickers */}
-              <div className="relative border-b border-[#8A8378]/15 bg-[#FAF8F4]" style={{ height: HAUTEURS.img }}>
+              {/* ── Pistes TX1 / TX2 — textes (⭐ V3.63 : glisser entre pistes) ── */}
+              {([1, 2] as const).map((pisteTx) => (
+                <div key={`tx${pisteTx}`} className="absolute left-0 right-0 border-b border-[#8A8378]/15" style={{ top: pisteTx === 1 ? OFFSETS_RANGEES[3] : OFFSETS_RANGEES[4], height: HAUTEURS.tx, background: pisteTx === 2 ? "rgba(139,92,246,0.05)" : "#FAF8F4" }}>
+                  {textesPiste(pisteTx).map((t) => {
+                    const { debut, fin } = fenetreOverlay(t);
+                    const sel = selectedOverlayId === t.id;
+                    const enDrag = drag?.genre === "overlay" && drag.id === t.id;
+                    return (
+                      <div key={t.id}
+                        className="absolute top-0.5 bottom-0.5 rounded flex items-center px-1.5 overflow-hidden cursor-grab active:cursor-grabbing group select-none"
+                        style={{
+                          left: debut * pxParSec, width: Math.max(30, (fin - debut) * pxParSec),
+                          transform: enDrag && dyDrag ? `translateY(${dyDrag}px)` : undefined,
+                          background: pisteTx === 1 ? "linear-gradient(180deg,#8B5CF6,#7C3AED)" : "linear-gradient(180deg,#A78BFA,#8B5CF6)",
+                          outline: sel ? "2px solid #C9A227" : undefined,
+                          zIndex: enDrag ? 25 : 4,
+                        }}
+                        onPointerDown={(e) => {
+                          if (e.button !== 0) return;
+                          e.stopPropagation();
+                          onSelectOverlay(t.id);
+                          setDyDrag(0);
+                          setDrag({ genre: "overlay", id: t.id, deltaX: xVersTemps(e.clientX) - debut, longueur: fin - debut, departY: e.clientY, nature: "texte" });
+                        }}
+                        title={`« ${t.content} » — glisser pour déplacer · VERTICALEMENT vers TX${pisteTx === 1 ? "2" : "1"} pour changer de piste`}
+                      >
+                        <Type className="w-2.5 h-2.5 text-white/90 flex-shrink-0" />
+                        <span className="text-[9px] font-bold text-white truncate ml-1">{t.content}</span>
+                        <button onClick={(e) => { e.stopPropagation(); onDeleteOverlay(t.id); }}
+                          className="absolute top-0 right-0 p-0.5 bg-black/30 rounded-bl text-white opacity-0 group-hover:opacity-100">
+                          <Trash2 className="w-2 h-2" />
+                        </button>
+                        <PoigneesOverlay id={t.id} debut={debut} fin={fin} onUpdate={onUpdateOverlayTime} xVersTemps={xVersTemps} />
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+
+              {/* ── Piste IMG — images & stickers ── */}
+              <div className="absolute left-0 right-0 border-b border-[#8A8378]/15 bg-[#FAF8F4]" style={{ top: OFFSETS_RANGEES[5], height: HAUTEURS.img }}>
                 {imagesStickers.map((o) => {
                   const { debut, fin } = fenetreOverlay(o);
                   const sel = selectedOverlayId === o.id;
                   const estStickerPro = o.type === "image" && o.id.startsWith("stickerpro-");
+                  const enDrag = drag?.genre === "overlay" && drag.id === o.id;
                   return (
                     <div key={o.id}
                       className="absolute top-0.5 bottom-0.5 rounded flex items-center px-1.5 overflow-hidden cursor-grab active:cursor-grabbing group select-none"
@@ -643,7 +887,7 @@ export function TimelinePro(props: TimelineProProps) {
                         if (e.button !== 0) return;
                         e.stopPropagation();
                         onSelectOverlay(o.id);
-                        setDrag({ genre: "overlay", id: o.id, deltaX: xVersTemps(e.clientX) - debut, longueur: fin - debut });
+                        setDrag({ genre: "overlay", id: o.id, deltaX: xVersTemps(e.clientX) - debut, longueur: fin - debut, departY: e.clientY, nature: "image" });
                       }}
                       title={`${o.type === "sticker" ? "Sticker" : estStickerPro ? "Sticker pro" : "Image"} — glisser pour déplacer, poignées pour la fenêtre`}
                     >
@@ -661,82 +905,104 @@ export function TimelinePro(props: TimelineProProps) {
                 })}
               </div>
 
-              {/* Pistes audio A1.. (une voie par piste) */}
-              {audioTracks.length === 0 ? (
-                <div className="relative border-b border-[#8A8378]/15" style={{ height: HAUTEURS.audio }}>
-                  <div
-                    className={`absolute inset-0 rounded-md transition-colors flex items-center justify-center gap-1.5 ${dropCible === "audio" ? "bg-[#C9A227]/15 ring-1 ring-[#C9A227] ring-inset" : "bg-[#15803D]/5"}`}
-                    onDragOver={surDragOverAudio}
-                    onDragLeave={() => setDropCible(null)}
-                    onDrop={surDropAudio}
-                  >
-                    <Music2 className="w-3 h-3 text-[#15803D]" />
-                    <span className="text-[9px] text-[#8A8378]">
-                      Glisser ici une musique ou un son depuis la <strong>Bibliothèque</strong>
-                    </span>
-                  </div>
-                </div>
-              ) : audioTracks.map((track, i) => {
-                const debut = Math.max(0, track.startTime || 0);
-                const duree = track.duration || 12;
-                const largeur = Math.max(28, duree * pxParSec);
-                const muet = track.volume === 0;
+              {/* ── Pistes A1 / A2 — audio (⭐ V3.63 : voies fixes, glisser A1↔A2) ── */}
+              {([1, 2] as const).map((voie) => {
+                const pistesVoie = audioVoie(voie);
                 return (
-                  <div key={track.id} className="relative border-b border-[#8A8378]/15" style={{ height: HAUTEURS.audio }}>
+                  <div key={`a${voie}`} className="absolute left-0 right-0 border-b border-[#8A8378]/15" style={{ top: voie === 1 ? OFFSETS_RANGEES[6] : OFFSETS_RANGEES[7], height: HAUTEURS.audio }}>
                     <div
-                      className={`absolute inset-0 rounded-md transition-colors ${dropCible === "audio" ? "bg-[#C9A227]/15 ring-1 ring-[#C9A227] ring-inset" : ""}`}
-                      onDragOver={surDragOverAudio}
+                      className={`absolute inset-0 rounded-md transition-colors ${dropCible === (voie === 1 ? "audio1" : "audio2") ? "bg-[#C9A227]/15 ring-1 ring-[#C9A227] ring-inset" : ""}`}
+                      onDragOver={(e) => surDragOverAudio(e, voie)}
                       onDragLeave={() => setDropCible(null)}
-                      onDrop={surDropAudio}
+                      onDrop={(e) => surDropAudio(e, voie)}
                     />
-                    <div
-                      className="absolute top-1 bottom-1 rounded-md overflow-hidden select-none cursor-grab active:cursor-grabbing group"
-                      style={{
-                        left: debut * pxParSec, width: largeur,
-                        background: muet
-                          ? "linear-gradient(180deg,#9CA3AF,#6B7280)"
-                          : "linear-gradient(180deg, #22c55e, #15803d)",
-                        boxShadow: "inset 0 1px 0 rgba(255,255,255,.25)",
-                        opacity: muet ? 0.75 : 1,
-                        zIndex: 2,
-                      }}
-                      onPointerDown={(e) => {
-                        if (e.button !== 0) return;
-                        e.stopPropagation();
-                        setDrag({ genre: "audio", id: track.id, deltaX: xVersTemps(e.clientX) - debut });
-                      }}
-                      title={`${track.name} — glisser pour déplacer dans le temps (position respectée à l'export)`}
-                    >
-                      {/* motif « forme d'onde » décoratif */}
-                      <div
-                        className="absolute inset-x-1 bottom-0.5 top-4 opacity-40 pointer-events-none"
-                        style={{
-                          backgroundImage:
-                            "repeating-linear-gradient(90deg, rgba(255,255,255,.9) 0 2px, transparent 2px 5px, rgba(255,255,255,.55) 5px 6px, transparent 6px 11px)",
-                          backgroundSize: "22px 100%",
-                        }}
-                      />
-                      <div className="relative flex items-center gap-1 px-1.5 h-4">
-                        <Music2 className="w-2.5 h-2.5 text-white/90 flex-shrink-0" />
-                        <span className="text-[9px] font-bold text-white truncate flex-1">{track.name}</span>
+                    {pistesVoie.length === 0 && audioTracks.length === 0 && voie === 1 && (
+                      <div className="absolute inset-0 rounded-md bg-[#15803D]/5 flex items-center justify-center gap-1.5">
+                        <Music2 className="w-3 h-3 text-[#15803D]" />
+                        <span className="text-[9px] text-[#8A8378]">
+                          Glisser ici une musique ou un son depuis la <strong>Bibliothèque</strong>
+                        </span>
                       </div>
-                      <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-white/85">
-                        {formaterTemps(duree)}
-                      </span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onDeleteAudio(track.id); }}
-                        className="absolute top-0.5 right-0.5 p-0.5 rounded bg-black/35 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Supprimer cette piste audio"
-                      >
-                        <Trash2 className="w-2.5 h-2.5" />
-                      </button>
-                      {track.fadeIn ? <span className="absolute top-1 left-0 h-2.5 w-2.5 rounded-sm bg-white/40" title={`Fondu entrée ${track.fadeOut}s`} /> : null}
-                    </div>
+                    )}
+                    {pistesVoie.map((track) => {
+                      const debut = Math.max(0, track.startTime || 0);
+                      const duree = track.duration || 12;
+                      const largeur = Math.max(28, duree * pxParSec);
+                      const muet = track.volume === 0;
+                      const enDrag = drag?.genre === "audio" && drag.id === track.id;
+                      return (
+                        <div
+                          key={track.id}
+                          className={`absolute top-1 bottom-1 rounded-md overflow-hidden select-none cursor-grab active:cursor-grabbing group ${enDrag ? "ring-2 ring-[#C9A227]" : ""}`}
+                          style={{
+                            left: debut * pxParSec, width: largeur,
+                            transform: enDrag && dyDrag ? `translateY(${dyDrag}px)` : undefined,
+                            background: muet
+                              ? "linear-gradient(180deg,#9CA3AF,#6B7280)"
+                              : voie === 1
+                                ? "linear-gradient(180deg, #22c55e, #15803d)"
+                                : "linear-gradient(180deg, #4ade80, #16a34a)",
+                            boxShadow: "inset 0 1px 0 rgba(255,255,255,.25)",
+                            opacity: muet ? 0.75 : 1,
+                            zIndex: enDrag ? 25 : 2,
+                          }}
+                          onPointerDown={(e) => {
+                            if (e.button !== 0) return;
+                            e.stopPropagation();
+                            setDyDrag(0);
+                            setDrag({ genre: "audio", id: track.id, deltaX: xVersTemps(e.clientX) - debut, departY: e.clientY, lane: voie });
+                          }}
+                          title={`${track.name} — voie A${voie} · glisser pour déplacer (position respectée à l'export) · VERTICALEMENT vers A${voie === 1 ? 2 : 1} pour changer de voie`}
+                        >
+                          {/* motif « forme d'onde » décoratif */}
+                          <div
+                            className="absolute inset-x-1 bottom-0.5 top-4 opacity-40 pointer-events-none"
+                            style={{
+                              backgroundImage:
+                                "repeating-linear-gradient(90deg, rgba(255,255,255,.9) 0 2px, transparent 2px 5px, rgba(255,255,255,.55) 5px 6px, transparent 6px 11px)",
+                              backgroundSize: "22px 100%",
+                            }}
+                          />
+                          <div className="relative flex items-center gap-1 px-1.5 h-4">
+                            <Music2 className="w-2.5 h-2.5 text-white/90 flex-shrink-0" />
+                            <span className="text-[9px] font-bold text-white truncate flex-1">{track.name}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onUpdateAudio(track.id, { volume: track.volume > 0 ? 0 : 1 }); }}
+                              className="p-0.5 rounded bg-black/25 text-white hover:bg-black/45 flex-shrink-0"
+                              title={muet ? "Rétablir le volume" : "Rendre muette (volume 0)"}
+                            >
+                              {muet ? <VolumeX className="w-2.5 h-2.5" /> : <Volume2 className="w-2.5 h-2.5" />}
+                            </button>
+                          </div>
+                          <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-white/85">
+                            {formaterTemps(duree)}
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onDeleteAudio(track.id); }}
+                            className="absolute top-0.5 right-0.5 p-0.5 rounded bg-black/35 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Supprimer cette piste audio"
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                          </button>
+                          {track.fadeIn ? <span className="absolute top-1 left-0 h-2.5 w-2.5 rounded-sm bg-white/40" title={`Fondu entrée ${track.fadeIn}s`} /> : null}
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}
 
-              {/* Tête de lecture */}
+              {/* ── ⭐ V3.63 — Surlignage de la piste de dépôt (drag en cours) ── */}
+              {rangeeSurvolee && drag && (() => {
+                const idx = RANGEES.findIndex((r) => r.id === rangeeSurvolee);
+                if (idx < 0) return null;
+                return (
+                  <div className="absolute left-0 right-0 pointer-events-none z-30 rounded-md bg-[#C9A227]/10 ring-1 ring-[#C9A227]/60 ring-inset"
+                    style={{ top: OFFSETS_RANGEES[idx], height: RANGEES[idx].h }} />
+                );
+              })()}
+
+              {/* ── Tête de lecture ── */}
               <div
                 className="absolute top-0 pointer-events-none z-30"
                 style={{ left: currentTime * pxParSec, height: "100%" }}
@@ -751,10 +1017,11 @@ export function TimelinePro(props: TimelineProProps) {
 
       {/* Légende interactions */}
       <p className="text-[9px] text-[#8A8378] leading-relaxed mt-2">
-        ⭐ Glisser les blocs pour les déplacer · poignées <GripVertical className="w-2.5 h-2.5 inline" /> pour rogner ·
-        badges <ArrowLeftRight className="w-2.5 h-2.5 inline" /> pour les transitions · glisser sons / musiques / vidéos
-        depuis la <strong>Bibliothèque</strong> directement sur les pistes. La position des pistes audio est désormais
-        respectée à l&apos;export (décalage réel).
+        ⭐ Glissez les blocs <strong>horizontalement</strong> pour les déplacer dans le temps et <strong>verticalement</strong> pour
+        les faire changer de piste (V1 ↔ V2, TX1 ↔ TX2, A1 ↔ A2) · poignées <GripVertical className="w-2.5 h-2.5 inline" /> pour rogner ·
+        badges <ArrowLeftRight className="w-2.5 h-2.5 inline" /> pour les transitions · glissez sons / musiques / vidéos depuis
+        la <strong>Bibliothèque</strong> directement sur la piste ou la voie visée. V2 = incrustation vidéo par-dessus V1 ·
+        TX2 se superpose au-dessus de TX1 · la position des pistes audio est respectée à l&apos;export.
       </p>
     </div>
   );

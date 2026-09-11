@@ -18,6 +18,10 @@ export interface TextOverlay {
   endTime?: number;
   animation?: "none" | "fade-in" | "fade-out" | "fade-in-out";
   animationDuration?: number;
+  /** ⭐ V3.63 — piste TEXTE (TX1 = 1 par défaut, TX2 = 2) : les textes
+   *  se glissent d'une piste à l'autre dans la timeline (TX2 se
+   *  superpose AU-DESSUS de TX1 à l'aperçu comme à l'export). */
+  track?: 1 | 2;
 }
 
 export interface ImageOverlay {
@@ -122,6 +126,10 @@ export interface AudioTrack {
   /** ⭐ V3.61 — durée (s) mesurée via métadonnées : dimensionne le bloc
    *  dans la timeline multi-pistes. Optionnelle (repli ~12 s à l'affichage). */
   duration?: number;
+  /** ⭐ V3.63 — VOIE audio (A1 = 1 par défaut, A2 = 2) : deux voies fixes
+   *  dans la timeline — on glisse une piste audio de A1 vers A2 (et
+   *  réciproquement) pour organiser le mixage, comme dans CapCut. */
+  lane?: 1 | 2;
 }
 
 export interface ExportConfig {
@@ -140,9 +148,24 @@ export interface Segment {
   trimEnd?: number;
 }
 
+/** ⭐ V3.63 — INCRUSTATION VIDÉO (piste V2 de la timeline) : un clip vidéo
+ *  superposé PAR-DESSUS la séquence V1 pendant sa fenêtre temporelle,
+ *  plein cadre (coupe B-roll, comme CapCut). Son propre audio est ignoré
+ *  (calque de compositing). */
+export interface VideoOverlayClip {
+  id: string;
+  url: string;
+  startTime: number;
+  duration: number;
+  trimStart?: number;
+  trimEnd?: number;
+}
+
 export interface RenderProject {
   videoId: string;
   segments: Segment[];
+  /** ⭐ V3.63 — incrustations vidéo (piste V2) superposées à la séquence. */
+  videoOverlays?: VideoOverlayClip[];
   overlays: Overlay[];
   subtitles?: SubtitleConfig;
   transitions?: TransitionConfig[];

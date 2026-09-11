@@ -23,7 +23,7 @@ import type {
   Overlay, TextOverlay, ImageOverlay, Segment, RenderProject,
   ColorAdjust, SpeedConfig, TransformConfig, AudioTrack, ExportConfig,
   SubtitleConfig, TransitionConfig, StickerOverlay, VideoFilter,
-  StabilisationConfig, ChromaKeyConfig,
+  StabilisationConfig, ChromaKeyConfig, VideoOverlayClip,
 } from "./types";
 import {
   DEFAULT_COLOR_ADJUST, DEFAULT_SPEED, DEFAULT_TRANSFORM, DEFAULT_EXPORT,
@@ -71,6 +71,11 @@ interface TimelineClip {
   /** ⭐ V3.61 — durée SOURCE complète (avant rognage) : permet de rogner
    *  plusieurs fois sans perdre la longueur d'origine. */
   dureeSource?: number;
+  /** ⭐ V3.63 — piste VIDÉO : 1 = V1 séquence (défaut), 2 = V2
+   *  incrustation à position libre (par-dessus V1). */
+  piste?: 1 | 2;
+  /** ⭐ V3.63 — position (s) sur la piste V2 (position libre). */
+  startTime?: number;
 }
 
 // ─── Templates prédéfinis ───
@@ -201,6 +206,29 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const [previewWidth, setPreviewWidth] = useState(0);
   const [videoDims, setVideoDims] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
+  // ⭐ V3.63 — vidéos de CALQUE V2 (incrustations) montées dans le preview :
+  // synchronisées lecture/pause/seek avec la vidéo principale.
+  const v2Refs = useRef<Map<string, HTMLVideoElement>>(new Map());
+  /** ⭐ V3.63 — cale chaque vidéo V2 active sur la position de lecture :
+  *  t_video = currentTime − startTime du clip (dérive > 0,4 s → recalage). */
+  const synchroniserV2 = (t: number, lecture: boolean) => {
+    for (const clip of timeline) {
+      if (clip.piste !== 2) continue;
+      const el = v2Refs.current.get(clip.id);
+      if (!el) continue;
+      const st = Math.max(0, clip.startTime || 0);
+      const cible = t - st;
+      const actif = cible >= 0 && cible < clip.duration;
+      if (!actif) { if (!el.paused) el.pause(); continue; }
+      try {
+        if (el.readyState >= 1 && Math.abs(el.currentTime - cible) > 0.4 && isFinite(cible)) {
+          el.currentTime = Math.max(0, Math.min(cible, Math.max(0, (el.duration || cible) - 0.05)));
+        }
+      } catch {}
+      if (lecture && el.paused) el.play().catch(() => {});
+      if (!lecture && !el.paused) el.pause();
+    }
+  };
   const [playingSfxId, setPlayingSfxId] = useState<string | null>(null);
   const sfxPreviewRef = useRef<HTMLAudioElement | null>(null);
 
@@ -417,10 +445,14 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         try { if (el.duration && isFinite(el.duration)) el.currentTime = offset % el.duration; } catch {}
         el.play().catch(() => {});
       });
+      // ⭐ V3.63 — calques V2 : lecture synchronisée
+      synchroniserV2(video.currentTime, true);
       setIsPlaying(true);
     } else {
       video.pause();
       audioRefs.current.forEach((el) => el.pause());
+      // ⭐ V3.63 — calques V2 : pause synchronisée
+      synchroniserV2(video.currentTime, false);
       setIsPlaying(false);
     }
   };
@@ -450,6 +482,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     if (!video) return;
     video.currentTime = time;
     setCurrentTime(time);
+    // ⭐ V3.63 — calques V2 : recalage au seek
+    synchroniserV2(time, isPlaying);
   };
 
   const handleSeekBy = (delta: number) => {
@@ -789,13 +823,23 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     if (ajoutStickerProEnCours) return; // anti double-clic
     setAjoutStickerProEnCours(true);
     try {
-      const png = await rasteriserStickerEnPng(sticker.svg, 512);
-      // Taille initiale raisonnable : ~30 % de la largeur d'export.
+      // ⭐ V3.63 — 2048 px (AVANT 512 : les boutons étaient flous/pixelisés
+      // une fois agrandis sur le canevas d'export 1920-2160 px).
+      const png = await rasteriserStickerEnPng(sticker.svg, 2048);
+      // Dimensions du sticker : lues dans le viewBox du SVG (la rasterisation
+      // borne le plus grand côté à 2048 en CONSERVANT les proportions).
+      const m = sticker.svg.match(/width="(\d+)"\s+height="(\d+)"/);
+      const sw = m ? Number(m[1]) : 600;
+      const sh = m ? Number(m[2]) : 150;
+      const natW = 2048 * (sw / Math.max(sw, sh));
+      // Taille initiale raisonnable : les BOUTONS larges (aspect ≥ 1.8) à
+      // ~42 % de la largeur d'export, les stickers carrés à ~30 %.
+      const aspect = sw / Math.max(1, sh);
       const exportW = exportConfig.resolution === "original"
         ? (videoDims.w || 1920)
         : (EXPORT_WIDTHS[exportConfig.resolution] || 1920);
-      const natW = 512; // la rasterisation borne le plus grand côté à 512
-      const scale = (exportW * 0.3) / natW;
+      const cible = exportW * (aspect >= 1.8 ? 0.42 : 0.3);
+      const scale = cible / natW;
       const newOverlay: ImageOverlay = {
         id: `stickerpro-${Date.now()}`,
         type: "image",
@@ -994,8 +1038,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const deleteClip = (id: string) => {
     const clip = timeline.find((c) => c.id === id);
     if (clip && clip.type !== "main") {
+      // ⭐ V3.63 — seule la séquence V1 compte dans totalDuration
       setTimeline((prev) => prev.filter((c) => c.id !== id));
-      setTotalDuration((prev) => prev - clip.duration);
+      if ((clip.piste || 1) === 1) {
+        setTotalDuration((prev) => Math.max(0, prev - clip.duration));
+      }
       pushHistory();
     }
   };
@@ -1004,19 +1051,68 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   // ⭐ V3.61 — TIMELINE PRO MULTI-PISTES : handlers dédiés
   // ═══════════════════════════════════════════════════════════════════
 
-  /** Réordonner un clip vidéo (glisser-déposer dans la piste V1). */
-  const reordonnerClip = (from: number, to: number) => {
-    if (from === to || from < 0 || to < 0 || from >= timeline.length || to >= timeline.length) return;
+  /** ⭐ V3.63 — Réordonner (par IDENTIFIANTS) dans la séquence V1 :
+   *  place `idDeplace` juste après `idCible` (null = tout au début).
+   *  Les clips V2 restent en fin de tableau (position libre). */
+  const reordonnerClip = (idDeplace: string, idCible: string | null) => {
     setTimeline((prev) => {
-      const next = [...prev];
-      const [deplace] = next.splice(from, 1);
-      next.splice(to, 0, deplace);
+      const v1 = prev.filter((c) => (c.piste || 1) === 1);
+      const deplace = v1.find((c) => c.id === idDeplace);
+      if (!deplace) return prev;
+      const autres = v1.filter((c) => c.id !== idDeplace);
+      const idx = idCible ? autres.findIndex((c) => c.id === idCible) : -1;
+      const insert = idx + 1; // après la cible (ou au début)
+      const v2 = prev.filter((c) => c.piste === 2);
+      return [...autres.slice(0, insert), deplace, ...autres.slice(insert), ...v2];
+    });
+    pushHistory();
+  };
+
+  /** ⭐ V3.63 — Glisser un clip V1 → V2 (incrustation à position libre) ou
+   *  V2 → V1 (retour dans la séquence, inséré à la position temporelle). */
+  const deplacerClipPiste = (id: string, piste: 1 | 2, startTime: number) => {
+    setTimeline((prev) => {
+      const clip = prev.find((c) => c.id === id);
+      if (!clip) return prev;
+      let next: TimelineClip[];
+      if (piste === 2) {
+        // V1 → V2 : retiré de la séquence, position libre au lâcher
+        next = prev.map((c) => (c.id === id ? { ...c, piste: 2 as const, startTime: Math.max(0, startTime) } : c));
+      } else {
+        // V2 → V1 : réinséré dans la séquence à la position temporelle
+        const v2 = prev.filter((c) => c.piste === 2 && c.id !== id);
+        const v1 = prev.filter((c) => (c.piste || 1) === 1);
+        const deplace = { ...clip, piste: undefined as unknown as 1 | undefined, startTime: undefined };
+        let cumul = 0;
+        let insert = v1.length;
+        for (let i = 0; i < v1.length; i++) {
+          cumul += v1[i].duration;
+          if (Math.max(0, startTime) < cumul) { insert = i + 1; break; }
+        }
+        next = [...v1.slice(0, insert), deplace, ...v1.slice(insert), ...v2];
+      }
+      setTotalDuration(next.filter((c) => (c.piste || 1) === 1).reduce((acc, c) => acc + c.duration, 0));
       return next;
     });
     pushHistory();
   };
 
-  /** Rogner un clip (poignées V1) — la durée affichée suit le rognage.
+  /** ⭐ V3.63 — Position libre d'un clip V2 (glisser horizontal, live). */
+  const majDebutClipV2 = (id: string, startTime: number) => {
+    setTimeline((prev) => prev.map((c) => (c.id === id && c.piste === 2 ? { ...c, startTime: Math.max(0, startTime) } : c)));
+  };
+
+  /** ⭐ V3.63 — Glisser un texte TX1 ↔ TX2 (live pendant le drag). */
+  const deplacerTextePiste = (id: string, track: 1 | 2) => {
+    setOverlays((prev) => prev.map((o) => (o.id === id && o.type === "text" ? { ...o, track } as Overlay : o)));
+  };
+
+  /** ⭐ V3.63 — Glisser une piste audio A1 ↔ A2 (live pendant le drag). */
+  const deplacerVoieAudio = (id: string, lane: 1 | 2) => {
+    setAudioTracks((prev) => prev.map((t) => (t.id === id ? { ...t, lane } : t)));
+  };
+
+  /** Rogner un clip (poignées V1/V2) — la durée affichée suit le rognage.
    *  dureeSource conserve la longueur d'origine pour rogner en plusieurs fois. */
   const majTrimClip = (id: string, trimStart: number | undefined, trimEnd: number | undefined) => {
     setTimeline((prev) => {
@@ -1027,7 +1123,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         const te = Math.min(source, Math.max(ts + 0.3, trimEnd ?? c.trimEnd ?? source));
         return { ...c, dureeSource: source, trimStart: ts, trimEnd: te, duration: Math.max(0.3, te - ts) };
       });
-      setTotalDuration(next.reduce((acc, c) => acc + c.duration, 0));
+      setTotalDuration(next.filter((c) => (c.piste || 1) === 1).reduce((acc, c) => acc + c.duration, 0));
       return next;
     });
     pushHistory();
@@ -1049,8 +1145,9 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     pushHistory();
   };
 
-  /** DROP bibliothèque → piste audio : créé À LA POSITION où on lâche. */
-  const deposerAudio = (data: DropAudioData, startTime: number) => {
+  /** DROP bibliothèque → piste audio : créé À LA POSITION où on lâche,
+   *  sur la VOIE visée (A1/A2 — ⭐ V3.63). */
+  const deposerAudio = (data: DropAudioData, startTime: number, lane: 1 | 2 = 1) => {
     const nouvelle: AudioTrack = {
       id: `lib-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       url: data.url,
@@ -1060,13 +1157,15 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
       fadeIn: data.fadeIn ?? 0.5,
       fadeOut: data.fadeOut ?? 0.5,
       startTime: Math.max(0, startTime),
+      lane,
     };
     setAudioTracks((prev) => [...prev, nouvelle]);
     pushHistory();
   };
 
-  /** DROP bibliothèque → piste V1 : insère le clip à la position temporelle. */
-  const deposerVideo = (data: DropVideoData, atSeconds: number) => {
+  /** DROP bibliothèque → V1 (séquence, insère à la position temporelle)
+   *  ou V2 (incrustation à position libre — ⭐ V3.63). */
+  const deposerVideo = (data: DropVideoData, atSeconds: number, piste: 1 | 2 = 1) => {
     const creerClip = (duree: number) => {
       const newClip: TimelineClip = {
         id: `clip-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -1076,19 +1175,30 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         dureeSource: duree || 5,
         src: data.url,
         url: data.url,
-        color: "#4A9E8F",
+        color: piste === 2 ? "#7C3AED" : "#4A9E8F",
+        // ⭐ V3.63 — dépôt sur V2 = incrustation à position libre
+        piste,
+        startTime: piste === 2 ? Math.max(0, atSeconds) : undefined,
       };
-      // insérer à l'endroit du dépôt (après le clip couvrant atSeconds)
-      let index = timeline.length;
+      if (piste === 2) {
+        // V2 : simple ajout (position libre), la séquence V1 ne change pas
+        setTimeline((prev) => [...prev, newClip]);
+        pushHistory();
+        return;
+      }
+      // V1 : insérer à l'endroit du dépôt (après le clip V1 couvrant atSeconds)
+      const v1 = timeline.filter((c) => (c.piste || 1) === 1);
+      let index = v1.length;
       let cumul = 0;
-      for (let i = 0; i < timeline.length; i++) {
-        cumul += timeline[i].duration;
+      for (let i = 0; i < v1.length; i++) {
+        cumul += v1[i].duration;
         if (atSeconds < cumul) { index = i + 1; break; }
       }
       setTimeline((prev) => {
-        const next = [...prev];
-        next.splice(index, 0, newClip);
-        setTotalDuration(next.reduce((acc, c) => acc + c.duration, 0));
+        const sequence = prev.filter((c) => (c.piste || 1) === 1);
+        const calques = prev.filter((c) => c.piste === 2);
+        const next = [...sequence.slice(0, index), newClip, ...sequence.slice(index), ...calques];
+        setTotalDuration(next.filter((c) => (c.piste || 1) === 1).reduce((acc, c) => acc + c.duration, 0));
         return next;
       });
       pushHistory();
@@ -1135,11 +1245,17 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
     try {
       const dureeVideo = totalDuration || trimEnd || 30;
       const resultat = tpl.build(dureeVideo);
-      // ① stickers SVG → PNG (pipeline existant V3.60)
+      // ① stickers SVG → PNG (pipeline existant V3.60 — ⭐ V3.63 : 2048 px
+      // + largeur naturelle calculée depuis l'aspect du SVG ; s.scale reste
+      // une FRACTION de la largeur d'export, quelle que soit la taille du PNG)
       const stickersPng: ImageOverlay[] = [];
       for (const s of resultat.stickersSvg) {
         try {
-          const png = await rasteriserStickerEnPng(s.sticker.svg, 512);
+          const png = await rasteriserStickerEnPng(s.sticker.svg, 2048);
+          const m = s.sticker.svg.match(/width="(\d+)"\s+height="(\d+)"/);
+          const sw = m ? Number(m[1]) : 600;
+          const sh = m ? Number(m[2]) : 150;
+          const natW = 2048 * (sw / Math.max(sw, sh));
           const exportW = exportConfig.resolution === "original"
             ? (videoDims.w || 1920)
             : (EXPORT_WIDTHS[exportConfig.resolution] || 1920);
@@ -1149,7 +1265,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             url: png,
             x: s.x, y: s.y,
             // s.scale = fraction de la largeur d'export → facteur ImageOverlay
-            scale: (exportW * s.scale) / 512,
+            scale: (exportW * s.scale) / natW,
             opacity: 1,
             animation: s.animation ?? "none",
             startTime: s.startTime,
@@ -1274,7 +1390,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
     try {
       // Construire le RenderProject
-      const segments: Segment[] = timeline.map((clip) => ({
+      // ⭐ V3.63 — la SÉQUENCE exportée = clips V1 uniquement ; les clips V2
+      // partent en incrustations (videoOverlays, superposées par ffmpeg).
+      const clipsV1 = timeline.filter((c) => (c.piste || 1) === 1);
+      const clipsV2 = timeline.filter((c) => c.piste === 2);
+      const segments: Segment[] = clipsV1.map((clip) => ({
         id: clip.id,
         type: clip.type,
         url: clip.url || clip.src || currentVideoUrl || "",
@@ -1282,11 +1402,29 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         trimStart: clip.type === "main" ? (trimStart > 0 ? trimStart : undefined) : clip.trimStart,
         trimEnd: clip.type === "main" ? (trimEnd < totalDuration ? trimEnd : undefined) : clip.trimEnd,
       }));
+      const videoOverlays: VideoOverlayClip[] = clipsV2
+        .filter((c) => c.url)
+        .map((clip) => ({
+          id: clip.id,
+          url: clip.url as string,
+          startTime: Math.max(0, clip.startTime || 0),
+          duration: clip.duration,
+          trimStart: clip.trimStart,
+          trimEnd: clip.trimEnd,
+        }));
+      // ⭐ V3.63 — ordre z des calques (le DERNIER appliqué est AU-DESSUS) :
+      // images/stickers (0) → textes TX1 (1) → textes TX2 (2).
+      const rangZ = (o: Overlay): number => {
+        if (o.type === "text") return (o as TextOverlay).track === 2 ? 2 : 1;
+        return 0;
+      };
+      const overlaysOrdonnes = [...overlays].sort((a, b) => rangZ(a) - rangZ(b));
 
       const project: RenderProject = {
         videoId,
         segments,
-        overlays,
+        videoOverlays: videoOverlays.length > 0 ? videoOverlays : undefined,
+        overlays: overlaysOrdonnes,
         subtitles: subtitles || undefined,
         transitions: transitions.length > 0 ? transitions : undefined,
         colorAdjust: (colorAdjust.brightness !== 0 || colorAdjust.contrast !== 1 || colorAdjust.saturation !== 1 || colorAdjust.gamma !== 1) ? colorAdjust : undefined,
@@ -1594,6 +1732,10 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     onTimeUpdate={(e) => {
                       const t = e.currentTarget.currentTime;
                       setCurrentTime(t);
+                      // ⭐ V3.63 — calques V2 : maintien de la synchro pendant
+                      // la lecture (recalage si dérive, montage/remontage des
+                      // éléments actifs)
+                      synchroniserV2(t, isPlaying);
                       // ⭐ V3.16 — la lecture S'ARRÊTE À LA FIN de la zone
                       // de découpe (trimEnd) et revient au début (trimStart).
                       if (
@@ -1603,12 +1745,13 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                       ) {
                         e.currentTarget.pause();
                         audioRefs.current.forEach((el) => el.pause());
+                        synchroniserV2(trimStart, false);
                         setIsPlaying(false);
                         e.currentTarget.currentTime = trimStart;
                         setCurrentTime(trimStart);
                       }
                     }}
-                    onEnded={() => { setIsPlaying(false); audioRefs.current.forEach((el) => el.pause()); }}
+                    onEnded={() => { setIsPlaying(false); audioRefs.current.forEach((el) => el.pause()); synchroniserV2(currentTime, false); }}
                   />
                 )}
 
@@ -1625,6 +1768,30 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     }}
                   />
                 ))}
+
+                {/* ⭐ V3.63 — CALQUE V2 : incrustations vidéo par-dessus la
+                    vidéo principale. Chaque clip V2 (position libre) s'affiche
+                    en plein cadre pendant sa fenêtre temporelle — synk lecture/
+                    pause/seek avec la vidéo principale (muet : c'est un calque
+                    de compositing, comme un B-roll dans CapCut). */}
+                {!youtubeMode && timeline.filter((c) => c.piste === 2).map((clip) => {
+                  const st = Math.max(0, clip.startTime || 0);
+                  const actif = currentTime >= st && currentTime < st + clip.duration;
+                  if (!actif || !clip.url) return null;
+                  return (
+                    <video
+                      key={`v2-${clip.id}`}
+                      ref={(el) => {
+                        if (el) v2Refs.current.set(clip.id, el);
+                        else v2Refs.current.delete(clip.id);
+                      }}
+                      src={clip.url}
+                      muted
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover bg-black z-[5]"
+                    />
+                  );
+                })}
 
                 {/* ⭐ V3.16 — OVERLAYS INTERACTIFS : clic → sélection, glisser →
                     déplacer, poignées de coin → redimensionner (images avec
@@ -1727,10 +1894,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           </div>
           )}
 
-          {/* ⭐ V3.61 — TIMELINE PRO MULTI-PISTES (style CapCut / Premiere Pro) :
-              V1 vidéo (+ transitions) · TX textes · IMG images/stickers ·
-              A1..An audio — glisser, rogner, déplacer dans le temps, déposer
-              depuis la Bibliothèque. */}
+          {/* ⭐ V3.63 — TIMELINE PRO MULTI-PISTES (style CapCut / Premiere Pro) :
+              V1 séquence vidéo (+ transitions) · V2 incrustations · TX1 + TX2
+              textes (glisser entre pistes) · IMG images/stickers · A1 + A2
+              audio (voies fixes, glisser entre voies) — déposer depuis la
+              Bibliothèque directement sur la piste visée. */}
           <TimelinePro
             clips={timeline}
             overlays={overlays}
@@ -1746,11 +1914,15 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             onUpdateClipTrim={majTrimClip}
             onSetMainTrim={majTrimPrincipal}
             onDeleteClip={deleteClip}
+            onMoveClipTrack={deplacerClipPiste}
+            onUpdateClipStart={majDebutClipV2}
             onUpdateAudio={majPisteAudio}
             onDeleteAudio={supprimerPisteAudio}
+            onMoveAudioLane={deplacerVoieAudio}
             onUpdateOverlayTime={(id, patch) => updateOverlay(id, patch as Partial<Overlay>)}
             onDeleteOverlay={deleteOverlay}
             onSelectOverlay={setSelectedOverlayId}
+            onMoveTextTrack={deplacerTextePiste}
             onOpenTransitions={() => setActiveTab("transitions")}
             onDropAudio={deposerAudio}
             onDropVideo={deposerVideo}
@@ -1982,15 +2154,18 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     </div>
                   </>
                 ) : (
-                  /* ⭐ V3.60 — grille de stickers PROFESSIONNELS (SVG vectoriel,
-                     rastérisés en 512 px à l'ajout → pipeline ImageOverlay) */
-                  <div className="grid grid-cols-3 gap-2 max-h-[340px] overflow-y-auto">
+                  /* ⭐ V3.63 — grille de stickers PROFESSIONNELS (SVG vectoriel,
+                     rastérisés en 2048 px à l'ajout → pipeline ImageOverlay).
+                     Les BOUTONS sociaux sont LARGES (jusqu'à ~4:1) : cellules
+                     allongées pour ne pas les écraser ; les autres stickers
+                     restent carrés. */
+                  <div className={`grid gap-2 max-h-[340px] overflow-y-auto ${stickerVue === "social" ? "grid-cols-2" : "grid-cols-3"}`}>
                     {stickersParCategorie(stickerVue).map((sticker) => (
                       <button key={sticker.id}
                         onClick={() => addProSticker(sticker)}
                         disabled={ajoutStickerProEnCours}
                         title={`${sticker.name} — cliquer pour ajouter sur la vidéo`}
-                        className="group relative aspect-square flex items-center justify-center rounded-lg border border-[#8A8378]/20 hover:border-[#C9A227] hover:shadow-md transition-all disabled:opacity-40 overflow-hidden"
+                        className={`group relative flex items-center justify-center rounded-lg border border-[#8A8378]/20 hover:border-[#C9A227] hover:shadow-md transition-all disabled:opacity-40 overflow-hidden ${stickerVue === "social" ? "aspect-[5/2] p-2" : "aspect-square p-1"}`}
                         style={{
                           backgroundColor: "#ffffff",
                           backgroundImage:
@@ -1998,7 +2173,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                           backgroundSize: "16px 16px",
                           backgroundPosition: "0 0, 8px 8px",
                         }}>
-                        <div className="w-full h-full flex items-center justify-center p-1 [&>svg]:max-w-full [&>svg]:max-h-full"
+                        <div className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full"
                           dangerouslySetInnerHTML={{ __html: sticker.svg }} />
                         <span className="absolute bottom-0 left-0 right-0 bg-[#2A0E3D]/75 text-white text-[8px] font-bold text-center py-0.5 px-1 truncate opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           {sticker.name}
