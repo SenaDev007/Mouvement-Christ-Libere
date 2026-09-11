@@ -681,7 +681,11 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                   {video.views > 0 ? `${video.views.toLocaleString("fr-FR")} vues` : "Nouveau"}
                 </span>
               </div>
-              <p className="text-sm text-[#1E0F2B]/80 leading-relaxed">{video.description}</p>
+              {/* ⭐ V3.65 — break-words : les descriptions TikTok V3.63
+                  contiennent l'URL complète (62 caractères insécables) qui
+                  dilatait le paragraphe → scrollWidth 492 px sur mobile
+                  390 px (mesuré en prod). Le mot long casse proprement. */}
+              <p className="text-sm text-[#1E0F2B]/80 leading-relaxed break-words">{video.description}</p>
             </div>
           </div>
 
