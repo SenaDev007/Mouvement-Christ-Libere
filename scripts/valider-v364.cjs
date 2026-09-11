@@ -78,6 +78,7 @@ res(bf.includes("uploadToR2") && bf.includes("thumbnails/tiktok-"), "miniature r
 res(bf.includes("data: { thumbnailUrl: urlPublique }") && !bf.includes("title:"), "SEULE la miniature est écrite (titres/rubriques jamais touchés)");
 res(bf.includes("LIMITE_MORCEAU_MS") && bf.includes("limite"), "traitement par lots + garde-fou horloge (rend la main avant le plafond serverless)");
 res(bf.includes("estUrlTiktok") && bf.includes("!v.thumbnailUrl"), "sélection : TikTok SANS miniature (idempotent)");
+res(bf.includes("exclure") && bf.includes("idsEchec"), "ids en échec exclus des lots suivants (vidéos TikTok supprimées — aucun slot perdu)");
 res(bf.includes("content-type") && bf.includes("startsWith(\"image/\")") && bf.includes("8 * 1024 * 1024"), "téléchargement validé (type image + taille bornée)");
 
 // ─── 5) Lecteur à dimension exacte ───

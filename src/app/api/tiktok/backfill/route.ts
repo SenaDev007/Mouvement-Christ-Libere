@@ -14,12 +14,15 @@
  *     (prefixe thumbnails/ — URL publique PERMANENTE) ;
  *  ④ met à jour Video.thumbnailUrl.
  *
- * Body : { limite?: number } — nombre de vidéos traitées par appel
- * (défaut 15, max 40 ; chaque vidéo ≈ 1-2 s : oEmbed + téléchargement +
- * upload R2). Un garde-fou horloge (23 s) rend la main AVANT le plafond
+ * Body : { limite?: number, exclure?: string[] } — nombre de vidéos
+ * traitées par appel (défaut 15, max 40 ; chaque vidéo ≈ 1-2 s : oEmbed +
+ * téléchargement + upload R2). `exclure` = ids à IGNORER (échecs déjà
+ * constatés par l'appelant — vidéos TikTok supprimées/privées sans
+ * miniature oEmbed : les re-essayer consommerait chaque lot en pure
+ * perte). Un garde-fou horloge (23 s) rend la main AVANT le plafond
  * serverless (30 s) : le script appelant boucle jusqu'à restantes = 0.
  *
- * Réponse : { traitées, misesAJour, restantes, erreurs: string[] }
+ * Réponse : { traitées, misesAJour, restantes, idsEchecs, erreurs[] }
  *
  * Idempotent : les vidéos déjà pourvues d'une miniature sont exclues —
  * relancer ne fait rien. Les titres/rubriques ne sont JAMAIS modifiés.
@@ -61,13 +64,19 @@ export async function POST(request: NextRequest) {
   }
 
   let limite = 15;
+  const exclure = new Set<string>();
   try {
-    const body = (await request.json()) as { limite?: number };
+    const body = (await request.json()) as { limite?: number; exclure?: string[] };
     if (body?.limite && Number.isFinite(body.limite)) {
       limite = Math.min(Math.max(Math.trunc(body.limite), 1), 40);
     }
+    if (Array.isArray(body?.exclure)) {
+      for (const id of body.exclure) {
+        if (typeof id === "string" && id) exclure.add(id);
+      }
+    }
   } catch {
-    // body vide → défaut 15
+    // body vide → défaut 15, aucune exclusion
   }
 
   const debut = Date.now();
@@ -81,11 +90,12 @@ export async function POST(request: NextRequest) {
       select: { id: true, videoUrl: true, thumbnailUrl: true },
     });
     const tiktokSansMiniature = candidates.filter(
-      (v) => estUrlTiktok(v.videoUrl) && !v.thumbnailUrl
+      (v) => estUrlTiktok(v.videoUrl) && !v.thumbnailUrl && !exclure.has(v.id)
     );
 
     let traites = 0;
     let misesAJour = 0;
+    const idsEchec: string[] = [];
 
     // ②-④ Pour chaque vidéo (jusqu'à la limite / le garde-fou horloge).
     for (const video of tiktokSansMiniature) {
@@ -96,6 +106,7 @@ export async function POST(request: NextRequest) {
         const oembed = await oembedTiktok(video.videoUrl as string);
         if (!oembed?.miniatureUrl) {
           erreurs.push(`${video.id}: oEmbed sans miniature`);
+          idsEchec.push(video.id);
           continue;
         }
 
@@ -110,16 +121,19 @@ export async function POST(request: NextRequest) {
         });
         if (!resImg.ok) {
           erreurs.push(`${video.id}: téléchargement HTTP ${resImg.status}`);
+          idsEchec.push(video.id);
           continue;
         }
         const typeImg = (resImg.headers.get("content-type") || "").toLowerCase();
         if (!typeImg.startsWith("image/")) {
           erreurs.push(`${video.id}: content-type inattendu ${typeImg}`);
+          idsEchec.push(video.id);
           continue;
         }
         const octets = Buffer.from(await resImg.arrayBuffer());
         if (octets.length < 1024 || octets.length > 8 * 1024 * 1024) {
           erreurs.push(`${video.id}: taille image suspecte ${octets.length}`);
+          idsEchec.push(video.id);
           continue;
         }
 
@@ -138,16 +152,19 @@ export async function POST(request: NextRequest) {
         erreurs.push(
           `${video.id}: ${e instanceof Error ? e.message : String(e)}`
         );
+        idsEchec.push(video.id);
       }
     }
 
-    // Restantes = vidéos TikTok TOUJOURS sans miniature (les échecs seront
-    // retentées au prochain appel — tant qu'elles échouent le compte reste
-    // stable : c'est le signal « boucle terminée » pour le script appelant).
+    // Restantes = vidéos TikTok toujours sans miniature, HORS ids exclus
+    // (les échecs renvoyés dans idsEchecs sont exclus par l'appelant au
+    // prochain lot : ils ne consomment plus aucun slot — ce sont en général
+    // des vidéos supprimées/privées côté TikTok, sans miniature oEmbed).
     return NextResponse.json({
       traitées: traites,
       misesAJour: misesAJour,
       restantes: Math.max(0, tiktokSansMiniature.length - misesAJour),
+      idsEchecs: idsEchec,
       erreurs: erreurs.slice(0, 10),
     });
   } catch (error) {
