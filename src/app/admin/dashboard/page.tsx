@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
+import { ensureStaffSpaces } from "@/lib/ensure-schema";
 import {
   Users, FileText, BookOpen, Video, MessageSquare, Inbox, Heart,
-  Radio, Calendar, TrendingUp, ArrowUpRight, Clock, Crown, Eye
+  Radio, Calendar, TrendingUp, ArrowUpRight, Clock, Crown
 } from "lucide-react";
 import Link from "next/link";
 
@@ -11,10 +12,11 @@ export const maxDuration = 30; // Timeout 30s (Vercel serverless)
 async function getStats() {
   const [
     servants, biographies, testimonies, teachings, videos, channels,
-    contactRequests, donations, liveStreams, pendingTestimonies, pendingContacts,
+    donations, liveStreams, pendingTestimonies,
+    meetingTransmises,
     pamServant, kongoServant,
     totalDonations, totalViews,
-    recentTestimonies, recentContactRequests, upcomingLives,
+    recentTestimonies, recentMeetingRequests, upcomingLives,
   ] = await Promise.all([
     db.servant.count(),
     db.biography.count(),
@@ -22,34 +24,43 @@ async function getStats() {
     db.teaching.count(),
     db.video.count(),
     db.channel.count(),
-    db.contactRequest.count(),
     db.donation.count(),
     db.liveStream.count(),
     db.testimony.count({ where: { status: "TO_DISCERN" } }),
-    db.contactRequest.count({ where: { status: "PENDING" } }),
+    // ⭐ V3.74 — « Demandes de contact » remplacées par les demandes de
+    // rencontre TRANSMISES par la secrétaire (réception /admin/demandes).
+    db.meetingRequest.count({ where: { status: "TRANSMISE" } }),
     db.servant.findFirst({ where: { code: "pam" }, include: { _count: { select: { videos: true, testimonies: true, teachings: true } } } }),
     db.servant.findFirst({ where: { code: "kongo" }, include: { _count: { select: { videos: true, testimonies: true, teachings: true } } } }),
     db.donation.aggregate({ _sum: { amount: true } }),
     db.video.aggregate({ _sum: { views: true } }),
     db.testimony.findMany({ take: 5, orderBy: { createdAt: "desc" }, include: { servant: true } }),
-    db.contactRequest.findMany({ take: 5, orderBy: { createdAt: "desc" } }),
+    db.meetingRequest.findMany({
+      take: 5,
+      orderBy: { transmittedAt: "desc" },
+      where: { status: "TRANSMISE" },
+      select: { id: true, requesterName: true, servantCode: true, subject: true, urgency: true, transmittedAt: true, createdAt: true },
+    }),
     db.liveStream.findMany({ take: 3, where: { scheduledAt: { gte: new Date() }, status: "SCHEDULED" }, orderBy: { scheduledAt: "asc" }, include: { servant: true } }),
   ]);
 
   return {
     servants, biographies, testimonies, teachings, videos, channels,
-    contactRequests, donations, liveStreams, pendingTestimonies, pendingContacts,
+    donations, liveStreams, pendingTestimonies, meetingTransmises,
     totalDonationsAmount: totalDonations._sum.amount || 0,
     totalViews: totalViews._sum.views || 0,
     pam: pamServant,
     kongo: kongoServant,
     recentTestimonies,
-    recentContactRequests,
+    recentMeetingRequests,
     upcomingLives,
   };
 }
 
 export default async function AdminDashboardPage() {
+  // ⭐ V3.74 — tables du flux des demandes (staff) vérifiées/créées ;
+  // ContactRequest disparu (DROP idempotent côté base).
+  await ensureStaffSpaces();
   const stats = await getStats();
 
   // Cards principales (KPIs)
@@ -59,7 +70,7 @@ export default async function AdminDashboardPage() {
     { label: "Enseignements", value: stats.teachings, icon: BookOpen, href: "/admin/teachings", color: "from-[#5B7052] to-[#3F5039]", bg: "bg-[#5B7052]/10" },
     { label: "Vidéos", value: stats.videos, icon: Video, href: "/admin/videos", color: "from-[#C9A227] to-[#A3821C]", bg: "bg-[#C9A227]/10", sub: `${stats.totalViews.toLocaleString("fr-FR")} vues` },
     { label: "Dons", value: stats.donations, icon: Heart, href: "/admin/donations", color: "from-[#8A857C] to-[#6B675F]", bg: "bg-[#8A857C]/10", sub: `${stats.totalDonationsAmount.toFixed(0)} €` },
-    { label: "Demandes contact", value: stats.contactRequests, icon: Inbox, href: "/admin/contact-requests", color: "from-[#5B7052] to-[#3F5039]", bg: "bg-[#5B7052]/10", badge: stats.pendingContacts > 0 ? `${stats.pendingContacts} en attente` : null },
+    { label: "Demandes reçues", value: stats.meetingTransmises, icon: Inbox, href: "/admin/demandes", color: "from-[#5B7052] to-[#3F5039]", bg: "bg-[#5B7052]/10", sub: "transmises par le secrétariat" },
   ];
 
   // Cards secondaires
@@ -99,7 +110,7 @@ export default async function AdminDashboardPage() {
         <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-3 px-1">
           Indicateurs clés
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {kpiCards.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -271,34 +282,40 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Demandes de contact récentes */}
+        {/* Demandes transmises par la secrétaire (⭐ V3.74 — remplace
+            « Demandes de contact » : le serviteur les réceptionne et les
+            valide dans /admin/demandes) */}
         <div className="bg-white rounded-2xl border border-[#8A857C]/15 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#8A857C]/10">
             <h2 className="font-bold text-[#000000] flex items-center gap-2">
-              <Inbox className="w-4 h-4 text-[#8A857C]" />
-              Demandes de contact
+              <Inbox className="w-4 h-4 text-[#5B7052]" />
+              Demandes transmises
             </h2>
-            <Link href="/admin/contact-requests" className="text-xs font-semibold text-[#8A857C] hover:underline">
-              Tout voir →
+            <Link href="/admin/demandes" className="text-xs font-semibold text-[#5B7052] hover:underline">
+              Réceptionner →
             </Link>
           </div>
           <div className="divide-y divide-[#8A857C]/10">
-            {stats.recentContactRequests.length === 0 ? (
-              <p className="text-sm text-[#8A857C] italic p-5 text-center">Aucune demande.</p>
+            {stats.recentMeetingRequests.length === 0 ? (
+              <p className="text-sm text-[#8A857C] italic p-5 text-center">
+                Aucune demande transmise pour l&apos;instant.
+              </p>
             ) : (
-              stats.recentContactRequests.map((c) => (
+              stats.recentMeetingRequests.map((c) => (
                 <div key={c.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#F0E9DE] transition-colors">
                   <div className="min-w-0 flex-1 mr-3">
-                    <p className="text-sm font-medium text-[#000000] truncate">{c.name}</p>
-                    <p className="text-xs text-[#8A857C] truncate">{c.contact}</p>
+                    <p className="text-sm font-medium text-[#000000] truncate">{c.requesterName}</p>
+                    <p className="text-xs text-[#8A857C] truncate">
+                      {c.subject} · {c.servantCode === "pam" ? "Sœur Pam" : "Pasteur Kongo"}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-[10px] text-[#8A857C]">
-                      {new Date(c.createdAt).toLocaleDateString("fr-FR")}
+                      {(c.transmittedAt ? new Date(c.transmittedAt) : new Date(c.createdAt)).toLocaleDateString("fr-FR")}
                     </span>
-                    {c.status === "PENDING" && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#C9A227]/15 text-[#A3821C]">
-                        En attente
+                    {c.urgency === "urgente" && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#B3452E]/10 text-[#B3452E]">
+                        Urgente
                       </span>
                     )}
                   </div>

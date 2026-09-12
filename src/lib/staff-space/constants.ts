@@ -26,6 +26,14 @@ export const DEMANDE_STATUTS = {
     couleur: "bg-[#5B7052]/15 text-[#3F5039] border-[#5B7052]/30",
     point: "#5B7052",
   },
+  VALIDEE: {
+    valeur: "VALIDEE",
+    libelle: "Validée",
+    description:
+      "Validée par le serviteur de Dieu — la secrétaire est notifiée (⭐ V3.74)",
+    couleur: "bg-[#C9A227]/15 text-[#A3821C] border-[#C9A227]/40",
+    point: "#D9A94A",
+  },
   TRAITEE: {
     valeur: "TRAITEE",
     libelle: "Traitée",
@@ -44,6 +52,24 @@ export const DEMANDE_STATUTS = {
 
 export type DemandeStatut = keyof typeof DEMANDE_STATUTS;
 export const DEMANDE_STATUT_VALEURS = Object.keys(DEMANDE_STATUTS);
+
+/** Origine d'une demande (⭐ V3.74 — flux sans ré-édition). */
+export const DEMANDE_SOURCES = {
+  SITE: {
+    valeur: "SITE",
+    libelle: "Site public",
+    description:
+      "Déposée sur /rendez-vous — arrive PRÉ-REMPLIE dans le flux : la secrétaire suit le flux sans ré-éditer, elle transmet telle quelle.",
+  },
+  MANUEL: {
+    valeur: "MANUEL",
+    libelle: "Présentiel / téléphone",
+    description:
+      "Saisie par la secrétaire (modal de saisie) — ré-édition réservée à ce cas.",
+  },
+} as const;
+
+export type DemandeSource = keyof typeof DEMANDE_SOURCES;
 
 /** Niveaux d'urgence d'une demande. */
 export const DEMANDE_URGENCES = {

@@ -1258,6 +1258,11 @@ let inflightStaffSpaces: Promise<void> | null = null;
  *  2. Tables `MeetingRequest` (demandes de rencontre), `MinistryAnnouncement`
  *     (annonces du ministère) et `TreasuryTransaction` (journal financier)
  *     avec leurs index.
+ *  ⭐ V3.74 : colonnes du flux de validation (source, validatedAt…),
+ *     tables `StaffSetting` (paramétrage des emails serviteurs) et
+ *     `StaffNotification` (notifications in-app), et SUPPRESSION de la
+ *     table `ContactRequest` (module « Demandes de contact » retiré du
+ *     back-office — le Secrétariat et la Trésorerie couvrent le besoin).
  *
  * À appeler en tête de CHAQUE route API des espaces (login, dashboards,
  * CRUD, rapports) : idempotent, mémoïsé, un seul DDL en vol — exactement
@@ -1429,6 +1434,60 @@ export function ensureStaffSpaces(): Promise<void> {
       await db.$executeRawUnsafe(
         'CREATE INDEX IF NOT EXISTS "MinistryAnnouncement_publishAt_idx" ON "MinistryAnnouncement"("publishAt")'
       );
+
+      // ⑧ V3.74 — Flux de bout en bout des demandes de rencontre :
+      //    · source (SITE = formulaire public pré-rempli / MANUEL =
+      //      présentiel, saisie secrétaire) ;
+      //    · validatedAt / validatedById : validation par le serviteur
+      //      depuis SON back-office → notification à la secrétaire.
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "MeetingRequest" ADD COLUMN IF NOT EXISTS "source" TEXT NOT NULL DEFAULT 'MANUEL'`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "MeetingRequest" ADD COLUMN IF NOT EXISTS "validatedAt" TIMESTAMPTZ`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "MeetingRequest" ADD COLUMN IF NOT EXISTS "validatedById" TEXT`
+      );
+
+      // ⑨ V3.74 — Paramétrage des espaces (clé/valeur). Clés actuelles :
+      // email_kongo / email_pam (bouton « Paramétrage » du Courrier).
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "StaffSetting" (
+          "key" TEXT NOT NULL,
+          "value" TEXT NOT NULL,
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "StaffSetting_pkey" PRIMARY KEY ("key")
+        )
+      `);
+
+      // ⑩ V3.74 — Notifications in-app des espaces (cloche Secrétariat :
+      // validation d'une demande par le serviteur, etc.).
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "StaffNotification" (
+          "id" TEXT NOT NULL,
+          "espace" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "titre" TEXT NOT NULL,
+          "message" TEXT,
+          "lien" TEXT,
+          "readAt" TIMESTAMPTZ,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "StaffNotification_pkey" PRIMARY KEY ("id")
+        )
+      `);
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "StaffNotification_espace_readAt_idx" ON "StaffNotification"("espace", "readAt")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "StaffNotification_createdAt_idx" ON "StaffNotification"("createdAt")'
+      );
+
+      // ⑪ V3.74 — Module « Demandes de contact » RETIRÉ du back-office
+      // (obsolète : le Secrétariat couvre les demandes de rencontre, la
+      // Trésorerie les finances). La table et son contenu disparaissent —
+      // la page publique /contact redirige vers /rendez-vous.
+      await db.$executeRawUnsafe(`DROP TABLE IF EXISTS "ContactRequest"`);
     })()
       .then(() => {
         staffSpacesOk = true;

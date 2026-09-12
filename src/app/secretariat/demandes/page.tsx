@@ -12,6 +12,17 @@
  *  · saisie MANUELLE d'une demande reçue par téléphone ou en personne
  *    (les demandes du formulaire public /rendez-vous arrivent seules).
  *
+ * ⭐ V3.74 — FLUX DYNAMIQUE SANS RÉ-ÉDITION :
+ *  · une demande déposée sur /rendez-vous (badge « Site public ») arrive
+ *    PRÉ-REMPLIE — toutes les infos sont déjà renseignées ; la secrétaire
+ *    suit le flux et clique « Transmettre » : PLUS DE MODAL intermédiaire,
+ *    la demande part telle quelle (note facultative inline) ;
+ *  · la ré-édition (modal de saisie) reste réservée aux demandes en
+ *    PRÉSENTIEL (badge « Présentiel » — saisie manuelle) ;
+ *  · la transmission fait atterrir la demande dans le BACK-OFFICE du
+ *    serviteur (/admin/demandes) ; quand il la VALIDE, elle passe ici au
+ *    statut « Validée » et la cloche de notification l'annonce.
+ *
  * Données : /secretariat/api/demandes (rôles SECRETARY / SUPER_ADMIN).
  */
 
@@ -52,8 +63,10 @@ interface Demande {
   country: string | null;
   city: string | null;
   status: string;
+  source: string;
   transmissionNote: string | null;
   transmittedAt: string | null;
+  validatedAt: string | null;
   processedAt: string | null;
   trackingCode?: string | null;
   createdAt: string;
@@ -100,9 +113,9 @@ function DemandesContenu() {
   const [detailOuvert, setDetailOuvert] = useState<string | null>(null);
   const [actionEnCours, setActionEnCours] = useState<string | null>(null);
 
-  // Modal transmission.
-  const [transmettreId, setTransmettreId] = useState<string | null>(null);
-  const [noteTransmission, setNoteTransmission] = useState("");
+  // ⭐ V3.74 — note de transmission INLINE (plus de modal intermédiaire) :
+  // une note par demande, tapée directement dans le détail ouvert.
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   // ⭐ V3.69 — retour visuel de la transmission (courriel au serviteur).
   const [confirmation, setConfirmation] = useState<{
@@ -170,8 +183,12 @@ function DemandesContenu() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
       if (action === "transmettre") {
-        setTransmettreId(null);
-        setNoteTransmission("");
+        // La note tapée repart avec la demande — on la nettoie.
+        setNotes((n) => {
+            const copie = { ...n };
+            delete copie[demande.id];
+            return copie;
+          });
         // ⭐ V3.69 — le serviteur est prévenu par email (ou non — signalé).
         const courriel = data.courriel as
           | { envoye: boolean; erreur?: string }
@@ -179,8 +196,8 @@ function DemandesContenu() {
         setConfirmation({
           type: courriel?.envoye ? "succes" : "avertissement",
           texte: courriel?.envoye
-            ? "Demande transmise — le serviteur de Dieu a été prévenu par email."
-            : "Demande transmise, mais l'email de notification n'a pas pu être envoyé" +
+            ? `Demande transmise à ${serviteurDe(demande)?.libelle ?? "serviteur"} — elle attend sa validation dans son back-office, et il a été prévenu par email.`
+            : "Demande transmise (elle attend la validation du serviteur dans son back-office), mais l'email de notification n'a pas pu être envoyé" +
                 (courriel?.erreur ? ` (${courriel.erreur})` : "") +
                 " — prévenez-le autrement si nécessaire.",
         });
@@ -193,6 +210,11 @@ function DemandesContenu() {
       setActionEnCours(null);
     }
   };
+
+  const serviteurDe = (demande: Demande) =>
+    SERVITEURS_RENDEZ_VOUS[
+      demande.servantCode as keyof typeof SERVITEURS_RENDEZ_VOUS
+    ];
 
   const creerDemande = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -402,6 +424,17 @@ function DemandesContenu() {
                         >
                           {statutInfo?.libelle}
                         </span>
+                        {/* ⭐ V3.74 — origine : site public (pré-remplie) vs
+                            présentiel (saisie manuelle). */}
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                            demande.source === "SITE"
+                              ? "bg-[#5B7052]/10 text-[#3F5039] border-[#5B7052]/30"
+                              : "bg-[#8A857C]/10 text-[#6B675F] border-[#8A857C]/30"
+                          }`}
+                        >
+                          {demande.source === "SITE" ? "Site public" : "Présentiel"}
+                        </span>
                         {demande.urgency === "urgente" && (
                           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#B3452E]/10 text-[#B3452E]">
                             URGENTE
@@ -483,12 +516,23 @@ function DemandesContenu() {
                     )}
 
                     {/* Dates clés */}
-                    {(demande.transmittedAt || demande.processedAt) && (
+                    {(demande.transmittedAt || demande.validatedAt || demande.processedAt) && (
                       <div className="flex gap-4 text-[11px] text-[#8A857C] flex-wrap">
                         {demande.transmittedAt && (
                           <span>
                             Transmise le{" "}
                             {new Date(demande.transmittedAt).toLocaleString("fr-FR", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        )}
+                        {demande.validatedAt && (
+                          <span className="font-semibold text-[#A3821C]">
+                            ✓ Validée par le serviteur le{" "}
+                            {new Date(demande.validatedAt).toLocaleString("fr-FR", {
                               day: "numeric",
                               month: "short",
                               hour: "2-digit",
@@ -510,15 +554,53 @@ function DemandesContenu() {
                       </div>
                     )}
 
+                    {/* ⭐ V3.74 — note de transmission INLINE (demande
+                        « Reçue » uniquement) : facultative, tapée ici —
+                        plus de modal intermédiaire. La demande du site
+                        public part PRÉ-REMPLIE telle quelle. */}
+                    {demande.status === "RECUE" && (
+                      <div className="space-y-2">
+                        <textarea
+                          value={notes[demande.id] || ""}
+                          onChange={(e) =>
+                            setNotes((n) => ({
+                              ...n,
+                              [demande.id]: e.target.value,
+                            }))
+                          }
+                          rows={2}
+                          maxLength={3000}
+                          placeholder={
+                            demande.source === "SITE"
+                              ? "Note pour le serviteur (facultative) — la demande arrive pré-remplie, vous pouvez la transmettre telle quelle."
+                              : "Note pour le serviteur (facultative)…"
+                          }
+                          className="w-full px-3.5 py-2.5 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] resize-none"
+                        />
+                        {demande.source === "SITE" && (
+                          <p className="text-[10px] text-[#5B7052] flex items-center gap-1.5">
+                            <Send className="w-3 h-3" />
+                            Déposée sur le site public — toutes les infos sont
+                            déjà renseignées : cliquez directement sur
+                            « Transmettre », la demande atterrira dans le
+                            back-office de {serviteur?.libelle}.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2 pt-1">
                       {demande.status === "RECUE" && (
                         <>
                           <button
-                            onClick={() => {
-                              setTransmettreId(demande.id);
-                              setNoteTransmission("");
-                            }}
+                            onClick={() =>
+                              agir(
+                                demande,
+                                "transmettre",
+                                notes[demande.id]?.trim() || undefined
+                              )
+                            }
                             disabled={actionEnCours === `transmettre:${demande.id}`}
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#5B7052] text-white text-xs font-semibold hover:bg-[#3F5039] transition-colors disabled:opacity-50"
                           >
@@ -541,8 +623,16 @@ function DemandesContenu() {
                           </button>
                         </>
                       )}
-                      {demande.status === "TRANSMISE" && (
+                      {(demande.status === "TRANSMISE" || demande.status === "VALIDEE") && (
                         <>
+                          {demande.status === "TRANSMISE" && (
+                            <p className="w-full text-[10px] text-[#8A857C] flex items-center gap-1.5">
+                              <Clock className="w-3 h-3" />
+                              En attente de validation par {serviteur?.libelle} dans
+                              son back-office — vous serez notifiée dès qu&apos;il la
+                              valide.
+                            </p>
+                          )}
                           <button
                             onClick={() => agir(demande, "traiter")}
                             disabled={actionEnCours === `traiter:${demande.id}`}
@@ -590,65 +680,6 @@ function DemandesContenu() {
           parPage={PAR_PAGE}
           onChange={setPage}
         />
-      )}
-
-      {/* ── Modal : transmission avec note ── */}
-      {transmettreId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/60">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-[#000000]">
-                  Transmettre la demande
-                </h2>
-                <p className="text-xs text-[#8A857C] mt-1">
-                  La demande passe au statut « Transmise » — le serviteur de
-                  Dieu concerné la verra à sa connexion.
-                </p>
-              </div>
-              <button
-                onClick={() => setTransmettreId(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A857C] hover:bg-[#F0E9DE]"
-                aria-label="Fermer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <textarea
-              value={noteTransmission}
-              onChange={(e) => setNoteTransmission(e.target.value)}
-              rows={4}
-              placeholder="Note pour le serviteur (contexte, priorité, éléments de langage…) — facultatif"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] resize-none"
-            />
-            <p className="text-[11px] text-[#8A857C] flex items-center gap-1.5">
-              <Send className="w-3 h-3 text-[#A3821C]" />
-              En transmettant, le serviteur de Dieu reçoit un email avec les
-              détails de la demande et votre note.
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setTransmettreId(null)}
-                className="px-4 py-2 rounded-lg text-sm text-[#8A857C] hover:text-[#000000]"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => {
-                  const demande = items.find((d) => d.id === transmettreId);
-                  if (demande) agir(demande, "transmettre", noteTransmission);
-                }}
-                disabled={actionEnCours?.startsWith("transmettre:")}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#5B7052] text-white text-sm font-semibold hover:bg-[#3F5039] transition-colors disabled:opacity-50"
-              >
-                {actionEnCours?.startsWith("transmettre:") && (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                )}
-                Transmettre
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* ── Modal : saisie manuelle ── */}

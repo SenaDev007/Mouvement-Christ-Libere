@@ -62,7 +62,6 @@ model User {
   blocksInitiated UserBlock[] @relation("UserBlockBlocker")
   blocksReceived  UserBlock[] @relation("UserBlockBlocked")
   testimonies   Testimony[] @relation("TestimonyAuthor")
-  contactRequests ContactRequest[]
   bibleBookmarks BibleBookmark[]
   auditLogs     AuditLog[]
 
@@ -667,27 +666,35 @@ enum CallStatus {
   IN_PROGRESS
 }
 
-// --- Demandes de contact ---
+// --- V3.74 — Paramétrage des espaces (clé/valeur) ---
 
-model ContactRequest {
-  id        String   @id @default(cuid())
-  name      String
-  contact   String   // email ou WhatsApp
-  message   String   @db.Text
-  userId    String?
-  status    ContactStatus @default(PENDING)
-  createdAt DateTime @default(now())
+// Stocke les réglages persistants des espaces Secrétariat/Trésorerie.
+// Clés actuelles : email_kongo / email_pam — adresses réelles de contact
+// des serviteurs de Dieu pour les courriers et transmissions de demandes
+// (bouton « Paramétrage » du module Courrier au serviteur).
+model StaffSetting {
+  key       String   @id
+  value     String
   updatedAt DateTime @updatedAt
-
-  user      User?    @relation(fields: [userId], references: [id])
-
-  @@index([status])
 }
 
-enum ContactStatus {
-  PENDING
-  ANSWERED
-  ARCHIVED
+// --- V3.74 — Notifications in-app des espaces ---
+
+// File de notifications d'un espace (ex. secrétariat). Le serviteur qui
+// VALIDE une demande transmise y dépose une notification DEMANDE_VALIDEE :
+// la cloche de l'espace Secrétariat l'affiche (badge non lues + liste).
+model StaffNotification {
+  id        String    @id @default(cuid())
+  espace    String    // "secretariat" | "tresorerie"
+  type      String    // "DEMANDE_VALIDEE" | "DEMANDE_TRANSMISE"…
+  titre     String
+  message   String?   @db.Text
+  lien      String?   // lien interne de l'espace ("/secretariat/demandes?…")
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([espace, readAt])
+  @@index([createdAt])
 }
 
 // --- Dons ---
@@ -991,7 +998,16 @@ model MeetingRequest {
   urgency           String    @default("normale") // normale | elevee | urgente
   country           String?   // pays du demandeur (facultatif)
   city              String?   // ville du demandeur (facultatif)
-  status            String    @default("RECUE") // RECUE | TRANSMISE | TRAITEE | ARCHIVEE
+  status            String    @default("RECUE") // RECUE | TRANSMISE | VALIDEE | TRAITEE | ARCHIVEE
+  // ⭐ V3.74 — Origine du dépôt : SITE (formulaire public /rendez-vous —
+  // pré-remplie, la secrétaire suit le flux sans ré-éditer) ou MANUEL
+  // (présentiel / téléphone — saisie par la secrétaire).
+  source            String    @default("MANUEL") // SITE | MANUEL
+  // ⭐ V3.74 — Validation par le serviteur de Dieu : la demande transmise
+  // est réceptionnée dans son back-office (/admin/demandes) ; quand il la
+  // VALIDE, la secrétaire reçoit une notification (cloche Secrétariat).
+  validatedAt       DateTime?
+  validatedById     String?
   // Note accompagnant la transmission au serviteur (contexte, priorité,
   // éléments de langage de la secrétaire).
   transmissionNote  String?   @db.Text

@@ -50,6 +50,31 @@ export interface SessionStaff {
   role: string;
 }
 
+/**
+ * ⭐ V3.74 — Résout le code serviteur (« kongo » | « pam » | null) d'un
+ * compte User, depuis son nom (le module de réception /admin/demandes
+ * montre au pasteur Congo SES demandes, à la sœur Pam les siennes).
+ * Best-effort : compte introuvable → null (vue complète en secours).
+ */
+export async function resoudreCodeServiteur(
+  userId: string
+): Promise<"kongo" | "pam" | null> {
+  try {
+    const { db } = await import("@/lib/db");
+    const utilisateur = await db.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+    const nom = (utilisateur?.name || "").toLowerCase();
+    if (nom.includes("kongo")) return "kongo";
+    if (nom === "pam" || nom.startsWith("pam") || nom.includes("pam"))
+      return "pam";
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /** Vérifie la signature du token et extrait { userId, role }. */
 export function lireSessionStaff(token: string): SessionStaff | null {
   if (!verifySessionToken(token)) return null;

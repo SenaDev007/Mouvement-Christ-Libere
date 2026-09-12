@@ -24,9 +24,11 @@ import {
  *                            automatique (noreply@… — détails + note) ;
  *                            l'échec éventuel de l'email n'annule pas la
  *                            transmission (best-effort, signalé en réponse).
+ *                            ⭐ V3.74 : la demande atterrit EN PLUS dans le
+ *                            back-office du serviteur (/admin/demandes) —
+ *                            il la réceptionne et la VALIDE de là.
  *   action = "traiter"     — réponse donnée / rendez-vous accordé
- *                            (TRANSMISE → TRAITEE). Le serviteur lui-même
- *                            peut le faire (il a accès à l'espace).
+ *                            (TRANSMISE ou VALIDEE → TRAITEE).
  *   action = "archiver"    — sortie du registre actif sans traitement.
  *   action = "rouvrir"     — retour à l'état « Reçue » (erreur de saisie…).
  *
@@ -88,9 +90,11 @@ export async function PATCH(
         };
         break;
       case "traiter":
-        if (demande.status !== "TRANSMISE") {
+        // ⭐ V3.74 — une demande VALIDEE (par le serviteur) peut être
+        // marquée traitée, comme une simple TRANSMISE.
+        if (demande.status !== "TRANSMISE" && demande.status !== "VALIDEE") {
           return NextResponse.json(
-            { error: "Seule une demande « Transmise » peut être marquée traitée." },
+            { error: "Seule une demande « Transmise » ou « Validée » peut être marquée traitée." },
             { status: 409 }
           );
         }
@@ -114,6 +118,9 @@ export async function PATCH(
           status: "RECUE",
           transmittedAt: null,
           processedAt: null,
+          // ⭐ V3.74 — la validation du serviteur est aussi réinitialisée.
+          validatedAt: null,
+          validatedById: null,
           handledById: acteurId,
         };
         break;
@@ -136,7 +143,7 @@ export async function PATCH(
             serviteur: demande.servantCode,
             statutPrecedent: demande.status,
             statut: modifiee.status,
-          },
+          } as never,
         },
       });
     } catch (e) {

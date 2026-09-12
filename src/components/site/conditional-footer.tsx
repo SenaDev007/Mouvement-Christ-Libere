@@ -35,7 +35,8 @@ const navLinks = [
   { label: "Vidéos & Lives", href: "/videos" },
   { label: "Communauté", href: "/communaute" },
   { label: "Contribuer", href: "/contribuer" },
-  { label: "Contact", href: "/contact" },
+  // ⭐ V3.74 — page /contact retirée (redirigée) : contact = rendez-vous.
+  { label: "Contact", href: "/rendez-vous" },
 ];
 
 export function ConditionalFooter() {

@@ -5,6 +5,8 @@ import { exigerSession, ROLES_SECRETARIAT } from "@/lib/staff-space/session";
 import {
   envoyerEmail,
   listerServiteursDestinataires,
+  lireEmailParametre,
+  enregistrerEmailParametre,
   CATEGORIES_EMAIL,
 } from "@/lib/email";
 import {
@@ -16,14 +18,16 @@ import {
 /**
  * ⭐ V3.69 — Courrier du secrétariat aux serviteurs de Dieu.
  *
- *   GET  /secretariat/api/courrier — destinataires (SUPER_ADMIN : Pam,
- *        Pasteur Kongo) + historique des courriers envoyés.
+ *   GET  /secretariat/api/courrier — destinataires + historique des
+ *        courriers envoyés + paramétrage des emails (⭐ V3.74).
  *   POST /secretariat/api/courrier
- *        · { toUserId, sujet, message } — envoie un courriel au serviteur
- *          choisi (Reply-To = email de la secrétaire : la réponse lui
- *          revient directement) ;
- *        · { action: "test" } — email de test à sa propre adresse, pour
- *          vérifier la configuration Resend (noreply@…).
+ *        · { action: "parametrer", emailKongo?, emailPam? } — ⭐ V3.74 :
+ *          enregistre les VRAIES adresses des serviteurs (StaffSetting) —
+ *          prioritaire sur les env vars et les comptes ;
+ *        · { toUserId, sujet, message } — envoie un courriel au destinataire
+ *          (id « serviteur:kongo » / « serviteur:pam » / « user:<id> ») avec
+ *          Reply-To = email de la secrétaire ;
+ *        · { action: "test" } — email de test à sa propre adresse.
  *
  * Chaque envoi est consigné dans OutgoingEmail + AuditLog (gouvernance).
  * ⚠️ Rôles : SECRETARY, SUPER_ADMIN.
@@ -42,6 +46,13 @@ export async function GET(request: NextRequest) {
 
     const destinataires = await listerServiteursDestinataires();
 
+    // ⭐ V3.74 — paramétrage actuel des emails serviteurs (bouton
+    // « Paramétrage ») + source effective de chaque adresse.
+    const [paramKongo, paramPam] = await Promise.all([
+      lireEmailParametre("kongo"),
+      lireEmailParametre("pam"),
+    ]);
+
     const historique = await db.outgoingEmail.findMany({
       where: { category: CATEGORIES_EMAIL.COURRIER_SERVITEUR },
       orderBy: { createdAt: "desc" },
@@ -57,7 +68,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ destinataires, historique });
+    return NextResponse.json({
+      destinataires,
+      historique,
+      parametres: { emailKongo: paramKongo, emailPam: paramPam },
+    });
   } catch (error) {
     console.error("[secretariat/api/courrier] GET error:", error);
     return NextResponse.json(
@@ -77,12 +92,15 @@ export async function POST(request: NextRequest) {
     await ensureEmailTables();
 
     const body = await request.json().catch(() => ({}));
-    const { toUserId, sujet, message, action } = body as {
-      toUserId?: string;
-      sujet?: string;
-      message?: string;
-      action?: string;
-    };
+    const { toUserId, sujet, message, action, emailKongo, emailPam } =
+      body as {
+        toUserId?: string;
+        sujet?: string;
+        message?: string;
+        action?: string;
+        emailKongo?: string;
+        emailPam?: string;
+      };
 
     // L'expéditrice (secrétaire connectée) — son email sert de Reply-To.
     const expeditrice = await db.user.findUnique({
@@ -120,6 +138,78 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // ── ⭐ V3.74 Mode « parametrer » : les VRAIES adresses des serviteurs.
+    // Les adresses par défaut (seed / env / compte) peuvent être factices
+    // ou périmées : la secrétaire consigne ici les adresses à utiliser
+    // pour l'envoi aux serviteurs (courriers ET transmissions de demandes).
+    if (action === "parametrer") {
+      const propres: string[] = [];
+
+      for (const [code, brute] of [
+        ["kongo", emailKongo],
+        ["pam", emailPam],
+      ] as const) {
+        if (brute === undefined) continue; // champ non modifié
+        const nettoyee = brute.trim();
+        if (nettoyee === "") {
+          // Champ vidé → on efface le paramétrage (retour à la résolution
+          // env/compte par défaut).
+          try {
+            await db.staffSetting.delete({
+              where: { key: code === "kongo" ? "email_kongo" : "email_pam" },
+            });
+            propres.push(code === "kongo" ? "Pasteur Kongo : paramétrage effacé" : "Sœur Pam : paramétrage effacé");
+          } catch {
+            // clé absente — rien à effacer.
+          }
+          continue;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nettoyee)) {
+          return NextResponse.json(
+            {
+              error: `Adresse invalide pour ${code === "kongo" ? "Pasteur Kongo" : "Sœur Pam"} : ${nettoyee}`,
+            },
+            { status: 400 }
+          );
+        }
+        await enregistrerEmailParametre(code, nettoyee.toLowerCase());
+        propres.push(
+          `${code === "kongo" ? "Pasteur Kongo" : "Sœur Pam"} : ${nettoyee}`
+        );
+      }
+
+      if (propres.length === 0) {
+        return NextResponse.json(
+          { error: "Aucune adresse fournie (emailKongo / emailPam)." },
+          { status: 400 }
+        );
+      }
+
+      // Gouvernance : trace du paramétrage (sans l'adresse complète).
+      try {
+        await db.auditLog.create({
+          data: {
+            action: "COURRIER_PARAMETRAGE",
+            userId: auteurId,
+            metadata: {
+              champs: propres.map((p) => p.split(" : ")[0]),
+            } as never,
+          },
+        });
+      } catch (e) {
+        console.warn("[secretariat/api/courrier] AuditLog impossible :", e);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Paramétrage enregistré — ${propres.join(" · ")}. Les prochains courriers partiront à ces adresses.`,
+        parametres: {
+          emailKongo: await lireEmailParametre("kongo"),
+          emailPam: await lireEmailParametre("pam"),
+        },
+      });
+    }
+
     // ── Courrier au serviteur. ───────────────────────────────────────
     if (!toUserId || !sujet?.trim() || !message?.trim()) {
       return NextResponse.json(
@@ -140,13 +230,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const destinataire = await db.user.findUnique({
-      where: { id: toUserId },
-      select: { id: true, name: true, email: true, role: true },
-    });
-    if (!destinataire?.email || destinataire.role !== "SUPER_ADMIN") {
+    const destinataire = await resoudreDestinataireCourrier(toUserId);
+    if (!destinataire) {
       return NextResponse.json(
-        { error: "Destinataire invalide — seuls les serviteurs de Dieu (super admins) peuvent recevoir un courrier." },
+        { error: "Destinataire invalide — serviteur ou compte super admin introuvable." },
         { status: 400 }
       );
     }
@@ -210,4 +297,52 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * ⭐ V3.74 — Résolution d'un destinataire de courrier depuis son
+ * identifiant de liste : « serviteur:kongo » / « serviteur:pam » (adresse
+ * résolue : paramétrage → env → compte) ou « user:<id> » (compte
+ * SUPER_ADMIN — délégués éventuels).
+ */
+async function resoudreDestinataireCourrier(
+  identifiant: string
+): Promise<{ id: string; name: string | null; email: string } | null> {
+  if (identifiant.startsWith("serviteur:")) {
+    const code = identifiant.slice("serviteur:".length).toLowerCase();
+    if (code !== "kongo" && code !== "pam") return null;
+    const resolu = await (
+      await import("@/lib/email")
+    ).resoudreEmailServiteur(code);
+    return { id: identifiant, name: resolu.nom, email: resolu.email };
+  }
+
+  if (identifiant.startsWith("user:")) {
+    const utilisateur = await db.user.findUnique({
+      where: { id: identifiant.slice("user:".length) },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    if (!utilisateur?.email || utilisateur.role !== "SUPER_ADMIN") {
+      return null;
+    }
+    return {
+      id: identifiant,
+      name: utilisateur.name,
+      email: utilisateur.email,
+    };
+  }
+
+  // Compatibilité : ancien format (identifiant = id de compte User).
+  const utilisateur = await db.user.findUnique({
+    where: { id: identifiant },
+    select: { id: true, name: true, email: true, role: true },
+  });
+  if (!utilisateur?.email || utilisateur.role !== "SUPER_ADMIN") {
+    return null;
+  }
+  return {
+    id: utilisateur.id,
+    name: utilisateur.name,
+    email: utilisateur.email,
+  };
 }

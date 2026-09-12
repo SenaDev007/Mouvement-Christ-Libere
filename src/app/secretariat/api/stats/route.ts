@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const [
       recues,
       transmises,
+      validees,
       traitees,
       archivees,
       urgentesAttente,
@@ -40,6 +41,8 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       db.meetingRequest.count({ where: { status: "RECUE" } }),
       db.meetingRequest.count({ where: { status: "TRANSMISE" } }),
+      // ⭐ V3.74 — demandes validées par les serviteurs (notification).
+      db.meetingRequest.count({ where: { status: "VALIDEE" } }),
       db.meetingRequest.count({ where: { status: "TRAITEE" } }),
       db.meetingRequest.count({ where: { status: "ARCHIVEE" } }),
       db.meetingRequest.count({
@@ -83,6 +86,7 @@ export async function GET(request: NextRequest) {
       demandes: {
         recues,
         transmises,
+        validees,
         traitees,
         archivees,
         urgentesAttente,

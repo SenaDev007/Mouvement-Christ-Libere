@@ -87,7 +87,9 @@ const navigationLinks = [
       { href: "/intercession", label: "Intercession" },
       { href: "/disperses", label: "Dispersés d'Israël" },
       { href: "/contribuer", label: "Contribuer (Don/Dîme)" },
-      { href: "/contact", label: "Contact" },
+      // ⭐ V3.74 — « Contact » retiré : le formulaire public de contact a
+      // disparu (module back-office supprimé) — tout passe par la demande
+      // de rendez-vous, porte d'entrée du secrétariat.
       // ⭐ V3.67 — Voix publique du secrétariat : annonces officielles du
       // ministère (page publique /annonces) + demande de rencontre avec un
       // serviteur de Dieu (/rendez-vous — porte d'entrée du secrétariat).

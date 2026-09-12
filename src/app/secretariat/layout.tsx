@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SpaceShell, type SectionNav } from "@/components/staff-space/space-shell";
+import { ClocheNotifications } from "@/components/staff-space/notifications";
 import { LayoutDashboard, Inbox, Megaphone, FileText, ShieldCheck, Mail } from "lucide-react";
 
 /**
@@ -15,6 +16,10 @@ import { LayoutDashboard, Inbox, Megaphone, FileText, ShieldCheck, Mail } from "
  * compte les demandes à examiner (RECUE + urgentes en attente) et se
  * rafraîchit par polling toutes les 60 s — visible sur TOUTES les pages
  * de l'espace, la secrétaire ne peut plus passer à côté d'une demande.
+ *
+ * ⭐ V3.74 — CLOCHE DE NOTIFICATIONS (sidebar + barre mobile) : quand un
+ * serviteur VALIDE une demande transmise (back-office /admin/demandes),
+ * la secrétaire est notifiée ici (badge + panneau).
  */
 
 function useBadgeDemandes(): string | null {
@@ -30,7 +35,9 @@ function useBadgeDemandes(): string | null {
         const json = await res.json();
         if (annule) return;
         const aExaminer =
-          (json?.demandes?.recues || 0) + (json?.demandes?.transmises || 0);
+          (json?.demandes?.recues || 0) +
+          (json?.demandes?.transmises || 0) +
+          (json?.demandes?.validees || 0);
         setBadge(aExaminer > 0 ? String(aExaminer) : null);
       } catch {
         // silencieux : le badge n'est pas critique.
@@ -110,6 +117,7 @@ export default function SecretariatLayout({
       prefixeEspace="/secretariat"
       libelleSousDomaine="secretariat"
       sections={SECTIONS}
+      actionsSupplementaires={<ClocheNotifications prefixeEspace="/secretariat" />}
     >
       {children}
     </SpaceShell>

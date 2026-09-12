@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
       lignes.push(
         [
           "Déposée le",
+          "Source",
           "Statut",
           "Code de suivi",
           "Demandeur",
@@ -86,15 +87,17 @@ export async function GET(request: NextRequest) {
           "Pays",
           "Ville",
           "Transmise le",
+          "Validée le",
           "Traitée le",
         ]
           .map(separer)
           .join(";")
       );
-      for (const d of items as typeof items & { transmittedAt?: Date | null; processedAt?: Date | null; trackingCode?: string | null; urgency?: string; country?: string | null; city?: string | null }[]) {
+      for (const d of items as typeof items & { transmittedAt?: Date | null; processedAt?: Date | null; validatedAt?: Date | null; source?: string; trackingCode?: string | null; urgency?: string; country?: string | null; city?: string | null }[]) {
         lignes.push(
           [
             new Date(d.createdAt).toISOString().substring(0, 10),
+            d.source === "SITE" ? "Site public" : "Présentiel",
             DEMANDE_STATUTS[d.status as keyof typeof DEMANDE_STATUTS]?.libelle ?? d.status,
             d.trackingCode || "",
             d.requesterName,
@@ -105,6 +108,7 @@ export async function GET(request: NextRequest) {
             d.country || "",
             d.city || "",
             d.transmittedAt ? new Date(d.transmittedAt).toISOString().substring(0, 10) : "",
+            d.validatedAt ? new Date(d.validatedAt).toISOString().substring(0, 10) : "",
             d.processedAt ? new Date(d.processedAt).toISOString().substring(0, 10) : "",
           ]
             .map((v) => separer(String(v)))
@@ -191,6 +195,10 @@ export async function POST(request: NextRequest) {
         country: country?.trim()?.substring(0, 60) || null,
         city: city?.trim()?.substring(0, 60) || null,
         status: "RECUE",
+        // ⭐ V3.74 — origine MANUEL : saisie présentiel / téléphone (la
+        // ré-édition du modal est réservée à ce cas ; les demandes du site
+        // public arrivent pré-remplies avec source SITE).
+        source: "MANUEL",
         handledById: userId,
         trackingCode: codeSuivi,
       },

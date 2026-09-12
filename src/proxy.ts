@@ -11,7 +11,12 @@ const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/api/login"];
 // Redirecting… » au lieu de 401). ⚠️ N'ajouter ICI que des routes vérifiées
 // portant leur propre exigerSession — les routes génériques
 // /admin/api/[entity] n'en ont PAS et dépendent de la garde du proxy.
-const ADMIN_API_AVEC_GARDE_PROPRE = ["/admin/api/staff"];
+// ⭐ V3.74 — /admin/api/demandes : module de réception des serviteurs
+// (garde exigerSession SUPER_ADMIN — 401/403 JSON).
+const ADMIN_API_AVEC_GARDE_PROPRE = [
+  "/admin/api/staff",
+  "/admin/api/demandes",
+];
 
 // ⭐ V3.44 — Back-office sur son propre sous-domaine : admin.mouvementchristlibere.com
 // (DNS Cloudflare → Vercel : le Host d'origine est préservé jusqu'à l'app Next.js).

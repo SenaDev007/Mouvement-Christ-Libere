@@ -146,6 +146,11 @@ export async function POST(request: NextRequest) {
         country: country?.trim()?.substring(0, 60) || null,
         city: city?.trim()?.substring(0, 60) || null,
         status: "RECUE",
+        // ⭐ V3.74 — origine SITE : la demande arrive PRÉ-REMPLIE dans le
+        // flux de la secrétaire (toutes les infos déjà renseignées) —
+        // elle suit le flux et transmet SANS ré-éditer ; la ré-édition
+        // (modal de saisie) reste réservée aux demandes en présentiel.
+        source: "SITE",
         trackingCode: codeSuivi,
       },
       select: { id: true },

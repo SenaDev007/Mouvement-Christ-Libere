@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
         servantCode: true,
         createdAt: true,
         transmittedAt: true,
+        validatedAt: true,
         processedAt: true,
       },
     });
@@ -96,6 +97,8 @@ export async function GET(request: NextRequest) {
       serviteur: serviteur?.libelle || null,
       deposeeLe: demande.createdAt,
       transmiseLe: demande.transmittedAt,
+      // ⭐ V3.74 — validation par le serviteur (étape du suivi public).
+      valideeLe: demande.validatedAt,
       traiteeLe: demande.processedAt,
     });
   } catch (error) {

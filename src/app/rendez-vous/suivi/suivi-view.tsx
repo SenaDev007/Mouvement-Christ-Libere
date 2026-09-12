@@ -23,6 +23,7 @@ import {
   Archive,
   Clock,
   CalendarHeart,
+  BadgeCheck,
 } from "lucide-react";
 
 interface ReponseSuivi {
@@ -31,6 +32,7 @@ interface ReponseSuivi {
   serviteur: string | null;
   deposeeLe: string;
   transmiseLe: string | null;
+  valideeLe?: string | null;
   traiteeLe: string | null;
 }
 
@@ -89,7 +91,8 @@ function SuiviContenu() {
   }, [searchParams, consulter]);
 
   const etape = (r: ReponseSuivi): number => {
-    if (r.statut === "TRAITEE") return 3;
+    if (r.statut === "TRAITEE") return r.valideeLe ? 4 : 3;
+    if (r.statut === "VALIDEE") return 4;
     if (r.statut === "TRANSMISE") return 2;
     if (r.statut === "ARCHIVEE") return 0;
     return 1;
@@ -196,7 +199,10 @@ function SuiviContenu() {
                 </div>
               </div>
             ) : (
-              /* Stepper Reçue → Transmise → Traitée */
+              /* Stepper Reçue → Transmise → (Validée) → Traitée
+                 ⭐ V3.74 — l'étape « Validée » n'apparaît que si le
+                 serviteur a réellement validé (nouveau flux) : les
+                 anciennes demandes gardent leur 3 étapes. */
               <ol className="space-y-0">
                 {[
                   {
@@ -211,11 +217,24 @@ function SuiviContenu() {
                     date: resultat.transmiseLe,
                     atteinte: etape(resultat) >= 2,
                   },
+                  ...(resultat.valideeLe || resultat.statut === "VALIDEE"
+                    ? [
+                        {
+                          icone: BadgeCheck,
+                          libelle: "Validée par le serviteur de Dieu",
+                          date: resultat.valideeLe,
+                          atteinte:
+                            resultat.statut === "VALIDEE" ||
+                            (resultat.statut === "TRAITEE" &&
+                              !!resultat.valideeLe),
+                        },
+                      ]
+                    : []),
                   {
                     icone: CheckCircle2,
                     libelle: "Traitée — réponse / rendez-vous",
                     date: resultat.traiteeLe,
-                    atteinte: etape(resultat) >= 3,
+                    atteinte: resultat.statut === "TRAITEE",
                   },
                 ].map((etapeItem, i, tous) => {
                   const Icone = etapeItem.icone;

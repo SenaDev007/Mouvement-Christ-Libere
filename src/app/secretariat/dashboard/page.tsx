@@ -22,6 +22,7 @@ import {
   ArrowUpRight,
   Loader2,
   FileText,
+  BadgeCheck,
 } from "lucide-react";
 import { DEMANDE_STATUTS, SERVITEURS_RENDEZ_VOUS } from "@/lib/staff-space/constants";
 
@@ -29,6 +30,7 @@ interface StatsSecretariat {
   demandes: {
     recues: number;
     transmises: number;
+    validees: number;
     traitees: number;
     archivees: number;
     urgentesAttente: number;
@@ -144,6 +146,21 @@ export default function SecretariatDashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* ⭐ V3.74 — validations des serviteurs en attente de clôture */}
+      {(d?.validees ?? 0) > 0 && (
+        <Link
+          href="/secretariat/demandes?statut=VALIDEE"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/40 hover:bg-[#C9A227]/20 transition-colors"
+        >
+          <BadgeCheck className="w-5 h-5 text-[#A3821C] flex-shrink-0" />
+          <p className="text-sm text-[#000000]">
+            <strong>{d?.validees} demande{d && d.validees > 1 ? "s" : ""} validée{d && d.validees > 1 ? "s" : ""}</strong>{" "}
+            par les serviteurs de Dieu — à marquer traitées.
+          </p>
+          <ArrowUpRight className="w-4 h-4 text-[#A3821C] ml-auto flex-shrink-0" />
+        </Link>
+      )}
+
       {/* En-tête */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#000000] via-[#161513] to-[#000000] p-6 md:p-8 text-white">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />

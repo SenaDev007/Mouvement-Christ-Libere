@@ -32,6 +32,8 @@ export const CATEGORIES_EMAIL = {
   OTP_RESET: "OTP_RESET",
   COURRIER_SERVITEUR: "COURRIER_SERVITEUR",
   DEMANDE_TRANSMISE: "DEMANDE_TRANSMISE",
+  // ⭐ V3.74 — serviteur a validé une demande : notification secrétaire.
+  DEMANDE_VALIDEE: "DEMANDE_VALIDEE",
   TEST: "TEST",
 } as const;
 
@@ -267,29 +269,85 @@ const EMAILS_SERVITEURS_DEFAUT: Record<string, string> = {
   pam: "pam@christ-libere.org",
 };
 
+/** Clés du paramétrage des emails serviteurs (table StaffSetting). */
+export const CLES_PARAMETRAGE_EMAIL: Record<string, string> = {
+  kongo: "email_kongo",
+  pam: "email_pam",
+};
+
+/**
+ * ⭐ V3.74 — Lit le paramétrage des adresses email des serviteurs
+ * (bouton « Paramétrage » du module Courrier au serviteur — la secrétaire
+ * y consigne les VRAIES adresses à utiliser, les adresses historiques du
+ * seed étant des adresses factices).
+ * Retourne null si la clé n'est pas paramétrée (ou table absente).
+ */
+export async function lireEmailParametre(
+  servantCode: string
+): Promise<string | null> {
+  const cle = CLES_PARAMETRAGE_EMAIL[servantCode?.trim().toLowerCase() || ""];
+  if (!cle) return null;
+  try {
+    const reglage = await db.staffSetting.findUnique({ where: { key: cle } });
+    const valeur = reglage?.value?.trim();
+    return valeur && valeur.includes("@") ? valeur : null;
+  } catch (e) {
+    // Table absente ou indisponible — on retombe sur la résolution standard.
+    console.warn("[email] Lecture StaffSetting impossible :", e);
+    return null;
+  }
+}
+
+/**
+ * Enregistre le paramétrage de l'email d'un serviteur (upsert).
+ * ⚠️ réservé aux routes du secrétariat (garde de session en amont).
+ */
+export async function enregistrerEmailParametre(
+  servantCode: string,
+  email: string
+): Promise<void> {
+  const cle = CLES_PARAMETRAGE_EMAIL[servantCode?.trim().toLowerCase() || ""];
+  if (!cle) throw new Error("Serviteur inconnu (pam ou kongo).");
+  await db.staffSetting.upsert({
+    where: { key: cle },
+    update: { value: email },
+    create: { key: cle, value: email },
+  });
+}
+
 /**
  * Résout l'adresse email du serviteur destinataire d'une demande
  * (« pam » | « kongo ») :
- *   ① variable d'environnement EMAIL_KONGO / EMAIL_PAM (prioritaire) ;
- *   ② compte SUPER_ADMIN correspondant en base (recherche par nom) ;
- *   ③ adresse historique du seed (dernier recours).
+ *   ① ⭐ V3.74 paramétrage du secrétariat (StaffSetting — bouton
+ *      « Paramétrage » du Courrier) : la VRAIE adresse choisie ;
+ *   ② variable d'environnement EMAIL_KONGO / EMAIL_PAM ;
+ *   ③ compte SUPER_ADMIN correspondant en base (recherche par nom) ;
+ *   ④ adresse historique du seed (dernier recours).
  */
 export async function resoudreEmailServiteur(
   servantCode: string
 ): Promise<{ email: string; nom: string }> {
   const code = servantCode?.trim().toLowerCase() || "kongo";
+  const nomParDefaut =
+    code === "pam" ? "Sœur Pam" : "Pasteur Kongo";
 
-  // ① Variable d'environnement explicite.
+  // ① Paramétrage du secrétariat (prioritaire — adresses réelles).
+  const parametre = await lireEmailParametre(code);
+  if (parametre) {
+    return { email: parametre, nom: nomParDefaut };
+  }
+
+  // ② Variable d'environnement explicite.
   const envVar =
     code === "pam" ? process.env.EMAIL_PAM : process.env.EMAIL_KONGO;
   if (envVar && envVar.includes("@")) {
     return {
       email: envVar,
-      nom: code === "pam" ? "Sœur Pam" : "Pasteur Kongo",
+      nom: nomParDefaut,
     };
   }
 
-  // ② Comptes SUPER_ADMIN en base — l'email réel prime sur le seed.
+  // ③ Comptes SUPER_ADMIN en base — l'email réel prime sur le seed.
   try {
     const supers = await db.user.findMany({
       where: { role: "SUPER_ADMIN" },
@@ -305,27 +363,52 @@ export async function resoudreEmailServiteur(
     if (correspondance?.email) {
       return {
         email: correspondance.email,
-        nom: correspondance.name || (code === "pam" ? "Sœur Pam" : "Pasteur Kongo"),
+        nom: correspondance.name || nomParDefaut,
       };
     }
   } catch (e) {
     console.warn("[email] Recherche SUPER_ADMIN impossible :", e);
   }
 
-  // ③ Dernier recours.
+  // ④ Dernier recours.
   return {
     email: EMAILS_SERVITEURS_DEFAUT[code] || EMAILS_SERVITEURS_DEFAUT.kongo,
-    nom: code === "pam" ? "Sœur Pam" : "Pasteur Kongo",
+    nom: nomParDefaut,
   };
 }
 
 /**
  * Liste des destinataires « serviteurs » pour le courrier du secrétariat :
- * les comptes SUPER_ADMIN (Pam, Pasteur Kongo) disposant d'un email.
+ *  · ⭐ V3.74 Pasteur Kongo et Sœur Pam TOUJOURS présents (id
+ *    « serviteur:kongo » / « serviteur:pam ») avec l'adresse résolue
+ *    (paramétrage → env → compte) — même sans compte SUPER_ADMIN ;
+ *  · les autres comptes SUPER_ADMIN disposant d'un email (id « user:… »).
  */
 export async function listerServiteursDestinataires(): Promise<
-  Array<{ id: string; nom: string; email: string }>
+  Array<{ id: string; nom: string; email: string; parametre?: boolean }>
 > {
+  const [emailKongo, emailPam] = await Promise.all([
+    resoudreEmailServiteur("kongo"),
+    resoudreEmailServiteur("pam"),
+  ]);
+  const result: Array<{
+    id: string;
+    nom: string;
+    email: string;
+    parametre?: boolean;
+  }> = [
+    {
+      id: "serviteur:kongo",
+      nom: emailKongo.nom,
+      email: emailKongo.email,
+    },
+    {
+      id: "serviteur:pam",
+      nom: emailPam.nom,
+      email: emailPam.email,
+    },
+  ];
+
   try {
     const supers = await db.user.findMany({
       where: { role: "SUPER_ADMIN" },
@@ -333,9 +416,16 @@ export async function listerServiteursDestinataires(): Promise<
       orderBy: { name: "asc" },
       take: 10,
     });
-    return supers.map((s) => ({ id: s.id, nom: s.name || s.email, email: s.email }));
+    for (const s of supers) {
+      const nom = (s.name || "").toLowerCase();
+      // Les deux serviteurs référencés ci-dessus ne sont pas dupliqués.
+      if (nom.includes("kongo") || nom === "pam" || nom.startsWith("pam")) {
+        continue;
+      }
+      result.push({ id: `user:${s.id}`, nom: s.name || s.email, email: s.email });
+    }
   } catch (e) {
     console.warn("[email] Liste des serviteurs impossible :", e);
-    return [];
   }
+  return result;
 }

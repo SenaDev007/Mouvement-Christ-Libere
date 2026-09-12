@@ -37,7 +37,9 @@ const FOOTER_LINKS = {
     links: [
       { label: "Politique de confidentialité", href: "/confidentialite" },
       { label: "Conditions d'utilisation", href: "/conditions" },
-      { label: "Contact", href: "/contact" },
+      // ⭐ V3.74 — page /contact retirée (redirigée) : le contact passe
+      // par la demande de rendez-vous, entrée du secrétariat.
+      { label: "Demander un rendez-vous", href: "/rendez-vous" },
     ],
   },
 };

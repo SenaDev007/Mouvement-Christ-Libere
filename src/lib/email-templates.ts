@@ -327,3 +327,68 @@ export function templateTest(): { html: string; text: string } {
     text: `Email de test — l'envoi depuis noreply@mouvementchristlibere.com fonctionne. — Mouvement Christ Libéré`,
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// ⑤ ⭐ V3.74 — Demande VALIDÉE par le serviteur (notification secrétaire)
+// ═══════════════════════════════════════════════════════════════════════
+
+interface OptionsDemandeValidee {
+  /** Prénom/nom de la secrétaire destinataire du message. */
+  secretaire: string;
+  /** Serviteur qui vient de valider (ex. « Pasteur Kongo »). */
+  serviteur: string;
+  demande: {
+    requesterName: string;
+    subject: string;
+    trackingCode?: string | null;
+  };
+}
+
+export function sujetDemandeValidee(nomDemandeur: string): string {
+  return `Demande validée par le serviteur — ${nomDemandeur}`;
+}
+
+export function templateDemandeValidee(
+  options: OptionsDemandeValidee
+): { html: string; text: string } {
+  const html = enveloppe(
+    `Demande validée — ${options.demande.requesterName}`,
+    `
+    <p style="margin:0 0 6px 0;">Shalom ${echapperHtml(options.secretaire)},</p>
+    <p style="margin:0 0 8px 0;">
+      <strong style="color:${OR};">${echapperHtml(options.serviteur)}</strong>
+      vient de <strong>valider</strong> la demande de rencontre que vous lui
+      aviez transmise. Elle passe au statut « Validée » dans votre registre
+      du secr&eacute;tariat — vous pouvez la marquer trait&eacute;e une fois le
+      rendez-vous donn&eacute;.
+    </p>
+
+    ${blocInfo([
+      { libelle: "Demandeur", valeur: options.demande.requesterName },
+      { libelle: "Objet", valeur: options.demande.subject },
+      ...(options.demande.trackingCode
+        ? [{ libelle: "Code de suivi", valeur: options.demande.trackingCode }]
+        : []),
+      { libelle: "Validée par", valeur: options.serviteur },
+    ])}
+
+    <p style="margin:0; font-size:13px; color:${GRIS};">
+      La cloche de notifications de l&apos;espace Secr&eacute;tariat affiche
+      &eacute;galement cette validation.
+    </p>
+    `
+  );
+
+  const text = `Shalom ${options.secretaire},
+
+${options.serviteur} vient de valider la demande de rencontre que vous lui aviez transmise.
+
+Demandeur : ${options.demande.requesterName}
+Objet : ${options.demande.subject}
+${options.demande.trackingCode ? "Code de suivi : " + options.demande.trackingCode + "\n" : ""}
+La demande passe au statut « Validée » dans le registre du secrétariat.
+
+— Mouvement Christ Libéré (mouvementchristlibere.com)`;
+
+  return { html, text };
+}

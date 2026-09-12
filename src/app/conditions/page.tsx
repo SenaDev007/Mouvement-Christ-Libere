@@ -240,7 +240,7 @@ export default function ConditionsPage() {
           <Section id="contact-cgu" icon={<Mail className="w-5 h-5 text-[#C9A227]" />} title="12. Contact et droit applicable">
             <p>
               Toute question relative aux présentes CGU peut être adressée via la{" "}
-              <Link href="/contact" className="text-[#C9A227] font-semibold hover:underline">page contact</Link>.
+              <Link href="/rendez-vous" className="text-[#C9A227] font-semibold hover:underline">page de demande de rendez-vous</Link>.
               Les présentes conditions sont soumises au droit applicable dans le pays de siège du
               ministère ; en cas de litige, les parties s&apos;engagent à rechercher d&apos;abord une
               solution amiable, dans un esprit de réconciliation évangélique.

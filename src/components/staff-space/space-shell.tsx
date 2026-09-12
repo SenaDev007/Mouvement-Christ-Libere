@@ -39,6 +39,10 @@ export interface SpaceShellProps {
   libelleSousDomaine: string;
   /** Sections de navigation. */
   sections: SectionNav[];
+  /** ⭐ V3.74 — Actions d'en-tête (cloche de notifications de l'espace) —
+   *  rendues dans la sidebar, à droite du logo, visibles sur TOUTES les
+   *  pages de l'espace. */
+  actionsSupplementaires?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -47,6 +51,7 @@ export function SpaceShell({
   prefixeEspace,
   libelleSousDomaine,
   sections,
+  actionsSupplementaires,
   children,
 }: SpaceShellProps) {
   const router = useRouter();
@@ -94,7 +99,7 @@ export function SpaceShell({
         )}
       >
         <div className="flex flex-col h-full">
-          {/* En-tête : logo + identité de l'espace */}
+          {/* En-tête : logo + identité de l'espace + actions ⭐ V3.74 */}
           <div className="px-5 py-5 border-b border-[#C9A227]/15">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -119,13 +124,18 @@ export function SpaceShell({
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="lg:hidden -mr-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#F0E9DE]/70 hover:text-[#F0E9DE] hover:bg-[#F0E9DE]/10 transition-colors"
-                aria-label="Fermer le menu"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {/* ⭐ V3.74 — cloche de notifications (ex. validation d'une
+                    demande par le serviteur). */}
+                {actionsSupplementaires}
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="lg:hidden -mr-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#F0E9DE]/70 hover:text-[#F0E9DE] hover:bg-[#F0E9DE]/10 transition-colors"
+                  aria-label="Fermer le menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -201,7 +211,7 @@ export function SpaceShell({
 
       {/* Contenu principal */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Barre supérieure mobile */}
+        {/* Barre supérieure mobile — ⭐ V3.74 : cloche incluse */}
         <header className="lg:hidden sticky top-0 z-20 bg-[#000000] text-[#F0E9DE] px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -222,7 +232,7 @@ export function SpaceShell({
               {titreEspace}
             </span>
           </div>
-          <div className="w-5" />
+          <div className="flex items-center">{actionsSupplementaires}</div>
         </header>
 
         {/* Contenu — chaque module gère son propre conteneur scrollable

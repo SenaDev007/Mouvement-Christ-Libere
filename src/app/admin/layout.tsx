@@ -23,6 +23,7 @@ import {
   Youtube,
   Image as ImageIcon,
   Building2,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -64,7 +65,11 @@ const NAV_SECTIONS = [
   {
     title: "Activité",
     items: [
-      { label: "Demandes de contact", href: "/admin/contact-requests", icon: Inbox },
+      // ⭐ V3.74 — « Demandes de contact » SUPPRIMÉ (obsolète : le
+      // Secrétariat couvre les demandes de rencontre, la Trésorerie les
+      // finances). Remplacé par le module de RÉCEPTION des demandes
+      // transmises par la secrétaire (validation → notification).
+      { label: "Demandes reçues", href: "/admin/demandes", icon: Inbox },
       { label: "Dons", href: "/admin/donations", icon: Heart },
       // ⭐ V3.2 — Intercession : les demandes arrivent DIRECTEMENT ici
       // (plus de redirection vers la page publique — confidentialité).
@@ -77,6 +82,10 @@ const NAV_SECTIONS = [
     title: "Espaces du ministère",
     items: [
       { label: "Secrétariat & Trésorerie", href: "/admin/staff", icon: Building2 },
+      // ⭐ V3.74 — Consultation de la trésorerie SANS entrer dans l'espace
+      // dédié (directive : le pasteur Congo et la sœur Pam veulent un
+      // simple coup d'œil depuis leur back-office — lecture seule).
+      { label: "Trésorerie (consultation)", href: "/admin/tresorerie", icon: Wallet },
     ],
   },
   {

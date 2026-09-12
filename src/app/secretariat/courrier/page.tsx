@@ -10,6 +10,11 @@
  * directement. Chaque envoi est journalisé (OutgoingEmail + audit) et
  * l'historique des 30 derniers courriers est visible en bas de page.
  *
+ * ⭐ V3.74 — bouton « Paramétrage » : les adresses des serviteurs
+ * (factices par défaut) sont configurables ici par la secrétaire — les
+ * courriers ET les transmissions de demandes partent ensuite à ces
+ * adresses réelles (StaffSetting, prioritaire sur tout le reste).
+ *
  * Données : /secretariat/api/courrier (rôles SECRETARY / SUPER_ADMIN).
  */
 
@@ -24,6 +29,7 @@ import {
   FlaskConical,
   ShieldCheck,
   User,
+  Settings2,
 } from "lucide-react";
 
 interface Destinataire {
@@ -63,6 +69,19 @@ export default function SecretariatCourrierPage() {
     texte: string;
   } | null>(null);
 
+  // ⭐ V3.74 — Paramétrage des adresses email des serviteurs.
+  const [parametres, setParametres] = useState<{
+    emailKongo: string | null;
+    emailPam: string | null;
+  } | null>(null);
+  const [paramModalOuvert, setParamModalOuvert] = useState(false);
+  const [formParam, setFormParam] = useState({ emailKongo: "", emailPam: "" });
+  const [paramEnCours, setParamEnCours] = useState(false);
+  const [retourParam, setRetourParam] = useState<{
+    type: "succes" | "erreur";
+    texte: string;
+  } | null>(null);
+
   const charger = useCallback(async () => {
     setChargement(true);
     setErreur("");
@@ -74,6 +93,7 @@ export default function SecretariatCourrierPage() {
       if (!res.ok) throw new Error(data.error || "Erreur de chargement");
       setDestinataires(data.destinataires || []);
       setHistorique(data.historique || []);
+      setParametres(data.parametres || null);
       // Destinataire par défaut : Pasteur Kongo s'il est présent.
       if (!toUserId && (data.destinataires || []).length > 0) {
         const kongo = data.destinataires.find(
@@ -144,6 +164,40 @@ export default function SecretariatCourrierPage() {
     }
   };
 
+  const envoyerParametrage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (paramEnCours) return;
+    setParamEnCours(true);
+    setRetourParam(null);
+    try {
+      const res = await fetch("/secretariat/api/courrier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "parametrer",
+          emailKongo: formParam.emailKongo.trim(),
+          emailPam: formParam.emailPam.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur d'enregistrement");
+      setRetourParam({
+        type: "succes",
+        texte: data.message || "Paramétrage enregistré.",
+      });
+      // Rafraîchit destinataires + paramètres effectifs.
+      await charger();
+      setTimeout(() => setParamModalOuvert(false), 1200);
+    } catch (err) {
+      setRetourParam({
+        type: "erreur",
+        texte: err instanceof Error ? err.message : "Erreur inconnue",
+      });
+    } finally {
+      setParamEnCours(false);
+    }
+  };
+
   const formaterDate = (iso: string) =>
     new Date(iso).toLocaleString("fr-FR", {
       day: "2-digit",
@@ -164,10 +218,37 @@ export default function SecretariatCourrierPage() {
     <div className="max-w-3xl mx-auto space-y-8">
       {/* En-tête */}
       <div>
-        <h1 className="font-serif text-3xl font-semibold text-[#000000] mb-1 flex items-center gap-3">
-          <Mail className="w-7 h-7 text-[#C9A227]" />
-          Courrier au serviteur
-        </h1>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <h1 className="font-serif text-3xl font-semibold text-[#000000] mb-1 flex items-center gap-3">
+            <Mail className="w-7 h-7 text-[#C9A227]" />
+            Courrier au serviteur
+          </h1>
+          {/* ⭐ V3.74 — bouton Paramétrage : configurer les VRAIES adresses. */}
+          <button
+            type="button"
+            onClick={() => {
+              // Pré-remplissage : paramétrage existant, sinon adresses
+              // actuellement résolues (affichées dans la liste).
+              const kongoResolu = destinataires.find(
+                (d) => d.id === "serviteur:kongo"
+              )?.email;
+              const pamResolue = destinataires.find(
+                (d) => d.id === "serviteur:pam"
+              )?.email;
+              setFormParam({
+                emailKongo: parametres?.emailKongo || kongoResolu || "",
+                emailPam: parametres?.emailPam || pamResolue || "",
+              });
+              setRetourParam(null);
+              setParamModalOuvert(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10 text-sm font-semibold text-[#A3821C] hover:bg-[#C9A227]/20 transition-colors"
+            title="Configurer les adresses email des serviteurs"
+          >
+            <Settings2 className="w-4 h-4" />
+            Paramétrage
+          </button>
+        </div>
         <p className="text-sm text-[#8A857C]">
           Écrire directement à Pasteur Kongo ou à Sœur Pam — le message part
           de noreply@mouvementchristlibere.com et le serviteur peut vous
@@ -377,6 +458,121 @@ export default function SecretariatCourrierPage() {
           </ul>
         )}
       </div>
+      {/* ── ⭐ V3.74 Modal : Paramétrage des adresses email des serviteurs ── */}
+      {paramModalOuvert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/60 overflow-y-auto">
+          <form
+            onSubmit={envoyerParametrage}
+            className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-5 my-8"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-[#000000] flex items-center gap-2">
+                  <Settings2 className="w-5 h-5 text-[#A3821C]" />
+                  Paramétrage des adresses
+                </h2>
+                <p className="text-xs text-[#8A857C] mt-1 leading-relaxed">
+                  Les adresses par défaut des serviteurs sont des adresses
+                  internes. Indiquez ici les <strong>vraies adresses email</strong> :
+                  les courriers ET les demandes transmises partiront à ces
+                  adresses (prioritaire sur tout le reste).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setParamModalOuvert(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A857C] hover:bg-[#F0E9DE]"
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#000000] mb-1.5">
+                  Email de Pasteur Kongo
+                </label>
+                <input
+                  type="email"
+                  value={formParam.emailKongo}
+                  onChange={(e) =>
+                    setFormParam({ ...formParam, emailKongo: e.target.value })
+                  }
+                  placeholder="exemple@gmail.com"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+                />
+                {parametres?.emailKongo && (
+                  <p className="text-[10px] text-[#5B7052] mt-1">
+                    ✓ Adresse paramétrée : {parametres.emailKongo}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#000000] mb-1.5">
+                  Email de Sœur Pam
+                </label>
+                <input
+                  type="email"
+                  value={formParam.emailPam}
+                  onChange={(e) =>
+                    setFormParam({ ...formParam, emailPam: e.target.value })
+                  }
+                  placeholder="exemple@gmail.com"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+                />
+                {parametres?.emailPam && (
+                  <p className="text-[10px] text-[#5B7052] mt-1">
+                    ✓ Adresse paramétrée : {parametres.emailPam}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <p className="text-[10px] text-[#8A857C] leading-relaxed px-3 py-2 rounded-lg bg-[#F0E9DE] border border-[#8A857C]/10">
+              Laisser un champ vide et enregistrer réinitialise ce serviteur
+              sur l&apos;adresse de son compte / de la configuration serveur.
+              ⚠️ Vérifiez bien la saisie : un courrier envoyé à une adresse
+              erronée ne revient pas vers vous.
+            </p>
+
+            {retourParam && (
+              <div
+                className={`flex items-start gap-2 px-4 py-3 rounded-lg text-xs leading-relaxed ${
+                  retourParam.type === "succes"
+                    ? "bg-[#5B7052]/10 text-[#3F5039] border border-[#5B7052]/30"
+                    : "bg-[#B3452E]/10 text-[#B3452E] border border-[#B3452E]/30"
+                }`}
+              >
+                {retourParam.type === "succes" ? (
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                )}
+                {retourParam.texte}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setParamModalOuvert(false)}
+                className="px-4 py-2 rounded-lg text-sm text-[#8A857C] hover:text-[#000000]"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={paramEnCours}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#000000] text-[#F0E9DE] text-sm font-semibold hover:bg-[#161513] transition-colors disabled:opacity-50"
+              >
+                {paramEnCours && <Loader2 className="w-4 h-4 animate-spin" />}
+                Enregistrer le paramétrage
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

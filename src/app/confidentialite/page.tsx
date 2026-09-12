@@ -44,7 +44,7 @@ export default function ConfidentialitePage() {
         kicker="Informations légales"
         title="Politique de confidentialité"
         subtitle="Comment le Mouvement Christ Libère collecte, utilise et protège vos données personnelles, conformément au Règlement Général sur la Protection des Données (RGPD)."
-        primaryCta={{ label: "Nous contacter", href: "/contact" }}
+        primaryCta={{ label: "Demander un rendez-vous", href: "/rendez-vous" }}
       />
 
       {/* Sommaire + contenu */}
@@ -91,7 +91,7 @@ export default function ConfidentialitePage() {
               <strong>Responsable de la publication :</strong> l&apos;équipe pastorale du Mouvement
               Christ Libère. Pour toute question relative à la présente politique ou à vos données,
               vous pouvez nous écrire via la{" "}
-              <Link href="/contact" className="text-[#C9A227] font-semibold hover:underline">page contact</Link>.
+              <Link href="/rendez-vous" className="text-[#C9A227] font-semibold hover:underline">page de demande de rendez-vous</Link>.
             </p>
           </Section>
 
@@ -214,7 +214,7 @@ export default function ConfidentialitePage() {
             </div>
             <p>
               Pour exercer ces droits, écrivez-nous via la{" "}
-              <Link href="/contact" className="text-[#C9A227] font-semibold hover:underline">page contact</Link>{" "}
+              <Link href="/rendez-vous" className="text-[#C9A227] font-semibold hover:underline">page de demande de rendez-vous</Link>{" "}
               en précisant votre demande. Nous répondons sous 30 jours maximum. Vous pouvez également
               introduire une réclamation auprès de votre autorité de protection des données (en
               France : la CNIL, www.cnil.fr).
@@ -233,7 +233,7 @@ export default function ConfidentialitePage() {
             <p>
               Pour toute question relative à la protection des données, l&apos;exercice de vos droits
               ou le contenu de cette politique, la voie la plus rapide est notre{" "}
-              <Link href="/contact" className="text-[#C9A227] font-semibold hover:underline">formulaire de contact</Link>.
+              <Link href="/rendez-vous" className="text-[#C9A227] font-semibold hover:underline">formulaire de demande de rendez-vous</Link>.
               L&apos;équipe pastorale s&apos;engage à répondre sous 24 à 48 heures.
             </p>
             <div className="mt-4 p-4 rounded-xl bg-[#000000]/5 border border-[#C9A227]/20 flex items-start gap-3">
