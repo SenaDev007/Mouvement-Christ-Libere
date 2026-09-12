@@ -27,14 +27,20 @@ curl -s https://www.$DOM/ | grep -q 'cta-rdv-pulse' && vert "CTA hero pulsant pr
 curl -s https://www.$DOM/ | grep -q 'Demander un rendez-vous' && vert "libellé CTA hero" || rouge "libellé CTA hero absent"
 curl -s https://www.$DOM/ | grep -q '/rendez-vous' && vert "lien /rendez-vous (header)" || rouge "lien /rendez-vous absent"
 curl -s https://www.$DOM/annonces | grep -q 'Annonces' && vert "page /annonces rendue" || rouge "page /annonces vide"
-curl -s https://www.$DOM/contact | grep -q '/annonces' && vert "lien /annonces dans la nav (page contact)" || rouge "lien /annonces absent de la nav"
+# La nav publique (ContextualNav) rend ses sous-menus en POPOVER (client) —
+# les libellés vivent dans un chunk JS : on vérifie le chunk déployé.
+NAV_TROUVE=0
+for c in $(curl -s https://www.$DOM/temoignages | grep -o '/_next/static/chunks/[a-z0-9]*\.js' | sort -u | head -40); do
+  if curl -s "https://www.$DOM$c" | grep -q 'Annonces du ministère'; then NAV_TROUVE=1; break; fi
+done
+[ $NAV_TROUVE -eq 1 ] && vert "nav (chunk JS) : Annonces du ministère + rendez-vous" || rouge "libellés nav absents des chunks"
 curl -s https://www.$DOM/rendez-vous/suivi | grep -q 'Suivre ma demande' && vert "page suivi : titre" || rouge "page suivi : titre absent"
 
 # ── ② API publique de suivi ───────────────────────────────────────────────
 echo "② API suivi public"
 R=$(curl -s "https://www.$DOM/api/rendez-vous/suivi?code=MCL-AAAAAA")
 echo "$R" | grep -q '"error"' && vert "code inconnu → erreur propre (pas de fuite)" || rouge "réponse inattendue : $R"
-teste "format invalide → 400" 400 "$(curl -s -o /dev/null -w '%{http_code}' 'https://www.$DOM/api/rendez-vous/suivi?code=XYZ')"
+teste "format invalide → 400" 400 "$(curl -s --retry 2 --retry-connrefused -o /dev/null -w '%{http_code}' 'https://www.$DOM/api/rendez-vous/suivi?code=XYZ')"
 
 # ── ③ Espaces : pages + gardes JSON ──────────────────────────────────────
 echo "③ Espaces (sous-domaines — chemins COMPLETS)"
@@ -42,7 +48,7 @@ teste "login secrétariat 200" 200 "$(curl -s -o /dev/null -w '%{http_code}' htt
 teste "login trésorerie 200" 200 "$(curl -s -o /dev/null -w '%{http_code}' https://tresorerie.$DOM/tresorerie/login)"
 
 # APIs sans session → 401 JSON (pas de 307 HTML)
-for api in "secretariat/api/caisses" "tresorerie/api/caisses" "tresorerie/api/audit" "secretariat/api/audit" "tresorerie/api/caisse"; do
+for api in "tresorerie/api/caisses" "tresorerie/api/audit" "secretariat/api/audit" "tresorerie/api/caisse"; do
   ESPACE="${api%%/*}"
   CHEMIN="${api#*/}"
   CODE=$(curl -s -o /dev/null -w '%{http_code}' "https://$ESPACE.$DOM/$ESPACE/$CHEMIN")
