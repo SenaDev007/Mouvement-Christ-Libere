@@ -8,6 +8,11 @@
  *
  * Cela évite le délai de 3s (timeout Railway) sur chaque requête
  * quand Railway est down.
+ *
+ * ⭐ V3.70 — Domaine officiel du backend Railway :
+ * https://api.mouvementchristlibere.com (à poser dans NEXT_PUBLIC_API_URL
+ * sur Vercel — le relais email de src/lib/email.ts y réunit ses envois
+ * quand RESEND_API_KEY est absente de Vercel).
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";

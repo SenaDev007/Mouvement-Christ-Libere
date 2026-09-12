@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "paths": {
+      "react": ["./node_modules/@types/react"],
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"],
+      "@/*": ["./src/*"]
+    }
+  },
+  "files": [
+    "./src/lib/email.ts",
+    "./src/lib/chat/socket-client.ts",
+    "./src/lib/api-client.ts",
+    "./src/app/api/auth/forgot-password/route.ts",
+    "./src/app/api/auth/reset-password/route.ts",
+    "./src/app/secretariat/api/courrier/route.ts",
+    "./src/app/secretariat/api/demandes/[id]/route.ts"
+  ]
+}

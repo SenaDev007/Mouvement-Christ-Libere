@@ -5,9 +5,14 @@ import { io, Socket } from "socket.io-client";
 /**
  * Récupère l'URL de base du backend Socket.io.
  *
+ * ⭐ V3.70 — Domaine officiel du backend : https://api.mouvementchristlibere.com
+ *
  * Priorité :
- *   1. NEXT_PUBLIC_API_URL (Railway backend déployé)
- *   2. http://localhost:3001 (backend Express local en dev)
+ *   1. NEXT_PUBLIC_API_URL (variable Vercel — à régler sur
+ *      https://api.mouvementchristlibere.com)
+ *   2. En production (hôte public, variable absente) : le domaine officiel
+ *      api.mouvementchristlibere.com — plus jamais localhost par erreur ;
+ *   3. http://localhost:3001 (backend Express local en dev uniquement).
  *
  * ⚠️ On lit NEXT_PUBLIC_API_URL directement (pas via api-client) pour rester
  * indépendant de la logique shouldUseBackend() — Socket.io a besoin d'une
@@ -19,8 +24,17 @@ function getSocketUrl(): string {
   if (railwayUrl && railwayUrl.length > 0 && !railwayUrl.includes("localhost")) {
     return railwayUrl.replace(/\/$/, "");
   }
-  // Dev local — backend Express sur le port 3001
-  return "http://localhost:3001";
+  // Dev local (localhost / IP privée) — backend Express sur le port 3001.
+  const hote = window.location.hostname;
+  const estLocal =
+    hote === "localhost" ||
+    hote.startsWith("127.") ||
+    hote.startsWith("192.168.") ||
+    hote.startsWith("10.") ||
+    /^\d+\.\d+\.\d+\.\d+$/.test(hote);
+  if (estLocal) return "http://localhost:3001";
+  // ⭐ V3.70 — Production sans variable : domaine officiel du backend.
+  return "https://api.mouvementchristlibere.com";
 }
 
 /**

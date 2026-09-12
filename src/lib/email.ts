@@ -1,15 +1,23 @@
 /**
  * ⭐ V3.69 — Moteur d'envoi d'emails transactionnels via Resend.
+ * ⭐ V3.70 — DOUBLE CHEMIN d'envoi : direct (Vercel) OU RELAIS BACKEND.
  *
  * Expéditeur : noreply@mouvementchristlibere.com (domaine du mouvement,
  * à vérifier dans le dashboard Resend — enregistrements SPF/DKIM).
  *
- * ⚠️ IMPORTANT — où configurer la clé :
- * La plateforme PRINCIPALE (logins, secrétariat, trésorerie — celle qui
- * envoie ces emails) tourne sur VERCEL : la variable RESEND_API_KEY doit
- * donc être déclarée dans les variables d'environnement VERCEL du projet.
- * (Le service Railway n'héberge que le backend Yeshua Connect : une clé
- * posée uniquement là-bas reste invisible pour ces routes.)
+ * ⭐ V3.70 — OÙ CONFIGURER LA CLÉ (deux options désormais) :
+ *   ① Option A (direct) : RESEND_API_KEY déclarée sur VERCEL → envoi
+ *      direct depuis les fonctions Vercel (comme en V3.69).
+ *   ② Option B (relais — clé sur Railway) : RESEND_API_KEY posée sur le
+ *      backend Railway, désormais servi sur https://api.mouvementchristlibere.com
+ *      → si la clé est ABSENTE de Vercel, chaque envoi est relayé au
+ *      backend (POST /api/email/send, appel server-to-server, aucune clé
+ *      exposée au navigateur). C'est le choix actuel du pasteur : la clé
+ *      vit sur Railway.
+ *      URL du relais : BACKEND_URL, sinon NEXT_PUBLIC_API_URL, sinon le
+ *      domaine officiel par défaut (constante BACKEND_EMAIL_URL_PAR_DEFAUT).
+ *      Durcissement optionnel : EMAIL_SERVICE_SECRET identique sur Vercel
+ *      et Railway → header X-Email-Secret exigé par le relais.
  *
  * Chaque expédition est consignée dans la table OutgoingEmail (statut,
  * erreur éventuelle, identifiant Resend) — en best-effort : un problème de
@@ -33,6 +41,23 @@ export type CategorieEmail = (typeof CATEGORIES_EMAIL)[keyof typeof CATEGORIES_E
 const EXPEDITEUR_PAR_DEFAUT = "Mouvement Christ Libéré <noreply@mouvementchristlibere.com>";
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
+
+/**
+ * ⭐ V3.70 — URL officielle du backend Railway (domaine dédié).
+ * Utilisée comme repli quand ni BACKEND_URL ni NEXT_PUBLIC_API_URL n'est
+ * défini : les emails partent quand le relais est la seule option.
+ */
+export const BACKEND_EMAIL_URL_PAR_DEFAUT = "https://api.mouvementchristlibere.com";
+
+/** URL complète du relais d'envoi du backend (POST /api/email/send). */
+function urlRelaisBackend(): string {
+  const base = (
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    BACKEND_EMAIL_URL_PAR_DEFAUT
+  ).replace(/\/$/, "");
+  return `${base}/api/email/send`;
+}
 
 export interface ResultatEnvoi {
   ok: boolean;
@@ -99,13 +124,10 @@ async function journaliser(
  * ou s'il est toléré (courrier best-effort).
  */
 export async function envoyerEmail(options: OptionsEnvoi): Promise<ResultatEnvoi> {
+  // ⭐ V3.70 — clé absente sur Vercel ? RELAIS vers le backend Railway
+  // (api.mouvementchristlibere.com), détenteur de RESEND_API_KEY.
   if (!cleResendPresente()) {
-    const erreur =
-      "Envoi d'email impossible : RESEND_API_KEY est absente de cet environnement (à ajouter dans les variables Vercel du projet principal).";
-    console.error("[email] " + erreur);
-    const resultat: ResultatEnvoi = { ok: false, erreur };
-    await journaliser(options, resultat);
-    return resultat;
+    return envoyerViaRelaisBackend(options);
   }
 
   const controle = new AbortController();
@@ -155,6 +177,77 @@ export async function envoyerEmail(options: OptionsEnvoi): Promise<ResultatEnvoi
     const erreur = abort
       ? "L'envoi a expiré (pas de réponse de Resend sous 12 s)."
       : `Échec réseau vers Resend : ${e instanceof Error ? e.message : String(e)}`;
+    console.error("[email] " + erreur);
+    const resultat: ResultatEnvoi = { ok: false, erreur };
+    await journaliser(options, resultat);
+    return resultat;
+  } finally {
+    clearTimeout(minuteur);
+  }
+}
+
+/**
+ * ⭐ V3.70 — Envoi via le RELAIS du backend Railway (server-to-server).
+ *
+ * POST {BACKEND_URL|NEXT_PUBLIC_API_URL|api.mouvementchristlibere.com}/api/email/send
+ * Le backend détient RESEND_API_KEY et transmet à Resend. Aucun CORS (appel
+ * serveur→serveur), aucune clé dans le navigateur. Le relais applique ses
+ * propres garde-fous (anti-relais : destinataire connu de la base ou email
+ * serviteur ; rate-limit ; tailles plafonnées ; secret X-Email-Secret si
+ * EMAIL_SERVICE_SECRET est partagé).
+ */
+async function envoyerViaRelaisBackend(options: OptionsEnvoi): Promise<ResultatEnvoi> {
+  const url = urlRelaisBackend();
+  const controle = new AbortController();
+  const minuteur = setTimeout(() => controle.abort(), 12_000);
+
+  try {
+    const reponse = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(process.env.EMAIL_SERVICE_SECRET
+          ? { "X-Email-Secret": process.env.EMAIL_SERVICE_SECRET }
+          : {}),
+      },
+      body: JSON.stringify({
+        to: formaterDestinataire(options.to, options.toName),
+        subject: options.subject,
+        html: options.html,
+        ...(options.text ? { text: options.text } : {}),
+        ...(options.replyTo ? { replyTo: options.replyTo } : {}),
+        category: options.category,
+      }),
+      signal: controle.signal,
+    });
+
+    const corps = (await reponse.json().catch(() => ({}))) as {
+      success?: boolean;
+      id?: string;
+      error?: string;
+      detail?: string;
+    };
+
+    if (!reponse.ok || !corps.success) {
+      const erreur = `Relais backend (${url}) a refusé l'envoi (${reponse.status}) : ${
+        corps.error || corps.detail || "raison inconnue"
+      }`;
+      console.error("[email] " + erreur);
+      const resultat: ResultatEnvoi = { ok: false, erreur };
+      await journaliser(options, resultat);
+      return resultat;
+    }
+
+    const resultat: ResultatEnvoi = { ok: true, resendId: corps.id };
+    await journaliser(options, resultat);
+    return resultat;
+  } catch (e) {
+    const abort = e instanceof Error && e.name === "AbortError";
+    const erreur = abort
+      ? `Le relais backend n'a pas répondu sous 12 s (${url}).`
+      : `Échec réseau vers le relais backend (${url}) : ${
+          e instanceof Error ? e.message : String(e)
+        }`;
     console.error("[email] " + erreur);
     const resultat: ResultatEnvoi = { ok: false, erreur };
     await journaliser(options, resultat);

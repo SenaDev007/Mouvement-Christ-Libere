@@ -5,6 +5,13 @@
  * Deployed on Railway. The Next.js frontend (Vercel) calls this via the
  * NEXT_PUBLIC_API_URL environment variable.
  *
+ * ⭐ V3.70 — Domaine officiel du backend : https://api.mouvementchristlibere.com
+ * (custom domain Railway). Utilisé par :
+ *   - Socket.io Yeshua Connect (NEXT_PUBLIC_API_URL côté Vercel) ;
+ *   - le RELAIS EMAIL (POST /api/email/send) : quand RESEND_API_KEY est
+ *     absente de Vercel, la plateforme relaie ses envois ICI (la clé vit
+ *     sur Railway) — voir backend/src/routes/email.ts.
+ *
  * Routes mounted under /api/* mirror the original Next.js paths.
  */
 
@@ -38,6 +45,7 @@ import soustitresRoutes from "./routes/soustitres";
 import deadMansSwitchRoutes from "./routes/dead-mans-switch";
 import liveRoutes from "./routes/live";
 import videosRoutes from "./routes/videos";
+import emailRoutes from "./routes/email";
 
 const app = express();
 
@@ -129,6 +137,7 @@ app.use("/api/soustitres", soustitresRoutes);
 app.use("/api/dead-mans-switch", deadMansSwitchRoutes);
 app.use("/api/live", liveRoutes);
 app.use("/api/videos", videosRoutes);
+app.use("/api/email", emailRoutes);
 
 // --- Warmup endpoint (garde Neon DB éveillée) ---
 app.get("/api/warmup", async (_req, res) => {
