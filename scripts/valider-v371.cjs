@@ -57,11 +57,13 @@ verifie("healthcheckPath /api/health conservé",
 verifie("startCommand npm run start conservé",
   /startCommand\s*=\s*"npm run start"/.test(toml));
 
-// ── B. package.json : postinstall prisma generate ──────────────────────
-console.log("\n② package.json — postinstall prisma generate");
+// ── B. package.json : prisma generate DANS le build ────────────────────
+console.log("\n② package.json — prisma generate intégré au script build");
 const pkg = JSON.parse(fs.readFileSync(path.join(BACKEND, "package.json"), "utf8"));
-verifie('script "postinstall": "prisma generate" présent',
-  pkg.scripts && pkg.scripts.postinstall === "prisma generate");
+verifie('script "build": "prisma generate && tsc" (phase qui réussit sur Railway)',
+  pkg.scripts && pkg.scripts.build === "prisma generate && tsc");
+verifie("postinstall supprimé (suspect de l'échec de déploiement 763dd55)",
+  !(pkg.scripts && pkg.scripts.postinstall));
 verifie("prisma CLI disponible au build (devDependencies)",
   pkg.devDependencies && "prisma" in pkg.devDependencies);
 verifie("@prisma/client en dependencies (runtime)",
