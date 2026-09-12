@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/lib/email.ts",
+    "src/lib/email-templates.ts",
+    "src/lib/ensure-schema.ts",
+    "src/lib/staff-space/session.ts",
+    "src/app/api/auth/forgot-password/route.ts",
+    "src/app/api/auth/reset-password/route.ts",
+    "src/app/admin/api/staff/route.ts",
+    "src/app/admin/staff/staff-client.tsx",
+    "src/app/admin/login/page.tsx",
+    "src/app/login/page.tsx",
+    "src/components/auth/mot-de-passe-oublie.tsx",
+    "src/components/staff-space/login-view.tsx",
+    "src/app/secretariat/**/*",
+    "src/app/tresorerie/**/*"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

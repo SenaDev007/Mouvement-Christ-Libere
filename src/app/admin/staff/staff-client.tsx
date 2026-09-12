@@ -115,7 +115,11 @@ export function StaffClient() {
       if (!res.ok) throw new Error(data.error || "Erreur lors de la création");
       setMessageCreation({
         type: "succes",
-        texte: `Compte ${data.name} créé avec le rôle ${data.role}. Communiquez le mot de passe de façon sécurisée.`,
+        texte: data.accredite
+          ? `Compte membre existant (${data.email}) accrédité ${
+              data.role === "SECRETARY" ? "secrétaire" : "trésorier"
+            } — la personne conserve son email et son compte, avec le nouveau mot de passe que vous venez de définir. Communiquez-le de façon sécurisée.`
+          : `Compte ${data.name} créé avec le rôle ${data.role}. Communiquez le mot de passe de façon sécurisée.`,
       });
       setForm({ name: "", email: "", password: "", role: form.role, bio: "" });
       chargerComptes();
@@ -194,11 +198,14 @@ export function StaffClient() {
       >
         <div>
           <h2 className="font-semibold text-[#000000] mb-1">
-            Créer un compte
+            Créer un compte / accréditer un membre
           </h2>
           <p className="text-xs text-[#8A857C] mb-4">
             Le compte sera immédiatement actif — communiquez le mot de passe de
-            façon sécurisée à son destinataire.
+            façon sécurisée à son destinataire. <strong>Si l&apos;email correspond
+            déjà à un compte membre</strong>, celui-ci est simplement accrédité
+            (même email, nouveau rôle) — être membre n&apos;empêche pas d&apos;être
+            secrétaire ou trésorier.
           </p>
         </div>
 

@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ensureStaffSpaces } from "@/lib/ensure-schema";
 import { exigerSession, ROLES_SECRETARIAT } from "@/lib/staff-space/session";
+import {
+  envoyerEmail,
+  resoudreEmailServiteur,
+  CATEGORIES_EMAIL,
+} from "@/lib/email";
+import {
+  templateDemandeTransmise,
+  sujetDemandeTransmise,
+} from "@/lib/email-templates";
 
 /**
  * ⭐ V3.66 — PATCH /secretariat/api/demandes/[id]
@@ -11,6 +20,10 @@ import { exigerSession, ROLES_SECRETARIAT } from "@/lib/staff-space/session";
  *   action = "transmettre" — la secrétaire transmet la demande au serviteur
  *                            de Dieu (statut RECUE → TRANSMISE) avec une
  *                            note éventuelle (contexte, priorité).
+ *                            ⭐ V3.69 : le serviteur reçoit AUSSI un email
+ *                            automatique (noreply@… — détails + note) ;
+ *                            l'échec éventuel de l'email n'annule pas la
+ *                            transmission (best-effort, signalé en réponse).
  *   action = "traiter"     — réponse donnée / rendez-vous accordé
  *                            (TRANSMISE → TRAITEE). Le serviteur lui-même
  *                            peut le faire (il a accès à l'espace).
@@ -130,7 +143,65 @@ export async function PATCH(
       console.warn("[secretariat/api/demandes] AuditLog impossible :", e);
     }
 
-    return NextResponse.json({ item: modifiee });
+    // ⭐ V3.69 — Courriel automatique au serviteur destinataire lors de la
+    // transmission (directive : « envoyer des mails au pasteur depuis le
+    // secrétariat ») : Pasteur Kongo / Sœur Pam reçoivent la demande dans
+    // leur boîte mail, avec la note de la secrétaire. Best-effort : un échec
+    // d'envoi n'annule PAS la transmission — il est signalé dans la réponse
+    // pour que la secrétaire puisse prévenir autrement.
+    let courriel: { envoye: boolean; erreur?: string } | undefined;
+    if (action === "transmettre") {
+      try {
+        const serviteur = await resoudreEmailServiteur(demande.servantCode);
+        const actrice = await db.user.findUnique({
+          where: { id: acteurId },
+          select: { name: true, email: true },
+        });
+        const { html, text } = templateDemandeTransmise({
+          destinataire: serviteur.nom,
+          serviteurLibelle: serviteur.nom,
+          secretaire: actrice?.name || "le secrétariat",
+          demande: {
+            requesterName: demande.requesterName,
+            contact: demande.contact,
+            subject: demande.subject,
+            message: demande.message,
+            urgency: demande.urgency,
+            country: demande.country,
+            city: demande.city,
+            trackingCode: modifiee.trackingCode ?? demande.trackingCode,
+          },
+          noteTransmission:
+            (modifiee.transmissionNote as string | null) ??
+            demande.transmissionNote ??
+            null,
+        });
+        const resultat = await envoyerEmail({
+          to: serviteur.email,
+          toName: serviteur.nom,
+          subject: sujetDemandeTransmise(demande.requesterName),
+          html,
+          text,
+          replyTo: actrice?.email ?? null,
+          category: CATEGORIES_EMAIL.DEMANDE_TRANSMISE,
+          sentById: acteurId,
+        });
+        courriel = resultat.ok
+          ? { envoye: true }
+          : { envoye: false, erreur: resultat.erreur };
+      } catch (e) {
+        console.warn(
+          "[secretariat/api/demandes] Courriel de transmission impossible :",
+          e
+        );
+        courriel = { envoye: false, erreur: "préparation du courrier impossible" };
+      }
+    }
+
+    return NextResponse.json({
+      item: modifiee,
+      ...(courriel ? { courriel } : {}),
+    });
   } catch (error) {
     console.error("[secretariat/api/demandes/[id]] PATCH error:", error);
     return NextResponse.json(

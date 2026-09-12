@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Lock, LogIn, AlertCircle, Loader2, User, ChevronRight } from "lucide-react";
+import { MotDePasseOublie } from "@/components/auth/mot-de-passe-oublie";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -94,9 +95,10 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Carte formulaire */}
+        <div className="bg-white rounded-lg border border-stone-200 border-t-[3px] border-t-[#C9A227] p-8 space-y-5">
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-lg border border-stone-200 border-t-[3px] border-t-[#C9A227] p-8 space-y-5"
+          className="space-y-5"
         >
           {error && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
@@ -163,6 +165,12 @@ export default function AdminLoginPage() {
             )}
           </button>
         </form>
+
+          {/* ⭐ V3.69 — Mot de passe oublié (OTP par email) */}
+          <div className="text-center">
+            <MotDePasseOublie variante="claire" />
+          </div>
+        </div>
 
         {/* Note de bas */}
         <p className="text-center text-xs text-[#F0E9DE]/60 mt-6 leading-relaxed">

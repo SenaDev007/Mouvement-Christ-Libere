@@ -1446,3 +1446,86 @@ export function ensureStaffSpaces(): Promise<void> {
   }
   return inflightStaffSpaces;
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// ⭐ V3.69 — Emails transactionnels (Resend) : tables de l'OTP et du
+// journal des envois.
+// ═══════════════════════════════════════════════════════════════════════
+
+let emailTablesOk = false;
+let inflightEmailTables: Promise<void> | null = null;
+
+/**
+ * S'assure que les tables de l'OTP de réinitialisation (`PasswordResetOtp`)
+ * et du journal des emails sortants (`OutgoingEmail`) existent.
+ *
+ * Mêmes garanties que les autres helpers : idempotent (CREATE TABLE IF NOT
+ * EXISTS / CREATE INDEX IF NOT EXISTS), mémoïsé en mémoire module, un seul
+ * DDL en vol — à appeler en tête des routes /api/auth/forgot-password,
+ * /api/auth/reset-password, /secretariat/api/courrier.
+ */
+export function ensureEmailTables(): Promise<void> {
+  if (emailTablesOk) return Promise.resolve();
+  if (!inflightEmailTables) {
+    inflightEmailTables = (async () => {
+      // ① OTP de réinitialisation de mot de passe (code haché).
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "PasswordResetOtp" (
+          "id" TEXT NOT NULL,
+          "email" TEXT NOT NULL,
+          "codeHash" TEXT NOT NULL,
+          "userId" TEXT,
+          "expiresAt" TIMESTAMPTZ NOT NULL,
+          "consumedAt" TIMESTAMPTZ,
+          "attempts" INTEGER NOT NULL DEFAULT 0,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "PasswordResetOtp_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "PasswordResetOtp_email_createdAt_idx" ON "PasswordResetOtp"("email", "createdAt")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "PasswordResetOtp_expiresAt_idx" ON "PasswordResetOtp"("expiresAt")'
+      );
+
+      // ② Journal des emails sortants (traçabilité des expéditions).
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "OutgoingEmail" (
+          "id" TEXT NOT NULL,
+          "category" TEXT NOT NULL,
+          "toEmail" TEXT NOT NULL,
+          "toName" TEXT,
+          "subject" TEXT NOT NULL,
+          "body" TEXT,
+          "status" TEXT NOT NULL DEFAULT 'ENVOYE',
+          "errorMessage" TEXT,
+          "resendId" TEXT,
+          "sentById" TEXT,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "OutgoingEmail_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "OutgoingEmail_category_createdAt_idx" ON "OutgoingEmail"("category", "createdAt")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "OutgoingEmail_toEmail_idx" ON "OutgoingEmail"("toEmail")'
+      );
+    })()
+      .then(() => {
+        emailTablesOk = true;
+        console.log("[ensure-schema] V3.69 : tables OTP + emails sortants vérifiées/créées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] V3.69 : création tables emails impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightEmailTables = null;
+      });
+  }
+  return inflightEmailTables;
+}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SpaceShell, type SectionNav } from "@/components/staff-space/space-shell";
-import { LayoutDashboard, Inbox, Megaphone, FileText, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Inbox, Megaphone, FileText, ShieldCheck, Mail } from "lucide-react";
 
 /**
  * ⭐ V3.66/V3.67 — Layout de l'espace Secrétariat.
@@ -79,6 +79,11 @@ export default function SecretariatLayout({
           label: "Annonces",
           href: "/secretariat/annonces",
           icon: Megaphone,
+        },
+        {
+          label: "Courrier au serviteur",
+          href: "/secretariat/courrier",
+          icon: Mail,
         },
       ],
     },

@@ -104,6 +104,12 @@ function DemandesContenu() {
   const [transmettreId, setTransmettreId] = useState<string | null>(null);
   const [noteTransmission, setNoteTransmission] = useState("");
 
+  // ⭐ V3.69 — retour visuel de la transmission (courriel au serviteur).
+  const [confirmation, setConfirmation] = useState<{
+    type: "succes" | "avertissement";
+    texte: string;
+  } | null>(null);
+
   // Formulaire de saisie manuelle.
   const [formulaireOuvert, setFormulaireOuvert] = useState(false);
   const [form, setForm] = useState({
@@ -166,6 +172,19 @@ function DemandesContenu() {
       if (action === "transmettre") {
         setTransmettreId(null);
         setNoteTransmission("");
+        // ⭐ V3.69 — le serviteur est prévenu par email (ou non — signalé).
+        const courriel = data.courriel as
+          | { envoye: boolean; erreur?: string }
+          | undefined;
+        setConfirmation({
+          type: courriel?.envoye ? "succes" : "avertissement",
+          texte: courriel?.envoye
+            ? "Demande transmise — le serviteur de Dieu a été prévenu par email."
+            : "Demande transmise, mais l'email de notification n'a pas pu être envoyé" +
+                (courriel?.erreur ? ` (${courriel.erreur})` : "") +
+                " — prévenez-le autrement si nécessaire.",
+        });
+        setTimeout(() => setConfirmation(null), 10_000);
       }
       charger();
     } catch (err) {
@@ -247,6 +266,24 @@ function DemandesContenu() {
           </button>
         </div>
       </div>
+
+      {/* ⭐ V3.69 — confirmation de transmission (email au serviteur) */}
+      {confirmation && (
+        <div
+          className={`flex items-start gap-2 px-4 py-3 rounded-xl border text-sm ${
+            confirmation.type === "succes"
+              ? "bg-[#5B7052]/10 border-[#5B7052]/30 text-[#3F5039]"
+              : "bg-[#C9A227]/10 border-[#C9A227]/40 text-[#A3821C]"
+          }`}
+        >
+          {confirmation.type === "succes" ? (
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          )}
+          {confirmation.texte}
+        </div>
+      )}
 
       {/* Filtres */}
       <div className="bg-white rounded-xl border border-[#8A857C]/15 p-4 space-y-3">
@@ -584,6 +621,11 @@ function DemandesContenu() {
               placeholder="Note pour le serviteur (contexte, priorité, éléments de langage…) — facultatif"
               className="w-full px-3.5 py-2.5 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] resize-none"
             />
+            <p className="text-[11px] text-[#8A857C] flex items-center gap-1.5">
+              <Send className="w-3 h-3 text-[#A3821C]" />
+              En transmettant, le serviteur de Dieu reçoit un email avec les
+              détails de la demande et votre note.
+            </p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setTransmettreId(null)}

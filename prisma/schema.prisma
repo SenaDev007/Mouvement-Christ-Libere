@@ -872,6 +872,45 @@ model AuditLog {
   @@index([userId])
 }
 
+// ⭐ V3.69 — OTP de réinitialisation de mot de passe (par email).
+// Un code à 6 chiffres est envoyé via Resend (noreply@mouvementchristlibere.com) ;
+// il est stocké HACHÉ (SHA-256 — jamais en clair), expire après 10 minutes,
+// est à usage unique et tolère au maximum 5 tentatives de vérification.
+model PasswordResetOtp {
+  id         String    @id @default(cuid())
+  email      String    // email normalisé (minuscules)
+  codeHash   String    // SHA-256 du code — jamais de code en clair en base
+  userId     String?   // compte concerné (traçabilité, facultatif)
+  expiresAt  DateTime  // validité : 10 minutes
+  consumedAt DateTime? // date de consommation — usage unique
+  attempts   Int       @default(0) // tentatives échouées (max 5)
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
+  @@index([expiresAt])
+}
+
+// ⭐ V3.69 — Journal des emails sortants (Resend).
+// Toutes les expéditions de la plateforme (OTP, courrier au serviteur,
+// transmission de demande) y sont consignées : statut ENVOYE/ECHOUE,
+// erreur éventuelle, identifiant Resend, auteur de l'envoi.
+model OutgoingEmail {
+  id           String   @id @default(cuid())
+  category     String   // OTP_RESET | COURRIER_SERVITEUR | DEMANDE_TRANSMISE | TEST
+  toEmail      String
+  toName       String?
+  subject      String
+  body         String   @db.Text // corps (HTML) — pour l'historique
+  status       String   @default("ENVOYE") // ENVOYE | ECHOUE
+  errorMessage String?  // raison de l'échec (Resend, clé absente…)
+  resendId     String?  // identifiant renvoyé par l'API Resend
+  sentById     String?  // compte à l'origine de l'envoi (facultatif)
+  createdAt    DateTime @default(now())
+
+  @@index([category, createdAt])
+  @@index([toEmail])
+}
+
 // --- Bible bookmarks (V3) ---
 
 model BibleBookmark {

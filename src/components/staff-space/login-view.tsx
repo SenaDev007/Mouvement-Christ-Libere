@@ -14,6 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Lock, LogIn, AlertCircle, Loader2, User, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import { MotDePasseOublie } from "@/components/auth/mot-de-passe-oublie";
 
 export interface LoginViewProps {
   /** Titre de l'espace (ex. « Secrétariat »). */
@@ -208,6 +209,12 @@ export function LoginView({
               {loading ? "Connexion…" : "Se connecter"}
             </button>
           </form>
+
+          {/* ⭐ V3.69 — Mot de passe oublié (OTP par email) — même compte,
+              même parcours que l'espace membre. */}
+          <div className="text-center">
+            <MotDePasseOublie variante="sombre" />
+          </div>
         </div>
 
         {/* Lien retour accueil public */}
