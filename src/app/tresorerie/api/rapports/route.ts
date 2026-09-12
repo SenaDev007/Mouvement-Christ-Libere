@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { ensureStaffSpaces } from "@/lib/ensure-schema";
 import { exigerSession, ROLES_TRESORERIE } from "@/lib/staff-space/session";
 import { DEVISE_CODES } from "@/lib/staff-space/constants";
+import { calculerSituationMulticaisse } from "@/lib/staff-space/multicaisse";
 import { genererRapportFinancier, enTetesPdf } from "@/lib/staff-space/pdf/documents";
 
 /**
@@ -50,15 +51,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const transactions = await db.treasuryTransaction.findMany({
-      where: { currency: deviseFinale, date: { gte: dateDu, lte: dateAu } },
-      orderBy: { date: "asc" },
-    });
+    const [transactions, caisses] = await Promise.all([
+      db.treasuryTransaction.findMany({
+        where: { currency: deviseFinale, date: { gte: dateDu, lte: dateAu } },
+        orderBy: { date: "asc" },
+      }),
+      db.treasuryCashAccount.findMany({ select: { id: true, name: true } }),
+    ]);
+
+    // ⭐ V3.67 — noms des caisses sur chaque écriture (journal + transferts).
+    const nomsCaisses = new Map(caisses.map((c) => [c.id, c.name]));
+    const transactionsEnrichies = transactions.map((t) => ({
+      ...t,
+      caisseNom: t.caisseId ? nomsCaisses.get(t.caisseId) || null : null,
+      caisseDestinationNom: t.caisseDestinationId
+        ? nomsCaisses.get(t.caisseDestinationId) || null
+        : null,
+    }));
+
+    // ⭐ V3.67 — situation multicaisse (section « Situation par caisse »).
+    const situation = await calculerSituationMulticaisse();
 
     const pdf = await genererRapportFinancier(
-      transactions,
+      transactionsEnrichies,
       { du: dateDu, au: dateAu },
-      deviseFinale
+      deviseFinale,
+      { caisses: situation.caisses }
     );
 
     return new NextResponse(Buffer.from(pdf), {

@@ -960,6 +960,10 @@ model MeetingRequest {
   processedAt       DateTime?
   // Compte ayant transmis/traité (secrétaire ou super admin) — traçabilité.
   handledById       String?
+  // ⭐ V3.67 — Code de suivi public (« MCL-XXXXXX ») remis au demandeur au
+  // dépôt : il consulte l'AVANCEMENT de sa demande sur /rendez-vous/suivi
+  // (statut + dates uniquement — jamais le contenu).
+  trackingCode      String?   @unique
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -982,6 +986,10 @@ model MinistryAnnouncement {
   category       String    @default("generale") // generale | live | evenement | urgence
   isPublished    Boolean   @default(false)
   publishedAt    DateTime?
+  // ⭐ V3.67 — Programmation : publication planifiée. L'annonce passe
+  // automatiquement à isPublished=true dès que publishAt est atteint
+  // (bascule à la consultation + verrou planifié dans l'interface).
+  publishAt      DateTime?
   authorId       String?   // compte auteur (secrétaire / super admin)
   relayedToYeshua Boolean  @default(false) // relais effectué dans le canal d'annonces
   relayedAt      DateTime?
@@ -1001,11 +1009,38 @@ model MinistryAnnouncement {
 // rapports financiers sont CALCULÉS depuis ce journal (jamais stockés) :
 // aucune divergence possible entre le journal et les totaux. Toute
 // écriture est journalisée dans AuditLog (traçabilité financière).
+// ⭐ V3.67 — Multicaisse : caisses dans lesquelles les mouvements sont
+// encaissés / décaissés (caisse espèces, compte bancaire, mobile money…).
+// Chaque caisse tient UNE devise et possède son solde d'ouverture. Le solde
+// courant n'est JAMAIS stocké : il est recalculé (ouverture + recettes −
+// dépenses − transferts sortants + transferts entrants). Les transferts
+// entre caisses sont des écritures type TRANSFERT : caisseId = source,
+// caisseDestinationId = destination (même devise uniquement).
+model TreasuryCashAccount {
+  id             String    @id @default(cuid())
+  code           String    @unique // "caisse-principale", "banque-eur"… (slug)
+  name           String    // « Caisse principale »
+  type           String    @default("especes") // especes | banque | mobile_money | autre
+  currency       String    @default("EUR") // devise tenue par cette caisse
+  openingBalance Float     @default(0) // solde d'ouverture avant première écriture
+  isActive       Boolean   @default(true) // caisse active (désactivable, jamais effaçable si mouvement)
+  description    String?   // précisions : banque, n° de compte, responsable…
+  // Traçabilité gouvernance : qui a créé / modifié la caisse (audit en plus).
+  createdBy      String?
+  updatedBy      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([isActive])
+  @@index([currency])
+}
+
 model TreasuryTransaction {
   id          String    @id @default(cuid())
-  type        String    // RECETTE | DEPENSE
+  type        String    // RECETTE | DEPENSE | TRANSFERT (V3.67)
   category    String    // recette : don, offrande, dime, projet, autre…
                         // dépense : charges, materiel, transport, aide, projet, autre…
+                        // transfert : toujours "transfert"
   amount      Float
   currency    String    @default("EUR") // EUR, XOF, USD…
   method      String?   // especes, mobile_money, virement, carte, crypto
@@ -1015,6 +1050,11 @@ model TreasuryTransaction {
   donorName   String?   // donateur identifié (recettes uniquement)
   isAnonymous Boolean   @default(false)
   note        String?   @db.Text // commentaire libre du trésorier
+  // ⭐ V3.67 — Multicaisse : caisse concernée (source pour un TRANSFERT) et
+  // caisse de destination (TRANSFERT uniquement). NULL = écriture saisie
+  // avant la multicaisse (affichée « non affectée »).
+  caisseId             String?
+  caisseDestinationId  String?
   createdBy   String?   // id du compte trésorier ayant créé la ligne
   updatedBy   String?   // id du dernier modificateur
   createdAt   DateTime  @default(now())
@@ -1024,4 +1064,5 @@ model TreasuryTransaction {
   @@index([category])
   @@index([date])
   @@index([currency])
+  @@index([caisseId])
 }

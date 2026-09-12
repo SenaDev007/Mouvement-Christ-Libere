@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useServant, type ServantId } from "./servant-context";
 import { cn } from "@/lib/utils";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, CalendarCheck } from "lucide-react";
 
 // Groupes de navigation avec sous-menus
 const NAV_GROUPS = [
@@ -39,6 +39,10 @@ const NAV_GROUPS = [
       { label: "Intercession", href: "/intercession" },
       // ⭐ V3.2 — Dispersés d'Israël regroupé sous « Communauté ».
       { label: "Dispersés", href: "/disperses" },
+      // ⭐ V3.67 — Annonces officielles publiques (secrétariat).
+      { label: "Annonces", href: "/annonces" },
+      // ⭐ V3.67 — Demande de rencontre (porte du secrétariat).
+      { label: "Rendez-vous", href: "/rendez-vous" },
     ],
   },
 ];
@@ -193,7 +197,21 @@ export function SiteHeader() {
 
           {/* CTA + burger */}
           <div className="flex items-center gap-3">
-            {/* Bouton "Rejoindre" supprimé — la communauté est accessible via le menu */}
+            {/* ⭐ V3.67 — CTA permanent « Rendez-vous » (lien public vers le
+                secrétariat — bilans V3.66 : le lien était absent du header).
+                Doré discret, visible sur tous les écrans ≥ sm. */}
+            <Link
+              href="/rendez-vous"
+              className={cn(
+                "hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all",
+                scrolled
+                  ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
+                  : "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54]"
+              )}
+            >
+              <CalendarCheck className="w-3.5 h-3.5" />
+              Rendez-vous
+            </Link>
             <button
               className={cn("lg:hidden p-2 rounded", scrolled ? "text-[#FAF6EF]" : "text-[#1E0F2B]")}
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -225,6 +243,15 @@ export function SiteHeader() {
                 ))}
               </div>
             ))}
+            {/* CTA Rendez-vous (mobile) */}
+            <Link
+              href="/rendez-vous"
+              className="mt-3 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-[#C9A227] text-[#1E0F2B] text-sm font-bold"
+              onClick={() => setMobileOpen(false)}
+            >
+              <CalendarCheck className="w-4 h-4" />
+              Demander un rendez-vous
+            </Link>
           </nav>
         </div>
       )}

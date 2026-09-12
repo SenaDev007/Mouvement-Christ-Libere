@@ -1,10 +1,12 @@
 "use client";
 
 /**
- * ⭐ V3.66 — Tableau de bord de la Trésorerie.
+ * ⭐ V3.66/V3.67 — Tableau de bord de la Trésorerie.
  *
  * KPIs calculés en direct depuis le journal (solde par devise, mois
  * courant), séries 6 mois + catégories (recharts), dernières écritures.
+ * ⭐ V3.67 — panneau MULTICAISSE : solde réel (ouvertures incluses),
+ * soldes par caisse de la devise courante, compartiment non affecté.
  * Données : GET /tresorerie/api/stats?devise=EUR|XOF|USD
  * (rôles TREASURER / SUPER_ADMIN).
  */
@@ -43,6 +45,19 @@ interface StatsTresorerie {
     depenses: number;
     solde: number;
     nbMouvements: number;
+  };
+  multicaisse?: {
+    nbCaisses: number;
+    soldeReel: number;
+    soldeNonAffecte: number;
+    coherent: boolean;
+    caisses: {
+      id: string;
+      name: string;
+      type: string;
+      isActive: boolean;
+      solde: number;
+    }[];
   };
   moisCourant: { recettes: number; depenses: number };
   serie6Mois: SerieMensuelle[];
@@ -212,6 +227,68 @@ export default function TresorerieDashboardPage() {
         </div>
       </div>
 
+      {/* ⭐ V3.67 — Panneau multicaisse */}
+      {stats?.multicaisse && stats.multicaisse.nbCaisses > 0 && (
+        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold">
+              Caisses — {devise} ({stats.multicaisse.nbCaisses})
+            </h2>
+            <Link
+              href="/tresorerie/caisse"
+              className="text-xs text-[#C9A227] hover:text-[#A3821C] font-semibold"
+            >
+              Situation complète →
+            </Link>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {stats.multicaisse.caisses.map((c) => (
+              <Link
+                key={c.id}
+                href={`/tresorerie/transactions?caisse=${c.id}`}
+                className={`flex items-center justify-between gap-2 px-4 py-3 rounded-lg border transition-colors hover:bg-[#FAF6EF] ${
+                  c.isActive
+                    ? "border-[#8A8378]/15"
+                    : "border-[#8A8378]/10 opacity-60"
+                }`}
+              >
+                <span className="text-xs font-semibold text-[#1E0F2B] truncate">
+                  {c.name}
+                </span>
+                <span
+                  className={`text-sm font-bold flex-shrink-0 ${
+                    c.solde >= 0 ? "text-[#3F5039]" : "text-[#B3452E]"
+                  }`}
+                >
+                  {formaterMontant(c.solde, devise)}
+                </span>
+              </Link>
+            ))}
+          </div>
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#8A8378]/10">
+            <span className="text-xs text-[#8A8378]">
+              Solde réel (ouvertures incluses)
+              {stats.multicaisse.soldeNonAffecte !== 0
+                ? " + écritures non affectées"
+                : ""}
+            </span>
+            <span
+              className={`text-lg font-bold ${
+                stats.multicaisse.soldeReel >= 0 ? "text-[#3F5039]" : "text-[#B3452E]"
+              }`}
+            >
+              {formaterMontant(stats.multicaisse.soldeReel, devise)}
+            </span>
+          </div>
+          {!stats.multicaisse.coherent && (
+            <p className="text-[11px] text-[#B3452E] mt-2">
+              Écart de cohérence détecté — vérifier les transferts et ouvertures
+              (page Situation de caisse).
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Mois courant */}
       <div className="grid md:grid-cols-2 gap-3">
         <div className="bg-white rounded-xl border border-[#8A8378]/15 p-5 flex items-center gap-4">
@@ -283,6 +360,7 @@ export default function TresorerieDashboardPage() {
           )}
           {stats?.dernieres.map((mouvement) => {
             const estRecette = mouvement.type === "RECETTE";
+            const estTransfert = mouvement.type === "TRANSFERT";
             return (
               <Link
                 key={mouvement.id}
@@ -290,7 +368,13 @@ export default function TresorerieDashboardPage() {
                 className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#FAF6EF] transition-colors"
               >
                 <span
-                  className={`w-2 h-2 rounded-full flex-shrink-0 ${estRecette ? "bg-[#5B7052]" : "bg-[#B3452E]"}`}
+                  className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    estTransfert
+                      ? "bg-[#8C5FA8]"
+                      : estRecette
+                        ? "bg-[#5B7052]"
+                        : "bg-[#B3452E]"
+                  }`}
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[#1E0F2B] truncate">
@@ -304,7 +388,13 @@ export default function TresorerieDashboardPage() {
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p
-                    className={`text-sm font-bold ${estRecette ? "text-[#3F5039]" : "text-[#B3452E]"}`}
+                    className={`text-sm font-bold ${
+                      estTransfert
+                        ? "text-[#6B4480]"
+                        : estRecette
+                          ? "text-[#3F5039]"
+                          : "text-[#B3452E]"
+                    }`}
                   >
                     {estRecette ? "+" : "−"}
                     {formaterMontant(mouvement.amount, mouvement.currency)}

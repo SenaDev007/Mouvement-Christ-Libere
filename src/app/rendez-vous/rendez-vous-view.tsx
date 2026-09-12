@@ -39,6 +39,9 @@ export function RendezVousView() {
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState("");
   const [succes, setSucces] = useState(false);
+  // ⭐ V3.67 — code de suivi remis au demandeur ( consultation publique
+  // sur /rendez-vous/suivi).
+  const [codeSuivi, setCodeSuivi] = useState<string | null>(null);
 
   const soumettre = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +57,7 @@ export function RendezVousView() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur lors de l'envoi");
+      setCodeSuivi(data.codeSuivi || null);
       setSucces(true);
     } catch (err) {
       setErreur(err instanceof Error ? err.message : "Erreur inconnue");
@@ -112,6 +116,30 @@ export function RendezVousView() {
               serviteur de Dieu concerné, qui reviendra vers vous selon les
               disponibilités du calendrier pastoral.
             </p>
+
+            {/* ⭐ V3.67 — Code de suivi */}
+            {codeSuivi && (
+              <div className="max-w-md mx-auto mb-6 px-5 py-4 rounded-xl bg-[#2A0E3D] border border-[#C9A227]/30">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/80 font-semibold mb-1">
+                  Votre code de suivi — conservez-le
+                </p>
+                <p className="font-mono text-2xl font-bold text-[#DDBE55] tracking-widest">
+                  {codeSuivi}
+                </p>
+                <p className="text-[11px] text-[#FAF6EF]/60 mt-2 leading-relaxed">
+                  Il vous permet de suivre l&apos;avancement de votre demande
+                  (statut et étapes) sur{" "}
+                  <Link
+                    href={`/rendez-vous/suivi?code=${encodeURIComponent(codeSuivi)}`}
+                    className="text-[#C9A227] underline font-semibold"
+                  >
+                    la page de suivi
+                  </Link>
+                  , sans exposer son contenu.
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/"

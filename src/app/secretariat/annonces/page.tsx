@@ -30,8 +30,10 @@ import {
   AlertTriangle,
   X,
   Check,
+  Clock,
 } from "lucide-react";
 import { ANNONCE_CATEGORIES } from "@/lib/staff-space/constants";
+import { Pagination } from "@/components/staff-space/pagination";
 
 interface Annonce {
   id: string;
@@ -40,6 +42,7 @@ interface Annonce {
   category: string;
   isPublished: boolean;
   publishedAt: string | null;
+  publishAt: string | null;
   relayedToYeshua: boolean;
   relayedAt: string | null;
   createdAt: string;
@@ -57,14 +60,30 @@ const FORM_VIDE = {
   content: "",
   category: "generale",
   isPublished: true,
+  publishAt: "",
   relayYeshua: false,
 };
 
+const PAR_PAGE = 20;
+
+/** datetime-local lisible d'une date ISO ("2026-09-12T20:30"). */
+function versDatetimeLocal(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const decalage = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - decalage).toISOString().slice(0, 16);
+}
+
 export default function SecretariatAnnoncesPage() {
   const [items, setItems] = useState<Annonce[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
-  const [filtreStatut, setFiltreStatut] = useState<"" | "publiee" | "brouillon">("");
+  const [filtreStatut, setFiltreStatut] = useState<
+    "" | "publiee" | "brouillon" | "planifiee"
+  >("");
 
   const [editeurOuvert, setEditeurOuvert] = useState(false);
   const [editionId, setEditionId] = useState<string | null>(null);
@@ -78,18 +97,21 @@ export default function SecretariatAnnoncesPage() {
     try {
       const params = new URLSearchParams();
       if (filtreStatut) params.set("statut", filtreStatut);
+      params.set("limit", String(PAR_PAGE));
+      params.set("offset", String((page - 1) * PAR_PAGE));
       const res = await fetch(`/secretariat/api/annonces?${params}`, {
         cache: "no-store",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur de chargement");
       setItems(data.items || []);
+      setTotal(data.total || 0);
     } catch (err) {
       setErreur(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setChargement(false);
     }
-  }, [filtreStatut]);
+  }, [filtreStatut, page]);
 
   useEffect(() => {
     charger();
@@ -109,6 +131,7 @@ export default function SecretariatAnnoncesPage() {
       content: annonce.content,
       category: annonce.category,
       isPublished: annonce.isPublished,
+      publishAt: versDatetimeLocal(annonce.publishAt),
       relayYeshua: false,
     });
     setErreurForm("");
@@ -122,12 +145,21 @@ export default function SecretariatAnnoncesPage() {
     setEnregistrement(true);
     setErreurForm("");
     try {
+      // publishAt rempli et futur → publication planifiée (le serveur
+      // lève isPublished et publiera à l'échéance). Sinon comportement normal.
+      const charge = { ...form };
+      if (form.publishAt) {
+        (charge as Record<string, unknown>).publishAt = form.publishAt;
+      } else if (editionId) {
+        // édition : retirer une éventuelle planification obsolète
+        (charge as Record<string, unknown>).publishAt = null;
+      }
       const res = await fetch(
         editionId ? `/secretariat/api/annonces/${editionId}` : "/secretariat/api/annonces",
         {
           method: editionId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify(charge),
         }
       );
       const data = await res.json();
@@ -196,11 +228,15 @@ export default function SecretariatAnnoncesPage() {
             { v: "", l: "Toutes" },
             { v: "publiee", l: "Publiées" },
             { v: "brouillon", l: "Brouillons" },
+            { v: "planifiee", l: "Programmées" },
           ] as const
         ).map((f) => (
           <button
             key={f.v}
-            onClick={() => setFiltreStatut(f.v)}
+            onClick={() => {
+              setPage(1);
+              setFiltreStatut(f.v);
+            }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               filtreStatut === f.v
                 ? "bg-[#2A0E3D] text-[#FAF6EF]"
@@ -266,6 +302,18 @@ export default function SecretariatAnnoncesPage() {
                               month: "short",
                               year: "numeric",
                             })}`}
+                        </span>
+                      ) : annonce.publishAt ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8C5FA8]/10 text-[#6B4480] border border-[#8C5FA8]/30">
+                          <Clock className="w-3 h-3" />
+                          Programmée
+                          {" "}
+                          {new Date(annonce.publishAt).toLocaleString("fr-FR", {
+                            day: "numeric",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8A8378]/10 text-[#6B6459] border border-[#8A8378]/30">
@@ -341,6 +389,16 @@ export default function SecretariatAnnoncesPage() {
             );
           })}
         </div>
+      )}
+
+      {/* ⭐ V3.67 — Pagination */}
+      {!chargement && total > 0 && (
+        <Pagination
+          total={total}
+          page={page}
+          parPage={PAR_PAGE}
+          onChange={setPage}
+        />
       )}
 
       {/* ── Éditeur ── */}
@@ -424,7 +482,14 @@ export default function SecretariatAnnoncesPage() {
                 <input
                   type="checkbox"
                   checked={form.isPublished}
-                  onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      isPublished: e.target.checked,
+                      // Publication immédiate = pas de planification.
+                      publishAt: e.target.checked ? "" : form.publishAt,
+                    })
+                  }
                   className="w-4 h-4 accent-[#C9A227]"
                 />
                 <span className="text-xs font-semibold text-[#1E0F2B]">
@@ -435,6 +500,30 @@ export default function SecretariatAnnoncesPage() {
                   </span>
                 </span>
               </label>
+
+              {/* ⭐ V3.67 — Programmation de la publication */}
+              {!form.isPublished && (
+                <div className="px-3 py-2.5 rounded-lg border border-[#8C5FA8]/25 bg-[#8C5FA8]/5">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-[#6B4480] mb-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    Programmer la publication (facultatif)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={form.publishAt}
+                    onChange={(e) =>
+                      setForm({ ...form, publishAt: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#8C5FA8]"
+                  />
+                  <p className="text-[10px] text-[#8A8378] mt-1">
+                    À l&apos;heure indiquée, l&apos;annonce passera automatiquement
+                    en « Publiée » (visible sur la page publique /annonces) —
+                    sans action de votre part.
+                  </p>
+                </div>
+              )}
+
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"

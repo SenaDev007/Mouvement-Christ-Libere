@@ -26,6 +26,10 @@ const FOOTER_LINKS = {
       { label: "Sous-titrage IA", href: "/soustitrage" },
       { label: "Coffre-fort Arweave", href: "/coffre-fort" },
       { label: "Contribuer", href: "/contribuer" },
+      // ⭐ V3.67 — Annonces officielles + rendez-vous (secrétariat).
+      { label: "Annonces du ministère", href: "/annonces" },
+      { label: "Demander un rendez-vous", href: "/rendez-vous" },
+      { label: "Suivre ma demande", href: "/rendez-vous/suivi" },
     ],
   },
   info: {

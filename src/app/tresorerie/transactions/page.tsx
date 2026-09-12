@@ -1,18 +1,24 @@
 "use client";
 
 /**
- * ⭐ V3.66 — Journal des mouvements (Trésorerie).
+ * ⭐ V3.66/V3.67 — Journal des mouvements (Trésorerie).
  *
  * Registre comptable complet :
- *  · filtres (type, catégorie, devise, période, recherche) + totaux de la
- *    sélection calculés côté serveur (recettes / dépenses filtrées) ;
+ *  · filtres (type, catégorie, devise, CAISSE, période, recherche) + totaux
+ *    de la sélection calculés côté serveur ;
  *  · saisie d'un mouvement (recette / dépense, catégorie, montant, devise,
- *    méthode, référence, donateur, note) ;
- *  · correction d'une écriture (le type et la devise sont figés — principe
- *    comptable : supprimer et ressaisir si la nature change) ;
- *  · suppression avec trace d'audit (AuditLog côté serveur).
+ *    méthode, référence, donateur, note, CAISSE de rattachement) ;
+ *  · ⭐ V3.67 — TRANSFERT INTERNE entre caisses (source → destination, même
+ *    devise, fonds suffisants vérifiés) ;
+ *  · correction d'une écriture (type et devise figés — principe comptable :
+ *    supprimer et ressaisir si la nature change ; la caisse peut être
+ *    rattachée/recorrigée) ;
+ *  · suppression avec MOTIF obligatoire (gouvernance V3.67 — trace complète
+ *    dans le journal d'audit) ;
+ *  · ⭐ V3.67 — pagination, export CSV (filtres actifs) et REÇU DE DON PDF
+ *    sur chaque recette.
  *
- * Données : /tresorerie/api/transactions (rôles TREASURER / SUPER_ADMIN).
+ * Données : /tresorerie/api/transactions · /tresorerie/api/caisses.
  */
 
 import { Suspense, useCallback, useEffect, useState } from "react";
@@ -28,6 +34,9 @@ import {
   X,
   ArrowDownCircle,
   ArrowUpCircle,
+  ArrowLeftRight,
+  Download,
+  FileText,
 } from "lucide-react";
 import {
   formaterMontant,
@@ -40,6 +49,7 @@ import {
   DEVISE_CODES,
   DEVISES,
 } from "@/lib/staff-space/constants";
+import { Pagination } from "@/components/staff-space/pagination";
 
 interface Transaction {
   id: string;
@@ -54,7 +64,22 @@ interface Transaction {
   donorName: string | null;
   isAnonymous: boolean;
   note: string | null;
+  caisseId?: string | null;
+  caisseDestinationId?: string | null;
+  caisseNom?: string | null;
+  caisseDestinationNom?: string | null;
 }
+
+interface CaisseLegere {
+  id: string;
+  name: string;
+  type: string;
+  currency: string;
+  isActive: boolean;
+  solde: number;
+}
+
+const PAR_PAGE = 50;
 
 const FORM_VIDE = {
   type: "RECETTE",
@@ -67,6 +92,17 @@ const FORM_VIDE = {
   reference: "",
   donorName: "",
   isAnonymous: false,
+  note: "",
+  caisseId: "",
+};
+
+const FORM_TRANSFERT_VIDE = {
+  caisseId: "",
+  caisseDestinationId: "",
+  amount: "",
+  label: "",
+  date: new Date().toISOString().slice(0, 10),
+  reference: "",
   note: "",
 };
 
@@ -89,13 +125,19 @@ function TransactionsContenu() {
 
   const [items, setItems] = useState<Transaction[]>([]);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [totaux, setTotaux] = useState({ recettes: 0, depenses: 0 });
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
 
+  const [caisses, setCaisses] = useState<CaisseLegere[]>([]);
+
   const [type, setType] = useState(searchParams.get("type") || "");
   const [categorie, setCategorie] = useState("");
   const [devise, setDevise] = useState(searchParams.get("devise") || "");
+  const [caisseFiltre, setCaisseFiltre] = useState(
+    searchParams.get("caisse") || ""
+  );
   const [du, setDu] = useState("");
   const [au, setAu] = useState("");
   const [recherche, setRecherche] = useState(searchParams.get("q") || "");
@@ -106,6 +148,38 @@ function TransactionsContenu() {
   const [enregistrement, setEnregistrement] = useState(false);
   const [erreurForm, setErreurForm] = useState("");
 
+  const [transfertOuvert, setTransfertOuvert] = useState(false);
+  const [formTransfert, setFormTransfert] = useState({ ...FORM_TRANSFERT_VIDE });
+  const [erreurTransfert, setErreurTransfert] = useState("");
+
+  const [suppression, setSuppression] = useState<Transaction | null>(null);
+  const [motifSuppression, setMotifSuppression] = useState("");
+  const [erreurSuppression, setErreurSuppression] = useState("");
+
+  // Chargement des caisses (sélecteurs du formulaire + filtre).
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/tresorerie/api/caisses", { cache: "no-store" });
+        const json = await res.json();
+        if (res.ok) {
+          setCaisses(
+            (json.caisses || []).map((c: CaisseLegere & { currency: string }) => ({
+              id: c.id,
+              name: c.name,
+              type: c.type,
+              currency: c.currency,
+              isActive: c.isActive,
+              solde: c.solde,
+            }))
+          );
+        }
+      } catch {
+        // silencieux : sélecteurs vides → « non affecté ».
+      }
+    })();
+  }, [chargement]);
+
   const charger = useCallback(async () => {
     setChargement(true);
     setErreur("");
@@ -114,9 +188,12 @@ function TransactionsContenu() {
       if (type) params.set("type", type);
       if (categorie) params.set("categorie", categorie);
       if (devise) params.set("devise", devise);
+      if (caisseFiltre) params.set("caisse", caisseFiltre);
       if (du) params.set("du", du);
       if (au) params.set("au", au);
       if (recherche.trim()) params.set("q", recherche.trim());
+      params.set("limit", String(PAR_PAGE));
+      params.set("offset", String((page - 1) * PAR_PAGE));
       const res = await fetch(`/tresorerie/api/transactions?${params}`, {
         cache: "no-store",
       });
@@ -130,7 +207,7 @@ function TransactionsContenu() {
     } finally {
       setChargement(false);
     }
-  }, [type, categorie, devise, du, au, recherche]);
+  }, [type, categorie, devise, caisseFiltre, du, au, recherche, page]);
 
   useEffect(() => {
     const t = setTimeout(charger, recherche ? 300 : 0);
@@ -139,9 +216,32 @@ function TransactionsContenu() {
 
   const ouvrirCreation = () => {
     setEditionId(null);
-    setForm({ ...FORM_VIDE, type: type || "RECETTE", currency: devise || "EUR" });
+    const caissesDevise = caisses.filter(
+      (c) => c.isActive && c.currency === (devise || "EUR")
+    );
+    setForm({
+      ...FORM_VIDE,
+      type: type === "DEPENSE" ? "DEPENSE" : "RECETTE",
+      category:
+        type === "DEPENSE"
+          ? Object.keys(DEPENSE_CATEGORIES)[0]
+          : Object.keys(RECETTE_CATEGORIES)[0],
+      currency: devise || "EUR",
+      caisseId: caissesDevise[0]?.id || "",
+    });
     setErreurForm("");
     setEditeurOuvert(true);
+  };
+
+  const ouvrirTransfert = () => {
+    const actives = caisses.filter((c) => c.isActive);
+    setFormTransfert({
+      ...FORM_TRANSFERT_VIDE,
+      caisseId: actives[0]?.id || "",
+      caisseDestinationId: actives[1]?.id || "",
+    });
+    setErreurTransfert("");
+    setTransfertOuvert(true);
   };
 
   const ouvrirCorrection = (t: Transaction) => {
@@ -158,6 +258,7 @@ function TransactionsContenu() {
       donorName: t.donorName || "",
       isAnonymous: t.isAnonymous,
       note: t.note || "",
+      caisseId: t.caisseId || "",
     });
     setErreurForm("");
     setEditeurOuvert(true);
@@ -184,6 +285,7 @@ function TransactionsContenu() {
             ...form,
             amount: montant,
             method: form.method || undefined,
+            caisseId: form.caisseId || (editionId ? null : undefined),
           }),
         }
       );
@@ -198,21 +300,107 @@ function TransactionsContenu() {
     }
   };
 
-  const supprimer = async (t: Transaction) => {
-    if (
-      !confirm(
-        `Supprimer définitivement « ${t.label} » (${formaterMontant(t.amount, t.currency)}) ?\n\nLa trace de suppression sera conservée dans le journal d'audit.`
-      )
-    )
+  const enregistrerTransfert = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const montant = parseFloat(formTransfert.amount.replace(",", "."));
+    if (!Number.isFinite(montant) || montant <= 0) {
+      setErreurTransfert("Le montant doit être un nombre strictement positif.");
       return;
-    const res = await fetch(`/tresorerie/api/transactions/${t.id}`, {
-      method: "DELETE",
-    });
-    if (res.ok) charger();
+    }
+    setEnregistrement(true);
+    setErreurTransfert("");
+    try {
+      const res = await fetch("/tresorerie/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "TRANSFERT",
+          caisseId: formTransfert.caisseId,
+          caisseDestinationId: formTransfert.caisseDestinationId,
+          amount: montant,
+          label: formTransfert.label,
+          date: formTransfert.date,
+          reference: formTransfert.reference || undefined,
+          note: formTransfert.note || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setTransfertOuvert(false);
+      charger();
+    } catch (err) {
+      setErreurTransfert(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setEnregistrement(false);
+    }
+  };
+
+  const confirmerSuppression = async () => {
+    if (!suppression) return;
+    if (motifSuppression.trim().length < 3) {
+      setErreurSuppression("Un motif d'au moins 3 caractères est obligatoire.");
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/tresorerie/api/transactions/${suppression.id}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ motif: motifSuppression.trim() }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setSuppression(null);
+      setMotifSuppression("");
+      setErreurSuppression("");
+      charger();
+    } catch (err) {
+      setErreurSuppression(err instanceof Error ? err.message : "Erreur inconnue");
+    }
+  };
+
+  const exporterCsv = () => {
+    const params = new URLSearchParams();
+    if (type) params.set("type", type);
+    if (categorie) params.set("categorie", categorie);
+    if (devise) params.set("devise", devise);
+    if (caisseFiltre) params.set("caisse", caisseFiltre);
+    if (du) params.set("du", du);
+    if (au) params.set("au", au);
+    if (recherche.trim()) params.set("q", recherche.trim());
+    params.set("format", "csv");
+    window.location.href = `/tresorerie/api/transactions?${params}`;
+  };
+
+  /** Reçu de don PDF : POST → blob → nouvel onglet (imprimable). */
+  const ouvrirRecu = async (t: Transaction) => {
+    try {
+      const res = await fetch(`/tresorerie/api/rapports/recu/${t.id}`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Erreur de génération du reçu");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : "Erreur inconnue");
+    }
   };
 
   const categoriesCourantes =
     form.type === "RECETTE" ? RECETTE_CATEGORIES : DEPENSE_CATEGORIES;
+
+  const caissesDuFormulaire = caisses.filter(
+    (c) => c.isActive && c.currency === form.currency
+  );
+
+  const caissesActives = caisses.filter((c) => c.isActive);
 
   return (
     <div className="space-y-6">
@@ -223,17 +411,40 @@ function TransactionsContenu() {
             Journal des mouvements
           </h1>
           <p className="text-sm text-[#8A8378] mt-1">
-            {total} écriture{total > 1 ? "s" : ""} — recettes et dépenses du
-            ministère, tracées ligne par ligne.
+            {total} écriture{total > 1 ? "s" : ""} — recettes, dépenses et
+            transferts internes, tracés ligne par ligne.
           </p>
         </div>
-        <button
-          onClick={ouvrirCreation}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Saisir un mouvement
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exporterCsv}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#8A8378]/25 text-sm font-medium text-[#1E0F2B] hover:bg-white transition-colors"
+            title="Exporter la sélection en CSV (Excel)"
+          >
+            <Download className="w-4 h-4 text-[#C9A227]" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+          <button
+            onClick={ouvrirTransfert}
+            disabled={caissesActives.length < 2}
+            title={
+              caissesActives.length < 2
+                ? "Créez au moins deux caisses actives pour transférer"
+                : "Transférer des fonds entre deux caisses"
+            }
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#8C5FA8]/30 text-sm font-medium text-[#6B4480] hover:bg-[#8C5FA8]/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <ArrowLeftRight className="w-4 h-4" />
+            <span className="hidden sm:inline">Transfert</span>
+          </button>
+          <button
+            onClick={ouvrirCreation}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Saisir
+          </button>
+        </div>
       </div>
 
       {/* Totaux de la sélection */}
@@ -273,7 +484,10 @@ function TransactionsContenu() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex gap-2">
             <button
-              onClick={() => setType("")}
+              onClick={() => {
+                setPage(1);
+                setType("");
+              }}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 type === ""
                   ? "bg-[#2A0E3D] text-[#FAF6EF]"
@@ -285,7 +499,10 @@ function TransactionsContenu() {
             {Object.entries(MOUVEMENT_TYPES).map(([v, t2]) => (
               <button
                 key={v}
-                onClick={() => setType(v)}
+                onClick={() => {
+                  setPage(1);
+                  setType(v);
+                }}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                   type === v ? "bg-[#2A0E3D] text-[#FAF6EF]" : "bg-[#FAF6EF] text-[#8A8378] hover:bg-[#C9A227]/10"
                 }`}
@@ -299,7 +516,10 @@ function TransactionsContenu() {
             <input
               type="search"
               value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
+              onChange={(e) => {
+                setPage(1);
+                setRecherche(e.target.value);
+              }}
               placeholder="Rechercher (libellé, référence, donateur…)…"
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
             />
@@ -308,7 +528,10 @@ function TransactionsContenu() {
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={categorie}
-            onChange={(e) => setCategorie(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setCategorie(e.target.value);
+            }}
             className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
             aria-label="Filtrer par catégorie"
           >
@@ -325,8 +548,27 @@ function TransactionsContenu() {
             ))}
           </select>
           <select
+            value={caisseFiltre}
+            onChange={(e) => {
+              setPage(1);
+              setCaisseFiltre(e.target.value);
+            }}
+            className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+            aria-label="Filtrer par caisse"
+          >
+            <option value="">Toutes caisses</option>
+            {caisses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <select
             value={devise}
-            onChange={(e) => setDevise(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setDevise(e.target.value);
+            }}
             className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
             aria-label="Filtrer par devise"
           >
@@ -340,26 +582,34 @@ function TransactionsContenu() {
           <input
             type="date"
             value={du}
-            onChange={(e) => setDu(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setDu(e.target.value);
+            }}
             className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
             aria-label="Date de début"
           />
           <input
             type="date"
             value={au}
-            onChange={(e) => setAu(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setAu(e.target.value);
+            }}
             className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
             aria-label="Date de fin"
           />
-          {(du || au || categorie || type || devise || recherche) && (
+          {(du || au || categorie || type || devise || caisseFiltre || recherche) && (
             <button
               onClick={() => {
                 setType("");
                 setCategorie("");
                 setDevise("");
+                setCaisseFiltre("");
                 setDu("");
                 setAu("");
                 setRecherche("");
+                setPage(1);
               }}
               className="text-xs text-[#C9A227] hover:text-[#A3821C] font-semibold px-2"
             >
@@ -391,20 +641,21 @@ function TransactionsContenu() {
       ) : (
         <div className="bg-white rounded-xl border border-[#8A8378]/15 divide-y divide-[#8A8378]/10 overflow-x-auto">
           {/* En-tête tableau (desktop) */}
-          <div className="hidden md:grid grid-cols-[110px_1fr_150px_120px_110px_92px] gap-2 px-5 py-3 text-[10px] uppercase font-bold tracking-wider text-[#8A8378]">
+          <div className="hidden md:grid grid-cols-[110px_1fr_150px_120px_110px_118px] gap-2 px-5 py-3 text-[10px] uppercase font-bold tracking-wider text-[#8A8378]">
             <span>Date</span>
             <span>Libellé</span>
             <span>Catégorie</span>
-            <span>Méthode</span>
+            <span>Caisse</span>
             <span className="text-right">Montant</span>
             <span className="text-right">Actions</span>
           </div>
           {items.map((t) => {
             const estRecette = t.type === "RECETTE";
+            const estTransfert = t.type === "TRANSFERT";
             return (
               <div
                 key={t.id}
-                className="md:grid md:grid-cols-[110px_1fr_150px_120px_110px_92px] flex flex-col md:flex-row gap-1 md:gap-2 px-5 py-3.5 hover:bg-[#FAF6EF]/60 transition-colors items-start md:items-center"
+                className="md:grid md:grid-cols-[110px_1fr_150px_120px_110px_118px] flex flex-col md:flex-row gap-1 md:gap-2 px-5 py-3.5 hover:bg-[#FAF6EF]/60 transition-colors items-start md:items-center"
               >
                 <span className="text-xs text-[#8A8378] whitespace-nowrap">
                   {new Date(t.date).toLocaleDateString("fr-FR", {
@@ -415,7 +666,9 @@ function TransactionsContenu() {
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-[#1E0F2B] flex items-center gap-1.5">
-                    {estRecette ? (
+                    {estTransfert ? (
+                      <ArrowLeftRight className="w-3.5 h-3.5 text-[#8C5FA8] flex-shrink-0" />
+                    ) : estRecette ? (
                       <ArrowDownCircle className="w-3.5 h-3.5 text-[#5B7052] flex-shrink-0" />
                     ) : (
                       <ArrowUpCircle className="w-3.5 h-3.5 text-[#B3452E] flex-shrink-0" />
@@ -423,40 +676,75 @@ function TransactionsContenu() {
                     <span className="truncate">{t.label}</span>
                   </p>
                   <p className="text-[11px] text-[#8A8378] truncate">
-                    {t.reference ? `réf. ${t.reference} · ` : ""}
-                    {estRecette
-                      ? t.isAnonymous
-                        ? "don anonyme"
-                        : t.donorName || "donateur non précisé"
-                      : t.note?.substring(0, 60) || ""}
+                    {estTransfert ? (
+                      <>
+                        {t.caisseNom || "?"} → {t.caisseDestinationNom || "?"}
+                        {t.reference ? ` · réf. ${t.reference}` : ""}
+                      </>
+                    ) : (
+                      <>
+                        {t.reference ? `réf. ${t.reference} · ` : ""}
+                        {estRecette
+                          ? t.isAnonymous
+                            ? "don anonyme"
+                            : t.donorName || "donateur non précisé"
+                          : t.note?.substring(0, 60) || ""}
+                      </>
+                    )}
                   </p>
                 </div>
                 <span className="text-[11px] text-[#8A8378]">
                   {libelleCategorie(t.category, t.type)}
                 </span>
-                <span className="text-[11px] text-[#8A8378]">
-                  {libelleMethode(t.method)}
+                <span className="text-[11px] text-[#8A8378] truncate">
+                  {estTransfert
+                    ? `${t.caisseNom || "?"} → ${t.caisseDestinationNom || "?"}`
+                    : t.caisseNom || (
+                        <span className="italic text-[#8A8378]/60">non affecté</span>
+                      )}
                 </span>
                 <span
-                  className={`text-sm font-bold md:text-right ${estRecette ? "text-[#3F5039]" : "text-[#B3452E]"}`}
+                  className={`text-sm font-bold md:text-right ${
+                    estTransfert
+                      ? "text-[#6B4480]"
+                      : estRecette
+                        ? "text-[#3F5039]"
+                        : "text-[#B3452E]"
+                  }`}
                 >
                   {estRecette ? "+" : "−"}
                   {formaterMontant(t.amount, t.currency)}
                 </span>
                 <div className="flex gap-1 md:justify-end">
+                  {estRecette && (
+                    <button
+                      onClick={() => ouvrirRecu(t)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#8C5FA8] hover:bg-[#8C5FA8]/10 transition-colors"
+                      aria-label="Reçu PDF"
+                      title="Reçu de don PDF"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {!estTransfert && (
+                    <button
+                      onClick={() => ouvrirCorrection(t)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors"
+                      aria-label="Corriger"
+                      title="Corriger l'écriture"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   <button
-                    onClick={() => ouvrirCorrection(t)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors"
-                    aria-label="Corriger"
-                    title="Corriger l'écriture"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => supprimer(t)}
+                    onClick={() => {
+                      setSuppression(t);
+                      setMotifSuppression("");
+                      setErreurSuppression("");
+                    }}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#B3452E] hover:bg-[#B3452E]/10 transition-colors"
                     aria-label="Supprimer"
-                    title="Supprimer l'écriture"
+                    title="Supprimer l'écriture (motif obligatoire)"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -464,6 +752,14 @@ function TransactionsContenu() {
               </div>
             );
           })}
+          <div className="border-t border-[#8A8378]/10 px-4 pb-3">
+            <Pagination
+              total={total}
+              page={page}
+              parPage={PAR_PAGE}
+              onChange={setPage}
+            />
+          </div>
         </div>
       )}
 
@@ -499,39 +795,41 @@ function TransactionsContenu() {
             {/* Type (création seulement) */}
             {!editionId && (
               <div className="grid grid-cols-2 gap-2">
-                {Object.entries(MOUVEMENT_TYPES).map(([v, t2]) => {
-                  const actif = form.type === v;
-                  return (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() =>
-                        setForm({
-                          ...form,
-                          type: v,
-                          category:
-                            v === "RECETTE"
-                              ? Object.keys(RECETTE_CATEGORIES)[0]
-                              : Object.keys(DEPENSE_CATEGORIES)[0],
-                        })
-                      }
-                      className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-bold transition-all ${
-                        actif
-                          ? v === "RECETTE"
-                            ? "border-[#5B7052] bg-[#5B7052]/5 text-[#3F5039]"
-                            : "border-[#B3452E] bg-[#B3452E]/5 text-[#B3452E]"
-                          : "border-[#8A8378]/15 text-[#8A8378] hover:border-[#C9A227]/40"
-                      }`}
-                    >
-                      {v === "RECETTE" ? (
-                        <ArrowDownCircle className="w-4 h-4" />
-                      ) : (
-                        <ArrowUpCircle className="w-4 h-4" />
-                      )}
-                      {t2.libelle}
-                    </button>
-                  );
-                })}
+                {Object.entries(MOUVEMENT_TYPES)
+                  .filter(([v]) => v !== "TRANSFERT")
+                  .map(([v, t2]) => {
+                    const actif = form.type === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() =>
+                          setForm({
+                            ...form,
+                            type: v,
+                            category:
+                              v === "RECETTE"
+                                ? Object.keys(RECETTE_CATEGORIES)[0]
+                                : Object.keys(DEPENSE_CATEGORIES)[0],
+                          })
+                        }
+                        className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-bold transition-all ${
+                          actif
+                            ? v === "RECETTE"
+                              ? "border-[#5B7052] bg-[#5B7052]/5 text-[#3F5039]"
+                              : "border-[#B3452E] bg-[#B3452E]/5 text-[#B3452E]"
+                            : "border-[#8A8378]/15 text-[#8A8378] hover:border-[#C9A227]/40"
+                        }`}
+                      >
+                        {v === "RECETTE" ? (
+                          <ArrowDownCircle className="w-4 h-4" />
+                        ) : (
+                          <ArrowUpCircle className="w-4 h-4" />
+                        )}
+                        {t2.libelle}
+                      </button>
+                    );
+                  })}
               </div>
             )}
 
@@ -557,7 +855,7 @@ function TransactionsContenu() {
                 <select
                   value={form.currency}
                   disabled={Boolean(editionId)}
-                  onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                  onChange={(e) => setForm({ ...form, currency: e.target.value, caisseId: "" })}
                   className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm disabled:opacity-60"
                 >
                   {DEVISE_CODES.map((d) => (
@@ -594,6 +892,35 @@ function TransactionsContenu() {
                   className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
                 />
               </div>
+            </div>
+
+            {/* ⭐ V3.67 — Caisse de rattachement */}
+            <div>
+              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                Caisse (multicaisse)
+              </label>
+              <select
+                value={form.caisseId}
+                onChange={(e) => setForm({ ...form, caisseId: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+              >
+                <option value="">
+                  {caissesDuFormulaire.length > 0
+                    ? "— Non affecté (hors multicaisse) —"
+                    : "Aucune caisse dans cette devise — créez une caisse (page Situation de caisse)"}
+                </option>
+                {caissesDuFormulaire.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              {caissesDuFormulaire.length > 0 && !form.caisseId && (
+                <p className="text-[10px] text-[#A3821C] mt-1">
+                  Recommandé : rattacher chaque écriture à une caisse pour une
+                  situation multicaisse exacte.
+                </p>
+              )}
             </div>
 
             <div>
@@ -708,6 +1035,225 @@ function TransactionsContenu() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* ── Transfert entre caisses (V3.67) ── */}
+      {transfertOuvert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 overflow-y-auto">
+          <form
+            onSubmit={enregistrerTransfert}
+            className="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 my-8"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-[#1E0F2B] flex items-center gap-2">
+                  <ArrowLeftRight className="w-5 h-5 text-[#8C5FA8]" />
+                  Transfert entre caisses
+                </h2>
+                <p className="text-[11px] text-[#8A8378] mt-0.5">
+                  Mouvement interne : l&apos;argent sort d&apos;une caisse et
+                  entre dans l&apos;autre — le total consolidé ne change pas.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTransfertOuvert(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:bg-[#FAF6EF]"
+                aria-label="Fermer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                  Caisse source *
+                </label>
+                <select
+                  value={formTransfert.caisseId}
+                  onChange={(e) =>
+                    setFormTransfert({ ...formTransfert, caisseId: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                >
+                  {caissesActives.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} · {formaterMontant(c.solde, c.currency)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                  Caisse destination *
+                </label>
+                <select
+                  value={formTransfert.caisseDestinationId}
+                  onChange={(e) =>
+                    setFormTransfert({
+                      ...formTransfert,
+                      caisseDestinationId: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                >
+                  {caissesActives.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} · {formaterMontant(c.solde, c.currency)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                  Montant *
+                </label>
+                <input
+                  type="text"
+                  required
+                  inputMode="decimal"
+                  value={formTransfert.amount}
+                  onChange={(e) =>
+                    setFormTransfert({ ...formTransfert, amount: e.target.value })
+                  }
+                  placeholder="Ex. 500,00"
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                  Date comptable
+                </label>
+                <input
+                  type="date"
+                  value={formTransfert.date}
+                  onChange={(e) =>
+                    setFormTransfert({ ...formTransfert, date: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                Libellé *
+              </label>
+              <input
+                type="text"
+                required
+                value={formTransfert.label}
+                onChange={(e) =>
+                  setFormTransfert({ ...formTransfert, label: e.target.value })
+                }
+                placeholder="Ex. Dépôt des offrandes en banque"
+                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                Référence / note (facultatif)
+              </label>
+              <input
+                type="text"
+                value={formTransfert.reference}
+                onChange={(e) =>
+                  setFormTransfert({ ...formTransfert, reference: e.target.value })
+                }
+                placeholder="Ex. BORD-2026-018 (bordereau de dépôt)"
+                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+              />
+            </div>
+
+            {formTransfert.caisseId &&
+              formTransfert.caisseDestinationId &&
+              formTransfert.caisseId === formTransfert.caisseDestinationId && (
+                <p className="text-xs text-[#B3452E]">
+                  La source et la destination doivent être des caisses différentes.
+                </p>
+              )}
+
+            {erreurTransfert && (
+              <p className="text-xs text-[#B3452E]">{erreurTransfert}</p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setTransfertOuvert(false)}
+                className="px-4 py-2 rounded-lg text-sm text-[#8A8378] hover:text-[#1E0F2B]"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={enregistrement}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+              >
+                {enregistrement && <Loader2 className="w-4 h-4 animate-spin" />}
+                Effectuer le transfert
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ── Suppression avec motif (gouvernance V3.67) ── */}
+      {suppression && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
+            <h2 className="text-lg font-bold text-[#B3452E] flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              Supprimer l&apos;écriture
+            </h2>
+            <p className="text-sm text-[#1E0F2B]">
+              « {suppression.label} » ·{" "}
+              <b>{formaterMontant(suppression.amount, suppression.currency)}</b>
+            </p>
+            <p className="text-xs text-[#8A8378] leading-relaxed">
+              Gouvernance : l&apos;écriture disparaît du journal, mais son
+              contenu complet, votre nom et le motif ci-dessous restent
+              consignés dans le journal d&apos;audit.
+            </p>
+            <div>
+              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                Motif de suppression * (au moins 3 caractères)
+              </label>
+              <input
+                type="text"
+                value={motifSuppression}
+                onChange={(e) => setMotifSuppression(e.target.value)}
+                placeholder="Ex. Doublon de saisie, erreur de montant…"
+                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                autoFocus
+              />
+            </div>
+            {erreurSuppression && (
+              <p className="text-xs text-[#B3452E]">{erreurSuppression}</p>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSuppression(null)}
+                className="px-4 py-2 rounded-lg text-sm text-[#8A8378] hover:text-[#1E0F2B]"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={confirmerSuppression}
+                className="px-5 py-2 rounded-lg bg-[#B3452E] text-white text-sm font-semibold hover:bg-[#9A3B26] transition-colors"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

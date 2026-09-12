@@ -6,11 +6,13 @@ import { ANNONCE_CATEGORIES_VALEURS } from "@/lib/staff-space/constants";
 import { relayerAnnonceMinistere } from "@/lib/staff-space/annonce-relay";
 
 /**
- * ⭐ V3.66 — Secrétariat : mise à jour / suppression d'une annonce.
+ * ⭐ V3.66/V3.67 — Secrétariat : mise à jour / suppression d'une annonce.
  *
  *   PATCH  /secretariat/api/annonces/[id]
- *          { title?, content?, category?, isPublished?, relayYeshua? }
+ *          { title?, content?, category?, isPublished?, publishAt?, relayYeshua? }
  *          — la (dé)publication met à jour publishedAt ;
+ *          — publishAt (V3.67) planifie la publication (bascule auto
+ *            à l'échéance, cf. secretariat/api/annonces) ;
  *          — relais Yeshua Connect optionnel au moment de la publication.
  *   DELETE /secretariat/api/annonces/[id]
  *
@@ -37,12 +39,14 @@ export async function PATCH(
       content,
       category,
       isPublished,
+      publishAt,
       relayYeshua,
     } = body as {
       title?: string;
       content?: string;
       category?: string;
       isPublished?: boolean;
+      publishAt?: string | null;
       relayYeshua?: boolean;
     };
 
@@ -57,9 +61,33 @@ export async function PATCH(
     if (category && ANNONCE_CATEGORIES_VALEURS.includes(category)) {
       data.category = category;
     }
+
+    // ⭐ V3.67 — planification : publishAt futur → brouillon programmé.
+    // Une publication MANUELLE (isPublished=true) annule la planification.
+    if (publishAt !== undefined) {
+      if (publishAt === null || publishAt === "") {
+        data.publishAt = null;
+      } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(publishAt)) {
+        const d = new Date(publishAt);
+        if (!Number.isNaN(d.getTime())) {
+          if (d.getTime() > Date.now()) {
+            data.publishAt = d;
+            data.isPublished = false;
+            data.publishedAt = null;
+          } else {
+            // Heure déjà passée → publication immédiate.
+            data.publishAt = d;
+            data.isPublished = true;
+            data.publishedAt = new Date();
+          }
+        }
+      }
+    }
     if (typeof isPublished === "boolean") {
       data.isPublished = isPublished;
       data.publishedAt = isPublished ? new Date() : null;
+      // Publication manuelle → la planification est retirée.
+      if (isPublished) data.publishAt = null;
     }
 
     const modifiee = await db.ministryAnnouncement.update({

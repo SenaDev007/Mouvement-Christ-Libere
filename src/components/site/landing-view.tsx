@@ -21,7 +21,7 @@ import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 import { LandingIntro } from "@/components/site/landing-intro";
 import {
   ChevronRight, Sparkles, BookOpen, FileText, Video, Users,
-  MessageSquare, Heart, ArrowRight,
+  MessageSquare, Heart, ArrowRight, CalendarCheck,
 } from "lucide-react";
 
 // NOTE: <AutoRefresh> était monté ici toutes les 30 s et déclenchait un
@@ -200,12 +200,29 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
+            {/* ⭐ V3.67 — CTA « Rendez-vous » pulsant vers /rendez-vous :
+                l'entrée publique du secrétariat (demande de rencontre avec
+                Sœur Pam ou le Pasteur Kongo). Effet double anneau doré
+                (globals.css : ctaPulseRing/ctaCoeur, prefers-reduced-motion). */}
+            <Link
+              href="/rendez-vous"
+              className="cta-rdv-pulse group inline-flex items-center justify-center w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-[#C9A227] to-[#DDBE55] hover:from-[#DDBE55] hover:to-[#E8CE74] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300 relative"
+            >
+              <span className="cta-rdv-coeur inline-flex items-center gap-2">
+                <CalendarCheck className="w-5 h-5" />
+                Demander un rendez-vous
+              </span>
+              <span className="absolute -top-1.5 -right-1.5 flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-[#FAF6EF] opacity-70 animate-ping" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#FAF6EF]" />
+              </span>
+            </Link>
             {hero.ctaLabel && hero.ctaHref && (
               <Link
                 href={hero.ctaHref}
-                className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300"
               >
                 {hero.ctaLabel}
                 <ChevronRight className="w-4 h-4 ml-2" />
@@ -214,7 +231,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             {hero.cta2Label && hero.cta2Href && (
               <Link
                 href={hero.cta2Href}
-                className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#FAF6EF]/25 text-[#FAF6EF]/90 font-sans font-bold text-base hover:bg-[#FAF6EF]/10 transition-all duration-300"
               >
                 {hero.cta2Label}
                 <ChevronRight className="w-4 h-4 ml-2" />

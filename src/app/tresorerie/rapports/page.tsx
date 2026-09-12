@@ -1,11 +1,13 @@
 "use client";
 
 /**
- * ⭐ V3.66 — Rapports financiers PDF (Trésorerie).
+ * ⭐ V3.66/V3.67 — Rapports financiers PDF (Trésorerie).
  *
  * Génération à la demande du « Rapport financier » : synthèse (totaux,
- * solde), récapitulatif par catégorie, journal détaillé avec solde cumulé
- * — ordre chronologique, une devise par document.
+ * solde), situation PAR CAISSE (V3.67), récapitulatif par catégorie,
+ * journal détaillé avec solde cumulé — ordre chronologique, une devise
+ * par document. Les reçus de don PDF s'émettent depuis le journal
+ * (bouton « Reçu » sur chaque recette).
  *
  * POST /tresorerie/api/rapports → binaire application/pdf.
  */
@@ -73,7 +75,8 @@ export default function TresorerieRapportsPage() {
         </h1>
         <p className="text-sm text-[#8A8378] mt-1">
           Document officiel de la trésorerie du Mouvement Christ Libère —
-          synthèse, catégories et journal détaillé avec solde cumulé.
+          synthèse, situation par caisse, catégories et journal détaillé avec
+          solde cumulé. Reçus de don : bouton « Reçu » du journal.
         </p>
       </div>
 

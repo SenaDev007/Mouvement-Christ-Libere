@@ -1374,6 +1374,61 @@ export function ensureStaffSpaces(): Promise<void> {
       await db.$executeRawUnsafe(
         'CREATE INDEX IF NOT EXISTS "TreasuryTransaction_currency_idx" ON "TreasuryTransaction"("currency")'
       );
+      // ⑤ V3.67 — Trésorerie : MULTICAISSE. Table des caisses (solde
+      // d'ouverture inclus — jamais de total stocké) + colonnes de
+      // rattachement sur le journal (caisseId = caisse concernée ou
+      // SOURCE d'un transfert ; caisseDestinationId = destination).
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "TreasuryCashAccount" (
+          "id" TEXT NOT NULL,
+          "code" TEXT NOT NULL,
+          "name" TEXT NOT NULL,
+          "type" TEXT NOT NULL DEFAULT 'especes',
+          "currency" TEXT NOT NULL DEFAULT 'EUR',
+          "openingBalance" DOUBLE PRECISION NOT NULL DEFAULT 0,
+          "isActive" BOOLEAN NOT NULL DEFAULT true,
+          "description" TEXT,
+          "createdBy" TEXT,
+          "updatedBy" TEXT,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "TreasuryCashAccount_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE UNIQUE INDEX IF NOT EXISTS "TreasuryCashAccount_code_key" ON "TreasuryCashAccount"("code")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "TreasuryCashAccount_isActive_idx" ON "TreasuryCashAccount"("isActive")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "TreasuryCashAccount_currency_idx" ON "TreasuryCashAccount"("currency")'
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "TreasuryTransaction" ADD COLUMN IF NOT EXISTS "caisseId" TEXT`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "TreasuryTransaction" ADD COLUMN IF NOT EXISTS "caisseDestinationId" TEXT`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "TreasuryTransaction_caisseId_idx" ON "TreasuryTransaction"("caisseId")'
+      );
+
+      // ⑥ V3.67 — Secrétariat : code de suivi public des demandes.
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "MeetingRequest" ADD COLUMN IF NOT EXISTS "trackingCode" TEXT`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE UNIQUE INDEX IF NOT EXISTS "MeetingRequest_trackingCode_key" ON "MeetingRequest"("trackingCode")'
+      );
+
+      // ⑦ V3.67 — Annonces : publication planifiée (publishAt).
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "MinistryAnnouncement" ADD COLUMN IF NOT EXISTS "publishAt" TIMESTAMPTZ`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "MinistryAnnouncement_publishAt_idx" ON "MinistryAnnouncement"("publishAt")'
+      );
     })()
       .then(() => {
         staffSpacesOk = true;

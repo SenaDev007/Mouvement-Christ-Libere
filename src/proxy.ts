@@ -4,6 +4,15 @@ const PAM_HOSTS = new Set(["amela.dali", "ameladali", "pam"]);
 const KONGO_HOSTS = new Set(["pasteurkongo", "kongo"]);
 const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/api/login"];
 
+// ⭐ V3.67 — Routes API du back-office qui possèdent LEUR PROPRE garde de
+// session (exigerSession → 401/403 JSON). Le proxy les laisse passer SANS
+// redirection 307 vers le login : un fetch reçoit un statut JSON exploitable
+// (bilan V3.66 : GET /admin/api/staff sans session renvoyait « 307 HTML
+// Redirecting… » au lieu de 401). ⚠️ N'ajouter ICI que des routes vérifiées
+// portant leur propre exigerSession — les routes génériques
+// /admin/api/[entity] n'en ont PAS et dépendent de la garde du proxy.
+const ADMIN_API_AVEC_GARDE_PROPRE = ["/admin/api/staff"];
+
 // ⭐ V3.44 — Back-office sur son propre sous-domaine : admin.mouvementchristlibere.com
 // (DNS Cloudflare → Vercel : le Host d'origine est préservé jusqu'à l'app Next.js).
 // En développement local, le même comportement est testable via admin.localhost:3000.
@@ -130,7 +139,13 @@ export function proxy(request: NextRequest) {
   }
 
   // --- Garde d'authentification back-office (comportement historique) ---
-  if (pathname.startsWith("/admin") && !PUBLIC_ADMIN_PATHS.some((p) => pathname.startsWith(p))) {
+  // Les routes API de ADMIN_API_AVEC_GARDE_PROPRE répondent elles-mêmes en
+  // 401/403 JSON (V3.67) — pas de redirection HTML pour un appel fetch.
+  if (
+    pathname.startsWith("/admin") &&
+    !PUBLIC_ADMIN_PATHS.some((p) => pathname.startsWith(p)) &&
+    !ADMIN_API_AVEC_GARDE_PROPRE.some((p) => pathname.startsWith(p))
+  ) {
     const session = request.cookies.get("admin_session");
     if (!session) {
       const loginUrl = new URL("/admin/login", request.url);

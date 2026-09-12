@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/proxy.ts",
+    "src/lib/staff-space/**/*.ts",
+    "src/lib/ensure-schema.ts",
+    "src/app/admin/api/staff/route.ts",
+    "src/app/admin/staff/**/*.tsx",
+    "src/app/secretariat/**/*.ts",
+    "src/app/secretariat/**/*.tsx",
+    "src/app/tresorerie/**/*.ts",
+    "src/app/tresorerie/**/*.tsx",
+    "src/app/api/rendez-vous/**/*.ts",
+    "src/app/rendez-vous/**/*.tsx",
+    "src/app/annonces/**/*.tsx",
+    "src/components/staff-space/**/*.tsx",
+    "src/components/site/site-header.tsx",
+    "src/components/site/site-footer.tsx",
+    "src/components/site/landing-view.tsx",
+    "src/components/site/layout-shell.tsx",
+    "src/app/admin/layout.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
+}

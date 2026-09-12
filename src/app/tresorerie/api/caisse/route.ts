@@ -2,15 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ensureStaffSpaces } from "@/lib/ensure-schema";
 import { exigerSession, ROLES_TRESORERIE } from "@/lib/staff-space/session";
+import { calculerSituationMulticaisse } from "@/lib/staff-space/multicaisse";
 
 /**
- * ⭐ V3.66 — GET /tresorerie/api/caisse
+ * ⭐ V3.67 — GET /tresorerie/api/caisse
  *
- * Situation de caisse calculée depuis le journal (jamais stockée) :
- *  · par DEVISE : total recettes, total dépenses, solde ;
- *  · par MÉTHODE (espèces, mobile money, virement…) pour chaque devise :
- *    encaissements et décaissements — la « caisse espèces » est la somme
- *    nette des mouvements especes.
+ * Situation de caisse MULTICAISSE calculée depuis le journal (jamais
+ * stockée) :
+ *  · par CAISSE : solde d'ouverture, recettes, dépenses, transferts
+ *    sortants/entrants, solde courant ;
+ *  · compartiment « non affecté » (écritures antérieures à la multicaisse) ;
+ *  · consolidation PAR DEVISE : somme des caisses + non affecté — avec
+ *    contrôle de cohérence interne (Σ soldes = Σ ouvertures + recettes −
+ *    dépenses) ;
+ *  · détail par MÉTHODE d'encaissement (espèces, mobile money, virement…).
  *
  * ⚠️ Rôles : TREASURER, SUPER_ADMIN.
  */
@@ -24,46 +29,24 @@ export async function GET(request: NextRequest) {
   try {
     await ensureStaffSpaces();
 
-    const transactions = await db.treasuryTransaction.findMany({
-      select: {
-        type: true,
-        amount: true,
-        currency: true,
-        method: true,
-        date: true,
-      },
-    });
+    const [situation, transactions] = await Promise.all([
+      calculerSituationMulticaisse(),
+      db.treasuryTransaction.findMany({
+        where: { type: { in: ["RECETTE", "DEPENSE"] } },
+        select: { type: true, amount: true, currency: true, method: true },
+      }),
+    ]);
 
-    // Agrégat par devise.
-    const parDevise = new Map<
-      string,
-      { recettes: number; depenses: number; solde: number; nbMouvements: number }
-    >();
-    // Agrégat par devise + méthode.
+    // Agrégat par devise + méthode (hors transferts : mouvements réels).
     const parMethode = new Map<
       string,
       { devise: string; methode: string; recettes: number; depenses: number; solde: number }
     >();
-
     for (const t of transactions) {
-      // Devise.
-      const devise =
-        parDevise.get(t.currency) || {
-          recettes: 0,
-          depenses: 0,
-          solde: 0,
-          nbMouvements: 0,
-        };
-      if (t.type === "RECETTE") devise.recettes += t.amount;
-      else devise.depenses += t.amount;
-      devise.solde = devise.recettes - devise.depenses;
-      devise.nbMouvements += 1;
-      parDevise.set(t.currency, devise);
-
-      // Devise + méthode.
       const cle = `${t.currency}:${t.method || "non_precise"}`;
       const ligne =
-        parMethode.get(cle) || {
+        parMethode.get(cle) ||
+        {
           devise: t.currency,
           methode: t.method || "non_precise",
           recettes: 0,
@@ -77,10 +60,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      devises: Array.from(parDevise.entries()).map(([devise, v]) => ({
-        devise,
-        ...v,
-      })),
+      ...situation,
       methodes: Array.from(parMethode.values()),
     });
   } catch (error) {

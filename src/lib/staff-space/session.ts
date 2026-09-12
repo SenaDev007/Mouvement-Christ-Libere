@@ -102,10 +102,13 @@ export function exigerSession(
  * Identique à /admin/api/login (recherche par nom OU email, bcrypt,
  * compte vérifié) — seule la liste de rôles change : seuls la secrétaire
  * (resp. le trésorier) et les super admins ouvrent une session ici.
+ * ⭐ V3.67 — gouvernance : chaque connexion réussie est tracée dans
+ * l'AuditLog (actionAudit = « TRESORERIE_LOGIN » / « SECRETARIAT_LOGIN »).
  */
 export async function handlerConnexionStaff(
   request: NextRequest,
-  rolesAutorises: readonly string[]
+  rolesAutorises: readonly string[],
+  actionAudit?: string
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -181,6 +184,24 @@ export async function handlerConnexionStaff(
       name: utilisateur.name,
       role: utilisateur.role,
     });
+
+    // ⭐ V3.67 — Gouvernance : trace de connexion (best-effort).
+    if (actionAudit) {
+      try {
+        await (await import("@/lib/db")).db.auditLog.create({
+          data: {
+            action: actionAudit,
+            userId: utilisateur.id,
+            metadata: {
+              compte: utilisateur.name,
+              role: utilisateur.role,
+            } as never,
+          },
+        });
+      } catch (e) {
+        console.warn("[staff/login] AuditLog impossible :", e);
+      }
+    }
 
     reponse.cookies.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,

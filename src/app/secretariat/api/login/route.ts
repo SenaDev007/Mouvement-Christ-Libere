@@ -20,5 +20,6 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   // Valeurs d'enum + tables de l'espace — AVANT tout filtrage par rôle.
   await ensureStaffSpaces();
-  return handlerConnexionStaff(request, ROLES_SECRETARIAT);
+  // V3.67 gouvernance : trace de connexion dans le journal d'audit.
+  return handlerConnexionStaff(request, ROLES_SECRETARIAT, "SECRETARIAT_LOGIN");
 }

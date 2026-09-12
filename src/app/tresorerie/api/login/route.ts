@@ -18,5 +18,6 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   await ensureStaffSpaces();
-  return handlerConnexionStaff(request, ROLES_TRESORERIE);
+  // V3.67 gouvernance : trace de connexion dans le journal d'audit.
+  return handlerConnexionStaff(request, ROLES_TRESORERIE, "TRESORERIE_LOGIN");
 }

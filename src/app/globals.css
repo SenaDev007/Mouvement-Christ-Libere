@@ -381,3 +381,43 @@
 .animate-slideIn {
   animation: slideIn 0.4s ease-out;
 }
+
+/* ============================================================
+   ⭐ V3.67 — CTA « Demander un rendez-vous » (hero d'accueil)
+   Effet call-to-action : double anneau doré qui pulse autour du
+   bouton + micro-rebond du contenu. Respecte prefers-reduced-motion.
+   ============================================================ */
+@keyframes ctaPulseRing {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(201, 162, 39, 0.55),
+      0 0 0 0 rgba(221, 190, 85, 0.35);
+  }
+  70% {
+    box-shadow:
+      0 0 0 14px rgba(201, 162, 39, 0),
+      0 0 0 26px rgba(221, 190, 85, 0);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(201, 162, 39, 0),
+      0 0 0 0 rgba(221, 190, 85, 0);
+  }
+}
+@keyframes ctaCoeur {
+  0%, 100% { transform: scale(1); }
+  12% { transform: scale(1.035); }
+  24% { transform: scale(1); }
+}
+.cta-rdv-pulse {
+  animation: ctaPulseRing 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+.cta-rdv-coeur {
+  animation: ctaCoeur 2.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cta-rdv-pulse,
+  .cta-rdv-coeur {
+    animation: none;
+  }
+}

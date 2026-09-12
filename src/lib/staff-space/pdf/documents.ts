@@ -28,12 +28,17 @@ import {
   dessinerLigneTable,
   dessinerLigneInfo,
   dessinerTexte,
+  dessinerPied,
   finaliserDocument,
   assurerPlace,
   dateCourte,
   dateLongue,
   formaterMontantPdf,
+  largeurTexte,
+  A4,
   MARGE,
+  CREME,
+  NUIT,
   VERT,
   ROUGE,
   TAUPE,
@@ -61,6 +66,7 @@ export interface DemandePdf {
   transmissionNote: string | null;
   transmittedAt: Date | null;
   processedAt: Date | null;
+  trackingCode?: string | null;
   createdAt: Date;
 }
 
@@ -150,6 +156,9 @@ export async function genererRegistreDemandes(
     const infosStatut: string[] = [
       `Statut : ${DEMANDE_STATUTS[d.status as keyof typeof DEMANDE_STATUTS]?.libelle ?? d.status}`,
     ];
+    if (d.trackingCode) {
+      infosStatut.push(`Suivi : ${d.trackingCode}`);
+    }
     if (d.transmittedAt) {
       infosStatut.push(`Transmise le ${dateCourte(d.transmittedAt)}`);
     }
@@ -284,7 +293,7 @@ export async function genererRegistreAnnonces(
 
 export interface TransactionPdf {
   id: string;
-  type: string; // RECETTE | DEPENSE
+  type: string; // RECETTE | DEPENSE | TRANSFERT
   category: string;
   amount: number;
   currency: string;
@@ -294,12 +303,30 @@ export interface TransactionPdf {
   reference: string | null;
   donorName: string | null;
   isAnonymous: boolean;
+  caisseNom?: string | null;
+  caisseDestinationNom?: string | null;
+}
+
+export interface SituationCaissePdf {
+  caisses: {
+    name: string;
+    type: string;
+    currency: string;
+    openingBalance: number;
+    recettes: number;
+    depenses: number;
+    transfertsSortants: number;
+    transfertsEntrants: number;
+    solde: number;
+    isActive: boolean;
+  }[];
 }
 
 export async function genererRapportFinancier(
   transactions: TransactionPdf[],
   periode: { du: Date; au: Date },
-  devise: string
+  devise: string,
+  situationCaisse?: SituationCaissePdf
 ): Promise<Uint8Array> {
   const ctx = await creerDocument({
     espace: "Trésorerie",
@@ -311,6 +338,7 @@ export async function genererRapportFinancier(
   // Les transactions arrivent déjà triées par date croissante.
   const recettes = transactions.filter((t) => t.type === "RECETTE");
   const depenses = transactions.filter((t) => t.type === "DEPENSE");
+  const transferts = transactions.filter((t) => t.type === "TRANSFERT");
   const totalRecettes = recettes.reduce((s, t) => s + t.amount, 0);
   const totalDepenses = depenses.reduce((s, t) => s + t.amount, 0);
   const solde = totalRecettes - totalDepenses;
@@ -332,10 +360,63 @@ export async function genererRapportFinancier(
     gras: true,
     couleurValeur: solde >= 0 ? VERT : ROUGE,
   });
+  if (transferts.length > 0) {
+    dessinerLigneInfo(
+      ctx,
+      `Transferts internes (${transferts.length}) — sans effet sur le solde`,
+      formaterMontantPdf(
+        transferts.reduce((s, t) => s + t.amount, 0),
+        devise
+      ),
+      { valeurDroite: true, couleurValeur: NUIT_PROFONDE }
+    );
+  }
   dessinerLigneInfo(ctx, "Nombre de mouvements", `${transactions.length}`, {
     valeurDroite: true,
   });
   ctx.y -= 10;
+
+  // ── ⭐ V3.67 — Situation par caisse (multicaisse) ──
+  if (situationCaisse && situationCaisse.caisses.length > 0) {
+    const caissesDevise = situationCaisse.caisses.filter(
+      (c) => c.currency === devise
+    );
+    if (caissesDevise.length > 0) {
+      dessinerTitreSection(ctx, "Situation par caisse (toute la période)");
+      const colonnesCaisses: ColonneTable[] = [
+        { titre: "Caisse", largeur: 150 },
+        { titre: "Ouverture", largeur: 75, alignement: "droite" },
+        { titre: "Recettes", largeur: 75, alignement: "droite" },
+        { titre: "Dépenses", largeur: 75, alignement: "droite" },
+        { titre: "Transf.", largeur: 65, alignement: "droite" },
+        { titre: "Solde", largeur: 75, alignement: "droite" },
+      ];
+      dessinerLigneTable(
+        ctx,
+        colonnesCaisses,
+        colonnesCaisses.map((c) => c.titre),
+        { entete: true }
+      );
+      caissesDevise.forEach((c, i) => {
+        assurerPlace(ctx, 24);
+        const netTransferts = c.transfertsEntrants - c.transfertsSortants;
+        dessinerLigneTable(
+          ctx,
+          colonnesCaisses,
+          [
+            c.name + (c.isActive ? "" : " (désactivée)"),
+            formaterMontantPdf(c.openingBalance, devise),
+            formaterMontantPdf(c.recettes, devise),
+            formaterMontantPdf(c.depenses, devise),
+            (netTransferts >= 0 ? "+" : "") + formaterMontantPdf(netTransferts, devise),
+            formaterMontantPdf(c.solde, devise),
+          ],
+          { zebra: i % 2 === 0 }
+        );
+      });
+      ctx.y -= 10;
+    }
+  }
 
   // ── Récapitulatif par catégorie ──
   dessinerTitreSection(ctx, "Recettes par catégorie");
@@ -418,18 +499,24 @@ export async function genererRapportFinancier(
   let cumul = 0;
   transactions.forEach((t, i) => {
     assurerPlace(ctx, 26);
-    cumul += t.type === "RECETTE" ? t.amount : -t.amount;
+    const delta =
+      t.type === "RECETTE" ? t.amount : -t.amount;
+    cumul += t.type === "TRANSFERT" ? 0 : delta;
     dessinerLigneTable(
       ctx,
       colonnes,
       [
         dateCourte(t.date),
-        t.label,
+        t.type === "TRANSFERT"
+          ? `${t.label} — ${t.caisseNom || "?"} → ${t.caisseDestinationNom || "?"}`
+          : `${t.label}${t.caisseNom ? ` (${t.caisseNom})` : ""}`,
         t.category,
         t.reference || "—",
         t.type === "RECETTE" ? formaterMontantPdf(t.amount, devise) : "",
         t.type === "DEPENSE" ? formaterMontantPdf(t.amount, devise) : "",
-        formaterMontantPdf(cumul, devise),
+        t.type === "TRANSFERT"
+          ? "interne"
+          : formaterMontantPdf(cumul, devise),
       ],
       {
         zebra: i % 2 === 0,
@@ -440,7 +527,11 @@ export async function genererRapportFinancier(
           null,
           VERT,
           ROUGE,
-          cumul >= 0 ? VERT : ROUGE,
+          t.type === "TRANSFERT"
+            ? NUIT_PROFONDE
+            : cumul >= 0
+              ? VERT
+              : ROUGE,
         ],
       }
     );
@@ -476,5 +567,176 @@ export function enTetesPdf(): Record<string, string> {
     "Cache-Control": "no-store",
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// ④ REÇU DE DON (V3.67 — gap du bilan : « pas de reçu de don PDF »)
+// ═══════════════════════════════════════════════════════════════════════
+
+import { ENCRE } from "./base";
+
+export interface RecuDonPdf {
+  id: string;
+  type: string;
+  category: string;
+  amount: number;
+  currency: string;
+  method: string | null;
+  label: string;
+  date: Date;
+  reference: string | null;
+  donorName: string | null;
+  isAnonymous: boolean;
+  note: string | null;
+  caisseNom: string | null;
+}
+
+/**
+ * Reçu de don — une page, format acknowledgment : identification du don,
+ * montant en grand, catégorie, méthode, caisse, espace de signature du
+ * trésorier. Mention discrète : document de confirmation, pas un reçu
+ * fiscal (les reçus fiscaux obéissent à des règles propres à chaque pays).
+ */
+export async function genererRecuDon(recu: RecuDonPdf): Promise<Uint8Array> {
+  const ctx = await creerDocument({
+    espace: "Trésorerie",
+    titreDocument: "Reçu de don",
+    sousTitre: `N° ${recu.reference || recu.id.toUpperCase()} · ${dateLongue(recu.date)}`,
+  });
+  dessinerCouverture(ctx);
+
+  const LARGEUR_UTILE = A4[0] - MARGE * 2;
+
+  // ── Bloc donateur ──
+  dessinerTitreSection(ctx, "Donateur");
+  dessinerLigneInfo(ctx, "Nom", recu.isAnonymous ? "Don anonyme" : recu.donorName || "Non précisé", {
+    gras: true,
+  });
+  if (recu.isAnonymous) {
+    dessinerTexte(
+      ctx,
+      "Le donateur a souhaité rester anonyme : aucun nom n'est conservé au journal.",
+      MARGE,
+      ctx.y,
+      { taille: 8.5, couleur: TAUPE }
+    );
+    ctx.y -= 16;
+  } else {
+    ctx.y -= 8;
+  }
+
+  // ── Bloc du don ──
+  dessinerTitreSection(ctx, "Détail du don");
+
+  // Encadré montant (bandeau or sur fond nuit).
+  const hauteurEncadre = 74;
+  ctx.y -= 6;
+  ctx.page.drawRectangle({
+    x: MARGE,
+    y: ctx.y - hauteurEncadre,
+    width: LARGEUR_UTILE,
+    height: hauteurEncadre,
+    color: NUIT,
+    borderColor: OR,
+    borderWidth: 1.2,
+  });
+  ctx.page.drawText("MONTANT DU DON", {
+    x: MARGE + 16,
+    y: ctx.y - 24,
+    size: 9,
+    font: ctx.sansGras,
+    color: CREME,
+  });
+  const montantTxt = formaterMontantPdf(recu.amount, recu.currency);
+  ctx.page.drawText(montantTxt, {
+    x: MARGE + 16,
+    y: ctx.y - 50,
+    size: 24,
+    font: ctx.serifGras,
+    color: OR,
+  });
+  // Référence du reçu à droite de l'encadré.
+  const refTxt = (recu.reference || recu.id.toUpperCase()).substring(0, 26);
+  ctx.page.drawText(`N° ${refTxt}`, {
+    x: MARGE + LARGEUR_UTILE - 16 - largeurTexte(ctx.sansGras, 9, `N° ${refTxt}`),
+    y: ctx.y - 24,
+    size: 9,
+    font: ctx.sansGras,
+    color: CREME,
+  });
+  ctx.y -= hauteurEncadre + 14;
+
+  dessinerLigneInfo(
+    ctx,
+    "Nature",
+    RECETTE_CATEGORIES[recu.category as keyof typeof RECETTE_CATEGORIES] || recu.category,
+    {}
+  );
+  dessinerLigneInfo(ctx, "Date du don", dateLongue(recu.date), {});
+  dessinerLigneInfo(
+    ctx,
+    "Méthode d'encaissement",
+    recu.method === "especes"
+      ? "Espèces"
+      : recu.method === "mobile_money"
+        ? "Mobile money"
+        : recu.method === "virement"
+          ? "Virement bancaire"
+          : recu.method === "carte"
+            ? "Carte bancaire"
+            : recu.method === "crypto"
+              ? "Crypto"
+              : "Non précisée",
+    {}
+  );
+  if (recu.caisseNom) {
+    dessinerLigneInfo(ctx, "Encaissé en caisse", recu.caisseNom, {});
+  }
+  if (recu.label) {
+    dessinerLigneInfo(ctx, "Libellé", recu.label.substring(0, 90), {});
+  }
+  if (recu.note) {
+    dessinerLigneInfo(ctx, "Note", recu.note.substring(0, 200), {});
+  }
+  ctx.y -= 12;
+
+  // ── Mention + signature ──
+  dessinerTexte(
+    ctx,
+    "Ce document confirme l'encaissement du don ci-dessus par la trésorerie du Mouvement Christ Libéré. Il est délivré à la demande du donateur et ne constitue pas un reçu fiscal.",
+    MARGE,
+    ctx.y,
+    { taille: 8, couleur: TAUPE }
+  );
+  ctx.y -= 26;
+
+  // Ligne de signature (côté droit, à ~120 du bas).
+  const ySignature = Math.max(ctx.y - 40, 140);
+  ctx.page.drawLine({
+    start: { x: A4[0] - MARGE - 170, y: ySignature },
+    end: { x: A4[0] - MARGE, y: ySignature },
+    thickness: 0.8,
+    color: ENCRE,
+  });
+  ctx.page.drawText("Le trésorier du ministère", {
+    x: A4[0] - MARGE - 170,
+    y: ySignature - 13,
+    size: 8.5,
+    font: ctx.sans,
+    color: TAUPE,
+  });
+  ctx.page.drawText(`Fait le ${dateCourte(ctx.genereLe)}`, {
+    x: A4[0] - MARGE - 170,
+    y: ySignature - 25,
+    size: 8.5,
+    font: ctx.sans,
+    color: TAUPE,
+  });
+
+  dessinerPied(ctx);
+
+  return finaliserDocument(ctx);
+}
+
+// Export utilitaire conservé pour compatibilité.
 
 export type { ContextePdf };

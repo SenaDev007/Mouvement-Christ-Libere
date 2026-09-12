@@ -91,10 +91,18 @@ export const ANNONCE_CATEGORIES_VALEURS = Object.keys(ANNONCE_CATEGORIES);
 export const MOUVEMENT_TYPES = {
   RECETTE: { valeur: "RECETTE", libelle: "Recette", couleur: "#5B7052" },
   DEPENSE: { valeur: "DEPENSE", libelle: "Dépense", couleur: "#B3452E" },
+  // ⭐ V3.67 — Transfert INTERNE entre deux caisses (aucun effet sur le
+  // total consolidé par devise : sortie d'une caisse = entrée dans l'autre).
+  TRANSFERT: { valeur: "TRANSFERT", libelle: "Transfert", couleur: "#8C5FA8" },
 } as const;
 
 export type MouvementType = keyof typeof MOUVEMENT_TYPES;
-export const MOUVEMENT_TYPE_VALEURS = Object.keys(MOUVEMENT_TYPES);
+/** Types de mouvements admis à la CRÉATION (le transfert passe par un
+ *  formulaire dédié : POST /tresorerie/api/transactions l'accepte aussi,
+ *  avec ses validations propres). */
+export const MOUVEMENT_TYPE_VALEURS = ["RECETTE", "DEPENSE"];
+/** Les trois types lisibles dans le journal. */
+export const MOUVEMENT_TYPE_TOUS = ["RECETTE", "DEPENSE", "TRANSFERT"];
 
 /** Catégories de RECETTES (dons, offrandes, dîmes…). */
 export const RECETTE_CATEGORIES = {
@@ -140,6 +148,45 @@ export const DEVISES = {
 export type DeviseCode = keyof typeof DEVISES;
 export const DEVISE_CODES = Object.keys(DEVISES);
 
+// ═════════════════════════════════════════════════════════════════════
+// ⭐ V3.67 — MULTICAISSE
+// ═══════════════════════════════════════════════════════════════════
+
+/** Types de caisses du ministère. */
+export const CAISSE_TYPES = {
+  especes: {
+    libelle: "Espèces",
+    description: "Caisse physique d'espèces (cultes, offrandes sur place…)",
+    couleur: "#5B7052",
+  },
+  banque: {
+    libelle: "Compte bancaire",
+    description: "Compte de dépôt en banque ou microfinance",
+    couleur: "#8C5FA8",
+  },
+  mobile_money: {
+    libelle: "Mobile money",
+    description: "Portefeuille électronique (Orange Money, MTN, Wave…)",
+    couleur: "#C9A227",
+  },
+  autre: {
+    libelle: "Autre",
+    description: "Autre encaissement (carte, crypto, tiers…)",
+    couleur: "#8A8378",
+  },
+} as const;
+
+export type CaisseType = keyof typeof CAISSE_TYPES;
+export const CAISSE_TYPE_VALEURS = Object.keys(CAISSE_TYPES);
+
+/** Libellé lisible d'un type de caisse. */
+export function libelleCaisseType(type: string): string {
+  return (CAISSE_TYPES as Record<string, { libelle: string }>)[type]?.libelle || type;
+}
+
+/** Catégorie d'un transfert interne (libellé de journal). */
+export const TRANSFERT_CATEGORIE = "transfert";
+
 /**
  * Formate un montant selon la devise — espace insécable avant le symbole,
  * séparateur de milliers français. Les montants XOF sont arrondis au
@@ -157,8 +204,9 @@ export function formaterMontant(montant: number, devise: string): string {
   return `${n}\u00A0${d.symbole}`;
 }
 
-/** Libellé lisible d'une catégorie (recette ou dépense). */
+/** Libellé lisible d'une catégorie (recette, dépense ou transfert). */
 export function libelleCategorie(categorie: string, type: string): string {
+  if (type === "TRANSFERT") return "Transfert interne";
   if (type === "RECETTE") {
     return (RECETTE_CATEGORIES as Record<string, string>)[categorie] || categorie;
   }

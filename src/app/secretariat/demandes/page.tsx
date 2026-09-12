@@ -38,6 +38,8 @@ import {
   DEMANDE_URGENCES,
   SERVITEURS_RENDEZ_VOUS,
 } from "@/lib/staff-space/constants";
+import { Pagination } from "@/components/staff-space/pagination";
+import { Download } from "lucide-react";
 
 interface Demande {
   id: string;
@@ -53,8 +55,11 @@ interface Demande {
   transmissionNote: string | null;
   transmittedAt: string | null;
   processedAt: string | null;
+  trackingCode?: string | null;
   createdAt: string;
 }
+
+const PAR_PAGE = 25;
 
 const ONGLET_STATUTS = [
   { valeur: "", libelle: "Tous" },
@@ -83,6 +88,7 @@ function DemandesContenu() {
 
   const [items, setItems] = useState<Demande[]>([]);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
 
@@ -122,6 +128,8 @@ function DemandesContenu() {
       if (servant) params.set("servant", servant);
       if (urgence) params.set("urgence", urgence);
       if (recherche.trim()) params.set("q", recherche.trim());
+      params.set("limit", String(PAR_PAGE));
+      params.set("offset", String((page - 1) * PAR_PAGE));
       const res = await fetch(`/secretariat/api/demandes?${params}`, {
         cache: "no-store",
       });
@@ -134,7 +142,7 @@ function DemandesContenu() {
     } finally {
       setChargement(false);
     }
-  }, [statut, servant, urgence, recherche]);
+  }, [statut, servant, urgence, recherche, page]);
 
   useEffect(() => {
     const t = setTimeout(charger, recherche ? 300 : 0);
@@ -198,6 +206,16 @@ function DemandesContenu() {
     }
   };
 
+  const exporterCsv = () => {
+    const params = new URLSearchParams();
+    if (statut) params.set("statut", statut);
+    if (servant) params.set("servant", servant);
+    if (urgence) params.set("urgence", urgence);
+    if (recherche.trim()) params.set("q", recherche.trim());
+    params.set("format", "csv");
+    window.location.href = `/secretariat/api/demandes?${params}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* En-tête */}
@@ -211,13 +229,23 @@ function DemandesContenu() {
             serviteurs de Dieu, traitées.
           </p>
         </div>
-        <button
-          onClick={() => setFormulaireOuvert(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Saisir une demande
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exporterCsv}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#8A8378]/25 text-sm font-medium text-[#1E0F2B] hover:bg-white transition-colors"
+            title="Exporter la sélection en CSV (Excel)"
+          >
+            <Download className="w-4 h-4 text-[#C9A227]" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+          <button
+            onClick={() => setFormulaireOuvert(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Saisir une demande
+          </button>
+        </div>
       </div>
 
       {/* Filtres */}
@@ -226,7 +254,10 @@ function DemandesContenu() {
           {ONGLET_STATUTS.map((o) => (
             <button
               key={o.valeur}
-              onClick={() => setStatut(o.valeur)}
+              onClick={() => {
+                setPage(1);
+                setStatut(o.valeur);
+              }}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 statut === o.valeur
                   ? "bg-[#2A0E3D] text-[#FAF6EF]"
@@ -243,14 +274,20 @@ function DemandesContenu() {
             <input
               type="search"
               value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
+              onChange={(e) => {
+                setPage(1);
+                setRecherche(e.target.value);
+              }}
               placeholder="Rechercher (nom, objet, contact)…"
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
             />
           </div>
           <select
             value={servant}
-            onChange={(e) => setServant(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setServant(e.target.value);
+            }}
             className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
             aria-label="Filtrer par serviteur"
           >
@@ -260,7 +297,10 @@ function DemandesContenu() {
           </select>
           <select
             value={urgence}
-            onChange={(e) => setUrgence(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setUrgence(e.target.value);
+            }}
             className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
             aria-label="Filtrer par urgence"
           >
@@ -350,6 +390,11 @@ function DemandesContenu() {
                             minute: "2-digit",
                           })}
                         </span>
+                        {demande.trackingCode && (
+                          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#FAF6EF] text-[#A3821C]">
+                            {demande.trackingCode}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <ChevronDown
@@ -370,6 +415,15 @@ function DemandesContenu() {
                         <div className="flex items-center gap-2 text-[#8A8378]">
                           <MapPin className="w-3.5 h-3.5 text-[#C9A227]" />
                           {[demande.city, demande.country].filter(Boolean).join(", ")}
+                        </div>
+                      )}
+                      {demande.trackingCode && (
+                        <div className="flex items-center gap-2 text-[#8A8378]">
+                          <Clock className="w-3.5 h-3.5 text-[#C9A227]" />
+                          Code de suivi public :{" "}
+                          <span className="font-mono text-[#A3821C] font-semibold">
+                            {demande.trackingCode}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -489,6 +543,16 @@ function DemandesContenu() {
             );
           })}
         </div>
+      )}
+
+      {/* ⭐ V3.67 — Pagination */}
+      {!chargement && total > 0 && (
+        <Pagination
+          total={total}
+          page={page}
+          parPage={PAR_PAGE}
+          onChange={setPage}
+        />
       )}
 
       {/* ── Modal : transmission avec note ── */}

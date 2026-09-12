@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ensureStaffSpaces } from "@/lib/ensure-schema";
 import { SERVITEUR_CODES, DEMANDE_URGENCE_VALEURS } from "@/lib/staff-space/constants";
+import { genererCodeSuiviUnique } from "@/lib/staff-space/multicaisse";
 
 /**
  * ⭐ V3.66 — POST /api/rendez-vous (PUBLIC — sans authentification).
@@ -130,6 +131,10 @@ export async function POST(request: NextRequest) {
     // Tables du secrétariat (première demande après déploiement).
     await ensureStaffSpaces();
 
+    // ⭐ V3.67 — code de suivi : la demanderesse ou le demandeur consulte
+    // l'avancement sur /rendez-vous/suivi (statut + dates, jamais le contenu).
+    const codeSuivi = await genererCodeSuiviUnique();
+
     const demande = await db.meetingRequest.create({
       data: {
         requesterName: requesterName.trim(),
@@ -141,6 +146,7 @@ export async function POST(request: NextRequest) {
         country: country?.trim()?.substring(0, 60) || null,
         city: city?.trim()?.substring(0, 60) || null,
         status: "RECUE",
+        trackingCode: codeSuivi,
       },
       select: { id: true },
     });
@@ -148,6 +154,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
+        codeSuivi,
         message:
           "Votre demande a bien été reçue par le secrétariat du Mouvement Christ Libère. La secrétaire l'examinera et la transmettra au serviteur de Dieu concerné.",
       },
