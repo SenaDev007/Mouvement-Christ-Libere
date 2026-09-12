@@ -1,129 +1,86 @@
 "use client";
 
+/**
+ * ⭐ V3.66 — Coquille de navigation partagée des espaces dédiés
+ * (secrétariat & trésorerie).
+ *
+ * Même structure que la sidebar du back-office (fixe, w-64, violet
+ * #2A0E3D, or #C9A227, crème #FAF6EF) — seuls le nom de l'espace, les
+ * sections de navigation et le point d'accès de déconnexion changent.
+ * Sur la page de connexion de l'espace, la coquille ne s'affiche pas.
+ */
+
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  LayoutDashboard,
-  Users,
-  BookOpen,
-  FileText,
-  Video,
-  Radio,
-  MessageSquare,
-  UserCog,
-  Inbox,
-  Heart,
-  LogOut,
-  Menu,
-  X,
-  ExternalLink,
-  ShieldAlert,
-  Cloud,
-  Youtube,
-  Image as ImageIcon,
-  Building2,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { LogOut, Menu, X, ExternalLink } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const NAV_SECTIONS = [
-  {
-    title: "Vue d'ensemble",
-    items: [
-      { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
-    title: "Contenu",
-    items: [
-      { label: "Serviteurs", href: "/admin/servants", icon: Users },
-      { label: "Biographies", href: "/admin/biographies", icon: BookOpen },
-      { label: "Témoignages", href: "/admin/testimonies", icon: FileText },
-      { label: "Enseignements", href: "/admin/teachings", icon: BookOpen },
-      // ⭐ V3.45 — Sections hero paramétrables (photos + textes de
-      // toutes les bannières du site public)
-      { label: "Sections Hero", href: "/admin/heroes", icon: ImageIcon },
-    ],
-  },
-  {
-    title: "Média",
-    items: [
-      { label: "Vidéos", href: "/admin/videos", icon: Video },
-      { label: "Lives", href: "/admin/lives", icon: Radio },
-    ],
-  },
-  {
-    title: "Communauté",
-    items: [
-      { label: "Canaux", href: "/admin/channels", icon: MessageSquare },
-      { label: "Membres Live", href: "/admin/live-members", icon: Users },
-      { label: "Utilisateurs", href: "/admin/users", icon: UserCog },
-    ],
-  },
-  {
-    title: "Activité",
-    items: [
-      { label: "Demandes de contact", href: "/admin/contact-requests", icon: Inbox },
-      { label: "Dons", href: "/admin/donations", icon: Heart },
-      // ⭐ V3.2 — Intercession : les demandes arrivent DIRECTEMENT ici
-      // (plus de redirection vers la page publique — confidentialité).
-      { label: "Intercession", href: "/admin/intercession", icon: Heart },
-      { label: "Dead Man's Switch", href: "/admin/dead-mans-switch", icon: ShieldAlert },
-    ],
-  },
-  {
-    // ⭐ V3.66 — Accréditation des sous-domaines secrétariat & trésorerie
-    title: "Espaces du ministère",
-    items: [
-      { label: "Secrétariat & Trésorerie", href: "/admin/staff", icon: Building2 },
-    ],
-  },
-  {
-    title: "Système",
-    items: [
-      { label: "YouTube Setup", href: "/admin/youtube-setup", icon: Youtube },
-      { label: "Stockage R2", href: "/admin/r2-test", icon: Cloud },
-    ],
-  },
-];
+export interface SectionNav {
+  title: string;
+  items: {
+    label: string;
+    href: string;
+    icon: LucideIcon;
+    badge?: string | null;
+  }[];
+}
 
-export default function AdminLayout({
-  children,
-}: {
+export interface SpaceShellProps {
+  /** Nom de l'espace (ex. « Secrétariat »). */
+  titreEspace: string;
+  /** Préfixe des routes (ex. /secretariat). */
+  prefixeEspace: string;
+  /** Libellé du sous-domaine dédié (ex. « secretariat » — sert à calculer
+   *  « Voir le site » : secretariat.mouvementchristlibere.com → mouvementchristlibere.com).
+   *  En dev : secretariat.localhost → localhost. */
+  libelleSousDomaine: string;
+  /** Sections de navigation. */
+  sections: SectionNav[];
   children: React.ReactNode;
-}) {
+}
+
+export function SpaceShell({
+  titreEspace,
+  prefixeEspace,
+  libelleSousDomaine,
+  sections,
+  children,
+}: SpaceShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // ⭐ V3.44 — Sur le sous-domaine admin (admin.mouvementchristlibere.com),
-  // « Voir le site » doit ouvrir le site PUBLIC et non le back-office réécrit
-  // à la racine de ce même hôte. Calcul côté client uniquement (pas de
-  // décalage d'hydratation : l'état initial "/" reste identique serveur/client).
+  // Sur le sous-domaine dédié, « Voir le site » doit ouvrir le site PUBLIC
+  // et non la racine de ce même hôte (calcul client uniquement — état
+  // initial "/" identique serveur/client → pas de décalage d'hydratation ;
+  // même astuce que le back-office V3.44).
   const [sitePublicUrl, setSitePublicUrl] = useState("/");
   useEffect(() => {
     try {
-      if (/^admin\./i.test(window.location.hostname)) {
+      const hote = window.location.hostname;
+      // secretariat.mouvementchristlibere.com → mouvementchristlibere.com
+      // secretariat.localhost (dev)              → localhost
+      if (hote.startsWith(`${libelleSousDomaine}.`)) {
         const url = new URL(window.location.origin);
-        url.hostname = window.location.hostname.replace(/^admin\./i, "");
+        url.hostname = hote.slice(libelleSousDomaine.length + 1);
         setSitePublicUrl(url.origin);
       }
     } catch {
-      // window indisponible ou origin invalide — comportement par défaut ("/")
+      // comportement par défaut "/"
     }
-  }, []);
+  }, [libelleSousDomaine]);
 
-  // ⚠️ Sur /admin/login : pas de sidebar, pas de topbar, juste le contenu plein écran.
-  // On ne doit rien afficher de l'interface d'administration tant que l'utilisateur
-  // n'est pas authentifié.
-  if (pathname === "/admin/login") {
+  // Page de connexion de l'espace : pas de sidebar, plein écran.
+  if (pathname === `${prefixeEspace}/login`) {
     return <>{children}</>;
   }
 
   const handleLogout = async () => {
-    await fetch("/admin/api/logout", { method: "POST" });
-    router.push("/admin/login");
+    await fetch(`${prefixeEspace}/api/logout`, { method: "POST" });
+    router.push(`${prefixeEspace}/login`);
     router.refresh();
   };
 
@@ -137,7 +94,7 @@ export default function AdminLayout({
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Header avec logo Christ Libère */}
+          {/* En-tête : logo + identité de l'espace */}
           <div className="px-5 py-5 border-b border-[#C9A227]/15">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -149,16 +106,16 @@ export default function AdminLayout({
                   className="relative w-10 h-10 object-contain"
                   priority
                 />
-                <div>
+                <div className="min-w-0">
                   <div
-                    className="text-lg font-bold leading-tight"
+                    className="text-base font-bold leading-tight whitespace-nowrap"
                     style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
                   >
                     <span style={{ color: "#C9A227" }}>Christ</span>
                     <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
                   </div>
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/70 font-semibold">
-                    Backoffice
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/70 font-semibold truncate">
+                    {titreEspace}
                   </div>
                 </div>
               </div>
@@ -174,7 +131,7 @@ export default function AdminLayout({
 
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto scrollbar-discrete py-4">
-            {NAV_SECTIONS.map((section) => (
+            {sections.map((section) => (
               <div key={section.title} className="mb-5">
                 <p className="px-5 mb-2 text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/50 font-semibold">
                   {section.title}
@@ -198,7 +155,12 @@ export default function AdminLayout({
                           )}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
-                          <span>{item.label}</span>
+                          <span className="flex-1">{item.label}</span>
+                          {item.badge && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-[#C9A227] text-[#1A0826] text-[10px] font-bold">
+                              {item.badge}
+                            </span>
+                          )}
                         </Link>
                       </li>
                     );
@@ -208,7 +170,7 @@ export default function AdminLayout({
             ))}
           </nav>
 
-          {/* Footer sidebar */}
+          {/* Pied de sidebar */}
           <div className="px-5 py-4 border-t border-[#C9A227]/15 space-y-1">
             <Link
               href={sitePublicUrl}
@@ -220,7 +182,7 @@ export default function AdminLayout({
             </Link>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-xs text-[#FAF6EF]/60 hover:text-state-danger transition-colors py-1.5"
+              className="flex items-center gap-2 text-xs text-[#FAF6EF]/60 hover:text-[#B3452E] transition-colors py-1.5"
             >
               <LogOut className="w-3 h-3" />
               Déconnexion
@@ -239,7 +201,7 @@ export default function AdminLayout({
 
       {/* Contenu principal */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar mobile avec logo */}
+        {/* Barre supérieure mobile */}
         <header className="lg:hidden sticky top-0 z-20 bg-[#2A0E3D] text-[#FAF6EF] px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -256,22 +218,17 @@ export default function AdminLayout({
               height={24}
               className="w-6 h-6 object-contain"
             />
-            <span
-              className="text-sm font-bold"
-              style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
-            >
-              <span style={{ color: "#C9A227" }}>Christ</span>
-              <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
+            <span className="text-sm font-semibold text-[#DDBE55]">
+              {titreEspace}
             </span>
           </div>
           <div className="w-5" />
         </header>
 
-        {/* Contenu — plus d'overflow-x-auto global (échappatoire qui masquait
-            les débordements) : chaque tableau gère son propre conteneur scrollable */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
-          {children}
-        </main>
+        {/* Contenu — chaque module gère son propre conteneur scrollable
+            (leçon V3.62 : pas d'overflow-x-auto global qui masquerait les
+            débordements, min-w-0 sur les colonnes flexibles). */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

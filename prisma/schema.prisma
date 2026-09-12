@@ -75,6 +75,10 @@ enum UserRole {
   ADMIN           // Délégués
   MODERATOR       // Bénévoles modération
   ANIMATOR        // Animateurs de canaux
+  // ⭐ V3.66 — Espaces dédiés (sous-domaines) accrédités par les super
+  // admins depuis le back-office /admin/staff :
+  SECRETARY       // Secrétaire du ministère (secretariat.mouvementchristlibere.com)
+  TREASURER       // Trésorier / comptable (tresorerie.mouvementchristlibere.com)
   MEMBER_VERIFIED // Croyant authentifié
   MEMBER          // Inscrit de base
   GUEST           // Visiteur (généralement pas en DB)
@@ -916,4 +920,108 @@ model HeroSection {
   dataJson        String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// ============================================================
+// ⭐ V3.66 — SECRÉTARIAT & TRÉSORERIE (sous-domaines dédiés)
+// ============================================================
+// Deux espaces indépendants — secretariat.mouvementchristlibere.com et
+// tresorerie.mouvementchristlibere.com — sous l'autorité des deux super
+// admins (Pam, Pasteur Kongo) qui accréditent leurs titulaires depuis
+// le back-office (/admin/staff). Même schéma de session signée que le
+// back-office (cookie « admin_session » — host-scoped : chaque
+// sous-domaine possède SA session), mêmes tables PostgreSQL auto-créées
+// à l'exécution (ensureStaffSpaces, cf. src/lib/ensure-schema.ts).
+
+// --- V3.66 — Secrétariat : demandes de rencontre avec les serviteurs ---
+
+// Parcours : un croyant dépose sa demande sur la page publique /rendez-vous
+// (ou par tout autre canal retranscrit par la secrétaire) → statut RECUE.
+// La secrétaire l'étudie puis la TRANSMET au serviteur concerné (pasteur
+// Kongo ou sœur Pam) avec une note éventuelle. Le serviteur (ou la
+// secrétaire sur instruction) marque la demande TRAITEE une fois le
+// rendez-vous donné / la réponse formulée. ARCHIVEE = sortie du registre
+// actif sans être traitée (doublon, indésirable…).
+model MeetingRequest {
+  id                String    @id @default(cuid())
+  requesterName     String    // nom complet du demandeur
+  contact           String    // téléphone / WhatsApp / email du demandeur
+  servantCode       String    // "pam" | "kongo" — serviteur demandé
+  subject           String    // objet / motif de la demande
+  message           String    @db.Text
+  urgency           String    @default("normale") // normale | elevee | urgente
+  country           String?   // pays du demandeur (facultatif)
+  city              String?   // ville du demandeur (facultatif)
+  status            String    @default("RECUE") // RECUE | TRANSMISE | TRAITEE | ARCHIVEE
+  // Note accompagnant la transmission au serviteur (contexte, priorité,
+  // éléments de langage de la secrétaire).
+  transmissionNote  String?   @db.Text
+  transmittedAt     DateTime?
+  processedAt       DateTime?
+  // Compte ayant transmis/traité (secrétaire ou super admin) — traçabilité.
+  handledById       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([status])
+  @@index([servantCode])
+  @@index([urgency])
+  @@index([createdAt])
+}
+
+// --- V3.66 — Secrétariat : annonces officielles du ministère ---
+
+// La secrétaire est chargée des annonces du ministère : vies programmés,
+// événements, communiqués généraux ou urgents. Brouillon → publication ;
+// option « relais Yeshua Connect » pousse l'annonce dans le canal
+// d'annonces de la communauté (best-effort, cf. live-announcement-relay).
+model MinistryAnnouncement {
+  id             String    @id @default(cuid())
+  title          String
+  content        String    @db.Text
+  category       String    @default("generale") // generale | live | evenement | urgence
+  isPublished    Boolean   @default(false)
+  publishedAt    DateTime?
+  authorId       String?   // compte auteur (secrétaire / super admin)
+  relayedToYeshua Boolean  @default(false) // relais effectué dans le canal d'annonces
+  relayedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([isPublished])
+  @@index([category])
+  @@index([publishedAt])
+}
+
+// --- V3.66 — Trésorerie : journal des recettes et dépenses ---
+
+// Chaque mouvement (don, offrande, dîme, charge, achat…) est saisi ligne
+// par ligne par le trésorier — avec référence de pièce justificative,
+// méthode d'encaissement et devise. La situation de caisse et les
+// rapports financiers sont CALCULÉS depuis ce journal (jamais stockés) :
+// aucune divergence possible entre le journal et les totaux. Toute
+// écriture est journalisée dans AuditLog (traçabilité financière).
+model TreasuryTransaction {
+  id          String    @id @default(cuid())
+  type        String    // RECETTE | DEPENSE
+  category    String    // recette : don, offrande, dime, projet, autre…
+                        // dépense : charges, materiel, transport, aide, projet, autre…
+  amount      Float
+  currency    String    @default("EUR") // EUR, XOF, USD…
+  method      String?   // especes, mobile_money, virement, carte, crypto
+  label       String    // libellé court du mouvement
+  date        DateTime  @default(now()) // date comptable du mouvement
+  reference   String?   // n° de pièce justificative / reçu
+  donorName   String?   // donateur identifié (recettes uniquement)
+  isAnonymous Boolean   @default(false)
+  note        String?   @db.Text // commentaire libre du trésorier
+  createdBy   String?   // id du compte trésorier ayant créé la ligne
+  updatedBy   String?   // id du dernier modificateur
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([type])
+  @@index([category])
+  @@index([date])
+  @@index([currency])
 }

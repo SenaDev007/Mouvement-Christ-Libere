@@ -1240,3 +1240,154 @@ export function ensureBiographyPhotoColumn(): Promise<void> {
   }
   return inflightBiographyPhoto;
 }
+
+// ============================================================
+// ⭐ V3.66 — SECRÉTARIAT & TRÉSORERIE (sous-domaines dédiés)
+// ============================================================
+
+let staffSpacesOk = false;
+let inflightStaffSpaces: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.66 — S'assure que tout l'outillage des deux espaces dédiés
+ * existe sur la base :
+ *
+ *  1. Valeurs d'enum `UserRole` : SECRETARY (secrétariat) et TREASURER
+ *     (trésorerie) — sans elles, toute requête filtrant sur ces rôles
+ *     échoue (« invalid input value for enum UserRole »).
+ *  2. Tables `MeetingRequest` (demandes de rencontre), `MinistryAnnouncement`
+ *     (annonces du ministère) et `TreasuryTransaction` (journal financier)
+ *     avec leurs index.
+ *
+ * À appeler en tête de CHAQUE route API des espaces (login, dashboards,
+ * CRUD, rapports) : idempotent, mémoïsé, un seul DDL en vol — exactement
+ * le pattern V3.45 (ensureHeroSectionsTable) qui a déjà fait ses preuves
+ * sur la base de production.
+ */
+export function ensureStaffSpaces(): Promise<void> {
+  if (staffSpacesOk) return Promise.resolve();
+  if (!inflightStaffSpaces) {
+    inflightStaffSpaces = (async () => {
+      // ① Valeurs d'enum (⚠️ PostgreSQL : ADD VALUE hors transaction —
+      // $executeRawUnsafe ne s'exécute pas dans un bloc transactionnel,
+      // même mécanisme que CallSignal → MessageType 'CALL_LOG', V3.1).
+      await db.$executeRawUnsafe(
+        `ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'SECRETARY'`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'TREASURER'`
+      );
+
+      // ② Secrétariat — demandes de rencontre avec les serviteurs.
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "MeetingRequest" (
+          "id" TEXT NOT NULL,
+          "requesterName" TEXT NOT NULL,
+          "contact" TEXT NOT NULL,
+          "servantCode" TEXT NOT NULL,
+          "subject" TEXT NOT NULL,
+          "message" TEXT NOT NULL,
+          "urgency" TEXT NOT NULL DEFAULT 'normale',
+          "country" TEXT,
+          "city" TEXT,
+          "status" TEXT NOT NULL DEFAULT 'RECUE',
+          "transmissionNote" TEXT,
+          "transmittedAt" TIMESTAMPTZ,
+          "processedAt" TIMESTAMPTZ,
+          "handledById" TEXT,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "MeetingRequest_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "MeetingRequest_status_idx" ON "MeetingRequest"("status")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "MeetingRequest_servantCode_idx" ON "MeetingRequest"("servantCode")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "MeetingRequest_urgency_idx" ON "MeetingRequest"("urgency")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "MeetingRequest_createdAt_idx" ON "MeetingRequest"("createdAt")'
+      );
+
+      // ③ Secrétariat — annonces officielles du ministère.
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "MinistryAnnouncement" (
+          "id" TEXT NOT NULL,
+          "title" TEXT NOT NULL,
+          "content" TEXT NOT NULL,
+          "category" TEXT NOT NULL DEFAULT 'generale',
+          "isPublished" BOOLEAN NOT NULL DEFAULT false,
+          "publishedAt" TIMESTAMPTZ,
+          "authorId" TEXT,
+          "relayedToYeshua" BOOLEAN NOT NULL DEFAULT false,
+          "relayedAt" TIMESTAMPTZ,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "MinistryAnnouncement_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "MinistryAnnouncement_isPublished_idx" ON "MinistryAnnouncement"("isPublished")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "MinistryAnnouncement_category_idx" ON "MinistryAnnouncement"("category")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "MinistryAnnouncement_publishedAt_idx" ON "MinistryAnnouncement"("publishedAt")'
+      );
+
+      // ④ Trésorerie — journal des recettes et dépenses.
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "TreasuryTransaction" (
+          "id" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "category" TEXT NOT NULL,
+          "amount" DOUBLE PRECISION NOT NULL,
+          "currency" TEXT NOT NULL DEFAULT 'EUR',
+          "method" TEXT,
+          "label" TEXT NOT NULL,
+          "date" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "reference" TEXT,
+          "donorName" TEXT,
+          "isAnonymous" BOOLEAN NOT NULL DEFAULT false,
+          "note" TEXT,
+          "createdBy" TEXT,
+          "updatedBy" TEXT,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "TreasuryTransaction_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "TreasuryTransaction_type_idx" ON "TreasuryTransaction"("type")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "TreasuryTransaction_category_idx" ON "TreasuryTransaction"("category")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "TreasuryTransaction_date_idx" ON "TreasuryTransaction"("date")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "TreasuryTransaction_currency_idx" ON "TreasuryTransaction"("currency")'
+      );
+    })()
+      .then(() => {
+        staffSpacesOk = true;
+        console.log("[ensure-schema] V3.66 : rôles SECRETARY/TREASURER + tables secrétariat/trésorerie vérifiées/créées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] V3.66 : création tables/rôles staff impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightStaffSpaces = null;
+      });
+  }
+  return inflightStaffSpaces;
+}

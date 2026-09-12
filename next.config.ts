@@ -69,6 +69,19 @@ const nextConfig: NextConfig = {
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
       {
+        // ⭐ V3.66 — Même protection pour les espaces dédiés secrétariat et
+        // trésorerie (données internes du ministère, jamais indexables).
+        source: "/:path*",
+        has: [{ type: "host", value: "secretariat.mouvementchristlibere.com" }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        // ⭐ V3.66 — Trésorerie : journal financier — hautement confidentiel.
+        source: "/:path*",
+        has: [{ type: "host", value: "tresorerie.mouvementchristlibere.com" }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
         source: "/_next/static/(.*)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },

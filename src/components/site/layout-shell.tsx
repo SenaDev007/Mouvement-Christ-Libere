@@ -7,13 +7,18 @@ import { LiveAnnouncementBar } from "@/components/site/live-announcement-bar";
 import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 
 // Routes où navbar, footer et barre live sont masqués (pages d'auth)
-const HIDDEN_ROUTES = ["/login", "/register", "/admin/login"];
+// ⭐ V3.66 — Espaces secrétariat & trésorerie : MASQUÉS intégralement (ils
+// possèdent leur propre coquille de navigation — sidebar violet/or — et leur
+// propre page de connexion plein écran, comme le back-office).
+const HIDDEN_ROUTES = ["/login", "/register", "/admin/login", "/secretariat", "/tresorerie"];
 
 // Routes où le footer est masqué mais la navbar reste visible
 const NO_FOOTER_ROUTES = ["/live/", "/yeshua-connect"];
 
 // Routes où la barre d'annonce live ne doit pas s'afficher
-const NO_LIVE_BAR_ROUTES = ["/admin", "/yeshua-connect", "/live/"];
+// ⭐ V3.66 — idem espaces staff (ceinture + bretelles : même si HIDDEN_ROUTES
+// les couvre déjà, le garde reste explicite).
+const NO_LIVE_BAR_ROUTES = ["/admin", "/yeshua-connect", "/live/", "/secretariat", "/tresorerie"];
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
