@@ -10,4 +10,8 @@ builder = "nixpacks"
 
 [variables]
 NODE_ENV = "production"
-PORT = "3001"
+# ⚠️ V3.71 — NE JAMAIS épingler PORT ici : Railway injecte son propre PORT au
+# démarrage et route son proxy vers CE port-là. Un PORT figé (ex. 3001) fait
+# écouter l'app sur un port différent de celui que Railway sonde →
+# « 502 Application failed to respond » malgré des builds « Success »
+# (symptôme observé en prod depuis des semaines, jamais diagnostiqué avant).
