@@ -10,7 +10,6 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -98,35 +97,19 @@ function SuiviContenu() {
 
   return (
     <div className="min-h-screen bg-[#F0E9DE]">
-      {/* En-tête public (même famille que /rendez-vous) */}
-      <header className="bg-[#000000] text-[#F0E9DE]">
-        <div className="max-w-3xl mx-auto px-4 py-5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Image
-              src="/logo-christ-libere-v2.png"
-              alt="Christ Libère"
-              width={36}
-              height={36}
-              className="w-9 h-9 object-contain"
-              priority
-            />
-            <span className="text-sm font-bold">
-              <span className="text-[#C9A227]">Christ</span>
-              <span className="text-[#F0E9DE]">&nbsp;Libère</span>
-            </span>
-          </Link>
+      {/* ⭐ V3.73 — Bande logo SUPPRIMÉE (même correction que /rendez-vous :
+          doublon avec la navbar + la bande d'annonce du layout). Il ne
+          reste que le bouton retour, simplement posé au-dessus du contenu. */}
+      <main className="max-w-3xl mx-auto px-4 py-8 md:py-12">
+        <div className="mb-6">
           <Link
             href="/rendez-vous"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#DDBE55] hover:text-[#FF7A1A] transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#8A857C]/25 bg-white/70 text-sm font-semibold text-[#000000]/70 hover:border-[#C9A227] hover:text-[#000000] transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-4 h-4" />
             Nouvelle demande
           </Link>
         </div>
-        <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C9A227] to-transparent" />
-      </header>
-
-      <main className="max-w-3xl mx-auto px-4 py-10 md:py-14">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-[#000000] flex items-center justify-center mx-auto mb-4">
             <Search className="w-7 h-7 text-[#C9A227]" />

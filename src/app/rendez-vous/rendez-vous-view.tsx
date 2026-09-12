@@ -3,10 +3,18 @@
 /**
  * ⭐ V3.66 — Formulaire public de demande de rendez-vous.
  *
- * Design public du site (nuit → crème, or, serif) : bandeau en-tête avec
- * logo, choix du serviteur de Dieu (Sœur Pam / Pasteur Kongo), urgence,
- * coordonnées + message. POST /api/rendez-vous (public, rate-limité,
- * honeypot anti-robots).
+ * Design public du site (nuit → crème, or, serif) : choix du serviteur de
+ * Dieu (Sœur Pam / Pasteur Kongo), urgence, coordonnées + message. POST
+ * /api/rendez-vous (public, rate-limité, honeypot anti-robots).
+ *
+ * ⭐ V3.73 — Deux retours pasteur :
+ *   ① bande logo supprimée (doublon navbar + bande d'annonce) — seul le
+ *      bouton « Retour au site » reste, simplement posé au-dessus du
+ *      contenu ;
+ *   ② champ « Pays » libre remplacé par LE sélecteur pays habituel des
+ *      formulaires (recherche + drapeaux + suggestions — comme /register
+ *      et le modal serviteur). Le NOM du pays est stocké (affichage email /
+ *      PDF du secrétariat inchangé).
  */
 
 import { useState } from "react";
@@ -21,8 +29,12 @@ import {
   CheckCircle2,
   ArrowLeft,
   ShieldCheck,
+  Search,
+  ChevronDown,
 } from "lucide-react";
 import { DEMANDE_URGENCES, SERVITEURS_RENDEZ_VOUS } from "@/lib/staff-space/constants";
+import { COUNTRIES } from "@/lib/data/countries";
+import { flagFromCountryCode } from "@/lib/data/flags";
 
 export function RendezVousView() {
   const [form, setForm] = useState({
@@ -43,9 +55,45 @@ export function RendezVousView() {
   // sur /rendez-vous/suivi).
   const [codeSuivi, setCodeSuivi] = useState<string | null>(null);
 
+  // ⭐ V3.73 — Sélecteur pays habituel (comme /register + modal
+  // serviteur) : champ de recherche + liste de suggestions filtrée.
+  // form.country stocke le NOM (ex. « Bénin ») — l'email et le PDF du
+  // secrétariat l'affichent tel quel.
+  const [paysRecherche, setPaysRecherche] = useState("");
+  const [listePaysOuverte, setListePaysOuverte] = useState(false);
+
+  const paysFiltres = COUNTRIES.filter(
+    (c) =>
+      c.name.toLowerCase().includes(paysRecherche.toLowerCase()) ||
+      c.code.toLowerCase().includes(paysRecherche.toLowerCase())
+  ).slice(0, 8);
+  const paysSelectionne = form.country
+    ? COUNTRIES.find((c) => c.name === form.country)
+    : undefined;
+
   const soumettre = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.requesterName || !form.contact || !form.subject || !form.message) return;
+
+    // ⭐ V3.73 — Auto-résolution du pays (même garde-fou que /register
+    // V3.24) : si le nom est tapé sans cliquer la suggestion, on résout
+    // le texte saisi (match exact, sinon préfixe unique). Champ optionnel :
+    // sans résolution, il part simplement vide.
+    let paysFinal = form.country;
+    if (!paysFinal && paysRecherche.trim()) {
+      const recherche = paysRecherche.trim().toLowerCase();
+      const exact =
+        COUNTRIES.find((c) => c.name.toLowerCase() === recherche) ??
+        COUNTRIES.find((c) => c.code.toLowerCase() === recherche);
+      const prefixes = COUNTRIES.filter((c) =>
+        c.name.toLowerCase().startsWith(recherche)
+      );
+      const resolu = exact ?? (prefixes.length === 1 ? prefixes[0] : undefined);
+      if (resolu) {
+        paysFinal = resolu.name;
+        setForm((f) => ({ ...f, country: resolu.name }));
+      }
+    }
 
     setEnvoi(true);
     setErreur("");
@@ -53,7 +101,7 @@ export function RendezVousView() {
       const res = await fetch("/api/rendez-vous", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, country: paysFinal }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur lors de l'envoi");
@@ -68,35 +116,19 @@ export function RendezVousView() {
 
   return (
     <div className="min-h-screen bg-[#F0E9DE]">
-      {/* En-tête public */}
-      <header className="bg-[#000000] text-[#F0E9DE]">
-        <div className="max-w-3xl mx-auto px-4 py-5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Image
-              src="/logo-christ-libere-v2.png"
-              alt="Christ Libère"
-              width={36}
-              height={36}
-              className="w-9 h-9 object-contain"
-              priority
-            />
-            <span className="text-sm font-bold">
-              <span className="text-[#C9A227]">Christ</span>
-              <span className="text-[#F0E9DE]">&nbsp;Libère</span>
-            </span>
-          </Link>
+      {/* ⭐ V3.73 — Bande logo SUPPRIMÉE (doublon avec la navbar + la bande
+          d'annonce du layout) : il ne reste que le bouton « Retour au site »,
+          simplement posé au-dessus du contenu. */}
+      <main className="max-w-3xl mx-auto px-4 py-8 md:py-12">
+        <div className="mb-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-[#F0E9DE]/60 hover:text-[#FF7A1A] transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#8A857C]/25 bg-white/70 text-sm font-semibold text-[#000000]/70 hover:border-[#C9A227] hover:text-[#000000] transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-4 h-4" />
             Retour au site
           </Link>
         </div>
-        <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C9A227] to-transparent" />
-      </header>
-
-      <main className="max-w-3xl mx-auto px-4 py-10 md:py-14">
         {succes ? (
           /* ── Confirmation ── */
           <motion.div
@@ -161,6 +193,8 @@ export function RendezVousView() {
                     city: "",
                     site: "",
                   });
+                  setPaysRecherche("");
+                  setListePaysOuverte(false);
                 }}
                 className="px-5 py-2.5 rounded-xl border border-[#8A857C]/25 text-sm font-semibold text-[#000000] hover:bg-[#F0E9DE] transition-colors"
               >
@@ -273,17 +307,68 @@ export function RendezVousView() {
                     placeholder="Pour être recontacté(e)"
                   />
                 </div>
-                <div>
+                <div className="relative">
                   <label className="block text-xs font-bold text-[#000000] mb-1.5 uppercase tracking-wider">
                     Pays
                   </label>
-                  <input
-                    type="text"
-                    value={form.country}
-                    onChange={(e) => setForm({ ...form, country: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
-                    placeholder="Ex. Bénin"
-                  />
+                  {/* ⭐ V3.73 — LE sélecteur pays habituel des formulaires :
+                      recherche + drapeaux + suggestions (comme /register et
+                      le modal serviteur). Cliquer une suggestion enregistre
+                      le NOM du pays. */}
+                  <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C] pointer-events-none" />
+                    <input
+                      type="text"
+                      value={
+                        form.country
+                          ? `${flagFromCountryCode(paysSelectionne?.code || "")} ${form.country}`
+                          : paysRecherche
+                      }
+                      onChange={(e) => {
+                        setPaysRecherche(e.target.value);
+                        setForm({ ...form, country: "" });
+                        setListePaysOuverte(true);
+                      }}
+                      onFocus={() => setListePaysOuverte(true)}
+                      placeholder="Rechercher un pays…"
+                      autoComplete="off"
+                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
+                    />
+                    <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C] pointer-events-none" />
+                  </div>
+                  {listePaysOuverte && (
+                    <>
+                      {/* Clic extérieur → fermer la liste (comme le modal
+                          serviteur) */}
+                      <div
+                        className="fixed inset-0 z-20"
+                        onClick={() => setListePaysOuverte(false)}
+                      />
+                      <div className="absolute z-30 mt-1 w-full max-h-40 overflow-y-auto bg-white rounded-xl shadow-xl border border-[#8A857C]/20 py-1">
+                        {paysFiltres.length === 0 && (
+                          <p className="px-4 py-2 text-sm text-[#8A857C]">
+                            Aucun pays trouvé — vérifiez l&apos;orthographe puis
+                            cliquez sur un pays de la liste.
+                          </p>
+                        )}
+                        {paysFiltres.map((c) => (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => {
+                              setForm({ ...form, country: c.name });
+                              setPaysRecherche("");
+                              setListePaysOuverte(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-[#F0E9DE] text-[#000000]"
+                          >
+                            {flagFromCountryCode(c.code)} {c.name}
+                            <span className="text-[#8A857C] ml-2 text-xs">{c.code}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[#000000] mb-1.5 uppercase tracking-wider">

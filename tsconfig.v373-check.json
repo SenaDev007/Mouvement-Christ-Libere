@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "paths": {
+      "react": ["./node_modules/@types/react"],
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"],
+      "@/*": ["./src/*"]
+    }
+  },
+  "files": [
+    "./src/components/ui/navigation-menu-4.tsx",
+    "./src/app/rendez-vous/rendez-vous-view.tsx",
+    "./src/app/rendez-vous/suivi/suivi-view.tsx",
+    "./src/lib/data/countries.ts",
+    "./src/lib/data/flags.ts"
+  ]
+}

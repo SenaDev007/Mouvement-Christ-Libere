@@ -12,7 +12,6 @@ import {
   LogIn,
   UserPlus,
   Settings,
-  User as UserIcon,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -486,17 +485,10 @@ export function ContextualNav() {
             /* ═══ Utilisateur connecté — avatar + menu déroulant ═══ */
             <div className="relative">
               <div className="flex items-center gap-1">
-                {/* ⭐ V3.0 — Accès DIRECT aux paramètres (engrenage) :
-                    visible pour TOUT membre connecté, avant même d'ouvrir
-                    le menu — le profil/photo se modifie en 1 geste. */}
-                <Link
-                  href="/profil"
-                  aria-label="Paramètres de mon compte"
-                  title="Modifier ma photo et mes informations"
-                  className="inline-flex items-center justify-center size-11 rounded-lg text-[#F0E9DE]/70 hover:text-[#FF7A1A] hover:bg-[#F0E9DE]/10 transition-colors"
-                >
-                  <Settings className="w-4.5 h-4.5" />
-                </Link>
+                {/* ⭐ V3.73 — Plus AUCUN bouton engrenage en dehors du menu
+                    profil (demande pasteur) : l'accès « modifier photo /
+                    paramètres » vit DANS le menu qui s'ouvre au clic sur
+                    l'avatar — entrée « Mon profil & paramètres ». */}
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-2 min-h-11 p-1.5 pr-2.5 rounded-full hover:bg-[#F0E9DE]/10 transition-colors"
@@ -546,17 +538,23 @@ export function ContextualNav() {
                         )}
                       </div>
                     </div>
-                    {/* ⭐ V3.0 — MON PROFIL & PARAMÈTRES : entrée principale
-                        (photo, nom, téléphone, pays, ville, bio). Avant, la
-                        page /profil existait mais n'était liée NULLE PART :
-                        aucun membre ne pouvait modifier ses informations. */}
+                    {/* ⭐ V3.73 — ENGRENAGE INCORPORÉ DANS LE MENU PROFIL
+                        (demande pasteur) : l'entrée principale « Mon profil &
+                        paramètres » porte désormais l'icône engrenage et mène
+                        à /profil (photo, nom, téléphone, pays, ville, bio) —
+                        plus AUCUN bouton engrenage hors du menu. */}
                     <Link
                       href="/profil"
                       onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-[#000000] hover:bg-[#FF7A1A]/10 hover:text-[#A3821C] transition-colors"
                     >
-                      <UserIcon className="w-4 h-4 text-[#C9A227]" />
-                      Mon profil & paramètres
+                      <Settings className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+                      <span className="min-w-0">
+                        <span className="block">Mon profil &amp; paramètres</span>
+                        <span className="block text-[11px] font-normal text-[#8A857C]">
+                          Photo, nom, téléphone, pays…
+                        </span>
+                      </span>
                     </Link>
                     <Link
                       href="/yeshua-connect"
