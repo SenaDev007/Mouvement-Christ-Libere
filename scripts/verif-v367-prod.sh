@@ -40,7 +40,7 @@ curl -s https://www.$DOM/rendez-vous/suivi | grep -q 'Suivre ma demande' && vert
 echo "② API suivi public"
 R=$(curl -s "https://www.$DOM/api/rendez-vous/suivi?code=MCL-AAAAAA")
 echo "$R" | grep -q '"error"' && vert "code inconnu → erreur propre (pas de fuite)" || rouge "réponse inattendue : $R"
-teste "format invalide → 400" 400 "$(curl -s --retry 2 --retry-connrefused -o /dev/null -w '%{http_code}' 'https://www.$DOM/api/rendez-vous/suivi?code=XYZ')"
+teste "format invalide → 400" 400 "$(curl -s --retry 2 --retry-connrefused -o /dev/null -w '%{http_code}' "https://www.$DOM/api/rendez-vous/suivi?code=XYZ")"
 
 # ── ③ Espaces : pages + gardes JSON ──────────────────────────────────────
 echo "③ Espaces (sous-domaines — chemins COMPLETS)"
