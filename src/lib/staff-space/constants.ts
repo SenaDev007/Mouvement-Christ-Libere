@@ -184,6 +184,50 @@ export function libelleCaisseType(type: string): string {
   return (CAISSE_TYPES as Record<string, { libelle: string }>)[type]?.libelle || type;
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V3.72 — CAISSES PRÉDÉFINIES (création de caisse)
+// Le sélecteur du formulaire propose les caisses types du ministère ;
+// l'option « Autre » laisse le nom entièrement libre. Le nom reste
+// de toute façon éditable après sélection (affiné, corrigé…).
+// ─────────────────────────────────────────────────────────────────────
+export const CAISSES_PREDEFINIES = [
+  {
+    nom: "Caisse principale",
+    description: "Caisse générale du ministère (fonctionnement courant)",
+  },
+  {
+    nom: "Caisse don",
+    description: "Dons reçus et suivis séparément",
+  },
+  {
+    nom: "Caisse offrande",
+    description: "Offrandes des cultes et réunions",
+  },
+  {
+    nom: "Caisse dîme",
+    description: "Dîmes perçues par le ministère",
+  },
+  {
+    nom: "Caisse subvention",
+    description: "Subventions et financements extérieurs",
+  },
+] as const;
+
+export const CAISSES_PREDEFINIES_NOMS: readonly string[] =
+  CAISSES_PREDEFINIES.map((c) => c.nom);
+
+/** Valeur du sélecteur quand le nom est saisi à la main. */
+export const CAISSE_PREDEFINIE_AUTRE = "__autre__";
+
+/** Description d'une caisse prédéfinie (ou null). */
+export function descriptionCaissePredefinie(nom: string): string | null {
+  return (
+    (CAISSES_PREDEFINIES as readonly { nom: string; description: string }[]).find(
+      (c) => c.nom === nom
+    )?.description ?? null
+  );
+}
+
 /** Catégorie d'un transfert interne (libellé de journal). */
 export const TRANSFERT_CATEGORIE = "transfert";
 

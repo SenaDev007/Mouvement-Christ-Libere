@@ -5,14 +5,19 @@
  *
  *  · CARTES PAR CAISSE : solde d'ouverture, recettes, dépenses, transferts
  *    sortants/entrants, solde courant — tout recalculé depuis le journal ;
- *  · GESTION des caisses : création, correction (y compris solde d'ouverture,
- *    audité avant/après), désactivation/réactivation — une caisse portant
- *    des écritures ne s'efface jamais, elle se désactive ;
+ *  · GESTION des caisses : création (⭐ V3.72 — sélecteur de caisses
+ *    prédéfinies : principale, don, offrande, dîme, subvention… + nom libre),
+ *    correction (y compris solde d'ouverture, audité avant/après),
+ *    désactivation/réactivation — une caisse portant des écritures ne
+ *    s'efface jamais, elle se désactive ;
+ *  · ⭐ V3.72 — TRANSFERT ENTRE CAISSES directement depuis la situation
+ *    de caisse (bouton en-tête + bouton rapide sur chaque carte) ;
  *  · CONSOLIDATION PAR DEVISE : caisses + compartiment « non affecté »
  *    (écritures antérieures à la multicaisse) + témoin de cohérence ;
  *  · détail par MÉTHODE d'encaissement (conservé V3.66).
  *
- * Données : GET /tresorerie/api/caisse · CRUD /tresorerie/api/caisses.
+ * Données : GET /tresorerie/api/caisse · CRUD /tresorerie/api/caisses ·
+ * transferts : POST /tresorerie/api/transactions (type TRANSFERT, V3.67).
  */
 
 import { useEffect, useState, useCallback } from "react";
@@ -40,6 +45,10 @@ import {
   libelleCaisseType,
   CAISSE_TYPES,
   CAISSE_TYPE_VALEURS,
+  CAISSES_PREDEFINIES,
+  CAISSES_PREDEFINIES_NOMS,
+  CAISSE_PREDEFINIE_AUTRE,
+  descriptionCaissePredefinie,
   DEVISES,
   DEVISE_CODES,
 } from "@/lib/staff-space/constants";
@@ -114,6 +123,15 @@ function FormulaireCaisse({
   onSauve: (payload: Record<string, unknown>, id?: string) => Promise<void>;
 }) {
   const [nom, setNom] = useState(caisseInitiale?.name || "");
+  // ⭐ V3.72 — sélecteur de caisse prédéfinie : pré-sélectionnée en création,
+  // en édition elle retrouve la prédéfinie si le nom correspond exactement.
+  const [predefinie, setPredefinie] = useState(
+    caisseInitiale
+      ? CAISSES_PREDEFINIES_NOMS.includes(caisseInitiale.name)
+        ? caisseInitiale.name
+        : CAISSE_PREDEFINIE_AUTRE
+      : CAISSES_PREDEFINIES[0].nom
+  );
   const [type, setType] = useState(caisseInitiale?.type || "especes");
   const [devise, setDevise] = useState(caisseInitiale?.currency || "EUR");
   const [ouverture, setOuverture] = useState(
@@ -122,6 +140,30 @@ function FormulaireCaisse({
   const [description, setDescription] = useState(caisseInitiale?.description || "");
   const [erreur, setErreur] = useState("");
   const [envoi, setEnvoi] = useState(false);
+
+  const changerPredefinie = (valeur: string) => {
+    setPredefinie(valeur);
+    // Sélection d'une prédéfinie → le nom suit (reste éditable ensuite).
+    if (valeur !== CAISSE_PREDEFINIE_AUTRE) {
+      setNom(valeur);
+    }
+    // Bascule vers « Autre » en création → champ vidé pour saisie libre.
+    if (valeur === CAISSE_PREDEFINIE_AUTRE && !caisseInitiale) {
+      setNom("");
+    }
+  };
+
+  const changerNom = (valeur: string) => {
+    setNom(valeur);
+    // Le nom s'écarte de la prédéfinie sélectionnée → le sélecteur bascule
+    // honnêtement sur « Autre » (pas de prédéfinie affichée mensongère).
+    if (
+      predefinie !== CAISSE_PREDEFINIE_AUTRE &&
+      valeur !== predefinie
+    ) {
+      setPredefinie(CAISSE_PREDEFINIE_AUTRE);
+    }
+  };
 
   const soumettre = async () => {
     if (!nom.trim()) {
@@ -173,15 +215,45 @@ function FormulaireCaisse({
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[#000000] mb-1">
+              Caisse prédéfinie
+            </label>
+            <select
+              value={predefinie}
+              onChange={(e) => changerPredefinie(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm bg-white focus:outline-none focus:border-[#C9A227]"
+            >
+              {CAISSES_PREDEFINIES.map((c) => (
+                <option key={c.nom} value={c.nom}>
+                  {c.nom}
+                </option>
+              ))}
+              <option value={CAISSE_PREDEFINIE_AUTRE}>
+                Autre — nom personnalisé
+              </option>
+            </select>
+            <p className="text-[10px] text-[#8A857C] mt-1">
+              {predefinie === CAISSE_PREDEFINIE_AUTRE
+                ? "Saisissez librement le nom de la caisse ci-dessous."
+                : descriptionCaissePredefinie(predefinie) || ""}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#000000] mb-1">
               Nom de la caisse
+              {predefinie !== CAISSE_PREDEFINIE_AUTRE && " (pré-rempli, ajustable)"}
             </label>
             <input
               value={nom}
-              onChange={(e) => setNom(e.target.value)}
+              onChange={(e) => changerNom(e.target.value)}
               placeholder="Caisse principale espèces"
               maxLength={80}
               className="w-full px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm focus:outline-none focus:border-[#C9A227]"
             />
+            <p className="text-[10px] text-[#8A857C] mt-1">
+              Le nom reste modifiable : affinez-le après sélection de la
+              caisse prédéfinie (ex. « Caisse offrande — culte du dimanche »).
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -287,6 +359,254 @@ function FormulaireCaisse({
   );
 }
 
+/** ⭐ V3.72 — Formulaire de TRANSFERT entre caisses (modal, situation de
+ * caisse). Réutilise l'API V3.67 (POST /tresorerie/api/transactions,
+ * type TRANSFERT) : contrôles serveur de devise, fonds et traçabilité audit. */
+function FormulaireTransfert({
+  caisses,
+  caisseSourceInitialeId,
+  onFermer,
+  onTransfere,
+}: {
+  caisses: LigneCaisse[];
+  caisseSourceInitialeId: string | null;
+  onFermer: () => void;
+  onTransfere: (payload: Record<string, unknown>) => Promise<void>;
+}) {
+  const actives = caisses.filter((c) => c.isActive);
+  const [caisseId, setCaisseId] = useState(
+    caisseSourceInitialeId || actives[0]?.id || ""
+  );
+  const [caisseDestinationId, setCaisseDestinationId] = useState("");
+  const [montant, setMontant] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [libelle, setLibelle] = useState("");
+  const [reference, setReference] = useState("");
+  const [erreur, setErreur] = useState("");
+  const [envoi, setEnvoi] = useState(false);
+
+  const source = actives.find((c) => c.id === caisseId) || null;
+  // Le serveur refuse les transferts entre devises : on ne propose en
+  // destination que les caisses actives de la MÊME devise que la source.
+  const destinations = source
+    ? actives.filter((c) => c.id !== source.id && c.currency === source.currency)
+    : [];
+
+  // Si la destination devient invalide (changement de source), on la réinitialise.
+  const destinationValide =
+    destinations.some((d) => d.id === caisseDestinationId);
+  const destinationEffective = destinationValide
+    ? caisseDestinationId
+    : destinations[0]?.id || "";
+
+  const montantNombre = Number(montant.replace(",", "."));
+  const fondsInsuffisants =
+    source !== null &&
+    montant.trim() !== "" &&
+    Number.isFinite(montantNombre) &&
+    montantNombre > source.solde + 0.01;
+
+  const soumettre = async () => {
+    if (!source) {
+      setErreur("Choisissez une caisse source.");
+      return;
+    }
+    if (!destinationEffective) {
+      setErreur(
+        `Aucune caisse de destination en ${source.currency} — créez-en une d'abord (les transferts se font à devise constante).`
+      );
+      return;
+    }
+    if (caisseId === destinationEffective) {
+      setErreur("La source et la destination doivent être différentes.");
+      return;
+    }
+    if (!libelle.trim()) {
+      setErreur("Le libellé est requis.");
+      return;
+    }
+    if (!Number.isFinite(montantNombre) || montantNombre <= 0) {
+      setErreur("Montant invalide — un nombre strictement positif est attendu.");
+      return;
+    }
+    setEnvoi(true);
+    setErreur("");
+    try {
+      await onTransfere({
+        type: "TRANSFERT",
+        caisseId,
+        caisseDestinationId: destinationEffective,
+        amount: Math.round(montantNombre * 100) / 100,
+        label: libelle.trim(),
+        date,
+        reference: reference.trim() || undefined,
+      });
+      onFermer();
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setEnvoi(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/70 overflow-y-auto">
+      <div className="bg-white rounded-2xl border border-[#C9A227]/25 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto my-8">
+        <div className="flex items-start justify-between px-6 py-4 border-b border-[#8A857C]/15">
+          <div>
+            <h2 className="text-lg font-bold text-[#000000] flex items-center gap-2">
+              <ArrowLeftRight className="w-5 h-5 text-[#A3821C]" />
+              Transfert entre caisses
+            </h2>
+            <p className="text-[11px] text-[#8A857C] mt-0.5">
+              Mouvement interne : l&apos;argent sort d&apos;une caisse et entre
+              dans l&apos;autre — le total consolidé ne change pas.
+            </p>
+          </div>
+          <button
+            onClick={onFermer}
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-[#8A857C] hover:bg-[#F0E9DE]"
+            aria-label="Fermer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[#000000] mb-1">
+                Caisse source *
+              </label>
+              <select
+                value={caisseId}
+                onChange={(e) => setCaisseId(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm bg-white focus:outline-none focus:border-[#C9A227]"
+              >
+                {actives.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} · {formaterMontant(c.solde, c.currency)}
+                  </option>
+                ))}
+              </select>
+              {source && (
+                <p className="text-[10px] text-[#8A857C] mt-1">
+                  Solde disponible :{" "}
+                  <b className="text-[#000000]">
+                    {formaterMontant(source.solde, source.currency)}
+                  </b>
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#000000] mb-1">
+                Caisse destination *
+              </label>
+              <select
+                value={destinationEffective}
+                onChange={(e) => setCaisseDestinationId(e.target.value)}
+                disabled={destinations.length === 0}
+                className="w-full px-3 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm bg-white focus:outline-none focus:border-[#C9A227] disabled:bg-[#F0E9DE] disabled:text-[#8A857C]"
+              >
+                {destinations.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} · {formaterMontant(c.solde, c.currency)}
+                  </option>
+                ))}
+                {destinations.length === 0 && (
+                  <option value="">
+                    Aucune caisse en {source?.currency || "cette devise"}
+                  </option>
+                )}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[#000000] mb-1">
+                Montant *{source ? ` (${source.currency})` : ""}
+              </label>
+              <input
+                value={montant}
+                onChange={(e) => setMontant(e.target.value)}
+                inputMode="decimal"
+                placeholder="Ex. 500,00"
+                className="w-full px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm focus:outline-none focus:border-[#C9A227]"
+              />
+              {fondsInsuffisants && source && (
+                <p className="text-[10px] text-[#B3452E] mt-1">
+                  Supérieur au solde courant ({formaterMontant(source.solde, source.currency)}) — le serveur refusera.
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#000000] mb-1">
+                Date comptable
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm bg-white focus:outline-none focus:border-[#C9A227]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#000000] mb-1">
+              Libellé *
+            </label>
+            <input
+              value={libelle}
+              onChange={(e) => setLibelle(e.target.value)}
+              placeholder="Ex. Dépôt des offrandes du culte"
+              maxLength={200}
+              className="w-full px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm focus:outline-none focus:border-[#C9A227]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#000000] mb-1">
+              Référence / note (facultatif)
+            </label>
+            <input
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="Ex. BORD-2026-018 (bordereau de dépôt)"
+              maxLength={80}
+              className="w-full px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm focus:outline-none focus:border-[#C9A227]"
+            />
+          </div>
+
+          {erreur && (
+            <p className="text-xs text-[#B3452E] bg-[#B3452E]/10 border border-[#B3452E]/25 rounded-lg px-3 py-2">
+              {erreur}
+            </p>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={onFermer}
+              className="flex-1 px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm font-medium text-[#000000] hover:bg-[#F0E9DE]"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={soumettre}
+              disabled={envoi || destinations.length === 0}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-[#000000] text-[#DDBE55] text-sm font-bold hover:bg-[#161513] disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {envoi && <Loader2 className="w-4 h-4 animate-spin" />}
+              Effectuer le transfert
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TresorerieCaissePage() {
   const [data, setData] = useState<CaisseData | null>(null);
   const [chargement, setChargement] = useState(true);
@@ -295,6 +615,9 @@ export default function TresorerieCaissePage() {
   const [creation, setCreation] = useState(false);
   const [actionEnCours, setActionEnCours] = useState("");
   const [onglet, setOnglet] = useState<"caisses" | "methodes">("caisses");
+  // ⭐ V3.72 — transfert entre caisses depuis la situation de caisse.
+  const [transfertOuvert, setTransfertOuvert] = useState(false);
+  const [caisseSourceTransfert, setCaisseSourceTransfert] = useState<string | null>(null);
 
   const charger = useCallback(async () => {
     try {
@@ -349,6 +672,24 @@ export default function TresorerieCaissePage() {
     }
   };
 
+  // ⭐ V3.72 — POST /tresorerie/api/transactions (type TRANSFERT, API V3.67 :
+  // contrôles serveur devise/fonds + journal d'audit, puis rechargement).
+  const effectuerTransfert = async (payload: Record<string, unknown>) => {
+    const res = await fetch("/tresorerie/api/transactions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || "Erreur de transfert");
+    await charger();
+  };
+
+  const ouvrirTransfert = (caisse?: LigneCaisse) => {
+    setCaisseSourceTransfert(caisse?.id || null);
+    setTransfertOuvert(true);
+  };
+
   if (chargement) {
     return (
       <div className="flex items-center justify-center py-24 text-[#8A857C]">
@@ -387,8 +728,21 @@ export default function TresorerieCaissePage() {
             className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm font-medium text-[#000000] hover:bg-white transition-colors"
           >
             <ArrowLeftRight className="w-4 h-4 text-[#8A857C]" />
-            Journal & transferts
+            Journal
           </a>
+          <button
+            onClick={() => ouvrirTransfert()}
+            disabled={!data || data.caisses.filter((c) => c.isActive).length < 2}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#C9A227]/40 bg-[#C9A227]/10 text-sm font-bold text-[#000000] hover:bg-[#C9A227]/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            title={
+              data && data.caisses.filter((c) => c.isActive).length < 2
+                ? "Créez au moins deux caisses actives pour transférer"
+                : "Déplacer de l'argent d'une caisse vers une autre"
+            }
+          >
+            <ArrowLeftRight className="w-4 h-4 text-[#A3821C]" />
+            Transfert
+          </button>
           <button
             onClick={() => setCreation(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#000000] text-[#DDBE55] text-sm font-bold hover:bg-[#161513] transition-colors"
@@ -493,6 +847,16 @@ export default function TresorerieCaissePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
+                        {c.isActive && (
+                          <button
+                            onClick={() => ouvrirTransfert(c)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-[#A3821C] hover:text-[#000000] hover:bg-[#C9A227]/15"
+                            aria-label={`Transférer depuis ${c.name}`}
+                            title={`Transférer depuis ${c.name}`}
+                          >
+                            <ArrowLeftRight className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         <button
                           onClick={() => setCaisseEditee(c)}
                           className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A857C] hover:text-[#000000] hover:bg-[#F0E9DE]"
@@ -722,6 +1086,14 @@ export default function TresorerieCaissePage() {
           caisseInitiale={caisseEditee}
           onFermer={() => setCaisseEditee(null)}
           onSauve={sauverCaisse}
+        />
+      )}
+      {transfertOuvert && data && (
+        <FormulaireTransfert
+          caisses={data.caisses}
+          caisseSourceInitialeId={caisseSourceTransfert}
+          onFermer={() => setTransfertOuvert(false)}
+          onTransfere={effectuerTransfert}
         />
       )}
     </div>

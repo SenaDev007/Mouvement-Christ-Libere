@@ -21,6 +21,9 @@ RUN npm run build
 # Prune dev dependencies
 RUN npm prune --production
 
-EXPOSE 3001
+# ⭐ V3.72 — 3000 par cohérence avec le défaut applicatif. NOTE : l'app écoute
+# en réalité sur TOUS les ports candidats ($PORT injecté, 3001, 3000) — voir
+# src/index.ts — donc le routage Railway aboutit quel que soit le port cible.
+EXPOSE 3000
 
 CMD ["npm", "start"]

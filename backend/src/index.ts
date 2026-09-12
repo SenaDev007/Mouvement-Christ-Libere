@@ -12,6 +12,16 @@
  *     absente de Vercel, la plateforme relaie ses envois ICI (la clé vit
  *     sur Railway) — voir backend/src/routes/email.ts.
  *
+ * ⭐ V3.72 — Démarrage BLINDÉ (panne « 502 Application failed to respond ») :
+ *   · écoute multi-ports : $PORT injecté par Railway + 3001 (ancien EXPOSE
+ *     Dockerfile / ancien épinglage) + 3000 (défaut) — quel que soit le port
+ *     que le proxy Railway route, l'app répond ;
+ *   · gardes anti-crash : uncaughtException / unhandledRejection loggés,
+ *     le process SURVIT (plus jamais de service mort en silence après un
+ *     déploiement « Success ») ;
+ *   · /api/health enrichi (ports écoutés, uptime, RSS, env) + heartbeat
+ *     toutes les 5 min dans les logs Railway.
+ *
  * Routes mounted under /api/* mirror the original Next.js paths.
  */
 
@@ -100,12 +110,25 @@ app.use(
 );
 
 // --- Health check ---
+// ⭐ V3.72 : enrichi — ports réellement écoutés + mémoire + env (booléens,
+// JAMAIS de valeurs de secrets) pour diagnostiquer en un seul curl.
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
     service: "mouvement-christ-libere-backend",
+    version: "V3.72",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    ports: portsEcoutes,
+    node: process.version,
+    rssMo: Math.round(process.memoryUsage().rss / 1048576),
+    env: {
+      port: process.env.PORT || null,
+      resend: Boolean(process.env.RESEND_API_KEY),
+      database: Boolean(process.env.DATABASE_URL),
+      jwt: Boolean(process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET),
+      cors: process.env.CORS_ORIGIN || null,
+    },
   });
 });
 
@@ -186,21 +209,97 @@ app.use(
   },
 );
 
-// --- Start server ---
+// --- Start server (⭐ V3.72 — démarrage blindé multi-ports) ---
 import http from "http";
 import { initSocketServer } from "./socket/yeshua-connect";
 
-const PORT = parseInt(process.env.PORT || "3000", 10);
+// Ports candidats dédupliqués : PORT injecté par Railway en priorité, puis
+// 3001 (EXPOSE historique du Dockerfile / épinglage dashboard éventuellement
+// persistant) et 3000 (défaut applicatif). On écoute sur TOUS — le binding
+// est gratuit et rend le routage Railway correct QUEL QUE SOIT le port sondé.
+const PORT_INJECTE = parseInt(process.env.PORT || "3000", 10);
+const PORTS_CANDIDATS = Array.from(
+  new Set([PORT_INJECTE, 3001, 3000])
+).filter((p) => Number.isInteger(p) && p > 0);
+
+const portsEcoutes: number[] = [];
 const httpServer = http.createServer(app);
 
-// Initialize Socket.io for real-time messaging
-initSocketServer(httpServer);
+// Socket.io attaché au serveur principal (l'instance est retournée pour
+// pouvoir l'attacher aussi aux serveurs secondaires ci-dessous).
+const io = initSocketServer(httpServer);
 
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Backend listening on port ${PORT}`);
-  console.log(`   Health: http://localhost:${PORT}/api/health`);
-  console.log(`   Socket.io: ws://localhost:${PORT}/yeshua-connect`);
-  console.log(`   CORS origins: ${corsOrigins.join(", ")}`);
+// Gardes anti-crash — un process qui meurt en silence est la panne la plus
+// coûteuse possible (service 502 + aucun log). On logge et on SURVIT.
+process.on("uncaughtException", (err) => {
+  console.error("[process] uncaughtException (process conservé vivant) :", err);
 });
+process.on("unhandledRejection", (raison) => {
+  console.error("[process] unhandledRejection (process conservé vivant) :", raison);
+});
+
+function ecouter(srv: http.Server, port: number, principal: boolean) {
+  return new Promise<void>((resoudre) => {
+    srv.once("error", (err: NodeJS.ErrnoException) => {
+      console.error(
+        `[boot] ✗ port ${port} NON écouté (${err.code || err.message})` +
+          (principal ? " — PORT INJECTÉ PAR RAILWAY, ÉCHEC CRITIQUE" : " — port secondaire, on continue")
+      );
+      resoudre();
+    });
+    srv.listen(port, () => {
+      portsEcoutes.push(port);
+      console.log(
+        `[boot] ✓ écoute active sur ${principal ? "0.0.0.0:" + port + " (PORT Railway injecté)" : "0.0.0.0:" + port + " (port candidat additionnel)"}`
+      );
+      resoudre();
+    });
+  });
+}
+
+// Serveurs secondaires : même app Express, socket.io attaché en plus.
+const serveursSecondaires = PORTS_CANDIDATS.filter((p) => p !== PORT_INJECTE).map(
+  (port) => {
+    const srv = http.createServer(app);
+    try {
+      io?.attach(srv);
+    } catch (e) {
+      console.error(`[boot] socket.io non attaché au port secondaire ${port} :`, e);
+    }
+    return { srv, port };
+  }
+);
+
+Promise.all([
+  ecouter(httpServer, PORT_INJECTE, true),
+  ...serveursSecondaires.map(({ srv, port }) => ecouter(srv, port, false)),
+]).then(() => {
+  if (portsEcoutes.length === 0) {
+    console.error(
+      "[boot] ✗✗✗ AUCUN port écouté — arrêt (le dashboard Railway montrera un crash explicite plutôt qu'un 502 muet)"
+    );
+    process.exit(1);
+  }
+  console.log("──────────────────────────────────────────────────");
+  console.log(
+    `🚀 Backend V3.72 EN LIGNE — ports écoutés : ${portsEcoutes.join(", ")}`
+  );
+  console.log(`   PORT env injecté : ${process.env.PORT || "(absent)"}`);
+  console.log(`   Health : http://localhost:${portsEcoutes[0]}/api/health`);
+  console.log(`   Socket.io : ws://localhost:${portsEcoutes[0]}/yeshua-connect`);
+  console.log(`   CORS origins : ${corsOrigins.join(", ") || "(aucune)"}`);
+  console.log(
+    `   env : RESEND_API_KEY=${process.env.RESEND_API_KEY ? "oui" : "non"} · DATABASE_URL=${process.env.DATABASE_URL ? "oui" : "non"}`
+  );
+  console.log("──────────────────────────────────────────────────");
+});
+
+// Heartbeat — preuve de vie toutes les 5 min dans les logs Railway.
+setInterval(() => {
+  const mem = process.memoryUsage();
+  console.log(
+    `[heartbeat] vivant · uptime=${Math.round(process.uptime())}s · ports=${portsEcoutes.join(",") || "?"} · rss=${Math.round(mem.rss / 1048576)}Mo`
+  );
+}, 5 * 60 * 1000);
 
 export default app;
