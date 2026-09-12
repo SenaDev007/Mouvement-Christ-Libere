@@ -348,19 +348,19 @@ export function BiographyModal({
         </div>
 
         {/* ─── Photo du jalon (affichée sur la page publique) ─── */}
-        <div className="rounded-xl border-2 border-[#8A8378]/15 bg-[#FAF6EF]/60 p-4">
+        <div className="rounded-xl border-2 border-[#8A857C]/15 bg-[#F0E9DE]/60 p-4">
           <div className="flex items-center gap-2 mb-3">
             <ImageIcon className="w-4 h-4 text-[#C9A227]" />
-            <p className="text-xs font-bold text-[#1E0F2B] uppercase tracking-wider">
+            <p className="text-xs font-bold text-[#000000] uppercase tracking-wider">
               Photo de ce jalon
             </p>
-            <span className="text-[10px] text-[#8A8378] font-medium">
+            <span className="text-[10px] text-[#8A857C] font-medium">
               (affichée sur la frise de la page publique)
             </span>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative flex-shrink-0">
-              <div className="w-36 h-[90px] rounded-lg border-2 border-[#C9A227]/30 overflow-hidden bg-[#2A0E3D] flex items-center justify-center shadow-md">
+              <div className="w-36 h-[90px] rounded-lg border-2 border-[#C9A227]/30 overflow-hidden bg-[#000000] flex items-center justify-center shadow-md">
                 {photoJalon ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={photoJalon} alt="Photo du jalon" className="w-full h-full object-cover" />
@@ -374,7 +374,7 @@ export function BiographyModal({
                 )}
               </div>
               <label
-                className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#1E0F2B] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
+                className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#000000] flex items-center justify-center shadow-lg hover:bg-[#FF7A1A] transition-colors border-2 border-white cursor-pointer"
                 title="Ajouter / changer la photo du jalon"
               >
                 {photoJalonProcessing ? (
@@ -392,7 +392,7 @@ export function BiographyModal({
               </label>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] text-[#1E0F2B]/70 leading-relaxed">
+              <p className="text-[11px] text-[#000000]/70 leading-relaxed">
                 Illustration de cette étape (enfance, appel, ministère…) — apparaît sur la
                 frise chronologique publique du serviteur. Format paysage de préférence,
                 compressée automatiquement (≤ 150 Ko, HEIC accepté).
@@ -415,18 +415,18 @@ export function BiographyModal({
           <div className="rounded-xl border-2 border-[#C9A227]/30 bg-[#C9A227]/5 p-4">
             <div className="flex items-center gap-2 mb-1">
               <Camera className="w-4 h-4 text-[#C9A227]" />
-              <p className="text-xs font-bold text-[#1E0F2B] uppercase tracking-wider">
+              <p className="text-xs font-bold text-[#000000] uppercase tracking-wider">
                 Photo de la biographie — page publique
               </p>
             </div>
-            <p className="text-[11px] text-[#8A8378] mb-3 leading-relaxed">
+            <p className="text-[11px] text-[#8A857C] mb-3 leading-relaxed">
               {selectedServant?.code === "pam"
                 ? "Grand portrait affiché à côté du texte biographique sur /pam — commun à toute la frise de Pam."
                 : "Grand portrait affiché à côté du texte biographique sur /pasteur-kongo — commun à toute la frise du Pasteur Kongo."}
             </p>
             <div className="flex items-center gap-4">
               <div className="relative flex-shrink-0">
-                <div className="w-[90px] h-[120px] rounded-lg border-2 border-[#C9A227]/40 overflow-hidden bg-[#2A0E3D] flex items-center justify-center shadow-md">
+                <div className="w-[90px] h-[120px] rounded-lg border-2 border-[#C9A227]/40 overflow-hidden bg-[#000000] flex items-center justify-center shadow-md">
                   {bioPhotoAffichee ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -444,7 +444,7 @@ export function BiographyModal({
                   )}
                 </div>
                 <label
-                  className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#1E0F2B] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
+                  className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#000000] flex items-center justify-center shadow-lg hover:bg-[#FF7A1A] transition-colors border-2 border-white cursor-pointer"
                   title="Changer la photo de biographie (page publique)"
                 >
                   {bioPhotoProcessing ? (
@@ -463,12 +463,12 @@ export function BiographyModal({
               </div>
               <div className="min-w-0 flex-1">
                 {heroRows === null && (
-                  <p className="text-[11px] text-[#8A8378] italic flex items-center gap-1.5">
+                  <p className="text-[11px] text-[#8A857C] italic flex items-center gap-1.5">
                     <Loader2 className="w-3 h-3 animate-spin" /> Chargement de la photo actuelle…
                   </p>
                 )}
                 {heroRows !== null && (
-                  <p className="text-[11px] text-[#1E0F2B]/70 leading-relaxed">
+                  <p className="text-[11px] text-[#000000]/70 leading-relaxed">
                     Portrait vertical de préférence (ratio 3/4). Compressée automatiquement
                     (≤ 150 Ko, HEIC accepté).
                   </p>
@@ -496,19 +496,19 @@ export function BiographyModal({
           </div>
         )}
         {heroRows !== null && !heroPage && form.servantId && (
-          <p className="text-[11px] text-[#8A8378] italic px-1">
+          <p className="text-[11px] text-[#8A857C] italic px-1">
             Ce serviteur n&apos;a pas de page publique dédiée — la photo de biographie
             publique ne s&apos;applique qu&apos;à Pam et au Pasteur Kongo.
           </p>
         )}
 
         {/* ─── Actions ─── */}
-        <div className="flex items-center justify-end gap-2.5 pt-1 border-t border-[#8A8378]/10">
+        <div className="flex items-center justify-end gap-2.5 pt-1 border-t border-[#8A857C]/10">
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#8A8378] hover:bg-[#8A8378]/10 transition-colors disabled:opacity-40"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#8A857C] hover:bg-[#8A857C]/10 transition-colors disabled:opacity-40"
           >
             Annuler
           </button>
@@ -516,7 +516,7 @@ export function BiographyModal({
             type="button"
             onClick={handleSave}
             disabled={saving || photoJalonProcessing || bioPhotoProcessing}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#000000] text-[#F0E9DE] font-bold text-sm hover:bg-[#161513] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? (
               <>
@@ -549,7 +549,7 @@ export function BiographyEditButton({ biography, servants, accentColor }: Biogra
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
+        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#FF7A1A]/10 text-[#8A857C] hover:text-[#FF7A1A] transition-colors"
         aria-label="Modifier"
         title="Modifier ce jalon"
       >
@@ -588,10 +588,10 @@ export function BiographyAutoModal({ servants, biography, accentColor = "#C9A227
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 px-4 text-center">
       <BookOpen className="w-10 h-10 text-[#C9A227]/30" aria-hidden />
-      <p className="text-sm text-[#8A8378] font-medium">
+      <p className="text-sm text-[#8A857C] font-medium">
         {biography ? `Jalon « ${biography.title} »` : "Nouveau jalon biographique"}
       </p>
-      <p className="text-xs text-[#8A8378]/70 max-w-sm">
+      <p className="text-xs text-[#8A857C]/70 max-w-sm">
         La fenêtre d&apos;édition est ouverte — fermez-la pour revenir à la liste des biographies.
       </p>
       <BiographyModal

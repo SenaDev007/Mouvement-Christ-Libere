@@ -33,7 +33,7 @@ interface TimelineClip {
 
 export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, servantName }: PostProductionProps) {
   const [timeline, setTimeline] = useState<TimelineClip[]>([
-    { id: "main", type: "main", label: "Replay principal", duration: 0, color: "#2A0E3D" },
+    { id: "main", type: "main", label: "Replay principal", duration: 0, color: "#000000" },
   ]);
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
@@ -112,7 +112,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           id: `${type}-${Date.now()}`, type,
           label: type === "intro" ? "Teaser Intro" : "Teaser Outro",
           duration: video.duration, src,
-          color: type === "intro" ? "#C9A227" : "#8C5FA8",
+          color: type === "intro" ? "#C9A227" : "#8A857C",
         };
         if (type === "intro") setTimeline((prev) => [newClip, ...prev]);
         else setTimeline((prev) => [...prev, newClip]);
@@ -296,18 +296,18 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-[#F0E9DE] text-[#000000]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
       {/* Header */}
-      <div className="border-b border-[#8A8378]/15 px-6 py-4 bg-white">
+      <div className="border-b border-[#8A857C]/15 px-6 py-4 bg-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold flex items-center gap-2 text-[#1E0F2B]">
+            <h1 className="text-xl font-bold flex items-center gap-2 text-[#000000]">
               <Film className="w-5 h-5 text-[#C9A227]" />Post-production
             </h1>
-            <p className="text-xs text-[#8A8378] mt-1">{title} — {servantName}</p>
+            <p className="text-xs text-[#8A857C] mt-1">{title} — {servantName}</p>
           </div>
           <button onClick={handleExport} disabled={exporting}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 shadow-md">
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors disabled:opacity-40 shadow-md">
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {exporting ? "Rendu en cours..." : "Exporter"}
           </button>
@@ -316,7 +316,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
       {(exporting || exportProgress.length > 0 || exportError) && (
         <div className="px-6 pb-4">
-          <div className={`rounded-xl p-4 ${exportError ? "bg-red-50 border border-red-200" : "bg-[#2A0E3D]/5 border border-[#C9A227]/20"}`}>
+          <div className={`rounded-xl p-4 ${exportError ? "bg-red-50 border border-red-200" : "bg-[#000000]/5 border border-[#C9A227]/20"}`}>
             {exportError ? (
               <p className="text-sm text-red-700">✗ {exportError}</p>
             ) : (
@@ -324,7 +324,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 <p className="text-xs font-bold text-[#C9A227] uppercase tracking-wider mb-2">{exporting ? "Rendu en cours..." : "✓ Rendu terminé"}</p>
                 <ul className="space-y-1">
                   {exportProgress.map((step, i) => (
-                    <li key={i} className="text-xs text-[#1E0F2B]/70 flex items-center gap-2">
+                    <li key={i} className="text-xs text-[#000000]/70 flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227]" />{step}
                     </li>
                   ))}
@@ -344,15 +344,15 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                 onEnded={() => setIsPlaying(false)} />
             ) : loadingVideo ? (
-              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#000000] to-[#000000] text-center p-8">
                 <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
-                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Chargement de la vidéo...</p>
-                <p className="text-xs text-[#FAF6EF]/50">Récupération de la source</p>
+                <p className="text-sm font-bold text-[#F0E9DE] mb-1">Chargement de la vidéo...</p>
+                <p className="text-xs text-[#F0E9DE]/50">Récupération de la source</p>
               </div>
             ) : uploadingVideo ? (
-              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#000000] to-[#000000] text-center p-8">
                 <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-4 animate-spin" />
-                <p className="text-sm font-bold text-[#FAF6EF] mb-2">
+                <p className="text-sm font-bold text-[#F0E9DE] mb-2">
                   {uploadStage || "Upload en cours..."} {uploadProgress}%
                 </p>
                 {/* Barre de progression */}
@@ -362,18 +362,18 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
-                <p className="text-xs text-[#FAF6EF]/50">Ne fermez pas cette page</p>
+                <p className="text-xs text-[#F0E9DE]/50">Ne fermez pas cette page</p>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#000000] to-[#000000] text-center p-8">
                 <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
-                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Aucune vidéo source</p>
-                <p className="text-xs text-[#FAF6EF]/50 max-w-sm mb-4">
+                <p className="text-sm font-bold text-[#F0E9DE] mb-1">Aucune vidéo source</p>
+                <p className="text-xs text-[#F0E9DE]/50 max-w-sm mb-4">
                   Uploadez le replay enregistré (MP4, WebM — aucune limite de taille)
                 </p>
                 <button
                   onClick={() => videoUploadRef.current?.click()}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors"
                 >
                   <Upload className="w-4 h-4" />
                   Uploader le replay
@@ -399,26 +399,26 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-center gap-3 bg-white rounded-xl p-3 border border-[#8A8378]/15">
-            <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B] transition-colors" disabled={!currentVideoUrl}>
+          <div className="flex items-center justify-center gap-3 bg-white rounded-xl p-3 border border-[#8A857C]/15">
+            <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-[#000000]/5 text-[#000000] transition-colors" disabled={!currentVideoUrl}>
               <SkipBack className="w-5 h-5" />
             </button>
-            <button onClick={togglePlay} className="p-3 rounded-full bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40" disabled={!currentVideoUrl}>
+            <button onClick={togglePlay} className="p-3 rounded-full bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A] transition-colors disabled:opacity-40" disabled={!currentVideoUrl}>
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
-            <button onClick={() => handleSeek(Math.min(trimEnd, currentTime + 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 text-[#1E0F2B] transition-colors" disabled={!currentVideoUrl}>
+            <button onClick={() => handleSeek(Math.min(trimEnd, currentTime + 10))} className="p-2 rounded-lg hover:bg-[#000000]/5 text-[#000000] transition-colors" disabled={!currentVideoUrl}>
               <SkipForward className="w-5 h-5" />
             </button>
-            <span className="text-xs text-[#8A8378] ml-2">{formatTime(currentTime)} / {formatTime(totalDuration)}</span>
+            <span className="text-xs text-[#8A857C] ml-2">{formatTime(currentTime)} / {formatTime(totalDuration)}</span>
           </div>
 
           {/* Timeline */}
-          <div className="bg-white rounded-xl p-4 border border-[#8A8378]/15">
+          <div className="bg-white rounded-xl p-4 border border-[#8A857C]/15">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-[#C9A227]" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#1E0F2B]">Timeline</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#000000]">Timeline</span>
             </div>
-            <div className="relative h-16 bg-[#2A0E3D]/10 rounded-lg overflow-hidden flex">
+            <div className="relative h-16 bg-[#000000]/10 rounded-lg overflow-hidden flex">
               {timeline.map((clip) => {
                 const widthPercent = totalDuration > 0 ? (clip.duration / totalDuration) * 100 : 100;
                 return (
@@ -448,13 +448,13 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </div>
             <div className="flex items-center gap-4 mt-3">
               <div className="flex-1">
-                <label className="text-[10px] text-[#8A8378] uppercase font-bold">Début : {formatTime(trimStart)}</label>
+                <label className="text-[10px] text-[#8A857C] uppercase font-bold">Début : {formatTime(trimStart)}</label>
                 <input type="range" min="0" max={totalDuration} step="0.1" value={trimStart}
                   onChange={(e) => setTrimStart(Math.min(parseFloat(e.target.value), trimEnd))}
                   className="w-full accent-[#C9A227]" disabled={!currentVideoUrl} />
               </div>
               <div className="flex-1">
-                <label className="text-[10px] text-[#8A8378] uppercase font-bold">Fin : {formatTime(trimEnd)}</label>
+                <label className="text-[10px] text-[#8A857C] uppercase font-bold">Fin : {formatTime(trimEnd)}</label>
                 <input type="range" min="0" max={totalDuration} step="0.1" value={trimEnd}
                   onChange={(e) => setTrimEnd(Math.max(parseFloat(e.target.value), trimStart))}
                   className="w-full accent-[#C9A227]" disabled={!currentVideoUrl} />
@@ -465,51 +465,51 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
         {/* Tools */}
         <div className="space-y-3">
-          <div className="flex gap-1 bg-white rounded-xl p-1 border border-[#8A8378]/15">
-            <button onClick={() => setActiveTab("trim")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "trim" ? "bg-[#2A0E3D] text-white" : "text-[#8A8378] hover:text-[#1E0F2B]"}`}>
+          <div className="flex gap-1 bg-white rounded-xl p-1 border border-[#8A857C]/15">
+            <button onClick={() => setActiveTab("trim")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "trim" ? "bg-[#000000] text-white" : "text-[#8A857C] hover:text-[#000000]"}`}>
               <Scissors className="w-3.5 h-3.5 inline" />
             </button>
-            <button onClick={() => setActiveTab("intro-outro")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "intro-outro" ? "bg-[#2A0E3D] text-white" : "text-[#8A8378] hover:text-[#1E0F2B]"}`}>
+            <button onClick={() => setActiveTab("intro-outro")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "intro-outro" ? "bg-[#000000] text-white" : "text-[#8A857C] hover:text-[#000000]"}`}>
               <Film className="w-3.5 h-3.5 inline" />
             </button>
-            <button onClick={() => setActiveTab("overlay")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "overlay" ? "bg-[#2A0E3D] text-white" : "text-[#8A8378] hover:text-[#1E0F2B]"}`}>
+            <button onClick={() => setActiveTab("overlay")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "overlay" ? "bg-[#000000] text-white" : "text-[#8A857C] hover:text-[#000000]"}`}>
               <ImageIcon className="w-3.5 h-3.5 inline" />
             </button>
-            <button onClick={() => setActiveTab("thumbnail")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "thumbnail" ? "bg-[#2A0E3D] text-white" : "text-[#8A8378] hover:text-[#1E0F2B]"}`}>
+            <button onClick={() => setActiveTab("thumbnail")} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "thumbnail" ? "bg-[#000000] text-white" : "text-[#8A857C] hover:text-[#000000]"}`}>
               <Type className="w-3.5 h-3.5 inline" />
             </button>
           </div>
 
           {activeTab === "trim" && (
-            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A8378]/15">
-              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Découpage</h3>
-              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">Ajustez le début et la fin du replay. Les zones rouges sur la timeline indiquent les parties qui seront supprimées.</p>
+            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A857C]/15">
+              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A857C]">Découpage</h3>
+              <p className="text-xs text-[#000000]/70 leading-relaxed">Ajustez le début et la fin du replay. Les zones rouges sur la timeline indiquent les parties qui seront supprimées.</p>
               <div className="flex gap-2">
-                <button onClick={() => setTrimStart(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors" disabled={!currentVideoUrl}>Définir début</button>
-                <button onClick={() => setTrimEnd(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors" disabled={!currentVideoUrl}>Définir fin</button>
+                <button onClick={() => setTrimStart(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#FF7A1A]/30 transition-colors" disabled={!currentVideoUrl}>Définir début</button>
+                <button onClick={() => setTrimEnd(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#FF7A1A]/30 transition-colors" disabled={!currentVideoUrl}>Définir fin</button>
               </div>
-              <div className="px-3 py-2 rounded-lg bg-[#2A0E3D]/5">
-                <p className="text-xs text-[#1E0F2B]/70">Durée finale : <span className="font-bold text-[#1E0F2B]">{formatTime(trimEnd - trimStart)}</span></p>
-                <p className="text-xs text-[#8A8378]">Supprimé : {formatTime(trimStart)} au début + {formatTime(totalDuration - trimEnd)} à la fin</p>
+              <div className="px-3 py-2 rounded-lg bg-[#000000]/5">
+                <p className="text-xs text-[#000000]/70">Durée finale : <span className="font-bold text-[#000000]">{formatTime(trimEnd - trimStart)}</span></p>
+                <p className="text-xs text-[#8A857C]">Supprimé : {formatTime(trimStart)} au début + {formatTime(totalDuration - trimEnd)} à la fin</p>
               </div>
             </div>
           )}
 
           {activeTab === "intro-outro" && (
-            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A8378]/15">
-              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Teaser Intro / Outro</h3>
-              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">Ajoutez une vidéo d'intro et d'outro qui seront concaténées avec le replay.</p>
+            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A857C]/15">
+              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A857C]">Teaser Intro / Outro</h3>
+              <p className="text-xs text-[#000000]/70 leading-relaxed">Ajoutez une vidéo d'intro et d'outro qui seront concaténées avec le replay.</p>
               <button onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+                className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A857C]/30 hover:border-[#FF7A1A] flex items-center justify-center gap-2 text-xs text-[#8A857C] hover:text-[#FF7A1A] transition-colors">
                 <Upload className="w-4 h-4" />Uploader un teaser
               </button>
               <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={(e) => { handleUploadClip("intro")(e); }} />
               <div className="space-y-2">
                 {timeline.filter((c) => c.type === "intro" || c.type === "outro").map((clip) => (
-                  <div key={clip.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#2A0E3D]/5">
+                  <div key={clip.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#000000]/5">
                     <Film className="w-3.5 h-3.5" style={{ color: clip.color }} />
-                    <span className="text-xs flex-1 truncate text-[#1E0F2B]">{clip.label}</span>
-                    <span className="text-[10px] text-[#8A8378]">{formatTime(clip.duration)}</span>
+                    <span className="text-xs flex-1 truncate text-[#000000]">{clip.label}</span>
+                    <span className="text-[10px] text-[#8A857C]">{formatTime(clip.duration)}</span>
                     <button onClick={() => deleteClip(clip.id)} className="p-1 rounded hover:bg-red-600/20 text-red-500"><Trash2 className="w-3 h-3" /></button>
                   </div>
                 ))}
@@ -518,23 +518,23 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           )}
 
           {activeTab === "overlay" && (
-            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A8378]/15">
-              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Images & Texte</h3>
-              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">Ajoutez des images ou du texte par-dessus la vidéo.</p>
-              <button className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A857C]/15">
+              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A857C]">Images & Texte</h3>
+              <p className="text-xs text-[#000000]/70 leading-relaxed">Ajoutez des images ou du texte par-dessus la vidéo.</p>
+              <button className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A857C]/30 hover:border-[#FF7A1A] flex items-center justify-center gap-2 text-xs text-[#8A857C] hover:text-[#FF7A1A] transition-colors">
                 <Plus className="w-4 h-4" />Ajouter une image
               </button>
-              <button className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+              <button className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A857C]/30 hover:border-[#FF7A1A] flex items-center justify-center gap-2 text-xs text-[#8A857C] hover:text-[#FF7A1A] transition-colors">
                 <Type className="w-4 h-4" />Ajouter du texte
               </button>
-              <p className="text-[10px] text-[#8A8378] italic">Bientôt disponible — nécessite FFmpeg serveur</p>
+              <p className="text-[10px] text-[#8A857C] italic">Bientôt disponible — nécessite FFmpeg serveur</p>
             </div>
           )}
 
           {activeTab === "thumbnail" && (
-            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A8378]/15">
-              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Miniature</h3>
-              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed">Changez la miniature affichée dans le module vidéo.</p>
+            <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A857C]/15">
+              <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A857C]">Miniature</h3>
+              <p className="text-xs text-[#000000]/70 leading-relaxed">Changez la miniature affichée dans le module vidéo.</p>
               {thumbnail ? (
                 <div className="relative rounded-xl overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -545,7 +545,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 </div>
               ) : (
                 <button onClick={() => thumbnailInputRef.current?.click()}
-                  className="w-full aspect-video rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+                  className="w-full aspect-video rounded-xl border-2 border-dashed border-[#8A857C]/30 hover:border-[#FF7A1A] flex items-center justify-center gap-2 text-xs text-[#8A857C] hover:text-[#FF7A1A] transition-colors">
                   <Upload className="w-4 h-4" />Uploader une miniature
                 </button>
               )}

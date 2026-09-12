@@ -79,7 +79,7 @@ export function AnnonceLiveButton({ liveId, status }: AnnonceLiveButtonProps) {
         type="button"
         onClick={handleAnnoncer}
         disabled={loading}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#A3821C] bg-[#C9A227]/10 hover:bg-[#C9A227]/20 disabled:opacity-50 transition-colors"
+        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#A3821C] bg-[#C9A227]/10 hover:bg-[#FF7A1A]/20 disabled:opacity-50 transition-colors"
         title="Envoyer l'annonce de ce live dans le canal « Annonces officielles » de Yeshua Connect (filet de sécurité si l'envoi automatique échoue)"
       >
         {loading ? (

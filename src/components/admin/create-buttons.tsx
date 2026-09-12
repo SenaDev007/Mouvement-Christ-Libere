@@ -84,7 +84,7 @@ export function NewServantButton({ accentColor = "#C9A227" }: NewServantButtonPr
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-sm font-bold transition-colors shadow-md"
-        style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
+        style={{ backgroundColor: accentColor, color: "#000000" }}
       >
         <Plus className="w-4 h-4" />
         Nouveau serviteur
@@ -120,7 +120,7 @@ export function NewBiographyButton({ servants, accentColor = "#C9A227" }: NewBio
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-sm font-bold transition-colors shadow-md"
-        style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
+        style={{ backgroundColor: accentColor, color: "#000000" }}
       >
         <Plus className="w-4 h-4" />
         Nouveau jalon
@@ -217,7 +217,7 @@ export function NewTestimonyButton({ servants, accentColor = "#C9A227" }: NewTes
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-sm font-bold transition-colors shadow-md"
-        style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
+        style={{ backgroundColor: accentColor, color: "#000000" }}
       >
         <Plus className="w-4 h-4" />
         Nouveau témoignage
@@ -321,7 +321,7 @@ export function NewTeachingButton({ servants, accentColor = "#C9A227" }: NewTeac
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-sm font-bold transition-colors shadow-md"
-        style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
+        style={{ backgroundColor: accentColor, color: "#000000" }}
       >
         <Plus className="w-4 h-4" />
         Nouvel enseignement
@@ -424,7 +424,7 @@ export function NewLiveButton({ servants, accentColor = "#C9A227" }: NewLiveButt
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl text-sm font-bold transition-colors shadow-md"
-        style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
+        style={{ backgroundColor: accentColor, color: "#000000" }}
       >
         <Plus className="w-4 h-4" />
         Programmer un live

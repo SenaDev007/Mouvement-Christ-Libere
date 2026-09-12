@@ -29,9 +29,9 @@ function RoleBadge({ role }: { role: string }) {
     },
     ADMIN: {
       label: "Admin",
-      color: "text-[#8C5FA8]",
+      color: "text-[#8A857C]",
       icon: Shield,
-      gradient: "from-[#8C5FA8] to-[#6B4480]",
+      gradient: "from-[#8A857C] to-[#6B675F]",
     },
     MODERATOR: {
       label: "Modérateur",
@@ -81,7 +81,7 @@ function RoleBadge({ role }: { role: string }) {
 function UserAvatar({ name, role, avatarUrl }: { name: string | null; role: string; avatarUrl?: string | null }) {
   const config: Record<string, string> = {
     SUPER_ADMIN: "from-[#C9A227] to-[#A3821C]",
-    ADMIN: "from-[#8C5FA8] to-[#6B4480]",
+    ADMIN: "from-[#8A857C] to-[#6B675F]",
     MODERATOR: "from-blue-500 to-blue-700",
     ANIMATOR: "from-green-500 to-green-700",
     MEMBER_VERIFIED: "from-emerald-500 to-emerald-700",
@@ -180,9 +180,9 @@ export default async function AdminUsersPage({
 
   // Groupes par rôle pour les onglets
   const roleGroups = [
-    { id: "all", label: "Tous", count: stats.total, color: "#1E0F2B" },
+    { id: "all", label: "Tous", count: stats.total, color: "#000000" },
     { id: "SUPER_ADMIN", label: "Super Admins", count: stats.superAdmins, color: "#C9A227" },
-    { id: "ADMIN", label: "Admins", count: stats.admins, color: "#8C5FA8" },
+    { id: "ADMIN", label: "Admins", count: stats.admins, color: "#8A857C" },
     { id: "MODERATOR", label: "Modérateurs", count: stats.moderators, color: "#3B82F6" },
     { id: "ANIMATOR", label: "Animateurs", count: stats.animators, color: "#10B981" },
     { id: "MEMBER", label: "Membres", count: stats.members, color: "#6B7280" },
@@ -191,7 +191,7 @@ export default async function AdminUsersPage({
   return (
     <div className="space-y-6">
       {/* Header avec gradient */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2A0E3D] via-[#3D1A54] to-[#2A0E3D] p-6 text-white">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#000000] via-[#161513] to-[#000000] p-6 text-white">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="relative z-10 flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -211,7 +211,7 @@ export default async function AdminUsersPage({
           {isSuperAdmin && (
             <Link
               href="/admin/users/new"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors shadow-md"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors shadow-md"
             >
               <UserPlus className="w-4 h-4" />
               Créer un administrateur
@@ -225,14 +225,14 @@ export default async function AdminUsersPage({
         <div className="bg-white rounded-xl border border-[#C9A227]/30 p-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
           <Crown className="w-4 h-4 text-[#C9A227] mb-2" />
-          <div className="text-2xl font-bold text-[#1E0F2B]">{stats.superAdmins}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5">Super Admins</div>
+          <div className="text-2xl font-bold text-[#000000]">{stats.superAdmins}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#8A857C] font-semibold mt-0.5">Super Admins</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8C5FA8]/30 p-4 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#8C5FA8] to-[#6B4480]" />
-          <Shield className="w-4 h-4 text-[#8C5FA8] mb-2" />
-          <div className="text-2xl font-bold text-[#1E0F2B]">{stats.admins + stats.moderators + stats.animators}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5">Staff</div>
+        <div className="bg-white rounded-xl border border-[#8A857C]/30 p-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#8A857C] to-[#6B675F]" />
+          <Shield className="w-4 h-4 text-[#8A857C] mb-2" />
+          <div className="text-2xl font-bold text-[#000000]">{stats.admins + stats.moderators + stats.animators}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#8A857C] font-semibold mt-0.5">Staff</div>
         </div>
         <div className="bg-white rounded-xl border border-emerald-200/50 p-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-700" />
@@ -250,9 +250,9 @@ export default async function AdminUsersPage({
 
       {/* Avertissement si non super admin */}
       {!isSuperAdmin && (
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#8A8378]/10 border border-[#8A8378]/30">
-          <Shield className="w-5 h-5 text-[#8A8378] flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-[#1E0F2B] leading-relaxed">
+        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#8A857C]/10 border border-[#8A857C]/30">
+          <Shield className="w-5 h-5 text-[#8A857C] flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-[#000000] leading-relaxed">
             Seuls les <strong>super administrateurs</strong> peuvent créer de nouveaux comptes administrateur. Vous pouvez consulter et modifier les informations des utilisateurs existants.
           </p>
         </div>
@@ -260,25 +260,25 @@ export default async function AdminUsersPage({
 
       {/* Barre de recherche */}
       <form className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
         <input
           type="text"
           name="q"
           defaultValue={q || ""}
           placeholder="Rechercher par nom ou email..."
-          className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-white text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] min-h-[44px]"
+          className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-white text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] min-h-[44px]"
         />
       </form>
 
       {/* Onglets filtres */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">Filtrer:</span>
-        <Link href="/admin/users" className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full text-xs font-semibold border ${!roleFilter || roleFilter === "all" ? "bg-[#1E0F2B] text-white border-[#1E0F2B]" : "bg-[#2A0E3D]/5 text-[#8A8378] border-[#8A8378]/20 hover:border-[#C9A227]/40"}`}>Tous</Link>
+        <span className="text-xs uppercase tracking-wider font-bold text-[#8A857C]">Filtrer:</span>
+        <Link href="/admin/users" className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full text-xs font-semibold border ${!roleFilter || roleFilter === "all" ? "bg-[#000000] text-white border-[#000000]" : "bg-[#000000]/5 text-[#8A857C] border-[#8A857C]/20 hover:border-[#FF7A1A]/40"}`}>Tous</Link>
         {roleGroups.map((g) => (
           <Link
             key={g.id}
             href={`/admin/users?role=${g.id}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-            className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full text-xs font-semibold border ${roleFilter === g.id ? "text-white border-transparent" : "hover:border-[#C9A227]/40"}`}
+            className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full text-xs font-semibold border ${roleFilter === g.id ? "text-white border-transparent" : "hover:border-[#FF7A1A]/40"}`}
             style={roleFilter === g.id ? { backgroundColor: g.color, borderColor: g.color } : { borderColor: `${g.color}30`, backgroundColor: `${g.color}08`, color: g.color }}
           >
             {g.label}
@@ -289,16 +289,16 @@ export default async function AdminUsersPage({
 
       {/* Liste des utilisateurs en cartes */}
       {users.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-[#8A8378]/30 p-12 text-center">
-          <UsersIcon className="w-10 h-10 text-[#8A8378]/30 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378] italic">Aucun utilisateur inscrit pour l&apos;instant.</p>
+        <div className="bg-white rounded-2xl border border-dashed border-[#8A857C]/30 p-12 text-center">
+          <UsersIcon className="w-10 h-10 text-[#8A857C]/30 mx-auto mb-3" />
+          <p className="text-sm text-[#8A857C] italic">Aucun utilisateur inscrit pour l&apos;instant.</p>
         </div>
       ) : (
         <div className="grid gap-3">
           {users.map((u) => (
             <div
               key={u.id}
-              className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:shadow-md hover:border-[#C9A227]/30 transition-all group min-w-0"
+              className="bg-white rounded-xl border border-[#8A857C]/15 p-4 hover:shadow-md hover:border-[#FF7A1A]/30 transition-all group min-w-0"
             >
               <div className="flex items-start gap-4 flex-wrap">
                 {/* Avatar — photo réelle V2.7 */}
@@ -309,7 +309,7 @@ export default async function AdminUsersPage({
                   <div className="flex items-start justify-between gap-3 mb-2 flex-wrap">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-sm text-[#1E0F2B]">{u.name || "Sans nom"}</h3>
+                        <h3 className="font-bold text-sm text-[#000000]">{u.name || "Sans nom"}</h3>
                         {u.role === "SUPER_ADMIN" && (
                           <CrownIcon className="w-3.5 h-3.5 text-[#C9A227]" />
                         )}
@@ -330,7 +330,7 @@ export default async function AdminUsersPage({
                       {/* Email */}
                       <a
                         href={`mailto:${u.email}`}
-                        className="inline-flex items-center gap-1 text-xs text-[#8C5FA8] hover:underline mt-1 min-w-0"
+                        className="inline-flex items-center gap-1 text-xs text-[#8A857C] hover:underline mt-1 min-w-0"
                       >
                         <Mail className="w-3 h-3 flex-shrink-0" />
                         <span className="truncate">{u.email}</span>
@@ -342,9 +342,9 @@ export default async function AdminUsersPage({
                   </div>
 
                   {/* Meta */}
-                  <div className="flex items-center gap-3 text-[11px] text-[#8A8378] flex-wrap min-w-0">
+                  <div className="flex items-center gap-3 text-[11px] text-[#8A857C] flex-wrap min-w-0">
                     {u.phone && (
-                      <a href={`tel:${u.phone}`} className="flex items-center gap-1 hover:text-[#C9A227]">
+                      <a href={`tel:${u.phone}`} className="flex items-center gap-1 hover:text-[#FF7A1A]">
                         <Phone className="w-3 h-3" />
                         {u.phone}
                       </a>

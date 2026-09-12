@@ -38,13 +38,13 @@ export default async function AdminTestimoniesPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-1">
             Récits & expériences spirituelles
           </p>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#000000]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
             Témoignages
           </h1>
-          <p className="text-sm text-[#8A8378] mt-1">
+          <p className="text-sm text-[#8A857C] mt-1">
             Gestion et modération des témoignages.
           </p>
         </div>
@@ -53,9 +53,9 @@ export default async function AdminTestimoniesPage() {
 
       {/* Stats rapides */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-          <div className="text-2xl font-bold text-[#1E0F2B]">{stats.total}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5">Total</div>
+        <div className="bg-white rounded-xl border border-[#8A857C]/15 p-4">
+          <div className="text-2xl font-bold text-[#000000]">{stats.total}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#8A857C] font-semibold mt-0.5">Total</div>
         </div>
         <div className="bg-white rounded-xl border border-emerald-200/50 p-4">
           <div className="text-2xl font-bold text-emerald-700">{stats.confirmed}</div>
@@ -65,7 +65,7 @@ export default async function AdminTestimoniesPage() {
           <div className="text-2xl font-bold text-[#A3821C]">{stats.toDiscern}</div>
           <div className="text-[10px] uppercase tracking-wider text-[#A3821C] font-semibold mt-0.5">À discerner</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
+        <div className="bg-white rounded-xl border border-[#8A857C]/15 p-4">
           <div className="text-2xl font-bold text-gray-500">{stats.archived}</div>
           <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mt-0.5">Archivés</div>
         </div>
@@ -73,9 +73,9 @@ export default async function AdminTestimoniesPage() {
 
       {/* Liste des témoignages */}
       {testimonies.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-[#8A8378]/30 p-12 text-center">
-          <FileText className="w-10 h-10 text-[#8A8378]/30 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378] italic">Aucun témoignage enregistré pour l&apos;instant.</p>
+        <div className="bg-white rounded-2xl border border-dashed border-[#8A857C]/30 p-12 text-center">
+          <FileText className="w-10 h-10 text-[#8A857C]/30 mx-auto mb-3" />
+          <p className="text-sm text-[#8A857C] italic">Aucun témoignage enregistré pour l&apos;instant.</p>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -83,12 +83,12 @@ export default async function AdminTestimoniesPage() {
             const status = STATUS_CONFIG[t.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.TO_DISCERN;
             const StatusIcon = status.icon;
             const isPam = t.servant.code === "pam";
-            const accentColor = isPam ? "#C9A227" : "#8C5FA8";
+            const accentColor = isPam ? "#C9A227" : "#8A857C";
 
             return (
               <div
                 key={t.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:border-[#C9A227]/30 hover:shadow-md transition-all group min-w-0"
+                className="bg-white rounded-xl border border-[#8A857C]/15 p-4 hover:border-[#FF7A1A]/30 hover:shadow-md transition-all group min-w-0"
               >
                 <div className="flex items-start gap-4">
                   {/* Icon serviteur */}
@@ -103,9 +103,9 @@ export default async function AdminTestimoniesPage() {
                   <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
                     <div className="flex items-start justify-between gap-3 mb-1 flex-wrap">
                       <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
-                        <h3 className="font-bold text-sm text-[#1E0F2B] truncate">{t.title}</h3>
+                        <h3 className="font-bold text-sm text-[#000000] truncate">{t.title}</h3>
                         {t.short && (
-                          <p className="text-xs text-[#8A8378] line-clamp-1 mt-0.5">{t.short}</p>
+                          <p className="text-xs text-[#8A857C] line-clamp-1 mt-0.5">{t.short}</p>
                         )}
                       </div>
                       {/* Status badge */}
@@ -116,7 +116,7 @@ export default async function AdminTestimoniesPage() {
                     </div>
 
                     {/* Meta */}
-                    <div className="flex items-center gap-3 text-[11px] text-[#8A8378] mt-2 flex-wrap">
+                    <div className="flex items-center gap-3 text-[11px] text-[#8A857C] mt-2 flex-wrap">
                       <span
                         className="font-bold uppercase tracking-wider"
                         style={{ color: accentColor }}
@@ -125,7 +125,7 @@ export default async function AdminTestimoniesPage() {
                       </span>
                       {t.publishedAt && (
                         <>
-                          <span className="text-[#8A8378]/40">·</span>
+                          <span className="text-[#8A857C]/40">·</span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {new Date(t.publishedAt).toLocaleDateString("fr-FR")}
@@ -139,7 +139,7 @@ export default async function AdminTestimoniesPage() {
                   <div className="flex items-center gap-1 ">
                     <Link
                       href={`/admin/testimonies/${t.id}/edit`}
-                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
+                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#FF7A1A]/10 text-[#8A857C] hover:text-[#FF7A1A] transition-colors"
                       aria-label="Modifier"
                     >
                       <Pencil className="w-3.5 h-3.5" />

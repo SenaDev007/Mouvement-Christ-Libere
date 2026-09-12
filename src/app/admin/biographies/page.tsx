@@ -38,13 +38,13 @@ export default async function AdminBiographiesPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-1">
             Frises chronologiques
           </p>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#000000]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
             Biographies
           </h1>
-          <p className="text-sm text-[#8A8378] mt-1">
+          <p className="text-sm text-[#8A857C] mt-1">
             {biographies.length} jalon{biographies.length > 1 ? "s" : ""} biographique{biographies.length > 1 ? "s" : ""} au total.
           </p>
         </div>
@@ -55,13 +55,13 @@ export default async function AdminBiographiesPage() {
       <div className="space-y-6">
         {Object.entries(byServant).map(([servantName, items]) => {
           const isPam = items[0]?.servant.code === "pam";
-          const accentColor = isPam ? "#C9A227" : "#8C5FA8";
+          const accentColor = isPam ? "#C9A227" : "#8A857C";
 
           return (
-            <div key={servantName} className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
+            <div key={servantName} className="bg-white rounded-2xl border border-[#8A857C]/15 overflow-hidden">
               {/* En-tête section serviteur */}
               <div
-                className="px-6 py-4 flex items-center justify-between border-b border-[#8A8378]/10"
+                className="px-6 py-4 flex items-center justify-between border-b border-[#8A857C]/10"
                 style={{ background: `linear-gradient(90deg, ${accentColor}10 0%, transparent 100%)` }}
               >
                 <div className="flex items-center gap-3">
@@ -69,11 +69,11 @@ export default async function AdminBiographiesPage() {
                     className="w-9 h-9 rounded-xl flex items-center justify-center"
                     style={{ background: `${accentColor}20` }}
                   >
-                    {isPam ? <Crown className="w-4 h-4 text-[#C9A227]" /> : <BookOpen className="w-4 h-4 text-[#8C5FA8]" />}
+                    {isPam ? <Crown className="w-4 h-4 text-[#C9A227]" /> : <BookOpen className="w-4 h-4 text-[#8A857C]" />}
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-[#1E0F2B]">{servantName}</h2>
-                    <p className="text-xs text-[#8A8378]">{items.length} jalon{items.length > 1 ? "s" : ""}</p>
+                    <h2 className="text-base font-bold text-[#000000]">{servantName}</h2>
+                    <p className="text-xs text-[#8A857C]">{items.length} jalon{items.length > 1 ? "s" : ""}</p>
                   </div>
                 </div>
               </div>
@@ -90,7 +90,7 @@ export default async function AdminBiographiesPage() {
                   {items.map((b) => (
                     <div
                       key={b.id}
-                      className="relative flex items-start gap-4 px-6 py-4 hover:bg-[#FAF6EF] transition-colors group"
+                      className="relative flex items-start gap-4 px-6 py-4 hover:bg-[#F0E9DE] transition-colors group"
                     >
                       {/* Point timeline */}
                       <div
@@ -105,14 +105,14 @@ export default async function AdminBiographiesPage() {
                         <div className="flex items-start gap-3">
                           {/* ⭐ V3.47 — miniature de la photo du jalon (si présente) */}
                           {b.photoUrl && (
-                            <div className="w-20 h-[50px] rounded-lg border-2 flex-shrink-0 overflow-hidden bg-[#2A0E3D] shadow-sm" style={{ borderColor: `${accentColor}55` }}>
+                            <div className="w-20 h-[50px] rounded-lg border-2 flex-shrink-0 overflow-hidden bg-[#000000] shadow-sm" style={{ borderColor: `${accentColor}55` }}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={b.photoUrl} alt={b.title} className="w-full h-full object-cover" />
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <Calendar className="w-3 h-3 text-[#8A8378]" />
+                              <Calendar className="w-3 h-3 text-[#8A857C]" />
                               <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: accentColor }}>
                                 {b.date}
                               </span>
@@ -120,16 +120,16 @@ export default async function AdminBiographiesPage() {
                                 <ImageIcon className="w-3 h-3 text-[#C9A227]" aria-label="Jalon illustré" />
                               )}
                             </div>
-                            <p className="font-bold text-sm text-[#1E0F2B] leading-tight">
+                            <p className="font-bold text-sm text-[#000000] leading-tight">
                               {b.title}
                             </p>
                             {b.description && (
-                              <p className="text-xs text-[#1E0F2B]/70 mt-1 line-clamp-2 leading-relaxed">
+                              <p className="text-xs text-[#000000]/70 mt-1 line-clamp-2 leading-relaxed">
                                 {b.description}
                               </p>
                             )}
                             {b.verseRef && (
-                              <div className="flex items-center gap-1.5 mt-2 text-[11px] text-[#8A8378] italic">
+                              <div className="flex items-center gap-1.5 mt-2 text-[11px] text-[#8A857C] italic">
                                 <Quote className="w-3 h-3 flex-shrink-0" />
                                 <span>{b.verseRef}</span>
                               </div>
@@ -167,9 +167,9 @@ export default async function AdminBiographiesPage() {
         })}
 
         {biographies.length === 0 && (
-          <div className="bg-white rounded-2xl border border-dashed border-[#8A8378]/30 p-12 text-center">
-            <BookOpen className="w-10 h-10 text-[#8A8378]/30 mx-auto mb-3" />
-            <p className="text-sm text-[#8A8378] italic">Aucune biographie enregistrée pour l&apos;instant.</p>
+          <div className="bg-white rounded-2xl border border-dashed border-[#8A857C]/30 p-12 text-center">
+            <BookOpen className="w-10 h-10 text-[#8A857C]/30 mx-auto mb-3" />
+            <p className="text-sm text-[#8A857C] italic">Aucune biographie enregistrée pour l&apos;instant.</p>
           </div>
         )}
       </div>

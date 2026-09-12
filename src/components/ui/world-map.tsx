@@ -21,7 +21,7 @@ interface WorldMapProps {
  * WorldMap — Carte du monde en points avec halos lumineux clignotants.
  * Contextualisée pour Christ Libère (dispersés d'Israël).
  *
- * - Fond violet impérial (#2A0E3D)
+ * - Fond violet impérial (#000000)
  * - Points en or (#C9A227) avec animation de halo pulsant
  * - Lignes courbes entre les points (trajectoires de dispersion)
  */
@@ -35,9 +35,9 @@ export function WorldMap({
 
   const svgMap = map.getSVG({
     radius: 0.22,
-    color: "#FAF6EF40",
+    color: "#F0E9DE40",
     shape: "circle",
-    backgroundColor: "#2A0E3D",
+    backgroundColor: "#000000",
   });
 
   const projectPoint = (lat: number, lng: number) => {
@@ -65,7 +65,7 @@ export function WorldMap({
   };
 
   return (
-    <div className="w-full aspect-[2/1] bg-[#2A0E3D] rounded-2xl relative font-sans overflow-hidden border border-[#C9A227]/20">
+    <div className="w-full aspect-[2/1] bg-[#000000] rounded-2xl relative font-sans overflow-hidden border border-[#C9A227]/20">
       <Image
         src={`data:image/svg+xml;utf8,${encodeURIComponent(svgMap)}`}
         className="h-full w-full [mask-image:linear-gradient(to_bottom,transparent,white_10%,white_90%,transparent)] pointer-events-none select-none"
@@ -129,7 +129,7 @@ export function WorldMap({
                 <text
                   x={x}
                   y={y - 8}
-                  fill="#FAF6EF"
+                  fill="#F0E9DE"
                   fontSize="8"
                   textAnchor="middle"
                   className="opacity-0 hover:opacity-100 transition-opacity pointer-events-none"

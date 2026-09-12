@@ -62,8 +62,10 @@ export function LiveAnnouncementBar() {
 
   const linkHref = live?.id ? `/live/${live.id}` : "/videos";
 
+  // V3.68 — palette logo : direct = ACCENT FEU (spec : badges « en direct »),
+  // repos = or. Texte noir sur feu (contraste 8,04:1 AA).
   const bgGradient = isLive
-    ? "linear-gradient(90deg, #16a34a 0%, #15803d 100%)"
+    ? "linear-gradient(90deg, #FF7A1A 0%, rgba(255, 122, 26, 0.88) 50%, #FF7A1A 100%)"
     : "linear-gradient(90deg, #C9A227 0%, #DDBE55 50%, #C9A227 100%)";
 
   const announcementText = isLive
@@ -77,7 +79,7 @@ export function LiveAnnouncementBar() {
       onMouseLeave={() => setIsHovered(false)}
       style={{
         background: bgGradient,
-        borderColor: isLive ? "rgba(20, 83, 45, 0.3)" : "rgba(156, 126, 30, 0.3)",
+        borderColor: isLive ? "rgba(0, 0, 0, 0.35)" : "rgba(156, 126, 30, 0.3)",
       }}
     >
       <div className="relative flex items-center py-2 px-4 gap-2.5">
@@ -85,18 +87,18 @@ export function LiveAnnouncementBar() {
         <div className="flex items-center gap-2 flex-shrink-0">
           <Radio
             className="w-4 h-4"
-            style={{ color: isLive ? "#ffffff" : "#1E0F2B", animation: "liveBtnBlink 1.5s ease-in-out infinite" }}
+            style={{ color: isLive ? "#000000" : "#000000", animation: "liveBtnBlink 1.5s ease-in-out infinite" }}
           />
           <span
             className="hidden sm:inline text-xs uppercase tracking-[0.12em] font-bold whitespace-nowrap"
-            style={{ color: isLive ? "#ffffff" : "#1E0F2B" }}
+            style={{ color: "#000000" }}
           >
             {isLive ? "En direct" : "Direct programmé"}
           </span>
         </div>
 
         {/* Séparateur */}
-        <span className="hidden sm:inline" style={{ color: isLive ? "rgba(255,255,255,0.3)" : "rgba(30,15,43,0.2)" }}>|</span>
+        <span className="hidden sm:inline" style={{ color: isLive ? "rgba(0,0,0,0.3)" : "rgba(0, 0, 0,0.2)" }}>|</span>
 
         {/* Zone de texte défilant */}
         <div className="flex-1 overflow-hidden min-w-0">
@@ -106,12 +108,12 @@ export function LiveAnnouncementBar() {
           >
             <span
               className="text-sm font-semibold"
-              style={{ color: isLive ? "#ffffff" : "#1E0F2B" }}
+              style={{ color: "#000000" }}
             >
               {announcementText}
               {/* Indicateur si plusieurs lives */}
               {lives.length > 1 && (
-                <span className="ml-3 opacity-60" style={{ color: isLive ? "#ffffff" : "#1E0F2B" }}>
+                <span className="ml-3 opacity-60" style={{ color: "#000000" }}>
                   ({currentIndex + 1}/{lives.length})
                 </span>
               )}
@@ -127,7 +129,7 @@ export function LiveAnnouncementBar() {
                 key={i}
                 onClick={() => setCurrentIndex(i)}
                 className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentIndex ? "w-3" : "opacity-40"}`}
-                style={{ backgroundColor: isLive ? "#ffffff" : "#1E0F2B" }}
+                style={{ backgroundColor: "#000000" }}
               />
             ))}
           </div>
@@ -139,8 +141,11 @@ export function LiveAnnouncementBar() {
           prefetch={false}
           className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all hover:scale-105"
           style={{
-            backgroundColor: isLive ? "#ffffff" : "#1E0F2B",
-            color: isLive ? "#15803d" : "#C9A227",
+            // V3.68 — action forte « Rejoindre » : noir + feu (spec point 3),
+            // lisible sur la barre or (repos) comme sur la barre feu (direct).
+            backgroundColor: "#000000",
+            color: "#FF7A1A",
+            border: "1px solid rgba(255, 122, 26, 0.55)",
             animation: "liveBtnBlink 1.5s ease-in-out infinite",
           }}
         >

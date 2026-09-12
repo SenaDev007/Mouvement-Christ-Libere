@@ -133,7 +133,7 @@ export const TEMPLATES_INTEGRES: TemplateIntegre[] = [
     nom: "Outro « Abonne-toi » (CapCut)",
     description: "Boutons J'AIME + S'ABONNER + cloche + PARTAGER + texte d'appel — l'outro des YouTubeurs.",
     categorie: "outro",
-    swatch: "linear-gradient(135deg, #ff2e97, #3b0fb5)",
+    swatch: "linear-gradient(135deg, #ff2e97, #A3821C)",
     emoji: "🔔",
     duree: 6,
     build: (dureeVideo) => {
@@ -248,14 +248,14 @@ export const TEMPLATES_INTEGRES: TemplateIntegre[] = [
     nom: "Intro VHS rétro",
     description: "Filtre VHS + titre rétro + transition glitch — parfait pour les clips mémoriels.",
     categorie: "intro",
-    swatch: "linear-gradient(135deg, #c084fc, #6d28d9)",
+    swatch: "linear-gradient(135deg, #DDBE55, #FF7A1A)",
     emoji: "📼",
     duree: 3,
     build: (dureeVideo) => ({
       overlays: [
         texte({
           content: "RÉTRO 1990",
-          fontSize: 60, fontColor: "#E9D5FF", bold: true,
+          fontSize: 60, fontColor: "#F0E9DE", bold: true,
           startTime: 0, endTime: Math.min(3, dureeVideo),
           animation: "fade-in", animationDuration: 0.7,
         }),
@@ -272,7 +272,7 @@ export const TEMPLATES_INTEGRES: TemplateIntegre[] = [
     nom: "Habillage réseaux sociaux",
     description: "Boutons like + partage + vues disposés à droite — incrustation permanente style live.",
     categorie: "social",
-    swatch: "linear-gradient(135deg, #ff9a8b, #a18cd1)",
+    swatch: "linear-gradient(135deg, #ff9a8b, #DDBE55)",
     emoji: "📱",
     duree: 15,
     build: (dureeVideo) => {

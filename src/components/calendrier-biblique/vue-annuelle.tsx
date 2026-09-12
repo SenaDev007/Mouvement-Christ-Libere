@@ -19,7 +19,7 @@ const NOMS_TRIMESTRES = [
     color: "#C9A227",
     mois: [1, 2, 3],
     image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop",
-    overlay: "linear-gradient(135deg, rgba(42,14,61,0.92) 0%, rgba(42,14,61,0.7) 50%, rgba(201,162,39,0.35) 100%)",
+    overlay: "linear-gradient(135deg, rgba(0, 0, 0,0.92) 0%, rgba(0, 0, 0,0.7) 50%, rgba(201,162,39,0.35) 100%)",
   },
   {
     nom: "Trimestre 2 — Été",
@@ -27,23 +27,23 @@ const NOMS_TRIMESTRES = [
     color: "#5B7052",
     mois: [4, 5, 6],
     image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1920&auto=format&fit=crop",
-    overlay: "linear-gradient(135deg, rgba(42,14,61,0.88) 0%, rgba(201,162,39,0.45) 50%, rgba(42,14,61,0.72) 100%)",
+    overlay: "linear-gradient(135deg, rgba(0, 0, 0,0.88) 0%, rgba(201,162,39,0.45) 50%, rgba(0, 0, 0,0.72) 100%)",
   },
   {
     nom: "Trimestre 3 — Automne",
     icon: Cloud,
-    color: "#8C5FA8",
+    color: "#8A857C",
     mois: [7, 8, 9],
     image: "https://images.unsplash.com/photo-1507371341162-763b5e419408?q=80&w=1920&auto=format&fit=crop",
-    overlay: "linear-gradient(135deg, rgba(42,14,61,0.88) 0%, rgba(124,92,184,0.4) 50%, rgba(156,126,30,0.5) 100%)",
+    overlay: "linear-gradient(135deg, rgba(0, 0, 0,0.88) 0%, rgba(124,92,184,0.4) 50%, rgba(156,126,30,0.5) 100%)",
   },
   {
     nom: "Trimestre 4 — Hiver",
     icon: Snowflake,
-    color: "#8A8378",
+    color: "#8A857C",
     mois: [10, 11, 12],
     image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?q=80&w=1920&auto=format&fit=crop",
-    overlay: "linear-gradient(135deg, rgba(42,14,61,0.92) 0%, rgba(250,246,239,0.25) 50%, rgba(42,14,61,0.78) 100%)",
+    overlay: "linear-gradient(135deg, rgba(0, 0, 0,0.92) 0%, rgba(240, 233, 222,0.25) 50%, rgba(0, 0, 0,0.78) 100%)",
   },
 ];
 
@@ -82,17 +82,17 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
     <div className="space-y-12">
       <div className="space-y-3">
         {/* Légende */}
-        <div className="flex flex-wrap items-center gap-4 text-xs bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-[#8A8378]/15 p-3">
-          <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
+        <div className="flex flex-wrap items-center gap-4 text-xs bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-[#8A857C]/15 p-3">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#000000]">
             <span className="w-3 h-3 rounded bg-[#C9A227]" />
             Fête de l&apos;Éternel
           </span>
-          <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
-            <span className="w-3 h-3 rounded bg-[#2A0E3D]/30" />
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#000000]">
+            <span className="w-3 h-3 rounded bg-[#000000]/30" />
             Shabbat hebdomadaire
           </span>
-          <span className="inline-flex items-center gap-1.5 font-semibold text-[#1E0F2B]">
-            <span className="w-3 h-3 rounded border-2 border-[#C9A227] bg-[#FAF6EF]" />
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#000000]">
+            <span className="w-3 h-3 rounded border-2 border-[#C9A227] bg-[#F0E9DE]" />
             Jour en cours
           </span>
         </div>
@@ -101,8 +101,8 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
             noms des jours (Yom Rishon → Yom Shabbat), visible en toute
             taille d'écran — sur la page publique du calendrier biblique ET
             dans le calendrier intégré de Yeshua Connect (composant partagé). */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-[#8A8378]/15 p-4">
-          <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-3 text-center">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-[#8A857C]/15 p-4">
+          <p className="text-[10px] font-bold text-[#8A857C] uppercase tracking-wider mb-3 text-center">
             La semaine hébraïque — du premier jour au jour du Shabbat
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
@@ -116,25 +116,25 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                     "text-center px-1.5 py-2 rounded-lg border min-w-0",
                     estShabbat
                       ? "bg-[#C9A227]/15 border-[#C9A227]/45"
-                      : "bg-[#FAF6EF] border-[#8A8378]/12",
+                      : "bg-[#F0E9DE] border-[#8A857C]/12",
                   )}
                 >
                   <div
                     className={cn(
                       "text-[9px] font-bold uppercase tracking-wide",
-                      estShabbat ? "text-[#8C5FA8]" : "text-[#8A8378]",
+                      estShabbat ? "text-[#8A857C]" : "text-[#8A857C]",
                     )}
                   >
                     {jour.fr}
                   </div>
-                  <div className="text-[11px] font-bold text-[#1E0F2B] mt-1 leading-tight">
+                  <div className="text-[11px] font-bold text-[#000000] mt-1 leading-tight">
                     {jour.translit}
                   </div>
                   <div
                     dir="rtl"
                     className={cn(
                       "text-[10px] font-serif mt-0.5 leading-tight",
-                      estShabbat ? "text-[#8C5FA8]" : "text-[#8A8378]",
+                      estShabbat ? "text-[#8A857C]" : "text-[#8A857C]",
                     )}
                   >
                     {jour.hebreu}
@@ -157,7 +157,7 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: tIdx * 0.1 }}
-            className="relative rounded-2xl overflow-hidden shadow-xl border border-[#8A8378]/20"
+            className="relative rounded-2xl overflow-hidden shadow-xl border border-[#8A857C]/20"
           >
             {/* ⭐ V3.28 — image de saison via next/image (remplace le
                 background-image CSS Unsplash 1920px non optimisé). */}
@@ -175,7 +175,7 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
             {/* Contenu */}
             <div className="relative z-10 p-6 md:p-8">
               {/* Header trimestre */}
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#FAF6EF]/20">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#F0E9DE]/20">
                 <div
                   className="flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-sm"
                   style={{ backgroundColor: `${trimestre.color}25` }}
@@ -183,10 +183,10 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                   <Icon className="w-6 h-6" style={{ color: trimestre.color }} />
                 </div>
                 <div>
-                  <h3 className="font-serif text-xl font-bold text-[#FAF6EF] drop-shadow-lg">
+                  <h3 className="font-serif text-xl font-bold text-[#F0E9DE] drop-shadow-lg">
                     {trimestre.nom}
                   </h3>
-                  <p className="text-xs text-[#FAF6EF]/80 font-semibold uppercase tracking-wider">
+                  <p className="text-xs text-[#F0E9DE]/80 font-semibold uppercase tracking-wider">
                     91 jours · 13 semaines
                   </p>
                 </div>
@@ -224,12 +224,12 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                   });
 
                   return (
-                    <div key={numMois} className="bg-[#FAF6EF]/95 backdrop-blur-sm rounded-xl p-4">
+                    <div key={numMois} className="bg-[#F0E9DE]/95 backdrop-blur-sm rounded-xl p-4">
                       {/* Nom du mois */}
-                      <h4 className="font-serif text-lg font-bold text-[#1E0F2B] text-center mb-1">
+                      <h4 className="font-serif text-lg font-bold text-[#000000] text-center mb-1">
                         {NOMS_MOIS[numMois - 1]}
                       </h4>
-                      <p className="text-[10px] text-[#8A8378] text-center mb-4 font-semibold uppercase tracking-wider">
+                      <p className="text-[10px] text-[#8A857C] text-center mb-4 font-semibold uppercase tracking-wider">
                         {joursMois.length} jours
                       </p>
 
@@ -248,8 +248,8 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                               className={cn(
                                 "text-center py-1 rounded min-w-0",
                                 estShabbat
-                                  ? "bg-[#2A0E3D]/10 text-[#2A0E3D]"
-                                  : "text-[#8A8378]"
+                                  ? "bg-[#000000]/10 text-[#000000]"
+                                  : "text-[#8A857C]"
                               )}
                             >
                               <div className="text-[9px] font-bold leading-none">
@@ -258,7 +258,7 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                               <div
                                 className={cn(
                                   "text-[8px] font-semibold mt-0.5 leading-tight truncate",
-                                  estShabbat ? "text-[#8C5FA8]" : "text-[#8A8378]/75"
+                                  estShabbat ? "text-[#8A857C]" : "text-[#8A857C]/75"
                                 )}
                               >
                                 {jour.translit.replace(/^Yom\s+/, "")}
@@ -306,10 +306,10 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                               className={cn(
                                 "aspect-square rounded flex flex-col items-center justify-center text-[10px] font-medium transition-all cursor-pointer",
                                 fete
-                                  ? "bg-[#C9A227] text-[#1E0F2B] font-bold"
+                                  ? "bg-[#C9A227] text-[#000000] font-bold"
                                   : isShabbat
-                                    ? "bg-[#2A0E3D]/10 text-[#2A0E3D]"
-                                    : "bg-white text-[#1E0F2B] hover:bg-[#C9A227]/10",
+                                    ? "bg-[#000000]/10 text-[#000000]"
+                                    : "bg-white text-[#000000] hover:bg-[#FF7A1A]/10",
                                 estAujourdhui &&
                                   "ring-2 ring-inset ring-[#C9A227] font-bold"
                               )}
@@ -321,7 +321,7 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
                             >
                               {jour.jourDuMois}
                               {fete && (
-                                <span className="w-1 h-1 rounded-full bg-[#1E0F2B] mt-0.5" />
+                                <span className="w-1 h-1 rounded-full bg-[#000000] mt-0.5" />
                               )}
                             </div>
                           );
@@ -330,15 +330,15 @@ export function VueAnnuelle({ annee }: VueAnnuelleProps) {
 
                       {/* Fêtes du mois */}
                       {fetesMois.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-[#8A8378]/10 space-y-1">
+                        <div className="mt-3 pt-3 border-t border-[#8A857C]/10 space-y-1">
                           {fetesMois.map((fete, i) => (
                             <div key={i} className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-[#C9A227] flex-shrink-0" />
-                              <span className="text-[10px] font-semibold text-[#1E0F2B]">
+                              <span className="text-[10px] font-semibold text-[#000000]">
                                 {fete.nomFr}
                               </span>
                               {fete.nomHebrew && (
-                                <span className="text-[10px] text-[#8C5FA8]">
+                                <span className="text-[10px] text-[#8A857C]">
                                   {fete.nomHebrew}
                                 </span>
                               )}

@@ -159,9 +159,9 @@ export function CallScreen({ roomName, callType, onEnd }: CallScreenProps) {
 
   if (error) {
     return (
-      <div className="fixed inset-0 bg-[#2A0E3D] z-[60] flex flex-col items-center justify-center">
+      <div className="fixed inset-0 bg-[#000000] z-[60] flex flex-col items-center justify-center">
         <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
-        <p className="text-[#FAF6EF] text-lg font-semibold mb-2">{error}</p>
+        <p className="text-[#F0E9DE] text-lg font-semibold mb-2">{error}</p>
         <button onClick={onEnd} className="mt-4 px-6 py-2 bg-red-500 text-white rounded-xl">
           Fermer
         </button>
@@ -170,14 +170,14 @@ export function CallScreen({ roomName, callType, onEnd }: CallScreenProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-[#0A2A5E] via-[#2A0E3D] to-[#1A0826] z-[60] flex flex-col items-center justify-between p-8">
+    <div className="fixed inset-0 bg-gradient-to-br from-[#0A2A5E] via-[#000000] to-[#000000] z-[60] flex flex-col items-center justify-between p-8">
       {/* Top: status */}
       <div className="pt-8 text-center">
         <p className="text-sm text-[#C9A227] font-medium tracking-wider uppercase">
           {status === "connecting" ? "Connexion en cours..." : "Appel en cours"}
         </p>
         {status === "active" && (
-          <p className="text-[#FAF6EF] text-2xl font-bold mt-2">
+          <p className="text-[#F0E9DE] text-2xl font-bold mt-2">
             {formatDuration(duration)}
           </p>
         )}
@@ -197,7 +197,7 @@ export function CallScreen({ roomName, callType, onEnd }: CallScreenProps) {
             <div className="w-32 h-32 rounded-full bg-[#C9A227]/20 border-4 border-[#C9A227]/40 flex items-center justify-center mx-auto mb-4">
               <Phone className="w-12 h-12 text-[#C9A227]" />
             </div>
-            <p className="text-[#FAF6EF] text-xl font-semibold">
+            <p className="text-[#F0E9DE] text-xl font-semibold">
               {callType === "VIDEO" ? "Appel vidéo" : "Appel audio"}
             </p>
           </div>
@@ -210,7 +210,7 @@ export function CallScreen({ roomName, callType, onEnd }: CallScreenProps) {
           onClick={toggleMic}
           className={cn(
             "w-14 h-14 rounded-full flex items-center justify-center transition-colors",
-            micEnabled ? "bg-white/10 text-[#FAF6EF]" : "bg-red-500 text-white"
+            micEnabled ? "bg-white/10 text-[#F0E9DE]" : "bg-red-500 text-white"
           )}
           title={micEnabled ? "Couper le micro" : "Activer le micro"}
         >
@@ -222,7 +222,7 @@ export function CallScreen({ roomName, callType, onEnd }: CallScreenProps) {
             onClick={toggleCamera}
             className={cn(
               "w-14 h-14 rounded-full flex items-center justify-center transition-colors",
-              cameraEnabled ? "bg-white/10 text-[#FAF6EF]" : "bg-red-500 text-white"
+              cameraEnabled ? "bg-white/10 text-[#F0E9DE]" : "bg-red-500 text-white"
             )}
             title={cameraEnabled ? "Couper la vidéo" : "Activer la vidéo"}
           >

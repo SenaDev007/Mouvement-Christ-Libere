@@ -40,9 +40,9 @@ export function VideoCard({
     >
       <Link href={href} className="block">
         {/* Thumbnail / Player placeholder */}
-        <div className="relative aspect-video rounded-2xl overflow-hidden bg-[#2A0E3D]">
+        <div className="relative aspect-video rounded-2xl overflow-hidden bg-[#000000]">
           {/* Gradient background animé */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#2A0E3D] via-[#2A0E3D]-light to-[#2A0E3D]-dark" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-[#000000]-light to-[#000000]-dark" />
 
           {/* Pattern décoratif */}
           <div className="absolute inset-0 opacity-[0.07]">
@@ -57,13 +57,13 @@ export function VideoCard({
           </div>
 
           {/* Halo or au hover */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-[#C9A227]/0 via-[#C9A227]/0 to-[#C9A227]/0 group-hover:from-[#C9A227]/10 group-hover:via-[#C9A227]/0 group-hover:to-[#C9A227]/20 transition-all duration-700" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-[#C9A227]/0 via-[#C9A227]/0 to-[#C9A227]/0 group-hover:from-[#FF7A1A]/10 group-hover:via-[#FF7A1A]/0 group-hover:to-[#FF7A1A]/20 transition-all duration-700" />
 
           {/* Play button */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-[#C9A227]/20 blur-xl group-hover:bg-[#C9A227]/30 transition-all" />
-              <div className="relative flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#C9A227]/60 bg-[#1A0826]/40 backdrop-blur-sm group-hover:border-[#C9A227] group-hover:bg-[#C9A227]/20 group-hover:scale-110 transition-all duration-300">
+              <div className="absolute inset-0 rounded-full bg-[#C9A227]/20 blur-xl group-hover:bg-[#FF7A1A]/30 transition-all" />
+              <div className="relative flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#C9A227]/60 bg-[#000000]/40 backdrop-blur-sm group-hover:border-[#FF7A1A] group-hover:bg-[#FF7A1A]/20 group-hover:scale-110 transition-all duration-300">
                 {isLive ? (
                   <Radio className="w-6 h-6 text-[#C9A227] fill-gold" />
                 ) : (
@@ -76,12 +76,12 @@ export function VideoCard({
           {/* Badge LIVE ou Duration */}
           <div className="absolute bottom-3 right-3">
             {isLive ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] uppercase tracking-[0.18em] font-bold bg-state-danger text-[#FAF6EF]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FAF6EF] animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] uppercase tracking-[0.18em] font-bold bg-state-danger text-[#F0E9DE]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#F0E9DE] animate-pulse" />
                 EN DIRECT
               </span>
             ) : (
-              <span className="px-2 py-0.5 rounded bg-[#1A0826]/80 backdrop-blur-sm text-[#FAF6EF] text-[10px] font-semibold">
+              <span className="px-2 py-0.5 rounded bg-[#000000]/80 backdrop-blur-sm text-[#F0E9DE] text-[10px] font-semibold">
                 {duration}
               </span>
             )}
@@ -89,7 +89,7 @@ export function VideoCard({
 
           {/* Portrait serviteur */}
           <div className="absolute top-3 left-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-full border border-[#C9A227]/50 bg-[#1A0826]/60 backdrop-blur-sm">
+            <div className="flex items-center justify-center w-9 h-9 rounded-full border border-[#C9A227]/50 bg-[#000000]/60 backdrop-blur-sm">
               <span className="font-serif text-[10px] font-semibold text-[#C9A227]">
                 {servantPortrait}
               </span>
@@ -99,14 +99,14 @@ export function VideoCard({
 
         {/* Contenu texte */}
         <div className="mt-3 px-1">
-          <h3 className="font-serif text-base font-semibold text-[#1E0F2B] leading-snug mb-1.5 line-clamp-2 break-words group-hover:text-[#A3821C] transition-colors">
+          <h3 className="font-serif text-base font-semibold text-[#000000] leading-snug mb-1.5 line-clamp-2 break-words group-hover:text-[#A3821C] transition-colors">
             {title}
           </h3>
-          <p className="text-xs text-[#8A8378] mb-2">{servantName}</p>
-          <p className="text-xs text-[#1E0F2B]/60 line-clamp-2 mb-3 leading-relaxed">
+          <p className="text-xs text-[#8A857C] mb-2">{servantName}</p>
+          <p className="text-xs text-[#000000]/60 line-clamp-2 mb-3 leading-relaxed">
             {description}
           </p>
-          <div className="flex items-center gap-3 text-[11px] text-[#8A8378]">
+          <div className="flex items-center gap-3 text-[11px] text-[#8A857C]">
             {!isLive && (
               <span className="inline-flex items-center gap-1">
                 <Eye className="w-3 h-3" />

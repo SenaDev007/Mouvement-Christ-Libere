@@ -26,7 +26,7 @@ export function BoutonHeroPdf({ annee }: BoutonHeroPdfProps) {
     <>
       <button
         onClick={() => setOuvert(true)}
-        className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300"
+        className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#FF7A1A]/10 transition-all duration-300"
       >
         <FileDown className="w-4 h-4 mr-2" />
         Télécharger PDF

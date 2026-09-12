@@ -46,7 +46,7 @@ export function BioTimeline({
   if (!milestones.length) return null;
 
   return (
-    <section className="py-16 md:py-24 bg-[#FAF6EF] overflow-x-clip">
+    <section className="py-16 md:py-24 bg-[#F0E9DE] overflow-x-clip">
       <div className="max-w-4xl mx-auto px-4">
         {/* En-tête */}
         <motion.div
@@ -59,7 +59,7 @@ export function BioTimeline({
           <p className="text-xs uppercase tracking-[0.3em] font-bold mb-3" style={{ color: accentColor }}>
             {kicker}
           </p>
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#1E0F2B] mb-4">
+          <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#000000] mb-4">
             <IsololeText>{title}</IsololeText>
           </h2>
           <div className="flex items-center justify-center gap-2">
@@ -107,11 +107,11 @@ export function BioTimeline({
 
                 {/* Carte du jalon */}
                 <div
-                  className="flex-1 min-w-0 bg-white rounded-2xl shadow-md border border-[#8A8378]/15 overflow-hidden"
+                  className="flex-1 min-w-0 bg-white rounded-2xl shadow-md border border-[#8A857C]/15 overflow-hidden"
                   style={{ borderLeft: `3px solid ${accentColor}` }}
                 >
                   {m.photoUrl && (
-                    <div className="relative aspect-video overflow-hidden bg-[#2A0E3D] group">
+                    <div className="relative aspect-video overflow-hidden bg-[#000000] group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={m.photoUrl}
@@ -119,11 +119,11 @@ export function BioTimeline({
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         loading="lazy"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#2A0E3D]/50 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#000000]/50 via-transparent to-transparent" />
                       {m.date && (
                         <span
                           className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.15em] font-bold backdrop-blur-sm border"
-                          style={{ background: "rgba(26,8,38,0.6)", borderColor: `${accentColor}55`, color: accentColor }}
+                          style={{ background: "rgba(0, 0, 0,0.6)", borderColor: `${accentColor}55`, color: accentColor }}
                         >
                           <Calendar className="w-3 h-3" />
                           <IsololeText>{m.date}</IsololeText>
@@ -143,25 +143,25 @@ export function BioTimeline({
                           <IsololeText>{m.date}</IsololeText>
                         </span>
                       )}
-                      <span className="text-[10px] font-bold text-[#8A8378]/60 ml-auto">
+                      <span className="text-[10px] font-bold text-[#8A857C]/60 ml-auto">
                         {String(i + 1).padStart(2, "0")}
                       </span>
                     </div>
 
-                    <h3 className="font-serif text-lg md:text-xl font-bold text-[#1E0F2B] leading-snug">
+                    <h3 className="font-serif text-lg md:text-xl font-bold text-[#000000] leading-snug">
                       <IsololeText>{m.title}</IsololeText>
                     </h3>
 
                     {m.description && (
-                      <p className="text-sm text-[#1E0F2B]/75 mt-2 leading-relaxed">
+                      <p className="text-sm text-[#000000]/75 mt-2 leading-relaxed">
                         <IsololeText>{m.description}</IsololeText>
                       </p>
                     )}
 
                     {(m.verseRef || m.verseText) && (
-                      <div className="mt-4 pt-4 border-t border-[#8A8378]/10">
+                      <div className="mt-4 pt-4 border-t border-[#8A857C]/10">
                         {m.verseText && (
-                          <p className="font-serif text-sm italic text-[#2A0E3D] leading-relaxed">
+                          <p className="font-serif text-sm italic text-[#000000] leading-relaxed">
                             « <IsololeText>{m.verseText}</IsololeText> »
                           </p>
                         )}

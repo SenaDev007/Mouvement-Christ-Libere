@@ -20,7 +20,7 @@
  *   4. La barre de progression affiche un POURCENTAGE (plus de minutes).
  *   5. Titre : « Christ Libère » (même style, même couleur).
  *
- * Conservé par ailleurs : palette nuit #1E0F2B + halo radial or + liserés,
+ * Conservé par ailleurs : palette nuit #000000 + halo radial or + liserés,
  * le VRAI logo officiel (Afrique + lion) au centre pulsant doucement,
  * « Le shofar retentit… », verset 1 Th 4:16, bouton « Passer » + Échap,
  * gestion de l'autoplay bloqué (invite au premier geste — le son démarre
@@ -360,7 +360,7 @@ export function LandingIntro() {
             duration: mouvementReduit ? 0 : FONDE_SORTIE_MS / 1000,
             ease: "easeInOut",
           }}
-          className="fixed inset-0 z-[100] overflow-hidden flex items-center justify-center bg-[#1E0F2B]"
+          className="fixed inset-0 z-[100] overflow-hidden flex items-center justify-center bg-[#000000]"
           role="status"
           aria-live="polite"
           aria-label="Chargement du site — son du shofar"
@@ -371,7 +371,7 @@ export function LandingIntro() {
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                "radial-gradient(circle at 50% 38%, rgba(201,162,39,0.22) 0%, rgba(201,162,39,0.08) 34%, rgba(30,15,43,0) 62%)",
+                "radial-gradient(circle at 50% 38%, rgba(201,162,39,0.22) 0%, rgba(201,162,39,0.08) 34%, rgba(0, 0, 0,0) 62%)",
             }}
           />
           {/* Liserés or haut/bas */}
@@ -414,19 +414,19 @@ export function LandingIntro() {
               </motion.div>
 
               {/* ⭐ V3.14 — « Christ Libère » (même style, même couleur) */}
-              <h1 className="font-serif text-3xl md:text-4xl font-bold text-[#FAF6EF] mt-7 drop-shadow-lg">
+              <h1 className="font-serif text-3xl md:text-4xl font-bold text-[#F0E9DE] mt-7 drop-shadow-lg">
                 Christ Libère
               </h1>
               <p className="font-serif italic text-[#C9A227] text-lg md:text-xl mt-3">
                 Le shofar retentit…
               </p>
-              <p className="text-[11px] text-[#FAF6EF]/50 mt-2 uppercase tracking-[0.25em] font-semibold">
+              <p className="text-[11px] text-[#F0E9DE]/50 mt-2 uppercase tracking-[0.25em] font-semibold">
                 Ouverture de la visitation
               </p>
 
               {/* Barre de chargement — 5 s, en POURCENTAGE */}
               <div className="w-full max-w-sm mt-8">
-                <div className="h-1.5 rounded-full bg-[#FAF6EF]/12 overflow-hidden">
+                <div className="h-1.5 rounded-full bg-[#F0E9DE]/12 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-[#9C7E1E] via-[#C9A227] to-[#E8CF6B] transition-[width] duration-100 ease-linear"
                     style={{ width: `${pourcentage}%` }}
@@ -434,7 +434,7 @@ export function LandingIntro() {
                 </div>
                 <div className="flex items-center justify-between mt-2.5">
                   <span
-                    className="text-[10px] font-mono font-semibold text-[#FAF6EF]/60 tracking-widest tabular-nums"
+                    className="text-[10px] font-mono font-semibold text-[#F0E9DE]/60 tracking-widest tabular-nums"
                     aria-label={`Chargement : ${pourcentage} pour cent`}
                   >
                     {pourcentage}&nbsp;%
@@ -446,7 +446,7 @@ export function LandingIntro() {
               </div>
 
               {/* Verset */}
-              <p className="text-[11px] text-[#FAF6EF]/40 mt-8 leading-relaxed italic">
+              <p className="text-[11px] text-[#F0E9DE]/40 mt-8 leading-relaxed italic">
                 « Car le Seigneur lui-même… descendra du ciel avec un son de trompette. »
                 <span className="not-italic text-[#C9A227]/60"> — 1 Thessaloniciens 4:16</span>
               </p>
@@ -456,7 +456,7 @@ export function LandingIntro() {
           {/* Passer l'écran (coupe aussi le son) */}
           <button
             onClick={() => terminer(false)}
-            className="absolute bottom-6 right-6 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#FAF6EF]/15 text-[#FAF6EF]/55 hover:text-[#FAF6EF] hover:border-[#C9A227]/50 hover:bg-[#C9A227]/10 transition-colors text-xs font-semibold"
+            className="absolute bottom-6 right-6 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#F0E9DE]/15 text-[#F0E9DE]/55 hover:text-[#F0E9DE] hover:border-[#FF7A1A]/50 hover:bg-[#FF7A1A]/10 transition-colors text-xs font-semibold"
             title="Passer l'introduction (Échap)"
           >
             <FastForward className="w-3.5 h-3.5" />

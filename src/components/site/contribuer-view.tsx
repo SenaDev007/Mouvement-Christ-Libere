@@ -48,17 +48,17 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
       />
 
       {/* Formulaire */}
-      <section id="don" className="bg-[#FAF6EF] py-20 md:py-24">
+      <section id="don" className="bg-[#F0E9DE] py-20 md:py-24">
         <div className="container mx-auto max-w-3xl px-4">
           {success ? (
             <div className="card-gold-top p-10 text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-state-success/15 border-2 border-state-success/40 mb-6">
                 <CheckCircle2 className="w-8 h-8 text-state-success" />
               </div>
-              <h2 className="font-serif text-2xl font-semibold text-[#1E0F2B] mb-3">
+              <h2 className="font-serif text-2xl font-semibold text-[#000000] mb-3">
                 Merci pour votre offrande
               </h2>
-              <p className="text-sm text-[#8A8378] leading-relaxed mb-6">
+              <p className="text-sm text-[#8A857C] leading-relaxed mb-6">
                 Votre don de <span className="font-semibold text-[#A3821C]">{finalAmount} €</span> a bien été enregistré.
                 Que le Seigneur vous bénisse.
               </p>
@@ -68,17 +68,17 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
                   setSelectedAmount(25);
                   setCustomAmount("");
                 }}
-                className="text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
+                className="text-sm font-semibold text-[#000000] hover:text-[#FF7A1A] transition-colors"
               >
                 Faire un autre don
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="card-gold-top p-8 md:p-10">
-              <h2 className="font-serif text-2xl font-semibold text-[#1E0F2B] mb-3">
+              <h2 className="font-serif text-2xl font-semibold text-[#000000] mb-3">
                 Faire un don
               </h2>
-              <p className="text-sm text-[#1E0F2B]/80 leading-relaxed mb-8">
+              <p className="text-sm text-[#000000]/80 leading-relaxed mb-8">
                 Choisissez le montant de votre offrande. Aucune pression, aucun montant minimum.
                 Ce que votre cœur décide, librement.
               </p>
@@ -97,12 +97,12 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
                       "px-4 py-4 rounded-2xl border text-center transition-all group",
                       selectedAmount === amount && !customAmount
                         ? "border-[#C9A227] bg-[#C9A227]/10 shadow-[0_0_20px_rgba(201,162,39,0.2)]"
-                        : "border-[#8A8378]/30 hover:border-[#C9A227]/50 hover:bg-[#C9A227]/5"
+                        : "border-[#8A857C]/30 hover:border-[#FF7A1A]/50 hover:bg-[#FF7A1A]/5"
                     )}
                   >
                     <div className={cn(
                       "font-serif text-2xl font-semibold transition-colors",
-                      selectedAmount === amount && !customAmount ? "text-[#A3821C]" : "text-[#2A0E3D] group-hover:text-[#C9A227]"
+                      selectedAmount === amount && !customAmount ? "text-[#A3821C]" : "text-[#000000] group-hover:text-[#FF7A1A]"
                     )}>
                       {amount} €
                     </div>
@@ -112,7 +112,7 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
 
               {/* Montant libre */}
               <div className="mb-8">
-                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-semibold mb-2 block">
                   Ou un montant libre
                 </label>
                 <div className="flex items-center gap-2">
@@ -125,15 +125,15 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
                       setSelectedAmount(null);
                     }}
                     placeholder="0"
-                    className="flex-1 min-w-0 px-4 py-3.5 rounded-2xl border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
+                    className="flex-1 min-w-0 px-4 py-3.5 rounded-2xl border border-[#8A857C]/30 bg-[#F0E9DE] text-[#000000] placeholder:text-[#8A857C]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
                   />
-                  <span className="text-[#8A8378] font-semibold text-lg">€</span>
+                  <span className="text-[#8A857C] font-semibold text-lg">€</span>
                 </div>
               </div>
 
               {/* Méthodes de paiement */}
               <div className="mb-8">
-                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-semibold mb-2 block">
                   Méthode de paiement
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -148,16 +148,16 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
                           "px-3 py-3 rounded-2xl border text-center transition-all",
                           method === m.id
                             ? "border-[#C9A227] bg-[#C9A227]/10"
-                            : "border-[#8A8378]/30 hover:border-[#C9A227]/50"
+                            : "border-[#8A857C]/30 hover:border-[#FF7A1A]/50"
                         )}
                       >
                         <Icon className={cn(
                           "w-4 h-4 mx-auto mb-1.5",
-                          method === m.id ? "text-[#C9A227]" : "text-[#8A8378]"
+                          method === m.id ? "text-[#C9A227]" : "text-[#8A857C]"
                         )} />
                         <span className={cn(
                           "text-xs font-semibold",
-                          method === m.id ? "text-[#1E0F2B]" : "text-[#8A8378]"
+                          method === m.id ? "text-[#000000]" : "text-[#8A857C]"
                         )}>
                           {m.label}
                         </span>
@@ -171,7 +171,7 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
               <button
                 type="submit"
                 disabled={submitting || !finalAmount || finalAmount < 1}
-                className="w-full px-6 py-4 rounded-2xl bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-4 rounded-2xl bg-[#C9A227] text-[#000000] font-semibold text-sm hover:bg-[#FF7A1A] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>
@@ -186,22 +186,22 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
                 )}
               </button>
 
-              <p className="text-xs text-[#8A8378] mt-4 text-center italic">
+              <p className="text-xs text-[#8A857C] mt-4 text-center italic">
                 Aucun montant minimum. Paiement sécurisé.
               </p>
             </form>
           )}
 
           {/* Transparence */}
-          <div className="mt-8 p-6 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-2xl text-center">
+          <div className="mt-8 p-6 bg-[#000000]/5 border border-[#C9A227]/20 rounded-2xl text-center">
             <FileText className="w-6 h-6 text-[#C9A227] mx-auto mb-3" />
-            <p className="text-sm text-[#1E0F2B]/80 mb-3">
+            <p className="text-sm text-[#000000]/80 mb-3">
               L'usage des dons est publié chaque année, avec transparence totale sur
               les montants reçus et leur affectation.
             </p>
             <a
               href="#"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#000000] hover:text-[#FF7A1A] transition-colors"
             >
               Consulter le rapport d'utilisation des fonds
             </a>
@@ -212,7 +212,7 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
       <SectionDivider variant="ornament" />
 
       {/* Citation */}
-      <section className="bg-[#2A0E3D] py-24 md:py-32 relative overflow-hidden">
+      <section className="bg-[#000000] py-24 md:py-32 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative">
           <QuoteBlock

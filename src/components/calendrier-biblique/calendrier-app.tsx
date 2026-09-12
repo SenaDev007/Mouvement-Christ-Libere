@@ -98,7 +98,7 @@ export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }
   // indicateur de chargement plutôt qu'un rendu partiel.
   if (!annee) {
     return (
-      <section id="aujourdhui" className="bg-[#FAF6EF] py-12 md:py-16">
+      <section id="aujourdhui" className="bg-[#F0E9DE] py-12 md:py-16">
         <div className="container mx-auto max-w-7xl px-4 flex items-center justify-center py-24">
           <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" aria-label="Chargement" />
         </div>
@@ -107,7 +107,7 @@ export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }
   }
 
   return (
-    <section id="aujourdhui" className="bg-[#FAF6EF] py-12 md:py-16">
+    <section id="aujourdhui" className="bg-[#F0E9DE] py-12 md:py-16">
       <div className="container mx-auto max-w-7xl px-4">
         {/* En-tête : navigation années + titre + export PDF */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
@@ -121,29 +121,29 @@ export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }
               <button
                 onClick={nav.anneePrecedente}
                 disabled={!nav.peutPrecedente}
-                className="p-2 rounded-lg border border-[#8A8378]/20 text-[#8A8378] hover:bg-[#FAF6EF] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg border border-[#8A857C]/20 text-[#8A857C] hover:bg-[#F0E9DE] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 title="Année précédente"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="inline-flex items-center gap-2 min-w-[7.5rem] justify-center text-sm font-bold text-[#1E0F2B] tabular-nums">
+              <span className="inline-flex items-center gap-2 min-w-[7.5rem] justify-center text-sm font-bold text-[#000000] tabular-nums">
                 {nav.chargement && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9A227]" />}
                 {annee.libelle}
               </span>
               <button
                 onClick={nav.anneeSuivante}
                 disabled={!nav.peutSuivante}
-                className="p-2 rounded-lg border border-[#8A8378]/20 text-[#8A8378] hover:bg-[#FAF6EF] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg border border-[#8A857C]/20 text-[#8A857C] hover:bg-[#F0E9DE] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 title="Année suivante"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
             <div>
-              <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#1E0F2B]">
+              <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#000000]">
                 Année biblique {annee.libelle}
               </h2>
-              <p className="text-sm text-[#8A8378] mt-1">
+              <p className="text-sm text-[#8A857C] mt-1">
                 {new Date(annee.debut).toLocaleDateString("fr-FR", {
                   day: "numeric",
                   month: "long",
@@ -167,7 +167,7 @@ export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }
               généré par le backend. */}
           <button
             onClick={() => setExportPdfOuvert(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#C9A227] text-[#2A0E3D] text-xs font-bold hover:bg-[#9C7E1E] hover:text-[#FAF6EF] transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#C9A227] text-[#000000] text-xs font-bold hover:bg-[#9C7E1E] hover:text-[#F0E9DE] transition-colors shadow-sm"
           >
             <Download className="w-3.5 h-3.5" />
             Télécharger PDF
@@ -183,7 +183,7 @@ export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }
         />
 
         {/* Onglets de navigation */}
-        <div className="flex items-center gap-1 mb-8 bg-[#2A0E3D]/5 p-1 rounded-xl overflow-x-auto">
+        <div className="flex items-center gap-1 mb-8 bg-[#000000]/5 p-1 rounded-xl overflow-x-auto">
           {VUES.map((vue) => {
             const Icon = vue.icon;
             const isActive = vueActive === vue.id;
@@ -194,8 +194,8 @@ export function CalendrierBibliqueApp({ annees, anneeCouranteIndex, maintenant }
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
                   isActive
-                    ? "bg-[#2A0E3D] text-[#FAF6EF] shadow-sm"
-                    : "text-[#1E0F2B]/60 hover:text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+                    ? "bg-[#000000] text-[#F0E9DE] shadow-sm"
+                    : "text-[#000000]/60 hover:text-[#000000] hover:bg-[#000000]/5"
                 )}
               >
                 <Icon className="w-4 h-4" />

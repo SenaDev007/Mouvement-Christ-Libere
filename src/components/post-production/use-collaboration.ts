@@ -22,8 +22,8 @@ interface UseCollaborationReturn {
 }
 
 const USER_COLORS = [
-  "#C9A227", "#8C5FA8", "#2A0E3D", "#16a34a",
-  "#dc2626", "#0891b2", "#ea580c", "#7c3aed",
+  "#C9A227", "#8A857C", "#000000", "#16a34a",
+  "#dc2626", "#0891b2", "#ea580c", "#FF7A1A",
 ];
 
 /**

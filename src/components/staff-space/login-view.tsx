@@ -5,7 +5,7 @@
  * (secrétariat & trésorerie).
  *
  * Même design que la connexion du back-office (fond violet profond
- * #1A0826, logo, framer-motion) — seule l'identité de l'espace change
+ * #000000, logo, framer-motion) — seule l'identité de l'espace change
  * (titre, sous-titre, point d'accès API, route post-connexion).
  */
 
@@ -97,7 +97,7 @@ export function LoginView({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-[#1A0826]">
+    <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-[#000000]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -114,10 +114,10 @@ export function LoginView({
             className="relative w-16 h-16 md:w-20 md:h-20 object-contain mb-4"
             priority
           />
-          <h1 className="text-2xl md:text-3xl font-bold text-[#FAF6EF] text-center">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#F0E9DE] text-center">
             <span className={accentTexte}>{titreEspace}</span>
           </h1>
-          <p className="text-sm text-[#FAF6EF]/60 text-center mt-1.5 max-w-xs leading-relaxed">
+          <p className="text-sm text-[#F0E9DE]/60 text-center mt-1.5 max-w-xs leading-relaxed">
             {soustitre}
           </p>
           <p className="text-[10px] font-mono text-[#DDBE55]/40 mt-2">
@@ -126,7 +126,7 @@ export function LoginView({
         </div>
 
         {/* Carte de connexion */}
-        <div className="relative bg-[#2A0E3D]/60 backdrop-blur-sm rounded-2xl border border-[#C9A227]/15 p-6 md:p-8 shadow-2xl">
+        <div className="relative bg-[#000000]/60 backdrop-blur-sm rounded-2xl border border-[#C9A227]/15 p-6 md:p-8 shadow-2xl">
           <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-[#C9A227]/50 to-transparent" />
 
           <div className="flex items-center gap-3 mb-6">
@@ -134,10 +134,10 @@ export function LoginView({
               <Lock className="w-5 h-5 text-[#C9A227]" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-[#FAF6EF]">
+              <h2 className="text-base font-semibold text-[#F0E9DE]">
                 Connexion
               </h2>
-              <p className="text-xs text-[#FAF6EF]/50">
+              <p className="text-xs text-[#F0E9DE]/50">
                 Accès réservé aux personnes accréditées
               </p>
             </div>
@@ -154,19 +154,19 @@ export function LoginView({
             <div>
               <label
                 htmlFor="login-name"
-                className="block text-xs font-semibold text-[#FAF6EF]/70 mb-1.5"
+                className="block text-xs font-semibold text-[#F0E9DE]/70 mb-1.5"
               >
                 Nom ou email
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FAF6EF]/30" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#F0E9DE]/30" />
                 <input
                   id="login-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="username"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#1A0826]/60 border border-[#C9A227]/20 text-sm text-[#FAF6EF] placeholder:text-[#FAF6EF]/25 focus:outline-none focus:border-[#C9A227]/60 focus:ring-1 focus:ring-[#C9A227]/30 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#000000]/60 border border-[#C9A227]/20 text-sm text-[#F0E9DE] placeholder:text-[#F0E9DE]/25 focus:outline-none focus:border-[#C9A227]/60 focus:ring-1 focus:ring-[#C9A227]/30 transition-colors"
                   placeholder="Votre nom ou email"
                   required
                 />
@@ -176,19 +176,19 @@ export function LoginView({
             <div>
               <label
                 htmlFor="login-password"
-                className="block text-xs font-semibold text-[#FAF6EF]/70 mb-1.5"
+                className="block text-xs font-semibold text-[#F0E9DE]/70 mb-1.5"
               >
                 Mot de passe
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FAF6EF]/30" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#F0E9DE]/30" />
                 <input
                   id="login-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#1A0826]/60 border border-[#C9A227]/20 text-sm text-[#FAF6EF] placeholder:text-[#FAF6EF]/25 focus:outline-none focus:border-[#C9A227]/60 focus:ring-1 focus:ring-[#C9A227]/30 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#000000]/60 border border-[#C9A227]/20 text-sm text-[#F0E9DE] placeholder:text-[#F0E9DE]/25 focus:outline-none focus:border-[#C9A227]/60 focus:ring-1 focus:ring-[#C9A227]/30 transition-colors"
                   placeholder="••••••••"
                   required
                 />
@@ -198,7 +198,7 @@ export function LoginView({
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#C9A227] text-[#1A0826] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#C9A227] text-[#000000] text-sm font-bold hover:bg-[#FF7A1A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -214,7 +214,7 @@ export function LoginView({
         <div className="mt-6 text-center">
           <a
             href={accueilPublicUrl}
-            className="inline-flex items-center gap-1.5 text-xs text-[#FAF6EF]/40 hover:text-[#C9A227] transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-[#F0E9DE]/40 hover:text-[#FF7A1A] transition-colors"
           >
             Retour à l&apos;accueil
             <ChevronRight className="w-3 h-3" />

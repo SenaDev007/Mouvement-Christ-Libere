@@ -45,7 +45,7 @@ export function HeroSection({
         {/* Halo or supérieur droit */}
         <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] rounded-full bg-[#C9A227]/10 blur-[120px]" />
         {/* Halo lavande inférieur gauche */}
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-[#8C5FA8]/20 blur-[100px]" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-[#8A857C]/20 blur-[100px]" />
       </motion.div>
 
       {/* Motif géométrique filigrane — étoile de David discrète */}
@@ -107,7 +107,7 @@ export function HeroSection({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold leading-[1.02] text-[#FAF6EF] mb-6 tracking-tight"
+            className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold leading-[1.02] text-[#F0E9DE] mb-6 tracking-tight"
           >
             {title}
           </motion.h1>
@@ -117,7 +117,7 @@ export function HeroSection({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.35 }}
-            className="text-lg md:text-xl text-[#FAF6EF]/75 leading-relaxed max-w-2xl mb-10 font-light"
+            className="text-lg md:text-xl text-[#F0E9DE]/75 leading-relaxed max-w-2xl mb-10 font-light"
           >
             {subtitle}
           </motion.p>
@@ -133,7 +133,7 @@ export function HeroSection({
               {primaryCta && (
                 <Link
                   href={primaryCta.href}
-                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-all hover:shadow-[0_0_30px_rgba(201,162,39,0.4)]"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#C9A227] text-[#000000] font-semibold text-sm hover:bg-[#FF7A1A] transition-all hover:shadow-[0_0_30px_rgba(201,162,39,0.4)]"
                 >
                   {primaryCta.label}
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -142,7 +142,7 @@ export function HeroSection({
               {secondaryCta && (
                 <Link
                   href={secondaryCta.href}
-                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-[#C9A227]/40 text-[#C9A227] font-semibold text-sm hover:bg-[#C9A227]/10 transition-all backdrop-blur-sm"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-[#C9A227]/40 text-[#C9A227] font-semibold text-sm hover:bg-[#FF7A1A]/10 transition-all backdrop-blur-sm"
                 >
                   {secondaryCta.label}
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -163,7 +163,7 @@ export function HeroSection({
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
           className="flex flex-col items-center gap-2"
         >
-          <span className="text-[10px] uppercase tracking-[0.3em] text-[#FAF6EF]/40 font-medium">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-[#F0E9DE]/40 font-medium">
             Défiler
           </span>
           <div className="w-px h-8 bg-gradient-to-b from-[#C9A227]/60 to-transparent" />

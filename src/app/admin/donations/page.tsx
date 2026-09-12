@@ -41,36 +41,36 @@ export default async function AdminDonationsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-1">
           Contributions financières
         </p>
-        <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+        <h1 className="text-2xl md:text-3xl font-bold text-[#000000]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
           Dons
         </h1>
-        <p className="text-sm text-[#8A8378] mt-1">
+        <p className="text-sm text-[#8A857C] mt-1">
           Dons reçus via la plateforme.
         </p>
       </div>
 
       {/* Stats cards premium */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 relative overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#8A857C]/15 p-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
           <Heart className="w-4 h-4 text-[#C9A227] mb-2" />
-          <div className="text-2xl font-bold text-[#1E0F2B]">{donations.length}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5">Dons reçus</div>
+          <div className="text-2xl font-bold text-[#000000]">{donations.length}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#8A857C] font-semibold mt-0.5">Dons reçus</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 relative overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#8A857C]/15 p-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
           <Euro className="w-4 h-4 text-[#C9A227] mb-2" />
-          <div className="text-2xl font-bold text-[#1E0F2B]">{total.toFixed(0)} €</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5">Total accumulé</div>
+          <div className="text-2xl font-bold text-[#000000]">{total.toFixed(0)} €</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#8A857C] font-semibold mt-0.5">Total accumulé</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8C5FA8]/30 p-4 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#8C5FA8] to-[#6B4480]" />
-          <Calendar className="w-4 h-4 text-[#8C5FA8] mb-2" />
-          <div className="text-2xl font-bold text-[#8C5FA8]">{monthTotal.toFixed(0)} €</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8C5FA8] font-semibold mt-0.5">Ce mois-ci</div>
+        <div className="bg-white rounded-xl border border-[#8A857C]/30 p-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#8A857C] to-[#6B675F]" />
+          <Calendar className="w-4 h-4 text-[#8A857C] mb-2" />
+          <div className="text-2xl font-bold text-[#8A857C]">{monthTotal.toFixed(0)} €</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#8A857C] font-semibold mt-0.5">Ce mois-ci</div>
         </div>
         <div className="bg-white rounded-xl border border-[#5B7052]/30 p-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#5B7052] to-[#3F5039]" />
@@ -83,26 +83,26 @@ export default async function AdminDonationsPage() {
       {/* Top donateurs + Liste */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Top donateurs */}
-        <div className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
-          <div className="px-5 py-4 border-b border-[#8A8378]/10 bg-gradient-to-r from-[#C9A227]/10 to-transparent">
-            <h2 className="font-bold text-sm text-[#1E0F2B] flex items-center gap-2">
+        <div className="bg-white rounded-2xl border border-[#8A857C]/15 overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#8A857C]/10 bg-gradient-to-r from-[#C9A227]/10 to-transparent">
+            <h2 className="font-bold text-sm text-[#000000] flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-[#C9A227]" />
               Top donateurs
             </h2>
           </div>
           {topDonors.length === 0 ? (
-            <p className="text-sm text-[#8A8378] italic p-5 text-center">Aucun donateur identifié.</p>
+            <p className="text-sm text-[#8A857C] italic p-5 text-center">Aucun donateur identifié.</p>
           ) : (
-            <div className="divide-y divide-[#8A8378]/10">
+            <div className="divide-y divide-[#8A857C]/10">
               {topDonors.map(([name, amount], i) => (
                 <div key={name} className="flex items-center justify-between px-5 py-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                      i === 0 ? "bg-[#C9A227]" : i === 1 ? "bg-[#8C5FA8]" : i === 2 ? "bg-[#5B7052]" : "bg-[#8A8378]"
+                      i === 0 ? "bg-[#C9A227]" : i === 1 ? "bg-[#8A857C]" : i === 2 ? "bg-[#5B7052]" : "bg-[#8A857C]"
                     }`}>
                       {i + 1}
                     </div>
-                    <span className="text-sm font-medium text-[#1E0F2B]">{name}</span>
+                    <span className="text-sm font-medium text-[#000000]">{name}</span>
                   </div>
                   <span className="text-sm font-bold text-[#A3821C]">{amount.toFixed(0)} €</span>
                 </div>
@@ -114,15 +114,15 @@ export default async function AdminDonationsPage() {
         {/* Liste complète */}
         <div className="lg:col-span-2 space-y-3">
           {donations.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-dashed border-[#8A8378]/30 p-12 text-center">
-              <Heart className="w-10 h-10 text-[#8A8378]/30 mx-auto mb-3" />
-              <p className="text-sm text-[#8A8378] italic">Aucun don pour l&apos;instant.</p>
+            <div className="bg-white rounded-2xl border border-dashed border-[#8A857C]/30 p-12 text-center">
+              <Heart className="w-10 h-10 text-[#8A857C]/30 mx-auto mb-3" />
+              <p className="text-sm text-[#8A857C] italic">Aucun don pour l&apos;instant.</p>
             </div>
           ) : (
             donations.map((d) => (
               <div
                 key={d.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:shadow-md transition-shadow group"
+                className="bg-white rounded-xl border border-[#8A857C]/15 p-4 hover:shadow-md transition-shadow group"
               >
                 <div className="flex items-start gap-3">
                   {/* Icon don */}
@@ -134,11 +134,11 @@ export default async function AdminDonationsPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3 mb-1">
                       <div>
-                        <h3 className="font-bold text-sm text-[#1E0F2B]">
+                        <h3 className="font-bold text-sm text-[#000000]">
                           {d.isAnonymous ? "Don anonyme" : d.donorName || d.donorEmail || "Donateur"}
                         </h3>
                         {!d.isAnonymous && d.donorEmail && (
-                          <a href={`mailto:${d.donorEmail}`} className="inline-flex items-center gap-1 text-xs text-[#8C5FA8] hover:underline mt-0.5">
+                          <a href={`mailto:${d.donorEmail}`} className="inline-flex items-center gap-1 text-xs text-[#8A857C] hover:underline mt-0.5">
                             <Mail className="w-3 h-3" />
                             {d.donorEmail}
                           </a>
@@ -146,7 +146,7 @@ export default async function AdminDonationsPage() {
                       </div>
                       <div className="text-right flex-shrink-0">
                         <div className="text-lg font-bold text-[#A3821C]">{d.amount.toFixed(2)} €</div>
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#8A8378]/10 text-[#8A8378]">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#8A857C]/10 text-[#8A857C]">
                           {d.method}
                         </span>
                       </div>
@@ -154,14 +154,14 @@ export default async function AdminDonationsPage() {
 
                     {/* Message */}
                     {d.message && (
-                      <div className="mt-2 px-3 py-2 rounded-lg bg-[#FAF6EF] border border-[#8A8378]/10 flex items-start gap-2">
-                        <MessageSquare className="w-3 h-3 text-[#8A8378] flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-[#1E0F2B]/70 italic line-clamp-2">{d.message}</p>
+                      <div className="mt-2 px-3 py-2 rounded-lg bg-[#F0E9DE] border border-[#8A857C]/10 flex items-start gap-2">
+                        <MessageSquare className="w-3 h-3 text-[#8A857C] flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-[#000000]/70 italic line-clamp-2">{d.message}</p>
                       </div>
                     )}
 
                     {/* Date */}
-                    <div className="flex items-center gap-1 text-[11px] text-[#8A8378] mt-2">
+                    <div className="flex items-center gap-1 text-[11px] text-[#8A857C] mt-2">
                       <Clock className="w-3 h-3" />
                       {new Date(d.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
                     </div>
@@ -169,7 +169,7 @@ export default async function AdminDonationsPage() {
                 </div>
 
                 {/* ⭐ V3.32 — Suppression en pied de carte, pleine largeur */}
-                <div className="mt-2 pt-2 border-t border-[#8A8378]/10 flex items-center justify-end">
+                <div className="mt-2 pt-2 border-t border-[#8A857C]/10 flex items-center justify-end">
                   <DeleteButton entity="donations" id={d.id} />
                 </div>
               </div>

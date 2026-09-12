@@ -43,9 +43,9 @@ export function CollaborationPanel({
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-[#8A8378]/15 overflow-hidden">
+    <div className="fixed bottom-4 right-4 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-[#8A857C]/15 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-[#2A0E3D] text-white">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-[#000000] text-white">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-[#C9A227]" />
           <span className="text-xs font-bold">Collaboration</span>
@@ -57,8 +57,8 @@ export function CollaborationPanel({
       </div>
 
       {/* Online users */}
-      <div className="px-4 py-2 border-b border-[#8A8378]/10">
-        <p className="text-[10px] text-[#8A8378] uppercase font-bold mb-1.5">
+      <div className="px-4 py-2 border-b border-[#8A857C]/10">
+        <p className="text-[10px] text-[#8A857C] uppercase font-bold mb-1.5">
           En ligne ({collaborators.length})
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -88,7 +88,7 @@ export function CollaborationPanel({
         <div className="flex flex-col h-48">
           <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
             {chatMessages.length === 0 ? (
-              <p className="text-[10px] text-[#8A8378] text-center py-4">
+              <p className="text-[10px] text-[#8A857C] text-center py-4">
                 Aucun message. Commencez la conversation !
               </p>
             ) : (
@@ -98,15 +98,15 @@ export function CollaborationPanel({
                   <div key={i} className="flex gap-1.5">
                     <span
                       className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                      style={{ backgroundColor: user?.color || "#8A8378" }}
+                      style={{ backgroundColor: user?.color || "#8A857C" }}
                     >
                       {msg.userName.charAt(0).toUpperCase()}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-bold" style={{ color: user?.color || "#8A8378" }}>
+                      <p className="text-[10px] font-bold" style={{ color: user?.color || "#8A857C" }}>
                         {msg.userName}
                       </p>
-                      <p className="text-xs text-[#1E0F2B] break-words">{msg.message}</p>
+                      <p className="text-xs text-[#000000] break-words">{msg.message}</p>
                     </div>
                   </div>
                 );
@@ -116,19 +116,19 @@ export function CollaborationPanel({
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSend} className="flex gap-1 px-2 py-2 border-t border-[#8A8378]/10">
+          <form onSubmit={handleSend} className="flex gap-1 px-2 py-2 border-t border-[#8A857C]/10">
             <input
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Message..."
               maxLength={200}
-              className="flex-1 px-2 py-1.5 rounded-lg border border-[#8A8378]/20 bg-[#FAF6EF] text-xs focus:outline-none focus:border-[#C9A227]"
+              className="flex-1 px-2 py-1.5 rounded-lg border border-[#8A857C]/20 bg-[#F0E9DE] text-xs focus:outline-none focus:border-[#C9A227]"
             />
             <button
               type="submit"
               disabled={!message.trim()}
-              className="p-1.5 rounded-lg bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-30"
+              className="p-1.5 rounded-lg bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A] transition-colors disabled:opacity-30"
             >
               <Send className="w-3.5 h-3.5" />
             </button>
@@ -139,7 +139,7 @@ export function CollaborationPanel({
       {!showChat && (
         <button
           onClick={() => setShowChat(true)}
-          className="w-full px-4 py-2 flex items-center justify-center gap-1 text-xs text-[#8A8378] hover:bg-[#2A0E3D]/5 transition-colors"
+          className="w-full px-4 py-2 flex items-center justify-center gap-1 text-xs text-[#8A857C] hover:bg-[#000000]/5 transition-colors"
         >
           <MessageCircle className="w-3.5 h-3.5" /> Afficher le chat
         </button>

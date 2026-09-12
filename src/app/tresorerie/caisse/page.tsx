@@ -155,15 +155,15 @@ function FormulaireCaisse({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/70">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/70">
       <div className="bg-white rounded-2xl border border-[#C9A227]/25 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#8A8378]/15">
-          <h2 className="text-lg font-bold text-[#1E0F2B]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#8A857C]/15">
+          <h2 className="text-lg font-bold text-[#000000]">
             {caisseInitiale ? "Modifier la caisse" : "Nouvelle caisse"}
           </h2>
           <button
             onClick={onFermer}
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-[#8A8378] hover:bg-[#FAF6EF]"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-[#8A857C] hover:bg-[#F0E9DE]"
             aria-label="Fermer"
           >
             <X className="w-4 h-4" />
@@ -172,7 +172,7 @@ function FormulaireCaisse({
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+            <label className="block text-xs font-semibold text-[#000000] mb-1">
               Nom de la caisse
             </label>
             <input
@@ -180,19 +180,19 @@ function FormulaireCaisse({
               onChange={(e) => setNom(e.target.value)}
               placeholder="Caisse principale espèces"
               maxLength={80}
-              className="w-full px-4 py-2.5 rounded-lg border border-[#8A8378]/25 text-sm focus:outline-none focus:border-[#C9A227]"
+              className="w-full px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm focus:outline-none focus:border-[#C9A227]"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+              <label className="block text-xs font-semibold text-[#000000] mb-1">
                 Type de caisse
               </label>
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#8A8378]/25 text-sm bg-white focus:outline-none focus:border-[#C9A227]"
+                className="w-full px-3 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm bg-white focus:outline-none focus:border-[#C9A227]"
               >
                 {CAISSE_TYPE_VALEURS.map((t) => (
                   <option key={t} value={t}>
@@ -200,19 +200,19 @@ function FormulaireCaisse({
                   </option>
                 ))}
               </select>
-              <p className="text-[10px] text-[#8A8378] mt-1">
+              <p className="text-[10px] text-[#8A857C] mt-1">
                 {CAISSE_TYPES[type as keyof typeof CAISSE_TYPES]?.description}
               </p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+              <label className="block text-xs font-semibold text-[#000000] mb-1">
                 Devise tenue
               </label>
               <select
                 value={devise}
                 onChange={(e) => setDevise(e.target.value)}
                 disabled={Boolean(caisseInitiale)}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#8A8378]/25 text-sm bg-white focus:outline-none focus:border-[#C9A227] disabled:bg-[#FAF6EF] disabled:text-[#8A8378]"
+                className="w-full px-3 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm bg-white focus:outline-none focus:border-[#C9A227] disabled:bg-[#F0E9DE] disabled:text-[#8A857C]"
               >
                 {DEVISE_CODES.map((d) => (
                   <option key={d} value={d}>
@@ -229,7 +229,7 @@ function FormulaireCaisse({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+            <label className="block text-xs font-semibold text-[#000000] mb-1">
               Solde d&apos;ouverture {caisseInitiale ? "(correction audité)" : ""}
             </label>
             <input
@@ -237,9 +237,9 @@ function FormulaireCaisse({
               onChange={(e) => setOuverture(e.target.value)}
               inputMode="decimal"
               placeholder="0"
-              className="w-full px-4 py-2.5 rounded-lg border border-[#8A8378]/25 text-sm focus:outline-none focus:border-[#C9A227]"
+              className="w-full px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm focus:outline-none focus:border-[#C9A227]"
             />
-            <p className="text-[10px] text-[#8A8378] mt-1">
+            <p className="text-[10px] text-[#8A857C] mt-1">
               Encaisse détenue par cette caisse avant la première écriture au
               journal. Toute correction est tracée (avant → après) dans le
               journal d&apos;audit.
@@ -247,7 +247,7 @@ function FormulaireCaisse({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+            <label className="block text-xs font-semibold text-[#000000] mb-1">
               Précisions (facultatif)
             </label>
             <input
@@ -255,7 +255,7 @@ function FormulaireCaisse({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Banque, n° de compte, responsable…"
               maxLength={300}
-              className="w-full px-4 py-2.5 rounded-lg border border-[#8A8378]/25 text-sm focus:outline-none focus:border-[#C9A227]"
+              className="w-full px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm focus:outline-none focus:border-[#C9A227]"
             />
           </div>
 
@@ -268,14 +268,14 @@ function FormulaireCaisse({
           <div className="flex gap-3 pt-2">
             <button
               onClick={onFermer}
-              className="flex-1 px-4 py-2.5 rounded-lg border border-[#8A8378]/25 text-sm font-medium text-[#1E0F2B] hover:bg-[#FAF6EF]"
+              className="flex-1 px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm font-medium text-[#000000] hover:bg-[#F0E9DE]"
             >
               Annuler
             </button>
             <button
               onClick={soumettre}
               disabled={envoi}
-              className="flex-1 px-4 py-2.5 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-sm font-bold hover:bg-[#3D1A54] disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 rounded-lg bg-[#000000] text-[#DDBE55] text-sm font-bold hover:bg-[#161513] disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {envoi && <Loader2 className="w-4 h-4 animate-spin" />}
               {caisseInitiale ? "Enregistrer" : "Créer la caisse"}
@@ -351,7 +351,7 @@ export default function TresorerieCaissePage() {
 
   if (chargement) {
     return (
-      <div className="flex items-center justify-center py-24 text-[#8A8378]">
+      <div className="flex items-center justify-center py-24 text-[#8A857C]">
         <Loader2 className="w-6 h-6 animate-spin" />
       </div>
     );
@@ -372,10 +372,10 @@ export default function TresorerieCaissePage() {
       {/* En-tête */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#000000]">
             Situation de caisse
           </h1>
-          <p className="text-sm text-[#8A8378] mt-1">
+          <p className="text-sm text-[#8A857C] mt-1">
             Multicaisse — soldes recalculés en direct depuis le journal et les
             soldes d&apos;ouverture : la caisse affichée est TOUJOURS la caisse
             réelle.
@@ -384,14 +384,14 @@ export default function TresorerieCaissePage() {
         <div className="flex items-center gap-2">
           <a
             href="/tresorerie/transactions"
-            className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#8A8378]/25 text-sm font-medium text-[#1E0F2B] hover:bg-white transition-colors"
+            className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#8A857C]/25 text-sm font-medium text-[#000000] hover:bg-white transition-colors"
           >
-            <ArrowLeftRight className="w-4 h-4 text-[#8C5FA8]" />
+            <ArrowLeftRight className="w-4 h-4 text-[#8A857C]" />
             Journal & transferts
           </a>
           <button
             onClick={() => setCreation(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-sm font-bold hover:bg-[#3D1A54] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#000000] text-[#DDBE55] text-sm font-bold hover:bg-[#161513] transition-colors"
           >
             <Plus className="w-4 h-4" />
             Nouvelle caisse
@@ -420,9 +420,9 @@ export default function TresorerieCaissePage() {
 
       {/* Première fois : aucune caisse */}
       {nbCaisses === 0 && (data?.nonAffecte.length || 0) === 0 && (
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 px-6 py-14 text-center">
-          <Wallet className="w-8 h-8 text-[#8A8378]/40 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378] max-w-md mx-auto">
+        <div className="bg-white rounded-xl border border-[#8A857C]/15 px-6 py-14 text-center">
+          <Wallet className="w-8 h-8 text-[#8A857C]/40 mx-auto mb-3" />
+          <p className="text-sm text-[#8A857C] max-w-md mx-auto">
             Aucun mouvement au journal et aucune caisse déclarée. Créez vos
             caisses (espèces, banque, mobile money…) avec leurs soldes
             d&apos;ouverture — la situation s&apos;établit ensuite à chaque
@@ -432,13 +432,13 @@ export default function TresorerieCaissePage() {
       )}
 
       {/* Onglets caisses / méthodes */}
-      <div className="flex gap-1 bg-[#FAF6EF] border border-[#8A8378]/15 rounded-xl p-1 w-fit">
+      <div className="flex gap-1 bg-[#F0E9DE] border border-[#8A857C]/15 rounded-xl p-1 w-fit">
         <button
           onClick={() => setOnglet("caisses")}
           className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
             onglet === "caisses"
-              ? "bg-[#2A0E3D] text-[#DDBE55]"
-              : "text-[#8A8378] hover:text-[#1E0F2B]"
+              ? "bg-[#000000] text-[#DDBE55]"
+              : "text-[#8A857C] hover:text-[#000000]"
           }`}
         >
           Par caisse ({nbCaisses})
@@ -447,8 +447,8 @@ export default function TresorerieCaissePage() {
           onClick={() => setOnglet("methodes")}
           className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
             onglet === "methodes"
-              ? "bg-[#2A0E3D] text-[#DDBE55]"
-              : "text-[#8A8378] hover:text-[#1E0F2B]"
+              ? "bg-[#000000] text-[#DDBE55]"
+              : "text-[#8A857C] hover:text-[#000000]"
           }`}
         >
           Par méthode
@@ -469,25 +469,25 @@ export default function TresorerieCaissePage() {
                     key={c.id}
                     className={`bg-white rounded-xl border ${
                       c.isActive
-                        ? "border-[#8A8378]/15"
-                        : "border-[#8A8378]/10 opacity-60"
+                        ? "border-[#8A857C]/15"
+                        : "border-[#8A857C]/10 opacity-60"
                     } p-5 relative overflow-hidden`}
                   >
                     {!c.isActive && (
-                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[#8A8378]/15 text-[#6B6459] text-[10px] font-bold">
+                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[#8A857C]/15 text-[#6B6459] text-[10px] font-bold">
                         Désactivée
                       </span>
                     )}
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-[#2A0E3D] flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-[#000000] flex items-center justify-center flex-shrink-0">
                           <Icone className="w-5 h-5 text-[#DDBE55]" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-[#1E0F2B] truncate">
+                          <p className="text-sm font-bold text-[#000000] truncate">
                             {c.name}
                           </p>
-                          <p className="text-[11px] text-[#8A8378]">
+                          <p className="text-[11px] text-[#8A857C]">
                             {libelleCaisseType(c.type)} · {c.currency}
                           </p>
                         </div>
@@ -495,7 +495,7 @@ export default function TresorerieCaissePage() {
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <button
                           onClick={() => setCaisseEditee(c)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#1E0F2B] hover:bg-[#FAF6EF]"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A857C] hover:text-[#000000] hover:bg-[#F0E9DE]"
                           aria-label={`Modifier ${c.name}`}
                         >
                           <Pencil className="w-3.5 h-3.5" />
@@ -503,7 +503,7 @@ export default function TresorerieCaissePage() {
                         <button
                           onClick={() => basculerActive(c)}
                           disabled={actionEnCours === c.id}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#B3452E] hover:bg-[#FAF6EF] disabled:opacity-40"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A857C] hover:text-[#B3452E] hover:bg-[#F0E9DE] disabled:opacity-40"
                           aria-label={
                             c.isActive ? `Désactiver ${c.name}` : `Réactiver ${c.name}`
                           }
@@ -518,15 +518,15 @@ export default function TresorerieCaissePage() {
                     </div>
 
                     <p
-                      className={`text-2xl font-bold ${positif ? "text-[#2A0E3D]" : "text-[#B3452E]"}`}
+                      className={`text-2xl font-bold ${positif ? "text-[#000000]" : "text-[#B3452E]"}`}
                     >
                       {formaterMontant(c.solde, c.currency)}
                     </p>
 
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-[11px] text-[#8A8378]">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-[11px] text-[#8A857C]">
                       <span>
                         Ouverture :{" "}
-                        <b className="text-[#1E0F2B]">
+                        <b className="text-[#000000]">
                           {formaterMontant(c.openingBalance, c.currency)}
                         </b>
                       </span>
@@ -540,20 +540,20 @@ export default function TresorerieCaissePage() {
                         − {formaterMontant(c.depenses, c.currency)} dépenses
                       </span>
                       {c.transfertsSortants > 0 && (
-                        <span className="text-[#6B4480]">
+                        <span className="text-[#6B675F]">
                           ↗ {formaterMontant(c.transfertsSortants, c.currency)}{" "}
                           transférés
                         </span>
                       )}
                       {c.transfertsEntrants > 0 && (
-                        <span className="text-[#6B4480]">
+                        <span className="text-[#6B675F]">
                           ↘ {formaterMontant(c.transfertsEntrants, c.currency)}{" "}
                           reçus
                         </span>
                       )}
                     </div>
                     {c.description && (
-                      <p className="text-[10px] text-[#8A8378]/80 mt-2 truncate">
+                      <p className="text-[10px] text-[#8A857C]/80 mt-2 truncate">
                         {c.description}
                       </p>
                     )}
@@ -566,20 +566,20 @@ export default function TresorerieCaissePage() {
           {/* Non affecté */}
           {data && data.nonAffecte.length > 0 && (
             <div>
-              <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-3 px-1">
+              <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-3 px-1">
                 Écritures non affectées (antérieures à la multicaisse)
               </h2>
-              <div className="bg-white rounded-xl border border-[#8A8378]/15 divide-y divide-[#8A8378]/10">
+              <div className="bg-white rounded-xl border border-[#8A857C]/15 divide-y divide-[#8A857C]/10">
                 {data.nonAffecte.map((n) => (
                   <div key={n.devise} className="flex items-center gap-4 px-5 py-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#FAF6EF] flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#F0E9DE] flex items-center justify-center flex-shrink-0">
                       <HelpCircle className="w-5 h-5 text-[#A3821C]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[#1E0F2B]">
+                      <p className="text-sm font-semibold text-[#000000]">
                         Non affecté · {n.devise}
                       </p>
-                      <p className="text-[11px] text-[#8A8378]">
+                      <p className="text-[11px] text-[#8A857C]">
                         {n.nbMouvements} écriture(s) saisies avant la
                         multicaisse — rattachez-les à une caisse par correction
                         (journal).
@@ -599,7 +599,7 @@ export default function TresorerieCaissePage() {
           {/* Consolidation par devise */}
           {data && data.consolide.length > 0 && (
             <div>
-              <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-3 px-1">
+              <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-3 px-1">
                 Consolidation par devise
               </h2>
               <div className="grid md:grid-cols-2 gap-3">
@@ -610,17 +610,17 @@ export default function TresorerieCaissePage() {
                   return (
                     <div
                       key={d.devise}
-                      className="bg-[#2A0E3D] rounded-xl border border-[#C9A227]/20 p-5 relative overflow-hidden"
+                      className="bg-[#000000] rounded-xl border border-[#C9A227]/20 p-5 relative overflow-hidden"
                     >
                       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <Landmark className="w-4 h-4 text-[#C9A227]" />
-                          <span className="text-sm font-bold text-[#FAF6EF]">
+                          <span className="text-sm font-bold text-[#F0E9DE]">
                             {deviseInfo?.libelle ?? d.devise}
                           </span>
                         </div>
-                        <span className="text-[10px] text-[#FAF6EF]/50">
+                        <span className="text-[10px] text-[#F0E9DE]/50">
                           {d.nbCaisses} caisse{d.nbCaisses > 1 ? "s" : ""}
                           {d.soldeNonAffecte !== 0 ? " + non affecté" : ""}
                         </span>
@@ -631,11 +631,11 @@ export default function TresorerieCaissePage() {
                         {formaterMontant(d.solde, d.devise)}
                       </p>
                       <div className="flex gap-4 mt-2 text-[11px]">
-                        <span className="text-[#FAF6EF]/70">
+                        <span className="text-[#F0E9DE]/70">
                           Caisses : {formaterMontant(d.soldeCaisses, d.devise)}
                         </span>
                         {d.soldeNonAffecte !== 0 && (
-                          <span className="text-[#FAF6EF]/50">
+                          <span className="text-[#F0E9DE]/50">
                             Non affecté : {formaterMontant(d.soldeNonAffecte, d.devise)}
                           </span>
                         )}
@@ -652,10 +652,10 @@ export default function TresorerieCaissePage() {
       {/* Par méthode (conservé V3.66) */}
       {onglet === "methodes" && data && data.methodes.length > 0 && (
         <div>
-          <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-3 px-1">
+          <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-3 px-1">
             Détail par méthode d&apos;encaissement
           </h2>
-          <div className="bg-white rounded-xl border border-[#8A8378]/15 divide-y divide-[#8A8378]/10">
+          <div className="bg-white rounded-xl border border-[#8A857C]/15 divide-y divide-[#8A857C]/10">
             {data.methodes
               .slice()
               .sort((a, b) => b.solde - a.solde)
@@ -667,17 +667,17 @@ export default function TresorerieCaissePage() {
                     key={`${m.devise}:${m.methode}`}
                     className="flex items-center gap-4 px-5 py-4"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-[#FAF6EF] flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#F0E9DE] flex items-center justify-center flex-shrink-0">
                       <Icone className="w-5 h-5 text-[#A3821C]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[#1E0F2B]">
+                      <p className="text-sm font-semibold text-[#000000]">
                         {libelleMethode(m.methode === "non_precise" ? null : m.methode) ===
                         "Non précisé"
                           ? "Méthode non précisée"
                           : libelleMethode(m.methode)}
                       </p>
-                      <p className="text-[11px] text-[#8A8378]">
+                      <p className="text-[11px] text-[#8A857C]">
                         {formaterMontant(m.recettes, m.devise)} encaissés ·{" "}
                         {formaterMontant(m.depenses, m.devise)} décaissés
                       </p>
@@ -688,7 +688,7 @@ export default function TresorerieCaissePage() {
                       >
                         {formaterMontant(m.solde, m.devise)}
                       </p>
-                      <p className="text-[10px] text-[#8A8378]/60">{m.devise}</p>
+                      <p className="text-[10px] text-[#8A857C]/60">{m.devise}</p>
                     </div>
                   </div>
                 );
@@ -698,9 +698,9 @@ export default function TresorerieCaissePage() {
       )}
 
       {/* Note traçabilité */}
-      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#FAF6EF] border border-[#8A8378]/15">
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#F0E9DE] border border-[#8A857C]/15">
         <CheckCircle2 className="w-4 h-4 text-[#5B7052] flex-shrink-0 mt-0.5" />
-        <p className="text-[11px] text-[#8A8378] leading-relaxed">
+        <p className="text-[11px] text-[#8A857C] leading-relaxed">
           Traçabilité multicaisse : chaque écriture porte sa caisse, les
           transferts sont internes (sortie d&apos;une caisse = entrée dans une
           autre), les soldes d&apos;ouverture et leurs corrections sont tracés

@@ -98,7 +98,7 @@ export function UpcomingLiveFloat() {
         />
 
         {/* Carte */}
-        <div className="relative bg-[#1A0826]/80 backdrop-blur-md rounded-2xl overflow-hidden border border-[#C9A227]/30 shadow-2xl w-64 transition-all group-hover:scale-105">
+        <div className="relative bg-[#000000]/80 backdrop-blur-md rounded-2xl overflow-hidden border border-[#C9A227]/30 shadow-2xl w-64 transition-all group-hover:scale-105">
           {/* Miniature */}
           <div className="relative aspect-video overflow-hidden">
             {/* ⭐ V3.28 — <img> brut -> next/image : miniature R2/YouTube
@@ -111,7 +111,7 @@ export function UpcomingLiveFloat() {
               className="object-cover"
             />
             {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A0826] via-[#1A0826]/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/20 to-transparent" />
 
             {/* Badge en HAUT: icône Radio */}
             {isLive ? (
@@ -164,7 +164,7 @@ export function UpcomingLiveFloat() {
           </div>
 
           {/* Barre avec statut + action */}
-          <div className="flex items-center justify-between px-3 py-2 bg-[#1A0826]">
+          <div className="flex items-center justify-between px-3 py-2 bg-[#000000]">
             {isLive ? (
               <>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-600/20 border border-green-500/30 text-[10px] font-bold text-green-400">
@@ -182,7 +182,7 @@ export function UpcomingLiveFloat() {
                   <Radio className="w-2.5 h-2.5" />
                   LIVE À VENIR
                 </span>
-                <div className="flex-shrink-0 px-3 py-1 rounded-full bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold flex items-center gap-1">
+                <div className="flex-shrink-0 px-3 py-1 rounded-full bg-[#C9A227] text-[#000000] text-[10px] font-bold flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5" />
                   {countdown}
                 </div>
@@ -192,7 +192,7 @@ export function UpcomingLiveFloat() {
 
           {/* Compteur de lives si plusieurs */}
           {lives.length > 1 && (
-            <div className="px-3 py-1 bg-[#1A0826]/50 text-center">
+            <div className="px-3 py-1 bg-[#000000]/50 text-center">
               <span className="text-[9px] text-white/40">
                 {currentIndex + 1} / {lives.length} lives programmés
               </span>

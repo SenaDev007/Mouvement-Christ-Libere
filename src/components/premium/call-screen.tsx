@@ -174,7 +174,7 @@ export function CallScreen() {
 
   // === ÉTAT CONNECTING / CONNECTED / ENDED : Interface d'appel ===
   return (
-    <div className="fixed inset-0 z-50 bg-[#1A0826] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-[#000000] flex flex-col">
       {/* Vidéo principale (si appel vidéo) */}
       <div className="flex-1 relative flex items-center justify-center overflow-hidden">
         {callType === "video" ? (
@@ -191,16 +191,16 @@ export function CallScreen() {
             <motion.div
               animate={{ scale: status === "connected" ? [1, 1.05, 1] : 1 }}
               transition={{ duration: 2, repeat: status === "connected" ? Infinity : 0 }}
-              className="w-32 h-32 rounded-full bg-gradient-to-br from-[#C9A227]/20 to-[#8C5FA8]/20 border-2 border-[#C9A227] flex items-center justify-center mb-6"
+              className="w-32 h-32 rounded-full bg-gradient-to-br from-[#C9A227]/20 to-[#8A857C]/20 border-2 border-[#C9A227] flex items-center justify-center mb-6"
             >
               <span className="font-serif text-4xl font-semibold text-[#C9A227]">
                 {selectedContact?.charAt(0).toUpperCase()}
               </span>
             </motion.div>
-            <h2 className="font-serif text-2xl font-semibold text-[#FAF6EF] mb-2">
+            <h2 className="font-serif text-2xl font-semibold text-[#F0E9DE] mb-2">
               {selectedContact}
             </h2>
-            <p className="text-sm text-[#FAF6EF]/60">
+            <p className="text-sm text-[#F0E9DE]/60">
               {status === "connecting" && "Connexion en cours..."}
               {status === "connected" && formatDuration(callDuration)}
               {status === "ended" && "Appel terminé"}
@@ -229,14 +229,14 @@ export function CallScreen() {
 
         {/* Durée en haut à droite */}
         {status === "connected" && (
-          <div className="absolute top-6 right-6 text-[#FAF6EF]">
+          <div className="absolute top-6 right-6 text-[#F0E9DE]">
             <span className="font-serif text-2xl font-semibold">{formatDuration(callDuration)}</span>
           </div>
         )}
       </div>
 
       {/* Contrôles */}
-      <div className="p-8 flex items-center justify-center gap-4 bg-[#1A0826]/95 backdrop-blur-md border-t border-[#C9A227]/10">
+      <div className="p-8 flex items-center justify-center gap-4 bg-[#000000]/95 backdrop-blur-md border-t border-[#C9A227]/10">
         <CallButton
           active={isAudioEnabled}
           onClick={toggleAudio}
@@ -273,7 +273,7 @@ export function CallScreen() {
         <button
           onClick={endCall}
           disabled={status === "ended"}
-          className="ml-4 w-16 h-16 rounded-full bg-state-danger text-[#FAF6EF] flex items-center justify-center hover:bg-state-danger/90 transition-colors disabled:opacity-50"
+          className="ml-4 w-16 h-16 rounded-full bg-state-danger text-[#F0E9DE] flex items-center justify-center hover:bg-state-danger/90 transition-colors disabled:opacity-50"
           aria-label="Raccrocher"
         >
           <PhoneOff className="w-6 h-6" />
@@ -307,7 +307,7 @@ function CallButton({
       className={cn(
         "w-14 h-14 rounded-full flex items-center justify-center transition-colors",
         active
-          ? "bg-[#3D1A54] text-[#FAF6EF] hover:bg-[#2A0E3D]"
+          ? "bg-[#161513] text-[#F0E9DE] hover:bg-[#000000]"
           : "bg-state-danger/20 text-state-danger border border-state-danger/40",
         disabled && "opacity-50 cursor-not-allowed"
       )}
@@ -333,10 +333,10 @@ function CallContactSelector({
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
-        <h2 className="font-serif text-2xl font-semibold text-[#1E0F2B] mb-2">
+        <h2 className="font-serif text-2xl font-semibold text-[#000000] mb-2">
           Démarrer un appel
         </h2>
-        <p className="text-sm text-[#8A8378]">
+        <p className="text-sm text-[#8A857C]">
           Choisissez un contact et le type d'appel. Les appels sont chiffrés de bout en bout.
         </p>
       </div>
@@ -358,12 +358,12 @@ function CallContactSelector({
                   </span>
                 </div>
                 {contact.available && (
-                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-state-success border-2 border-[#FAF6EF]" />
+                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-state-success border-2 border-[#F0E9DE]" />
                 )}
               </div>
               <div>
-                <p className="font-medium text-[#1E0F2B]">{contact.name}</p>
-                <p className="text-xs text-[#8A8378]">{contact.role}</p>
+                <p className="font-medium text-[#000000]">{contact.name}</p>
+                <p className="text-xs text-[#8A857C]">{contact.role}</p>
               </div>
             </div>
 
@@ -371,7 +371,7 @@ function CallContactSelector({
               <button
                 onClick={() => contact.available && onSelect("audio", contact.name)}
                 disabled={!contact.available}
-                className="w-10 h-10 rounded-full bg-[#2A0E3D]/10 text-[#2A0E3D] flex items-center justify-center hover:bg-[#2A0E3D] hover:text-[#FAF6EF] transition-colors disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-full bg-[#000000]/10 text-[#000000] flex items-center justify-center hover:bg-[#000000] hover:text-[#F0E9DE] transition-colors disabled:cursor-not-allowed"
                 aria-label="Appel audio"
                 title="Appel audio"
               >
@@ -380,7 +380,7 @@ function CallContactSelector({
               <button
                 onClick={() => contact.available && onSelect("video", contact.name)}
                 disabled={!contact.available}
-                className="w-10 h-10 rounded-full bg-[#2A0E3D]/10 text-[#2A0E3D] flex items-center justify-center hover:bg-[#2A0E3D] hover:text-[#FAF6EF] transition-colors disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-full bg-[#000000]/10 text-[#000000] flex items-center justify-center hover:bg-[#000000] hover:text-[#F0E9DE] transition-colors disabled:cursor-not-allowed"
                 aria-label="Appel vidéo"
                 title="Appel vidéo"
               >
@@ -391,8 +391,8 @@ function CallContactSelector({
         ))}
       </div>
 
-      <div className="mt-6 p-4 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-2xl">
-        <p className="text-xs text-[#8A8378] leading-relaxed">
+      <div className="mt-6 p-4 bg-[#000000]/5 border border-[#C9A227]/20 rounded-2xl">
+        <p className="text-xs text-[#8A857C] leading-relaxed">
           <AlertCircle className="w-3.5 h-3.5 inline mr-1.5 text-[#C9A227]" />
           Les appels sont enregistrés dans votre historique. En cas d'indisponibilité,
           le contact recevra une notification d'appel manqué.

@@ -108,7 +108,7 @@ export function calculerEvenementsShofar(maintenant: Date = new Date()): Eveneme
       type: "shabbat",
       titre: "Shabbat",
       titreHebreu: "שַׁבָּת",
-      couleur: "#2A0E3D",
+      couleur: "#000000",
       dateBiblique: null,
       dateGregorienne: ceSamedi.toISOString(),
       entree: entree.toISOString(),

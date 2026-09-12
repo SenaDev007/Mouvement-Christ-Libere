@@ -114,12 +114,12 @@ export function CalendarView({ events }: CalendarViewProps) {
     <div className="grid lg:grid-cols-3 gap-8">
       {/* Calendrier (2/3) */}
       <div className="lg:col-span-2">
-        <div className="bg-[#FAF6EF] border border-[#8A8378]/20 rounded-2xl overflow-hidden">
+        <div className="bg-[#F0E9DE] border border-[#8A857C]/20 rounded-2xl overflow-hidden">
           {/* En-tête navigation mois */}
-          <div className="flex items-center justify-between p-5 border-b border-[#8A8378]/15 bg-[#2A0E3D] text-[#FAF6EF]">
+          <div className="flex items-center justify-between p-5 border-b border-[#8A857C]/15 bg-[#000000] text-[#F0E9DE]">
             <button
               onClick={previousMonth}
-              className="p-2 rounded hover:bg-[#3D1A54]/40 transition-colors"
+              className="p-2 rounded hover:bg-[#161513]/40 transition-colors"
               aria-label="Mois précédent"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -134,7 +134,7 @@ export function CalendarView({ events }: CalendarViewProps) {
             </div>
             <button
               onClick={nextMonth}
-              className="p-2 rounded hover:bg-[#3D1A54]/40 transition-colors"
+              className="p-2 rounded hover:bg-[#161513]/40 transition-colors"
               aria-label="Mois suivant"
             >
               <ChevronRight className="w-5 h-5" />
@@ -142,13 +142,13 @@ export function CalendarView({ events }: CalendarViewProps) {
           </div>
 
           {/* Jours de la semaine */}
-          <div className="grid grid-cols-7 border-b border-[#8A8378]/15">
+          <div className="grid grid-cols-7 border-b border-[#8A857C]/15">
             {DAYS_FR.map((day) => (
               <div
                 key={day}
                 className={cn(
                   "py-2.5 text-center text-[10px] uppercase tracking-[0.18em] font-semibold",
-                  day === "Sam" ? "text-[#2A0E3D] bg-[#2A0E3D]/5" : "text-[#8A8378]"
+                  day === "Sam" ? "text-[#000000] bg-[#000000]/5" : "text-[#8A857C]"
                 )}
               >
                 {day}
@@ -162,9 +162,9 @@ export function CalendarView({ events }: CalendarViewProps) {
               <div
                 key={i}
                 className={cn(
-                  "min-h-[80px] md:min-h-[100px] p-1.5 border-r border-b border-[#8A8378]/10 last:border-r-0",
-                  !day.date && "bg-[#8A8378]/5",
-                  day.date && day.date.getDay() === 6 && "bg-[#2A0E3D]/[0.03]" // shabbat
+                  "min-h-[80px] md:min-h-[100px] p-1.5 border-r border-b border-[#8A857C]/10 last:border-r-0",
+                  !day.date && "bg-[#8A857C]/5",
+                  day.date && day.date.getDay() === 6 && "bg-[#000000]/[0.03]" // shabbat
                 )}
               >
                 {day.date && (
@@ -173,10 +173,10 @@ export function CalendarView({ events }: CalendarViewProps) {
                       className={cn(
                         "text-xs font-semibold mb-1 inline-flex items-center justify-center w-6 h-6 rounded-full",
                         isToday(day.date)
-                          ? "bg-[#C9A227] text-[#1E0F2B]"
+                          ? "bg-[#C9A227] text-[#000000]"
                           : day.date.getDay() === 6
-                            ? "text-[#2A0E3D]"
-                            : "text-[#1E0F2B]"
+                            ? "text-[#000000]"
+                            : "text-[#000000]"
                       )}
                     >
                       {day.date.getDate()}
@@ -196,7 +196,7 @@ export function CalendarView({ events }: CalendarViewProps) {
                         </button>
                       ))}
                       {day.events.length > 2 && (
-                        <p className="text-[9px] text-[#8A8378] px-1.5">
+                        <p className="text-[9px] text-[#8A857C] px-1.5">
                           +{day.events.length - 2} autres
                         </p>
                       )}
@@ -209,13 +209,13 @@ export function CalendarView({ events }: CalendarViewProps) {
         </div>
 
         {/* Légende */}
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-[#8A8378]">
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-[#8A857C]">
           <span className="inline-flex items-center gap-1.5">
             <span className="w-3 h-3 rounded" style={{ backgroundColor: "#C9A227" }} />
             Fête de printemps
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded" style={{ backgroundColor: "#8C5FA8" }} />
+            <span className="w-3 h-3 rounded" style={{ backgroundColor: "#8A857C" }} />
             Fête d'automne
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -232,13 +232,13 @@ export function CalendarView({ events }: CalendarViewProps) {
       {/* Sidebar : événements du mois + options */}
       <div className="space-y-6">
         {/* Événements du mois */}
-        <div className="bg-[#FAF6EF] border border-[#8A8378]/20 rounded-2xl p-5">
-          <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-4 flex items-center gap-2">
+        <div className="bg-[#F0E9DE] border border-[#8A857C]/20 rounded-2xl p-5">
+          <h3 className="font-serif text-lg font-semibold text-[#000000] mb-4 flex items-center gap-2">
             <CalendarIcon className="w-4 h-4 text-[#C9A227]" />
             Événements de {MONTHS_FR[month]}
           </h3>
           {monthEvents.length === 0 ? (
-            <p className="text-sm text-[#8A8378] italic">
+            <p className="text-sm text-[#8A857C] italic">
               Aucune fête biblique ce mois-ci.
             </p>
           ) : (
@@ -247,7 +247,7 @@ export function CalendarView({ events }: CalendarViewProps) {
                 <button
                   key={event.id}
                   onClick={() => setSelectedEvent(event)}
-                  className="block w-full text-left p-3 rounded-2xl border border-[#8A8378]/15 hover:border-[#C9A227]/40 hover:bg-[#C9A227]/5 transition-all"
+                  className="block w-full text-left p-3 rounded-2xl border border-[#8A857C]/15 hover:border-[#FF7A1A]/40 hover:bg-[#FF7A1A]/5 transition-all"
                 >
                   <div className="flex items-start gap-3">
                     <div
@@ -255,15 +255,15 @@ export function CalendarView({ events }: CalendarViewProps) {
                       style={{ backgroundColor: event.color }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-serif text-sm font-semibold text-[#1E0F2B]">
+                      <p className="font-serif text-sm font-semibold text-[#000000]">
                         {event.nameFr}
                       </p>
                       {event.nameHe && (
-                        <p className="text-xs text-[#8A8378] font-serif" dir="rtl">
+                        <p className="text-xs text-[#8A857C] font-serif" dir="rtl">
                           {event.nameHe}
                         </p>
                       )}
-                      <p className="text-[11px] text-[#8A8378] mt-1">
+                      <p className="text-[11px] text-[#8A857C] mt-1">
                         {new Date(event.startDate).toLocaleDateString("fr-FR", {
                           day: "numeric",
                           month: "short",
@@ -287,20 +287,20 @@ export function CalendarView({ events }: CalendarViewProps) {
         </div>
 
         {/* Option repos shabbatique */}
-        <div className="bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-2xl p-5">
+        <div className="bg-[#000000]/5 border border-[#C9A227]/20 rounded-2xl p-5">
           <div className="flex items-start gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded bg-[#2A0E3D]/10 flex-shrink-0">
+            <div className="flex items-center justify-center w-10 h-10 rounded bg-[#000000]/10 flex-shrink-0">
               {shabbatRest ? (
-                <Moon className="w-5 h-5 text-[#2A0E3D]" />
+                <Moon className="w-5 h-5 text-[#000000]" />
               ) : (
                 <Sun className="w-5 h-5 text-[#C9A227]" />
               )}
             </div>
             <div className="flex-1">
-              <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-1">
+              <h3 className="font-serif text-base font-semibold text-[#000000] mb-1">
                 Repos shabbatique
               </h3>
-              <p className="text-xs text-[#8A8378] leading-relaxed mb-3">
+              <p className="text-xs text-[#8A857C] leading-relaxed mb-3">
                 Suspendre les notifications du vendredi soir au samedi soir, pour sanctifier le shabbat.
               </p>
               <label className="inline-flex items-center gap-2 cursor-pointer">
@@ -308,17 +308,17 @@ export function CalendarView({ events }: CalendarViewProps) {
                   onClick={() => setShabbatRest(!shabbatRest)}
                   className={cn(
                     "relative w-10 h-5 rounded-full transition-colors",
-                    shabbatRest ? "bg-[#C9A227]" : "bg-[#8A8378]/30"
+                    shabbatRest ? "bg-[#C9A227]" : "bg-[#8A857C]/30"
                   )}
                 >
                   <span
                     className={cn(
-                      "absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-[#FAF6EF] transition-transform",
+                      "absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-[#F0E9DE] transition-transform",
                       shabbatRest && "translate-x-5"
                     )}
                   />
                 </button>
-                <span className="text-xs font-medium text-[#1E0F2B]">
+                <span className="text-xs font-medium text-[#000000]">
                   {shabbatRest ? "Activé" : "Désactivé"}
                 </span>
               </label>
@@ -337,24 +337,24 @@ export function CalendarView({ events }: CalendarViewProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/60 backdrop-blur-sm"
             onClick={() => setSelectedEvent(null)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#FAF6EF] rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden"
+              className="bg-[#F0E9DE] rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* En-tête coloré */}
               <div
-                className="p-6 text-[#FAF6EF] relative"
+                className="p-6 text-[#F0E9DE] relative"
                 style={{ backgroundColor: selectedEvent.color }}
               >
                 <button
                   onClick={() => setSelectedEvent(null)}
-                  className="absolute top-4 right-4 p-1.5 rounded hover:bg-[#FAF6EF]/20 transition-colors"
+                  className="absolute top-4 right-4 p-1.5 rounded hover:bg-[#F0E9DE]/20 transition-colors"
                   aria-label="Fermer"
                 >
                   <X className="w-5 h-5" />
@@ -377,7 +377,7 @@ export function CalendarView({ events }: CalendarViewProps) {
 
               {/* Contenu */}
               <div className="p-6 overflow-y-auto">
-                <div className="flex items-center gap-2 mb-4 text-sm text-[#8A8378]">
+                <div className="flex items-center gap-2 mb-4 text-sm text-[#8A857C]">
                   <CalendarIcon className="w-4 h-4 text-[#C9A227]" />
                   {new Date(selectedEvent.startDate).toLocaleDateString("fr-FR", {
                     weekday: "long",
@@ -398,11 +398,11 @@ export function CalendarView({ events }: CalendarViewProps) {
                   )}
                 </div>
 
-                <p className="text-sm text-[#1E0F2B]/80 leading-relaxed mb-6">
+                <p className="text-sm text-[#000000]/80 leading-relaxed mb-6">
                   {selectedEvent.description}
                 </p>
 
-                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors">
+                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#C9A227] text-[#000000] text-xs font-semibold hover:bg-[#FF7A1A] transition-colors">
                   <Bell className="w-3.5 h-3.5" />
                   Activer les rappels pour cette fête
                 </button>
@@ -429,10 +429,10 @@ function UpcomingFeast({ events }: { events: LiturgicalEvent[] }) {
 
   return (
     <div
-      className="rounded-2xl p-5 text-[#FAF6EF] relative overflow-hidden"
+      className="rounded-2xl p-5 text-[#F0E9DE] relative overflow-hidden"
       style={{ backgroundColor: upcoming.color }}
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-[#FAF6EF]/10 blur-2xl rounded-full pointer-events-none" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#F0E9DE]/10 blur-2xl rounded-full pointer-events-none" />
       <div className="relative">
         <p className="text-[10px] uppercase tracking-[0.2em] font-semibold mb-2 opacity-80">
           Prochaine fête

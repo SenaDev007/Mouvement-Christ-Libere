@@ -55,10 +55,10 @@ export default async function AdminDashboardPage() {
   // Cards principales (KPIs)
   const kpiCards = [
     { label: "Serviteurs", value: stats.servants, icon: Users, href: "/admin/servants", color: "from-[#C9A227] to-[#A3821C]", bg: "bg-[#C9A227]/10" },
-    { label: "Témoignages", value: stats.testimonies, icon: FileText, href: "/admin/testimonies", color: "from-[#8C5FA8] to-[#6B4480]", bg: "bg-[#8C5FA8]/10", badge: stats.pendingTestimonies > 0 ? `${stats.pendingTestimonies} à discerner` : null },
+    { label: "Témoignages", value: stats.testimonies, icon: FileText, href: "/admin/testimonies", color: "from-[#8A857C] to-[#6B675F]", bg: "bg-[#8A857C]/10", badge: stats.pendingTestimonies > 0 ? `${stats.pendingTestimonies} à discerner` : null },
     { label: "Enseignements", value: stats.teachings, icon: BookOpen, href: "/admin/teachings", color: "from-[#5B7052] to-[#3F5039]", bg: "bg-[#5B7052]/10" },
     { label: "Vidéos", value: stats.videos, icon: Video, href: "/admin/videos", color: "from-[#C9A227] to-[#A3821C]", bg: "bg-[#C9A227]/10", sub: `${stats.totalViews.toLocaleString("fr-FR")} vues` },
-    { label: "Dons", value: stats.donations, icon: Heart, href: "/admin/donations", color: "from-[#8C5FA8] to-[#6B4480]", bg: "bg-[#8C5FA8]/10", sub: `${stats.totalDonationsAmount.toFixed(0)} €` },
+    { label: "Dons", value: stats.donations, icon: Heart, href: "/admin/donations", color: "from-[#8A857C] to-[#6B675F]", bg: "bg-[#8A857C]/10", sub: `${stats.totalDonationsAmount.toFixed(0)} €` },
     { label: "Demandes contact", value: stats.contactRequests, icon: Inbox, href: "/admin/contact-requests", color: "from-[#5B7052] to-[#3F5039]", bg: "bg-[#5B7052]/10", badge: stats.pendingContacts > 0 ? `${stats.pendingContacts} en attente` : null },
   ];
 
@@ -72,9 +72,9 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header avec gradient */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2A0E3D] via-[#3D1A54] to-[#2A0E3D] p-6 md:p-8 text-white">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#000000] via-[#161513] to-[#000000] p-6 md:p-8 text-white">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#8C5FA8]/10 blur-3xl rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#8A857C]/10 blur-3xl rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
         <div className="relative z-10 flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-[#DDBE55]/80 font-semibold mb-2">
@@ -96,7 +96,7 @@ export default async function AdminDashboardPage() {
 
       {/* KPI Cards principales */}
       <div>
-        <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-3 px-1">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-3 px-1">
           Indicateurs clés
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -106,22 +106,22 @@ export default async function AdminDashboardPage() {
               <Link
                 key={stat.label}
                 href={stat.href}
-                className="group relative bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:border-[#C9A227]/40 hover:shadow-lg transition-all overflow-hidden"
+                className="group relative bg-white rounded-xl border border-[#8A857C]/15 p-4 hover:border-[#FF7A1A]/40 hover:shadow-lg transition-all overflow-hidden"
               >
                 {/* Accent bar top */}
                 <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.color} opacity-80`} />
 
                 <div className="flex items-start justify-between mb-3">
                   <div className={`p-2 rounded-lg ${stat.bg}`}>
-                    <Icon className="w-4 h-4 text-[#1E0F2B]" />
+                    <Icon className="w-4 h-4 text-[#000000]" />
                   </div>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-[#8A8378]/40 group-hover:text-[#C9A227] transition-colors" />
+                  <ArrowUpRight className="w-3.5 h-3.5 text-[#8A857C]/40 group-hover:text-[#FF7A1A] transition-colors" />
                 </div>
 
-                <div className="text-2xl font-bold text-[#1E0F2B] leading-tight">
+                <div className="text-2xl font-bold text-[#000000] leading-tight">
                   {stat.value}
                 </div>
-                <div className="text-[11px] text-[#8A8378] mt-0.5">
+                <div className="text-[11px] text-[#8A857C] mt-0.5">
                   {stat.label}
                 </div>
                 {stat.sub && (
@@ -148,14 +148,14 @@ export default async function AdminDashboardPage() {
             <Link
               key={stat.label}
               href={stat.href}
-              className="group flex items-center gap-3 bg-white rounded-xl border border-[#8A8378]/15 p-3 hover:border-[#C9A227]/40 transition-colors"
+              className="group flex items-center gap-3 bg-white rounded-xl border border-[#8A857C]/15 p-3 hover:border-[#FF7A1A]/40 transition-colors"
             >
-              <div className="p-2 rounded-lg bg-[#2A0E3D]/5">
-                <Icon className="w-4 h-4 text-[#2A0E3D]" />
+              <div className="p-2 rounded-lg bg-[#000000]/5">
+                <Icon className="w-4 h-4 text-[#000000]" />
               </div>
               <div>
-                <div className="text-lg font-bold text-[#1E0F2B] leading-tight">{stat.value}</div>
-                <div className="text-[10px] text-[#8A8378]">{stat.label}</div>
+                <div className="text-lg font-bold text-[#000000] leading-tight">{stat.value}</div>
+                <div className="text-[10px] text-[#8A857C]">{stat.label}</div>
               </div>
             </Link>
           );
@@ -165,65 +165,65 @@ export default async function AdminDashboardPage() {
       {/* Section serviteurs (Pam & Kongo) */}
       <div className="grid md:grid-cols-2 gap-4">
         {stats.pam && (
-          <div className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-[#C9A227]/10 to-transparent border-b border-[#8A8378]/10">
+          <div className="bg-white rounded-2xl border border-[#8A857C]/15 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-[#C9A227]/10 to-transparent border-b border-[#8A857C]/10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#C9A227]/20 flex items-center justify-center">
                   <Crown className="w-5 h-5 text-[#C9A227]" />
                 </div>
                 <div>
-                  <div className="font-bold text-[#1E0F2B]">{stats.pam.shortName}</div>
-                  <div className="text-xs text-[#8A8378]">{stats.pam.role}</div>
+                  <div className="font-bold text-[#000000]">{stats.pam.shortName}</div>
+                  <div className="text-xs text-[#8A857C]">{stats.pam.role}</div>
                 </div>
               </div>
               <Link href="/admin/servants" className="text-xs text-[#C9A227] font-semibold hover:underline">
                 Gérer →
               </Link>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-[#8A8378]/10">
-              <Link href="/admin/videos?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
-                <div className="text-xl font-bold text-[#1E0F2B]">{stats.pam._count.videos}</div>
-                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Vidéos</div>
+            <div className="grid grid-cols-3 divide-x divide-[#8A857C]/10">
+              <Link href="/admin/videos?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#F0E9DE] transition-colors">
+                <div className="text-xl font-bold text-[#000000]">{stats.pam._count.videos}</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A857C] mt-0.5">Vidéos</div>
               </Link>
-              <Link href="/admin/testimonies?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
-                <div className="text-xl font-bold text-[#1E0F2B]">{stats.pam._count.testimonies}</div>
-                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Témoignages</div>
+              <Link href="/admin/testimonies?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#F0E9DE] transition-colors">
+                <div className="text-xl font-bold text-[#000000]">{stats.pam._count.testimonies}</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A857C] mt-0.5">Témoignages</div>
               </Link>
-              <Link href="/admin/teachings?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
-                <div className="text-xl font-bold text-[#1E0F2B]">{stats.pam._count.teachings}</div>
-                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Enseignements</div>
+              <Link href="/admin/teachings?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#F0E9DE] transition-colors">
+                <div className="text-xl font-bold text-[#000000]">{stats.pam._count.teachings}</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A857C] mt-0.5">Enseignements</div>
               </Link>
             </div>
           </div>
         )}
         {stats.kongo && (
-          <div className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-[#8C5FA8]/10 to-transparent border-b border-[#8A8378]/10">
+          <div className="bg-white rounded-2xl border border-[#8A857C]/15 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-[#8A857C]/10 to-transparent border-b border-[#8A857C]/10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#8C5FA8]/20 flex items-center justify-center">
-                  <Crown className="w-5 h-5 text-[#8C5FA8]" />
+                <div className="w-10 h-10 rounded-full bg-[#8A857C]/20 flex items-center justify-center">
+                  <Crown className="w-5 h-5 text-[#8A857C]" />
                 </div>
                 <div>
-                  <div className="font-bold text-[#1E0F2B]">{stats.kongo.shortName}</div>
-                  <div className="text-xs text-[#8A8378]">{stats.kongo.role}</div>
+                  <div className="font-bold text-[#000000]">{stats.kongo.shortName}</div>
+                  <div className="text-xs text-[#8A857C]">{stats.kongo.role}</div>
                 </div>
               </div>
-              <Link href="/admin/servants" className="text-xs text-[#8C5FA8] font-semibold hover:underline">
+              <Link href="/admin/servants" className="text-xs text-[#8A857C] font-semibold hover:underline">
                 Gérer →
               </Link>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-[#8A8378]/10">
-              <Link href="/admin/videos?servant=kongo" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
-                <div className="text-xl font-bold text-[#1E0F2B]">{stats.kongo._count.videos}</div>
-                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Vidéos</div>
+            <div className="grid grid-cols-3 divide-x divide-[#8A857C]/10">
+              <Link href="/admin/videos?servant=kongo" className="p-3 md:p-4 text-center hover:bg-[#F0E9DE] transition-colors">
+                <div className="text-xl font-bold text-[#000000]">{stats.kongo._count.videos}</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A857C] mt-0.5">Vidéos</div>
               </Link>
-              <Link href="/admin/testimonies?servant=kongo" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
-                <div className="text-xl font-bold text-[#1E0F2B]">{stats.kongo._count.testimonies}</div>
-                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Témoignages</div>
+              <Link href="/admin/testimonies?servant=kongo" className="p-3 md:p-4 text-center hover:bg-[#F0E9DE] transition-colors">
+                <div className="text-xl font-bold text-[#000000]">{stats.kongo._count.testimonies}</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A857C] mt-0.5">Témoignages</div>
               </Link>
-              <Link href="/admin/teachings?servant=kongo" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
-                <div className="text-xl font-bold text-[#1E0F2B]">{stats.kongo._count.teachings}</div>
-                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Enseignements</div>
+              <Link href="/admin/teachings?servant=kongo" className="p-3 md:p-4 text-center hover:bg-[#F0E9DE] transition-colors">
+                <div className="text-xl font-bold text-[#000000]">{stats.kongo._count.teachings}</div>
+                <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A857C] mt-0.5">Enseignements</div>
               </Link>
             </div>
           </div>
@@ -233,9 +233,9 @@ export default async function AdminDashboardPage() {
       {/* Activité récente : 2 colonnes */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Témoignages récents */}
-        <div className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#8A8378]/10">
-            <h2 className="font-bold text-[#1E0F2B] flex items-center gap-2">
+        <div className="bg-white rounded-2xl border border-[#8A857C]/15 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#8A857C]/10">
+            <h2 className="font-bold text-[#000000] flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#C9A227]" />
               Témoignages récents
             </h2>
@@ -243,15 +243,15 @@ export default async function AdminDashboardPage() {
               Tout voir →
             </Link>
           </div>
-          <div className="divide-y divide-[#8A8378]/10">
+          <div className="divide-y divide-[#8A857C]/10">
             {stats.recentTestimonies.length === 0 ? (
-              <p className="text-sm text-[#8A8378] italic p-5 text-center">Aucun témoignage.</p>
+              <p className="text-sm text-[#8A857C] italic p-5 text-center">Aucun témoignage.</p>
             ) : (
               stats.recentTestimonies.map((t) => (
-                <div key={t.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#FAF6EF] transition-colors">
+                <div key={t.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#F0E9DE] transition-colors">
                   <div className="min-w-0 flex-1 mr-3">
-                    <p className="text-sm font-medium text-[#1E0F2B] truncate">{t.title}</p>
-                    <p className="text-xs text-[#8A8378] flex items-center gap-1.5 mt-0.5">
+                    <p className="text-sm font-medium text-[#000000] truncate">{t.title}</p>
+                    <p className="text-xs text-[#8A857C] flex items-center gap-1.5 mt-0.5">
                       <span className="font-semibold">{t.servant.shortName}</span>
                       <span>·</span>
                       <Clock className="w-3 h-3" />
@@ -272,28 +272,28 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Demandes de contact récentes */}
-        <div className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#8A8378]/10">
-            <h2 className="font-bold text-[#1E0F2B] flex items-center gap-2">
-              <Inbox className="w-4 h-4 text-[#8C5FA8]" />
+        <div className="bg-white rounded-2xl border border-[#8A857C]/15 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#8A857C]/10">
+            <h2 className="font-bold text-[#000000] flex items-center gap-2">
+              <Inbox className="w-4 h-4 text-[#8A857C]" />
               Demandes de contact
             </h2>
-            <Link href="/admin/contact-requests" className="text-xs font-semibold text-[#8C5FA8] hover:underline">
+            <Link href="/admin/contact-requests" className="text-xs font-semibold text-[#8A857C] hover:underline">
               Tout voir →
             </Link>
           </div>
-          <div className="divide-y divide-[#8A8378]/10">
+          <div className="divide-y divide-[#8A857C]/10">
             {stats.recentContactRequests.length === 0 ? (
-              <p className="text-sm text-[#8A8378] italic p-5 text-center">Aucune demande.</p>
+              <p className="text-sm text-[#8A857C] italic p-5 text-center">Aucune demande.</p>
             ) : (
               stats.recentContactRequests.map((c) => (
-                <div key={c.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#FAF6EF] transition-colors">
+                <div key={c.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#F0E9DE] transition-colors">
                   <div className="min-w-0 flex-1 mr-3">
-                    <p className="text-sm font-medium text-[#1E0F2B] truncate">{c.name}</p>
-                    <p className="text-xs text-[#8A8378] truncate">{c.contact}</p>
+                    <p className="text-sm font-medium text-[#000000] truncate">{c.name}</p>
+                    <p className="text-xs text-[#8A857C] truncate">{c.contact}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[10px] text-[#8A8378]">
+                    <span className="text-[10px] text-[#8A857C]">
                       {new Date(c.createdAt).toLocaleDateString("fr-FR")}
                     </span>
                     {c.status === "PENDING" && (
@@ -310,9 +310,9 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Prochains lives */}
-      <div className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#8A8378]/10">
-          <h2 className="font-bold text-[#1E0F2B] flex items-center gap-2">
+      <div className="bg-white rounded-2xl border border-[#8A857C]/15 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#8A857C]/10">
+          <h2 className="font-bold text-[#000000] flex items-center gap-2">
             <Calendar className="w-4 h-4 text-[#5B7052]" />
             Prochains directs
           </h2>
@@ -321,19 +321,19 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
         {stats.upcomingLives.length === 0 ? (
-          <p className="text-sm text-[#8A8378] italic p-5 text-center">Aucun direct programmé.</p>
+          <p className="text-sm text-[#8A857C] italic p-5 text-center">Aucun direct programmé.</p>
         ) : (
           <div className="grid md:grid-cols-3 gap-3 p-4">
             {stats.upcomingLives.map((live) => (
-              <div key={live.id} className="p-4 rounded-xl border border-[#8A8378]/20 bg-gradient-to-br from-[#FAF6EF] to-white">
+              <div key={live.id} className="p-4 rounded-xl border border-[#8A857C]/20 bg-gradient-to-br from-[#F0E9DE] to-white">
                 <div className="flex items-center gap-2 mb-2">
                   <Radio className="w-3.5 h-3.5 text-[#5B7052]" />
                   <span className="text-[10px] uppercase tracking-[0.15em] text-[#5B7052] font-bold">
                     {live.servant.shortName}
                   </span>
                 </div>
-                <p className="font-bold text-sm text-[#1E0F2B] mb-2 leading-tight">{live.title}</p>
-                <p className="text-xs text-[#8A8378] flex items-center gap-1">
+                <p className="font-bold text-sm text-[#000000] mb-2 leading-tight">{live.title}</p>
+                <p className="text-xs text-[#8A857C] flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   {new Date(live.scheduledAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} à{" "}
                   {new Date(live.scheduledAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}

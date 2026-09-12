@@ -26,12 +26,12 @@ function Section({ id, icon, title, children }: SectionProps) {
   return (
     <section id={id} className="scroll-mt-24 mb-10">
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-xl bg-[#2A0E3D]/5 border border-[#C9A227]/20 flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-[#000000]/5 border border-[#C9A227]/20 flex items-center justify-center flex-shrink-0">
           {icon}
         </div>
-        <h2 className="font-serif text-xl md:text-2xl font-bold text-[#1E0F2B]">{title}</h2>
+        <h2 className="font-serif text-xl md:text-2xl font-bold text-[#000000]">{title}</h2>
       </div>
-      <div className="md:pl-13 space-y-3 text-sm md:text-[15px] leading-relaxed text-[#1E0F2B]/80">
+      <div className="md:pl-13 space-y-3 text-sm md:text-[15px] leading-relaxed text-[#000000]/80">
         {children}
       </div>
     </section>
@@ -52,11 +52,11 @@ export default function ConditionsPage() {
       />
 
       {/* Sommaire + contenu */}
-      <section className="bg-[#FAF6EF] py-16 md:py-20">
+      <section className="bg-[#F0E9DE] py-16 md:py-20">
         <div className="container mx-auto max-w-3xl px-4">
           {/* Date + sommaire */}
-          <div className="mb-10 p-5 rounded-2xl bg-white border border-[#8A8378]/15">
-            <p className="text-xs text-[#8A8378] mb-4">Dernière mise à jour : {LAST_UPDATED}</p>
+          <div className="mb-10 p-5 rounded-2xl bg-white border border-[#8A857C]/15">
+            <p className="text-xs text-[#8A857C] mb-4">Dernière mise à jour : {LAST_UPDATED}</p>
             <p className="text-xs uppercase tracking-[0.18em] text-[#C9A227] font-semibold mb-2">
               Sommaire
             </p>
@@ -76,7 +76,7 @@ export default function ConditionsPage() {
                 ["#contact-cgu", "12. Contact et droit applicable"],
               ].map(([href, label]) => (
                 <li key={href}>
-                  <a href={href} className="text-[#1E0F2B]/75 hover:text-[#C9A227] transition-colors">
+                  <a href={href} className="text-[#000000]/75 hover:text-[#FF7A1A] transition-colors">
                     {label}
                   </a>
                 </li>
@@ -252,7 +252,7 @@ export default function ConditionsPage() {
       <SectionDivider variant="ornament" />
 
       {/* Citation finale */}
-      <section className="bg-[#2A0E3D] py-24 md:py-32 relative overflow-hidden">
+      <section className="bg-[#000000] py-24 md:py-32 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative">
           <QuoteBlock

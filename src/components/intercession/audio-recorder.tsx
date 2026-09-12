@@ -175,10 +175,10 @@ export function AudioRecorder({ onFileChange }: AudioRecorderProps) {
   };
 
   return (
-    <div className="rounded-2xl border border-[#8A8378]/30 bg-white/60 p-4 space-y-3">
+    <div className="rounded-2xl border border-[#8A857C]/30 bg-white/60 p-4 space-y-3">
       <div className="flex items-center gap-2 min-w-0">
         <AudioLines className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8A8378]">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8A857C]">
           Note vocale <span className="normal-case tracking-normal font-normal">(facultative)</span>
         </p>
       </div>
@@ -188,12 +188,12 @@ export function AudioRecorder({ onFileChange }: AudioRecorderProps) {
           <button
             type="button"
             onClick={demarrer}
-            className="inline-flex items-center justify-center gap-2.5 min-h-[44px] px-5 rounded-full border-2 border-[#C9A227]/50 text-[#2A0E3D] font-semibold text-sm hover:bg-[#C9A227]/10 transition-colors"
+            className="inline-flex items-center justify-center gap-2.5 min-h-[44px] px-5 rounded-full border-2 border-[#C9A227]/50 text-[#000000] font-semibold text-sm hover:bg-[#FF7A1A]/10 transition-colors"
           >
             <Mic className="w-4 h-4 text-[#C9A227]" />
             S&apos;exprimer en audio
           </button>
-          <p className="text-[11px] text-[#8A8378] mt-2 leading-relaxed">
+          <p className="text-[11px] text-[#8A857C] mt-2 leading-relaxed">
             Exprimez-vous librement avec votre voix, en plus du texte ou à la place de la
             description écrite. Maximum 2 minutes. La note vocale est transmise avec votre
             demande, en toute confidentialité.
@@ -207,14 +207,14 @@ export function AudioRecorder({ onFileChange }: AudioRecorderProps) {
             <span className="absolute inline-flex h-full w-full rounded-full bg-state-danger/40 animate-ping" />
             <span className="relative inline-flex rounded-full w-4 h-4 bg-state-danger" />
           </span>
-          <span className="font-mono text-lg font-bold text-[#1E0F2B] tabular-nums">
+          <span className="font-mono text-lg font-bold text-[#000000] tabular-nums">
             {formaterDuree(duree)}
-            <span className="text-[#8A8378] text-xs font-normal"> / {formaterDuree(DUREE_MAX_S)}</span>
+            <span className="text-[#8A857C] text-xs font-normal"> / {formaterDuree(DUREE_MAX_S)}</span>
           </span>
           <button
             type="button"
             onClick={arreter}
-            className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 rounded-full bg-[#2A0E3D] text-[#FAF6EF] font-semibold text-sm hover:bg-[#1E0F2B] transition-colors ml-auto"
+            className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 rounded-full bg-[#000000] text-[#F0E9DE] font-semibold text-sm hover:bg-[#000000] transition-colors ml-auto"
             aria-label="Arrêter l'enregistrement"
           >
             <Square className="w-4 h-4 fill-current" />
@@ -225,7 +225,7 @@ export function AudioRecorder({ onFileChange }: AudioRecorderProps) {
 
       {etat === "preview" && apercuUrl && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-xs text-[#8A8378] font-semibold flex-wrap">
+          <div className="flex items-center gap-2 text-xs text-[#8A857C] font-semibold flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#C9A227]/15 text-[#A3821C]">
               <Mic className="w-3 h-3" /> {formaterDuree(duree)} · {tailleKo} Ko
             </span>
@@ -237,7 +237,7 @@ export function AudioRecorder({ onFileChange }: AudioRecorderProps) {
             <button
               type="button"
               onClick={demarrer}
-              className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-full border border-[#8A8378]/30 text-[#1E0F2B] font-semibold text-sm hover:bg-[#FAF6EF] transition-colors"
+              className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-full border border-[#8A857C]/30 text-[#000000] font-semibold text-sm hover:bg-[#F0E9DE] transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
               Réenregistrer
@@ -262,7 +262,7 @@ export function AudioRecorder({ onFileChange }: AudioRecorderProps) {
           <button
             type="button"
             onClick={demarrer}
-            className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-full border-2 border-[#C9A227]/50 text-[#2A0E3D] font-semibold text-sm hover:bg-[#C9A227]/10 transition-colors"
+            className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-full border-2 border-[#C9A227]/50 text-[#000000] font-semibold text-sm hover:bg-[#FF7A1A]/10 transition-colors"
           >
             <Mic className="w-4 h-4 text-[#C9A227]" />
             Réessayer

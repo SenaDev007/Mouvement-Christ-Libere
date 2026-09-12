@@ -65,21 +65,21 @@ function renderPage(
 
 const PAGE_STYLE = `
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-         background: #2A0E3D; color: #FAF6EF; display: flex; align-items: center;
+         background: #000000; color: #F0E9DE; display: flex; align-items: center;
          justify-content: center; min-height: 100vh; margin: 0; padding: 16px;
          box-sizing: border-box; }
-  .card { background: #FAF6EF; color: #1E0F2B; border-radius: 16px; padding: 32px;
+  .card { background: #F0E9DE; color: #000000; border-radius: 16px; padding: 32px;
           max-width: 640px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.35);
           box-sizing: border-box; }
   h1 { margin: 0 0 8px; font-size: 22px; }
-  p  { font-size: 14px; line-height: 1.6; color: #1E0F2B; }
+  p  { font-size: 14px; line-height: 1.6; color: #000000; }
   .gold { color: #C9A227; font-weight: 700; }
-  .muted { color: #8A8378; font-size: 12px; }
-  .vars { background: #1A0826; color: #C9A227; padding: 16px; border-radius: 10px;
+  .muted { color: #8A857C; font-size: 12px; }
+  .vars { background: #000000; color: #C9A227; padding: 16px; border-radius: 10px;
           font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
           white-space: pre-wrap; word-break: break-all; margin: 12px 0; }
   .btn { display: inline-flex; align-items: center; gap: 8px; background: #C9A227;
-         color: #1E0F2B; border: none; border-radius: 10px; padding: 12px 20px;
+         color: #000000; border: none; border-radius: 10px; padding: 12px 20px;
          font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none;
          margin-top: 8px; }
   .btn:hover { background: #DDBE55; }
@@ -88,7 +88,7 @@ const PAGE_STYLE = `
           font-weight: 700; padding: 6px 12px; border-radius: 999px; }
   .chip-ok { background: #DCFCE7; color: #166534; }
   .chip-err { background: #FEE2E2; color: #991B1B; }
-  ol { font-size: 13px; line-height: 1.8; color: #1E0F2B; padding-left: 20px; }
+  ol { font-size: 13px; line-height: 1.8; color: #000000; padding-left: 20px; }
   a { color: #C9A227; font-weight: 600; }
   .copy-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .icon-title { display: flex; align-items: center; gap: 10px; }

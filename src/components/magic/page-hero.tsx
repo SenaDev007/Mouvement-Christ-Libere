@@ -68,7 +68,7 @@ export function PageHero({
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.1 }}
-                className="font-serif text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight text-[#FAF6EF] mb-6"
+                className="font-serif text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight text-[#F0E9DE] mb-6"
               >
                 {title}
               </motion.h1>
@@ -77,7 +77,7 @@ export function PageHero({
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.25 }}
-                className="text-lg md:text-xl text-[#FAF6EF]/70 leading-relaxed max-w-2xl mb-10 font-light"
+                className="text-lg md:text-xl text-[#F0E9DE]/70 leading-relaxed max-w-2xl mb-10 font-light"
               >
                 {subtitle}
               </motion.p>

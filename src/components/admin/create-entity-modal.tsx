@@ -179,7 +179,7 @@ export function CreateEntityModal({
     if (field.type === "checkbox") {
       return (
         <div key={field.name} className={colSpan}>
-          <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
+          <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] cursor-pointer hover:border-[#FF7A1A] transition-colors">
             <input
               type="checkbox"
               checked={Boolean(value)}
@@ -187,8 +187,8 @@ export function CreateEntityModal({
               className="w-4 h-4 accent-[#C9A227]"
             />
             <div>
-              <div className="text-sm font-semibold text-[#1E0F2B]">{field.label}</div>
-              {field.help && <div className="text-xs text-[#8A8378] mt-0.5">{field.help}</div>}
+              <div className="text-sm font-semibold text-[#000000]">{field.label}</div>
+              {field.help && <div className="text-xs text-[#8A857C] mt-0.5">{field.help}</div>}
             </div>
           </label>
         </div>
@@ -211,7 +211,7 @@ export function CreateEntityModal({
               </option>
             ))}
           </select>
-          {field.help && <p className="text-[10px] text-[#8A8378] mt-1">{field.help}</p>}
+          {field.help && <p className="text-[10px] text-[#8A857C] mt-1">{field.help}</p>}
         </ModalField>
       );
     }
@@ -227,7 +227,7 @@ export function CreateEntityModal({
             placeholder={field.placeholder}
             className={`${modalInputClass()} resize-none`}
           />
-          {field.help && <p className="text-[10px] text-[#8A8378] mt-1">{field.help}</p>}
+          {field.help && <p className="text-[10px] text-[#8A857C] mt-1">{field.help}</p>}
         </ModalField>
       );
     }
@@ -238,7 +238,7 @@ export function CreateEntityModal({
 
       return (
         <ModalField key={field.name} label={field.label} required={field.required} fullWidth={field.fullWidth}>
-          <div className="rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] p-2 focus-within:border-[#C9A227] transition-colors">
+          <div className="rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] p-2 focus-within:border-[#C9A227] transition-colors">
             <div className="flex flex-wrap gap-1.5 mb-2">
               {tagsArray.map((tag, i) => (
                 <span
@@ -262,10 +262,10 @@ export function CreateEntityModal({
               onChange={(e) => setTagsInput((t) => ({ ...t, [field.name]: e.target.value }))}
               onKeyDown={(e) => handleTagsKey(field.name, e)}
               placeholder={field.placeholder || "Tapez un mot + Entrée"}
-              className="w-full bg-transparent text-sm text-[#1E0F2B] outline-none placeholder:text-[#8A8378]/50"
+              className="w-full bg-transparent text-sm text-[#000000] outline-none placeholder:text-[#8A857C]/50"
             />
           </div>
-          {field.help && <p className="text-[10px] text-[#8A8378] mt-1">{field.help}</p>}
+          {field.help && <p className="text-[10px] text-[#8A857C] mt-1">{field.help}</p>}
         </ModalField>
       );
     }
@@ -296,7 +296,7 @@ export function CreateEntityModal({
           placeholder={field.placeholder}
           className={modalInputClass()}
         />
-        {field.help && <p className="text-[10px] text-[#8A8378] mt-1">{field.help}</p>}
+        {field.help && <p className="text-[10px] text-[#8A857C] mt-1">{field.help}</p>}
       </ModalField>
     );
   };
@@ -325,11 +325,11 @@ export function CreateEntityModal({
 
         <ModalError error={error} />
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A8378]/10">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A857C]/10">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8A857C] hover:text-[#000000] transition-colors"
           >
             Annuler
           </button>

@@ -52,9 +52,9 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
   const shareUrl = `/temoignages/${testimony.id}`;
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF]">
+    <div className="min-h-screen bg-[#F0E9DE]">
       {/* ═══ HERO avec image appropriée au témoignage ═══ */}
-      <section className="relative min-h-[60vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-[#FAF6EF]">
+      <section className="relative min-h-[60vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#000000] text-[#F0E9DE]">
         <div className="absolute inset-0 z-0">
           <Image
             src={heroImage}
@@ -64,7 +64,7 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
             className="object-cover opacity-30"
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/70 via-[#2A0E3D]/80 to-[#1A0826]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#000000]/70 via-[#000000]/80 to-[#000000]" />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
@@ -81,17 +81,17 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
           </div>
 
           {/* Titre */}
-          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-[#FAF6EF] leading-tight mb-6 drop-shadow-lg">
+          <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-[#F0E9DE] leading-tight mb-6 drop-shadow-lg">
             <IsololeText>{testimony.title}</IsololeText>
           </h1>
 
           {/* Résumé */}
-          <p className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-8 drop-shadow">
+          <p className="text-base md:text-lg text-[#F0E9DE]/70 leading-relaxed max-w-2xl mx-auto mb-8 drop-shadow">
             <IsololeText>{testimony.short}</IsololeText>
           </p>
 
           {/* Métadonnées */}
-          <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-[#FAF6EF]/60">
+          <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-[#F0E9DE]/60">
             <span className="inline-flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-[#C9A227]" />
               {testimony.servant.shortName}
@@ -124,18 +124,18 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
       <article className="py-16 md:py-24">
         <div className="max-w-3xl mx-auto px-4">
           {/* Carte texte principale */}
-          <div className="bg-white rounded-3xl shadow-xl border border-[#8A8378]/15 overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-xl border border-[#8A857C]/15 overflow-hidden">
             {/* En-tête carte */}
-            <div className="px-8 md:px-12 py-6 bg-gradient-to-r from-[#2A0E3D]/5 to-transparent border-b border-[#8A8378]/10">
+            <div className="px-8 md:px-12 py-6 bg-gradient-to-r from-[#000000]/5 to-transparent border-b border-[#8A857C]/10">
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#2A0E3D] flex-shrink-0">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#000000] flex-shrink-0">
                   <Quote className="w-5 h-5 text-[#C9A227]" />
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#C9A227]">
                     Témoignage authentique
                   </p>
-                  <p className="text-sm font-bold text-[#1E0F2B]">
+                  <p className="text-sm font-bold text-[#000000]">
                     Récit rapporté par {testimony.servant.shortName}
                   </p>
                 </div>
@@ -146,8 +146,8 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
             <div className="px-8 md:px-12 py-8 md:py-10">
               {/* Citation d'ouverture */}
               {testimony.short && (
-                <div className="mb-8 pb-6 border-b border-[#8A8378]/12">
-                  <p className="font-serif text-lg md:text-xl italic text-[#2A0E3D] leading-relaxed">
+                <div className="mb-8 pb-6 border-b border-[#8A857C]/12">
+                  <p className="font-serif text-lg md:text-xl italic text-[#000000] leading-relaxed">
                     « {testimony.short} »
                   </p>
                 </div>
@@ -167,7 +167,7 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
                       <p className="text-[10px] uppercase tracking-wider font-bold text-[#9C7E1E] mb-0.5">
                         Référence biblique
                       </p>
-                      <p className="text-sm font-serif font-bold text-[#1E0F2B]">
+                      <p className="text-sm font-serif font-bold text-[#000000]">
                         {testimony.bookRef}
                       </p>
                     </div>
@@ -176,9 +176,9 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
               )}
 
               {/* Signature */}
-              <div className="mt-8 pt-6 border-t border-[#8A8378]/12 flex items-center gap-3">
+              <div className="mt-8 pt-6 border-t border-[#8A857C]/12 flex items-center gap-3">
                 <div className="w-10 h-px bg-[#C9A227]" />
-                <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#8A8378]">
+                <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#8A857C]">
                   Rédigé par la rédaction de Christ Libère
                 </span>
               </div>
@@ -186,7 +186,7 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
           </div>
 
           {/* Section partage */}
-          <div className="mt-10 p-6 md:p-8 bg-white rounded-2xl shadow-md border border-[#8A8378]/15">
+          <div className="mt-10 p-6 md:p-8 bg-white rounded-2xl shadow-md border border-[#8A857C]/15">
             <ShareButtons url={shareUrl} title={testimony.title} variant="light" />
           </div>
 
@@ -194,14 +194,14 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
           <div className="mt-8 flex items-center justify-between">
             <Link
               href="/temoignages"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#000000] hover:text-[#FF7A1A] transition-colors"
             >
               <ChevronRight className="w-4 h-4 rotate-180" />
               Tous les témoignages
             </Link>
             <Link
               href={testimony.servant.code === "pam" ? "/pam" : "/pasteur-kongo"}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#000000] hover:text-[#FF7A1A] transition-colors"
             >
               Voir {testimony.servant.shortName}
               <ChevronRight className="w-4 h-4" />
@@ -211,11 +211,11 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
       </article>
 
       {/* ═══ CITATION FINALE ═══ */}
-      <section className="py-16 md:py-20 bg-[#2A0E3D] relative overflow-hidden">
+      <section className="py-16 md:py-20 bg-[#000000] relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative max-w-3xl mx-auto px-4 text-center">
           <Quote className="w-10 h-10 text-[#C9A227] mx-auto mb-6 opacity-50" />
-          <p className="font-serif text-xl md:text-2xl italic text-[#FAF6EF]/90 leading-relaxed mb-4">
+          <p className="font-serif text-xl md:text-2xl italic text-[#F0E9DE]/90 leading-relaxed mb-4">
             « Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe. »
           </p>
           <p className="text-xs uppercase tracking-[0.2em] text-[#C9A227] font-bold">

@@ -111,18 +111,18 @@ export function StreamConfigClient({ servantId, servantName, initialConfig }: St
       <div>
         <Link
           href="/admin/servants"
-          className="inline-flex items-center gap-1.5 text-xs text-[#8A8378] hover:text-[#C9A227] mb-3"
+          className="inline-flex items-center gap-1.5 text-xs text-[#8A857C] hover:text-[#FF7A1A] mb-3"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Retour aux serviteurs
         </Link>
         <h1
-          className="text-2xl md:text-3xl font-bold text-[#1E0F2B]"
+          className="text-2xl md:text-3xl font-bold text-[#000000]"
           style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}
         >
           Configuration RTMP
         </h1>
-        <p className="text-sm text-[#8A8378] mt-1">
+        <p className="text-sm text-[#8A857C] mt-1">
           Clés de streaming pour {servantName} — utilisées pour le multistreaming automatique
         </p>
       </div>
@@ -137,7 +137,7 @@ export function StreamConfigClient({ servantId, servantName, initialConfig }: St
           return (
             <div
               key={platform.key}
-              className="bg-white rounded-2xl border border-[#8A8378]/15 p-5"
+              className="bg-white rounded-2xl border border-[#8A857C]/15 p-5"
             >
               <div className="flex items-center gap-3 mb-4">
                 <div
@@ -147,14 +147,14 @@ export function StreamConfigClient({ servantId, servantName, initialConfig }: St
                   <Icon className="w-5 h-5" style={{ color: platform.color }} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-[#1E0F2B]">{platform.label}</h3>
-                  <p className="text-xs text-[#8A8378]">{platform.help}</p>
+                  <h3 className="font-bold text-sm text-[#000000]">{platform.label}</h3>
+                  <p className="text-xs text-[#8A857C]">{platform.help}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-[#000000] uppercase tracking-wider mb-1.5">
                     URL RTMP
                   </label>
                   <input
@@ -162,11 +162,11 @@ export function StreamConfigClient({ servantId, servantName, initialConfig }: St
                     value={form[`${platform.key}RtmpUrl` as keyof typeof form]}
                     onChange={(e) => setForm({ ...form, [`${platform.key}RtmpUrl`]: e.target.value })}
                     placeholder={platform.defaultUrl}
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] font-mono"
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-[#000000] uppercase tracking-wider mb-1.5">
                     Clé de stream
                   </label>
                   <input
@@ -174,7 +174,7 @@ export function StreamConfigClient({ servantId, servantName, initialConfig }: St
                     value={form[`${platform.key}RtmpKey` as keyof typeof form]}
                     onChange={(e) => setForm({ ...form, [`${platform.key}RtmpKey`]: e.target.value })}
                     placeholder="xxxx-xxxx-xxxx-xxxx"
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] font-mono"
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] font-mono"
                   />
                 </div>
               </div>
@@ -197,17 +197,17 @@ export function StreamConfigClient({ servantId, servantName, initialConfig }: St
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A8378]/10">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A857C]/10">
           <Link
             href="/admin/servants"
-            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8A857C] hover:text-[#000000] transition-colors"
           >
             Annuler
           </Link>
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#000000] text-[#F0E9DE] font-bold text-sm hover:bg-[#161513] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {loading ? "Enregistrement..." : "Enregistrer"}

@@ -46,11 +46,11 @@ export function AnimatedStat({ value, label, suffix = "", delay = 0 }: AnimatedS
       <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 group-hover:w-12 h-[2px] bg-[#C9A227] transition-all duration-500" />
 
       <div className="text-center pt-4">
-        <div className="font-serif text-4xl md:text-5xl lg:text-6xl font-semibold text-[#2A0E3D] mb-2 tracking-tight">
+        <div className="font-serif text-4xl md:text-5xl lg:text-6xl font-semibold text-[#000000] mb-2 tracking-tight">
           {displayValue}
           {suffix && <span className="text-[#C9A227]">{suffix}</span>}
         </div>
-        <div className="text-xs md:text-sm text-[#8A8378] leading-snug max-w-[120px] mx-auto">
+        <div className="text-xs md:text-sm text-[#8A857C] leading-snug max-w-[120px] mx-auto">
           {label}
         </div>
       </div>
@@ -65,7 +65,7 @@ interface StatsGridProps {
 
 export function StatsGrid({ stats, title }: StatsGridProps) {
   return (
-    <section className="bg-[#FAF6EF] py-20 md:py-28 relative overflow-hidden">
+    <section className="bg-[#F0E9DE] py-20 md:py-28 relative overflow-hidden">
       {/* Décoration fond */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
 
@@ -75,7 +75,7 @@ export function StatsGrid({ stats, title }: StatsGridProps) {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center text-xs uppercase tracking-[0.25em] text-[#8A8378] font-semibold mb-12"
+            className="text-center text-xs uppercase tracking-[0.25em] text-[#8A857C] font-semibold mb-12"
           >
             {title}
           </motion.p>

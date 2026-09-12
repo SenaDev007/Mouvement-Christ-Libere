@@ -229,7 +229,7 @@ export function ContextualNav() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 border-b border-[#C9A227]/20 bg-[#2A0E3D]/95 backdrop-blur-lg"
+        "fixed top-0 left-0 right-0 z-50 border-b border-[#C9A227]/20 bg-[#000000]/95 backdrop-blur-lg"
       )}
     >
       <div className="flex h-16 md:h-20 items-center justify-between gap-4 px-4 md:px-6 max-w-7xl mx-auto">
@@ -245,10 +245,10 @@ export function ContextualNav() {
                 size="icon"
                 aria-label="Ouvrir le menu de navigation"
               >
-                <Menu className="w-5 h-5 text-[#FAF6EF]" />
+                <Menu className="w-5 h-5 text-[#F0E9DE]" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-72 max-w-[calc(100vw-1.5rem)] p-1 md:hidden bg-[#2A0E3D] border-[#C9A227]/30">
+            <PopoverContent align="start" className="w-72 max-w-[calc(100vw-1.5rem)] p-1 md:hidden bg-[#000000] border-[#C9A227]/30">
               <NavigationMenu className="max-w-none *:w-full">
                 <NavigationMenuList className="flex-col items-start gap-0 md:gap-2">
                   {navigationLinks.map((link, index) => (
@@ -263,7 +263,7 @@ export function ContextualNav() {
                               <li key={itemIndex}>
                                 <NavigationMenuLink
                                   href={item.href}
-                                  className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                                  className="py-3 text-[#F0E9DE]/70 hover:text-[#FF7A1A]"
                                   onClick={() => setMobileOpen(false)}
                                 >
                                   <IsololeText>{item.label}</IsololeText>
@@ -275,7 +275,7 @@ export function ContextualNav() {
                       ) : (
                         <NavigationMenuLink
                           href={(link as { href?: string }).href}
-                          className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                          className="py-3 text-[#F0E9DE]/70 hover:text-[#FF7A1A]"
                           onClick={() => setMobileOpen(false)}
                         >
                           <IsololeText>{link.label}</IsololeText>
@@ -312,7 +312,7 @@ export function ContextualNav() {
                         <li>
                           <NavigationMenuLink
                             href="/login"
-                            className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                            className="py-3 text-[#F0E9DE]/70 hover:text-[#FF7A1A]"
                             onClick={() => setMobileOpen(false)}
                           >
                             Se connecter
@@ -321,7 +321,7 @@ export function ContextualNav() {
                         <li>
                           <NavigationMenuLink
                             href="/register"
-                            className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                            className="py-3 text-[#F0E9DE]/70 hover:text-[#FF7A1A]"
                             onClick={() => setMobileOpen(false)}
                           >
                             Créer un compte
@@ -338,21 +338,26 @@ export function ContextualNav() {
           {/* Logo Christ Libère — ⭐ V3.28 : 40px sous sm pour que burger +
               logo + wordmark + icône connexion tiennent sur iPhone SE (320px) */}
           <Link href="/" className="flex items-center gap-1 group/logo">
-            <Image
-              src="/logo-christ-libere-v2.png"
-              alt="Christ Libère"
-              width={56}
-              height={56}
-              sizes="(max-width: 639px) 40px, (max-width: 767px) 48px, 56px"
-              className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain"
-              priority
-            />
+            {/* ⭐ V3.68 — halo feu discret derrière le logo (palette logo :
+                noir / or / feu) — glow radial, jamais le dégradé du logo */}
+            <span className="relative flex items-center justify-center">
+              <span className="logo-halo-feu absolute inset-[-35%] pointer-events-none" aria-hidden="true" />
+              <Image
+                src="/logo-christ-libere-v2.png"
+                alt="Christ Libère"
+                width={56}
+                height={56}
+                sizes="(max-width: 639px) 40px, (max-width: 767px) 48px, 56px"
+                className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain"
+                priority
+              />
+            </span>
             <span
               className="text-lg sm:text-xl md:text-2xl font-bold whitespace-nowrap"
               style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
             >
               <span style={{ color: "#C9A227" }}>Christ</span>
-              <span style={{ color: "#FAF6EF" }} className="ml-0.5">Libère</span>
+              <span style={{ color: "#F0E9DE" }} className="ml-0.5">Libère</span>
             </span>
           </Link>
 
@@ -386,7 +391,7 @@ export function ContextualNav() {
                       "flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-[#C9A227]/40",
                       openMenu === link.label
                         ? "text-[#C9A227] bg-[#C9A227]/10"
-                        : "text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#C9A227]/10"
+                        : "text-[#F0E9DE]/70 hover:text-[#FF7A1A] hover:bg-[#FF7A1A]/10"
                     )}
                   >
                     <IsololeText>{link.label}</IsololeText>
@@ -417,7 +422,7 @@ export function ContextualNav() {
                     >
                       <ul
                         className={cn(
-                          "bg-[#2A0E3D]/95 backdrop-blur-md border border-[#C9A227]/30 rounded-xl shadow-2xl shadow-black/50 py-1.5",
+                          "bg-[#000000]/95 backdrop-blur-md border border-[#C9A227]/30 rounded-xl shadow-2xl shadow-black/50 py-1.5",
                           link.type === "description" ? "w-[380px]" : "min-w-[220px]"
                         )}
                       >
@@ -427,7 +432,7 @@ export function ContextualNav() {
                               href={item.href}
                               role="menuitem"
                               onClick={() => setOpenMenu(null)}
-                              className="flex items-start gap-2.5 mx-1 px-3 py-2 rounded-lg text-[#FAF6EF]/85 hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors outline-none focus-visible:bg-[#C9A227]/10 focus-visible:text-[#C9A227] whitespace-nowrap"
+                              className="flex items-start gap-2.5 mx-1 px-3 py-2 rounded-lg text-[#F0E9DE]/85 hover:text-[#FF7A1A] hover:bg-[#FF7A1A]/10 transition-colors outline-none focus-visible:bg-[#C9A227]/10 focus-visible:text-[#C9A227] whitespace-nowrap"
                             >
                               {/* Icône (type icon) */}
                               {link.type === "icon" && "icon" in item &&
@@ -450,7 +455,7 @@ export function ContextualNav() {
                                     secondaire, peut se plier sur 2 lignes */}
                                 {link.type === "description" &&
                                   "description" in item && (
-                                    <span className="block text-xs leading-snug text-[#FAF6EF]/50 mt-0.5 whitespace-normal line-clamp-2">
+                                    <span className="block text-xs leading-snug text-[#F0E9DE]/50 mt-0.5 whitespace-normal line-clamp-2">
                                       <IsololeText>{item.description}</IsololeText>
                                     </span>
                                   )}
@@ -466,7 +471,7 @@ export function ContextualNav() {
                 <Link
                   key={link.label}
                   href={(link as { href?: string }).href!}
-                  className="px-2 py-1.5 rounded-md text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors whitespace-nowrap"
+                  className="px-2 py-1.5 rounded-md text-sm font-medium text-[#F0E9DE]/70 hover:text-[#FF7A1A] hover:bg-[#FF7A1A]/10 transition-colors whitespace-nowrap"
                 >
                   <IsololeText>{link.label}</IsololeText>
                 </Link>
@@ -488,13 +493,13 @@ export function ContextualNav() {
                   href="/profil"
                   aria-label="Paramètres de mon compte"
                   title="Modifier ma photo et mes informations"
-                  className="inline-flex items-center justify-center size-11 rounded-lg text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#FAF6EF]/10 transition-colors"
+                  className="inline-flex items-center justify-center size-11 rounded-lg text-[#F0E9DE]/70 hover:text-[#FF7A1A] hover:bg-[#F0E9DE]/10 transition-colors"
                 >
                   <Settings className="w-4.5 h-4.5" />
                 </Link>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 min-h-11 p-1.5 pr-2.5 rounded-full hover:bg-[#FAF6EF]/10 transition-colors"
+                  className="flex items-center gap-2 min-h-11 p-1.5 pr-2.5 rounded-full hover:bg-[#F0E9DE]/10 transition-colors"
                   aria-haspopup="menu"
                   aria-expanded={userMenuOpen}
                 >
@@ -505,14 +510,14 @@ export function ContextualNav() {
                       className="w-8 h-8 rounded-full object-cover ring-1 ring-[#C9A227]/40"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-[#C9A227] flex items-center justify-center text-[#1E0F2B] font-bold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-[#C9A227] flex items-center justify-center text-[#000000] font-bold text-sm">
                       {(displayName || session?.user?.email || "U")
                         .charAt(0)
                         .toUpperCase()}
                     </div>
                   )}
                   {!isMobile && (
-                    <span className="hidden sm:inline text-sm font-medium text-[#FAF6EF] max-w-[100px] truncate">
+                    <span className="hidden sm:inline text-sm font-medium text-[#F0E9DE] max-w-[100px] truncate">
                       {displayName}
                     </span>
                   )}
@@ -523,21 +528,21 @@ export function ContextualNav() {
               {userMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                  <div className="absolute top-full right-0 mt-2 z-50 bg-white rounded-xl shadow-2xl border border-[#8A8378]/15 py-2 min-w-[230px]">
-                    <div className="px-4 py-2 border-b border-[#8A8378]/10 flex items-center gap-3">
+                  <div className="absolute top-full right-0 mt-2 z-50 bg-white rounded-xl shadow-2xl border border-[#8A857C]/15 py-2 min-w-[230px]">
+                    <div className="px-4 py-2 border-b border-[#8A857C]/10 flex items-center gap-3">
                       {displayAvatar ? (
                         <img src={displayAvatar} alt={displayName} className="w-10 h-10 rounded-full object-cover ring-1 ring-[#C9A227]/40 flex-shrink-0" />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-[#C9A227] flex items-center justify-center text-[#1E0F2B] font-bold flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-[#C9A227] flex items-center justify-center text-[#000000] font-bold flex-shrink-0">
                           {(displayName || "U").charAt(0).toUpperCase()}
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-[#1E0F2B] truncate">
+                        <p className="text-sm font-bold text-[#000000] truncate">
                           {displayName}
                         </p>
                         {session?.user?.email && (
-                          <p className="text-xs text-[#8A8378] truncate">{session?.user?.email}</p>
+                          <p className="text-xs text-[#8A857C] truncate">{session?.user?.email}</p>
                         )}
                       </div>
                     </div>
@@ -548,7 +553,7 @@ export function ContextualNav() {
                     <Link
                       href="/profil"
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 hover:text-[#A3821C] transition-colors"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-[#000000] hover:bg-[#FF7A1A]/10 hover:text-[#A3821C] transition-colors"
                     >
                       <UserIcon className="w-4 h-4 text-[#C9A227]" />
                       Mon profil & paramètres
@@ -556,15 +561,15 @@ export function ContextualNav() {
                     <Link
                       href="/yeshua-connect"
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-[#1E0F2B] hover:bg-[#2A0E3D]/5 transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-[#000000] hover:bg-[#000000]/5 transition-colors"
                     >
-                      <MessageSquare className="w-4 h-4 text-[#8A8378]" />
+                      <MessageSquare className="w-4 h-4 text-[#8A857C]" />
                       Yeshua Connect
                     </Link>
                     {/* ⭐ V3.2 — « Carte des dispersés » retirée du menu
                         utilisateur : désormais sous le bouton principal
                         « Communauté » (avec l'Intercession). */}
-                    <div className="border-t border-[#8A8378]/10 mt-1 pt-1">
+                    <div className="border-t border-[#8A857C]/10 mt-1 pt-1">
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -583,7 +588,7 @@ export function ContextualNav() {
               {/* Mobile: icône seule */}
               <Link
                 href="/login"
-                className="sm:hidden inline-flex items-center justify-center size-11 rounded-lg text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors"
+                className="sm:hidden inline-flex items-center justify-center size-11 rounded-lg text-[#F0E9DE]/70 hover:text-[#FF7A1A] transition-colors"
                 aria-label="Se connecter"
               >
                 <LogIn className="w-5 h-5" />
@@ -591,7 +596,7 @@ export function ContextualNav() {
               {/* Desktop: texte */}
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors px-3 py-2.5"
+                className="hidden sm:inline-flex items-center text-sm font-medium text-[#F0E9DE]/70 hover:text-[#FF7A1A] transition-colors px-3 py-2.5"
               >
                 Se connecter
               </Link>
@@ -600,13 +605,13 @@ export function ContextualNav() {
                   déborder sur iPhone SE ; visible de 400px à sm. */}
               <Link
                 href="/register"
-                className="sm:hidden hidden min-[400px]:inline-flex items-center justify-center size-11 rounded-lg text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 transition-colors"
+                className="sm:hidden hidden min-[400px]:inline-flex items-center justify-center size-11 rounded-lg text-[#F0E9DE] hover:text-[#FF7A1A] hover:bg-[#F0E9DE]/5 transition-colors"
                 aria-label="Créer un compte"
               >
                 <UserPlus className="w-5 h-5" />
               </Link>
               {/* Desktop: texte */}
-              <Button asChild size="sm" variant="ghost" className="hidden sm:flex text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 text-sm">
+              <Button asChild size="sm" variant="ghost" className="hidden sm:flex text-[#F0E9DE] hover:text-[#FF7A1A] hover:bg-[#F0E9DE]/5 text-sm">
                 <Link href="/register">
                   Créer un compte
                 </Link>

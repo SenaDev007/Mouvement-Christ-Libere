@@ -32,22 +32,22 @@ const NOMS_JOURS = JOURS_SEMAINE_HEBREU;
 const SAISON_MOIS: Array<{ image: string; overlay: string; saison: string }> = [
   {
     image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1920&auto=format&fit=crop",
-    overlay: "linear-gradient(135deg, rgba(42,14,61,0.88) 0%, rgba(42,14,61,0.7) 50%, rgba(201,162,39,0.35) 100%)",
+    overlay: "linear-gradient(135deg, rgba(0, 0, 0,0.88) 0%, rgba(0, 0, 0,0.7) 50%, rgba(201,162,39,0.35) 100%)",
     saison: "Printemps",
   },
   {
     image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1920&auto=format&fit=crop",
-    overlay: "linear-gradient(135deg, rgba(42,14,61,0.85) 0%, rgba(201,162,39,0.45) 50%, rgba(42,14,61,0.7) 100%)",
+    overlay: "linear-gradient(135deg, rgba(0, 0, 0,0.85) 0%, rgba(201,162,39,0.45) 50%, rgba(0, 0, 0,0.7) 100%)",
     saison: "Été",
   },
   {
     image: "https://images.unsplash.com/photo-1507371341162-763b5e419408?q=80&w=1920&auto=format&fit=crop",
-    overlay: "linear-gradient(135deg, rgba(42,14,61,0.85) 0%, rgba(124,92,184,0.4) 50%, rgba(156,126,30,0.5) 100%)",
+    overlay: "linear-gradient(135deg, rgba(0, 0, 0,0.85) 0%, rgba(124,92,184,0.4) 50%, rgba(156,126,30,0.5) 100%)",
     saison: "Automne",
   },
   {
     image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?q=80&w=1920&auto=format&fit=crop",
-    overlay: "linear-gradient(135deg, rgba(42,14,61,0.88) 0%, rgba(250,246,239,0.25) 50%, rgba(42,14,61,0.75) 100%)",
+    overlay: "linear-gradient(135deg, rgba(0, 0, 0,0.88) 0%, rgba(240, 233, 222,0.25) 50%, rgba(0, 0, 0,0.75) 100%)",
     saison: "Hiver",
   },
 ];
@@ -107,25 +107,25 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
   return (
     <div className="space-y-6">
       {/* Navigation mois */}
-      <div className="flex items-center justify-between bg-white rounded-2xl shadow-sm border border-[#8A8378]/15 p-4">
+      <div className="flex items-center justify-between bg-white rounded-2xl shadow-sm border border-[#8A857C]/15 p-4">
         <button
           onClick={moisPrecedent}
-          className="p-2 rounded-full hover:bg-[#FAF6EF] text-[#2A0E3D] transition-colors"
+          className="p-2 rounded-full hover:bg-[#F0E9DE] text-[#000000] transition-colors"
           aria-label="Mois précédent"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="text-center">
-          <h3 className="font-serif text-2xl font-bold text-[#1E0F2B]">
+          <h3 className="font-serif text-2xl font-bold text-[#000000]">
             {NOMS_MOIS[moisCourant - 1]}
           </h3>
-          <p className="text-xs text-[#8A8378] uppercase tracking-[0.18em] font-bold">
+          <p className="text-xs text-[#8A857C] uppercase tracking-[0.18em] font-bold">
             {NOMS_MOIS_FR[moisCourant - 1]} · {saison.saison}
           </p>
         </div>
         <button
           onClick={moisSuivant}
-          className="p-2 rounded-full hover:bg-[#FAF6EF] text-[#2A0E3D] transition-colors"
+          className="p-2 rounded-full hover:bg-[#F0E9DE] text-[#000000] transition-colors"
           aria-label="Mois suivant"
         >
           <ChevronRight className="w-5 h-5" />
@@ -134,7 +134,7 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Grille du mois — avec image saisonnière en fond */}
-        <div className="lg:col-span-2 relative rounded-2xl overflow-hidden shadow-xl border border-[#8A8378]/20">
+        <div className="lg:col-span-2 relative rounded-2xl overflow-hidden shadow-xl border border-[#8A857C]/20">
           {/* ⭐ V3.28 — image de saison via next/image (remplace le
               background-image CSS Unsplash 1920px non optimisé). */}
           <Image
@@ -161,14 +161,14 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
                     className={cn(
                       "text-center py-2 rounded-lg",
                       estShabbat
-                        ? "bg-[#2A0E3D]/40 backdrop-blur-sm"
-                        : "bg-[#FAF6EF]/10 backdrop-blur-sm"
+                        ? "bg-[#000000]/40 backdrop-blur-sm"
+                        : "bg-[#F0E9DE]/10 backdrop-blur-sm"
                     )}
                   >
                     <div
                       className={cn(
                         "text-xs font-bold",
-                        estShabbat ? "text-[#C9A227]" : "text-[#FAF6EF]"
+                        estShabbat ? "text-[#C9A227]" : "text-[#F0E9DE]"
                       )}
                     >
                       {jour.frAbbr}
@@ -179,7 +179,7 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
                         "text-[10px] hidden md:block mt-0.5 font-serif leading-tight",
                         estShabbat
                           ? "text-[#C9A227]/85 font-semibold"
-                          : "text-[#FAF6EF]/65"
+                          : "text-[#F0E9DE]/65"
                       )}
                     >
                       {jour.hebreu}
@@ -189,7 +189,7 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
                         "text-[9px] hidden lg:block mt-0.5 leading-tight",
                         estShabbat
                           ? "text-[#C9A227]/70 font-semibold"
-                          : "text-[#FAF6EF]/50"
+                          : "text-[#F0E9DE]/50"
                       )}
                     >
                       {jour.translit}
@@ -216,13 +216,13 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
 
         {/* Sidebar : fêtes du mois */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl shadow-sm border border-[#8A8378]/15 p-5">
-            <h4 className="font-serif text-base font-bold text-[#1E0F2B] mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-xl shadow-sm border border-[#8A857C]/15 p-5">
+            <h4 className="font-serif text-base font-bold text-[#000000] mb-4 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#C9A227]" />
               Fêtes en {NOMS_MOIS[moisCourant - 1]}
             </h4>
             {fetesDuMois.length === 0 ? (
-              <p className="text-sm text-[#8A8378] italic">
+              <p className="text-sm text-[#8A857C] italic">
                 Aucune fête ce mois-ci.
               </p>
             ) : (
@@ -230,7 +230,7 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
                 {fetesDuMois.map((fete) => (
                   <div
                     key={fete.id}
-                    className="p-3 rounded-lg border border-[#8A8378]/15 hover:border-[#C9A227]/40 transition-colors bg-[#FAF6EF]/40"
+                    className="p-3 rounded-lg border border-[#8A857C]/15 hover:border-[#FF7A1A]/40 transition-colors bg-[#F0E9DE]/40"
                   >
                     <div className="flex items-start gap-2">
                       <div
@@ -238,15 +238,15 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
                         style={{ backgroundColor: fete.couleur }}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-serif text-sm font-bold text-[#1E0F2B]">
+                        <p className="font-serif text-sm font-bold text-[#000000]">
                           {fete.nomFr}
                         </p>
                         {fete.nomHebrew && (
-                          <p className="text-xs text-[#8C5FA8] font-serif" dir="rtl">
+                          <p className="text-xs text-[#8A857C] font-serif" dir="rtl">
                             {fete.nomHebrew}
                           </p>
                         )}
-                        <p className="text-[11px] text-[#8A8378] mt-1 font-semibold">
+                        <p className="text-[11px] text-[#8A857C] mt-1 font-semibold">
                           {new Date(fete.dateGregorienne).toLocaleDateString("fr-FR", {
                             day: "numeric",
                             month: "short",
@@ -267,9 +267,9 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
           </div>
 
           {/* Info sur le mois */}
-          <div className="bg-white rounded-xl shadow-sm border border-[#8A8378]/15 p-5">
-            <p className="text-xs text-[#8A8378] leading-relaxed">
-              <strong className="text-[#1E0F2B]">{NOMS_MOIS[moisCourant - 1]}</strong> est le mois
+          <div className="bg-white rounded-xl shadow-sm border border-[#8A857C]/15 p-5">
+            <p className="text-xs text-[#8A857C] leading-relaxed">
+              <strong className="text-[#000000]">{NOMS_MOIS[moisCourant - 1]}</strong> est le mois
               numéro {moisCourant} du calendrier biblique. Il appartient au trimestre{" "}
               {Math.ceil(moisCourant / 3)} — saison de{" "}
               <strong className="text-[#9C7E1E]">{saison.saison}</strong>.
@@ -283,7 +283,7 @@ export function VueMensuelle({ annee }: VueMensuelleProps) {
 
 function JourMensuelCell({ jour, fete }: { jour: JourBiblique | null; fete?: Fete }) {
   if (!jour) {
-    return <div className="aspect-square rounded-md bg-[#FAF6EF]/5" />;
+    return <div className="aspect-square rounded-md bg-[#F0E9DE]/5" />;
   }
 
   const maintenant = new Date();
@@ -299,11 +299,11 @@ function JourMensuelCell({ jour, fete }: { jour: JourBiblique | null; fete?: Fet
       className={cn(
         "aspect-square rounded-md p-2 cursor-pointer transition-colors relative flex flex-col backdrop-blur-sm",
         fete
-          ? "text-[#FAF6EF] shadow-md"
+          ? "text-[#F0E9DE] shadow-md"
           : isShabbat
-            ? "bg-[#2A0E3D]/50 border border-[#C9A227]/30 text-[#FAF6EF]"
-            : "bg-[#FAF6EF]/85 border border-[#FAF6EF]/30 text-[#1E0F2B] hover:border-[#C9A227]/60",
-        estAujourdhui && "ring-2 ring-[#C9A227] ring-offset-1 ring-offset-[#2A0E3D]/40"
+            ? "bg-[#000000]/50 border border-[#C9A227]/30 text-[#F0E9DE]"
+            : "bg-[#F0E9DE]/85 border border-[#F0E9DE]/30 text-[#000000] hover:border-[#FF7A1A]/60",
+        estAujourdhui && "ring-2 ring-[#C9A227] ring-offset-1 ring-offset-[#000000]/40"
       )}
       style={fete ? { backgroundColor: fete.couleur } : {}}
     >
@@ -312,7 +312,7 @@ function JourMensuelCell({ jour, fete }: { jour: JourBiblique | null; fete?: Fet
         {dateGreg.toLocaleDateString("fr-FR", { day: "numeric", month: "numeric", timeZone: "UTC" })}
       </span>
       {fete && (
-        <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#FAF6EF]" />
+        <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#F0E9DE]" />
       )}
     </motion.div>
   );

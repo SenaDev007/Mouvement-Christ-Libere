@@ -5,7 +5,7 @@
  * (secrétariat & trésorerie).
  *
  * Même structure que la sidebar du back-office (fixe, w-64, violet
- * #2A0E3D, or #C9A227, crème #FAF6EF) — seuls le nom de l'espace, les
+ * #000000, or #C9A227, crème #F0E9DE) — seuls le nom de l'espace, les
  * sections de navigation et le point d'accès de déconnexion changent.
  * Sur la page de connexion de l'espace, la coquille ne s'affiche pas.
  */
@@ -85,11 +85,11 @@ export function SpaceShell({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] flex">
+    <div className="min-h-screen bg-[#F0E9DE] flex">
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-[#2A0E3D] text-[#FAF6EF] flex-shrink-0 transition-transform duration-300",
+          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-[#000000] text-[#F0E9DE] flex-shrink-0 transition-transform duration-300",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
@@ -112,7 +112,7 @@ export function SpaceShell({
                     style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
                   >
                     <span style={{ color: "#C9A227" }}>Christ</span>
-                    <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
+                    <span style={{ color: "#F0E9DE" }}>&nbsp;Libère</span>
                   </div>
                   <div className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/70 font-semibold truncate">
                     {titreEspace}
@@ -121,7 +121,7 @@ export function SpaceShell({
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden -mr-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#FAF6EF]/70 hover:text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
+                className="lg:hidden -mr-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#F0E9DE]/70 hover:text-[#F0E9DE] hover:bg-[#F0E9DE]/10 transition-colors"
                 aria-label="Fermer le menu"
               >
                 <X className="w-5 h-5" />
@@ -151,13 +151,13 @@ export function SpaceShell({
                             "flex items-center gap-3 px-5 py-3 text-sm transition-colors",
                             isActive
                               ? "bg-[#C9A227]/15 text-[#C9A227] border-l-2 border-[#C9A227]"
-                              : "text-[#FAF6EF]/70 hover:bg-[#3D1A54]/40 hover:text-[#FAF6EF] border-l-2 border-transparent"
+                              : "text-[#F0E9DE]/70 hover:bg-[#161513]/40 hover:text-[#F0E9DE] border-l-2 border-transparent"
                           )}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
                           <span className="flex-1">{item.label}</span>
                           {item.badge && (
-                            <span className="px-1.5 py-0.5 rounded-full bg-[#C9A227] text-[#1A0826] text-[10px] font-bold">
+                            <span className="px-1.5 py-0.5 rounded-full bg-[#C9A227] text-[#000000] text-[10px] font-bold">
                               {item.badge}
                             </span>
                           )}
@@ -175,14 +175,14 @@ export function SpaceShell({
             <Link
               href={sitePublicUrl}
               target="_blank"
-              className="flex items-center gap-2 text-xs text-[#FAF6EF]/60 hover:text-[#C9A227] transition-colors py-1.5"
+              className="flex items-center gap-2 text-xs text-[#F0E9DE]/60 hover:text-[#FF7A1A] transition-colors py-1.5"
             >
               <ExternalLink className="w-3 h-3" />
               Voir le site
             </Link>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-xs text-[#FAF6EF]/60 hover:text-[#B3452E] transition-colors py-1.5"
+              className="flex items-center gap-2 text-xs text-[#F0E9DE]/60 hover:text-[#B3452E] transition-colors py-1.5"
             >
               <LogOut className="w-3 h-3" />
               Déconnexion
@@ -194,7 +194,7 @@ export function SpaceShell({
       {/* Overlay mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-[#1A0826]/60 z-30 lg:hidden"
+          className="fixed inset-0 bg-[#000000]/60 z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -202,10 +202,10 @@ export function SpaceShell({
       {/* Contenu principal */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Barre supérieure mobile */}
-        <header className="lg:hidden sticky top-0 z-20 bg-[#2A0E3D] text-[#FAF6EF] px-4 py-3 flex items-center justify-between">
+        <header className="lg:hidden sticky top-0 z-20 bg-[#000000] text-[#F0E9DE] px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="-ml-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
+            className="-ml-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#F0E9DE] hover:bg-[#F0E9DE]/10 transition-colors"
             aria-label="Ouvrir le menu"
           >
             <Menu className="w-5 h-5" />

@@ -142,7 +142,7 @@ export function TableEquivalence({ annee }: TableEquivalenceProps) {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.2, delay: i * 0.005 }}
                     className={cn(
-                      "border-b border-stone/15 hover:bg-gold/5",
+                      "border-b border-stone/15 hover:bg-fire/5",
                       estAujourdhui && "bg-gold/10",
                       jour.estShabbat && "bg-imperial/[0.03]"
                     )}

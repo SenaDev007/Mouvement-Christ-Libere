@@ -115,7 +115,7 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#1E0F2B]/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#000000]/60 backdrop-blur-sm"
           onClick={onFermer}
           role="dialog"
           aria-modal="true"
@@ -127,15 +127,15 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ type: "spring", stiffness: 300, damping: 26 }}
-            className="w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain bg-[#FAF6EF] rounded-2xl shadow-2xl border border-[#8A8378]/20"
+            className="w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain bg-[#F0E9DE] rounded-2xl shadow-2xl border border-[#8A857C]/20"
             onClick={(e) => e.stopPropagation()}
           >
             {/* En-tête */}
-            <div className="relative bg-[#2A0E3D] px-5 py-4">
+            <div className="relative bg-[#000000] px-5 py-4">
               <div className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#C9A227] to-transparent" />
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="font-serif text-lg font-bold text-[#FAF6EF] leading-tight">
+                  <h3 className="font-serif text-lg font-bold text-[#F0E9DE] leading-tight">
                     Télécharger en PDF
                   </h3>
                   <p className="text-xs text-[#C9A227] font-semibold mt-0.5">
@@ -144,7 +144,7 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
                 </div>
                 <button
                   onClick={onFermer}
-                  className="p-1.5 rounded-lg text-[#FAF6EF]/60 hover:text-[#FAF6EF] hover:bg-white/10 transition-colors"
+                  className="p-1.5 rounded-lg text-[#F0E9DE]/60 hover:text-[#F0E9DE] hover:bg-white/10 transition-colors"
                   aria-label="Fermer"
                 >
                   <X className="w-4 h-4" />
@@ -154,7 +154,7 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
 
             {/* Choix du mode */}
             <div className="p-5 space-y-4">
-              <p className="text-[11px] text-[#8A8378] font-semibold uppercase tracking-wider">
+              <p className="text-[11px] text-[#8A857C] font-semibold uppercase tracking-wider">
                 Comment découper le calendrier ?
               </p>
 
@@ -170,14 +170,14 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
                         "w-full flex items-center gap-3.5 p-3.5 rounded-xl border text-left transition-all",
                         actif
                           ? "border-[#C9A227] bg-[#C9A227]/12 shadow-sm"
-                          : "border-[#8A8378]/25 bg-white hover:border-[#C9A227]/50 hover:bg-[#C9A227]/5"
+                          : "border-[#8A857C]/25 bg-white hover:border-[#FF7A1A]/50 hover:bg-[#FF7A1A]/5"
                       )}
                       aria-pressed={actif}
                     >
                       <div
                         className={cn(
                           "flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 transition-colors",
-                          actif ? "bg-[#C9A227] text-[#2A0E3D]" : "bg-[#FAF6EF] text-[#8A8378] border border-[#8A8378]/20"
+                          actif ? "bg-[#C9A227] text-[#000000]" : "bg-[#F0E9DE] text-[#8A857C] border border-[#8A857C]/20"
                         )}
                       >
                         <Icone className="w-5 h-5" />
@@ -185,11 +185,11 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
                       <div className="min-w-0">
                         <p className={cn(
                           "text-sm font-bold leading-tight",
-                          actif ? "text-[#1E0F2B]" : "text-[#1E0F2B]/80"
+                          actif ? "text-[#000000]" : "text-[#000000]/80"
                         )}>
                           {m.titre}
                         </p>
-                        <p className="text-[11px] text-[#8A8378] leading-snug mt-0.5">
+                        <p className="text-[11px] text-[#8A857C] leading-snug mt-0.5">
                           {m.detail}
                         </p>
                       </div>
@@ -197,7 +197,7 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
                       <div
                         className={cn(
                           "ml-auto flex-shrink-0 w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center",
-                          actif ? "border-[#C9A227]" : "border-[#8A8378]/40"
+                          actif ? "border-[#C9A227]" : "border-[#8A857C]/40"
                         )}
                       >
                         {actif && <div className="w-2.5 h-2.5 rounded-full bg-[#C9A227]" />}
@@ -213,7 +213,7 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
                 </p>
               )}
 
-              <p className="text-[10px] text-[#8A8378] leading-relaxed">
+              <p className="text-[10px] text-[#8A857C] leading-relaxed">
                 Document généré par le serveur, fidèle au calendrier affiché : couverture,
                 couleurs des fêtes de l&apos;Éternel, Shabbat, noms hébreux des jours et
                 correspondances grégoriennes.
@@ -225,7 +225,7 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
               <button
                 onClick={telecharger}
                 disabled={telechargement}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227] text-[#2A0E3D] text-sm font-bold hover:bg-[#9C7E1E] hover:text-[#FAF6EF] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227] text-[#000000] text-sm font-bold hover:bg-[#9C7E1E] hover:text-[#F0E9DE] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
                 {telechargement ? (
                   <>
@@ -241,7 +241,7 @@ export function ModalExportPdf({ ouverte, onFermer, annee, libelle }: ModalExpor
               </button>
               <button
                 onClick={onFermer}
-                className="px-4 py-2.5 rounded-lg border border-[#8A8378]/30 text-[#1E0F2B]/70 text-sm font-bold hover:bg-[#FAF6EF] transition-colors"
+                className="px-4 py-2.5 rounded-lg border border-[#8A857C]/30 text-[#000000]/70 text-sm font-bold hover:bg-[#F0E9DE] transition-colors"
               >
                 Annuler
               </button>

@@ -80,23 +80,23 @@ export default async function CalendrierBibliquePage() {
       <SectionDivider variant="ornament" />
 
       {/* Documentation théologique */}
-      <section className="bg-[#FAF6EF] py-20 md:py-24">
+      <section className="bg-[#F0E9DE] py-20 md:py-24">
         <div className="container mx-auto max-w-5xl px-4">
           <div className="text-center mb-12">
             <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-semibold mb-3">
               Fondements bibliques
             </p>
-            <h2 className="font-serif text-3xl md:text-4xl font-semibold text-[#1E0F2B]">
+            <h2 className="font-serif text-3xl md:text-4xl font-semibold text-[#000000]">
               Pourquoi un calendrier de 364 jours ?
             </h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="card-gold-top p-6">
-              <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-3">
+              <h3 className="font-serif text-lg font-semibold text-[#000000] mb-3">
                 Structure mathématique
               </h3>
-              <p className="text-sm text-[#1E0F2B]/75 leading-relaxed">
+              <p className="text-sm text-[#000000]/75 leading-relaxed">
                 364 jours = 52 semaines × 7 jours, soit 4 trimestres × 91 jours = 13 semaines.
                 Parce que 91 = 13 × 7 exactement, chaque trimestre reproduit la même structure
                 de semaine. Le 1er mois de chaque trimestre commence toujours un mercredi.
@@ -106,10 +106,10 @@ export default async function CalendrierBibliquePage() {
             </div>
 
             <div className="card-gold-top p-6">
-              <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-3">
+              <h3 className="font-serif text-lg font-semibold text-[#000000] mb-3">
                 Sources historiques
               </h3>
-              <p className="text-sm text-[#1E0F2B]/75 leading-relaxed">
+              <p className="text-sm text-[#000000]/75 leading-relaxed">
                 Le Livre d&apos;Hénoch (chapitres 72-82) décrit un calendrier solaire de 364 jours.
                 Les manuscrits de Qumrân (4Q319, 4Q320, 4Q321) confirment son usage dans le judaïsme
                 du Second Temple. Le Livre des Jubilés (6:32-38) condamne ceux qui suivent la lune
@@ -119,10 +119,10 @@ export default async function CalendrierBibliquePage() {
             </div>
 
             <div className="card-gold-top p-6">
-              <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-3">
+              <h3 className="font-serif text-lg font-semibold text-[#000000] mb-3">
                 Le jour commence au coucher du soleil
               </h3>
-              <p className="text-sm text-[#1E0F2B]/75 leading-relaxed">
+              <p className="text-sm text-[#000000]/75 leading-relaxed">
                 Genèse 1:5 : « il y eut un soir et il y eut un matin, un jour. »
                 Lévitique 23:32 : « du soir au soir. » Le jour biblique ne commence pas à minuit,
                 mais au coucher du soleil. Le moteur calendaire calcule le coucher de soleil à
@@ -131,10 +131,10 @@ export default async function CalendrierBibliquePage() {
             </div>
 
             <div className="card-gold-top p-6">
-              <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-3">
+              <h3 className="font-serif text-lg font-semibold text-[#000000] mb-3">
                 Ancrage sur l&apos;équinoxe
               </h3>
-              <p className="text-sm text-[#1E0F2B]/75 leading-relaxed">
+              <p className="text-sm text-[#000000]/75 leading-relaxed">
                 Pour éviter la dérive (364 jours vs 365,2422), l&apos;année est recalculée
                 chaque année sur le mercredi le plus proche de l&apos;équinoxe de printemps.
                 Cette approche auto-correctrice garantit que le 1 Aviv tombe toujours autour du

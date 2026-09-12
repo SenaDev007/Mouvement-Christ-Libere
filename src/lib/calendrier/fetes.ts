@@ -44,7 +44,7 @@ export interface DefinitionFete {
 
 // Couleurs des fêtes (cohérentes avec le design system)
 const COULEUR_PRINTEMPS = "#C9A227"; // or
-const COULEUR_AUTOMNE = "#8C5FA8"; // lavande
+const COULEUR_AUTOMNE = "#8A857C"; // lavande
 const COULEUR_JEUNE = "#B5502F"; // terracotta
 const COULEUR_TABERNACLES = "#5B7052"; // vert olive
 

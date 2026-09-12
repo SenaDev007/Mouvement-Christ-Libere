@@ -17,7 +17,7 @@ fonctionnalités "finales" demandées pour la messagerie Yeshua Connect.
 - ✅ Upload séquentiel (boucle `for ... await uploadSingleFile`) des fichiers multiples
   via l'API attachment existante `/api/yeshua-connect/conversations/{id}/messages/attachment`.
 - ✅ Overlay visuel : bordure pointillée dorée (`border-dashed border-[#C9A227]`) + icône
-  `UploadCloud` + texte "Déposez vos fichiers ici", avec fond translucide `bg-[#FAF6EF]/80`
+  `UploadCloud` + texte "Déposez vos fichiers ici", avec fond translucide `bg-[#F0E9DE]/80`
   + `backdrop-blur-sm`. Animé via Framer Motion `AnimatePresence`.
 
 ### 2. Paste d'image depuis le presse-papiers
@@ -64,7 +64,7 @@ fonctionnalités "finales" demandées pour la messagerie Yeshua Connect.
   `useEffect` ne changent pas → le listener reste stable).
 
 ### 5. Code blocks ```lang\ncode```
-- ✅ Composant `CodeBlock` : fond `bg-[#1E0F2B]`, header `bg-[#2A0E3D]/60` avec label
+- ✅ Composant `CodeBlock` : fond `bg-[#000000]`, header `bg-[#000000]/60` avec label
   langage (uppercase, font-mono) + bouton "Copier" (`navigator.clipboard.writeText`)
   avec feedback "Copié" pendant 2s (icône `Check` lucide).
 - ✅ `<pre><code>` monospace `text-xs text-stone-100` + `overflow-x-auto` pour le scroll
@@ -72,7 +72,7 @@ fonctionnalités "finales" demandées pour la messagerie Yeshua Connect.
 - ✅ Aucun syntax highlighting réel (conforme au cahier des charges).
 
 ### 6. Spoiler tags ||texte||
-- ✅ Composant `SpoilerText` : `<button>` inline avec `bg-[#1E0F2B]` (hidden) et
+- ✅ Composant `SpoilerText` : `<button>` inline avec `bg-[#000000]` (hidden) et
   `bg-stone-300/60` (revealed). Texte masqué via `opacity-0` + `select-none`.
   `aria-pressed={revealed}` + `<span className="sr-only">` pour l'accessibilité.
 - ✅ Toggle au clic (`setRevealed(r => !r)`), `e.stopPropagation()` pour éviter que le

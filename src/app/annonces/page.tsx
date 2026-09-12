@@ -98,7 +98,7 @@ export default async function AnnoncesPage({
         imageSrc="/pam-kongo-hero.webp"
       />
 
-      <section className="py-12 md:py-16 bg-[#FAF6EF]">
+      <section className="py-12 md:py-16 bg-[#F0E9DE]">
         <div className="container mx-auto max-w-4xl px-4">
           {/* Filtres catégories */}
           <div className="flex flex-wrap gap-2 mb-8 justify-center">
@@ -106,8 +106,8 @@ export default async function AnnoncesPage({
               href="/annonces"
               className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${
                 !categorie
-                  ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                  : "bg-white border border-[#8A8378]/15 text-[#8A8378] hover:border-[#C9A227]/40 hover:text-[#A3821C]"
+                  ? "bg-[#000000] text-[#F0E9DE]"
+                  : "bg-white border border-[#8A857C]/15 text-[#8A857C] hover:border-[#FF7A1A]/40 hover:text-[#A3821C]"
               }`}
             >
               Toutes
@@ -120,8 +120,8 @@ export default async function AnnoncesPage({
                   href={construireLien(1, v)}
                   className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${
                     actif
-                      ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                      : "bg-white border border-[#8A8378]/15 text-[#8A8378] hover:border-[#C9A227]/40 hover:text-[#A3821C]"
+                      ? "bg-[#000000] text-[#F0E9DE]"
+                      : "bg-white border border-[#8A857C]/15 text-[#8A857C] hover:border-[#FF7A1A]/40 hover:text-[#A3821C]"
                   }`}
                 >
                   {c.libelle}
@@ -131,9 +131,9 @@ export default async function AnnoncesPage({
           </div>
 
           {total === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#8A8378]/15 px-6 py-16 text-center">
-              <Megaphone className="w-10 h-10 text-[#8A8378]/40 mx-auto mb-4" />
-              <p className="text-sm text-[#8A8378]">
+            <div className="bg-white rounded-2xl border border-[#8A857C]/15 px-6 py-16 text-center">
+              <Megaphone className="w-10 h-10 text-[#8A857C]/40 mx-auto mb-4" />
+              <p className="text-sm text-[#8A857C]">
                 Aucune annonce publiée pour le moment — les communiqués du
                 ministère apparaîtront ici dès leur publication par le
                 secrétariat.
@@ -141,7 +141,7 @@ export default async function AnnoncesPage({
             </div>
           ) : (
             <>
-              <p className="text-xs text-[#8A8378] text-center mb-6">
+              <p className="text-xs text-[#8A857C] text-center mb-6">
                 {total} annonce{total > 1 ? "s" : ""}
                 {categorie
                   ? ` · ${ANNONCE_CATEGORIES[categorie as keyof typeof ANNONCE_CATEGORIES].libelle}`
@@ -158,7 +158,7 @@ export default async function AnnoncesPage({
                   return (
                     <article
                       key={a.id}
-                      className="bg-white rounded-2xl border border-[#8A8378]/15 p-6 md:p-7"
+                      className="bg-white rounded-2xl border border-[#8A857C]/15 p-6 md:p-7"
                     >
                       <div className="flex items-center gap-2 flex-wrap mb-3">
                         <span
@@ -172,17 +172,17 @@ export default async function AnnoncesPage({
                           <Icone className="w-3 h-3" />
                           {categorieInfo?.libelle ?? a.category}
                         </span>
-                        <span className="inline-flex items-center gap-1 text-[11px] text-[#8A8378]">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-[#8A857C]">
                           <Clock className="w-3 h-3" />
                           {a.publishedAt
                             ? formaterDate(a.publishedAt)
                             : formaterDate(a.createdAt)}
                         </span>
                       </div>
-                      <h2 className="font-serif text-xl font-semibold text-[#1E0F2B] mb-3">
+                      <h2 className="font-serif text-xl font-semibold text-[#000000] mb-3">
                         {a.title}
                       </h2>
-                      <div className="text-sm text-[#1E0F2B]/80 leading-relaxed whitespace-pre-wrap">
+                      <div className="text-sm text-[#000000]/80 leading-relaxed whitespace-pre-wrap">
                         {a.content}
                       </div>
                     </article>
@@ -196,7 +196,7 @@ export default async function AnnoncesPage({
                   {page > 1 ? (
                     <Link
                       href={construireLien(page - 1, categorie)}
-                      className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-[#8A8378]/15 text-[#1E0F2B] hover:border-[#C9A227]/40 transition-colors"
+                      className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-[#8A857C]/15 text-[#000000] hover:border-[#FF7A1A]/40 transition-colors"
                       aria-label="Page précédente"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -204,13 +204,13 @@ export default async function AnnoncesPage({
                   ) : (
                     <span className="w-10 h-10" />
                   )}
-                  <span className="text-xs font-semibold text-[#1E0F2B]">
+                  <span className="text-xs font-semibold text-[#000000]">
                     Page {page} sur {nbPages}
                   </span>
                   {page < nbPages ? (
                     <Link
                       href={construireLien(page + 1, categorie)}
-                      className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-[#8A8378]/15 text-[#1E0F2B] hover:border-[#C9A227]/40 transition-colors"
+                      className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-[#8A857C]/15 text-[#000000] hover:border-[#FF7A1A]/40 transition-colors"
                       aria-label="Page suivante"
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -227,7 +227,7 @@ export default async function AnnoncesPage({
           <div className="mt-12 text-center">
             <Link
               href="/rendez-vous"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#2A0E3D] text-[#DDBE55] text-sm font-bold hover:bg-[#3D1A54] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#000000] text-[#DDBE55] text-sm font-bold hover:bg-[#161513] transition-colors"
             >
               <Megaphone className="w-4 h-4" />
               Vous souhaitez rencontrer un serviteur de Dieu ?

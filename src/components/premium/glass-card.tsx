@@ -23,9 +23,9 @@ export function GlassCard({
   const baseClass = cn(
     "group relative rounded-2xl overflow-hidden transition-all duration-500",
     "backdrop-blur-md border",
-    variant === "default" && "bg-[#FAF6EF]/80 border-[#8A8378]/20 hover:border-[#C9A227]/40 hover:shadow-[0_10px_40px_-10px_rgba(42,14,61,0.15)]",
-    variant === "imperial" && "bg-[#3D1A54]/40 border-[#C9A227]/20 hover:border-[#C9A227]/50 hover:shadow-[0_10px_40px_-10px_rgba(201,162,39,0.2)]",
-    variant === "gold-accent" && "bg-[#FAF6EF] border-[#C9A227]/30 hover:border-[#C9A227] hover:shadow-[0_10px_40px_-10px_rgba(201,162,39,0.3)]",
+    variant === "default" && "bg-[#F0E9DE]/80 border-[#8A857C]/20 hover:border-[#FF7A1A]/40 hover:shadow-[0_10px_40px_-10px_rgba(0, 0, 0,0.15)]",
+    variant === "imperial" && "bg-[#161513]/40 border-[#C9A227]/20 hover:border-[#FF7A1A]/50 hover:shadow-[0_10px_40px_-10px_rgba(201,162,39,0.2)]",
+    variant === "gold-accent" && "bg-[#F0E9DE] border-[#C9A227]/30 hover:border-[#FF7A1A] hover:shadow-[0_10px_40px_-10px_rgba(201,162,39,0.3)]",
     className
   );
 
@@ -35,7 +35,7 @@ export function GlassCard({
       <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#C9A227] via-[#C9A227]-light to-[#C9A227] opacity-60 group-hover:opacity-100 transition-opacity" />
 
       {/* Halo lumineux au hover */}
-      <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#C9A227]/0 group-hover:bg-[#C9A227]/10 blur-3xl transition-all duration-700 pointer-events-none" />
+      <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#C9A227]/0 group-hover:bg-[#FF7A1A]/10 blur-3xl transition-all duration-700 pointer-events-none" />
 
       <div className="relative z-10">{children}</div>
     </>
@@ -105,25 +105,25 @@ export function ServantCard({
             <div className="absolute inset-0 rounded-full border border-[#C9A227]/30 animate-ping opacity-50" />
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-semibold">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[#8A857C] font-semibold">
               {role}
             </div>
-            <div className="font-serif text-xl font-semibold text-[#1E0F2B] mt-0.5">
+            <div className="font-serif text-xl font-semibold text-[#000000] mt-0.5">
               {name}
             </div>
-            <div className="text-xs text-[#8A8378] mt-0.5">{fullName}</div>
+            <div className="text-xs text-[#8A857C] mt-0.5">{fullName}</div>
           </div>
         </div>
 
         {/* Bio */}
-        <p className="text-sm text-[#1E0F2B]/75 leading-relaxed mb-6 flex-1">
+        <p className="text-sm text-[#000000]/75 leading-relaxed mb-6 flex-1">
           {bio}
         </p>
 
         {/* CTA */}
         <Link
           href={href}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors group/cta mt-auto"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#000000] hover:text-[#FF7A1A] transition-colors group/cta mt-auto"
         >
           {ctaLabel}
           <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover/cta:translate-x-1" />

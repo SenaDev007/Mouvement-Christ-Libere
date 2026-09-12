@@ -125,17 +125,17 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden bg-[#1A0826]">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden bg-[#000000]">
       {/* Décor de fond */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-96 h-96 bg-[#C9A227]/8 blur-[120px] rounded-full" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#7C5CB8]/8 blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#8A857C]/8 blur-[120px] rounded-full" />
       </div>
 
       <div className="relative z-10 w-full max-w-2xl">
-        <div className="bg-[#FAF6EF] rounded-3xl shadow-2xl overflow-hidden border border-[#C9A227]/20">
+        <div className="bg-[#F0E9DE] rounded-3xl shadow-2xl overflow-hidden border border-[#C9A227]/20">
           {/* En-tête */}
-          <div className="bg-[#2A0E3D] px-8 py-8 text-center relative overflow-hidden">
+          <div className="bg-[#000000] px-8 py-8 text-center relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A227]/10 blur-3xl rounded-full pointer-events-none" />
             <div className="relative z-10 flex flex-col items-center">
               <div className="relative mb-3">
@@ -144,7 +144,7 @@ export default function RegisterPage() {
               </div>
               <h1 className="text-xl md:text-2xl font-bold mb-1">
                 <span style={{ color: "#C9A227" }}>Christ</span>
-                <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
+                <span style={{ color: "#F0E9DE" }}>&nbsp;Libère</span>
               </h1>
               <p className="text-xs uppercase tracking-[0.2em] font-bold text-[#C9A227]">Rejoindre la communauté</p>
             </div>
@@ -154,26 +154,26 @@ export default function RegisterPage() {
           <div className="p-6 md:p-8">
             <div className="flex items-center justify-center gap-2 mb-6">
               <Users className="w-4 h-4 text-[#5B7052]" />
-              <span className="text-xs font-semibold text-[#8A8378]">Inscription — Votre compte sera validé par un administrateur</span>
+              <span className="text-xs font-semibold text-[#8A857C]">Inscription — Votre compte sera validé par un administrateur</span>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Nom + Email */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Nom complet *</label>
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A857C] font-bold mb-1.5 block">Nom complet *</label>
                   <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
                     <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="Votre nom" autoComplete="name"
-                      className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
+                      className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Email *</label>
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A857C] font-bold mb-1.5 block">Email *</label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
                     <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required placeholder="vous@email.com" autoComplete="email" inputMode="email"
-                      className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
+                      className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]" />
                   </div>
                 </div>
               </div>
@@ -181,55 +181,55 @@ export default function RegisterPage() {
               {/* Mot de passe + Pseudonyme */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Mot de passe *</label>
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A857C] font-bold mb-1.5 block">Mot de passe *</label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
                     <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required autoComplete="new-password" placeholder="••••••••"
-                      className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
+                      className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Pseudonyme</label>
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A857C] font-bold mb-1.5 block">Pseudonyme</label>
                   <input type="text" value={form.pseudonyme} onChange={e => setForm({ ...form, pseudonyme: e.target.value })} placeholder="Nom sur la carte des dispersés" autoComplete="off"
-                    className="w-full px-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
+                    className="w-full px-3 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]" />
                 </div>
               </div>
 
               {/* Pays (avec recherche) + Ville */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="relative">
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Pays *</label>
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A857C] font-bold mb-1.5 block">Pays *</label>
                   <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
                     <input type="text" value={form.pays ? COUNTRIES.find(c => c.code === form.pays)?.name || "" : countrySearch}
                       onChange={e => { setCountrySearch(e.target.value); setForm({ ...form, pays: "" }); setShowCountryList(true); }}
                       onFocus={() => setShowCountryList(true)} placeholder="Rechercher un pays..." autoComplete="off"
-                      className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
+                      className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]" />
                   </div>
                   {showCountryList && (
-                    <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto bg-white rounded-xl shadow-xl border border-[#8A8378]/20 py-1">
+                    <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto bg-white rounded-xl shadow-xl border border-[#8A857C]/20 py-1">
                       {/* ⭐ V3.24 — Aide explicite quand aucune suggestion ne correspond :
                           l'utilisateur comprend qu'il doit sélectionner un pays. */}
                       {filteredCountries.length === 0 && (
-                        <p className="px-4 py-2 text-sm text-[#8A8378]">
+                        <p className="px-4 py-2 text-sm text-[#8A857C]">
                           Aucun pays trouvé — vérifiez l&#39;orthographe puis cliquez sur un pays de la liste.
                         </p>
                       )}
                       {filteredCountries.map(c => (
                         <button key={c.code} type="button" onClick={() => { setForm({ ...form, pays: c.code }); setShowCountryList(false); setCountrySearch(""); }}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-[#FAF6EF] text-[#1E0F2B]">
-                          {c.name}<span className="text-[#8A8378] ml-2 text-xs">{c.code}</span>
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-[#F0E9DE] text-[#000000]">
+                          {c.name}<span className="text-[#8A857C] ml-2 text-xs">{c.code}</span>
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Ville</label>
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A857C] font-bold mb-1.5 block">Ville</label>
                   <div className="relative">
-                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
                     <input type="text" value={form.ville} onChange={e => setForm({ ...form, ville: e.target.value })} placeholder="Votre ville" autoComplete="address-level2"
-                      className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]" />
+                      className="w-full pl-10 pr-3 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]" />
                   </div>
                 </div>
               </div>
@@ -237,16 +237,16 @@ export default function RegisterPage() {
               {/* Langue + Niveau */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Langue</label>
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A857C] font-bold mb-1.5 block">Langue</label>
                   <select value={form.langue} onChange={e => setForm({ ...form, langue: e.target.value })}
-                    className="w-full px-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]">
+                    className="w-full px-3 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]">
                     {LANGUES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Niveau spirituel</label>
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A857C] font-bold mb-1.5 block">Niveau spirituel</label>
                   <select value={form.niveau} onChange={e => setForm({ ...form, niveau: e.target.value })}
-                    className="w-full px-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]">
+                    className="w-full px-3 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]">
                     {NIVEAUX.map(n => <option key={n.code} value={n.code}>{n.label}</option>)}
                   </select>
                 </div>
@@ -254,14 +254,14 @@ export default function RegisterPage() {
 
               {/* Choix du canal */}
               <div>
-                <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-2 block">Canal de communauté</label>
-                <p className="text-xs text-[#8A8378] mb-3">Choisissez le canal que vous souhaitez rejoindre. Un administrateur validera votre affectation.</p>
+                <label className="text-xs uppercase tracking-[0.15em] text-[#8A857C] font-bold mb-2 block">Canal de communauté</label>
+                <p className="text-xs text-[#8A857C] mb-3">Choisissez le canal que vous souhaitez rejoindre. Un administrateur validera votre affectation.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {CANAUX.map(canal => (
                     <button key={canal.id} type="button" onClick={() => setForm({ ...form, canal: canal.id })}
-                      className={`text-left p-3 rounded-xl border-2 transition-all ${form.canal === canal.id ? "border-[#C9A227] bg-[#C9A227]/5" : "border-[#8A8378]/15 hover:border-[#C9A227]/40"}`}>
-                      <p className="text-sm font-bold text-[#1E0F2B]">{canal.label}</p>
-                      <p className="text-xs text-[#8A8378]">{canal.desc}</p>
+                      className={`text-left p-3 rounded-xl border-2 transition-all ${form.canal === canal.id ? "border-[#C9A227] bg-[#C9A227]/5" : "border-[#8A857C]/15 hover:border-[#FF7A1A]/40"}`}>
+                      <p className="text-sm font-bold text-[#000000]">{canal.label}</p>
+                      <p className="text-xs text-[#8A857C]">{canal.desc}</p>
                     </button>
                   ))}
                 </div>
@@ -269,9 +269,9 @@ export default function RegisterPage() {
 
               {/* Message */}
               <div>
-                <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Message (optionnel)</label>
+                <label className="text-xs uppercase tracking-[0.15em] text-[#8A857C] font-bold mb-1.5 block">Message (optionnel)</label>
                 <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} rows={2} placeholder="Quelques mots sur votre parcours..."
-                  className="w-full px-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] resize-none" />
+                  className="w-full px-3 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] resize-none" />
               </div>
 
               {/* Erreur */}
@@ -284,7 +284,7 @@ export default function RegisterPage() {
 
               {/* Bouton */}
               <button type="submit" disabled={loading}
-                className="w-full py-3.5 rounded-2xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-all inline-flex items-center justify-center gap-2 disabled:opacity-40 shadow-lg">
+                className="w-full py-3.5 rounded-2xl bg-[#000000] text-[#F0E9DE] font-bold text-sm hover:bg-[#161513] transition-all inline-flex items-center justify-center gap-2 disabled:opacity-40 shadow-lg">
                 {loading ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Création du compte...</>
                 ) : (
@@ -292,7 +292,7 @@ export default function RegisterPage() {
                 )}
               </button>
 
-              <p className="text-center text-xs text-[#8A8378]">
+              <p className="text-center text-xs text-[#8A857C]">
                 Votre compte sera examiné par un administrateur qui validera votre canal de communauté.
               </p>
             </form>
@@ -301,9 +301,9 @@ export default function RegisterPage() {
 
         {/* Liens */}
         <div className="mt-6 flex items-center justify-center gap-4">
-          <a href="/login" className="text-xs font-semibold text-[#FAF6EF]/60 hover:text-[#C9A227] transition-colors">Déjà un compte ? Se connecter</a>
-          <span className="text-[#FAF6EF]/20">|</span>
-          <a href="/" className="text-xs font-semibold text-[#FAF6EF]/60 hover:text-[#C9A227] transition-colors">← Retour au site</a>
+          <a href="/login" className="text-xs font-semibold text-[#F0E9DE]/60 hover:text-[#FF7A1A] transition-colors">Déjà un compte ? Se connecter</a>
+          <span className="text-[#F0E9DE]/20">|</span>
+          <a href="/" className="text-xs font-semibold text-[#F0E9DE]/60 hover:text-[#FF7A1A] transition-colors">← Retour au site</a>
         </div>
       </div>
     </div>

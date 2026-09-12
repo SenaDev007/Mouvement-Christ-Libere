@@ -319,7 +319,7 @@ export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
           aria-live="assertive"
         >
           <div
-            className="rounded-2xl overflow-hidden shadow-2xl border bg-[#2A0E3D]"
+            className="rounded-2xl overflow-hidden shadow-2xl border bg-[#000000]"
             style={{ borderColor: `${banniere.evenement.couleur}66` }}
           >
             {/* Liseré de fête */}
@@ -346,17 +346,17 @@ export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
                   {banniere.type === "sonnerie" ? (
                     banniere.evenement.type === "shabbat" ? (
                       <>
-                        <p className="font-serif text-base font-bold text-[#FAF6EF] leading-tight">
+                        <p className="font-serif text-base font-bold text-[#F0E9DE] leading-tight">
                           Shabbat Shalom !
                         </p>
-                        <p className="text-xs text-[#FAF6EF]/70 mt-1 leading-snug">
+                        <p className="text-xs text-[#F0E9DE]/70 mt-1 leading-snug">
                           Le Shabbat est entré au coucher du soleil ({heureJerusalem(banniere.evenement.entree)} à Jérusalem).
                           Jour de repos et de sainte convocation — Exode 20:8.
                         </p>
                       </>
                     ) : (
                       <>
-                        <p className="font-serif text-base font-bold text-[#FAF6EF] leading-tight">
+                        <p className="font-serif text-base font-bold text-[#F0E9DE] leading-tight">
                           📯 Le shofar retentit — {banniere.evenement.titre}
                         </p>
                         {banniere.evenement.titreHebreu && (
@@ -364,13 +364,13 @@ export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
                             {banniere.evenement.titreHebreu}
                           </p>
                         )}
-                        <p className="text-xs text-[#FAF6EF]/70 mt-1 leading-snug">
+                        <p className="text-xs text-[#F0E9DE]/70 mt-1 leading-snug">
                           {banniere.evenement.dateBiblique}
                           {banniere.evenement.reference ? ` · ${banniere.evenement.reference}` : ""} — la solennité
                           commence maintenant, au coucher du soleil ({heureJerusalem(banniere.evenement.entree)} à Jérusalem).
                         </p>
                         {tronquer(banniere.evenement.description, 110) && (
-                          <p className="text-[11px] text-[#FAF6EF]/55 mt-1.5 leading-snug italic">
+                          <p className="text-[11px] text-[#F0E9DE]/55 mt-1.5 leading-snug italic">
                             {tronquer(banniere.evenement.description, 110)}
                           </p>
                         )}
@@ -379,10 +379,10 @@ export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
                   ) : (
                     banniere.jalon && (
                       <>
-                        <p className="font-serif text-base font-bold text-[#FAF6EF] leading-tight">
+                        <p className="font-serif text-base font-bold text-[#F0E9DE] leading-tight">
                           {texteJalon(banniere.jalon.cle)} : {banniere.evenement.titre}
                         </p>
-                        <p className="text-xs text-[#FAF6EF]/70 mt-1 leading-snug">
+                        <p className="text-xs text-[#F0E9DE]/70 mt-1 leading-snug">
                           La fête de l&apos;Éternel approche — elle entre{" "}
                           {banniere.jalon.cle === "j24h" ? "demain soir" : `${banniere.jalon.label} avant l&apos;entrée`},
                           au coucher du soleil. Le shofar retentira dans la communauté.
@@ -412,7 +412,7 @@ export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
                           <VolumeX className="w-3 h-3" /> Son bloqué par le navigateur — cliquez sur la page
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[#FAF6EF]/50">
+                        <span className="inline-flex items-center gap-1 text-[#F0E9DE]/50">
                           <VolumeX className="w-3 h-3" /> Son désactivé
                         </span>
                       )}
@@ -425,14 +425,14 @@ export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
                         setBanniere(null);
                         onOpenCalendar();
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#2A0E3D] text-[11px] font-bold hover:bg-[#9C7E1E] hover:text-[#FAF6EF] transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#000000] text-[11px] font-bold hover:bg-[#9C7E1E] hover:text-[#F0E9DE] transition-colors"
                     >
                       <Sunset className="w-3.5 h-3.5" />
                       Voir le calendrier
                     </button>
                     <button
                       onClick={() => setBanniere(null)}
-                      className="p-1.5 rounded-lg text-[#FAF6EF]/50 hover:text-[#FAF6EF] hover:bg-white/10 transition-colors"
+                      className="p-1.5 rounded-lg text-[#F0E9DE]/50 hover:text-[#F0E9DE] hover:bg-white/10 transition-colors"
                       title="Fermer"
                       aria-label="Fermer la notification"
                     >

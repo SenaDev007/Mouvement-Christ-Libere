@@ -63,7 +63,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-[#1A0826]">
+    <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-[#000000]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -86,7 +86,7 @@ export default function AdminLoginPage() {
             style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
           >
             <span style={{ color: "#C9A227" }}>Christ</span>
-            <span style={{ color: "#FAF6EF" }}>&nbsp;&nbsp;Libère</span>
+            <span style={{ color: "#F0E9DE" }}>&nbsp;&nbsp;Libère</span>
           </h1>
           <p className="text-xs uppercase tracking-[0.25em] font-bold text-[#C9A227]">
             Back Office
@@ -107,11 +107,11 @@ export default function AdminLoginPage() {
 
           {/* Champ pseudonyme / email */}
           <div>
-            <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-[#000000] uppercase tracking-wider mb-2">
               Pseudonyme ou email
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
               <input
                 type="text"
                 value={name}
@@ -121,18 +121,18 @@ export default function AdminLoginPage() {
                 disabled={loading}
                 placeholder="Votre pseudonyme ou email"
                 autoComplete="username"
-                className="w-full pl-10 pr-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
+                className="w-full pl-10 pr-4 py-3 bg-[#F0E9DE] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
               />
             </div>
           </div>
 
           {/* Champ mot de passe */}
           <div>
-            <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-[#000000] uppercase tracking-wider mb-2">
               Mot de passe
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
               <input
                 type="password"
                 value={password}
@@ -141,7 +141,7 @@ export default function AdminLoginPage() {
                 disabled={loading}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className="w-full pl-10 pr-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
+                className="w-full pl-10 pr-4 py-3 bg-[#F0E9DE] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
               />
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading || !name || !password}
-            className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-md hover:bg-[#DDBE55] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-[#C9A227] text-[#000000] font-semibold text-sm rounded-md hover:bg-[#FF7A1A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -165,13 +165,13 @@ export default function AdminLoginPage() {
         </form>
 
         {/* Note de bas */}
-        <p className="text-center text-xs text-[#FAF6EF]/60 mt-6 leading-relaxed">
+        <p className="text-center text-xs text-[#F0E9DE]/60 mt-6 leading-relaxed">
           Accès réservé aux super administrateurs et administrateurs autorisés.
         </p>
 
         {/* Retour à l'accueil */}
-        <p className="text-center text-xs text-[#FAF6EF]/60 mt-4">
-          <Link href={accueilPublicUrl} className="hover:text-[#C9A227] transition-colors">
+        <p className="text-center text-xs text-[#F0E9DE]/60 mt-4">
+          <Link href={accueilPublicUrl} className="hover:text-[#FF7A1A] transition-colors">
             ← Retour à l&apos;accueil
           </Link>
         </p>

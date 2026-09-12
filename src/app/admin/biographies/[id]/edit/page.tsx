@@ -32,7 +32,7 @@ export default async function EditBiographyPage({
   ]);
   if (!biography) notFound();
 
-  const accentColor = biography.servant?.code === "pam" ? "#C9A227" : "#8C5FA8";
+  const accentColor = biography.servant?.code === "pam" ? "#C9A227" : "#8A857C";
 
   return (
     <BiographyAutoModal

@@ -204,17 +204,17 @@ export default function SecretariatAnnoncesPage() {
       {/* En-tête */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#000000]">
             Annonces du ministère
           </h1>
-          <p className="text-sm text-[#8A8378] mt-1">
+          <p className="text-sm text-[#8A857C] mt-1">
             Lives programmés, événements, communiqués — la voix officielle du
             Mouvement Christ Libère.
           </p>
         </div>
         <button
           onClick={ouvrirCreation}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#000000] text-[#F0E9DE] text-sm font-semibold hover:bg-[#161513] transition-colors"
         >
           <Plus className="w-4 h-4" />
           Rédiger une annonce
@@ -239,8 +239,8 @@ export default function SecretariatAnnoncesPage() {
             }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               filtreStatut === f.v
-                ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                : "bg-white border border-[#8A8378]/15 text-[#8A8378] hover:bg-[#FAF6EF]"
+                ? "bg-[#000000] text-[#F0E9DE]"
+                : "bg-white border border-[#8A857C]/15 text-[#8A857C] hover:bg-[#F0E9DE]"
             }`}
           >
             {f.l}
@@ -257,13 +257,13 @@ export default function SecretariatAnnoncesPage() {
 
       {/* Liste */}
       {chargement ? (
-        <div className="flex items-center justify-center py-16 text-[#8A8378]">
+        <div className="flex items-center justify-center py-16 text-[#8A857C]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 px-6 py-14 text-center">
-          <Megaphone className="w-8 h-8 text-[#8A8378]/40 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378]">
+        <div className="bg-white rounded-xl border border-[#8A857C]/15 px-6 py-14 text-center">
+          <Megaphone className="w-8 h-8 text-[#8A857C]/40 mx-auto mb-3" />
+          <p className="text-sm text-[#8A857C]">
             Aucune annonce — rédigez la première pour le ministère.
           </p>
         </div>
@@ -277,7 +277,7 @@ export default function SecretariatAnnoncesPage() {
             return (
               <div
                 key={annonce.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 md:p-5"
+                className="bg-white rounded-xl border border-[#8A857C]/15 p-4 md:p-5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -304,7 +304,7 @@ export default function SecretariatAnnoncesPage() {
                             })}`}
                         </span>
                       ) : annonce.publishAt ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8C5FA8]/10 text-[#6B4480] border border-[#8C5FA8]/30">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8A857C]/10 text-[#6B675F] border border-[#8A857C]/30">
                           <Clock className="w-3 h-3" />
                           Programmée
                           {" "}
@@ -316,7 +316,7 @@ export default function SecretariatAnnoncesPage() {
                           })}
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8A8378]/10 text-[#6B6459] border border-[#8A8378]/30">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8A857C]/10 text-[#6B6459] border border-[#8A857C]/30">
                           Brouillon
                         </span>
                       )}
@@ -327,27 +327,27 @@ export default function SecretariatAnnoncesPage() {
                         </span>
                       )}
                     </div>
-                    <h2 className="text-sm font-bold text-[#1E0F2B]">
+                    <h2 className="text-sm font-bold text-[#000000]">
                       {annonce.title}
                     </h2>
-                    <p className="text-xs text-[#8A8378] whitespace-pre-wrap leading-relaxed mt-1.5 line-clamp-4">
+                    <p className="text-xs text-[#8A857C] whitespace-pre-wrap leading-relaxed mt-1.5 line-clamp-4">
                       {annonce.content}
                     </p>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-[#8A8378]/10">
+                <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-[#8A857C]/10">
                   <button
                     onClick={() => ouvrirEdition(annonce)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#C9A227]/40 text-[#A3821C] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#C9A227]/40 text-[#A3821C] text-xs font-semibold hover:bg-[#FF7A1A]/10 transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     Modifier
                   </button>
                   <button
                     onClick={() => basculerPublication(annonce)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#8A8378]/25 text-[#8A8378] text-xs font-semibold hover:bg-[#FAF6EF] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#8A857C]/25 text-[#8A857C] text-xs font-semibold hover:bg-[#F0E9DE] transition-colors"
                   >
                     {annonce.isPublished ? (
                       <>
@@ -371,7 +371,7 @@ export default function SecretariatAnnoncesPage() {
                         )
                           relayer(annonce);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#8C5FA8] text-white text-xs font-semibold hover:bg-[#6B4480] transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#8A857C] text-white text-xs font-semibold hover:bg-[#6B675F] transition-colors"
                     >
                       <Send className="w-3.5 h-3.5" />
                       Relayer à la communauté
@@ -403,19 +403,19 @@ export default function SecretariatAnnoncesPage() {
 
       {/* ── Éditeur ── */}
       {editeurOuvert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/60 overflow-y-auto">
           <form
             onSubmit={enregistrer}
             className="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 my-8"
           >
             <div className="flex items-start justify-between">
-              <h2 className="text-lg font-bold text-[#1E0F2B]">
+              <h2 className="text-lg font-bold text-[#000000]">
                 {editionId ? "Modifier l'annonce" : "Nouvelle annonce"}
               </h2>
               <button
                 type="button"
                 onClick={() => setEditeurOuvert(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:bg-[#FAF6EF]"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A857C] hover:bg-[#F0E9DE]"
                 aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
@@ -423,7 +423,7 @@ export default function SecretariatAnnoncesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1.5">
+              <label className="block text-xs font-semibold text-[#000000] mb-1.5">
                 Titre *
               </label>
               <input
@@ -432,12 +432,12 @@ export default function SecretariatAnnoncesPage() {
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 placeholder="Ex. Live spécial délivrance — vendredi 20 h"
-                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1.5">
+              <label className="block text-xs font-semibold text-[#000000] mb-1.5">
                 Catégorie
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -452,7 +452,7 @@ export default function SecretariatAnnoncesPage() {
                       className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-lg border-2 text-[11px] font-semibold transition-all ${
                         actif
                           ? "border-[#C9A227] bg-[#C9A227]/5 text-[#A3821C]"
-                          : "border-[#8A8378]/15 text-[#8A8378] hover:border-[#C9A227]/40"
+                          : "border-[#8A857C]/15 text-[#8A857C] hover:border-[#FF7A1A]/40"
                       }`}
                     >
                       {Icone && <Icone className="w-4 h-4" />}
@@ -464,7 +464,7 @@ export default function SecretariatAnnoncesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1.5">
+              <label className="block text-xs font-semibold text-[#000000] mb-1.5">
                 Contenu *
               </label>
               <textarea
@@ -473,7 +473,7 @@ export default function SecretariatAnnoncesPage() {
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
                 placeholder="Rédigez l'annonce complète — elle sera visible par le serviteur concerné et, si publiée, dans le registre du ministère…"
-                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm resize-none"
+                className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm resize-none"
               />
             </div>
 
@@ -492,9 +492,9 @@ export default function SecretariatAnnoncesPage() {
                   }
                   className="w-4 h-4 accent-[#C9A227]"
                 />
-                <span className="text-xs font-semibold text-[#1E0F2B]">
+                <span className="text-xs font-semibold text-[#000000]">
                   Publier immédiatement
-                  <span className="text-[#8A8378] font-normal">
+                  <span className="text-[#8A857C] font-normal">
                     {" "}
                     (sinon : enregistrer comme brouillon)
                   </span>
@@ -503,8 +503,8 @@ export default function SecretariatAnnoncesPage() {
 
               {/* ⭐ V3.67 — Programmation de la publication */}
               {!form.isPublished && (
-                <div className="px-3 py-2.5 rounded-lg border border-[#8C5FA8]/25 bg-[#8C5FA8]/5">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-[#6B4480] mb-1.5">
+                <div className="px-3 py-2.5 rounded-lg border border-[#8A857C]/25 bg-[#8A857C]/5">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-[#6B675F] mb-1.5">
                     <Clock className="w-3.5 h-3.5" />
                     Programmer la publication (facultatif)
                   </label>
@@ -514,9 +514,9 @@ export default function SecretariatAnnoncesPage() {
                     onChange={(e) =>
                       setForm({ ...form, publishAt: e.target.value })
                     }
-                    className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#8C5FA8]"
+                    className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#8A857C]"
                   />
-                  <p className="text-[10px] text-[#8A8378] mt-1">
+                  <p className="text-[10px] text-[#8A857C] mt-1">
                     À l&apos;heure indiquée, l&apos;annonce passera automatiquement
                     en « Publiée » (visible sur la page publique /annonces) —
                     sans action de votre part.
@@ -529,11 +529,11 @@ export default function SecretariatAnnoncesPage() {
                   type="checkbox"
                   checked={form.relayYeshua}
                   onChange={(e) => setForm({ ...form, relayYeshua: e.target.checked })}
-                  className="w-4 h-4 accent-[#8C5FA8]"
+                  className="w-4 h-4 accent-[#8A857C]"
                 />
-                <span className="text-xs font-semibold text-[#1E0F2B]">
+                <span className="text-xs font-semibold text-[#000000]">
                   Relayer dans Yeshua Connect
-                  <span className="text-[#8A8378] font-normal">
+                  <span className="text-[#8A857C] font-normal">
                     {" "}
                     (canal d&apos;annonces — toute la communauté)
                   </span>
@@ -547,14 +547,14 @@ export default function SecretariatAnnoncesPage() {
               <button
                 type="button"
                 onClick={() => setEditeurOuvert(false)}
-                className="px-4 py-2 rounded-lg text-sm text-[#8A8378] hover:text-[#1E0F2B]"
+                className="px-4 py-2 rounded-lg text-sm text-[#8A857C] hover:text-[#000000]"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={enregistrement}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#000000] text-[#F0E9DE] text-sm font-semibold hover:bg-[#161513] transition-colors disabled:opacity-50"
               >
                 {enregistrement && <Loader2 className="w-4 h-4 animate-spin" />}
                 {editionId ? "Enregistrer" : "Créer l'annonce"}

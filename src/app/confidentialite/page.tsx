@@ -22,12 +22,12 @@ function Section({ id, icon, title, children }: SectionProps) {
   return (
     <section id={id} className="scroll-mt-24 mb-10">
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-xl bg-[#2A0E3D]/5 border border-[#C9A227]/20 flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-[#000000]/5 border border-[#C9A227]/20 flex items-center justify-center flex-shrink-0">
           {icon}
         </div>
-        <h2 className="font-serif text-xl md:text-2xl font-bold text-[#1E0F2B]">{title}</h2>
+        <h2 className="font-serif text-xl md:text-2xl font-bold text-[#000000]">{title}</h2>
       </div>
-      <div className="md:pl-13 space-y-3 text-sm md:text-[15px] leading-relaxed text-[#1E0F2B]/80">
+      <div className="md:pl-13 space-y-3 text-sm md:text-[15px] leading-relaxed text-[#000000]/80">
         {children}
       </div>
     </section>
@@ -48,11 +48,11 @@ export default function ConfidentialitePage() {
       />
 
       {/* Sommaire + contenu */}
-      <section className="bg-[#FAF6EF] py-16 md:py-20">
+      <section className="bg-[#F0E9DE] py-16 md:py-20">
         <div className="container mx-auto max-w-3xl px-4">
           {/* Date + sommaire */}
-          <div className="mb-10 p-5 rounded-2xl bg-white border border-[#8A8378]/15">
-            <p className="text-xs text-[#8A8378] mb-4 flex items-center gap-2">
+          <div className="mb-10 p-5 rounded-2xl bg-white border border-[#8A857C]/15">
+            <p className="text-xs text-[#8A857C] mb-4 flex items-center gap-2">
               <Clock className="w-3.5 h-3.5" /> Dernière mise à jour : {LAST_UPDATED}
             </p>
             <p className="text-xs uppercase tracking-[0.18em] text-[#C9A227] font-semibold mb-2">
@@ -72,7 +72,7 @@ export default function ConfidentialitePage() {
                 ["#contact", "10. Nous contacter"],
               ].map(([href, label]) => (
                 <li key={href}>
-                  <a href={href} className="text-[#1E0F2B]/75 hover:text-[#C9A227] transition-colors">
+                  <a href={href} className="text-[#000000]/75 hover:text-[#FF7A1A] transition-colors">
                     {label}
                   </a>
                 </li>
@@ -109,8 +109,8 @@ export default function ConfidentialitePage() {
                 ["Vidéos et lives", "interactions publiques (chat, réactions) liées aux retransmissions YouTube."],
                 ["Données techniques", "journaux de connexion (adresse IP anonymisée, navigateur) conservés à des fins de sécurité."],
               ].map(([title, desc]) => (
-                <li key={title} className="p-3 rounded-xl bg-white border border-[#8A8378]/10">
-                  <strong className="text-[#1E0F2B]">{title} :</strong> {desc}
+                <li key={title} className="p-3 rounded-xl bg-white border border-[#8A857C]/10">
+                  <strong className="text-[#000000]">{title} :</strong> {desc}
                 </li>
               ))}
             </ul>
@@ -206,7 +206,7 @@ export default function ConfidentialitePage() {
               {["Accès", "Rectification", "Effacement", "Limitation", "Opposition", "Portabilité", "Retrait du consentement"].map((d) => (
                 <span
                   key={d}
-                  className="px-3 py-1.5 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/25 text-xs font-semibold text-[#1E0F2B]"
+                  className="px-3 py-1.5 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/25 text-xs font-semibold text-[#000000]"
                 >
                   {d}
                 </span>
@@ -236,7 +236,7 @@ export default function ConfidentialitePage() {
               <Link href="/contact" className="text-[#C9A227] font-semibold hover:underline">formulaire de contact</Link>.
               L&apos;équipe pastorale s&apos;engage à répondre sous 24 à 48 heures.
             </p>
-            <div className="mt-4 p-4 rounded-xl bg-[#2A0E3D]/5 border border-[#C9A227]/20 flex items-start gap-3">
+            <div className="mt-4 p-4 rounded-xl bg-[#000000]/5 border border-[#C9A227]/20 flex items-start gap-3">
               <ShieldCheck className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
               <p className="text-xs leading-relaxed">
                 <strong>En résumé :</strong> nous ne collectons que le strict nécessaire, nous ne

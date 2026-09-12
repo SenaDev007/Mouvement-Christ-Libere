@@ -11,10 +11,12 @@ interface AuroraBackgroundProps {
 }
 
 const VARIANT_COLORS = {
-  imperial: ["#2A0E3D", "#3D1A54", "#1A0826"],
+  // V3.68 — palette logo : noir / or / feu. « dawn » = halo feu discret
+  // derrière le contenu du hero (spec : glow feu, jamais dégradé complet).
+  imperial: ["#000000", "#161513", "#000000"],
   gold: ["#C9A227", "#DDBE55", "#A3821C"],
-  lavender: ["#8C5FA8", "#A878C4", "#6B4485"],
-  dawn: ["#2A0E3D", "#8C5FA8", "#C9A227"],
+  lavender: ["#8A857C", "#A29C92", "#6B675F"],
+  dawn: ["#000000", "#FF7A1A", "#C9A227"],
 };
 
 const INTENSITY_OPACITY = {

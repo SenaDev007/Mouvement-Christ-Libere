@@ -43,7 +43,7 @@ export function UpdateContactStatusButton({ id, status, icon }: UpdateContactSta
       onClick={handleClick}
       disabled={isPending}
       title={status === "ANSWERED" ? "Marquer comme traité" : "Archiver"}
-      className={`p-2 rounded-lg text-[#8A8378] ${hoverColor} transition-colors disabled:opacity-50`}
+      className={`p-2 rounded-lg text-[#8A857C] ${hoverColor} transition-colors disabled:opacity-50`}
     >
       {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Icon className="w-3.5 h-3.5" />}
       {error && <span className="sr-only">{error}</span>}

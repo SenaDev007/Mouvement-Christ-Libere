@@ -260,9 +260,9 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
   // ─── Rendu ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-full flex flex-col bg-[#FAF6EF] overflow-hidden" role="dialog" aria-label="Calendrier biblique">
+    <div className="h-full flex flex-col bg-[#F0E9DE] overflow-hidden" role="dialog" aria-label="Calendrier biblique">
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 bg-[#2A0E3D] text-[#FAF6EF]">
+      <div className="flex-shrink-0 bg-[#000000] text-[#F0E9DE]">
         <div className="flex items-center gap-3 px-3 md:px-5 py-3">
           <button
             onClick={onClose}
@@ -276,7 +276,7 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
             <h2 className="font-serif text-lg md:text-xl font-bold leading-tight truncate">
               Calendrier biblique
             </h2>
-            <p className="text-[10px] md:text-xs text-[#FAF6EF]/60 uppercase tracking-[0.14em] font-bold truncate">
+            <p className="text-[10px] md:text-xs text-[#F0E9DE]/60 uppercase tracking-[0.14em] font-bold truncate">
               Fêtes de l'Éternel · 364 jours · Shofar au coucher du soleil
             </p>
           </div>
@@ -311,7 +311,7 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
           {annee && (
             <button
               onClick={() => setExportPdfOuvert(true)}
-              className="ml-1.5 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A227] text-[#2A0E3D] text-[11px] font-bold hover:bg-[#9C7E1E] hover:text-[#FAF6EF] transition-colors"
+              className="ml-1.5 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A227] text-[#000000] text-[11px] font-bold hover:bg-[#9C7E1E] hover:text-[#F0E9DE] transition-colors"
               title="Télécharger le calendrier en PDF"
             >
               <Download className="w-3.5 h-3.5" />
@@ -331,7 +331,7 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
                 onClick={() => setVueActive(vue.id)}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all",
-                  actif ? "bg-[#C9A227] text-[#2A0E3D] shadow-sm" : "text-[#FAF6EF]/70 hover:text-[#FAF6EF] hover:bg-white/10"
+                  actif ? "bg-[#C9A227] text-[#000000] shadow-sm" : "text-[#F0E9DE]/70 hover:text-[#F0E9DE] hover:bg-white/10"
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -347,9 +347,9 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
         {chargement && (
           <div className="p-8 md:p-12 max-w-6xl mx-auto">
             <div className="animate-pulse space-y-4">
-              <div className="h-28 rounded-2xl bg-[#2A0E3D]/10" />
-              <div className="h-64 rounded-2xl bg-[#2A0E3D]/5" />
-              <div className="h-40 rounded-2xl bg-[#2A0E3D]/5" />
+              <div className="h-28 rounded-2xl bg-[#000000]/10" />
+              <div className="h-64 rounded-2xl bg-[#000000]/5" />
+              <div className="h-40 rounded-2xl bg-[#000000]/5" />
             </div>
           </div>
         )}
@@ -359,7 +359,7 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
             <p className="text-sm text-[#B5502F] mb-4">{erreur}</p>
             <button
               onClick={() => void charger()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-sm font-bold hover:bg-[#1E0F2B] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#000000] text-[#F0E9DE] text-sm font-bold hover:bg-[#000000] transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Réessayer
@@ -370,7 +370,7 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
         {donnees && !chargement && (
           <div className="p-3 md:p-6 max-w-6xl mx-auto space-y-5 md:space-y-6">
             {/* ══ Bloc SHOFAR & solennités ══════════════════════════════ */}
-            <div className="rounded-2xl overflow-hidden shadow-lg border border-[#C9A227]/30 bg-[#2A0E3D] relative">
+            <div className="rounded-2xl overflow-hidden shadow-lg border border-[#C9A227]/30 bg-[#000000] relative">
               <div className="absolute top-0 right-0 w-40 h-40 bg-[#C9A227]/10 blur-3xl rounded-full pointer-events-none" />
               <div className="relative p-4 md:p-6">
                 <div className="flex items-center gap-2 mb-4">
@@ -383,31 +383,31 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
                 {prochainEvenement ? (
                   <div className="grid md:grid-cols-[1fr_auto] gap-4 md:gap-8 items-start">
                     <div className="min-w-0">
-                      <h3 className="font-serif text-xl md:text-2xl font-bold text-[#FAF6EF] leading-tight">
+                      <h3 className="font-serif text-xl md:text-2xl font-bold text-[#F0E9DE] leading-tight">
                         {prochainEvenement.type === "shabbat" ? "Shabbat" : prochainEvenement.titre}
                       </h3>
                       {prochainEvenement.titreHebreu && (
                         <p className="text-sm text-[#C9A227] font-serif mt-0.5" dir="rtl">
                           {prochainEvenement.titreHebreu}
                           {prochainEvenement.dateBiblique ? (
-                            <span dir="ltr" className="text-[#FAF6EF]/60 not-italic ml-2 text-xs">
+                            <span dir="ltr" className="text-[#F0E9DE]/60 not-italic ml-2 text-xs">
                               · {prochainEvenement.dateBiblique}
                             </span>
                           ) : null}
                         </p>
                       )}
                       <div className="mt-3 space-y-1.5">
-                        <p className="flex items-center gap-2 text-xs text-[#FAF6EF]/75">
-                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: prochainEvenement.couleur === "#2A0E3D" ? "#C9A227" : prochainEvenement.couleur }} />
+                        <p className="flex items-center gap-2 text-xs text-[#F0E9DE]/75">
+                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: prochainEvenement.couleur === "#000000" ? "#C9A227" : prochainEvenement.couleur }} />
                           Entrée {dateLongue(prochainEvenement.entree)}
                         </p>
-                        <p className="flex items-center gap-2 text-xs text-[#FAF6EF]/75">
+                        <p className="flex items-center gap-2 text-xs text-[#F0E9DE]/75">
                           <MapPin className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
                           Coucher du soleil : {heureJerusalem(prochainEvenement.entree)} à Jérusalem ·{" "}
                           {heureLocale(prochainEvenement.entree)} chez vous
                         </p>
                         {prochainEvenement.type === "fete" && prochainEvenement.jalons.length > 0 && (
-                          <p className="flex items-center gap-2 text-xs text-[#FAF6EF]/75">
+                          <p className="flex items-center gap-2 text-xs text-[#F0E9DE]/75">
                             <Bell className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
                             Rappels automatiques : 7 jours, 3 jours et 24 heures avant
                           </p>
@@ -424,14 +424,14 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-[#FAF6EF]/60 italic">Aucune sonnerie à venir dans la fenêtre de calcul.</p>
+                  <p className="text-sm text-[#F0E9DE]/60 italic">Aucune sonnerie à venir dans la fenêtre de calcul.</p>
                 )}
 
                 {/* Actions + préférences */}
                 <div className="mt-4 pt-4 border-t border-[#C9A227]/20 flex flex-wrap items-center gap-2">
                   <button
                     onClick={ecouterAnnonce}
-                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#C9A227] text-[#2A0E3D] text-xs font-bold hover:bg-[#9C7E1E] hover:text-[#FAF6EF] transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#C9A227] text-[#000000] text-xs font-bold hover:bg-[#9C7E1E] hover:text-[#F0E9DE] transition-colors shadow-sm"
                     title="Écouter la séquence complète (Tekiah, Shevarim, Teruah, Tekiah Gedolah)"
                   >
                     <Volume2 className="w-3.5 h-3.5" />
@@ -442,7 +442,7 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
                     <button
                       onClick={partagerAnnonce}
                       disabled={annonceEnvoyee}
-                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-[#C9A227]/40 text-[#FAF6EF] text-xs font-bold hover:bg-[#C9A227]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-[#C9A227]/40 text-[#F0E9DE] text-xs font-bold hover:bg-[#FF7A1A]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       title="Partager l'annonce dans la conversation active"
                     >
                       <Send className="w-3.5 h-3.5" />
@@ -458,7 +458,7 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
                         "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors border",
                         prefs.sound
                           ? "bg-[#C9A227]/15 border-[#C9A227]/40 text-[#C9A227]"
-                          : "bg-white/5 border-white/10 text-[#FAF6EF]/50"
+                          : "bg-white/5 border-white/10 text-[#F0E9DE]/50"
                       )}
                       title="Le shofar retentit-il à l'entrée du Shabbat et des fêtes ?"
                     >
@@ -479,7 +479,7 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
                         "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors border",
                         prefs.notif
                           ? "bg-[#C9A227]/15 border-[#C9A227]/40 text-[#C9A227]"
-                          : "bg-white/5 border-white/10 text-[#FAF6EF]/50"
+                          : "bg-white/5 border-white/10 text-[#F0E9DE]/50"
                       )}
                       title="Notifications à 7 jours, 3 jours, 24 heures et à l'entrée"
                     >
@@ -496,7 +496,7 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
                   </p>
                 )}
                 {permissionNotif !== "granted" && (
-                  <p className="mt-3 text-[11px] text-[#FAF6EF]/60 leading-snug">
+                  <p className="mt-3 text-[11px] text-[#F0E9DE]/60 leading-snug">
                     {permissionNotif === "denied" ? (
                       <>Notifications système bloquées dans les réglages du navigateur — les rappels 7 j / 3 j / 24 h
                       resteront visibles dans la communauté sous forme de bannières.</>
@@ -513,8 +513,8 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
 
             {/* ══ Prochaines sonneries ══════════════════════════════════ */}
             {prochainsEvenements.length > 1 && (
-              <div className="bg-white rounded-xl shadow-sm border border-[#8A8378]/15 p-4 md:p-5">
-                <h4 className="font-serif text-sm font-bold text-[#1E0F2B] mb-3 flex items-center gap-2">
+              <div className="bg-white rounded-xl shadow-sm border border-[#8A857C]/15 p-4 md:p-5">
+                <h4 className="font-serif text-sm font-bold text-[#000000] mb-3 flex items-center gap-2">
                   <Sunset className="w-4 h-4 text-[#C9A227]" />
                   Les prochaines sonneries
                 </h4>
@@ -522,19 +522,19 @@ export function CalendarWorkspace({ onClose, onShareAnnonce }: CalendarWorkspace
                   {prochainsEvenements.map((e) => (
                     <div
                       key={e.id}
-                      className="flex items-center gap-3 p-2.5 rounded-lg bg-[#FAF6EF]/60 border border-[#8A8378]/10"
+                      className="flex items-center gap-3 p-2.5 rounded-lg bg-[#F0E9DE]/60 border border-[#8A857C]/10"
                     >
                       <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-[#FAF6EF] text-sm"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-[#F0E9DE] text-sm"
                         style={{ backgroundColor: e.couleur }}
                       >
                         {e.type === "shabbat" ? "🕯️" : "📯"}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#1E0F2B] truncate">
+                        <p className="text-xs font-bold text-[#000000] truncate">
                           {e.type === "shabbat" ? "Shabbat" : e.titre}
                         </p>
-                        <p className="text-[10px] text-[#8A8378] truncate">
+                        <p className="text-[10px] text-[#8A857C] truncate">
                           {new Date(e.entree).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
                           {" · "}
                           {heureLocale(e.entree)}
@@ -594,10 +594,10 @@ function CaseCompte({ valeur, label, accent }: { valeur: number; label: string; 
         accent ? "bg-[#C9A227]/15 border-[#C9A227]/40" : "bg-white/5 border-white/10"
       )}
     >
-      <div className={cn("font-serif text-xl md:text-2xl font-bold tabular-nums", accent ? "text-[#C9A227]" : "text-[#FAF6EF]")}>
+      <div className={cn("font-serif text-xl md:text-2xl font-bold tabular-nums", accent ? "text-[#C9A227]" : "text-[#F0E9DE]")}>
         {pad(valeur)}
       </div>
-      <div className="text-[9px] uppercase tracking-[0.14em] text-[#FAF6EF]/50 font-bold">{label}</div>
+      <div className="text-[9px] uppercase tracking-[0.14em] text-[#F0E9DE]/50 font-bold">{label}</div>
     </div>
   );
 }

@@ -69,18 +69,18 @@ export function AdminModal({
     >
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-[#1A0826]/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-[#000000]/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
-        className={`relative ${SIZES[size]} w-full bg-white rounded-2xl shadow-2xl border border-[#8A8378]/15 max-h-[90vh] flex flex-col overflow-hidden`}
+        className={`relative ${SIZES[size]} w-full bg-white rounded-2xl shadow-2xl border border-[#8A857C]/15 max-h-[90vh] flex flex-col overflow-hidden`}
         style={{ animation: "modalIn 200ms ease-out" }}
       >
         {/* Header avec accent */}
         <div
-          className="px-6 py-4 border-b border-[#8A8378]/10 relative overflow-hidden flex-shrink-0"
+          className="px-6 py-4 border-b border-[#8A857C]/10 relative overflow-hidden flex-shrink-0"
           style={{
             background: `linear-gradient(90deg, ${accentColor}10 0%, transparent 100%)`,
           }}
@@ -91,14 +91,14 @@ export function AdminModal({
           />
           <div className="flex items-start justify-between gap-4 relative z-10">
             <div>
-              <h2 className="text-lg font-bold text-[#1E0F2B]">{title}</h2>
+              <h2 className="text-lg font-bold text-[#000000]">{title}</h2>
               {subtitle && (
-                <p className="text-xs text-[#8A8378] mt-0.5">{subtitle}</p>
+                <p className="text-xs text-[#8A857C] mt-0.5">{subtitle}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-[#8A8378]/10 text-[#8A8378] hover:text-[#1E0F2B] transition-colors flex-shrink-0"
+              className="p-1.5 rounded-lg hover:bg-[#8A857C]/10 text-[#8A857C] hover:text-[#000000] transition-colors flex-shrink-0"
               aria-label="Fermer"
             >
               <X className="w-4 h-4" />
@@ -149,19 +149,19 @@ interface ModalFieldProps {
 export function ModalField({ label, required, fullWidth, children, help }: ModalFieldProps) {
   return (
     <div className={fullWidth ? "col-span-2" : ""}>
-      <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">
+      <label className="block text-xs font-bold text-[#000000] uppercase tracking-wider mb-1.5">
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       {children}
-      {help && <p className="text-[10px] text-[#8A8378] mt-1">{help}</p>}
+      {help && <p className="text-[10px] text-[#8A857C] mt-1">{help}</p>}
     </div>
   );
 }
 
 // Wrapper pour les inputs/selects avec border-radius élégant
 export function modalInputClass() {
-  return "w-full px-4 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/15 transition-all placeholder:text-[#8A8378]/50";
+  return "w-full px-4 py-2.5 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/15 transition-all placeholder:text-[#8A857C]/50";
 }
 
 // Bouton de soumission du modal
@@ -177,7 +177,7 @@ export function ModalSubmit({ loading, disabled, label, loadingLabel = "Enregist
     <button
       type="submit"
       disabled={loading || disabled}
-      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#000000] text-[#F0E9DE] font-bold text-sm hover:bg-[#161513] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {loading ? (
         <>

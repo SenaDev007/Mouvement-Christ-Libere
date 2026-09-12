@@ -187,20 +187,20 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[#1A0826]/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-[#000000]/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-white rounded-2xl shadow-2xl border border-[#8A8378]/15 max-w-md w-full overflow-hidden">
+      <div className="relative bg-white rounded-2xl shadow-2xl border border-[#8A857C]/15 max-w-md w-full overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
 
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#8A8378]/10 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-[#8A857C]/10 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-[#1E0F2B]">
+            <h2 className="text-lg font-bold text-[#000000]">
               {existingMember ? "Bienvenue à nouveau" : "Rejoindre le live"}
             </h2>
-            <p className="text-xs text-[#8A8378] mt-0.5">{liveTitle}</p>
+            <p className="text-xs text-[#8A857C] mt-0.5">{liveTitle}</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-[#8A8378]/10 text-[#8A8378]">
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-[#8A857C]/10 text-[#8A857C]">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -220,7 +220,7 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
             </div>
             <button
               onClick={() => onRegistered({ id: existingMember.id, firstName: existingMember.firstName, isAnonymous: !existingMember.contact })}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors"
             >
               Rejoindre le live
             </button>
@@ -229,16 +229,16 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
           /* ═══ Nouveau visiteur — quick join ou full registration ═══ */
           <div className="px-6 py-5">
             {/* Tabs */}
-            <div className="flex gap-1 bg-[#2A0E3D]/5 rounded-xl p-1 mb-4">
+            <div className="flex gap-1 bg-[#000000]/5 rounded-xl p-1 mb-4">
               <button
                 onClick={() => setMode("quick")}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${mode === "quick" ? "bg-white text-[#1E0F2B] shadow-sm" : "text-[#8A8378]"}`}
+                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${mode === "quick" ? "bg-white text-[#000000] shadow-sm" : "text-[#8A857C]"}`}
               >
                 Accès rapide
               </button>
               <button
                 onClick={() => setMode("full")}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${mode === "full" ? "bg-white text-[#1E0F2B] shadow-sm" : "text-[#8A8378]"}`}
+                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${mode === "full" ? "bg-white text-[#000000] shadow-sm" : "text-[#8A857C]"}`}
               >
                 Créer un compte
               </button>
@@ -247,17 +247,17 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
             {mode === "quick" ? (
               /* ═══ Quick join — juste le nom ═══ */
               <form onSubmit={handleQuickJoin} className="space-y-4">
-                <p className="text-xs text-[#8A8378] bg-[#2A0E3D]/5 rounded-lg p-3">
+                <p className="text-xs text-[#8A857C] bg-[#000000]/5 rounded-lg p-3">
                   Entrez simplement votre nom pour regarder le live et participer au chat.
                   Vous pourrez créer un compte complet plus tard.
                 </p>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-[#000000] uppercase tracking-wider mb-1.5">
                     Votre nom <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
                     <input
                       type="text"
                       value={firstName}
@@ -265,7 +265,7 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
                       required
                       maxLength={50}
                       autoFocus
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
                       placeholder="Votre prénom ou pseudo"
                     />
                   </div>
@@ -276,7 +276,7 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
                 <button
                   type="submit"
                   disabled={loading || !firstName.trim()}
-                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {loading ? "Connexion..." : "Regarder le live"}
@@ -297,18 +297,18 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
             ) : (
               /* ═══ Full registration ═══ */
               <form onSubmit={handleFullRegister} className="space-y-4">
-                <p className="text-xs text-[#8A8378] bg-[#2A0E3D]/5 rounded-lg p-3">
+                <p className="text-xs text-[#8A857C] bg-[#000000]/5 rounded-lg p-3">
                   Créez votre compte une fois pour suivre tous les lives, participer au chat,
                   gagner de l'XP et apparaître sur la carte des dispersés.
                 </p>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-[#000000] uppercase tracking-wider mb-1.5">
                       Prénom <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
                       <input
                         type="text"
                         value={firstName}
@@ -316,19 +316,19 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
                         required
                         maxLength={50}
                         autoFocus
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
                         placeholder="Prénom"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">Nom</label>
+                    <label className="block text-xs font-bold text-[#000000] uppercase tracking-wider mb-1.5">Nom</label>
                     <input
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       maxLength={50}
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+                      className="w-full px-3 py-2.5 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
                       placeholder="Nom"
                     />
                   </div>
@@ -336,13 +336,13 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">Pays</label>
+                    <label className="block text-xs font-bold text-[#000000] uppercase tracking-wider mb-1.5">Pays</label>
                     <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378] z-10" />
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C] z-10" />
                       <select
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] appearance-none"
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] appearance-none"
                       >
                         <option value="">Sélectionner...</option>
                         {COUNTRIES.map((c) => (
@@ -354,28 +354,28 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">Ville</label>
+                    <label className="block text-xs font-bold text-[#000000] uppercase tracking-wider mb-1.5">Ville</label>
                     <input
                       type="text"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       maxLength={50}
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+                      className="w-full px-3 py-2.5 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
                       placeholder="Ville"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">
-                    Contact <span className="text-[#8A8378] normal-case font-normal">(optionnel)</span>
+                  <label className="block text-xs font-bold text-[#000000] uppercase tracking-wider mb-1.5">
+                    Contact <span className="text-[#8A857C] normal-case font-normal">(optionnel)</span>
                   </label>
                   <input
                     type="text"
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
                     maxLength={100}
-                    className="w-full px-3 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+                    className="w-full px-3 py-2.5 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
                     placeholder="Email ou téléphone"
                   />
                 </div>
@@ -385,7 +385,7 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
                 <button
                   type="submit"
                   disabled={loading || !firstName.trim()}
-                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#000000] text-[#F0E9DE] font-bold text-sm hover:bg-[#161513] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                   {loading ? "Inscription..." : "Créer mon compte"}
@@ -395,7 +395,7 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
                 <div className="text-center pt-2">
                   <Link
                     href="/register"
-                    className="text-xs text-[#8A8378] hover:text-[#C9A227] inline-flex items-center gap-1"
+                    className="text-xs text-[#8A857C] hover:text-[#FF7A1A] inline-flex items-center gap-1"
                   >
                     <LogIn className="w-3 h-3" />
                     Ou se connecter avec un compte existant

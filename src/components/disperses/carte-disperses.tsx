@@ -33,9 +33,9 @@ interface CarteDispersesProps {
 
 const NIVEAU_COULEURS: Record<string, string> = {
   pasteur: "#C9A227",
-  disciple: "#8C5FA8",
+  disciple: "#8A857C",
   croyant: "#5B7052",
-  chercheur: "#8A8378",
+  chercheur: "#8A857C",
 };
 
 const NIVEAU_LABELS: Record<string, string> = {
@@ -155,9 +155,9 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
 
     const svg = map.getSVG({
       radius: 0.25,
-      color: "#FAF6EF30",
+      color: "#F0E9DE30",
       shape: "circle",
-      backgroundColor: "#1A0826",
+      backgroundColor: "#000000",
     });
 
     // Extraire les dimensions du viewBox
@@ -192,7 +192,7 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
         <div className="card-gold-top p-6">
           {/* Filtres */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <span className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mr-2">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-semibold mr-2">
               Filtrer :
             </span>
             <button
@@ -200,8 +200,8 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
               className={cn(
                 "px-3 py-1 rounded text-xs font-semibold transition-all",
                 !filtreNiveau
-                  ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                  : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+                  ? "bg-[#000000] text-[#F0E9DE]"
+                  : "border border-[#000000]/30 text-[#000000] hover:bg-[#000000]/5"
               )}
             >
               Tous
@@ -213,8 +213,8 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
                 className={cn(
                   "px-3 py-1 rounded text-xs font-semibold transition-all inline-flex items-center gap-1.5",
                   filtreNiveau === niveau
-                    ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                    : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+                    ? "bg-[#000000] text-[#F0E9DE]"
+                    : "border border-[#000000]/30 text-[#000000] hover:bg-[#000000]/5"
                 )}
               >
                 <span
@@ -227,7 +227,7 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
           </div>
 
           {/* Carte dotted-map avec overlay interactif */}
-          <div className="relative bg-[#1A0826] rounded-2xl overflow-hidden border-2 border-[#C9A227]/20" style={{ aspectRatio: "2 / 1" }}>
+          <div className="relative bg-[#000000] rounded-2xl overflow-hidden border-2 border-[#C9A227]/20" style={{ aspectRatio: "2 / 1" }}>
             {/* Fond dotted-map */}
             <Image
               src={`data:image/svg+xml;utf8,${encodeURIComponent(svgMap)}`}
@@ -314,7 +314,7 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
                       cy={pin.y}
                       r="5"
                       fill={couleur}
-                      stroke="#FAF6EF"
+                      stroke="#F0E9DE"
                       strokeWidth="1.5"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -329,7 +329,7 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
           </div>
 
           {/* Légende */}
-          <div className="mt-4 flex items-center gap-4 flex-wrap text-xs text-[#8A8378]">
+          <div className="mt-4 flex items-center gap-4 flex-wrap text-xs text-[#8A857C]">
             {Object.entries(NIVEAU_LABELS).map(([niveau, label]) => (
               <span key={niveau} className="inline-flex items-center gap-1.5">
                 <span
@@ -339,8 +339,8 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
                 {label}
               </span>
             ))}
-            <span className="text-[#8A8378]/60">·</span>
-            <span className="inline-flex items-center gap-1.5 text-[#8A8378]/70 italic">
+            <span className="text-[#8A857C]/60">·</span>
+            <span className="inline-flex items-center gap-1.5 text-[#8A857C]/70 italic">
               Position arrondie à 0.1° pour anonymat
             </span>
           </div>
@@ -350,7 +350,7 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
       {/* Sidebar (1/4) */}
       <div className="space-y-4">
         <div className="card-gold-top p-5">
-          <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-4 flex items-center gap-2">
+          <h3 className="font-serif text-base font-semibold text-[#000000] mb-4 flex items-center gap-2">
             <Globe className="w-4 h-4 text-[#C9A227]" />
             Rassemblement en cours
           </h3>
@@ -361,13 +361,13 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
           </div>
         </div>
 
-        <div className="bg-[#2A0E3D] text-[#FAF6EF] rounded-2xl p-5 relative overflow-hidden">
+        <div className="bg-[#000000] text-[#F0E9DE] rounded-2xl p-5 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A227]/10 blur-2xl rounded-full pointer-events-none" />
           <div className="relative">
             <p className="text-[10px] uppercase tracking-[0.2em] text-[#DDBE55]/70 font-semibold mb-2">
               Prophétie
             </p>
-            <p className="font-serif italic text-sm text-[#FAF6EF]/90 leading-relaxed mb-2">
+            <p className="font-serif italic text-sm text-[#F0E9DE]/90 leading-relaxed mb-2">
               « <IsololeText>Il rassemblera les exilés d'Israël, et il recueillera les dispersés de Juda des quatre extrémités de la terre.</IsololeText> »
             </p>
             <p className="text-xs text-[#DDBE55]/70 font-semibold">Ésaïe 11:12</p>
@@ -377,7 +377,7 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
         {/* ⭐ V3.11 — « Derniers inscrits » : SUPER_ADMIN uniquement */}
         {afficherDerniersInscrits && (
           <div className="card-gold-top p-5">
-            <h3 className="font-serif text-base font-semibold text-[#1E0F2B] mb-3">
+            <h3 className="font-serif text-base font-semibold text-[#000000] mb-3">
               Derniers inscrits
             </h3>
             <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-discrete">
@@ -385,7 +385,7 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
                 <button
                   key={m.id}
                   onClick={() => setMembreSelectionne(m)}
-                  className="w-full text-left p-2 rounded hover:bg-[#C9A227]/5 transition-colors flex items-center gap-2"
+                  className="w-full text-left p-2 rounded hover:bg-[#FF7A1A]/5 transition-colors flex items-center gap-2"
                 >
                   {/* ⭐ V3.15 — Photo du membre ou initiales, anneau de la
                       couleur du niveau spirituel */}
@@ -396,8 +396,8 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
                     couleurRing={NIVEAU_COULEURS[m.niveau] || NIVEAU_COULEURS.chercheur}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-[#1E0F2B] truncate">{m.pseudonyme}</p>
-                    <p className="text-[10px] text-[#8A8378]">
+                    <p className="text-xs font-medium text-[#000000] truncate">{m.pseudonyme}</p>
+                    <p className="text-[10px] text-[#8A857C]">
                       {getDrapeau(m.pays)} {m.ville || m.pays}
                     </p>
                   </div>
@@ -415,28 +415,28 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/60 backdrop-blur-sm"
             onClick={() => setMembreSelectionne(null)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#FAF6EF] rounded-2xl max-w-md w-full overflow-hidden"
+              className="bg-[#F0E9DE] rounded-2xl max-w-md w-full overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div
-                className="p-6 text-[#FAF6EF] relative"
+                className="p-6 text-[#F0E9DE] relative"
                 style={{ backgroundColor: NIVEAU_COULEURS[membreSelectionne.niveau] }}
               >
                 <button
                   onClick={() => setMembreSelectionne(null)}
-                  className="absolute top-4 right-4 p-1.5 rounded hover:bg-[#FAF6EF]/20"
+                  className="absolute top-4 right-4 p-1.5 rounded hover:bg-[#F0E9DE]/20"
                 >
                   <X className="w-4 h-4" />
                 </button>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#FAF6EF]/20 border border-[#FAF6EF]/30 overflow-hidden flex-shrink-0">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0E9DE]/20 border border-[#F0E9DE]/30 overflow-hidden flex-shrink-0">
                     {/* ⭐ V3.15 — Photo du membre si ajoutée, sinon initiales
                         (AKPOVI Sènakpon → AS, plus un simple A) */}
                     {membreSelectionne.photo ? (
@@ -492,21 +492,21 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
                 </div>
 
                 {membreSelectionne.message && (
-                  <div className="p-4 bg-[#2A0E3D]/5 rounded-md border border-[#C9A227]/20 mb-4">
-                    <p className="font-serif italic text-sm text-[#1E0F2B]/80 leading-relaxed">
+                  <div className="p-4 bg-[#000000]/5 rounded-md border border-[#C9A227]/20 mb-4">
+                    <p className="font-serif italic text-sm text-[#000000]/80 leading-relaxed">
                       « <IsololeText>{membreSelectionne.message}</IsololeText> »
                     </p>
                   </div>
                 )}
 
-                <div className="text-xs text-[#8A8378] space-y-1">
+                <div className="text-xs text-[#8A857C] space-y-1">
                   <p>
-                    <strong className="text-[#1E0F2B]">Position :</strong>{" "}
+                    <strong className="text-[#000000]">Position :</strong>{" "}
                     {membreSelectionne.latitude.toFixed(1)}°, {membreSelectionne.longitude.toFixed(1)}°
-                    <span className="text-[#8A8378]/60 ml-1">(arrondie à 0.1° pour anonymat)</span>
+                    <span className="text-[#8A857C]/60 ml-1">(arrondie à 0.1° pour anonymat)</span>
                   </p>
                   <p>
-                    <strong className="text-[#1E0F2B]">Langue :</strong> {membreSelectionne.langue}
+                    <strong className="text-[#000000]">Langue :</strong> {membreSelectionne.langue}
                   </p>
                 </div>
               </div>
@@ -521,12 +521,12 @@ export function CarteDisperses({ membres, afficherDerniersInscrits = false }: Ca
 function StatItem({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: number }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex items-center justify-center w-9 h-9 rounded-md bg-[#2A0E3D]/10">
-        <Icon className="w-4 h-4 text-[#2A0E3D]" />
+      <div className="flex items-center justify-center w-9 h-9 rounded-md bg-[#000000]/10">
+        <Icon className="w-4 h-4 text-[#000000]" />
       </div>
       <div>
-        <div className="font-serif text-xl font-semibold text-[#1E0F2B]">{value}</div>
-        <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold">{label}</div>
+        <div className="font-serif text-xl font-semibold text-[#000000]">{value}</div>
+        <div className="text-[10px] uppercase tracking-wider text-[#8A857C] font-semibold">{label}</div>
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ export default function Loading() {
         <div className="w-16 h-16 rounded-full border-2 border-[#C9A227]/20" />
         <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-2 border-transparent border-t-gold animate-spin" />
       </div>
-      <p className="mt-6 text-sm text-[#8A8378] italic font-serif">
+      <p className="mt-6 text-sm text-[#8A857C] italic font-serif">
         Un instant...
       </p>
     </div>

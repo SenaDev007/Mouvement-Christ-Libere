@@ -28,7 +28,7 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
           times: [0, 0.4, 0.6, 1],
           ease: "easeInOut",
         }}
-        className="fixed inset-0 z-[9998] bg-[#2A0E3D] pointer-events-none"
+        className="fixed inset-0 z-[9998] bg-[#000000] pointer-events-none"
         style={{ transformOrigin: "top" }}
       >
         <div className="h-full w-full flex items-center justify-center">

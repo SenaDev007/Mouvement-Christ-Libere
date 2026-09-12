@@ -776,7 +776,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     };
   }, [isLive, live.id, live.livekitRoomName, liveYoutubeUrl, hasJoined]);
 
-  const accentColor = live.servantCode === "pam" ? "#C9A227" : "#8C5FA8";
+  const accentColor = live.servantCode === "pam" ? "#C9A227" : "#8A857C";
   // ⭐ V3.33 — Regex étendue (embed/, live/, shorts/ comme /stats) +
   // autoplay muet : les navigateurs bloquent l'autoplay non muet — le
   // lecteur démarre ainsi systématiquement et le viewer active le son
@@ -907,7 +907,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF]">
+    <div className="min-h-screen bg-[#F0E9DE]">
       {/* Modal d'inscription unique */}
       <LiveJoinModal
         open={showJoinModal}
@@ -928,7 +928,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
       {/* ⭐ V3.39 — Toast de confirmation (enregistrer / copier). */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[95] px-4 py-2.5 rounded-full bg-[#1E0F2B] text-white text-xs font-bold shadow-2xl pointer-events-none">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[95] px-4 py-2.5 rounded-full bg-[#000000] text-white text-xs font-bold shadow-2xl pointer-events-none">
           {toast}
         </div>
       )}
@@ -943,23 +943,23 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-[#1E0F2B] mb-1">
+              <p className="text-sm font-bold text-[#000000] mb-1">
                 Bonjour {viewerFirstName} ! 👋
               </p>
-              <p className="text-xs text-[#8A8378] leading-relaxed mb-3">
+              <p className="text-xs text-[#8A857C] leading-relaxed mb-3">
                 Créez un compte gratuit pour suivre tous les lives, gagner de l'XP
                 et participer à la communauté à tout moment.
               </p>
               <div className="flex items-center gap-2">
                 <Link
                   href="/register"
-                  className="px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-xs font-bold hover:bg-[#DDBE55] transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#000000] text-xs font-bold hover:bg-[#FF7A1A] transition-colors"
                 >
                   Créer un compte
                 </Link>
                 <button
                   onClick={() => setShowAccountPrompt(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#8A857C] hover:text-[#000000] transition-colors"
                 >
                   Plus tard
                 </button>
@@ -967,7 +967,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
             </div>
             <button
               onClick={() => setShowAccountPrompt(false)}
-              className="p-0.5 rounded hover:bg-[#8A8378]/10 text-[#8A8378] flex-shrink-0"
+              className="p-0.5 rounded hover:bg-[#8A857C]/10 text-[#8A857C] flex-shrink-0"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -985,21 +985,21 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                   depuis le back-office, l'écran de CHAQUE viewer coupe
                   (demande explicite) — plus de lecteur figé indéfiniment. */}
               {liveEnded && (
-                <div className="absolute inset-0 z-40 flex items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826]">
-                  <div className="text-center text-[#FAF6EF] p-8 relative z-10">
-                    <div className="w-16 h-16 rounded-full bg-[#8A8378]/20 border-2 border-[#8A8378]/40 flex items-center justify-center mx-auto mb-4">
+                <div className="absolute inset-0 z-40 flex items-center justify-center bg-gradient-to-br from-[#000000] to-[#000000]">
+                  <div className="text-center text-[#F0E9DE] p-8 relative z-10">
+                    <div className="w-16 h-16 rounded-full bg-[#8A857C]/20 border-2 border-[#8A857C]/40 flex items-center justify-center mx-auto mb-4">
                       <CheckCircle2 className="w-8 h-8 text-[#C9A227]" />
                     </div>
                     <p className="text-lg font-bold mb-1">Direct terminé</p>
-                    <p className="text-sm text-[#FAF6EF]/60 mb-5 max-w-xs mx-auto">
+                    <p className="text-sm text-[#F0E9DE]/60 mb-5 max-w-xs mx-auto">
                       Merci d&apos;avoir rejoint ce direct avec nous. Le replay
                       sera publié prochainement sur la page Vidéos.
                     </p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
-                      <Link href="/videos" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-xs hover:bg-[#DDBE55] transition-colors">
+                      <Link href="/videos" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-xs hover:bg-[#FF7A1A] transition-colors">
                         Voir les rediffusions
                       </Link>
-                      <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#FAF6EF]/30 text-[#FAF6EF] font-medium text-xs hover:bg-white/10 transition-colors">
+                      <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#F0E9DE]/30 text-[#F0E9DE] font-medium text-xs hover:bg-white/10 transition-colors">
                         Retour à l&apos;accueil
                       </Link>
                     </div>
@@ -1044,7 +1044,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                   mais qu'aucun track vidéo n'est reçu (le studio n'est pas encore
                   connecté, ou le flux RTMP vers YouTube n'est pas encore actif). */}
               {isLive && !liveYoutubeUrl && hasJoined && waitingForStream && !streamReceived && !connecting && (
-                <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#1A0826]">
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#000000]">
                   {/* Miniature en fond si disponible */}
                   {live.thumbnailUrl && (
                     <img
@@ -1053,7 +1053,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                       className="absolute inset-0 w-full h-full object-cover opacity-20"
                     />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-b from-[#1A0826]/60 to-[#1A0826]" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#000000]/60 to-[#000000]" />
                   <div className="relative z-10 text-center px-6">
                     <div className="relative inline-flex mb-5">
                       {/* Halo pulsé */}
@@ -1062,10 +1062,10 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                         <Radio className="w-7 h-7 text-[#C9A227] animate-pulse" />
                       </div>
                     </div>
-                    <h3 className="text-lg font-bold text-[#FAF6EF] mb-2">
+                    <h3 className="text-lg font-bold text-[#F0E9DE] mb-2">
                       En attente du diffuseur
                     </h3>
-                    <p className="text-sm text-[#FAF6EF]/60 max-w-xs mx-auto leading-relaxed">
+                    <p className="text-sm text-[#F0E9DE]/60 max-w-xs mx-auto leading-relaxed">
                       Le live va commencer dans un instant. La vidéo apparaîtra
                       automatiquement dès que le flux sera actif.
                     </p>
@@ -1080,20 +1080,20 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
               {/* Écran "Rejoindre le live" si pas encore inscrit */}
               {isLive && !hasJoined && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826]">
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#000000] to-[#000000]">
                   {/* Miniature du live en fond si disponible */}
                   {live.thumbnailUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={live.thumbnailUrl} alt={live.title} className="absolute inset-0 w-full h-full object-cover opacity-40" />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#2A0E3D] via-[#2A0E3D]/70 to-[#2A0E3D]/50" />
-                  <div className="text-center text-[#FAF6EF] p-8 relative z-10">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/70 to-[#000000]/50" />
+                  <div className="text-center text-[#F0E9DE] p-8 relative z-10">
                     <Radio className="w-12 h-12 text-red-500 mx-auto mb-4 animate-pulse" />
                     <p className="text-lg font-bold mb-2">Le live est en cours</p>
-                    <p className="text-sm text-[#FAF6EF]/60 mb-6">Rejoignez la diffusion pour regarder et participer au chat</p>
+                    <p className="text-sm text-[#F0E9DE]/60 mb-6">Rejoignez la diffusion pour regarder et participer au chat</p>
                     <button
                       onClick={() => setShowJoinModal(true)}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors shadow-lg"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors shadow-lg"
                     >
                       <Radio className="w-4 h-4" />
                       Rejoindre le live
@@ -1104,19 +1104,19 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
               {/* Live programmé */}
               {live.status === "SCHEDULED" && !isLive && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826]">
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#000000] to-[#000000]">
                   {/* Miniature en fond si disponible */}
                   {live.thumbnailUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={live.thumbnailUrl} alt={live.title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#2A0E3D] via-[#2A0E3D]/60 to-[#2A0E3D]/40" />
-                  <div className="text-center text-[#FAF6EF] p-8 relative z-10">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/60 to-[#000000]/40" />
+                  <div className="text-center text-[#F0E9DE] p-8 relative z-10">
                     <Calendar className="w-12 h-12 text-[#C9A227] mx-auto mb-4" />
                     <p className="text-xs uppercase tracking-[0.2em] font-bold text-[#C9A227] mb-2">Live programmé</p>
                     <p className="text-xl md:text-2xl font-bold mb-4">{new Date(live.scheduledAt).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</p>
                     {countdown && (
-                      <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold">
+                      <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold">
                         <Clock className="w-4 h-4" />{countdown}
                       </div>
                     )}
@@ -1135,11 +1135,11 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
 
               {/* Live terminé */}
               {live.status === "ENDED" && !isLive && (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#2A0E3D]">
-                  <div className="text-center text-[#FAF6EF] p-8">
-                    <AlertCircle className="w-12 h-12 text-[#FAF6EF]/30 mx-auto mb-4" />
+                <div className="absolute inset-0 flex items-center justify-center bg-[#000000]">
+                  <div className="text-center text-[#F0E9DE] p-8">
+                    <AlertCircle className="w-12 h-12 text-[#F0E9DE]/30 mx-auto mb-4" />
                     <p className="text-lg font-bold mb-2">Ce live est terminé</p>
-                    <p className="text-sm text-[#FAF6EF]/50">Le replay sera disponible prochainement</p>
+                    <p className="text-sm text-[#F0E9DE]/50">Le replay sera disponible prochainement</p>
                   </div>
                 </div>
               )}
@@ -1158,8 +1158,8 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               {/* Badge PAUSE côté viewer */}
               {isLive && hasJoined && viewerPaused && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#C9A227] text-[#1E0F2B] text-xs font-bold">
-                    <span className="w-2 h-2 rounded-full bg-[#1E0F2B]" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#C9A227] text-[#000000] text-xs font-bold">
+                    <span className="w-2 h-2 rounded-full bg-[#000000]" />
                     PAUSE · {liveDuration}
                   </span>
                 </div>
@@ -1187,12 +1187,12 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
             </div>
 
             {/* Titre */}
-            <h1 className="text-lg md:text-xl font-bold text-[#1E0F2B] leading-snug" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+            <h1 className="text-lg md:text-xl font-bold text-[#000000] leading-snug" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
               {live.title}
             </h1>
 
             {/* Barre chaîne + actions */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#8A8378]/15">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#8A857C]/15">
               <div className="flex items-center gap-3">
                 {live.servantPortraitUrl ? (
                   <img src={live.servantPortraitUrl} alt={live.servantName} className="w-10 h-10 rounded-full object-cover border-2" style={{ borderColor: accentColor }} />
@@ -1203,10 +1203,10 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                 )}
                 <div>
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold text-[#1E0F2B]">{live.servantName}</span>
+                    <span className="text-sm font-bold text-[#000000]">{live.servantName}</span>
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#C9A227]" />
                   </div>
-                  <p className="text-xs text-[#8A8378] flex items-center gap-1">
+                  <p className="text-xs text-[#8A857C] flex items-center gap-1">
                     {isLive && <><Users className="w-3 h-3" />{viewerCount} spectateur{viewerCount > 1 ? "s" : ""} en direct</>}
                     {!isLive && "Diffusion à venir"}
                   </p>
@@ -1217,9 +1217,9 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                 {/* Bouton cœur rouge — ⭐ V3.39 : like PERSISTANT (appareil +
                     compteur serveur réel, survit au rechargement). */}
                 <button onClick={handleLike} aria-label="J'aime" aria-pressed={liked}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors">
-                  <Heart className={`w-4 h-4 ${liked ? "text-red-500 fill-red-500" : "text-[#1E0F2B]"}`} />
-                  {likeCount > 0 && <span className="text-xs font-medium text-[#1E0F2B]">{likeCount}</span>}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-[#000000]/5 rounded-full hover:bg-[#000000]/10 transition-colors">
+                  <Heart className={`w-4 h-4 ${liked ? "text-red-500 fill-red-500" : "text-[#000000]"}`} />
+                  {likeCount > 0 && <span className="text-xs font-medium text-[#000000]">{likeCount}</span>}
                 </button>
 
                 {/* Partager avec icônes officielles */}
@@ -1228,9 +1228,9 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                 {/* Enregistrer — ⭐ V3.39 : PERSISTE sur l'appareil (avant :
                     état React local perdu au rechargement) + confirmation. */}
                 <button onClick={handleSave} aria-label="Enregistrer le live" aria-pressed={saved}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors">
-                  <Bookmark className={`w-4 h-4 ${saved ? "text-[#C9A227] fill-[#C9A227]" : "text-[#1E0F2B]"}`} />
-                  <span className="text-xs font-medium text-[#1E0F2B] hidden sm:inline">Enregistrer</span>
+                  className="flex items-center gap-1.5 px-3 py-2 bg-[#000000]/5 rounded-full hover:bg-[#000000]/10 transition-colors">
+                  <Bookmark className={`w-4 h-4 ${saved ? "text-[#C9A227] fill-[#C9A227]" : "text-[#000000]"}`} />
+                  <span className="text-xs font-medium text-[#000000] hidden sm:inline">Enregistrer</span>
                 </button>
 
                 {/* ⭐ V3.39 — Menu trois points : AVANT ce bouton n'avait
@@ -1244,9 +1244,9 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                     aria-label="Plus d'actions"
                     aria-expanded={menuOuvert}
                     onClick={() => setMenuOuvert((o) => !o)}
-                    className="p-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors"
+                    className="p-2 bg-[#000000]/5 rounded-full hover:bg-[#000000]/10 transition-colors"
                   >
-                    <MoreHorizontal className="w-4 h-4 text-[#1E0F2B]" />
+                    <MoreHorizontal className="w-4 h-4 text-[#000000]" />
                   </button>
                   {menuOuvert && (
                     <>
@@ -1256,24 +1256,24 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                         onClick={() => setMenuOuvert(false)}
                         aria-hidden="true"
                       />
-                      <div className="absolute right-0 top-full mt-2 z-[70] w-60 bg-white rounded-xl shadow-2xl border border-[#8A8378]/20 py-1.5 overflow-hidden">
+                      <div className="absolute right-0 top-full mt-2 z-[70] w-60 bg-white rounded-xl shadow-2xl border border-[#8A857C]/20 py-1.5 overflow-hidden">
                         <button
                           type="button"
                           onClick={() => {
                             setPartageOuvert(true);
                             setMenuOuvert(false);
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#000000] hover:bg-[#FF7A1A]/10 transition-colors"
                         >
-                          <Share2 className="w-4 h-4 text-[#8A8378]" />
+                          <Share2 className="w-4 h-4 text-[#8A857C]" />
                           Partager le live
                         </button>
                         <button
                           type="button"
                           onClick={copierLien}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#000000] hover:bg-[#FF7A1A]/10 transition-colors"
                         >
-                          <Link2 className="w-4 h-4 text-[#8A8378]" />
+                          <Link2 className="w-4 h-4 text-[#8A857C]" />
                           Copier le lien
                         </button>
                         {(liveYoutubeUrl || live.youtubeUrl) && (
@@ -1282,9 +1282,9 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={() => setMenuOuvert(false)}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#000000] hover:bg-[#FF7A1A]/10 transition-colors"
                           >
-                            <ExternalLink className="w-4 h-4 text-[#8A8378]" />
+                            <ExternalLink className="w-4 h-4 text-[#8A857C]" />
                             Regarder sur YouTube
                           </a>
                         )}
@@ -1294,10 +1294,10 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                             setMenuOuvert(false);
                             handleSave();
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 transition-colors border-t border-[#8A8378]/10 mt-1"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-[#000000] hover:bg-[#FF7A1A]/10 transition-colors border-t border-[#8A857C]/10 mt-1"
                         >
                           <Bookmark
-                            className={`w-4 h-4 ${saved ? "text-[#C9A227] fill-[#C9A227]" : "text-[#8A8378]"}`}
+                            className={`w-4 h-4 ${saved ? "text-[#C9A227] fill-[#C9A227]" : "text-[#8A857C]"}`}
                           />
                           {saved ? "Ne plus enregistrer" : "Enregistrer le live"}
                         </button>
@@ -1309,31 +1309,31 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
             </div>
 
             {/* Description repliable */}
-            <div className="bg-white rounded-xl p-3 border border-[#8A8378]/15 cursor-pointer" onClick={() => setShowDescription(!showDescription)}>
+            <div className="bg-white rounded-xl p-3 border border-[#8A857C]/15 cursor-pointer" onClick={() => setShowDescription(!showDescription)}>
               <div className="flex items-center gap-2 text-xs mb-1">
                 {isLive && (
-                  <span className="font-bold text-[#1E0F2B] flex items-center gap-1">
+                  <span className="font-bold text-[#000000] flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
                     {viewerCount} spectateur{viewerCount > 1 ? "s" : ""} en direct
                   </span>
                 )}
-                <span className="text-[#8A8378]">
+                <span className="text-[#8A857C]">
                   Diffusée le {new Date(live.startedAt || live.scheduledAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
                 </span>
               </div>
               {live.description && (
-                <div className="text-sm text-[#1E0F2B]/80">
+                <div className="text-sm text-[#000000]/80">
                   <p className={`leading-relaxed ${showDescription ? "" : "line-clamp-2"}`}>{live.description}</p>
                   <button className="text-xs text-[#C9A227] font-medium mt-1 flex items-center gap-1">
                     {showDescription ? <><ChevronUp className="w-3 h-3" />Afficher moins</> : <><ChevronDown className="w-3 h-3" />...afficher plus</>}
                   </button>
                 </div>
               )}
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Regarder sur :</span>
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#8A857C]/10">
+                <span className="text-xs text-[#8A857C]">Regarder sur :</span>
                 {liveYoutubeUrl && <a href={liveYoutubeUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-red-600/10 text-red-600 text-xs font-bold hover:bg-red-600/20 transition-colors">YouTube</a>}
                 {live.facebookUrl && <a href={live.facebookUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-blue-600/10 text-blue-600 text-xs font-bold hover:bg-blue-600/20 transition-colors">Facebook</a>}
-                {live.tiktokUrl && <a href={live.tiktokUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#1E0F2B]/10 text-[#1E0F2B] text-xs font-bold hover:bg-[#1E0F2B]/20 transition-colors">TikTok</a>}
+                {live.tiktokUrl && <a href={live.tiktokUrl} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 rounded-lg bg-[#000000]/10 text-[#000000] text-xs font-bold hover:bg-[#000000]/20 transition-colors">TikTok</a>}
               </div>
             </div>
           </div>
@@ -1343,14 +1343,14 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
             {hasJoined ? (
               <LiveChat liveId={live.id} isLive={isLive} />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full bg-white rounded-xl border border-[#8A8378]/15 p-8">
-                <p className="text-sm text-[#8A8378] text-center mb-4">
+              <div className="flex flex-col items-center justify-center h-full bg-white rounded-xl border border-[#8A857C]/15 p-8">
+                <p className="text-sm text-[#8A857C] text-center mb-4">
                   Le chat est disponible après avoir rejoint le live
                 </p>
                 {isLive && (
                   <button
                     onClick={() => setShowJoinModal(true)}
-                    className="px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+                    className="px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors"
                   >
                     Rejoindre le live
                   </button>

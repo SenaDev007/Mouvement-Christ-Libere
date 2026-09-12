@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/app/layout.tsx",
+    "src/app/globals.css",
+    "src/lib/staff-space/pdf/**/*.ts",
+    "src/lib/calendrier/pdf/**/*.ts",
+    "src/components/site/live-announcement-bar.tsx",
+    "src/components/magic/cinematic-hero.tsx",
+    "src/components/magic/aurora-background.tsx",
+    "src/components/premium/live-banner.tsx",
+    "src/components/ui/navigation-menu-4.tsx",
+    "src/components/site/landing-view.tsx",
+    "src/components/site/site-footer.tsx",
+    "src/components/tiktok/lecteur-tiktok.tsx",
+    "src/components/admin/videos-tabs-client.tsx",
+    "src/components/videos/videos-view.tsx",
+    "src/components/premium/video-card.tsx",
+    "src/components/post-production/post-production.tsx",
+    "src/components/live/live-viewer-client.tsx",
+    "src/app/rendez-vous/**/*.tsx",
+    "src/app/annonces/**/*.tsx",
+    "src/app/secretariat/**/*.tsx",
+    "src/app/tresorerie/**/*.tsx"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

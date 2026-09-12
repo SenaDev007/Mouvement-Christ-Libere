@@ -24,9 +24,9 @@ interface ChannelCardProps {
 }
 
 const TYPE_CONFIG = {
-  TEXT: { icon: Hash, label: "Texte", color: "text-[#2A0E3D] bg-[#2A0E3D]/10" },
-  VOICE: { icon: Volume2, label: "Voix", color: "text-[#8C5FA8] bg-[#8C5FA8]/10" },
-  VIDEO: { icon: Volume2, label: "Vidéo", color: "text-[#8C5FA8] bg-[#8C5FA8]/10" },
+  TEXT: { icon: Hash, label: "Texte", color: "text-[#000000] bg-[#000000]/10" },
+  VOICE: { icon: Volume2, label: "Voix", color: "text-[#8A857C] bg-[#8A857C]/10" },
+  VIDEO: { icon: Volume2, label: "Vidéo", color: "text-[#8A857C] bg-[#8A857C]/10" },
   ANNOUNCEMENT: { icon: Megaphone, label: "Annonce", color: "text-[#A3821C] bg-[#C9A227]/10" },
   RESTRICTED: { icon: Lock, label: "Restreint", color: "text-state-danger bg-state-danger/10" },
 } as const;
@@ -52,12 +52,12 @@ export function ChannelCard({
       className={cn(
         "group relative p-6 rounded-2xl border transition-all duration-500",
         isEncrypted
-          ? "bg-[#2A0E3D]/5 border-[#C9A227]/30 hover:border-[#C9A227]/60 hover:shadow-[0_10px_40px_-10px_rgba(201,162,39,0.2)]"
-          : "bg-[#FAF6EF] border-[#8A8378]/20 hover:border-[#C9A227]/40 hover:shadow-[0_10px_40px_-10px_rgba(42,14,61,0.15)]"
+          ? "bg-[#000000]/5 border-[#C9A227]/30 hover:border-[#FF7A1A]/60 hover:shadow-[0_10px_40px_-10px_rgba(201,162,39,0.2)]"
+          : "bg-[#F0E9DE] border-[#8A857C]/20 hover:border-[#FF7A1A]/40 hover:shadow-[0_10px_40px_-10px_rgba(0, 0, 0,0.15)]"
       )}
     >
       {/* Halo au hover */}
-      <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#C9A227]/0 group-hover:bg-[#C9A227]/10 blur-3xl transition-all duration-700 pointer-events-none" />
+      <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#C9A227]/0 group-hover:bg-[#FF7A1A]/10 blur-3xl transition-all duration-700 pointer-events-none" />
 
       <div className="relative z-10">
         {/* En-tête */}
@@ -72,10 +72,10 @@ export function ChannelCard({
               <Icon className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-serif text-base font-semibold text-[#1E0F2B] leading-tight">
+              <h3 className="font-serif text-base font-semibold text-[#000000] leading-tight">
                 {name}
               </h3>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-semibold mt-0.5">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A857C] font-semibold mt-0.5">
                 Canal {config.label}
               </p>
             </div>
@@ -92,14 +92,14 @@ export function ChannelCard({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-5">
+        <p className="text-sm text-[#000000]/70 leading-relaxed mb-5">
           {description}
         </p>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-[#8A8378]/15">
+        <div className="flex items-center justify-between pt-4 border-t border-[#8A857C]/15">
           {members !== undefined && (
-            <span className="inline-flex items-center gap-1.5 text-xs text-[#8A8378]">
+            <span className="inline-flex items-center gap-1.5 text-xs text-[#8A857C]">
               <Users className="w-3 h-3" />
               {members > 0 ? `${members} membres` : "Canal d'écoute"}
             </span>
@@ -109,8 +109,8 @@ export function ChannelCard({
             className={cn(
               "inline-flex items-center gap-1 text-xs font-semibold transition-colors group/cta ml-auto",
               type === "RESTRICTED"
-                ? "text-[#8A8378] hover:text-[#C9A227]"
-                : "text-[#2A0E3D] hover:text-[#C9A227]"
+                ? "text-[#8A857C] hover:text-[#FF7A1A]"
+                : "text-[#000000] hover:text-[#FF7A1A]"
             )}
           >
             {type === "RESTRICTED" ? "Demander l'accès" : "Rejoindre"}
@@ -134,7 +134,7 @@ export function SecureBanner({ title, description }: SecureBannerProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="relative bg-[#2A0E3D] text-[#FAF6EF] rounded-2xl border border-[#C9A227]/30 overflow-hidden p-8"
+      className="relative bg-[#000000] text-[#F0E9DE] rounded-2xl border border-[#C9A227]/30 overflow-hidden p-8"
     >
       {/* Décor fond */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full pointer-events-none" />
@@ -144,10 +144,10 @@ export function SecureBanner({ title, description }: SecureBannerProps) {
           <ShieldCheck className="w-6 h-6 text-[#C9A227]" />
         </div>
         <div>
-          <h3 className="font-serif text-lg font-semibold text-[#FAF6EF] mb-2">
+          <h3 className="font-serif text-lg font-semibold text-[#F0E9DE] mb-2">
             {title}
           </h3>
-          <p className="text-sm text-[#FAF6EF]/80 leading-relaxed">
+          <p className="text-sm text-[#F0E9DE]/80 leading-relaxed">
             {description}
           </p>
         </div>

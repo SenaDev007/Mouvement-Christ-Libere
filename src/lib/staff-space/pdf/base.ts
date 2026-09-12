@@ -5,7 +5,7 @@
  * Documents « registre » (demandes de rencontre, annonces) et « rapport
  * financier » générés côté serveur avec pdf-lib — même famille de design
  * que le PDF du calendrier biblique V3.10 :
- *   · nuit #2A0E3D, or #C9A227, crème #FAF6EF, taupe #8A8378 ;
+ *   · nuit #000000, or #C9A227, crème #F0E9DE, taupe #8A857C ;
  *   · titres serif (DejaVu Serif Bold), corps sans (DejaVu Sans) ;
  *   · polices sous-ensembles DÉDIÉES incluant le symbole € (U+20AC) —
  *     les polices du calendrier ne le contiennent pas ;
@@ -32,14 +32,15 @@ import {
 } from "./fonts";
 import { LOGO_CHRIST_LIBERE_B64 } from "@/lib/calendrier/pdf/logo";
 
-// ═══ Palette ═════════════════════════════════════════════════════════════
+// ═══ Palette V3.68 — Noir / Or / Feu (alignement logo) ═══════════════════
 
-export const NUIT = rgb(0.165, 0.055, 0.239); // #2A0E3D
-export const NUIT_PROFONDE = rgb(0.118, 0.059, 0.169); // #1E0F2B
+export const NUIT = rgb(0, 0, 0); // #000000 — noir pur
+export const NUIT_PROFONDE = rgb(0, 0, 0); // #000000 — noir pur
 export const OR = rgb(0.788, 0.635, 0.153); // #C9A227
-export const CREME = rgb(0.980, 0.965, 0.937); // #FAF6EF
-export const ENCRE = rgb(0.118, 0.059, 0.169); // #1E0F2B
-export const TAUPE = rgb(0.541, 0.514, 0.471); // #8A8378
+export const FEU = rgb(1, 0.478, 0.102); // #FF7A1A — accents énergie
+export const CREME = rgb(0.941, 0.914, 0.871); // #F0E9DE — blanc cassé chaud
+export const ENCRE = rgb(0, 0, 0); // #000000 — texte noir
+export const TAUPE = rgb(0.541, 0.522, 0.486); // #8A857C — gris chaud
 export const BLANC = rgb(1, 1, 1);
 export const VERT = rgb(0.357, 0.439, 0.322); // #5B7052 — recettes
 export const ROUGE = rgb(0.702, 0.271, 0.180); // #B3452E — dépenses

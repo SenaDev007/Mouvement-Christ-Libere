@@ -57,44 +57,44 @@ export function MessageThreads({
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
-      className="fixed md:absolute inset-y-0 right-0 w-full md:w-96 bg-white border-l border-[#8A8378]/20 z-40 flex flex-col"
+      className="fixed md:absolute inset-y-0 right-0 w-full md:w-96 bg-white border-l border-[#8A857C]/20 z-40 flex flex-col"
     >
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-[#8A8378]/10 bg-[#FAF6EF]">
-        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#8A8378]/10 text-[#8A8378]">
+      <div className="flex items-center gap-3 p-4 border-b border-[#8A857C]/10 bg-[#F0E9DE]">
+        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#8A857C]/10 text-[#8A857C]">
           <X className="w-4 h-4" />
         </button>
         <MessageCircle className="w-4 h-4 text-[#C9A227]" />
-        <span className="text-sm font-semibold text-[#1E0F2B]">Thread</span>
-        <span className="text-xs text-[#8A8378] ml-auto">{threadMessages.length} réponse{threadMessages.length > 1 ? "s" : ""}</span>
+        <span className="text-sm font-semibold text-[#000000]">Thread</span>
+        <span className="text-xs text-[#8A857C] ml-auto">{threadMessages.length} réponse{threadMessages.length > 1 ? "s" : ""}</span>
       </div>
 
       {/* Parent message */}
-      <div className="p-4 border-b border-[#8A8378]/10 bg-[#FAF6EF]/50">
-        <p className="text-xs font-semibold text-[#8C5FA8] mb-1">{parentSenderName}</p>
-        <p className="text-sm text-[#1E0F2B]/70 line-clamp-3">{parentMessageContent}</p>
+      <div className="p-4 border-b border-[#8A857C]/10 bg-[#F0E9DE]/50">
+        <p className="text-xs font-semibold text-[#8A857C] mb-1">{parentSenderName}</p>
+        <p className="text-sm text-[#000000]/70 line-clamp-3">{parentMessageContent}</p>
       </div>
 
       {/* Thread messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {threadMessages.length === 0 ? (
           <div className="text-center py-8">
-            <MessageCircle className="w-10 h-10 text-[#8A8378]/30 mx-auto mb-2" />
-            <p className="text-sm text-[#8A8378]">Aucune réponse pour l'instant</p>
-            <p className="text-xs text-[#8A8378]/60 mt-1">Soyez le premier à répondre</p>
+            <MessageCircle className="w-10 h-10 text-[#8A857C]/30 mx-auto mb-2" />
+            <p className="text-sm text-[#8A857C]">Aucune réponse pour l'instant</p>
+            <p className="text-xs text-[#8A857C]/60 mt-1">Soyez le premier à répondre</p>
           </div>
         ) : (
           threadMessages.map((msg) => (
             <div key={msg.id} className="flex gap-2">
-              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[#2A0E3D] flex-shrink-0">
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[#000000] flex-shrink-0">
                 <span className="text-[10px] font-bold text-[#C9A227]">{msg.senderName.charAt(0).toUpperCase()}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xs font-semibold text-[#1E0F2B]">{msg.senderName}</span>
-                  <span className="text-[10px] text-[#8A8378]">{new Date(msg.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span className="text-xs font-semibold text-[#000000]">{msg.senderName}</span>
+                  <span className="text-[10px] text-[#8A857C]">{new Date(msg.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
                 </div>
-                <p className="text-sm text-[#1E0F2B] mt-0.5">{msg.content}</p>
+                <p className="text-sm text-[#000000] mt-0.5">{msg.content}</p>
               </div>
             </div>
           ))
@@ -102,7 +102,7 @@ export function MessageThreads({
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-[#8A8378]/10">
+      <div className="p-4 border-t border-[#8A857C]/10">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -110,12 +110,12 @@ export function MessageThreads({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
             placeholder="Répondre dans le thread..."
-            className="flex-1 px-4 py-2.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/20 text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+            className="flex-1 px-4 py-2.5 rounded-full bg-[#F0E9DE] border border-[#8A857C]/20 text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim()}
-            className="p-2.5 rounded-full bg-[#C9A227] text-[#1E0F2B] disabled:opacity-30 hover:bg-[#DDBE55] transition-colors"
+            className="p-2.5 rounded-full bg-[#C9A227] text-[#000000] disabled:opacity-30 hover:bg-[#FF7A1A] transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

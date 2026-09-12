@@ -103,7 +103,7 @@ export function ShareModal({ open, onClose, url, title, thumbnailUrl }: ShareMod
     {
       name: "E-mail",
       icon: null, // lucide Mail — pas une icône SVG de marque
-      color: "#8A8378",
+      color: "#8A857C",
       href: `mailto:?subject=${shareTitle}&body=${shareUrl}`,
     },
     {
@@ -165,11 +165,11 @@ export function ShareModal({ open, onClose, url, title, thumbnailUrl }: ShareMod
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 60, opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="w-full sm:max-w-md bg-[#FAF6EF] rounded-t-3xl sm:rounded-2xl shadow-2xl border border-[#8A8378]/15 max-h-[92vh] overflow-y-auto"
+            className="w-full sm:max-w-md bg-[#F0E9DE] rounded-t-3xl sm:rounded-2xl shadow-2xl border border-[#8A857C]/15 max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* En-tête */}
-            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-[#2A0E3D] text-[#FAF6EF] sm:rounded-t-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-[#000000] text-[#F0E9DE] sm:rounded-t-2xl">
               <div className="flex items-center gap-2">
                 <Share2 className="w-5 h-5 text-[#C9A227]" />
                 <span className="text-sm uppercase tracking-[0.18em] font-bold text-[#C9A227]">
@@ -178,7 +178,7 @@ export function ShareModal({ open, onClose, url, title, thumbnailUrl }: ShareMod
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-[#FAF6EF]/10 transition-colors"
+                className="p-2 rounded-full hover:bg-[#F0E9DE]/10 transition-colors"
                 title="Fermer (Échap)"
                 aria-label="Fermer"
               >
@@ -187,27 +187,27 @@ export function ShareModal({ open, onClose, url, title, thumbnailUrl }: ShareMod
             </div>
 
             {/* Fiche : miniature + titre (contexte de ce qu'on partage) */}
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-[#8A8378]/10">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-[#8A857C]/10">
               {thumbnailUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={thumbnailUrl}
                   alt=""
-                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-[#8A8378]/15"
+                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-[#8A857C]/15"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-lg bg-[#2A0E3D]/5 flex items-center justify-center flex-shrink-0">
+                <div className="w-16 h-16 rounded-lg bg-[#000000]/5 flex items-center justify-center flex-shrink-0">
                   <Share2 className="w-6 h-6 text-[#C9A227]/60" />
                 </div>
               )}
-              <p className="text-sm font-bold text-[#1E0F2B] leading-snug line-clamp-3 break-words">
+              <p className="text-sm font-bold text-[#000000] leading-snug line-clamp-3 break-words">
                 {title}
               </p>
             </div>
 
             {/* Grille des plateformes — TOUTE la liste visible d'un coup */}
             <div className="px-4 py-4">
-              <p className="text-xs font-bold text-[#8A8378] uppercase tracking-wider mb-3 px-1">
+              <p className="text-xs font-bold text-[#8A857C] uppercase tracking-wider mb-3 px-1">
                 Partager sur
               </p>
               <div className="grid grid-cols-3 gap-3">
@@ -219,16 +219,16 @@ export function ShareModal({ open, onClose, url, title, thumbnailUrl }: ShareMod
                       href={p.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex flex-col items-center gap-2 px-2 py-3 rounded-xl bg-white border border-[#8A8378]/15 hover:border-[#C9A227]/50 hover:bg-[#C9A227]/5 transition-colors"
+                      className="flex flex-col items-center gap-2 px-2 py-3 rounded-xl bg-white border border-[#8A857C]/15 hover:border-[#FF7A1A]/50 hover:bg-[#FF7A1A]/5 transition-colors"
                     >
-                      <div className="w-11 h-11 rounded-full bg-[#2A0E3D]/5 flex items-center justify-center">
+                      <div className="w-11 h-11 rounded-full bg-[#000000]/5 flex items-center justify-center">
                         {Icon ? (
                           <Icon size={24} />
                         ) : (
                           <Mail className="w-6 h-6" style={{ color: p.color }} />
                         )}
                       </div>
-                      <span className="text-xs font-semibold text-[#1E0F2B]">{p.name}</span>
+                      <span className="text-xs font-semibold text-[#000000]">{p.name}</span>
                     </a>
                   );
                 })}
@@ -238,10 +238,10 @@ export function ShareModal({ open, onClose, url, title, thumbnailUrl }: ShareMod
               {canNativeShare && (
                 <button
                   onClick={handleNativeShare}
-                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white border border-[#8A8378]/15 hover:border-[#C9A227]/50 hover:bg-[#C9A227]/5 transition-colors"
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white border border-[#8A857C]/15 hover:border-[#FF7A1A]/50 hover:bg-[#FF7A1A]/5 transition-colors"
                 >
                   <Share2 className="w-4 h-4 text-[#C9A227]" />
-                  <span className="text-sm font-semibold text-[#1E0F2B]">
+                  <span className="text-sm font-semibold text-[#000000]">
                     {nativeShared ? "Partagé !" : "Autres applications…"}
                   </span>
                 </button>
@@ -254,7 +254,7 @@ export function ShareModal({ open, onClose, url, title, thumbnailUrl }: ShareMod
                   "mt-3 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-colors " +
                   (copied
                     ? "bg-[#5B7052] text-white"
-                    : "bg-[#2A0E3D] text-[#FAF6EF] hover:bg-[#3A1E4D]")
+                    : "bg-[#000000] text-[#F0E9DE] hover:bg-[#161513]")
                 }
               >
                 {copied ? (
@@ -271,7 +271,7 @@ export function ShareModal({ open, onClose, url, title, thumbnailUrl }: ShareMod
               </button>
 
               {/* Aperçu discret du lien partagé (vérifiable d'un coup d'œil) */}
-              <p className="mt-3 px-1 text-[11px] text-[#8A8378] break-all line-clamp-2">
+              <p className="mt-3 px-1 text-[11px] text-[#8A857C] break-all line-clamp-2">
                 {url}
               </p>
             </div>

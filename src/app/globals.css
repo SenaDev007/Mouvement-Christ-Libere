@@ -4,8 +4,12 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
-   Design System Royaume — Concept D
-   Violet impérial · Or sacré · Ivoire chaud
+   Design System Royaume — V3.68 « Palette Logo »
+   Noir pur · Or sacré (#C9A227, valeur réelle en usage) · Feu (#FF7A1A)
+   Alignement sur le logo Mouvement CHRIST LIBÈRE (noir / or / feu).
+   Neutres fonctionnels : blanc cassé #F0E9DE · gris chaud #8A857C.
+   NOTE : les noms de jetons historiques (imperial/lavender/ink) sont
+   conservés pour compatibilité — leurs VALEURS sont désormais noir/neutre.
    ============================================================ */
 
 @theme inline {
@@ -13,17 +17,19 @@
   --font-sans: var(--font-inter);
   --font-serif: 'Segoe UI', 'Segoe UI Variable', var(--font-inter), sans-serif;
 
-  /* === Palette de couleurs custom (Concept D) === */
-  --color-imperial: #2A0E3D;
-  --color-imperial-light: #3D1A54;
-  --color-imperial-dark: #1A0826;
-  --color-gold: #C9A227;
+  /* === Palette V3.68 (noir / or / feu + neutres) === */
+  --color-imperial: #000000;      /* base : noir pur */
+  --color-imperial-light: #161513; /* surface élevée neutre (cartes) */
+  --color-imperial-dark: #000000; /* fond profond : noir pur */
+  --color-gold: #C9A227;          /* or — couleur de REPOS (inchangé) */
   --color-gold-light: #DDBE55;
   --color-gold-dark: #A3821C;
-  --color-lavender: #8C5FA8;
-  --color-ivory: #FAF6EF;
-  --color-ink: #1E0F2B;
-  --color-stone: #8A8378;
+  --color-fire: #FF7A1A;          /* feu — hovers, badges direct, actions fortes */
+  --color-coal: #161513;          /* alias surface neutre */
+  --color-lavender: #8A857C;      /* (historique) gris chaud */
+  --color-ivory: #F0E9DE;         /* blanc cassé chaud */
+  --color-ink: #000000;           /* texte noir sur surfaces claires */
+  --color-stone: #8A857C;         /* gris chaud (muted) */
   --color-state-success: #5B7052;
   --color-state-danger: #B5502F;
 
@@ -70,85 +76,85 @@
 :root {
   --radius: 0.5rem;
 
-  /* Light mode = ivoire */
-  --background: 41 38% 96%;
-  --foreground: 270 47% 11%;
-  --card: 41 38% 98%;
-  --card-foreground: 270 47% 11%;
-  --popover: 41 38% 98%;
-  --popover-foreground: 270 47% 11%;
+  /* Light mode = ivoire (lecture, cartes claires) — accent or, encre noire */
+  --background: 37 38% 91%;
+  --foreground: 0 0% 0%;
+  --card: 37 33% 93%;
+  --card-foreground: 0 0% 0%;
+  --popover: 37 33% 93%;
+  --popover-foreground: 0 0% 0%;
 
-  --primary: 46 74% 47%;
-  --primary-foreground: 270 47% 11%;
+  --primary: 46 68% 47%;
+  --primary-foreground: 0 0% 0%;
 
-  --secondary: 281 30% 51%;
-  --secondary-foreground: 41 38% 98%;
+  --secondary: 39 6% 51%;
+  --secondary-foreground: 37 38% 98%;
 
-  --muted: 38 12% 50%;
-  --muted-foreground: 270 10% 35%;
-  --accent: 279 60% 14%;
-  --accent-foreground: 41 38% 96%;
+  --muted: 39 6% 90%;
+  --muted-foreground: 39 6% 40%;
+  --accent: 25 100% 55%;
+  --accent-foreground: 0 0% 0%;
 
   --destructive: 18 71% 45%;
-  --border: 38 14% 70%;
-  --input: 38 14% 70%;
-  --ring: 46 74% 47%;
+  --border: 39 6% 74%;
+  --input: 39 6% 74%;
+  --ring: 25 100% 55%;
 
-  --chart-1: 46 74% 47%;
-  --chart-2: 281 30% 51%;
-  --chart-3: 279 60% 14%;
+  --chart-1: 46 68% 47%;
+  --chart-2: 25 100% 55%;
+  --chart-3: 39 6% 51%;
   --chart-4: 18 71% 45%;
-  --chart-5: 88 12% 38%;
+  --chart-5: 37 37% 91%;
 
-  --sidebar: 279 60% 14%;
-  --sidebar-foreground: 41 38% 96%;
-  --sidebar-primary: 46 74% 47%;
-  --sidebar-primary-foreground: 270 47% 11%;
-  --sidebar-accent: 279 50% 22%;
-  --sidebar-accent-foreground: 41 38% 96%;
-  --sidebar-border: 279 30% 25%;
-  --sidebar-ring: 46 74% 47%;
+  --sidebar: 0 0% 0%;
+  --sidebar-foreground: 37 38% 91%;
+  --sidebar-primary: 46 68% 47%;
+  --sidebar-primary-foreground: 0 0% 0%;
+  --sidebar-accent: 40 7% 8%;
+  --sidebar-accent-foreground: 37 38% 91%;
+  --sidebar-border: 40 6% 18%;
+  --sidebar-ring: 25 100% 55%;
 }
 
 .dark {
-  /* Dark mode = violet impérial */
-  --background: 277 67% 14%;
-  --foreground: 41 38% 96%;
-  --card: 279 60% 17%;
-  --card-foreground: 41 38% 96%;
-  --popover: 279 60% 17%;
-  --popover-foreground: 41 38% 96%;
+  /* Dark mode = noir pur (palette logo V3.68) */
+  --background: 0 0% 0%;
+  --foreground: 37 38% 91%;
+  --card: 40 7% 8%;
+  --card-foreground: 37 38% 91%;
+  --popover: 40 7% 8%;
+  --popover-foreground: 37 38% 91%;
 
-  --primary: 46 74% 47%;
-  --primary-foreground: 270 47% 11%;
+  --primary: 46 68% 47%;
+  --primary-foreground: 0 0% 0%;
 
-  --secondary: 281 30% 51%;
-  --secondary-foreground: 41 38% 98%;
+  --secondary: 40 5% 14%;
+  --secondary-foreground: 37 38% 91%;
 
-  --muted: 279 30% 25%;
-  --muted-foreground: 41 20% 75%;
-  --accent: 46 74% 47%;
-  --accent-foreground: 270 47% 11%;
+  --muted: 40 5% 14%;
+  --muted-foreground: 39 6% 51%;
+  --accent: 25 100% 55%;
+  --accent-foreground: 0 0% 0%;
 
   --destructive: 18 71% 50%;
-  --border: 279 30% 25%;
-  --input: 279 30% 25%;
-  --ring: 46 74% 47%;
+  --border: 40 6% 18%;
+  --input: 40 6% 18%;
+  --ring: 25 100% 55%;
 
-  --chart-1: 46 74% 47%;
-  --chart-2: 281 30% 51%;
-  --chart-3: 41 38% 96%;
+  --chart-1: 46 68% 47%;
+  --chart-2: 25 100% 55%;
+  --chart-3: 37 38% 91%;
   --chart-4: 18 71% 50%;
-  --chart-5: 88 12% 50%;
+  --chart-5: 39 6% 51%;
 
-  --sidebar: 277 67% 11%;
-  --sidebar-foreground: 41 38% 96%;
-  --sidebar-primary: 46 74% 47%;
-  --sidebar-primary-foreground: 270 47% 11%;
-  --sidebar-accent: 279 50% 22%;
-  --sidebar-accent-foreground: 41 38% 96%;
-  --sidebar-border: 279 30% 25%;
-  --sidebar-ring: 46 74% 47%;
+  --sidebar: 0 0% 0%;
+  --sidebar-foreground: 37 38% 91%;
+  --sidebar-primary: 46 68% 47%;
+  --sidebar-primary-foreground: 0 0% 0%;
+  --sidebar-accent: 40 7% 8%;
+  --sidebar-accent-foreground: 37 38% 91%;
+  --sidebar-border: 40 6% 18%;
+  --sidebar-ring: 25 100% 55%;
 }
 
 @layer base {
@@ -181,7 +187,7 @@
   /* Sélection de texte personnalisée */
   ::selection {
     background-color: rgba(201, 162, 39, 0.3);
-    color: #1E0F2B;
+    color: #000000;
   }
 }
 
@@ -203,22 +209,24 @@
 }
 
 .hero-imperial {
+  /* V3.68 — noir pur + halo feu discret (spec : glow feu derrière le logo,
+     jamais de dégradé complet du logo en CSS) */
   background:
-    radial-gradient(ellipse at top, rgba(140, 95, 168, 0.15), transparent 60%),
-    radial-gradient(ellipse at bottom right, rgba(201, 162, 39, 0.08), transparent 50%),
-    #2A0E3D;
+    radial-gradient(ellipse at top, rgba(255, 122, 26, 0.09), transparent 60%),
+    radial-gradient(ellipse at bottom right, rgba(201, 162, 39, 0.07), transparent 50%),
+    #000000;
 }
 
 .hero-imperial-deep {
   background:
-    radial-gradient(ellipse at center, rgba(140, 95, 168, 0.1), transparent 70%),
-    #1A0826;
+    radial-gradient(ellipse at center, rgba(255, 122, 26, 0.06), transparent 70%),
+    #000000;
 }
 
 .card-gold-top {
   position: relative;
-  background-color: #FAF6EF;
-  border: 1px solid rgba(138, 131, 120, 0.3);
+  background-color: #F0E9DE;
+  border: 1px solid rgba(138, 133, 124, 0.3);
   border-radius: 8px;
 }
 .card-gold-top::before {
@@ -236,11 +244,11 @@
 .scrollbar-discrete::-webkit-scrollbar { width: 6px; height: 6px; }
 .scrollbar-discrete::-webkit-scrollbar-track { background: transparent; }
 .scrollbar-discrete::-webkit-scrollbar-thumb {
-  background: rgba(138, 131, 120, 0.4);
+  background: rgba(138, 133, 124, 0.4);
   border-radius: 3px;
 }
 .scrollbar-discrete::-webkit-scrollbar-thumb:hover {
-  background: rgba(138, 131, 120, 0.6);
+  background: rgba(138, 133, 124, 0.6);
 }
 
 .fade-cross {
@@ -252,7 +260,7 @@
 }
 
 .focus-mode {
-  background: #1A0826;
+  background: #000000;
   transition: background 400ms ease;
 }
 
@@ -345,13 +353,19 @@
   background: transparent;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(138, 131, 120, 0.2);
+  background: rgba(138, 133, 124, 0.2);
   border-radius: 3px;
 }
 
 /* ============================================================
-   Halo lumineux du logo Christ Libère (pages de login)
+   V3.68 — Halo feu derrière le logo (hero d'accueil et pages clés)
+   Glow radial discret, sans reproduire le dégradé du logo.
    ============================================================ */
+.logo-halo-feu {
+  background: radial-gradient(circle, rgba(255, 122, 26, 0.22) 0%, rgba(255, 122, 26, 0.07) 45%, transparent 70%);
+}
+
+/* Halo lumineux doré du logo Christ Libère (pages de login) */
 @keyframes logoHaloPulse {
   0%, 100% {
     box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.5);

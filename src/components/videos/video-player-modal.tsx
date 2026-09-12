@@ -76,11 +76,11 @@ export function VideoPlayerModal({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           transition={{ duration: 0.3 }}
-          className="bg-[#FAF6EF] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+          className="bg-[#F0E9DE] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-[#2A0E3D] text-[#FAF6EF]">
+          <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-[#000000] text-[#F0E9DE]">
             <div className="flex items-center gap-2">
               <Play className="w-5 h-5 text-[#C9A227]" />
               <span className="text-xs uppercase tracking-[0.18em] font-bold text-[#C9A227]">
@@ -89,7 +89,7 @@ export function VideoPlayerModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-[#FAF6EF]/10 transition-colors"
+              className="p-2 rounded-full hover:bg-[#F0E9DE]/10 transition-colors"
               title="Fermer (Échap)"
             >
               <X className="w-5 h-5" />
@@ -109,13 +109,13 @@ export function VideoPlayerModal({
 
           {/* Informations vidéo */}
           <div className="p-6 md:p-8">
-            <h2 className="font-serif text-xl md:text-2xl font-bold text-[#1E0F2B] leading-snug mb-3">
+            <h2 className="font-serif text-xl md:text-2xl font-bold text-[#000000] leading-snug mb-3">
               {title}
             </h2>
 
-            <div className="flex flex-wrap items-center gap-4 mb-5 text-xs text-[#8A8378]">
-              <span className="inline-flex items-center gap-1.5 font-semibold text-[#2A0E3D]">
-                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#2A0E3D]">
+            <div className="flex flex-wrap items-center gap-4 mb-5 text-xs text-[#8A857C]">
+              <span className="inline-flex items-center gap-1.5 font-semibold text-[#000000]">
+                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#000000]">
                   <span className="text-[9px] font-bold text-[#C9A227]">
                     {servantName.charAt(0).toUpperCase()}
                   </span>
@@ -138,7 +138,7 @@ export function VideoPlayerModal({
 
             <div className="w-16 h-0.5 bg-[#C9A227] mb-4" />
 
-            <p className="text-sm md:text-base text-[#1E0F2B]/80 leading-relaxed mb-6">
+            <p className="text-sm md:text-base text-[#000000]/80 leading-relaxed mb-6">
               {description}
             </p>
 

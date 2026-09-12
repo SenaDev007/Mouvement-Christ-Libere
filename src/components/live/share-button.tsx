@@ -27,11 +27,11 @@ export function ShareButton({ url, title, thumbnailUrl }: ShareButtonProps) {
     <div className="relative">
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-2 bg-[#2A0E3D]/5 rounded-full hover:bg-[#2A0E3D]/10 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-2 bg-[#000000]/5 rounded-full hover:bg-[#000000]/10 transition-colors"
         title="Partager ce live"
       >
-        <Share2 className="w-4 h-4 text-[#1E0F2B]" />
-        <span className="text-xs font-medium text-[#1E0F2B] hidden sm:inline">Partager</span>
+        <Share2 className="w-4 h-4 text-[#000000]" />
+        <span className="text-xs font-medium text-[#000000] hidden sm:inline">Partager</span>
       </button>
 
       {/* ⭐ V3.36 — Grand modal de partage complet */}

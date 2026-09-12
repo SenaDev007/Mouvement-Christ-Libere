@@ -253,7 +253,7 @@ export async function compressHeroImage(file: File): Promise<string> {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas non supporté par votre navigateur.");
   // Fond sombre (transparences PNG → harmonisé au violet impérial)
-  ctx.fillStyle = "#2A0E3D";
+  ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, width, height);
   image.draw(ctx, 0, 0, image.width, image.height, 0, 0, width, height);
 

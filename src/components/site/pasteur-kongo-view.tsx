@@ -25,16 +25,16 @@ import { ChevronRight, BookOpen, Video, Sparkles, Calendar, Quote, Users } from 
 export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; milestones?: BioMilestone[] }) {
   const d = hero.data;
   return (
-    <div className="min-h-screen bg-[#FAF6EF]">
+    <div className="min-h-screen bg-[#F0E9DE]">
       {/* ═══ HERO avec photo paramétrable ═══ */}
-      <section className="relative min-h-[70vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-[#FAF6EF]">
+      <section className="relative min-h-[70vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#000000] text-[#F0E9DE]">
         <div className="absolute inset-0 z-0">
           <HeroBackgroundImage
             src={hero.backgroundImage}
             alt={hero.title}
             className="object-cover object-center opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/70 via-[#2A0E3D]/80 to-[#1A0826]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#000000]/70 via-[#000000]/80 to-[#000000]" />
         </div>
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
           <motion.div
@@ -64,7 +64,7 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-base md:text-lg text-[#FAF6EF]/80 leading-relaxed max-w-2xl mx-auto mb-8 drop-shadow"
+            className="text-base md:text-lg text-[#F0E9DE]/80 leading-relaxed max-w-2xl mx-auto mb-8 drop-shadow"
           >
             <IsololeText>{hero.subtitle}</IsololeText>
           </motion.p>
@@ -72,7 +72,7 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="flex flex-wrap items-center justify-center gap-6 text-xs text-[#FAF6EF]/70"
+            className="flex flex-wrap items-center justify-center gap-6 text-xs text-[#F0E9DE]/70"
           >
             {d.badge1 && (
               <span className="inline-flex items-center gap-1.5">
@@ -91,7 +91,7 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
       </section>
 
       {/* ═══ BIOGRAPHIE — texte + photo paramétrables ═══ */}
-      <article className="py-16 md:py-24 bg-[#FAF6EF] overflow-x-clip">
+      <article className="py-16 md:py-24 bg-[#F0E9DE] overflow-x-clip">
         <div className="max-w-6xl mx-auto px-4">
           {/* En-tête biographie */}
           <motion.div
@@ -104,7 +104,7 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
             <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-bold mb-3">
               {d.bioKicker || "Biographie"}
             </p>
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#1E0F2B] mb-4">
+            <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#000000] mb-4">
               <IsololeText>{d.bioTitle}</IsololeText>
             </h2>
             <div className="flex items-center justify-center gap-2">
@@ -124,10 +124,10 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
               transition={{ duration: 0.8 }}
               className="order-2 lg:order-1"
             >
-              <div className="bg-white rounded-2xl shadow-md border border-[#8A8378]/15 p-8 md:p-10 border-l-[4px] border-l-[#C9A227]">
+              <div className="bg-white rounded-2xl shadow-md border border-[#8A857C]/15 p-8 md:p-10 border-l-[4px] border-l-[#C9A227]">
                 {/* Citation d'ouverture */}
-                <div className="mb-6 pb-6 border-b border-[#8A8378]/15">
-                  <p className="font-serif text-lg md:text-xl italic text-[#2A0E3D] leading-relaxed">
+                <div className="mb-6 pb-6 border-b border-[#8A857C]/15">
+                  <p className="font-serif text-lg md:text-xl italic text-[#000000] leading-relaxed">
                     <IsololeText>{d.bioQuote}</IsololeText>
                   </p>
                 </div>
@@ -140,7 +140,7 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
                 {/* Signature */}
                 <div className="mt-6 flex items-center gap-3">
                   <div className="w-10 h-px bg-[#C9A227]" />
-                  <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#8A8378]">
+                  <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#8A857C]">
                     Biographie rédigée par la rédaction de Christ Libère
                   </span>
                 </div>
@@ -171,7 +171,7 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
                 />
 
                 {/* Cadre photo — photo paramétrable (data.bioPhoto) */}
-                <div className="relative bg-[#2A0E3D] rounded-2xl overflow-hidden shadow-xl border-2 border-[#C9A227]/30">
+                <div className="relative bg-[#000000] rounded-2xl overflow-hidden shadow-xl border-2 border-[#C9A227]/30">
                   <div className="relative aspect-[3/4] overflow-hidden">
                     <HeroBackgroundImage
                       src={d.bioPhoto}
@@ -180,7 +180,7 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
                       className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
                     />
                     {/* Gradient overlay en bas */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#2A0E3D] via-[#2A0E3D]/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/20 to-transparent" />
 
                     {/* Badge sur la photo */}
                     <motion.div
@@ -188,7 +188,7 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.6, delay: 0.4 }}
-                      className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2A0E3D]/80 backdrop-blur-sm border border-[#C9A227]/40"
+                      className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#000000]/80 backdrop-blur-sm border border-[#C9A227]/40"
                     >
                       <Sparkles className="w-3 h-3 text-[#C9A227]" />
                       <span className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#C9A227]">
@@ -212,7 +212,7 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.7, delay: 0.4 }}
-                        className="font-serif text-2xl font-bold text-[#FAF6EF] drop-shadow-lg"
+                        className="font-serif text-2xl font-bold text-[#F0E9DE] drop-shadow-lg"
                       >
                         <IsololeText>{d.bioPhotoLastName}</IsololeText>
                       </motion.h3>
@@ -230,13 +230,13 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
                   <div className="px-5 py-4 border-t border-[#C9A227]/20">
                     <div className="flex items-center gap-2 text-xs">
                       <Users className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
-                      <span className="text-[#FAF6EF]/70 font-medium">
+                      <span className="text-[#F0E9DE]/70 font-medium">
                         <IsololeText>{d.bioCardLocation}</IsololeText>
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs mt-2">
                       <Calendar className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
-                      <span className="text-[#FAF6EF]/70 font-medium">
+                      <span className="text-[#F0E9DE]/70 font-medium">
                         <IsololeText>{d.bioCardCalendar}</IsololeText>
                       </span>
                     </div>
@@ -266,31 +266,31 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
           photos incluses — masquée si aucun jalon) ═══ */}
       <BioTimeline
         milestones={milestones}
-        accentColor="#8C5FA8"
+        accentColor="#8A857C"
         title="Les étapes du parcours du Pasteur Kongo"
       />
 
       {/* ═══ LIENS VERS AUTRES CONTENUS ═══ */}
-      <section className="py-16 bg-[#2A0E3D]">
+      <section className="py-16 bg-[#000000]">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-10">
             <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-bold mb-3">
               Aller plus loin
             </p>
-            <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#FAF6EF]">
+            <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#F0E9DE]">
               Explorer le ministère
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Link
               href="/enseignements?servant=kongo"
-              className="group bg-[#FAF6EF]/5 hover:bg-[#FAF6EF]/10 border border-[#C9A227]/20 hover:border-[#C9A227]/40 rounded-xl p-6 transition-all"
+              className="group bg-[#F0E9DE]/5 hover:bg-[#F0E9DE]/10 border border-[#C9A227]/20 hover:border-[#FF7A1A]/40 rounded-xl p-6 transition-all"
             >
               <BookOpen className="w-6 h-6 text-[#C9A227] mb-3" />
-              <h3 className="font-serif text-base font-bold text-[#FAF6EF] mb-1">
+              <h3 className="font-serif text-base font-bold text-[#F0E9DE] mb-1">
                 Enseignements
               </h3>
-              <p className="text-xs text-[#FAF6EF]/60 leading-relaxed mb-3">
+              <p className="text-xs text-[#F0E9DE]/60 leading-relaxed mb-3">
                 Études bibliques : fêtes de l'Éternel, discernement spirituel.
               </p>
               <span className="inline-flex items-center gap-1 text-xs font-bold text-[#C9A227] group-hover:gap-2 transition-all">
@@ -299,13 +299,13 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
             </Link>
             <Link
               href="/videos?servant=kongo"
-              className="group bg-[#FAF6EF]/5 hover:bg-[#FAF6EF]/10 border border-[#C9A227]/20 hover:border-[#C9A227]/40 rounded-xl p-6 transition-all"
+              className="group bg-[#F0E9DE]/5 hover:bg-[#F0E9DE]/10 border border-[#C9A227]/20 hover:border-[#FF7A1A]/40 rounded-xl p-6 transition-all"
             >
               <Video className="w-6 h-6 text-[#C9A227] mb-3" />
-              <h3 className="font-serif text-base font-bold text-[#FAF6EF] mb-1">
+              <h3 className="font-serif text-base font-bold text-[#F0E9DE] mb-1">
                 Vidéos & Lives
               </h3>
-              <p className="text-xs text-[#FAF6EF]/60 leading-relaxed mb-3">
+              <p className="text-xs text-[#F0E9DE]/60 leading-relaxed mb-3">
                 Enseignements vidéo et directs du Pasteur Kongo.
               </p>
               <span className="inline-flex items-center gap-1 text-xs font-bold text-[#C9A227] group-hover:gap-2 transition-all">
@@ -314,13 +314,13 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
             </Link>
             <Link
               href="/communaute"
-              className="group bg-[#FAF6EF]/5 hover:bg-[#FAF6EF]/10 border border-[#C9A227]/20 hover:border-[#C9A227]/40 rounded-xl p-6 transition-all"
+              className="group bg-[#F0E9DE]/5 hover:bg-[#F0E9DE]/10 border border-[#C9A227]/20 hover:border-[#FF7A1A]/40 rounded-xl p-6 transition-all"
             >
               <Users className="w-6 h-6 text-[#C9A227] mb-3" />
-              <h3 className="font-serif text-base font-bold text-[#FAF6EF] mb-1">
+              <h3 className="font-serif text-base font-bold text-[#F0E9DE] mb-1">
                 Communauté
               </h3>
-              <p className="text-xs text-[#FAF6EF]/60 leading-relaxed mb-3">
+              <p className="text-xs text-[#F0E9DE]/60 leading-relaxed mb-3">
                 Berger de la communauté, accompagnement pastoral.
               </p>
               <span className="inline-flex items-center gap-1 text-xs font-bold text-[#C9A227] group-hover:gap-2 transition-all">
@@ -332,14 +332,14 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
       </section>
 
       {/* ═══ CTA PAM ═══ */}
-      <section className="py-12 bg-[#1A0826]">
+      <section className="py-12 bg-[#000000]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-bold mb-3">
             Découvrez également
           </p>
           <Link
             href="/pam"
-            className="inline-flex items-center gap-2 text-[#FAF6EF] hover:text-[#C9A227] font-serif text-lg font-bold transition-colors"
+            className="inline-flex items-center gap-2 text-[#F0E9DE] hover:text-[#FF7A1A] font-serif text-lg font-bold transition-colors"
           >
             Pam — Afrika Alkebulane Pamela Dali <ChevronRight className="w-4 h-4" />
           </Link>

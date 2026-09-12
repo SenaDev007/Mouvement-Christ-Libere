@@ -67,9 +67,9 @@ export function RendezVousView() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF]">
+    <div className="min-h-screen bg-[#F0E9DE]">
       {/* En-tête public */}
-      <header className="bg-[#2A0E3D] text-[#FAF6EF]">
+      <header className="bg-[#000000] text-[#F0E9DE]">
         <div className="max-w-3xl mx-auto px-4 py-5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <Image
@@ -82,12 +82,12 @@ export function RendezVousView() {
             />
             <span className="text-sm font-bold">
               <span className="text-[#C9A227]">Christ</span>
-              <span className="text-[#FAF6EF]">&nbsp;Libère</span>
+              <span className="text-[#F0E9DE]">&nbsp;Libère</span>
             </span>
           </Link>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-[#FAF6EF]/60 hover:text-[#C9A227] transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-[#F0E9DE]/60 hover:text-[#FF7A1A] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Retour au site
@@ -107,10 +107,10 @@ export function RendezVousView() {
             <div className="w-16 h-16 rounded-full bg-[#5B7052]/10 flex items-center justify-center mx-auto mb-5">
               <CheckCircle2 className="w-8 h-8 text-[#5B7052]" />
             </div>
-            <h1 className="font-serif text-2xl md:text-3xl font-semibold text-[#1E0F2B] mb-3">
+            <h1 className="font-serif text-2xl md:text-3xl font-semibold text-[#000000] mb-3">
               Votre demande est bien reçue
             </h1>
-            <p className="text-sm text-[#8A8378] leading-relaxed max-w-md mx-auto mb-6">
+            <p className="text-sm text-[#8A857C] leading-relaxed max-w-md mx-auto mb-6">
               Le secrétariat du Mouvement Christ Libère a enregistré votre
               demande. La secrétaire l&apos;examinera et la transmettra au
               serviteur de Dieu concerné, qui reviendra vers vous selon les
@@ -119,14 +119,14 @@ export function RendezVousView() {
 
             {/* ⭐ V3.67 — Code de suivi */}
             {codeSuivi && (
-              <div className="max-w-md mx-auto mb-6 px-5 py-4 rounded-xl bg-[#2A0E3D] border border-[#C9A227]/30">
+              <div className="max-w-md mx-auto mb-6 px-5 py-4 rounded-xl bg-[#000000] border border-[#C9A227]/30">
                 <p className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/80 font-semibold mb-1">
                   Votre code de suivi — conservez-le
                 </p>
                 <p className="font-mono text-2xl font-bold text-[#DDBE55] tracking-widest">
                   {codeSuivi}
                 </p>
-                <p className="text-[11px] text-[#FAF6EF]/60 mt-2 leading-relaxed">
+                <p className="text-[11px] text-[#F0E9DE]/60 mt-2 leading-relaxed">
                   Il vous permet de suivre l&apos;avancement de votre demande
                   (statut et étapes) sur{" "}
                   <Link
@@ -143,7 +143,7 @@ export function RendezVousView() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#000000] text-[#F0E9DE] text-sm font-semibold hover:bg-[#161513] transition-colors"
               >
                 Retour à l&apos;accueil
               </Link>
@@ -162,7 +162,7 @@ export function RendezVousView() {
                     site: "",
                   });
                 }}
-                className="px-5 py-2.5 rounded-xl border border-[#8A8378]/25 text-sm font-semibold text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors"
+                className="px-5 py-2.5 rounded-xl border border-[#8A857C]/25 text-sm font-semibold text-[#000000] hover:bg-[#F0E9DE] transition-colors"
               >
                 Déposer une autre demande
               </button>
@@ -177,13 +177,13 @@ export function RendezVousView() {
             className="space-y-8"
           >
             <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#2A0E3D] flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-[#000000] flex items-center justify-center mx-auto mb-4">
                 <CalendarHeart className="w-7 h-7 text-[#C9A227]" />
               </div>
-              <h1 className="font-serif text-3xl md:text-4xl font-semibold text-[#1E0F2B] mb-3">
+              <h1 className="font-serif text-3xl md:text-4xl font-semibold text-[#000000] mb-3">
                 Demander un rendez-vous
               </h1>
-              <p className="text-sm md:text-base text-[#8A8378] leading-relaxed max-w-xl mx-auto">
+              <p className="text-sm md:text-base text-[#8A857C] leading-relaxed max-w-xl mx-auto">
                 Vous souhaitez rencontrer un serviteur de Dieu du Mouvement
                 Christ Libère ? Votre demande sera reçue par le secrétariat,
                 qui la transmettra à la personne concernée.
@@ -192,7 +192,7 @@ export function RendezVousView() {
 
             <form
               onSubmit={soumettre}
-              className="bg-white rounded-2xl border border-[#8A8378]/15 p-6 md:p-8 space-y-6"
+              className="bg-white rounded-2xl border border-[#8A857C]/15 p-6 md:p-8 space-y-6"
             >
               {/* Honeypot (invisible) */}
               <input
@@ -207,7 +207,7 @@ export function RendezVousView() {
 
               {/* Choix du serviteur */}
               <div>
-                <label className="block text-xs font-bold text-[#1E0F2B] mb-2 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-[#000000] mb-2 uppercase tracking-wider">
                   Serviteur de Dieu souhaité
                 </label>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -221,7 +221,7 @@ export function RendezVousView() {
                         className={`text-left p-4 rounded-xl border-2 transition-all ${
                           actif
                             ? "border-[#C9A227] bg-[#C9A227]/5"
-                            : "border-[#8A8378]/15 hover:border-[#C9A227]/40"
+                            : "border-[#8A857C]/15 hover:border-[#FF7A1A]/40"
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -233,10 +233,10 @@ export function RendezVousView() {
                             className="w-10 h-10 rounded-full object-cover"
                           />
                           <div>
-                            <p className="text-sm font-bold text-[#1E0F2B]">
+                            <p className="text-sm font-bold text-[#000000]">
                               {s.libelle}
                             </p>
-                            <p className="text-[11px] text-[#8A8378]">{s.titre}</p>
+                            <p className="text-[11px] text-[#8A857C]">{s.titre}</p>
                           </div>
                         </div>
                       </button>
@@ -248,7 +248,7 @@ export function RendezVousView() {
               {/* Identité */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#1E0F2B] mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-[#000000] mb-1.5 uppercase tracking-wider">
                     Votre nom complet <span className="text-[#B3452E]">*</span>
                   </label>
                   <input
@@ -256,12 +256,12 @@ export function RendezVousView() {
                     required
                     value={form.requesterName}
                     onChange={(e) => setForm({ ...form, requesterName: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+                    className="w-full px-4 py-3 rounded-xl border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
                     placeholder="Ex. Grâce Adjoua"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1E0F2B] mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-[#000000] mb-1.5 uppercase tracking-wider">
                     Contact (téléphone / WhatsApp / email) <span className="text-[#B3452E]">*</span>
                   </label>
                   <input
@@ -269,31 +269,31 @@ export function RendezVousView() {
                     required
                     value={form.contact}
                     onChange={(e) => setForm({ ...form, contact: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+                    className="w-full px-4 py-3 rounded-xl border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
                     placeholder="Pour être recontacté(e)"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1E0F2B] mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-[#000000] mb-1.5 uppercase tracking-wider">
                     Pays
                   </label>
                   <input
                     type="text"
                     value={form.country}
                     onChange={(e) => setForm({ ...form, country: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+                    className="w-full px-4 py-3 rounded-xl border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
                     placeholder="Ex. Bénin"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1E0F2B] mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-[#000000] mb-1.5 uppercase tracking-wider">
                     Ville
                   </label>
                   <input
                     type="text"
                     value={form.city}
                     onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+                    className="w-full px-4 py-3 rounded-xl border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
                     placeholder="Ex. Cotonou"
                   />
                 </div>
@@ -302,7 +302,7 @@ export function RendezVousView() {
               {/* Objet + urgence */}
               <div className="grid sm:grid-cols-[1fr_180px] gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#1E0F2B] mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-[#000000] mb-1.5 uppercase tracking-wider">
                     Objet de la demande <span className="text-[#B3452E]">*</span>
                   </label>
                   <input
@@ -310,18 +310,18 @@ export function RendezVousView() {
                     required
                     value={form.subject}
                     onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+                    className="w-full px-4 py-3 rounded-xl border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
                     placeholder="Ex. Accompagnement spirituel personnel"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1E0F2B] mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-[#000000] mb-1.5 uppercase tracking-wider">
                     Urgence
                   </label>
                   <select
                     value={form.urgency}
                     onChange={(e) => setForm({ ...form, urgency: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+                    className="w-full px-4 py-3 rounded-xl border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
                   >
                     {Object.entries(DEMANDE_URGENCES).map(([v, u]) => (
                       <option key={v} value={v}>
@@ -334,7 +334,7 @@ export function RendezVousView() {
 
               {/* Message */}
               <div>
-                <label className="block text-xs font-bold text-[#1E0F2B] mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-[#000000] mb-1.5 uppercase tracking-wider">
                   Votre message <span className="text-[#B3452E]">*</span>
                 </label>
                 <textarea
@@ -342,7 +342,7 @@ export function RendezVousView() {
                   rows={6}
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] resize-none"
                   placeholder="Présentez votre demande, le motif de la rencontre et toute information utile…"
                 />
               </div>
@@ -355,14 +355,14 @@ export function RendezVousView() {
               )}
 
               <div className="flex items-center justify-between flex-wrap gap-3">
-                <p className="flex items-center gap-1.5 text-[11px] text-[#8A8378]">
+                <p className="flex items-center gap-1.5 text-[11px] text-[#8A857C]">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#5B7052]" />
                   Demande transmise au secrétariat du ministère
                 </p>
                 <button
                   type="submit"
                   disabled={envoi}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#000000] text-[#F0E9DE] text-sm font-bold hover:bg-[#161513] transition-colors disabled:opacity-50"
                 >
                   {envoi ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -374,7 +374,7 @@ export function RendezVousView() {
               </div>
             </form>
 
-            <p className="text-[11px] text-[#8A8378] text-center leading-relaxed max-w-lg mx-auto">
+            <p className="text-[11px] text-[#8A857C] text-center leading-relaxed max-w-lg mx-auto">
               Vos coordonnées sont transmises uniquement au secrétariat du
               Mouvement Christ Libère et au serviteur de Dieu concerné — elles
               ne sont jamais publiées. Consultez notre{" "}

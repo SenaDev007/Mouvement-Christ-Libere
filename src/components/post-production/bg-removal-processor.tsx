@@ -214,22 +214,22 @@ export function BgRemovalProcessor({ videoRef, videoId, onProcessed }: BgRemoval
 
       {!processing && !modelLoaded && (
         <>
-          <p className="text-[10px] text-[#8A8378] leading-relaxed">
+          <p className="text-[10px] text-[#8A857C] leading-relaxed">
             Supprime automatiquement le fond de la vidéo en gardant uniquement la personne.
             Utilise MediaPipe Selfie Segmentation (IA Google). Le traitement prend ~2-3 min pour 10 min de vidéo.
           </p>
           <div>
-            <label className="text-[10px] text-[#8A8378] uppercase font-bold">Couleur de fond de remplacement</label>
+            <label className="text-[10px] text-[#8A857C] uppercase font-bold">Couleur de fond de remplacement</label>
             <div className="flex items-center gap-2 mt-1">
               <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)}
                 className="w-10 h-7 rounded" />
-              <span className="text-xs text-[#8A8378]">
+              <span className="text-xs text-[#8A857C]">
                 {bgColor === "#00FF00" ? "Vert (pour chroma key)" : bgColor === "#000000" ? "Noir" : "Personnalisé"}
               </span>
             </div>
           </div>
           <button onClick={loadModel}
-            className="w-full px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors">
+            className="w-full px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#FF7A1A]/30 transition-colors">
             Charger le modèle IA
           </button>
         </>
@@ -238,17 +238,17 @@ export function BgRemovalProcessor({ videoRef, videoId, onProcessed }: BgRemoval
       {modelLoaded && !processing && (
         <>
           <div>
-            <label className="text-[10px] text-[#8A8378] uppercase font-bold">Couleur de fond</label>
+            <label className="text-[10px] text-[#8A857C] uppercase font-bold">Couleur de fond</label>
             <div className="flex items-center gap-2 mt-1">
               <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)}
                 className="w-10 h-7 rounded" />
-              <span className="text-xs text-[#8A8378]">
+              <span className="text-xs text-[#8A857C]">
                 {bgColor === "#00FF00" ? "Vert (chroma key)" : bgColor === "#000000" ? "Noir" : "Personnalisé"}
               </span>
             </div>
           </div>
           <button onClick={processVideo}
-            className="w-full px-3 py-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-xs font-bold hover:bg-[#DDBE55] transition-colors flex items-center justify-center gap-1.5">
+            className="w-full px-3 py-2 rounded-lg bg-[#C9A227] text-[#000000] text-xs font-bold hover:bg-[#FF7A1A] transition-colors flex items-center justify-center gap-1.5">
             <Eraser className="w-3.5 h-3.5" />
             Lancer le traitement IA
           </button>
@@ -258,12 +258,12 @@ export function BgRemovalProcessor({ videoRef, videoId, onProcessed }: BgRemoval
       {processing && (
         <div className="text-center py-4">
           <Loader2 className="w-8 h-8 text-[#C9A227] mx-auto mb-3 animate-spin" />
-          <p className="text-xs font-bold text-[#1E0F2B] mb-2">{stage || "Traitement..."} {progress}%</p>
-          <div className="w-full bg-[#2A0E3D]/10 rounded-full h-2 overflow-hidden">
+          <p className="text-xs font-bold text-[#000000] mb-2">{stage || "Traitement..."} {progress}%</p>
+          <div className="w-full bg-[#000000]/10 rounded-full h-2 overflow-hidden">
             <div className="h-full bg-gradient-to-r from-[#C9A227] to-[#DDBE55] rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }} />
           </div>
-          <p className="text-[10px] text-[#8A8378] mt-2">Ne fermez pas cette page</p>
+          <p className="text-[10px] text-[#8A857C] mt-2">Ne fermez pas cette page</p>
         </div>
       )}
 

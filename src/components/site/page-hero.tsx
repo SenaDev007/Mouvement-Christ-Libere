@@ -71,11 +71,11 @@ export function PageHero({
   secondaryCtaNode,
 }: PageHeroProps) {
   return (
-    <section className="page-hero-min-h relative flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
+    <section className="page-hero-min-h relative flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#000000] text-white">
       {/* Background */}
       <div className="absolute inset-0 z-0">
         <HeroBackgroundImage src={imageSrc} alt={title} className="object-cover opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/90 to-[#1A0826]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#000000]/80 via-[#000000]/90 to-[#000000]" />
       </div>
 
       {/* Content */}
@@ -104,19 +104,19 @@ export function PageHero({
           ) : null}
         </motion.h1>
 
-        <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-10">
+        <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="text-base md:text-lg text-[#F0E9DE]/70 leading-relaxed max-w-2xl mx-auto mb-10">
           <IsololeText>{subtitle}</IsololeText>
         </motion.p>
 
         {(primaryCta || secondaryCta || secondaryCtaNode) && (
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.5 }} className="flex flex-col sm:flex-row gap-4 justify-center">
             {primaryCta && (
-              <Link href={primaryCta.href} className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300">
+              <Link href={primaryCta.href} className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#FF7A1A] text-[#000000] font-sans font-bold text-base shadow-lg transition-all duration-300">
                 {primaryCta.label} <ChevronRight className="w-4 h-4 ml-2" />
               </Link>
             )}
             {secondaryCtaNode ?? (secondaryCta && (
-              <Link href={secondaryCta.href} className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300">
+              <Link href={secondaryCta.href} className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#FF7A1A]/10 transition-all duration-300">
                 {secondaryCta.label} <ChevronRight className="w-4 h-4 ml-2" />
               </Link>
             ))}

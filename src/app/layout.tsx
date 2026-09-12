@@ -41,18 +41,18 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Mouvement Christ Libère" }],
   // ⭐ V3.50 — NOUVEAU LOGO (2026) : favicon + icônes PWA + manifest ENFIN
-  // LIÉS. Le suffixe ?v=2026-09 force le re-téléchargement par les navigateurs
+  // LIÉS. Le suffixe ?v=noir-2026-09 force le re-téléchargement par les navigateurs
   // qui avaient mis en cache l'ancienne icône (cache immutable 1 an de la
   // config précédente) : le lien <link rel="icon"> émis par Next.js prend le
   // pas sur la requête conventionnelle /favicon.ico.
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
-      { url: "/favicon.ico?v=2026-09", sizes: "48x48", type: "image/x-icon" },
-      { url: "/icon-32.png?v=2026-09", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.ico?v=noir-2026-09", sizes: "48x48", type: "image/x-icon" },
+      { url: "/icon-32.png?v=noir-2026-09", sizes: "96x96", type: "image/png" },
     ],
     apple: [
-      { url: "/apple-icon.png?v=2026-09", sizes: "180x180", type: "image/png" },
+      { url: "/apple-icon.png?v=noir-2026-09", sizes: "180x180", type: "image/png" },
     ],
   },
   openGraph: {
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     // régénérée avec le nouveau logo (avant : og-image.png jamais référencé).
     images: [
       {
-        url: "/og-image.png?v=2026-09",
+        url: "/og-image.png?v=noir-2026-09",
         width: 1200,
         height: 630,
         alt: "Mouvement Christ Libère — Pam & Pasteur Kongo",
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     title: "Pam & Pasteur Kongo — Au son du chofar",
     description:
       "Enseignements, témoignages et vie de communauté. Un espace de foi centralisé.",
-    images: ["/og-image.png?v=2026-09"],
+    images: ["/og-image.png?v=noir-2026-09"],
   },
 };
 
@@ -95,9 +95,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   interactiveWidget: "resizes-content",
   // ⭐ V3.50 — Couleur de la barre d'outils du navigateur mobile (Android
-  // Chrome / Windows Phone) : pourpre profond du Mouvement, aligné sur le
+  // Chrome / Windows Phone) : noir pur du Mouvement (palette logo V3.68), aligné sur le
   // theme_color du manifest PWA.
-  themeColor: "#2A0E3D",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({

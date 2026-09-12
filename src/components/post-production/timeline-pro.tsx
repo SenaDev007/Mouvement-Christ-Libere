@@ -474,27 +474,27 @@ export function TimelinePro(props: TimelineProProps) {
 
   // Bloc LIBELLÉ de la gouttière (une rangée)
   const libelleRangee = (icon: React.ReactNode, titre: string, sousTitre: string, accent: string) => (
-    <div className="flex items-center gap-1.5 px-2 border-b border-[#8A8378]/15 min-w-0">
+    <div className="flex items-center gap-1.5 px-2 border-b border-[#8A857C]/15 min-w-0">
       {icon}
       <div className="min-w-0">
-        <p className="text-[10px] font-black text-[#1E0F2B] leading-tight truncate" style={{ color: accent }}>{titre}</p>
-        <p className="text-[8px] text-[#8A8378] leading-tight truncate">{sousTitre}</p>
+        <p className="text-[10px] font-black text-[#000000] leading-tight truncate" style={{ color: accent }}>{titre}</p>
+        <p className="text-[8px] text-[#8A857C] leading-tight truncate">{sousTitre}</p>
       </div>
     </div>
   );
 
   return (
-    <div className="bg-white rounded-xl p-3 border border-[#8A8378]/15">
+    <div className="bg-white rounded-xl p-3 border border-[#8A857C]/15">
       {/* ─── Barre d'outils ─── */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
         <Layers className="w-4 h-4 text-[#C9A227]" />
-        <span className="text-xs font-bold uppercase tracking-wider text-[#1E0F2B]">Timeline multi-pistes</span>
-        <span className="text-[10px] text-[#8A8378] truncate">
+        <span className="text-xs font-bold uppercase tracking-wider text-[#000000]">Timeline multi-pistes</span>
+        <span className="text-[10px] text-[#8A857C] truncate">
           V1 {clipsV1.length} clip(s) · V2 {clipsV2.length} incrust. · TX {nbTextesT1 + nbTextesT2} · A {audioTracks.length}
         </span>
         <div className="ml-auto flex items-center gap-1">
           <button onClick={() => zoomer(pxParSec / 1.35)}
-            className="p-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10" title="Zoom arrière">
+            className="p-1.5 rounded-lg bg-[#000000]/5 hover:bg-[#000000]/10" title="Zoom arrière">
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
           <input
@@ -503,35 +503,35 @@ export function TimelinePro(props: TimelineProProps) {
             className="w-24 accent-[#C9A227]" title="Zoom (pixels/seconde)"
           />
           <button onClick={() => zoomer(pxParSec * 1.35)}
-            className="p-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10" title="Zoom avant">
+            className="p-1.5 rounded-lg bg-[#000000]/5 hover:bg-[#000000]/10" title="Zoom avant">
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
           <button onClick={() => { zoomManuelRef.current = true; ajuster(); }}
-            className="p-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10" title="Ajuster à la fenêtre">
+            className="p-1.5 rounded-lg bg-[#000000]/5 hover:bg-[#000000]/10" title="Ajuster à la fenêtre">
             <Maximize2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
       {/* ─── Corps : gouttière + pistes scrollables ─── */}
-      <div ref={conteneurRef} className="relative rounded-lg border border-[#8A8378]/15 bg-[#FAF8F4] overflow-hidden">
+      <div ref={conteneurRef} className="relative rounded-lg border border-[#8A857C]/15 bg-[#FAF8F4] overflow-hidden">
         <div className="flex">
           {/* Gouttière (en-têtes de pistes) — fixe, ne défile pas */}
-          <div className="bg-[#F3F0E8] border-r border-[#8A8378]/20 flex-shrink-0 select-none" style={{ width: GOUTTERE }}>
-            <div className="flex items-center px-2 border-b border-[#8A8378]/15 text-[9px] font-bold text-[#8A8378] tabular-nums" style={{ height: HAUTEURS.ruler }}>
+          <div className="bg-[#F3F0E8] border-r border-[#8A857C]/20 flex-shrink-0 select-none" style={{ width: GOUTTERE }}>
+            <div className="flex items-center px-2 border-b border-[#8A857C]/15 text-[9px] font-bold text-[#8A857C] tabular-nums" style={{ height: HAUTEURS.ruler }}>
               {formaterTempsFin(currentTime)}
             </div>
             <div style={{ height: HAUTEURS.v1 }}>
-              {libelleRangee(<Film className="w-3.5 h-3.5 text-[#2A0E3D] flex-shrink-0" />, "V1 · Vidéo", `séquence · ${clipsV1.length} clip(s)`, "#1E0F2B")}
+              {libelleRangee(<Film className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />, "V1 · Vidéo", `séquence · ${clipsV1.length} clip(s)`, "#000000")}
             </div>
             <div style={{ height: HAUTEURS.v2 }}>
-              {libelleRangee(<Film className="w-3 h-3 text-[#7C3AED] flex-shrink-0" />, "V2 · Incrustation", `calque vidéo · ${clipsV2.length}`, "#7C3AED")}
+              {libelleRangee(<Film className="w-3 h-3 text-[#FF7A1A] flex-shrink-0" />, "V2 · Incrustation", `calque vidéo · ${clipsV2.length}`, "#FF7A1A")}
             </div>
             <div style={{ height: HAUTEURS.tx }}>
-              {libelleRangee(<Type className="w-3 h-3 text-[#7C3AED] flex-shrink-0" />, "TX1 · Texte", `piste 1 · ${nbTextesT1}`, "#6D28D9")}
+              {libelleRangee(<Type className="w-3 h-3 text-[#FF7A1A] flex-shrink-0" />, "TX1 · Texte", `piste 1 · ${nbTextesT1}`, "#FF7A1A")}
             </div>
             <div style={{ height: HAUTEURS.tx }}>
-              {libelleRangee(<Type className="w-3 h-3 text-[#A78BFA] flex-shrink-0" />, "TX2 · Texte", `piste 2 (dessus) · ${nbTextesT2}`, "#8B5CF6")}
+              {libelleRangee(<Type className="w-3 h-3 text-[#DDBE55] flex-shrink-0" />, "TX2 · Texte", `piste 2 (dessus) · ${nbTextesT2}`, "#FF7A1A")}
             </div>
             <div style={{ height: HAUTEURS.img }}>
               {libelleRangee(<ImageIcon className="w-3 h-3 text-[#0D9488] flex-shrink-0" />, "IMG · Images", `images & stickers · ${imagesStickers.length}`, "#0D9488")}
@@ -551,7 +551,7 @@ export function TimelinePro(props: TimelineProProps) {
             <div style={{ width: largeurContenu, position: "relative", height: HAUTEUR_TOTALE }} data-contenu>
               {/* ── Règle temporelle (scrub) ── */}
               <div
-                className="absolute top-0 left-0 right-0 bg-[#F3F0E8] border-b border-[#8A8378]/15 cursor-ew-resize select-none"
+                className="absolute top-0 left-0 right-0 bg-[#F3F0E8] border-b border-[#8A857C]/15 cursor-ew-resize select-none"
                 style={{ height: HAUTEURS.ruler }}
                 onPointerDown={(e) => {
                   if (e.button !== 0) return;
@@ -561,8 +561,8 @@ export function TimelinePro(props: TimelineProProps) {
               >
                 {graduations.map((t) => (
                   <div key={t} className="absolute top-0 bottom-0" style={{ left: t * pxParSec }}>
-                    <div className="absolute top-0 w-px h-2 bg-[#8A8378]/50" />
-                    <span className="absolute top-2 left-1 text-[8px] font-bold text-[#8A8378] tabular-nums">
+                    <div className="absolute top-0 w-px h-2 bg-[#8A857C]/50" />
+                    <span className="absolute top-2 left-1 text-[8px] font-bold text-[#8A857C] tabular-nums">
                       {formaterTemps(t)}
                     </span>
                   </div>
@@ -604,15 +604,15 @@ export function TimelinePro(props: TimelineProProps) {
                             left: gauche - 11, top: HAUTEURS.v1 / 2 - 11,
                             width: 22, height: 22,
                             background: transitions[i - 1] ? "#C9A227" : "#ffffff",
-                            borderColor: transitions[i - 1] ? "#A3821C" : "#8A8378",
+                            borderColor: transitions[i - 1] ? "#A3821C" : "#8A857C",
                           }}
                         >
-                          <ArrowLeftRight className="w-3 h-3" style={{ color: transitions[i - 1] ? "#fff" : "#8A8378" }} />
+                          <ArrowLeftRight className="w-3 h-3" style={{ color: transitions[i - 1] ? "#fff" : "#8A857C" }} />
                         </button>
                       )}
                       {/* Bloc clip */}
                       <div
-                        className={`absolute top-1 bottom-1 rounded-md overflow-hidden select-none group ${enDrag ? "opacity-60 ring-2 ring-[#7C3AED]" : ""}`}
+                        className={`absolute top-1 bottom-1 rounded-md overflow-hidden select-none group ${enDrag ? "opacity-60 ring-2 ring-[#FF7A1A]" : ""}`}
                         style={{
                           left: gauche + (enDrag && drag?.genre === "clip" && drag.piste === 1 ? ghostX : 0), width: largeur,
                           transform: enDrag && dyDrag ? `translateY(${dyDrag}px)` : undefined,
@@ -714,7 +714,7 @@ export function TimelinePro(props: TimelineProProps) {
               </div>
 
               {/* ── Piste V2 — incrustations vidéo à position libre ── */}
-              <div className="absolute left-0 right-0 border-t border-b border-[#8A8378]/10" style={{ top: OFFSETS_RANGEES[2], height: HAUTEURS.v2, background: "rgba(124,58,237,0.04)" }}>
+              <div className="absolute left-0 right-0 border-t border-b border-[#8A857C]/10" style={{ top: OFFSETS_RANGEES[2], height: HAUTEURS.v2, background: "rgba(124,58,237,0.04)" }}>
                 <div
                   className="absolute inset-0"
                   onDragOver={(e) => surDragOverVideo(e, 2)}
@@ -722,15 +722,15 @@ export function TimelinePro(props: TimelineProProps) {
                   onDrop={(e) => surDropVideo(e, 2)}
                 />
                 {dropCible === "video2" && (
-                  <div className="absolute inset-0 bg-[#7C3AED]/12 ring-1 ring-[#7C3AED] ring-inset rounded-md pointer-events-none z-20 flex items-center justify-center">
-                    <span className="px-3 py-1.5 rounded-full bg-[#7C3AED] text-white text-[10px] font-bold shadow-lg flex items-center gap-1">
+                  <div className="absolute inset-0 bg-[#FF7A1A]/12 ring-1 ring-[#FF7A1A] ring-inset rounded-md pointer-events-none z-20 flex items-center justify-center">
+                    <span className="px-3 py-1.5 rounded-full bg-[#FF7A1A] text-white text-[10px] font-bold shadow-lg flex items-center gap-1">
                       <Plus className="w-3 h-3" /> Incrustation sur V2
                     </span>
                   </div>
                 )}
                 {audioTracks.length === 0 && clipsV2.length === 0 && textesPiste(1).length === 0 && textesPiste(2).length === 0 && imagesStickers.length === 0 && clipsV1.length > 0 && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-[9px] text-[#8A8378]/70 italic">Glisser un clip V1 ici (ou déposer une vidéo) → incrustation par-dessus</span>
+                    <span className="text-[9px] text-[#8A857C]/70 italic">Glisser un clip V1 ici (ou déposer une vidéo) → incrustation par-dessus</span>
                   </div>
                 )}
                 {clipsV2.map((clip) => {
@@ -747,7 +747,7 @@ export function TimelinePro(props: TimelineProProps) {
                       style={{
                         left: gauche, width: largeur,
                         transform: enDrag && dyDrag ? `translateY(${dyDrag}px)` : undefined,
-                        background: "linear-gradient(180deg,#7C3AED,#5B21B6)",
+                        background: "linear-gradient(180deg,#FF7A1A,#A3821C)",
                         boxShadow: "inset 0 1px 0 rgba(255,255,255,.3)",
                         zIndex: enDrag ? 25 : 5, cursor: "grab",
                       }}
@@ -830,7 +830,7 @@ export function TimelinePro(props: TimelineProProps) {
 
               {/* ── Pistes TX1 / TX2 — textes (⭐ V3.63 : glisser entre pistes) ── */}
               {([1, 2] as const).map((pisteTx) => (
-                <div key={`tx${pisteTx}`} className="absolute left-0 right-0 border-b border-[#8A8378]/15" style={{ top: pisteTx === 1 ? OFFSETS_RANGEES[3] : OFFSETS_RANGEES[4], height: HAUTEURS.tx, background: pisteTx === 2 ? "rgba(139,92,246,0.05)" : "#FAF8F4" }}>
+                <div key={`tx${pisteTx}`} className="absolute left-0 right-0 border-b border-[#8A857C]/15" style={{ top: pisteTx === 1 ? OFFSETS_RANGEES[3] : OFFSETS_RANGEES[4], height: HAUTEURS.tx, background: pisteTx === 2 ? "rgba(139,92,246,0.05)" : "#FAF8F4" }}>
                   {textesPiste(pisteTx).map((t) => {
                     const { debut, fin } = fenetreOverlay(t);
                     const sel = selectedOverlayId === t.id;
@@ -841,7 +841,7 @@ export function TimelinePro(props: TimelineProProps) {
                         style={{
                           left: debut * pxParSec, width: Math.max(30, (fin - debut) * pxParSec),
                           transform: enDrag && dyDrag ? `translateY(${dyDrag}px)` : undefined,
-                          background: pisteTx === 1 ? "linear-gradient(180deg,#8B5CF6,#7C3AED)" : "linear-gradient(180deg,#A78BFA,#8B5CF6)",
+                          background: pisteTx === 1 ? "linear-gradient(180deg,#FF7A1A,#FF7A1A)" : "linear-gradient(180deg,#DDBE55,#FF7A1A)",
                           outline: sel ? "2px solid #C9A227" : undefined,
                           zIndex: enDrag ? 25 : 4,
                         }}
@@ -868,7 +868,7 @@ export function TimelinePro(props: TimelineProProps) {
               ))}
 
               {/* ── Piste IMG — images & stickers ── */}
-              <div className="absolute left-0 right-0 border-b border-[#8A8378]/15 bg-[#FAF8F4]" style={{ top: OFFSETS_RANGEES[5], height: HAUTEURS.img }}>
+              <div className="absolute left-0 right-0 border-b border-[#8A857C]/15 bg-[#FAF8F4]" style={{ top: OFFSETS_RANGEES[5], height: HAUTEURS.img }}>
                 {imagesStickers.map((o) => {
                   const { debut, fin } = fenetreOverlay(o);
                   const sel = selectedOverlayId === o.id;
@@ -909,7 +909,7 @@ export function TimelinePro(props: TimelineProProps) {
               {([1, 2] as const).map((voie) => {
                 const pistesVoie = audioVoie(voie);
                 return (
-                  <div key={`a${voie}`} className="absolute left-0 right-0 border-b border-[#8A8378]/15" style={{ top: voie === 1 ? OFFSETS_RANGEES[6] : OFFSETS_RANGEES[7], height: HAUTEURS.audio }}>
+                  <div key={`a${voie}`} className="absolute left-0 right-0 border-b border-[#8A857C]/15" style={{ top: voie === 1 ? OFFSETS_RANGEES[6] : OFFSETS_RANGEES[7], height: HAUTEURS.audio }}>
                     <div
                       className={`absolute inset-0 rounded-md transition-colors ${dropCible === (voie === 1 ? "audio1" : "audio2") ? "bg-[#C9A227]/15 ring-1 ring-[#C9A227] ring-inset" : ""}`}
                       onDragOver={(e) => surDragOverAudio(e, voie)}
@@ -919,7 +919,7 @@ export function TimelinePro(props: TimelineProProps) {
                     {pistesVoie.length === 0 && audioTracks.length === 0 && voie === 1 && (
                       <div className="absolute inset-0 rounded-md bg-[#15803D]/5 flex items-center justify-center gap-1.5">
                         <Music2 className="w-3 h-3 text-[#15803D]" />
-                        <span className="text-[9px] text-[#8A8378]">
+                        <span className="text-[9px] text-[#8A857C]">
                           Glisser ici une musique ou un son depuis la <strong>Bibliothèque</strong>
                         </span>
                       </div>
@@ -1016,7 +1016,7 @@ export function TimelinePro(props: TimelineProProps) {
       </div>
 
       {/* Légende interactions */}
-      <p className="text-[9px] text-[#8A8378] leading-relaxed mt-2">
+      <p className="text-[9px] text-[#8A857C] leading-relaxed mt-2">
         ⭐ Glissez les blocs <strong>horizontalement</strong> pour les déplacer dans le temps et <strong>verticalement</strong> pour
         les faire changer de piste (V1 ↔ V2, TX1 ↔ TX2, A1 ↔ A2) · poignées <GripVertical className="w-2.5 h-2.5 inline" /> pour rogner ·
         badges <ArrowLeftRight className="w-2.5 h-2.5 inline" /> pour les transitions · glissez sons / musiques / vidéos depuis

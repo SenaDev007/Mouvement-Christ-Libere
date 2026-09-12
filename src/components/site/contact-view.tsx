@@ -57,17 +57,17 @@ export function ContactView({ hero }: { hero: HeroConfig }) {
       />
 
       {/* Formulaire */}
-      <section id="form" className="bg-[#FAF6EF] py-20 md:py-24">
+      <section id="form" className="bg-[#F0E9DE] py-20 md:py-24">
         <div className="container mx-auto max-w-2xl px-4">
           {submitted ? (
             <div className="card-gold-top p-10 text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-state-success/15 border-2 border-state-success/40 mb-6">
                 <CheckCircle2 className="w-8 h-8 text-state-success" />
               </div>
-              <h2 className="font-serif text-2xl font-semibold text-[#1E0F2B] mb-3">
+              <h2 className="font-serif text-2xl font-semibold text-[#000000] mb-3">
                 Message bien transmis
               </h2>
-              <p className="text-sm text-[#8A8378] leading-relaxed mb-6">
+              <p className="text-sm text-[#8A857C] leading-relaxed mb-6">
                 Votre message a bien été transmis. Une réponse vous parviendra sous 24 à 48h.
               </p>
               <button
@@ -75,7 +75,7 @@ export function ContactView({ hero }: { hero: HeroConfig }) {
                   setSubmitted(false);
                   setForm({ name: "", contact: "", message: "" });
                 }}
-                className="text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
+                className="text-sm font-semibold text-[#000000] hover:text-[#FF7A1A] transition-colors"
               >
                 Envoyer un autre message
               </button>
@@ -83,7 +83,7 @@ export function ContactView({ hero }: { hero: HeroConfig }) {
           ) : (
             <form onSubmit={handleSubmit} className="card-gold-top p-8 md:p-10 space-y-6">
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-semibold mb-2 block">
                   Votre nom
                 </label>
                 <input
@@ -93,13 +93,13 @@ export function ContactView({ hero }: { hero: HeroConfig }) {
                   onChange={handleChange}
                   required
                   autoComplete="name"
-                  className="w-full px-4 py-3.5 rounded-2xl border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
+                  className="w-full px-4 py-3.5 rounded-2xl border border-[#8A857C]/30 bg-[#F0E9DE] text-[#000000] placeholder:text-[#8A857C]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
                   placeholder="Votre nom complet"
                 />
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-semibold mb-2 block">
                   Votre email ou numéro WhatsApp
                 </label>
                 <input
@@ -108,13 +108,13 @@ export function ContactView({ hero }: { hero: HeroConfig }) {
                   value={form.contact}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3.5 rounded-2xl border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
+                  className="w-full px-4 py-3.5 rounded-2xl border border-[#8A857C]/30 bg-[#F0E9DE] text-[#000000] placeholder:text-[#8A857C]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
                   placeholder="email@exemple.com ou +33 6 12 34 56 78"
                 />
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold mb-2 block">
+                <label className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-semibold mb-2 block">
                   Votre message
                 </label>
                 <textarea
@@ -123,7 +123,7 @@ export function ContactView({ hero }: { hero: HeroConfig }) {
                   onChange={handleChange}
                   required
                   rows={6}
-                  className="w-full px-4 py-3.5 rounded-2xl border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all resize-none"
+                  className="w-full px-4 py-3.5 rounded-2xl border border-[#8A857C]/30 bg-[#F0E9DE] text-[#000000] placeholder:text-[#8A857C]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all resize-none"
                   placeholder="Décrivez en quelques mots l'objet de votre demande..."
                 />
               </div>
@@ -138,7 +138,7 @@ export function ContactView({ hero }: { hero: HeroConfig }) {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-6 py-4 rounded-2xl bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-4 rounded-2xl bg-[#C9A227] text-[#000000] font-semibold text-sm hover:bg-[#FF7A1A] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>
@@ -153,18 +153,18 @@ export function ContactView({ hero }: { hero: HeroConfig }) {
                 )}
               </button>
 
-              <p className="text-xs text-[#8A8378] text-center">
+              <p className="text-xs text-[#8A857C] text-center">
                 Délai de réponse garanti : sous 24h.
               </p>
             </form>
           )}
 
           {/* Alternative WhatsApp */}
-          <div className="mt-8 p-6 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-2xl">
+          <div className="mt-8 p-6 bg-[#000000]/5 border border-[#C9A227]/20 rounded-2xl">
             <div className="flex items-start gap-3">
               <MessageCircle className="w-5 h-5 text-state-success flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm text-[#1E0F2B]/80 mb-3">
+                <p className="text-sm text-[#000000]/80 mb-3">
                   Pour une demande urgente, vous pouvez aussi nous écrire directement sur WhatsApp :
                 </p>
                 <a
@@ -186,7 +186,7 @@ export function ContactView({ hero }: { hero: HeroConfig }) {
       <SectionDivider variant="ornament" />
 
       {/* Citation */}
-      <section className="bg-[#2A0E3D] py-24 md:py-32 relative overflow-hidden">
+      <section className="bg-[#000000] py-24 md:py-32 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative">
           <QuoteBlock

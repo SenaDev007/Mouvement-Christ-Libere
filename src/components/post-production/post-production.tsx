@@ -170,7 +170,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const [exportConfig, setExportConfig] = useState<ExportConfig>(DEFAULT_EXPORT);
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<TimelineClip[]>([
-    { id: "main", type: "main", label: "Replay principal", duration: 0, color: "#2A0E3D" },
+    { id: "main", type: "main", label: "Replay principal", duration: 0, color: "#000000" },
   ]);
 
   // ─── Sprint 5+ — nouveaux états ───
@@ -1031,7 +1031,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           id: `${type}-${Date.now()}`, type,
           label: type === "intro" ? "Intro" : "Outro",
           duration: video.duration, src, url: src,
-          color: type === "intro" ? "#C9A227" : "#8C5FA8",
+          color: type === "intro" ? "#C9A227" : "#8A857C",
         };
         if (type === "intro") setTimeline((prev) => [newClip, ...prev]);
         else setTimeline((prev) => [...prev, newClip]);
@@ -1183,7 +1183,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         dureeSource: duree || 5,
         src: data.url,
         url: data.url,
-        color: piste === 2 ? "#7C3AED" : "#4A9E8F",
+        color: piste === 2 ? "#FF7A1A" : "#4A9E8F",
         // ⭐ V3.63 — dépôt sur V2 = incrustation à position libre
         piste,
         startTime: piste === 2 ? Math.max(0, atSeconds) : undefined,
@@ -1537,65 +1537,65 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
   const hasActiveStickers = overlays.some((o) => o.type === "sticker");
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-[#F0E9DE] text-[#000000]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
       {/* ─── Header ─── */}
-      <div className="border-b border-[#8A8378]/15 px-4 sm:px-6 py-3 bg-white sticky top-0 z-30">
+      <div className="border-b border-[#8A857C]/15 px-4 sm:px-6 py-3 bg-white sticky top-0 z-30">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3 flex-wrap min-w-0">
             {/* ⭐ V3.17 — bouton retour vers la page Vidéos (plus besoin de repasser par la sidebar) */}
             <button
               onClick={handleRetour}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-[#2A0E3D]/5 text-xs font-bold transition-colors flex-shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-[#000000]/5 text-xs font-bold transition-colors flex-shrink-0"
               title="Retour à la page Vidéos"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Retour</span>
             </button>
-            <h1 className="text-xl font-bold flex items-center gap-2 text-[#1E0F2B] min-w-0">
+            <h1 className="text-xl font-bold flex items-center gap-2 text-[#000000] min-w-0">
               <Film className="w-5 h-5 text-[#C9A227] flex-shrink-0" /><span className="truncate">Post-production</span>
             </h1>
-            <span className="text-xs text-[#8A8378] min-w-0 break-words">{title} — {servantName}</span>
+            <span className="text-xs text-[#8A857C] min-w-0 break-words">{title} — {servantName}</span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Undo/Redo */}
             <button onClick={undo} disabled={historyIndex <= 0}
-              className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 disabled:opacity-30 transition-colors" title="Annuler">
+              className="p-2 rounded-lg hover:bg-[#000000]/5 disabled:opacity-30 transition-colors" title="Annuler">
               <Undo2 className="w-4 h-4" />
             </button>
             <button onClick={redo} disabled={historyIndex >= history.length - 1}
-              className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 disabled:opacity-30 transition-colors" title="Refaire">
+              className="p-2 rounded-lg hover:bg-[#000000]/5 disabled:opacity-30 transition-colors" title="Refaire">
               <Redo2 className="w-4 h-4" />
             </button>
-            <div className="w-px h-6 bg-[#8A8378]/20" />
+            <div className="w-px h-6 bg-[#8A857C]/20" />
             {/* Templates */}
             <button onClick={() => setShowTemplates(!showTemplates)}
-              className="px-3 py-2 rounded-lg hover:bg-[#2A0E3D]/5 text-xs font-bold flex items-center gap-1.5 transition-colors">
+              className="px-3 py-2 rounded-lg hover:bg-[#000000]/5 text-xs font-bold flex items-center gap-1.5 transition-colors">
               <Wand2 className="w-3.5 h-3.5" />Templates
             </button>
             {/* ⭐ V3.60 — raccourci BIBLIOTHÈQUE dans l'en-tête (retour pasteur :
                 « je n'ai pas vu la bibliothèque » — 1 795 médias Mixkit +
                 stickers/filtres/presets V3.60) */}
             <button onClick={() => { setActiveTab("library"); }}
-              className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${activeTab === "library" ? "bg-[#C9A227]/20 text-[#A3821C]" : "hover:bg-[#2A0E3D]/5"}`}
+              className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${activeTab === "library" ? "bg-[#C9A227]/20 text-[#A3821C]" : "hover:bg-[#000000]/5"}`}
               title="Bibliothèque : sons, musiques, vidéos, templates + stickers pro">
               <LibraryIcon className="w-3.5 h-3.5" />Bibliothèque
               <span className="w-1.5 h-1.5 rounded-full bg-[#E0245E] animate-pulse" />
             </button>
             {/* Save project */}
             <button onClick={handleSaveProject}
-              className="px-3 py-2 rounded-lg hover:bg-[#2A0E3D]/5 text-xs font-bold flex items-center gap-1.5 transition-colors"
+              className="px-3 py-2 rounded-lg hover:bg-[#000000]/5 text-xs font-bold flex items-center gap-1.5 transition-colors"
               title="Ctrl+S">
               {projectSaved ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> : <Save className="w-3.5 h-3.5" />}
               {projectSaved ? "Sauvegardé" : "Sauver"}
             </button>
             {/* Keyboard shortcuts */}
             <button onClick={() => setShowShortcuts(!showShortcuts)}
-              className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors" title="Raccourcis clavier">
+              className="p-2 rounded-lg hover:bg-[#000000]/5 transition-colors" title="Raccourcis clavier">
               <Keyboard className="w-4 h-4" />
             </button>
             {/* Collaboration */}
             <button onClick={() => { setCollabEnabled(!collabEnabled); setShowCollabPanel(!collabEnabled); }}
-              className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${collabEnabled ? "bg-green-600 text-white" : "hover:bg-[#2A0E3D]/5"}`}
+              className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${collabEnabled ? "bg-green-600 text-white" : "hover:bg-[#000000]/5"}`}
               title="Collaboration temps réel">
               <Users className="w-3.5 h-3.5" />
               {collabEnabled ? (
@@ -1607,7 +1607,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </button>
             {/* Export */}
             <button onClick={handleExport} disabled={exporting}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 shadow-md">
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors disabled:opacity-40 shadow-md">
               {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               {exporting ? "Rendu..." : "Exporter"}
             </button>
@@ -1616,12 +1616,12 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
         {/* Keyboard shortcuts dropdown */}
         {showShortcuts && (
-          <div className="absolute top-full right-6 mt-1 bg-white rounded-xl shadow-2xl border border-[#8A8378]/15 p-3 w-80 z-40 max-h-96 overflow-y-auto">
-            <p className="text-xs font-bold text-[#8A8378] uppercase tracking-wider px-2 py-1 mb-1">Raccourcis clavier</p>
+          <div className="absolute top-full right-6 mt-1 bg-white rounded-xl shadow-2xl border border-[#8A857C]/15 p-3 w-80 z-40 max-h-96 overflow-y-auto">
+            <p className="text-xs font-bold text-[#8A857C] uppercase tracking-wider px-2 py-1 mb-1">Raccourcis clavier</p>
             {KEYBOARD_SHORTCUTS.map((sc, i) => (
-              <div key={i} className="flex items-center justify-between px-2 py-1 hover:bg-[#2A0E3D]/5 rounded">
-                <span className="text-xs text-[#1E0F2B]">{sc.description}</span>
-                <kbd className="text-[10px] font-bold px-1.5 py-0.5 bg-[#2A0E3D]/10 rounded">
+              <div key={i} className="flex items-center justify-between px-2 py-1 hover:bg-[#000000]/5 rounded">
+                <span className="text-xs text-[#000000]">{sc.description}</span>
+                <kbd className="text-[10px] font-bold px-1.5 py-0.5 bg-[#000000]/10 rounded">
                   {sc.ctrl ? "⌘+" : ""}{sc.shift ? "⇧+" : ""}{sc.key === " " ? "Space" : sc.key}
                 </kbd>
               </div>
@@ -1631,38 +1631,38 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
         {/* Templates dropdown */}
         {showTemplates && (
-          <div className="absolute top-full right-6 mt-1 bg-white rounded-xl shadow-2xl border border-[#8A8378]/15 p-2 w-72 z-40 max-h-[70vh] overflow-y-auto">
-            <p className="text-xs font-bold text-[#8A8378] uppercase tracking-wider px-2 py-1">Formats d'export</p>
+          <div className="absolute top-full right-6 mt-1 bg-white rounded-xl shadow-2xl border border-[#8A857C]/15 p-2 w-72 z-40 max-h-[70vh] overflow-y-auto">
+            <p className="text-xs font-bold text-[#8A857C] uppercase tracking-wider px-2 py-1">Formats d'export</p>
             {TEMPLATES.map((t) => (
               <button key={t.id} onClick={() => applyTemplate(t.id)}
-                className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors">
-                <p className="text-sm font-bold text-[#1E0F2B]">{t.name}</p>
-                <p className="text-xs text-[#8A8378]">{t.description}</p>
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#000000]/5 transition-colors">
+                <p className="text-sm font-bold text-[#000000]">{t.name}</p>
+                <p className="text-xs text-[#8A857C]">{t.description}</p>
               </button>
             ))}
-            <div className="border-t border-[#8A8378]/15 my-1" />
+            <div className="border-t border-[#8A857C]/15 my-1" />
             <p className="text-xs font-bold text-[#C9A227] uppercase tracking-wider px-2 py-1">
               ⭐ Templates intégrés — 100 % personnalisables
             </p>
-            <p className="text-[9px] text-[#8A8378] leading-relaxed px-2 pb-1">
+            <p className="text-[9px] text-[#8A857C] leading-relaxed px-2 pb-1">
               Compositions prêtes (textes animés + stickers + transitions + filtre) que vous
               modifiez APRÈS application : texte, position, durée — tout est éditable dans l'app,
               comme dans CapCut.
             </p>
             {TEMPLATES_INTEGRES.map((t) => (
               <button key={t.id} onClick={() => appliquerTemplateIntegre(t.id)} disabled={templateEnCours !== null}
-                className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#C9A227]/10 transition-colors disabled:opacity-50">
+                className="w-full text-left px-2 py-2 rounded-lg hover:bg-[#FF7A1A]/10 transition-colors disabled:opacity-50">
                 <div className="flex items-center gap-2">
                   <span className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-lg" style={{ background: t.swatch }}>{t.emoji}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-[#1E0F2B] truncate">{t.nom}</p>
-                    <p className="text-[10px] text-[#8A8378] leading-tight line-clamp-2">{t.description}</p>
+                    <p className="text-sm font-bold text-[#000000] truncate">{t.nom}</p>
+                    <p className="text-[10px] text-[#8A857C] leading-tight line-clamp-2">{t.description}</p>
                   </div>
                 </div>
               </button>
             ))}
-            <div className="border-t border-[#8A8378]/15 my-1" />
-            <p className="text-[9px] text-[#8A8378] leading-relaxed px-2">
+            <div className="border-t border-[#8A857C]/15 my-1" />
+            <p className="text-[9px] text-[#8A857C] leading-relaxed px-2">
               📦 Les templates <strong>Premiere Pro / After Effects / Final Cut / DaVinci</strong>
               (Bibliothèque → Templates) sont des fichiers de projet pour logiciels de bureau :
               téléchargez-les et ouvrez-les dans ces logiciels — c'est leur format propriétaire.
@@ -1674,7 +1674,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
       {/* ─── Progress export ─── */}
       {(exporting || exportProgress.length > 0 || exportError) && (
-        <div className="px-6 py-3 bg-[#2A0E3D]/5">
+        <div className="px-6 py-3 bg-[#000000]/5">
           <div className={`rounded-xl p-4 ${exportError ? "bg-red-50 border border-red-200" : "bg-white border border-[#C9A227]/20"}`}>
             {exportError ? (
               <p className="text-sm text-red-700">✗ {exportError}</p>
@@ -1683,7 +1683,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 <p className="text-xs font-bold text-[#C9A227] uppercase tracking-wider mb-2">{exporting ? "Rendu en cours..." : "✓ Rendu terminé"}</p>
                 <ul className="space-y-1">
                   {exportProgress.map((step, i) => (
-                    <li key={i} className="text-xs text-[#1E0F2B]/70 flex items-center gap-2">
+                    <li key={i} className="text-xs text-[#000000]/70 flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227]" />{step}
                     </li>
                   ))}
@@ -1867,21 +1867,21 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     explique qu'il faut uploader le fichier source pour
                     éditer (trim, overlays, etc.) */}
                 {embedMode && (
-                  <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#2A0E3D]/90 backdrop-blur-sm px-4 py-2 border-t border-[#C9A227]/30">
+                  <div className="absolute bottom-0 left-0 right-0 z-20 bg-[#000000]/90 backdrop-blur-sm px-4 py-2 border-t border-[#C9A227]/30">
                     <div className="flex items-center gap-2">
                       {tiktokMode ? (
                         <TiktokNoteIcon size={16} className="flex-shrink-0" />
                       ) : (
                         <Youtube className="w-4 h-4 text-red-500 flex-shrink-0" />
                       )}
-                      <p className="text-[11px] text-[#FAF6EF]/80 flex-1 leading-tight">
+                      <p className="text-[11px] text-[#F0E9DE]/80 flex-1 leading-tight">
                         {tiktokMode
                           ? "Vidéo TikTok en lecture. Pour éditer (découper, texte, filtres), uploadez le fichier source ci-dessous."
                           : "Vidéo YouTube en lecture. Pour éditer (découper, texte, filtres), uploadez le fichier source ci-dessous."}
                       </p>
                       <button
                         onClick={() => videoUploadRef.current?.click()}
-                        className="flex-shrink-0 px-2.5 py-1 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold hover:bg-[#DDBE55] transition-colors flex items-center gap-1"
+                        className="flex-shrink-0 px-2.5 py-1 rounded-lg bg-[#C9A227] text-[#000000] text-[10px] font-bold hover:bg-[#FF7A1A] transition-colors flex items-center gap-1"
                       >
                         <Upload className="w-3 h-3" />
                         Uploader
@@ -1895,26 +1895,26 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   progression toujours visible (avant, elle n'apparaissait
                   que si AUCUNE vidéo n'était chargée — l'écran restait
                   figé sur l'ancienne source pendant l'upload). */
-              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#000000] to-[#000000] text-center p-8">
                 <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-4 animate-spin" />
-                <p className="text-sm font-bold text-[#FAF6EF] mb-2">{uploadStage || "Upload..."} {uploadProgress}%</p>
+                <p className="text-sm font-bold text-[#F0E9DE] mb-2">{uploadStage || "Upload..."} {uploadProgress}%</p>
                 <div className="w-full max-w-xs bg-white/10 rounded-full h-3 overflow-hidden mb-2">
                   <div className="h-full bg-gradient-to-r from-[#C9A227] to-[#DDBE55] rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
                 </div>
-                <p className="text-xs text-[#FAF6EF]/50">Ne fermez pas cette page</p>
+                <p className="text-xs text-[#F0E9DE]/50">Ne fermez pas cette page</p>
                 {uploadError && <p className="text-xs text-red-400 mt-3 max-w-sm">{uploadError}</p>}
               </div>
             ) : loadingVideo ? (
-              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#000000] to-[#000000] text-center p-8">
                 <Loader2 className="w-12 h-12 text-[#C9A227] mx-auto mb-3 animate-spin" />
-                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Chargement de la vidéo...</p>
+                <p className="text-sm font-bold text-[#F0E9DE] mb-1">Chargement de la vidéo...</p>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-[#000000] to-[#000000] text-center p-8">
                 <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
-                <p className="text-sm font-bold text-[#FAF6EF] mb-1">Aucune vidéo source</p>
-                <p className="text-xs text-[#FAF6EF]/50 max-w-sm mb-4">Uploadez le replay enregistré (MP4, WebM — aucune limite de taille)</p>
-                <button onClick={() => videoUploadRef.current?.click()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors">
+                <p className="text-sm font-bold text-[#F0E9DE] mb-1">Aucune vidéo source</p>
+                <p className="text-xs text-[#F0E9DE]/50 max-w-sm mb-4">Uploadez le replay enregistré (MP4, WebM — aucune limite de taille)</p>
+                <button onClick={() => videoUploadRef.current?.click()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors">
                   <Upload className="w-4 h-4" />Uploader le replay
                 </button>
                 {uploadError && <p className="text-xs text-red-400 mt-3 max-w-sm">{uploadError}</p>}
@@ -1924,17 +1924,17 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
           {/* Controls — masqués en mode embed (l'iframe a ses propres contrôles) */}
           {!embedMode && (
-          <div className="flex items-center justify-center gap-3 bg-white rounded-xl p-3 border border-[#8A8378]/15">
-            <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors" disabled={!currentVideoUrl}>
+          <div className="flex items-center justify-center gap-3 bg-white rounded-xl p-3 border border-[#8A857C]/15">
+            <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-[#000000]/5 transition-colors" disabled={!currentVideoUrl}>
               <SkipBack className="w-5 h-5" />
             </button>
-            <button onClick={togglePlay} className="p-3 rounded-full bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40" disabled={!currentVideoUrl}>
+            <button onClick={togglePlay} className="p-3 rounded-full bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A] transition-colors disabled:opacity-40" disabled={!currentVideoUrl}>
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
-            <button onClick={() => handleSeek(Math.min(trimEnd, currentTime + 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors" disabled={!currentVideoUrl}>
+            <button onClick={() => handleSeek(Math.min(trimEnd, currentTime + 10))} className="p-2 rounded-lg hover:bg-[#000000]/5 transition-colors" disabled={!currentVideoUrl}>
               <SkipForward className="w-5 h-5" />
             </button>
-            <span className="text-xs text-[#8A8378] ml-2">{formatTime(currentTime)} / {formatTime(totalDuration)}</span>
+            <span className="text-xs text-[#8A857C] ml-2">{formatTime(currentTime)} / {formatTime(totalDuration)}</span>
           </div>
           )}
 
@@ -1976,7 +1976,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
         {/* ─── Colonne droite : Tabs + Panels ─── */}
         <div className="min-w-0 space-y-3">
           {/* Tab bar */}
-          <div className="grid grid-cols-5 gap-1 bg-white rounded-xl p-1 border border-[#8A8378]/15">
+          <div className="grid grid-cols-5 gap-1 bg-white rounded-xl p-1 border border-[#8A857C]/15">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -1993,7 +1993,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 (tab.id === "audio" && hasActiveAudio);
               return (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  className={`relative py-2 rounded-lg text-[10px] font-bold transition-colors ${isActive ? "bg-[#2A0E3D] text-white" : "text-[#8A8378] hover:text-[#1E0F2B]"}`}>
+                  className={`relative py-2 rounded-lg text-[10px] font-bold transition-colors ${isActive ? "bg-[#000000] text-white" : "text-[#8A857C] hover:text-[#000000]"}`}>
                   <Icon className="w-3.5 h-3.5 mx-auto mb-0.5" />
                   {tab.label}
                   {hasIndicator && <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#C9A227]" />}
@@ -2009,28 +2009,28 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           {/* ─── Panel: Découpage ─── */}
           {activeTab === "trim" && (
             <Panel title="Découpage">
-              <p className="text-xs text-[#1E0F2B]/70 leading-relaxed mb-3">Ajustez le début et la fin du replay. Les zones rouges sur la timeline indiquent les parties supprimées.</p>
+              <p className="text-xs text-[#000000]/70 leading-relaxed mb-3">Ajustez le début et la fin du replay. Les zones rouges sur la timeline indiquent les parties supprimées.</p>
               <div className="flex gap-2 mb-3">
-                <button onClick={() => setTrimStart(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors" disabled={!currentVideoUrl}>Définir début</button>
-                <button onClick={() => setTrimEnd(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#C9A227]/30 transition-colors" disabled={!currentVideoUrl}>Définir fin</button>
+                <button onClick={() => setTrimStart(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#FF7A1A]/30 transition-colors" disabled={!currentVideoUrl}>Définir début</button>
+                <button onClick={() => setTrimEnd(currentTime)} className="flex-1 px-3 py-2 rounded-lg bg-[#C9A227]/20 text-[#A3821C] text-xs font-bold hover:bg-[#FF7A1A]/30 transition-colors" disabled={!currentVideoUrl}>Définir fin</button>
               </div>
-              <div className="px-3 py-2 rounded-lg bg-[#2A0E3D]/5 mb-3">
-                <p className="text-xs text-[#1E0F2B]/70">Durée finale : <span className="font-bold">{formatTime(trimEnd - trimStart)}</span></p>
-                <p className="text-xs text-[#8A8378]">Supprimé : {formatTime(trimStart)} début + {formatTime(totalDuration - trimEnd)} fin</p>
+              <div className="px-3 py-2 rounded-lg bg-[#000000]/5 mb-3">
+                <p className="text-xs text-[#000000]/70">Durée finale : <span className="font-bold">{formatTime(trimEnd - trimStart)}</span></p>
+                <p className="text-xs text-[#8A857C]">Supprimé : {formatTime(trimStart)} début + {formatTime(totalDuration - trimEnd)} fin</p>
               </div>
               {/* Intro/outro upload */}
               <div className="space-y-2">
-                <button onClick={() => fileInputRef.current?.click()} className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+                <button onClick={() => fileInputRef.current?.click()} className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A857C]/30 hover:border-[#FF7A1A] flex items-center justify-center gap-2 text-xs text-[#8A857C] hover:text-[#FF7A1A] transition-colors">
                   <Upload className="w-4 h-4" />Ajouter intro/outro
                 </button>
                 <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={(e) => { handleUploadClip("intro")(e); }} />
               </div>
               <div className="space-y-2 mt-2">
                 {timeline.filter((c) => c.type !== "main").map((clip) => (
-                  <div key={clip.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#2A0E3D]/5">
+                  <div key={clip.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#000000]/5">
                     <Film className="w-3.5 h-3.5" style={{ color: clip.color }} />
                     <span className="text-xs flex-1 truncate">{clip.label}</span>
-                    <span className="text-[10px] text-[#8A8378]">{formatTime(clip.duration)}</span>
+                    <span className="text-[10px] text-[#8A857C]">{formatTime(clip.duration)}</span>
                     <button onClick={() => deleteClip(clip.id)} className="p-1 rounded hover:bg-red-600/20 text-red-500"><Trash2 className="w-3 h-3" /></button>
                   </div>
                 ))}
@@ -2041,53 +2041,53 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           {/* ─── Panel: Texte ─── */}
           {activeTab === "text" && (
             <Panel title="Texte & Titres">
-              <button onClick={addTextOverlay} className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors mb-3">
+              <button onClick={addTextOverlay} className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A857C]/30 hover:border-[#FF7A1A] flex items-center justify-center gap-2 text-xs text-[#8A857C] hover:text-[#FF7A1A] transition-colors mb-3">
                 <Plus className="w-4 h-4" />Ajouter un texte
               </button>
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {overlays.filter((o) => o.type === "text").map((overlay) => {
                   const t = overlay as TextOverlay;
                   return (
-                    <div key={t.id} className="bg-[#2A0E3D]/5 rounded-lg p-3 space-y-2">
+                    <div key={t.id} className="bg-[#000000]/5 rounded-lg p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold truncate flex-1">{t.content || "Texte vide"}</span>
                         <button onClick={() => deleteOverlay(t.id)} className="p-1 rounded hover:bg-red-600/20 text-red-500"><Trash2 className="w-3 h-3" /></button>
                       </div>
                       <input type="text" value={t.content} onChange={(e) => updateOverlay(t.id, { content: e.target.value })}
-                        placeholder="Texte..." className="w-full px-2 py-1.5 rounded-lg border border-[#8A8378]/20 bg-white text-xs" />
+                        placeholder="Texte..." className="w-full px-2 py-1.5 rounded-lg border border-[#8A857C]/20 bg-white text-xs" />
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">X: {Math.round(t.x)}%</label>
+                          <label className="text-[10px] text-[#8A857C]">X: {Math.round(t.x)}%</label>
                           <input type="range" min="0" max="100" value={t.x} onChange={(e) => updateOverlay(t.id, { x: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Y: {Math.round(t.y)}%</label>
+                          <label className="text-[10px] text-[#8A857C]">Y: {Math.round(t.y)}%</label>
                           <input type="range" min="0" max="100" value={t.y} onChange={(e) => updateOverlay(t.id, { y: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Taille: {t.fontSize}px</label>
+                          <label className="text-[10px] text-[#8A857C]">Taille: {t.fontSize}px</label>
                           <input type="range" min="12" max="120" value={t.fontSize} onChange={(e) => updateOverlay(t.id, { fontSize: parseInt(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Couleur</label>
+                          <label className="text-[10px] text-[#8A857C]">Couleur</label>
                           <input type="color" value={t.fontColor} onChange={(e) => updateOverlay(t.id, { fontColor: e.target.value })} className="w-full h-7 rounded" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Début: {Math.round(t.startTime || 0)}s</label>
+                          <label className="text-[10px] text-[#8A857C]">Début: {Math.round(t.startTime || 0)}s</label>
                           <input type="range" min="0" max={Math.round(totalDuration)} value={t.startTime || 0} onChange={(e) => updateOverlay(t.id, { startTime: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Fin: {Math.round(t.endTime || totalDuration)}s</label>
+                          <label className="text-[10px] text-[#8A857C]">Fin: {Math.round(t.endTime || totalDuration)}s</label>
                           <input type="range" min="0" max={Math.round(totalDuration)} value={t.endTime || totalDuration} onChange={(e) => updateOverlay(t.id, { endTime: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] text-[#8A8378]">Animation</label>
-                        <select value={t.animation || "none"} onChange={(e) => updateOverlay(t.id, { animation: e.target.value as TextOverlay["animation"] })} className="w-full px-2 py-1 rounded-lg border border-[#8A8378]/20 bg-white text-xs">
+                        <label className="text-[10px] text-[#8A857C]">Animation</label>
+                        <select value={t.animation || "none"} onChange={(e) => updateOverlay(t.id, { animation: e.target.value as TextOverlay["animation"] })} className="w-full px-2 py-1 rounded-lg border border-[#8A857C]/20 bg-white text-xs">
                           <option value="none">Aucune</option>
                           <option value="fade-in">Fondu entrée</option>
                           <option value="fade-out">Fondu sortie</option>
@@ -2104,10 +2104,10 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           {/* ─── Panel: Images ─── */}
           {activeTab === "image" && (
             <Panel title="Images & Logos">
-              <p className="text-[10px] text-[#8A8378] leading-relaxed bg-[#C9A227]/10 rounded-lg p-2 mb-3">
+              <p className="text-[10px] text-[#8A857C] leading-relaxed bg-[#C9A227]/10 rounded-lg p-2 mb-3">
                 ⭐ Cliquez sur l'image dans le preview pour la sélectionner : bordure dorée + poignées de coin. Glissez pour la déplacer, tirez une poignée pour la redimensionner (ratio préservé, qualité intacte).
               </p>
-              <button onClick={() => fileInputRef.current?.click()} className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors mb-3">
+              <button onClick={() => fileInputRef.current?.click()} className="w-full py-3 rounded-xl border-2 border-dashed border-[#8A857C]/30 hover:border-[#FF7A1A] flex items-center justify-center gap-2 text-xs text-[#8A857C] hover:text-[#FF7A1A] transition-colors mb-3">
                 <Plus className="w-4 h-4" />Ajouter une image
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={addImageOverlay} />
@@ -2115,38 +2115,38 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 {overlays.filter((o) => o.type === "image").map((overlay) => {
                   const img = overlay as ImageOverlay;
                   return (
-                    <div key={img.id} className="bg-[#2A0E3D]/5 rounded-lg p-3 space-y-2">
+                    <div key={img.id} className="bg-[#000000]/5 rounded-lg p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <img src={img.url} alt="" className="w-12 h-12 object-cover rounded" />
                         <button onClick={() => deleteOverlay(img.id)} className="p-1 rounded hover:bg-red-600/20 text-red-500"><Trash2 className="w-3 h-3" /></button>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">X: {Math.round(img.x)}%</label>
+                          <label className="text-[10px] text-[#8A857C]">X: {Math.round(img.x)}%</label>
                           <input type="range" min="0" max="100" value={img.x} onChange={(e) => updateOverlay(img.id, { x: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Y: {Math.round(img.y)}%</label>
+                          <label className="text-[10px] text-[#8A857C]">Y: {Math.round(img.y)}%</label>
                           <input type="range" min="0" max="100" value={img.y} onChange={(e) => updateOverlay(img.id, { y: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Scale: {img.scale.toFixed(1)}x</label>
+                          <label className="text-[10px] text-[#8A857C]">Scale: {img.scale.toFixed(1)}x</label>
                           <input type="range" min="0.1" max="5" step="0.1" value={img.scale} onChange={(e) => updateOverlay(img.id, { scale: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Opacité: {Math.round(img.opacity * 100)}%</label>
+                          <label className="text-[10px] text-[#8A857C]">Opacité: {Math.round(img.opacity * 100)}%</label>
                           <input type="range" min="0" max="1" step="0.05" value={img.opacity} onChange={(e) => updateOverlay(img.id, { opacity: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Début: {Math.round(img.startTime || 0)}s</label>
+                          <label className="text-[10px] text-[#8A857C]">Début: {Math.round(img.startTime || 0)}s</label>
                           <input type="range" min="0" max={Math.round(totalDuration)} value={img.startTime || 0} onChange={(e) => updateOverlay(img.id, { startTime: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Fin: {Math.round(img.endTime || totalDuration)}s</label>
+                          <label className="text-[10px] text-[#8A857C]">Fin: {Math.round(img.endTime || totalDuration)}s</label>
                           <input type="range" min="0" max={Math.round(totalDuration)} value={img.endTime || totalDuration} onChange={(e) => updateOverlay(img.id, { endTime: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                         </div>
                       </div>
@@ -2164,12 +2164,12 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 {/* ⭐ V3.60 — vues : Emojis ou catégories de stickers pro */}
                 <div className="flex gap-1 flex-wrap">
                   <button onClick={() => setStickerVue("emoji")}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${stickerVue === "emoji" ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${stickerVue === "emoji" ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                     Emojis
                   </button>
                   {STICKER_CATEGORIES.map((cat) => (
                     <button key={cat.id} onClick={() => setStickerVue(cat.id)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1 ${stickerVue === cat.id ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1 ${stickerVue === cat.id ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                       {cat.id === "social" && <span className="w-1.5 h-1.5 rounded-full bg-[#E0245E] animate-pulse" />}
                       {cat.name}
                     </button>
@@ -2182,7 +2182,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     <div className="flex gap-1 flex-wrap">
                       {EMOJI_CATEGORIES.map((cat, i) => (
                         <button key={cat.name} onClick={() => setEmojiCategory(i)}
-                          className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${emojiCategory === i ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                          className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${emojiCategory === i ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                           {cat.name}
                         </button>
                       ))}
@@ -2191,7 +2191,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     <div className="grid grid-cols-8 gap-1 max-h-[300px] overflow-y-auto">
                       {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji, i) => (
                         <button key={i} onClick={() => addSticker(emoji)}
-                          className="aspect-square flex items-center justify-center text-xl hover:bg-[#2A0E3D]/5 rounded-lg transition-colors">
+                          className="aspect-square flex items-center justify-center text-xl hover:bg-[#000000]/5 rounded-lg transition-colors">
                           {emoji}
                         </button>
                       ))}
@@ -2209,7 +2209,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                         onClick={() => addProSticker(sticker)}
                         disabled={ajoutStickerProEnCours}
                         title={`${sticker.name} — cliquer pour ajouter sur la vidéo`}
-                        className={`group relative flex items-center justify-center rounded-lg border border-[#8A8378]/20 hover:border-[#C9A227] hover:shadow-md transition-all disabled:opacity-40 overflow-hidden ${stickerVue === "social" ? "aspect-[5/2] p-2" : "aspect-square p-1"}`}
+                        className={`group relative flex items-center justify-center rounded-lg border border-[#8A857C]/20 hover:border-[#FF7A1A] hover:shadow-md transition-all disabled:opacity-40 overflow-hidden ${stickerVue === "social" ? "aspect-[5/2] p-2" : "aspect-square p-1"}`}
                         style={{
                           backgroundColor: "#ffffff",
                           backgroundImage:
@@ -2219,7 +2219,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                         }}>
                         <div className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full"
                           dangerouslySetInnerHTML={{ __html: sticker.svg }} />
-                        <span className="absolute bottom-0 left-0 right-0 bg-[#2A0E3D]/75 text-white text-[8px] font-bold text-center py-0.5 px-1 truncate opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <span className="absolute bottom-0 left-0 right-0 bg-[#000000]/75 text-white text-[8px] font-bold text-center py-0.5 px-1 truncate opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           {sticker.name}
                         </span>
                       </button>
@@ -2229,32 +2229,32 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
                 {/* Stickers emoji actifs */}
                 {overlays.filter((o) => o.type === "sticker").length > 0 && (
-                  <div className="space-y-2 border-t border-[#8A8378]/15 pt-3">
-                    <p className="text-[10px] text-[#8A8378] uppercase font-bold">Stickers actifs</p>
+                  <div className="space-y-2 border-t border-[#8A857C]/15 pt-3">
+                    <p className="text-[10px] text-[#8A857C] uppercase font-bold">Stickers actifs</p>
                     {overlays.filter((o) => o.type === "sticker").map((overlay) => {
                       const s = overlay as StickerOverlay;
                       return (
-                        <div key={s.id} className="bg-[#2A0E3D]/5 rounded-lg p-2 space-y-2">
+                        <div key={s.id} className="bg-[#000000]/5 rounded-lg p-2 space-y-2">
                           <div className="flex items-center gap-2">
                             <span className="text-2xl">{s.emoji}</span>
                             <button onClick={() => deleteOverlay(s.id)} className="ml-auto p-1 rounded hover:bg-red-600/20 text-red-500"><Trash2 className="w-3 h-3" /></button>
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="text-[10px] text-[#8A8378]">X: {Math.round(s.x)}%</label>
+                              <label className="text-[10px] text-[#8A857C]">X: {Math.round(s.x)}%</label>
                               <input type="range" min="0" max="100" value={s.x} onChange={(e) => updateOverlay(s.id, { x: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                             </div>
                             <div>
-                              <label className="text-[10px] text-[#8A8378]">Y: {Math.round(s.y)}%</label>
+                              <label className="text-[10px] text-[#8A857C]">Y: {Math.round(s.y)}%</label>
                               <input type="range" min="0" max="100" value={s.y} onChange={(e) => updateOverlay(s.id, { y: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                             </div>
                           </div>
                           <div>
-                            <label className="text-[10px] text-[#8A8378]">Taille: {s.size}px</label>
+                            <label className="text-[10px] text-[#8A857C]">Taille: {s.size}px</label>
                             <input type="range" min="20" max="200" value={s.size} onChange={(e) => updateOverlay(s.id, { size: parseInt(e.target.value) })} className="w-full accent-[#C9A227]" />
                           </div>
                           <div>
-                            <label className="text-[10px] text-[#8A8378]">Rotation: {s.rotation}°</label>
+                            <label className="text-[10px] text-[#8A857C]">Rotation: {s.rotation}°</label>
                             <input type="range" min="0" max="360" value={s.rotation} onChange={(e) => updateOverlay(s.id, { rotation: parseInt(e.target.value) })} className="w-full accent-[#C9A227]" />
                           </div>
                         </div>
@@ -2266,8 +2266,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 {/* ⭐ V3.60 — stickers PRO actifs (pipeline image : glisser et
                     poignées dans le preview ; réglages fins dans l'onglet Images) */}
                 {overlays.filter((o) => o.type === "image" && o.id.startsWith("stickerpro-")).length > 0 && (
-                  <div className="space-y-2 border-t border-[#8A8378]/15 pt-3">
-                    <p className="text-[10px] text-[#8A8378] uppercase font-bold">Stickers pro actifs</p>
+                  <div className="space-y-2 border-t border-[#8A857C]/15 pt-3">
+                    <p className="text-[10px] text-[#8A857C] uppercase font-bold">Stickers pro actifs</p>
                     {overlays.filter((o) => o.type === "image" && o.id.startsWith("stickerpro-")).map((overlay) => {
                       const p = overlay as ImageOverlay;
                       return (
@@ -2278,11 +2278,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="text-[10px] text-[#8A8378]">Taille: {p.scale.toFixed(1)}x</label>
+                              <label className="text-[10px] text-[#8A857C]">Taille: {p.scale.toFixed(1)}x</label>
                               <input type="range" min="0.1" max="5" step="0.1" value={p.scale} onChange={(e) => updateOverlay(p.id, { scale: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                             </div>
                             <div>
-                              <label className="text-[10px] text-[#8A8378]">Opacité: {Math.round(p.opacity * 100)}%</label>
+                              <label className="text-[10px] text-[#8A857C]">Opacité: {Math.round(p.opacity * 100)}%</label>
                               <input type="range" min="0" max="1" step="0.05" value={p.opacity} onChange={(e) => updateOverlay(p.id, { opacity: parseFloat(e.target.value) })} className="w-full accent-[#C9A227]" />
                             </div>
                           </div>
@@ -2301,12 +2301,12 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               {!subtitles ? (
                 <div className="text-center py-6">
                   <Subtitles className="w-10 h-10 text-[#C9A227]/40 mx-auto mb-3" />
-                  <p className="text-xs text-[#1E0F2B]/70 mb-4">Générez automatiquement des sous-titres avec l'IA (Whisper) ou importez un fichier SRT.</p>
+                  <p className="text-xs text-[#000000]/70 mb-4">Générez automatiquement des sous-titres avec l'IA (Whisper) ou importez un fichier SRT.</p>
                   <button onClick={generateSubtitles} disabled={generatingSubtitles || !currentVideoUrl}
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-xs hover:bg-[#DDBE55] transition-colors disabled:opacity-40 mb-2">
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-xs hover:bg-[#FF7A1A] transition-colors disabled:opacity-40 mb-2">
                     {generatingSubtitles ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Générer avec l'IA"}
                   </button>
-                  <button onClick={() => fileInputRef.current?.click()} className="w-full px-4 py-2.5 rounded-xl border border-[#8A8378]/30 text-xs font-bold hover:bg-[#2A0E3D]/5 transition-colors">
+                  <button onClick={() => fileInputRef.current?.click()} className="w-full px-4 py-2.5 rounded-xl border border-[#8A857C]/30 text-xs font-bold hover:bg-[#000000]/5 transition-colors">
                     Importer SRT
                   </button>
                   <input ref={fileInputRef} type="file" accept=".srt,.vtt" className="hidden" onChange={(e) => {
@@ -2330,30 +2330,30 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   </div>
                   <div className="space-y-2">
                     <div>
-                      <label className="text-[10px] text-[#8A8378]">Taille: {subtitles.style.fontSize}px</label>
+                      <label className="text-[10px] text-[#8A857C]">Taille: {subtitles.style.fontSize}px</label>
                       <input type="range" min="12" max="48" value={subtitles.style.fontSize}
                         onChange={(e) => setSubtitles({ ...subtitles, style: { ...subtitles.style, fontSize: parseInt(e.target.value) } })}
                         className="w-full accent-[#C9A227]" />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[10px] text-[#8A8378]">Couleur texte</label>
+                        <label className="text-[10px] text-[#8A857C]">Couleur texte</label>
                         <input type="color" value={subtitles.style.fontColor}
                           onChange={(e) => setSubtitles({ ...subtitles, style: { ...subtitles.style, fontColor: e.target.value } })}
                           className="w-full h-7 rounded" />
                       </div>
                       <div>
-                        <label className="text-[10px] text-[#8A8378]">Contour</label>
+                        <label className="text-[10px] text-[#8A857C]">Contour</label>
                         <input type="color" value={subtitles.style.outlineColor}
                           onChange={(e) => setSubtitles({ ...subtitles, style: { ...subtitles.style, outlineColor: e.target.value } })}
                           className="w-full h-7 rounded" />
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] text-[#8A8378]">Position</label>
+                      <label className="text-[10px] text-[#8A857C]">Position</label>
                       <select value={subtitles.style.position}
                         onChange={(e) => setSubtitles({ ...subtitles, style: { ...subtitles.style, position: e.target.value as "bottom" | "top" | "center" } })}
-                        className="w-full px-2 py-1 rounded-lg border border-[#8A8378]/20 bg-white text-xs">
+                        className="w-full px-2 py-1 rounded-lg border border-[#8A857C]/20 bg-white text-xs">
                         <option value="bottom">Bas</option>
                         <option value="center">Centre</option>
                         <option value="top">Haut</option>
@@ -2361,7 +2361,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     </div>
                   </div>
                   <textarea value={subtitles.srtContent} onChange={(e) => setSubtitles({ ...subtitles, srtContent: e.target.value })}
-                    className="w-full h-32 px-2 py-1.5 rounded-lg border border-[#8A8378]/20 bg-white text-xs font-mono" placeholder="Contenu SRT..." />
+                    className="w-full h-32 px-2 py-1.5 rounded-lg border border-[#8A857C]/20 bg-white text-xs font-mono" placeholder="Contenu SRT..." />
                 </div>
               )}
             </Panel>
@@ -2370,19 +2370,19 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           {/* ─── Panel: Transitions ─── */}
           {activeTab === "transitions" && (
             <Panel title="Transitions">
-              <p className="text-xs text-[#1E0F2B]/70 mb-2">Ajoutez des transitions entre les segments de la timeline.</p>
+              <p className="text-xs text-[#000000]/70 mb-2">Ajoutez des transitions entre les segments de la timeline.</p>
               {/* ⭐ V3.60 — info : transitions réellement rendues (xfade ffmpeg) */}
-              <p className="text-[10px] text-[#8A8378] leading-relaxed bg-[#C9A227]/10 rounded-lg p-2 mb-2">
+              <p className="text-[10px] text-[#8A857C] leading-relaxed bg-[#C9A227]/10 rounded-lg p-2 mb-2">
                 ⭐ V3.60 — {TRANSITION_TYPES.length} transitions, y compris un pack PRO (balayages,
                 zoom, flash, glitch…) : elles sont désormais RÉELLEMENT rendues à l'export
                 (fondu croisé vidéo + audio ffmpeg), plus seulement en preview.
               </p>
               {timeline.length <= 1 ? (
-                <p className="text-xs text-[#8A8378] text-center py-4">Ajoutez d'abord une intro ou un outro.</p>
+                <p className="text-xs text-[#8A857C] text-center py-4">Ajoutez d'abord une intro ou un outro.</p>
               ) : (
                 <div className="space-y-2">
                   {timeline.slice(0, -1).map((clip, i) => (
-                    <div key={`trans-${i}`} className="bg-[#2A0E3D]/5 rounded-lg p-3 space-y-2">
+                    <div key={`trans-${i}`} className="bg-[#000000]/5 rounded-lg p-3 space-y-2">
                       <p className="text-xs font-bold">{clip.label} → {timeline[i + 1].label}</p>
                       <select value={transitions[i]?.type || "fade"}
                         onChange={(e) => {
@@ -2391,7 +2391,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                           setTransitions(newTrans);
                           pushHistory();
                         }}
-                        className="w-full px-2 py-1 rounded-lg border border-[#8A8378]/20 bg-white text-xs">
+                        className="w-full px-2 py-1 rounded-lg border border-[#8A857C]/20 bg-white text-xs">
                         {/* ⭐ V3.60 — options groupées : Classiques / Pack PRO */}
                         <optgroup label="— Classiques —">
                           {TRANSITION_TYPES.filter((t) => t.groupe === "classiques").map((t) => (
@@ -2405,7 +2405,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                         </optgroup>
                       </select>
                       <div>
-                        <label className="text-[10px] text-[#8A8378]">Durée: {transitions[i]?.duration || 0.5}s</label>
+                        <label className="text-[10px] text-[#8A857C]">Durée: {transitions[i]?.duration || 0.5}s</label>
                         <input type="range" min="0.1" max="3" step="0.1" value={transitions[i]?.duration || 0.5}
                           onChange={(e) => {
                             const newTrans = [...transitions];
@@ -2424,13 +2424,13 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
           {/* ─── Panel: Couleur (⭐ V3.60 : presets + réglages fins) ─── */}
           {activeTab === "color" && (
             <Panel title="Étalonnage couleur">
-              <p className="text-[10px] text-[#8A8378] leading-relaxed bg-[#C9A227]/10 rounded-lg p-2 mb-1">
+              <p className="text-[10px] text-[#8A857C] leading-relaxed bg-[#C9A227]/10 rounded-lg p-2 mb-1">
                 ⭐ Les réglages s'appliquent EN DIRECT sur le preview (et à l'export).
               </p>
               <div className="space-y-3">
                 {/* ⭐ V3.60 — PRESETS d'un clic (Cinéma, Chaud, Froid, HDR…) */}
                 <div>
-                  <p className="text-[10px] text-[#8A8378] uppercase font-bold mb-1.5">Presets d'un clic</p>
+                  <p className="text-[10px] text-[#8A857C] uppercase font-bold mb-1.5">Presets d'un clic</p>
                   <div className="grid grid-cols-4 gap-1.5">
                     {COLOR_PRESETS.map((preset) => {
                       const actif =
@@ -2442,9 +2442,9 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                         <button key={preset.name}
                           onClick={() => { setColorAdjust({ ...preset.values }); pushHistory(); }}
                           title={`${preset.name} — applique luminosité/contraste/saturation/gamma`}
-                          className={`rounded-lg overflow-hidden border transition-all ${actif ? "border-[#C9A227] ring-1 ring-[#C9A227]" : "border-[#8A8378]/20 hover:border-[#C9A227]/60"}`}>
+                          className={`rounded-lg overflow-hidden border transition-all ${actif ? "border-[#C9A227] ring-1 ring-[#C9A227]" : "border-[#8A857C]/20 hover:border-[#FF7A1A]/60"}`}>
                           <div className="h-7" style={{ background: preset.swatch }} />
-                          <p className="text-[8px] font-bold text-center py-1 bg-white text-[#1E0F2B] truncate px-0.5">{preset.name}</p>
+                          <p className="text-[8px] font-bold text-center py-1 bg-white text-[#000000] truncate px-0.5">{preset.name}</p>
                         </button>
                       );
                     })}
@@ -2459,7 +2459,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 <Slider label="Gamma" min={0.1} max={10} step={0.1} value={colorAdjust.gamma}
                   onChange={(v) => setColorAdjust({ ...colorAdjust, gamma: v })} format={(v) => v.toFixed(1)} />
                 <button onClick={() => { setColorAdjust(DEFAULT_COLOR_ADJUST); pushHistory(); }}
-                  className="w-full px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-xs font-bold hover:bg-[#2A0E3D]/10 transition-colors">
+                  className="w-full px-3 py-2 rounded-lg bg-[#000000]/5 text-xs font-bold hover:bg-[#000000]/10 transition-colors">
                   Réinitialiser
                 </button>
               </div>
@@ -2475,14 +2475,14 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 { id: "ambiance", label: "Ambiance" },
               ] as const).map((grp) => (
                 <div key={grp.id} className="mb-3">
-                  <p className="text-[10px] text-[#8A8378] uppercase font-bold mb-1.5">{grp.label}</p>
+                  <p className="text-[10px] text-[#8A857C] uppercase font-bold mb-1.5">{grp.label}</p>
                   <div className="grid grid-cols-3 gap-2">
                     {VIDEO_FILTERS.filter((f) => f.groupe === grp.id).map((f) => (
                       <button key={f.value} onClick={() => { setVideoFilter(f.value); pushHistory(); }}
                         title={`${f.label}${f.value !== "none" ? " — un clic applique le filtre au preview et à l'export" : " — retirer le filtre"}`}
-                        className={`flex flex-col items-center gap-1 rounded-lg overflow-hidden transition-all border ${videoFilter === f.value ? "border-[#C9A227] ring-1 ring-[#C9A227]" : "border-[#8A8378]/20 hover:border-[#C9A227]/60"}`}>
+                        className={`flex flex-col items-center gap-1 rounded-lg overflow-hidden transition-all border ${videoFilter === f.value ? "border-[#C9A227] ring-1 ring-[#C9A227]" : "border-[#8A857C]/20 hover:border-[#FF7A1A]/60"}`}>
                         <span className="w-full h-12 flex items-center justify-center text-xl" style={{ background: f.swatch }}>{f.icon}</span>
-                        <span className="text-[9px] font-bold text-[#1E0F2B] text-center pb-1 px-0.5 leading-tight">{f.label}</span>
+                        <span className="text-[9px] font-bold text-[#000000] text-center pb-1 px-0.5 leading-tight">{f.label}</span>
                       </button>
                     ))}
                   </div>
@@ -2490,11 +2490,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               ))}
               {videoFilter !== "none" && (
                 <button onClick={() => { setVideoFilter("none"); pushHistory(); }}
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-xs font-bold hover:bg-[#2A0E3D]/10 transition-colors">
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-[#000000]/5 text-xs font-bold hover:bg-[#000000]/10 transition-colors">
                   Retirer le filtre
                 </button>
               )}
-              <p className="text-[9px] text-[#8A8378] leading-relaxed mt-2">
+              <p className="text-[9px] text-[#8A857C] leading-relaxed mt-2">
                 ⭐ V3.60 — le filtre appliqué est visible en direct sur le preview ET rendu par
                 ffmpeg à l'export (chaînes colorbalance / curves / eq équivalentes).
               </p>
@@ -2510,20 +2510,20 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold flex items-center gap-1"><Wind className="w-3.5 h-3.5" />Stabilisation</span>
                     <button onClick={() => setStabilisation({ ...stabilisation, enabled: !stabilisation.enabled })}
-                      className={`w-9 h-5 rounded-full transition-colors ${stabilisation.enabled ? "bg-[#C9A227]" : "bg-[#8A8378]/30"}`}>
+                      className={`w-9 h-5 rounded-full transition-colors ${stabilisation.enabled ? "bg-[#C9A227]" : "bg-[#8A857C]/30"}`}>
                       <span className={`block w-4 h-4 rounded-full bg-white transition-transform ${stabilisation.enabled ? "translate-x-4" : "translate-x-0.5"}`} />
                     </button>
                   </div>
                   {stabilisation.enabled && (
                     <>
                       <div>
-                        <label className="text-[10px] text-[#8A8378]">Tremblement: {stabilisation.shakiness}/10</label>
+                        <label className="text-[10px] text-[#8A857C]">Tremblement: {stabilisation.shakiness}/10</label>
                         <input type="range" min="1" max="10" value={stabilisation.shakiness}
                           onChange={(e) => setStabilisation({ ...stabilisation, shakiness: parseInt(e.target.value) })}
                           className="w-full accent-[#C9A227]" />
                       </div>
                       <div>
-                        <label className="text-[10px] text-[#8A8378]">Lissage: {Math.round(stabilisation.smoothing * 100)}%</label>
+                        <label className="text-[10px] text-[#8A857C]">Lissage: {Math.round(stabilisation.smoothing * 100)}%</label>
                         <input type="range" min="0" max="1" step="0.1" value={stabilisation.smoothing}
                           onChange={(e) => setStabilisation({ ...stabilisation, smoothing: parseFloat(e.target.value) })}
                           className="w-full accent-[#C9A227]" />
@@ -2532,33 +2532,33 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   )}
                 </div>
 
-                <div className="border-t border-[#8A8378]/15" />
+                <div className="border-t border-[#8A857C]/15" />
 
                 {/* Chroma key */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold flex items-center gap-1"><Eraser className="w-3.5 h-3.5" />Chroma Key (fond vert)</span>
                     <button onClick={() => setChromaKey({ ...chromaKey, enabled: !chromaKey.enabled })}
-                      className={`w-9 h-5 rounded-full transition-colors ${chromaKey.enabled ? "bg-[#C9A227]" : "bg-[#8A8378]/30"}`}>
+                      className={`w-9 h-5 rounded-full transition-colors ${chromaKey.enabled ? "bg-[#C9A227]" : "bg-[#8A857C]/30"}`}>
                       <span className={`block w-4 h-4 rounded-full bg-white transition-transform ${chromaKey.enabled ? "translate-x-4" : "translate-x-0.5"}`} />
                     </button>
                   </div>
                   {chromaKey.enabled && (
                     <>
                       <div>
-                        <label className="text-[10px] text-[#8A8378]">Couleur de fond</label>
+                        <label className="text-[10px] text-[#8A857C]">Couleur de fond</label>
                         <input type="color" value={chromaKey.color}
                           onChange={(e) => setChromaKey({ ...chromaKey, color: e.target.value })}
                           className="w-full h-7 rounded" />
                       </div>
                       <div>
-                        <label className="text-[10px] text-[#8A8378]">Similarité: {chromaKey.similarity.toFixed(2)}</label>
+                        <label className="text-[10px] text-[#8A857C]">Similarité: {chromaKey.similarity.toFixed(2)}</label>
                         <input type="range" min="0.01" max="1" step="0.01" value={chromaKey.similarity}
                           onChange={(e) => setChromaKey({ ...chromaKey, similarity: parseFloat(e.target.value) })}
                           className="w-full accent-[#C9A227]" />
                       </div>
                       <div>
-                        <label className="text-[10px] text-[#8A8378]">Fusion: {chromaKey.blend.toFixed(2)}</label>
+                        <label className="text-[10px] text-[#8A857C]">Fusion: {chromaKey.blend.toFixed(2)}</label>
                         <input type="range" min="0" max="1" step="0.05" value={chromaKey.blend}
                           onChange={(e) => setChromaKey({ ...chromaKey, blend: parseFloat(e.target.value) })}
                           className="w-full accent-[#C9A227]" />
@@ -2567,7 +2567,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   )}
                 </div>
 
-                <div className="border-t border-[#8A8378]/15" />
+                <div className="border-t border-[#8A857C]/15" />
 
                 {/* Background removal IA — MediaPipe Selfie Segmentation */}
                 <BgRemovalProcessor
@@ -2584,24 +2584,24 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             <Panel title="Vitesse de lecture">
               <div className="space-y-3">
                 <div>
-                  <label className="text-[10px] text-[#8A8378] uppercase font-bold">Vitesse: {speed.factor.toFixed(2)}x</label>
+                  <label className="text-[10px] text-[#8A857C] uppercase font-bold">Vitesse: {speed.factor.toFixed(2)}x</label>
                   <input type="range" min={0.25} max={4} step={0.25} value={speed.factor}
                     onChange={(e) => setSpeed({ factor: parseFloat(e.target.value) })}
                     className="w-full accent-[#C9A227]" />
-                  <div className="flex justify-between text-[9px] text-[#8A8378] mt-1">
+                  <div className="flex justify-between text-[9px] text-[#8A857C] mt-1">
                     <span>0.25x</span><span>1x</span><span>4x</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-4 gap-1">
                   {[0.5, 1, 1.5, 2].map((v) => (
                     <button key={v} onClick={() => setSpeed({ factor: v })}
-                      className={`py-1.5 rounded-lg text-xs font-bold transition-colors ${speed.factor === v ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                      className={`py-1.5 rounded-lg text-xs font-bold transition-colors ${speed.factor === v ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                       {v}x
                     </button>
                   ))}
                 </div>
                 <button onClick={() => { setSpeed(DEFAULT_SPEED); pushHistory(); }}
-                  className="w-full px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-xs font-bold hover:bg-[#2A0E3D]/10 transition-colors">
+                  className="w-full px-3 py-2 rounded-lg bg-[#000000]/5 text-xs font-bold hover:bg-[#000000]/10 transition-colors">
                   Réinitialiser
                 </button>
               </div>
@@ -2613,11 +2613,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             <Panel title="Transformations">
               <div className="space-y-3">
                 <div>
-                  <label className="text-[10px] text-[#8A8378] uppercase font-bold">Rotation</label>
+                  <label className="text-[10px] text-[#8A857C] uppercase font-bold">Rotation</label>
                   <div className="grid grid-cols-4 gap-1 mt-1">
                     {[0, 90, 180, 270].map((r) => (
                       <button key={r} onClick={() => setTransform({ ...transform, rotate: r })}
-                        className={`py-2 rounded-lg text-xs font-bold transition-colors ${transform.rotate === r ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                        className={`py-2 rounded-lg text-xs font-bold transition-colors ${transform.rotate === r ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                         {r}°
                       </button>
                     ))}
@@ -2625,16 +2625,16 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={() => setTransform({ ...transform, flipH: !transform.flipH })}
-                    className={`py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors ${transform.flipH ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                    className={`py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors ${transform.flipH ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                     <FlipHorizontal className="w-3.5 h-3.5" /> Miroir H
                   </button>
                   <button onClick={() => setTransform({ ...transform, flipV: !transform.flipV })}
-                    className={`py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors ${transform.flipV ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                    className={`py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors ${transform.flipV ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                     <FlipVertical className="w-3.5 h-3.5" /> Miroir V
                   </button>
                 </div>
                 <button onClick={() => { setTransform(DEFAULT_TRANSFORM); pushHistory(); }}
-                  className="w-full px-3 py-2 rounded-lg bg-[#2A0E3D]/5 text-xs font-bold hover:bg-[#2A0E3D]/10 transition-colors">
+                  className="w-full px-3 py-2 rounded-lg bg-[#000000]/5 text-xs font-bold hover:bg-[#000000]/10 transition-colors">
                   Réinitialiser
                 </button>
               </div>
@@ -2647,14 +2647,14 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               <div className="space-y-3">
                 {/* Volume principal */}
                 <div>
-                  <label className="text-[10px] text-[#8A8378] uppercase font-bold">Volume vidéo: {Math.round(mainVolume * 100)}%</label>
+                  <label className="text-[10px] text-[#8A857C] uppercase font-bold">Volume vidéo: {Math.round(mainVolume * 100)}%</label>
                   <input type="range" min={0} max={2} step={0.05} value={mainVolume}
                     onChange={(e) => setMainVolume(parseFloat(e.target.value))}
                     className="w-full accent-[#C9A227]" />
                 </div>
 
                 {/* Voiceover */}
-                <div className="border-t border-[#8A8378]/15 pt-3">
+                <div className="border-t border-[#8A857C]/15 pt-3">
                   <p className="text-xs font-bold mb-2 flex items-center gap-1"><Mic className="w-3.5 h-3.5" />Voiceover</p>
                   {!isRecordingVoiceover ? (
                     <button onClick={startVoiceover} className="w-full py-2 rounded-lg bg-red-600/10 text-red-600 text-xs font-bold hover:bg-red-600/20 transition-colors flex items-center justify-center gap-1">
@@ -2668,9 +2668,9 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 </div>
 
                 {/* Musique de fond */}
-                <div className="border-t border-[#8A8378]/15 pt-3">
+                <div className="border-t border-[#8A857C]/15 pt-3">
                   <p className="text-xs font-bold mb-2 flex items-center gap-1"><Music className="w-3.5 h-3.5" />Musique de fond</p>
-                  <button onClick={() => audioInputRef.current?.click()} className="w-full py-2 rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+                  <button onClick={() => audioInputRef.current?.click()} className="w-full py-2 rounded-xl border-2 border-dashed border-[#8A857C]/30 hover:border-[#FF7A1A] flex items-center justify-center gap-2 text-xs text-[#8A857C] hover:text-[#FF7A1A] transition-colors">
                     <Upload className="w-3.5 h-3.5" />Importer musique
                   </button>
                   <input ref={audioInputRef} type="file" accept="audio/*" className="hidden" onChange={handleAudioUpload} />
@@ -2678,16 +2678,16 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
                 {/* Liste des pistes audio */}
                 {audioTracks.length > 0 && (
-                  <div className="space-y-2 border-t border-[#8A8378]/15 pt-3">
+                  <div className="space-y-2 border-t border-[#8A857C]/15 pt-3">
                     {audioTracks.map((track) => (
-                      <div key={track.id} className="bg-[#2A0E3D]/5 rounded-lg p-2 space-y-1">
+                      <div key={track.id} className="bg-[#000000]/5 rounded-lg p-2 space-y-1">
                         <div className="flex items-center gap-2">
-                          <Volume2 className="w-3 h-3 text-[#8A8378]" />
+                          <Volume2 className="w-3 h-3 text-[#8A857C]" />
                           <span className="text-xs flex-1 truncate">{track.name}</span>
                           <button onClick={() => setAudioTracks(audioTracks.filter((t) => t.id !== track.id))} className="p-1 rounded hover:bg-red-600/20 text-red-500"><Trash2 className="w-3 h-3" /></button>
                         </div>
                         <div>
-                          <label className="text-[10px] text-[#8A8378]">Volume: {Math.round(track.volume * 100)}%</label>
+                          <label className="text-[10px] text-[#8A857C]">Volume: {Math.round(track.volume * 100)}%</label>
                           <input type="range" min={0} max={2} step={0.05} value={track.volume}
                             onChange={(e) => setAudioTracks(audioTracks.map((t) => t.id === track.id ? { ...t, volume: parseFloat(e.target.value) } : t))}
                             className="w-full accent-[#C9A227]" />
@@ -2706,20 +2706,20 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
               <div className="space-y-3 max-h-[500px] overflow-y-auto">
                 {(["transition", "impact", "nature", "ui", "crowd", "music"] as const).map((cat) => (
                   <div key={cat}>
-                    <p className="text-[10px] text-[#8A8378] uppercase font-bold mb-1">{cat}</p>
+                    <p className="text-[10px] text-[#8A857C] uppercase font-bold mb-1">{cat}</p>
                     <div className="space-y-1">
                       {SOUND_EFFECTS.filter((s) => s.category === cat).map((sfx) => (
                         /* ⭐ V3.16 — Ligne SFX : bouton ▶ pour ÉCOUTER AVANT
                            d'ajouter (« il faut qu'on puisse jouer avant
                            d'ajouter »), puis le bouton + pour l'ajouter. */
-                        <div key={sfx.id} className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors">
+                        <div key={sfx.id} className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-[#000000]/5 hover:bg-[#000000]/10 transition-colors">
                           <button
                             onClick={() => toggleSfxPreview(sfx)}
                             title={playingSfxId === sfx.id ? "Arrêter l'écoute" : "Écouter"}
                             className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
                               playingSfxId === sfx.id
-                                ? "bg-[#C9A227] text-[#1E0F2B]"
-                                : "bg-[#2A0E3D]/10 text-[#2A0E3D] hover:bg-[#2A0E3D]/20"
+                                ? "bg-[#C9A227] text-[#000000]"
+                                : "bg-[#000000]/10 text-[#000000] hover:bg-[#000000]/20"
                             }`}
                           >
                             {playingSfxId === sfx.id ? (
@@ -2730,11 +2730,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                           </button>
                           <span className="text-lg flex-shrink-0">{sfx.icon}</span>
                           <span className="text-xs font-bold flex-1 truncate">{sfx.name}</span>
-                          <span className="text-[10px] text-[#8A8378] flex-shrink-0">{sfx.duration}s</span>
+                          <span className="text-[10px] text-[#8A857C] flex-shrink-0">{sfx.duration}s</span>
                           <button
                             onClick={() => addSoundEffect(sfx)}
                             title="Ajouter à la timeline"
-                            className="flex-shrink-0 w-7 h-7 rounded-full bg-[#C9A227]/20 text-[#A3821C] hover:bg-[#C9A227]/30 flex items-center justify-center transition-colors"
+                            className="flex-shrink-0 w-7 h-7 rounded-full bg-[#C9A227]/20 text-[#A3821C] hover:bg-[#FF7A1A]/30 flex items-center justify-center transition-colors"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
@@ -2770,7 +2770,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                       </button>
                     </div>
                   ) : (
-                    <button onClick={() => thumbnailInputRef.current?.click()} className="w-full aspect-video rounded-lg border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex items-center justify-center gap-2 text-xs text-[#8A8378] hover:text-[#C9A227] transition-colors">
+                    <button onClick={() => thumbnailInputRef.current?.click()} className="w-full aspect-video rounded-lg border-2 border-dashed border-[#8A857C]/30 hover:border-[#FF7A1A] flex items-center justify-center gap-2 text-xs text-[#8A857C] hover:text-[#FF7A1A] transition-colors">
                       <Upload className="w-4 h-4" />Uploader
                     </button>
                   )}
@@ -2783,7 +2783,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   <div className="grid grid-cols-3 gap-1">
                     {ASPECT_RATIOS.map((ar) => (
                       <button key={ar.value} onClick={() => setExportConfig({ ...exportConfig, aspectRatio: ar.value })}
-                        className={`py-2 rounded-lg text-[10px] font-bold transition-colors ${exportConfig.aspectRatio === ar.value ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                        className={`py-2 rounded-lg text-[10px] font-bold transition-colors ${exportConfig.aspectRatio === ar.value ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                         <span className="text-base block">{ar.icon}</span>
                         {ar.label}
                       </button>
@@ -2797,7 +2797,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   <div className="grid grid-cols-2 gap-1">
                     {RESOLUTIONS.map((res) => (
                       <button key={res.value} onClick={() => setExportConfig({ ...exportConfig, resolution: res.value })}
-                        className={`py-2 rounded-lg text-xs font-bold transition-colors ${exportConfig.resolution === res.value ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                        className={`py-2 rounded-lg text-xs font-bold transition-colors ${exportConfig.resolution === res.value ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                         {res.label}
                       </button>
                     ))}
@@ -2806,11 +2806,11 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
                 {/* Qualité */}
                 <div>
-                  <label className="text-[10px] text-[#8A8378] uppercase font-bold">Qualité (CRF): {exportConfig.crf || 23}</label>
+                  <label className="text-[10px] text-[#8A857C] uppercase font-bold">Qualité (CRF): {exportConfig.crf || 23}</label>
                   <input type="range" min={18} max={28} value={exportConfig.crf || 23}
                     onChange={(e) => setExportConfig({ ...exportConfig, crf: parseInt(e.target.value) })}
                     className="w-full accent-[#C9A227]" />
-                  <div className="flex justify-between text-[9px] text-[#8A8378] mt-1">
+                  <div className="flex justify-between text-[9px] text-[#8A857C] mt-1">
                     <span>Haute (18)</span><span>Standard (23)</span><span>Léger (28)</span>
                   </div>
                 </div>
@@ -2821,12 +2821,12 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   <div className="grid grid-cols-4 gap-1">
                     {[24, 30, 60].map((fps) => (
                       <button key={fps} onClick={() => setExportConfig({ ...exportConfig, fps })}
-                        className={`py-2 rounded-lg text-xs font-bold transition-colors ${exportConfig.fps === fps ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                        className={`py-2 rounded-lg text-xs font-bold transition-colors ${exportConfig.fps === fps ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                         {fps}
                       </button>
                     ))}
                     <button onClick={() => setExportConfig({ ...exportConfig, fps: undefined })}
-                      className={`py-2 rounded-lg text-xs font-bold transition-colors ${!exportConfig.fps ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10"}`}>
+                      className={`py-2 rounded-lg text-xs font-bold transition-colors ${!exportConfig.fps ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/5 hover:bg-[#000000]/10"}`}>
                       Auto
                     </button>
                   </div>
@@ -2860,8 +2860,8 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A8378]/15">
-      <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378]">{title}</h3>
+    <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A857C]/15">
+      <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A857C]">{title}</h3>
       {children}
     </div>
   );
@@ -2873,7 +2873,7 @@ function Slider({ label, min, max, step, value, onChange, format }: {
 }) {
   return (
     <div>
-      <label className="text-[10px] text-[#8A8378] uppercase font-bold">{label}: {format(value)}</label>
+      <label className="text-[10px] text-[#8A857C] uppercase font-bold">{label}: {format(value)}</label>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="w-full accent-[#C9A227]" />

@@ -80,22 +80,22 @@ export function SiteHeader() {
       className={cn(
         "sticky top-0 z-50 transition-all duration-300 border-b",
         scrolled
-          ? "bg-[#2A0E3D] border-[#C9A227]/20 shadow-lg"
-          : "bg-[#FAF6EF] border-[#8A8378]/20"
+          ? "bg-[#000000] border-[#C9A227]/20 shadow-lg"
+          : "bg-[#F0E9DE] border-[#8A857C]/20"
       )}
     >
       {/* Bandeau supérieur — switcher d'identité */}
       <div
         className={cn(
           "border-b transition-colors",
-          scrolled ? "border-[#C9A227]/15 bg-[#1A0826]/40" : "border-[#8A8378]/15"
+          scrolled ? "border-[#C9A227]/15 bg-[#000000]/40" : "border-[#8A857C]/15"
         )}
       >
         <div className="container mx-auto max-w-7xl px-4 py-2 flex items-center justify-center gap-6">
           <span
             className={cn(
               "text-[11px] uppercase tracking-[0.2em] font-medium hidden sm:block",
-              scrolled ? "text-[#DDBE55]/70" : "text-[#8A8378]"
+              scrolled ? "text-[#DDBE55]/70" : "text-[#8A857C]"
             )}
           >
             Un même appel, deux serviteurs
@@ -107,7 +107,7 @@ export function SiteHeader() {
               onClick={() => handleSwitch("pam")}
               scrolled={scrolled}
             />
-            <span className={cn("text-xs", scrolled ? "text-[#C9A227]/40" : "text-[#8A8378]/50")}>·</span>
+            <span className={cn("text-xs", scrolled ? "text-[#C9A227]/40" : "text-[#8A857C]/50")}>·</span>
             <ServantMedal
               id="kongo"
               active={current === "kongo" || current === "commun"}
@@ -134,7 +134,7 @@ export function SiteHeader() {
             <span
               className={cn(
                 "font-serif text-lg font-semibold transition-colors whitespace-nowrap",
-                scrolled ? "text-[#FAF6EF]" : "text-[#1E0F2B]"
+                scrolled ? "text-[#F0E9DE]" : "text-[#000000]"
               )}
             >
               <span style={{ color: "#C9A227" }}>Christ</span>
@@ -148,7 +148,7 @@ export function SiteHeader() {
               href="/"
               className={cn(
                 "text-sm font-medium transition-colors px-3 py-2 rounded-lg whitespace-nowrap",
-                scrolled ? "text-[#FAF6EF]/80 hover:text-[#C9A227] hover:bg-white/5" : "text-[#1E0F2B]/80 hover:text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+                scrolled ? "text-[#F0E9DE]/80 hover:text-[#FF7A1A] hover:bg-white/5" : "text-[#000000]/80 hover:text-[#000000] hover:bg-[#000000]/5"
               )}
               onClick={() => handleSwitch("commun")}
             >
@@ -164,7 +164,7 @@ export function SiteHeader() {
                 <button
                   className={cn(
                     "flex items-center gap-1 text-sm font-medium transition-colors px-3 py-2 rounded-lg whitespace-nowrap",
-                    scrolled ? "text-[#FAF6EF]/80 hover:text-[#C9A227] hover:bg-white/5" : "text-[#1E0F2B]/80 hover:text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+                    scrolled ? "text-[#F0E9DE]/80 hover:text-[#FF7A1A] hover:bg-white/5" : "text-[#000000]/80 hover:text-[#000000] hover:bg-[#000000]/5"
                   )}
                 >
                   {group.label}
@@ -174,7 +174,7 @@ export function SiteHeader() {
                   <div
                     className={cn(
                       "absolute top-full left-0 mt-1 min-w-[180px] rounded-xl shadow-xl border py-2 z-50",
-                      scrolled ? "bg-[#1A0826] border-[#C9A227]/20" : "bg-white border-[#8A8378]/15"
+                      scrolled ? "bg-[#000000] border-[#C9A227]/20" : "bg-white border-[#8A857C]/15"
                     )}
                   >
                     {group.items.map((item) => (
@@ -183,7 +183,7 @@ export function SiteHeader() {
                         href={item.href}
                         className={cn(
                           "block px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap",
-                          scrolled ? "text-[#FAF6EF]/80 hover:text-[#C9A227] hover:bg-white/5" : "text-[#1E0F2B]/80 hover:text-[#C9A227] hover:bg-[#FAF6EF]"
+                          scrolled ? "text-[#F0E9DE]/80 hover:text-[#FF7A1A] hover:bg-white/5" : "text-[#000000]/80 hover:text-[#FF7A1A] hover:bg-[#F0E9DE]"
                         )}
                       >
                         {item.label}
@@ -205,15 +205,15 @@ export function SiteHeader() {
               className={cn(
                 "hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all",
                 scrolled
-                  ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
-                  : "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54]"
+                  ? "bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A]"
+                  : "bg-[#000000] text-[#DDBE55] hover:bg-[#161513]"
               )}
             >
               <CalendarCheck className="w-3.5 h-3.5" />
               Rendez-vous
             </Link>
             <button
-              className={cn("lg:hidden p-2 rounded", scrolled ? "text-[#FAF6EF]" : "text-[#1E0F2B]")}
+              className={cn("lg:hidden p-2 rounded", scrolled ? "text-[#F0E9DE]" : "text-[#000000]")}
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Menu"
             >
@@ -225,9 +225,9 @@ export function SiteHeader() {
 
       {/* Nav mobile — flat list */}
       {mobileOpen && (
-        <div className="lg:hidden bg-[#2A0E3D] border-t border-[#C9A227]/15">
+        <div className="lg:hidden bg-[#000000] border-t border-[#C9A227]/15">
           <nav className="container mx-auto max-w-7xl px-4 py-4 flex flex-col gap-1">
-            <Link href="/" className="text-[#FAF6EF]/90 hover:text-[#C9A227] py-2.5 text-sm font-medium whitespace-nowrap" onClick={() => setMobileOpen(false)}>Accueil</Link>
+            <Link href="/" className="text-[#F0E9DE]/90 hover:text-[#FF7A1A] py-2.5 text-sm font-medium whitespace-nowrap" onClick={() => setMobileOpen(false)}>Accueil</Link>
             {NAV_GROUPS.map((group) => (
               <div key={group.label} className="border-t border-[#C9A227]/10 pt-2 mt-1">
                 <p className="text-[10px] uppercase tracking-wider text-[#C9A227]/60 font-bold px-1 mb-1">{group.label}</p>
@@ -235,7 +235,7 @@ export function SiteHeader() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="block text-[#FAF6EF]/90 hover:text-[#C9A227] py-2 text-sm font-medium whitespace-nowrap"
+                    className="block text-[#F0E9DE]/90 hover:text-[#FF7A1A] py-2 text-sm font-medium whitespace-nowrap"
                     onClick={() => setMobileOpen(false)}
                   >
                     {item.label}
@@ -246,7 +246,7 @@ export function SiteHeader() {
             {/* CTA Rendez-vous (mobile) */}
             <Link
               href="/rendez-vous"
-              className="mt-3 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-[#C9A227] text-[#1E0F2B] text-sm font-bold"
+              className="mt-3 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-[#C9A227] text-[#000000] text-sm font-bold"
               onClick={() => setMobileOpen(false)}
             >
               <CalendarCheck className="w-4 h-4" />
@@ -264,10 +264,10 @@ function ServantMedal({ id, active, onClick, scrolled }: { id: ServantId; active
   const s = servants[id];
   return (
     <button onClick={onClick} className="flex items-center gap-2 group" aria-label={`Voir ${s.shortName}`}>
-      <span className={cn("flex items-center justify-center w-9 h-9 rounded-full border-2 transition-all", active ? "border-[#C9A227] bg-[#C9A227]/10" : scrolled ? "border-[#FAF6EF]/30 hover:border-[#C9A227]/50" : "border-[#8A8378]/30 hover:border-[#C9A227]/50")}>
-        <span className={cn("font-serif text-xs font-semibold", active ? "text-[#C9A227]" : scrolled ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/70")}>{s.portrait}</span>
+      <span className={cn("flex items-center justify-center w-9 h-9 rounded-full border-2 transition-all", active ? "border-[#C9A227] bg-[#C9A227]/10" : scrolled ? "border-[#F0E9DE]/30 hover:border-[#FF7A1A]/50" : "border-[#8A857C]/30 hover:border-[#FF7A1A]/50")}>
+        <span className={cn("font-serif text-xs font-semibold", active ? "text-[#C9A227]" : scrolled ? "text-[#F0E9DE]/70" : "text-[#000000]/70")}>{s.portrait}</span>
       </span>
-      <span className={cn("text-xs font-medium transition-all hidden sm:block", active ? "text-[#C9A227] border-b border-[#C9A227] pb-0.5" : scrolled ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/70")}>{s.shortName}</span>
+      <span className={cn("text-xs font-medium transition-all hidden sm:block", active ? "text-[#C9A227] border-b border-[#C9A227] pb-0.5" : scrolled ? "text-[#F0E9DE]/70" : "text-[#000000]/70")}>{s.shortName}</span>
     </button>
   );
 }

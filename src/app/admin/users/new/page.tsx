@@ -69,16 +69,16 @@ export default function NewAdminUserPage() {
       <div>
         <Link
           href="/admin/users"
-          className="inline-flex items-center gap-1.5 text-xs text-[#8A8378] hover:text-[#C9A227] mb-3"
+          className="inline-flex items-center gap-1.5 text-xs text-[#8A857C] hover:text-[#FF7A1A] mb-3"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Retour aux utilisateurs
         </Link>
-        <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1 flex items-center gap-3">
+        <h1 className="font-serif text-3xl font-semibold text-[#000000] mb-1 flex items-center gap-3">
           <UserCog className="w-7 h-7 text-[#C9A227]" />
           Créer un compte administrateur
         </h1>
-        <p className="text-sm text-[#8A8378]">
+        <p className="text-sm text-[#8A857C]">
           Réservé aux super administrateurs (Pam, Pasteur Kongo).
         </p>
       </div>
@@ -86,7 +86,7 @@ export default function NewAdminUserPage() {
       {/* Avertissement */}
       <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30">
         <ShieldCheck className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-[#1E0F2B] leading-relaxed">
+        <p className="text-xs text-[#000000] leading-relaxed">
           Le compte créé sera <strong>immédiatement actif</strong> et pourra se
           connecter au back-office. Choisissez un mot de passe robuste et
           communiquez-le de façon sécurisée au destinataire. Il pourra le changer
@@ -97,11 +97,11 @@ export default function NewAdminUserPage() {
       {/* Formulaire */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-2xl border border-[#8A8378]/15 p-6 space-y-5"
+        className="bg-white rounded-2xl border border-[#8A857C]/15 p-6 space-y-5"
       >
         {/* Nom */}
         <div>
-          <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-2 block">
+          <label className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-2 block">
             Nom affiché *
           </label>
           <input
@@ -111,16 +111,16 @@ export default function NewAdminUserPage() {
             required
             autoComplete="name"
             placeholder="Ex : Marie Dubois"
-            className="w-full px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+            className="w-full px-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
           />
-          <p className="text-xs text-[#8A8378] mt-1">
+          <p className="text-xs text-[#8A857C] mt-1">
             Ce nom sera utilisé pour la connexion au back-office.
           </p>
         </div>
 
         {/* Email */}
         <div>
-          <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-2 block">
+          <label className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-2 block">
             Email *
           </label>
           <input
@@ -130,13 +130,13 @@ export default function NewAdminUserPage() {
             required
             autoComplete="email"
             placeholder="marie@christ-libere.org"
-            className="w-full px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+            className="w-full px-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
           />
         </div>
 
         {/* Mot de passe */}
         <div>
-          <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-2 block">
+          <label className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-2 block">
             Mot de passe initial *
           </label>
           <input
@@ -147,16 +147,16 @@ export default function NewAdminUserPage() {
             minLength={8}
             autoComplete="new-password"
             placeholder="Minimum 8 caractères"
-            className="w-full px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] font-mono"
+            className="w-full px-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] font-mono"
           />
-          <p className="text-xs text-[#8A8378] mt-1">
+          <p className="text-xs text-[#8A857C] mt-1">
             L&apos;utilisateur devra le changer après sa première connexion.
           </p>
         </div>
 
         {/* Rôle */}
         <div>
-          <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-2 block">
+          <label className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-2 block">
             Rôle *
           </label>
           <div className="space-y-2">
@@ -166,7 +166,7 @@ export default function NewAdminUserPage() {
                 className={`flex items-start gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all ${
                   form.role === r.value
                     ? "border-[#C9A227] bg-[#C9A227]/5"
-                    : "border-[#8A8378]/20 hover:border-[#8A8378]/40"
+                    : "border-[#8A857C]/20 hover:border-[#8A857C]/40"
                 }`}
               >
                 <input
@@ -178,10 +178,10 @@ export default function NewAdminUserPage() {
                   className="mt-1 accent-[#C9A227]"
                 />
                 <div className="flex-1">
-                  <div className="text-sm font-semibold text-[#1E0F2B]">
+                  <div className="text-sm font-semibold text-[#000000]">
                     {r.label}
                   </div>
-                  <div className="text-xs text-[#8A8378] mt-0.5">{r.desc}</div>
+                  <div className="text-xs text-[#8A857C] mt-0.5">{r.desc}</div>
                 </div>
               </label>
             ))}
@@ -190,7 +190,7 @@ export default function NewAdminUserPage() {
 
         {/* Bio optionnelle */}
         <div>
-          <label className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-2 block">
+          <label className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-2 block">
             Note / Bio <span className="normal-case font-normal">(optionnel)</span>
           </label>
           <textarea
@@ -198,7 +198,7 @@ export default function NewAdminUserPage() {
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
             rows={3}
             placeholder="Fonction, responsabilité, contexte..."
-            className="w-full px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] resize-none"
+            className="w-full px-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] resize-none"
           />
         </div>
 
@@ -211,17 +211,17 @@ export default function NewAdminUserPage() {
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A8378]/10">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A857C]/10">
           <Link
             href="/admin/users"
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-[#8A857C] hover:text-[#000000] transition-colors"
           >
             Annuler
           </Link>
           <button
             type="submit"
             disabled={loading || !form.name || !form.email || !form.password}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-semibold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#000000] text-[#F0E9DE] font-semibold text-sm hover:bg-[#161513] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>

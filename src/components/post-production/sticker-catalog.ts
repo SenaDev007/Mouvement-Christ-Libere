@@ -188,7 +188,7 @@ const STYLES_BOUTON: Record<StyleBouton, {
   noir: { fond: "url(#gbtn-noir)", stroke: "#000000", texte: "#ffffff", icone: "#C9A227", suffixeId: "noir", nom: "noir" },
   or: { fond: "url(#gbtn-or)", stroke: "#8a6a10", texte: "#221607", icone: "#7f1d1d", suffixeId: "or", nom: "doré" },
   vert: { fond: "url(#gbtn-vert)", stroke: "#14532d", texte: "#ffffff", icone: "#ffffff", suffixeId: "vert", nom: "vert" },
-  violet: { fond: "url(#gbtn-violet)", stroke: "#4c1d95", texte: "#ffffff", icone: "#ffffff", suffixeId: "violet", nom: "violet" },
+  violet: { fond: "url(#gbtn-violet)", stroke: "#A3821C", texte: "#ffffff", icone: "#ffffff", suffixeId: "violet", nom: "violet" },
   verre: { fond: "rgba(255,255,255,0.16)", stroke: "rgba(255,255,255,0.75)", texte: "#ffffff", icone: "#ffffff", suffixeId: "verre", nom: "verre" },
   gris: { fond: "url(#gbtn-gris)", stroke: "#9ca3af", texte: "#52525b", icone: "#71717a", suffixeId: "gris", nom: "gris" },
 };
@@ -200,7 +200,7 @@ const DEFS_BOUTON = `<defs>
 <linearGradient id="gbtn-noir" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2b33"/><stop offset="1" stop-color="#101014"/></linearGradient>
 <linearGradient id="gbtn-or" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d774"/><stop offset="1" stop-color="#d3a017"/></linearGradient>
 <linearGradient id="gbtn-vert" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#059669"/></linearGradient>
-<linearGradient id="gbtn-violet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+<linearGradient id="gbtn-violet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DDBE55"/><stop offset="1" stop-color="#FF7A1A"/></linearGradient>
 <linearGradient id="gbtn-gris" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4e4e7"/><stop offset="1" stop-color="#d4d4d8"/></linearGradient>
 <filter id="gbtn-shadow" x="-20%" y="-25%" width="140%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#000000" flood-opacity="0.32"/></filter>
 </defs>`;
@@ -379,7 +379,7 @@ const SOCIAL: StickerPro[] = [
       300, 240,
       `<defs><linearGradient id="g9" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs>
       <rect x="10" y="128" width="280" height="100" rx="18" fill="url(#g9)"/>
-      ${txt(150, 180, 52, "#1e0f2b", "SWIPE UP")}
+      ${txt(150, 180, 52, "#000000", "SWIPE UP")}
       <g stroke="#fbbf24" stroke-width="16" stroke-linecap="round" fill="none">
         <path d="M150 104 V30"/><path d="M110 62 L150 22 L190 62"/>
       </g>
@@ -397,7 +397,7 @@ const SOCIAL: StickerPro[] = [
       <circle cx="170" cy="72" r="30" fill="none" stroke="#fde047" stroke-width="8" opacity="0.85"/>
       <circle cx="170" cy="72" r="14" fill="#fde047"/>
       <rect x="8" y="112" width="324" height="72" rx="16" fill="url(#g10)"/>
-      ${txt(170, 148, 48, "#1e0f2b", "APPUYEZ ICI")}`,
+      ${txt(170, 148, 48, "#000000", "APPUYEZ ICI")}`,
     ),
   },
   {
@@ -410,8 +410,8 @@ const SOCIAL: StickerPro[] = [
       <g filter="url(#sh17)">${pill(520, 130, "#ffffff")}
         <rect x="6" y="6" width="164" height="118" rx="59" fill="#fee2e2"/>
         ${heartPath(64, 65, 40, "#dc2626")}${txt(122, 65, 40, "#18181b", "1,2K")}
-        <rect x="178" y="6" width="164" height="118" rx="59" fill="#ede9fe"/>
-        <path d="M222 38 h76 a12 12 0 0 1 12 12 v34 a12 12 0 0 1 -12 12 h-46 l-14 12 v-12 h-16 a12 12 0 0 1 -12 -12 v-34 a12 12 0 0 1 12 -12 z" fill="#7c3aed"/>${txt(296, 65, 40, "#18181b", "89")}
+        <rect x="178" y="6" width="164" height="118" rx="59" fill="#F0E9DE"/>
+        <path d="M222 38 h76 a12 12 0 0 1 12 12 v34 a12 12 0 0 1 -12 12 h-46 l-14 12 v-12 h-16 a12 12 0 0 1 -12 -12 v-34 a12 12 0 0 1 12 -12 z" fill="#FF7A1A"/>${txt(296, 65, 40, "#18181b", "89")}
         <rect x="350" y="6" width="164" height="118" rx="59" fill="#dbeafe"/>
         <path d="M396 74 Q390 52 422 50 L422 40 L446 58 L422 76 L422 66 Q410 68 414 74 Z" fill="#1d4ed8"/>${txt(474, 65, 40, "#18181b", "45")}
       </g>`,
@@ -595,12 +595,12 @@ const BADGES: StickerPro[] = [
     category: "badges",
     svg: svgRoot(
       340, 200,
-      `<defs><linearGradient id="gb8" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c084fc"/><stop offset="1" stop-color="#7c3aed"/></linearGradient><filter id="shb8" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/></filter></defs>
+      `<defs><linearGradient id="gb8" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DDBE55"/><stop offset="1" stop-color="#FF7A1A"/></linearGradient><filter id="shb8" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/></filter></defs>
       <g filter="url(#shb8)">
         ${starPath(170, 92, 132, "url(#gb8)")}
         ${starPath(170, 92, 100, "#ffffff")}
-        ${txt(170, 90, 72, "#7c3aed", "WOW !")}
-        <circle cx="42" cy="160" r="10" fill="#c084fc"/><circle cx="74" cy="182" r="7" fill="#a78bfa"/><circle cx="298" cy="160" r="10" fill="#c084fc"/><circle cx="266" cy="182" r="7" fill="#a78bfa"/>
+        ${txt(170, 90, 72, "#FF7A1A", "WOW !")}
+        <circle cx="42" cy="160" r="10" fill="#DDBE55"/><circle cx="74" cy="182" r="7" fill="#DDBE55"/><circle cx="298" cy="160" r="10" fill="#DDBE55"/><circle cx="266" cy="182" r="7" fill="#DDBE55"/>
       </g>`,
     ),
   },
@@ -621,7 +621,7 @@ const BADGES: StickerPro[] = [
     category: "badges",
     svg: svgRoot(
       480, 130,
-      `<defs><linearGradient id="gb10" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d28d9"/><stop offset="1" stop-color="#2e1065"/></linearGradient><filter id="shb10" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.35"/></filter></defs>
+      `<defs><linearGradient id="gb10" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF7A1A"/><stop offset="1" stop-color="#000000"/></linearGradient><filter id="shb10" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.35"/></filter></defs>
       <g filter="url(#shb10)">
         <path d="M18 4 h444 q18 0 18 22 v82 q0 22 -18 22 H18 q-18 0 -18 -22 V26 q0 -22 18 -22 z" fill="url(#gb10)"/>
         <path d="M6 26 q226 -30 456 0" stroke="#fcd34d" stroke-width="10" fill="none" opacity="0.6"/>
@@ -686,12 +686,12 @@ const SHAPES: StickerPro[] = [
         <rect x="90" y="24" width="34" height="14" rx="7" fill="#fbbf24" transform="rotate(-18 107 31)"/>
         <rect x="160" y="52" width="34" height="14" rx="7" fill="#34d399" transform="rotate(40 177 59)"/>
         <rect x="236" y="30" width="34" height="14" rx="7" fill="#60a5fa" transform="rotate(-30 253 37)"/>
-        <rect x="300" y="70" width="34" height="14" rx="7" fill="#c084fc" transform="rotate(14 317 77)"/>
+        <rect x="300" y="70" width="34" height="14" rx="7" fill="#DDBE55" transform="rotate(14 317 77)"/>
         <rect x="60" y="150" width="34" height="14" rx="7" fill="#60a5fa" transform="rotate(-24 77 157)"/>
         <rect x="140" y="170" width="34" height="14" rx="7" fill="#f87171" transform="rotate(32 157 177)"/>
         <rect x="220" y="200" width="34" height="14" rx="7" fill="#fbbf24" transform="rotate(-40 237 207)"/>
         <rect x="310" y="180" width="34" height="14" rx="7" fill="#34d399" transform="rotate(20 327 187)"/>
-        <circle cx="120" cy="110" r="10" fill="#f472b6"/><circle cx="270" cy="120" r="12" fill="#c084fc"/>
+        <circle cx="120" cy="110" r="10" fill="#f472b6"/><circle cx="270" cy="120" r="12" fill="#DDBE55"/>
         <circle cx="50" cy="220" r="9" fill="#fbbf24"/><circle cx="190" cy="120" r="8" fill="#34d399"/>
         <path d="M320 108 l10 6 v12 l-10 6 -10 -6 v-12 z" fill="#f87171"/>
         <path d="M90 90 l9 5 v11 l-9 5 -9 -5 v-11 z" fill="#60a5fa"/>

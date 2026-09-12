@@ -115,13 +115,13 @@ export function SlashCommands({ input, onCommand, onDismiss }: SlashCommandsProp
   return (
     <div
       ref={containerRef}
-      className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-2xl shadow-xl border border-[#8A8378]/20 overflow-hidden z-50"
+      className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-2xl shadow-xl border border-[#8A857C]/20 overflow-hidden z-50"
     >
-      <div className="px-4 py-2 bg-[#FAF6EF] border-b border-[#8A8378]/10 flex items-center justify-between">
-        <p className="text-[10px] uppercase tracking-wider font-semibold text-[#8A8378]">
+      <div className="px-4 py-2 bg-[#F0E9DE] border-b border-[#8A857C]/10 flex items-center justify-between">
+        <p className="text-[10px] uppercase tracking-wider font-semibold text-[#8A857C]">
           Commandes
         </p>
-        <p className="text-[10px] text-[#8A8378]/60">
+        <p className="text-[10px] text-[#8A857C]/60">
           ↑↓ naviguer · Entrée valider · Échap fermer
         </p>
       </div>
@@ -132,15 +132,15 @@ export function SlashCommands({ input, onCommand, onDismiss }: SlashCommandsProp
             onClick={() => onCommand(cmd.name, args)}
             onMouseEnter={() => setSelectedIndex(i)}
             className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-              i === safeSelectedIndex ? "bg-[#C9A227]/10" : "hover:bg-[#FAF6EF]"
+              i === safeSelectedIndex ? "bg-[#C9A227]/10" : "hover:bg-[#F0E9DE]"
             }`}
           >
             <span className="text-xl">{cmd.icon}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#1E0F2B]">/{cmd.name}</p>
-              <p className="text-xs text-[#8A8378] truncate">{cmd.description}</p>
+              <p className="text-sm font-semibold text-[#000000]">/{cmd.name}</p>
+              <p className="text-xs text-[#8A857C] truncate">{cmd.description}</p>
             </div>
-            <span className="text-[10px] text-[#8A8378]/60 font-mono hidden sm:inline">
+            <span className="text-[10px] text-[#8A857C]/60 font-mono hidden sm:inline">
               {cmd.usage}
             </span>
           </button>

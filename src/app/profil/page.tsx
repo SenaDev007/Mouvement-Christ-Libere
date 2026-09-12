@@ -140,7 +140,7 @@ export default function ProfilPage() {
   const initials = (session.user?.name || session.user?.email || "?").charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] py-12 px-4">
+    <div className="min-h-screen bg-[#F0E9DE] py-12 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header — photo de profil éditable */}
         <motion.div
@@ -150,7 +150,7 @@ export default function ProfilPage() {
           className="text-center mb-8"
         >
           <div className="relative inline-block mb-4 group">
-            <div className="w-28 h-28 rounded-full border-4 border-[#C9A227]/30 overflow-hidden bg-[#2A0E3D] flex items-center justify-center shadow-xl">
+            <div className="w-28 h-28 rounded-full border-4 border-[#C9A227]/30 overflow-hidden bg-[#000000] flex items-center justify-center shadow-xl">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Ma photo" className="w-full h-full object-cover" />
               ) : (
@@ -176,17 +176,17 @@ export default function ProfilPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={avatarProcessing}
-              className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-[#C9A227] text-[#1E0F2B] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-[#FAF6EF]"
+              className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-[#C9A227] text-[#000000] flex items-center justify-center shadow-lg hover:bg-[#FF7A1A] transition-colors border-2 border-[#F0E9DE]"
               title="Changer ma photo"
               aria-label="Changer ma photo"
             >
               <Camera className="w-4.5 h-4.5" />
             </button>
           </div>
-          <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1">
+          <h1 className="font-serif text-3xl font-semibold text-[#000000] mb-1">
             Mon profil
           </h1>
-          <p className="text-sm text-[#8A8378]">{session.user?.email}</p>
+          <p className="text-sm text-[#8A857C]">{session.user?.email}</p>
           <div className="flex items-center justify-center gap-3 mt-3">
             {avatarUrl ? (
               <button
@@ -201,7 +201,7 @@ export default function ProfilPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 px-3 py-1.5 rounded-full transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#000000] hover:bg-[#FF7A1A]/10 px-3 py-1.5 rounded-full transition-colors"
               >
                 <Camera className="w-3.5 h-3.5 text-[#C9A227]" />
                 Ajouter ma photo
@@ -214,7 +214,7 @@ export default function ProfilPage() {
               {avatarError}
             </p>
           )}
-          <p className="text-[10px] text-[#8A8378] mt-2">
+          <p className="text-[10px] text-[#8A857C] mt-2">
             JPG/PNG · recadrée en carré · compressée ≤ 60 Ko · visible dans Yeshua Connect
           </p>
         </motion.div>
@@ -228,42 +228,42 @@ export default function ProfilPage() {
 
         {/* Profile form — informations complètes */}
         <div className="bg-white rounded-lg border border-stone-200 border-t-[3px] border-t-[#C9A227] p-8 space-y-5 mb-6">
-          <h2 className="font-serif text-lg font-semibold text-[#1E0F2B] flex items-center gap-2">
+          <h2 className="font-serif text-lg font-semibold text-[#000000] flex items-center gap-2">
             <User className="w-4 h-4 text-[#C9A227]" /> Informations complètes
           </h2>
 
           <div>
-            <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Nom</label>
+            <label className="block text-xs font-semibold text-[#000000] uppercase tracking-wider mb-2">Nom</label>
             <input
               type="text" value={name} onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+              className="w-full px-4 py-3 bg-[#F0E9DE] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
             />
           </div>
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-[#000000] uppercase tracking-wider mb-2">
               <PhoneIcon className="w-3 h-3 text-[#C9A227]" /> Téléphone
             </label>
             <input
               type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
               placeholder="+225 07 00 00 00 00"
               maxLength={20}
-              className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+              className="w-full px-4 py-3 bg-[#F0E9DE] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
             />
-            <p className="text-[10px] text-[#8A8378] mt-1.5">
+            <p className="text-[10px] text-[#8A857C] mt-1.5">
               Visible uniquement par les administrateurs (back-office).
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-[#000000] uppercase tracking-wider mb-2">
                 <MapPin className="w-3 h-3 text-[#C9A227]" /> Pays
               </label>
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+                className="w-full px-4 py-3 bg-[#F0E9DE] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
               >
                 <option value="">— Choisir —</option>
                 {COUNTRIES.map((c) => (
@@ -272,56 +272,56 @@ export default function ProfilPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Ville</label>
+              <label className="block text-xs font-semibold text-[#000000] uppercase tracking-wider mb-2">Ville</label>
               <input
                 type="text" value={city} onChange={(e) => setCity(e.target.value)}
                 placeholder="Abidjan"
-                className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+                className="w-full px-4 py-3 bg-[#F0E9DE] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Bio</label>
+            <label className="block text-xs font-semibold text-[#000000] uppercase tracking-wider mb-2">Bio</label>
             <textarea
               value={bio} onChange={(e) => setBio(e.target.value)} rows={3}
               placeholder="Quelques mots sur vous..."
-              className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 resize-none"
+              className="w-full px-4 py-3 bg-[#F0E9DE] border border-stone-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 resize-none"
             />
           </div>
         </div>
 
         {/* Notification preferences */}
         <div className="bg-white rounded-lg border border-stone-200 border-t-[3px] border-t-[#C9A227] p-8 space-y-4 mb-6">
-          <h2 className="font-serif text-lg font-semibold text-[#1E0F2B] flex items-center gap-2">
+          <h2 className="font-serif text-lg font-semibold text-[#000000] flex items-center gap-2">
             <Bell className="w-4 h-4 text-[#C9A227]" /> Notifications
           </h2>
 
           <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-sm text-[#1E0F2B]">Messages directs</span>
+            <span className="text-sm text-[#000000]">Messages directs</span>
             <input type="checkbox" checked={notifMessages} onChange={(e) => setNotifMessages(e.target.checked)} className="w-5 h-5 rounded border-stone-300 text-[#C9A227]" />
           </label>
           <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-sm text-[#1E0F2B]">Annonces officielles</span>
+            <span className="text-sm text-[#000000]">Annonces officielles</span>
             <input type="checkbox" checked={notifAnnouncements} onChange={(e) => setNotifAnnouncements(e.target.checked)} className="w-5 h-5 rounded border-stone-300 text-[#C9A227]" />
           </label>
           <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-sm text-[#1E0F2B]">Lives et vidéos</span>
+            <span className="text-sm text-[#000000]">Lives et vidéos</span>
             <input type="checkbox" checked={notifLive} onChange={(e) => setNotifLive(e.target.checked)} className="w-5 h-5 rounded border-stone-300 text-[#C9A227]" />
           </label>
           <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-sm text-[#1E0F2B]">Activité communauté</span>
+            <span className="text-sm text-[#000000]">Activité communauté</span>
             <input type="checkbox" checked={notifCommunity} onChange={(e) => setNotifCommunity(e.target.checked)} className="w-5 h-5 rounded border-stone-300 text-[#C9A227]" />
           </label>
 
           <div className="pt-4 border-t border-stone-100">
             <label className="flex items-center justify-between cursor-pointer">
               <div>
-                <span className="text-sm font-semibold text-[#1E0F2B] flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-[#000000] flex items-center gap-1.5">
                   {dndEnabled ? <BellOff className="w-4 h-4 text-red-500" /> : <Bell className="w-4 h-4" />}
                   Ne pas déranger (DND)
                 </span>
-                <p className="text-xs text-[#8A8378] mt-0.5">Coupe toutes les notifications</p>
+                <p className="text-xs text-[#8A857C] mt-0.5">Coupe toutes les notifications</p>
               </div>
               <input type="checkbox" checked={dndEnabled} onChange={(e) => setDndEnabled(e.target.checked)} className="w-5 h-5 rounded border-stone-300 text-[#C9A227]" />
             </label>
@@ -332,7 +332,7 @@ export default function ProfilPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mb-4 shadow-md"
+          className="w-full py-3 bg-[#C9A227] text-[#000000] font-semibold text-sm rounded-full hover:bg-[#FF7A1A] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mb-4 shadow-md"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : savedMsg ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
           {savedMsg ? "Enregistré" : saving ? "Enregistrement..." : "Enregistrer"}

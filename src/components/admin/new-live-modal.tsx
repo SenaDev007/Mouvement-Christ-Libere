@@ -84,7 +84,7 @@ export function NewLiveButton({ servants, accentColor = "#C9A227" }: NewLiveButt
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md"
-        style={{ backgroundColor: accentColor, color: "#1E0F2B" }}
+        style={{ backgroundColor: accentColor, color: "#000000" }}
       >
         <Plus className="w-4 h-4" />
         Programmer un live
@@ -173,46 +173,46 @@ export function NewLiveButton({ servants, accentColor = "#C9A227" }: NewLiveButt
 
           {/* Multistream checkboxes */}
           <div className="space-y-2">
-            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
+            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] cursor-pointer hover:border-[#FF7A1A] transition-colors">
               <input type="checkbox" checked={form.streamToYoutube}
                 onChange={(e) => setForm({ ...form, streamToYoutube: e.target.checked })}
                 className="w-4 h-4 accent-[#C9A227]" />
-              <span className="text-sm font-semibold text-[#1E0F2B]">Diffuser sur YouTube</span>
+              <span className="text-sm font-semibold text-[#000000]">Diffuser sur YouTube</span>
             </label>
-            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
+            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] cursor-pointer hover:border-[#FF7A1A] transition-colors">
               <input type="checkbox" checked={form.streamToFacebook}
                 onChange={(e) => setForm({ ...form, streamToFacebook: e.target.checked })}
                 className="w-4 h-4 accent-[#C9A227]" />
-              <span className="text-sm font-semibold text-[#1E0F2B]">Diffuser sur Facebook</span>
+              <span className="text-sm font-semibold text-[#000000]">Diffuser sur Facebook</span>
             </label>
-            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
+            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] cursor-pointer hover:border-[#FF7A1A] transition-colors">
               <input type="checkbox" checked={form.streamToTiktok}
                 onChange={(e) => setForm({ ...form, streamToTiktok: e.target.checked })}
                 className="w-4 h-4 accent-[#C9A227]" />
-              <span className="text-sm font-semibold text-[#1E0F2B]">Diffuser sur TikTok</span>
+              <span className="text-sm font-semibold text-[#000000]">Diffuser sur TikTok</span>
             </label>
-            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
+            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] cursor-pointer hover:border-[#FF7A1A] transition-colors">
               <input type="checkbox" checked={form.streamToInstagram}
                 onChange={(e) => setForm({ ...form, streamToInstagram: e.target.checked })}
                 className="w-4 h-4 accent-[#C9A227]" />
-              <span className="text-sm font-semibold text-[#1E0F2B]">Diffuser sur Instagram</span>
+              <span className="text-sm font-semibold text-[#000000]">Diffuser sur Instagram</span>
             </label>
-            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
+            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A857C]/20 bg-[#F0E9DE] cursor-pointer hover:border-[#FF7A1A] transition-colors">
               <input type="checkbox" checked={form.multistreamEnabled}
                 onChange={(e) => setForm({ ...form, multistreamEnabled: e.target.checked })}
                 className="w-4 h-4 accent-[#C9A227]" />
               <div>
-                <div className="text-sm font-semibold text-[#1E0F2B]">Activer le multistreaming</div>
-                <div className="text-xs text-[#8A8378]">Si activé, le live sera diffusé simultanément sur les plateformes cochées</div>
+                <div className="text-sm font-semibold text-[#000000]">Activer le multistreaming</div>
+                <div className="text-xs text-[#8A857C]">Si activé, le live sera diffusé simultanément sur les plateformes cochées</div>
               </div>
             </label>
           </div>
 
           <ModalError error={error} />
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A8378]/10">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A857C]/10">
             <button type="button" onClick={() => setOpen(false)}
-              className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8A8378] hover:text-[#1E0F2B] transition-colors">
+              className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8A857C] hover:text-[#000000] transition-colors">
               Annuler
             </button>
             <ModalSubmit loading={loading} disabled={!form.servantId || !form.title || !form.scheduledAt} label="Créer le live" />

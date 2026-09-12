@@ -205,7 +205,7 @@ export function LecteurTikTok({
         )}
       >
         <div
-          className="relative overflow-hidden rounded-lg bg-[#111118] ring-1 ring-white/10 shadow-inner"
+          className="relative overflow-hidden rounded-lg bg-[#0B0B0A] ring-1 ring-white/10 shadow-inner"
           style={{ width: largAffichee, height: hautAffichee }}
         >
           {/* Iframe à la TAILLE LOGIQUE de TikTok (325 × hauteur exacte),
@@ -240,7 +240,7 @@ export function LecteurTikTok({
           <div
             aria-hidden={prete}
             className={cn(
-              "absolute inset-0 z-10 flex items-center justify-center overflow-hidden bg-[#0d0d16] transition-opacity duration-500",
+              "absolute inset-0 z-10 flex items-center justify-center overflow-hidden bg-[#070706] transition-opacity duration-500",
               prete && "pointer-events-none opacity-0"
             )}
           >
@@ -257,7 +257,7 @@ export function LecteurTikTok({
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/30" />
             )}
             <div className="relative z-10 flex flex-col items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#C9A227]/95 text-[#1E0F2B] shadow-lg">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#C9A227]/95 text-[#000000] shadow-lg">
                 <TiktokNoteIcon size={26} />
               </div>
               <div className="flex items-center gap-1.5">
@@ -281,7 +281,7 @@ export function LecteurTikTok({
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 text-[#1E0F2B] text-xs font-semibold transition-colors"
+            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#000000]/5 hover:bg-[#000000]/10 text-[#000000] text-xs font-semibold transition-colors"
           >
             <ExternalLink className="h-3.5 w-3.5" style={{ color: accent }} />
             Ouvrir sur TikTok

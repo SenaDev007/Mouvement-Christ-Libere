@@ -79,8 +79,8 @@ function TimelineNode({
           className={cn(
             "flex items-center justify-center w-8 h-8 rounded-full border-2 backdrop-blur-sm",
             isDark
-              ? "bg-[#2A0E3D] border-[#C9A227]"
-              : "bg-[#FAF6EF] border-[#C9A227] shadow-[0_0_20px_rgba(201,162,39,0.3)]"
+              ? "bg-[#000000] border-[#C9A227]"
+              : "bg-[#F0E9DE] border-[#C9A227] shadow-[0_0_20px_rgba(201,162,39,0.3)]"
           )}
         >
           <div className="w-2.5 h-2.5 rounded-full bg-[#C9A227]" />
@@ -95,8 +95,8 @@ function TimelineNode({
           className={cn(
             "group relative p-6 md:p-8 rounded-2xl border transition-all duration-500",
             isDark
-              ? "bg-[#3D1A54]/30 border-[#C9A227]/20 hover:border-[#C9A227]/50"
-              : "bg-[#FAF6EF] border-[#8A8378]/20 hover:border-[#C9A227]/40 hover:shadow-[0_15px_50px_-15px_rgba(42,14,61,0.2)]"
+              ? "bg-[#161513]/30 border-[#C9A227]/20 hover:border-[#FF7A1A]/50"
+              : "bg-[#F0E9DE] border-[#8A857C]/20 hover:border-[#FF7A1A]/40 hover:shadow-[0_15px_50px_-15px_rgba(0, 0, 0,0.2)]"
           )}
         >
           {/* Date */}
@@ -111,7 +111,7 @@ function TimelineNode({
           <h3
             className={cn(
               "font-serif text-2xl md:text-3xl font-semibold leading-snug mb-3",
-              isDark ? "text-[#FAF6EF]" : "text-[#1E0F2B]"
+              isDark ? "text-[#F0E9DE]" : "text-[#000000]"
             )}
           >
             {item.title}
@@ -121,7 +121,7 @@ function TimelineNode({
           <div
             className={cn(
               "text-sm md:text-base leading-relaxed mb-4",
-              isDark ? "text-[#FAF6EF]/75" : "text-[#1E0F2B]/75"
+              isDark ? "text-[#F0E9DE]/75" : "text-[#000000]/75"
             )}
           >
             <MarkdownText variant={isDark ? "dark" : "light"}>{item.description}</MarkdownText>
@@ -136,12 +136,12 @@ function TimelineNode({
                   <p
                     className={cn(
                       "font-serif italic text-sm leading-relaxed mb-1",
-                      isDark ? "text-[#DDBE55]/90" : "text-[#2A0E3D]/90"
+                      isDark ? "text-[#DDBE55]/90" : "text-[#000000]/90"
                     )}
                   >
                     « {item.verseText} »
                   </p>
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-semibold">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A857C] font-semibold">
                     {item.verseRef}
                   </p>
                 </div>

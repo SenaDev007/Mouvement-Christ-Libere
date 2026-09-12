@@ -7,7 +7,7 @@
  *  · GrapheCategories : répartition par catégorie (donut recettes / anneau dépenses).
  *
  * Palette du ministère : vert #5B7052 (recettes), rouge #B3452E (dépenses),
- * or #C9A227, violet #8C5FA8, taupe #8A8378.
+ * or #C9A227, violet #8A857C, taupe #8A857C.
  */
 
 import {
@@ -53,12 +53,12 @@ export function GrapheMensuel({
       <BarChart data={serie} barGap={4}>
         <XAxis
           dataKey="mois"
-          tick={{ fill: "#8A8378", fontSize: 11 }}
-          axisLine={{ stroke: "#8A8378/30" }}
+          tick={{ fill: "#8A857C", fontSize: 11 }}
+          axisLine={{ stroke: "#8A857C/30" }}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: "#8A8378", fontSize: 10 }}
+          tick={{ fill: "#8A857C", fontSize: 10 }}
           axisLine={false}
           tickLine={false}
           width={54}
@@ -70,7 +70,7 @@ export function GrapheMensuel({
           ]}
           contentStyle={{
             borderRadius: 12,
-            border: "1px solid rgba(138,131,120,0.25)",
+            border: "1px solid rgba(138, 133, 124,0.25)",
             fontSize: 12,
           }}
         />
@@ -85,7 +85,7 @@ export function GrapheMensuel({
   );
 }
 
-const COULEURS = ["#C9A227", "#5B7052", "#8C5FA8", "#B3452E", "#8A8378", "#A3821C", "#6B4480", "#3F5039"];
+const COULEURS = ["#C9A227", "#5B7052", "#8A857C", "#B3452E", "#8A857C", "#A3821C", "#6B675F", "#3F5039"];
 
 export function GrapheCategories({
   categories,
@@ -110,7 +110,7 @@ export function GrapheCategories({
 
   if (donneesRecettes.length === 0 && donneesDepenses.length === 0) {
     return (
-      <p className="text-xs text-[#8A8378] text-center py-10">
+      <p className="text-xs text-[#8A857C] text-center py-10">
         Aucune donnée à afficher sur la période.
       </p>
     );
@@ -144,7 +144,7 @@ export function GrapheCategories({
                 ]}
                 contentStyle={{
                   borderRadius: 12,
-                  border: "1px solid rgba(138,131,120,0.25)",
+                  border: "1px solid rgba(138, 133, 124,0.25)",
                   fontSize: 12,
                 }}
               />
@@ -152,13 +152,13 @@ export function GrapheCategories({
           </ResponsiveContainer>
           <ul className="space-y-1 mt-1">
             {donneesRecettes.map((d, i) => (
-              <li key={d.nom} className="flex items-center gap-2 text-[11px] text-[#1E0F2B]">
+              <li key={d.nom} className="flex items-center gap-2 text-[11px] text-[#000000]">
                 <span
                   className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                   style={{ backgroundColor: COULEURS[i % COULEURS.length] }}
                 />
                 <span className="truncate flex-1">{d.nom}</span>
-                <span className="text-[#8A8378]">
+                <span className="text-[#8A857C]">
                   {formaterMontant(d.valeur, devise)}
                 </span>
               </li>
@@ -192,7 +192,7 @@ export function GrapheCategories({
                 ]}
                 contentStyle={{
                   borderRadius: 12,
-                  border: "1px solid rgba(138,131,120,0.25)",
+                  border: "1px solid rgba(138, 133, 124,0.25)",
                   fontSize: 12,
                 }}
               />
@@ -200,13 +200,13 @@ export function GrapheCategories({
           </ResponsiveContainer>
           <ul className="space-y-1 mt-1">
             {donneesDepenses.map((d, i) => (
-              <li key={d.nom} className="flex items-center gap-2 text-[11px] text-[#1E0F2B]">
+              <li key={d.nom} className="flex items-center gap-2 text-[11px] text-[#000000]">
                 <span
                   className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                   style={{ backgroundColor: COULEURS[(i + 2) % COULEURS.length] }}
                 />
                 <span className="truncate flex-1">{d.nom}</span>
-                <span className="text-[#8A8378]">
+                <span className="text-[#8A857C]">
                   {formaterMontant(d.valeur, devise)}
                 </span>
               </li>

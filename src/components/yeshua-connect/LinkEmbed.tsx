@@ -62,9 +62,9 @@ function LinkEmbedInner({ url }: { url: string }) {
 
   if (status === "loading") {
     return (
-      <div className="mt-2 p-3 rounded-xl bg-[#1E0F2B]/5 border border-[#8A8378]/10 animate-pulse">
-        <div className="h-4 bg-[#8A8378]/20 rounded w-3/4 mb-2" />
-        <div className="h-3 bg-[#8A8378]/10 rounded w-full" />
+      <div className="mt-2 p-3 rounded-xl bg-[#000000]/5 border border-[#8A857C]/10 animate-pulse">
+        <div className="h-4 bg-[#8A857C]/20 rounded w-3/4 mb-2" />
+        <div className="h-3 bg-[#8A857C]/10 rounded w-full" />
       </div>
     );
   }
@@ -83,10 +83,10 @@ function LinkEmbedInner({ url }: { url: string }) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FAF6EF] border border-[#8A8378]/20 hover:border-[#C9A227]/40 transition-colors group"
+        className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F0E9DE] border border-[#8A857C]/20 hover:border-[#FF7A1A]/40 transition-colors group"
       >
         <LinkIcon />
-        <span className="text-xs text-[#1E0F2B] group-hover:text-[#C9A227] truncate max-w-[240px]">
+        <span className="text-xs text-[#000000] group-hover:text-[#FF7A1A] truncate max-w-[240px]">
           {status === "failed" ? "Lien (aperçu indisponible)" : domain}
         </span>
       </a>
@@ -98,10 +98,10 @@ function LinkEmbedInner({ url }: { url: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="mt-2 block max-w-md rounded-xl overflow-hidden border border-[#8A8378]/20 hover:border-[#C9A227]/40 transition-colors group"
+      className="mt-2 block max-w-md rounded-xl overflow-hidden border border-[#8A857C]/20 hover:border-[#FF7A1A]/40 transition-colors group"
     >
       {embed.image && (
-        <div className="w-full h-32 overflow-hidden bg-[#FAF6EF]">
+        <div className="w-full h-32 overflow-hidden bg-[#F0E9DE]">
           <img
             src={embed.image}
             alt={embed.title}
@@ -113,14 +113,14 @@ function LinkEmbedInner({ url }: { url: string }) {
           />
         </div>
       )}
-      <div className="p-3 bg-[#FAF6EF]">
-        <p className="text-sm font-semibold text-[#1E0F2B] group-hover:text-[#C9A227] transition-colors truncate">
+      <div className="p-3 bg-[#F0E9DE]">
+        <p className="text-sm font-semibold text-[#000000] group-hover:text-[#FF7A1A] transition-colors truncate">
           {embed.title}
         </p>
         {embed.description && (
-          <p className="text-xs text-[#8A8378] mt-1 line-clamp-2">{embed.description}</p>
+          <p className="text-xs text-[#8A857C] mt-1 line-clamp-2">{embed.description}</p>
         )}
-        <p className="text-[10px] text-[#8A8378]/60 mt-1 truncate">{url}</p>
+        <p className="text-[10px] text-[#8A857C]/60 mt-1 truncate">{url}</p>
       </div>
     </a>
   );
@@ -144,7 +144,7 @@ function LinkIcon() {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="text-[#8A8378] flex-shrink-0"
+      className="text-[#8A857C] flex-shrink-0"
     >
       <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />

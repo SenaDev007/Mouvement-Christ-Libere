@@ -153,11 +153,11 @@ Schéma Prisma complet dans `prisma/schema.prisma` :
 
 ## Design system
 
-- **Palette** : Violet impérial `#2A0E3D`, Or sacré `#C9A227`, Ivoire chaud `#FAF6EF`
+- **Palette (V3.68 « logo »)** : Noir pur `#000000`, Or `#C9A227` (repos), Feu `#FF7A1A` (hovers/direct), Blanc cassé `#F0E9DE`, Gris chaud `#8A857C`
 - **Typographies** : Cormorant Garamond (titres), Inter (corps)
 - **Iconographie** : motifs hébraïques au trait fin (menorah, chofar)
 - **Angles** : peu arrondis (4-8px) pour sobriété géométrique
-- **Mode sombre** : natif (violet impérial)
+- **Mode sombre** : natif (noir pur — palette logo)
 
 ## Roadmap
 

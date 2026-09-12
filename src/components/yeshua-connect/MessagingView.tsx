@@ -132,7 +132,7 @@ function getFileIcon(fileName?: string): { icon: React.ReactNode; color: string;
 
 // ─── Helper: avatar color ─────────────────────────────────────────────
 function getAvatarColor(name: string): string {
-  const colors = ["bg-[#C9A227]", "bg-[#8C5FA8]", "bg-[#2A0E3D]", "bg-[#5B7052]", "bg-[#B5502F]"];
+  const colors = ["bg-[#C9A227]", "bg-[#8A857C]", "bg-[#000000]", "bg-[#5B7052]", "bg-[#B5502F]"];
   const idx = name.charCodeAt(0) % colors.length;
   return colors[idx];
 }
@@ -181,26 +181,26 @@ function jitsiUrlFor(room: string, displayName?: string): string {
 // NELLE en fonction de chaque utilisateur — il faut qu'il y ait des
 // variantes de couleurs ENTRE les autres utilisateurs. »
 //
-//   - MES messages       : violet maison #8C5FA8 ( reconnaissance instantanée )
+//   - MES messages       : violet maison #8A857C ( reconnaissance instantanée )
 //   - messages des AUTRES : une couleur STABLE par utilisateur (hash djb2 de
 //     son ID) prise dans une palette harmonisée avec la charte (or #C9A227,
-//     violet #8C5FA8, encre #2A0E3D) — comme Slack/Discord : on reconnaît
+//     violet #8A857C, encre #000000) — comme Slack/Discord : on reconnaît
 //     qui parle d'un coup d'œil, et la couleur ne change JAMAIS entre les
 //     écrans (hash sur l'ID, pas sur le nom ni la position).
 //
-// `light: true` → texte clair (#FAF6EF) sur bulle foncée → styles internes
+// `light: true` → texte clair (#F0E9DE) sur bulle foncée → styles internes
 // « purple » (citations, réactions…). `light: false` → texte encre → « gold ».
 interface BubbleStyle { bg: string; text: string; light: boolean }
-const BUBBLE_MINE: BubbleStyle = { bg: "#8C5FA8", text: "#FAF6EF", light: true };
+const BUBBLE_MINE: BubbleStyle = { bg: "#8A857C", text: "#F0E9DE", light: true };
 const BUBBLE_PALETTE: BubbleStyle[] = [
-  { bg: "#C9A227", text: "#1E0F2B", light: false }, // Or (maison)
-  { bg: "#2E6E9E", text: "#FAF6EF", light: true },  // Bleu océan
-  { bg: "#0F766E", text: "#FAF6EF", light: true },  // Sarcelle
-  { bg: "#B5502F", text: "#FAF6EF", light: true },  // Terracotta
-  { bg: "#9C4A74", text: "#FAF6EF", light: true },  // Prune
-  { bg: "#5B7052", text: "#FAF6EF", light: true },  // Sauge
-  { bg: "#3E5C76", text: "#FAF6EF", light: true },  // Bleu acier
-  { bg: "#8C6D1F", text: "#FAF6EF", light: true },  // Bronze
+  { bg: "#C9A227", text: "#000000", light: false }, // Or (maison)
+  { bg: "#2E6E9E", text: "#F0E9DE", light: true },  // Bleu océan
+  { bg: "#0F766E", text: "#F0E9DE", light: true },  // Sarcelle
+  { bg: "#B5502F", text: "#F0E9DE", light: true },  // Terracotta
+  { bg: "#9C4A74", text: "#F0E9DE", light: true },  // Prune
+  { bg: "#5B7052", text: "#F0E9DE", light: true },  // Sauge
+  { bg: "#3E5C76", text: "#F0E9DE", light: true },  // Bleu acier
+  { bg: "#8C6D1F", text: "#F0E9DE", light: true },  // Bronze
 ];
 /** Hash djb2 — stable et bien réparti même sur des IDs courts. */
 function hashUserId(id: string): number {
@@ -289,10 +289,10 @@ function participantAvatarUrl(
 //
 // Couleur du nom d'utilisateur selon son rôle dans le canal (ChatParticipant.role).
 //   - SUPER_ADMIN : #C9A227 (or)
-//   - ADMIN       : #8C5FA8 (violet)
+//   - ADMIN       : #8A857C (violet)
 //   - MODERATOR   : #5B7052 (vert)
 //   - ANIMATOR    : #3b82f6 (bleu)
-//   - MEMBER      : #8A8378 (gris, défaut)
+//   - MEMBER      : #8A857C (gris, défaut)
 //
 // Le rôle peut venir soit du message (msg.senderRole — c'est le UserRole du User)
 // soit d'un ChannelMember (channelMembers[i].role — c'est le ChannelRole).
@@ -304,7 +304,7 @@ function getRoleColor(role?: string): string {
     case "SUPER_ADMIN":
       return "#C9A227";
     case "ADMIN":
-      return "#8C5FA8";
+      return "#8A857C";
     case "MODERATOR":
       return "#5B7052";
     case "ANIMATOR":
@@ -312,7 +312,7 @@ function getRoleColor(role?: string): string {
     case "MEMBER_VERIFIED":
     case "MEMBER":
     default:
-      return "#8A8378";
+      return "#8A857C";
   }
 }
 
@@ -3741,7 +3741,7 @@ export function MessagingView() {
     // = viewport visible − navbar (dvh ne suit pas le clavier — voir le
     // hook plus haut). Sinon undefined → les classes dvh s'appliquent.
     <div
-      className="relative flex h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)] bg-[#FAF6EF] overflow-hidden"
+      className="relative flex h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)] bg-[#F0E9DE] overflow-hidden"
       style={hauteurVisibleClavier ? { height: hauteurVisibleClavier } : undefined}
     >
       {/* ⭐ V2.9 — Conteneur INVISIBLE des <audio> distants du canal vocal.
@@ -3765,7 +3765,7 @@ export function MessagingView() {
         {/* Déplier → sidebar complète (noms + aperçus + recherche) */}
         <button
           onClick={() => setMobileSidebarExpanded(true)}
-          className="w-full h-12 flex items-center justify-center text-[#1E0F2B]/70 hover:bg-[#FAF6EF] active:bg-[#C9A227]/15 transition-colors"
+          className="w-full h-12 flex items-center justify-center text-[#000000]/70 hover:bg-[#F0E9DE] active:bg-[#C9A227]/15 transition-colors"
           title="Déplier la liste des conversations"
           aria-label="Déplier la liste des conversations"
         >
@@ -3774,7 +3774,7 @@ export function MessagingView() {
         {/* Mon profil (photo) — ouvre l'éditeur de profil */}
         <button
           onClick={() => setShowProfile(true)}
-          className="relative mx-auto w-11 h-11 rounded-full overflow-hidden border border-[#C9A227]/50 hover:border-[#C9A227] transition-colors flex-shrink-0 mb-1"
+          className="relative mx-auto w-11 h-11 rounded-full overflow-hidden border border-[#C9A227]/50 hover:border-[#FF7A1A] transition-colors flex-shrink-0 mb-1"
           title="Mon profil — modifier ma photo et mes informations"
           aria-label="Mon profil"
         >
@@ -3790,7 +3790,7 @@ export function MessagingView() {
         {/* Avatars des conversations (scroll vertical) */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden py-1 flex flex-col items-center gap-1.5">
           {(loadingConvs || conversations.length === 0) && (
-            <div className="w-11 h-11 rounded-full bg-[#FAF6EF] animate-pulse flex items-center justify-center">
+            <div className="w-11 h-11 rounded-full bg-[#F0E9DE] animate-pulse flex items-center justify-center">
               <Loader2 className="w-4 h-4 text-[#C9A227] animate-spin" />
             </div>
           )}
@@ -3832,7 +3832,7 @@ export function MessagingView() {
                 )}
                 {/* Badge non-lus */}
                 {conv.unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full text-[10px] font-bold bg-[#C9A227] text-[#1E0F2B] border-2 border-white shadow-sm">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full text-[10px] font-bold bg-[#C9A227] text-[#000000] border-2 border-white shadow-sm">
                     {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
                   </span>
                 )}
@@ -3857,7 +3857,7 @@ export function MessagingView() {
       {/* ⭐ V3.0 — Backdrop : ferme la sidebar mobile dépliée au clic dehors */}
       {mobileSidebarExpanded && (
         <div
-          className="lg:hidden absolute inset-0 z-30 bg-[#1A0826]/40 backdrop-blur-[2px]"
+          className="lg:hidden absolute inset-0 z-30 bg-[#000000]/40 backdrop-blur-[2px]"
           onClick={() => setMobileSidebarExpanded(false)}
           aria-hidden
         />
@@ -3874,22 +3874,22 @@ export function MessagingView() {
         "border-r border-stone-200 bg-white flex-col flex-shrink-0",
         "hidden lg:flex lg:w-80",
         mobileSidebarExpanded &&
-          "max-lg:flex max-lg:absolute max-lg:inset-y-0 max-lg:left-[68px] max-lg:right-0 max-lg:z-40 max-lg:max-w-[340px] max-lg:shadow-2xl max-lg:shadow-[#1A0826]/30"
+          "max-lg:flex max-lg:absolute max-lg:inset-y-0 max-lg:left-[68px] max-lg:right-0 max-lg:z-40 max-lg:max-w-[340px] max-lg:shadow-2xl max-lg:shadow-[#000000]/30"
       )}>
         {/* Header */}
-        <div className="p-3 border-b border-stone-100 bg-[#2A0E3D]">
+        <div className="p-3 border-b border-stone-100 bg-[#000000]">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-1.5 min-w-0">
               {/* ⭐ V3.0 — Replier (mobile uniquement, quand dépliée) */}
               <button
                 onClick={() => setMobileSidebarExpanded(false)}
-                className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-[#FAF6EF]/70 transition-colors flex-shrink-0"
+                className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-[#F0E9DE]/70 transition-colors flex-shrink-0"
                 title="Replier — revenir aux icônes"
                 aria-label="Replier la barre latérale"
               >
                 <PanelLeftClose className="w-4 h-4" />
               </button>
-              <h2 className="text-sm font-bold text-[#FAF6EF] flex items-center gap-1.5 min-w-0">
+              <h2 className="text-sm font-bold text-[#F0E9DE] flex items-center gap-1.5 min-w-0">
                 <Sparkles className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
                 <span className="truncate">Yeshua Connect</span>
               </h2>
@@ -3900,7 +3900,7 @@ export function MessagingView() {
                   Avant, aucun accès visible aux paramètres du compte. */}
               <button
                 onClick={() => setShowProfile(true)}
-                className="relative w-8 h-8 rounded-full overflow-hidden border border-[#C9A227]/50 hover:border-[#C9A227] transition-colors flex-shrink-0"
+                className="relative w-8 h-8 rounded-full overflow-hidden border border-[#C9A227]/50 hover:border-[#FF7A1A] transition-colors flex-shrink-0"
                 title="Mon profil — modifier ma photo et mes informations"
               >
                 {currentUserAvatar ? (
@@ -3910,7 +3910,7 @@ export function MessagingView() {
                     {getInitials(currentUserName)}
                   </span>
                 )}
-                <span className="absolute inset-0 bg-[#C9A227]/0 hover:bg-[#C9A227]/20 transition-colors flex items-center justify-center">
+                <span className="absolute inset-0 bg-[#C9A227]/0 hover:bg-[#FF7A1A]/20 transition-colors flex items-center justify-center">
                   <Camera className="w-3.5 h-3.5 text-white opacity-0 hover:opacity-100 drop-shadow" />
                 </span>
               </button>
@@ -3918,28 +3918,28 @@ export function MessagingView() {
               <div className="relative">
                 <button
                   onClick={() => setShowMoreMenu(!showMoreMenu)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-[#FAF6EF]/70"
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-[#F0E9DE]/70"
                 >
                   <MoreVertical className="w-4 h-4" />
                 </button>
                 {showMoreMenu && (
                   <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-stone-200 py-1 z-50">
-                    <button onClick={() => { setShowGlobalSearch(true); setShowMoreMenu(false); }} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#1E0F2B]">
+                    <button onClick={() => { setShowGlobalSearch(true); setShowMoreMenu(false); }} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#000000]">
                       <Search className="w-3.5 h-3.5" /> Recherche globale
                     </button>
-                    <button onClick={() => { setShowAnnouncements(true); setShowMoreMenu(false); }} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#1E0F2B]">
+                    <button onClick={() => { setShowAnnouncements(true); setShowMoreMenu(false); }} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#000000]">
                       <Megaphone className="w-3.5 h-3.5" /> Annonces officielles
                     </button>
-                    <button onClick={() => { setShowNewChannel(true); setShowMoreMenu(false); }} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#1E0F2B]">
+                    <button onClick={() => { setShowNewChannel(true); setShowMoreMenu(false); }} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#000000]">
                       <Plus className="w-3.5 h-3.5" /> Nouveau canal/groupe
                     </button>
-                    <button onClick={() => { setShowNotifPrefs(true); setShowMoreMenu(false); }} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#1E0F2B]">
+                    <button onClick={() => { setShowNotifPrefs(true); setShowMoreMenu(false); }} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#000000]">
                       <Bell className="w-3.5 h-3.5" /> Préférences notifications
                     </button>
-                    <button onClick={() => { setShowProfile(true); setShowMoreMenu(false); }} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#1E0F2B]">
+                    <button onClick={() => { setShowProfile(true); setShowMoreMenu(false); }} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#000000]">
                       <Settings className="w-3.5 h-3.5" /> Mon profil
                     </button>
-                    <button onClick={() => setDndEnabled(!dndEnabled)} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#1E0F2B]">
+                    <button onClick={() => setDndEnabled(!dndEnabled)} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#000000]">
                       {dndEnabled ? <BellOff className="w-3.5 h-3.5 text-red-500" /> : <Bell className="w-3.5 h-3.5" />}
                       {dndEnabled ? "DND activé" : "Activer DND"}
                     </button>
@@ -3950,12 +3950,12 @@ export function MessagingView() {
           </div>
           {/* Search bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#FAF6EF]/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#F0E9DE]/40" />
             <input
               value={convSearchQuery}
               onChange={(e) => setConvSearchQuery(e.target.value)}
               placeholder="Rechercher une conversation..."
-              className="w-full pl-9 pr-3 py-2 bg-white/10 border border-white/10 rounded-lg text-base md:text-xs text-[#FAF6EF] placeholder:text-[#FAF6EF]/40 outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+              className="w-full pl-9 pr-3 py-2 bg-white/10 border border-white/10 rounded-lg text-base md:text-xs text-[#F0E9DE] placeholder:text-[#F0E9DE]/40 outline-none focus:ring-2 focus:ring-[#C9A227]/30"
             />
           </div>
         </div>
@@ -3977,17 +3977,17 @@ export function MessagingView() {
                4xx/5xx. Distinct de l'état « vide » (base sans canaux). */
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <AlertCircle className="w-10 h-10 text-[#C9A227] mb-2" />
-              <p className="text-sm font-semibold text-[#1E0F2B]">
+              <p className="text-sm font-semibold text-[#000000]">
                 Impossible de charger les conversations
               </p>
-              <p className="text-xs text-[#8A8378] mt-1">
+              <p className="text-xs text-[#8A857C] mt-1">
                 {convError === 401
                   ? "Session expirée — rechargez la page pour vous reconnecter."
                   : `Erreur serveur (${convError}). Réessayez dans un instant.`}
               </p>
               <button
                 onClick={() => { setConvError(null); setLoadingConvs(true); loadConversations(); }}
-                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-xs font-medium hover:bg-[#3A1E4D] transition-colors"
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#000000] text-[#F0E9DE] text-xs font-medium hover:bg-[#161513] transition-colors"
               >
                 <Loader2 className="w-3 h-3" /> Réessayer
               </button>
@@ -3995,8 +3995,8 @@ export function MessagingView() {
           ) : filteredConversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <MessageSquare className="w-12 h-12 text-[#C9A227]/40 mb-3" />
-              <p className="text-sm font-semibold text-[#1E0F2B]">Aucune conversation</p>
-              <p className="text-xs text-[#8A8378] mt-1">Les canaux de la communauté apparaîtront ici</p>
+              <p className="text-sm font-semibold text-[#000000]">Aucune conversation</p>
+              <p className="text-xs text-[#8A857C] mt-1">Les canaux de la communauté apparaîtront ici</p>
             </div>
           ) : (
             <>
@@ -4052,11 +4052,11 @@ export function MessagingView() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center bg-[#FAF6EF]/80 backdrop-blur-sm"
+              className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center bg-[#F0E9DE]/80 backdrop-blur-sm"
             >
               <div className="border-2 border-dashed border-[#C9A227] rounded-3xl p-12 text-center max-w-md mx-4 bg-white/60">
                 <UploadCloud className="w-16 h-16 text-[#C9A227] mx-auto mb-3" />
-                <p className="text-lg font-bold text-[#1E0F2B]">
+                <p className="text-lg font-bold text-[#000000]">
                   Déposez vos fichiers ici
                 </p>
                 <p className="text-sm text-stone-600 mt-1">
@@ -4079,7 +4079,7 @@ export function MessagingView() {
                   contenu au même endroit quand il replie. */}
               <button
                 onClick={() => setMobileSidebarExpanded(true)}
-                className="lg:hidden p-1.5 -ml-1 rounded-lg hover:bg-stone-100 text-[#8A8378]"
+                className="lg:hidden p-1.5 -ml-1 rounded-lg hover:bg-stone-100 text-[#8A857C]"
                 aria-label="Voir toutes les conversations"
                 title="Voir toutes les conversations"
               >
@@ -4103,18 +4103,18 @@ export function MessagingView() {
                 )}
               </div>
               <div className="min-w-0">
-                <h3 className="font-bold text-[#1E0F2B] text-sm flex items-center gap-1.5 truncate">
+                <h3 className="font-bold text-[#000000] text-sm flex items-center gap-1.5 truncate">
                   {headerDisplayName || activeConv.name}
                   {activeConv.isEncrypted && <Lock className="w-3 h-3 text-[#C9A227] flex-shrink-0" />}
                 </h3>
                 {/* ⭐ V2.6.2 — Ligne d'info thématée (icônes lucide au lieu des
-                    emojis, ton chaud #8A8378 au lieu du gris stone).
+                    emojis, ton chaud #8A857C au lieu du gris stone).
                     ⭐ V3.4 — La ligne « N membres · N en ligne » est CLIQUABLE :
                     elle ouvre le panneau des membres du canal (façon Telegram /
                     WhatsApp — on tape sur l'en-tête pour voir qui est là). */}
                 <button
                   onClick={() => setShowMembersPanel(true)}
-                  className="text-xs text-[#8A8378] hover:text-[#1E0F2B] flex items-center gap-1 flex-wrap text-left group/members"
+                  className="text-xs text-[#8A857C] hover:text-[#000000] flex items-center gap-1 flex-wrap text-left group/members"
                   title="Voir les membres du canal"
                   aria-label="Voir les membres du canal"
                 >
@@ -4131,7 +4131,7 @@ export function MessagingView() {
                       </span>
                     ) : null;
                   })()}
-                  {mutedConversations.has(activeConv.id) && <> · <BellOff className="w-3 h-3 text-[#8A8378] inline" /> Muet</>}
+                  {mutedConversations.has(activeConv.id) && <> · <BellOff className="w-3 h-3 text-[#8A857C] inline" /> Muet</>}
                   {/* ⭐ V2.9 — Indicateur de synchro honnête : le temps réel
                       fonctionne (socket OU polling de secours) → badge vert.
                       En cas d'échec réseau → « Reconnexion… » en ambre. */}
@@ -4162,7 +4162,7 @@ export function MessagingView() {
                 aria-label="Membres du canal"
               >
                 <Users2 className="w-4 h-4" />
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full text-[9px] font-bold bg-[#C9A227] text-[#1E0F2B] border border-white">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full text-[9px] font-bold bg-[#C9A227] text-[#000000] border border-white">
                   {activeConv.participants.length > 99 ? "99+" : activeConv.participants.length}
                 </span>
               </button>
@@ -4251,10 +4251,10 @@ export function MessagingView() {
             compteur si plusieurs, liste déroulante pour tous les voir,
             désépinglage direct. Clic sur un aperçu → scroll vers le message. */}
         {pinnedPreviewMessages.length > 0 && activeConv && activeConv.type !== "VOICE" && (
-          <div className="relative bg-[#2A0E3D]/[0.04] border-b border-[#C9A227]/25">
+          <div className="relative bg-[#000000]/[0.04] border-b border-[#C9A227]/25">
             <button
               onClick={() => setPinnedListOpen(o => !o)}
-              className="w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-[#C9A227]/5 transition-colors"
+              className="w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-[#FF7A1A]/5 transition-colors"
               title="Voir les messages épinglés"
             >
               <span className="w-7 h-7 rounded-lg bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
@@ -4267,19 +4267,19 @@ export function MessagingView() {
                     : "Message épinglé"}
                 </span>
                 {/* Aperçu du message le plus récemment épinglé */}
-                <span className="block text-xs text-[#1E0F2B]/80 truncate leading-snug">
+                <span className="block text-xs text-[#000000]/80 truncate leading-snug">
                   <span className="font-semibold">{pinnedPreviewMessages[0].senderName}</span>
                   {" · "}
                   <span className="opacity-80">{summarizeMessage(pinnedPreviewMessages[0])}</span>
                 </span>
               </span>
-              <ChevronRight className={cn("w-4 h-4 text-[#8A8378] flex-shrink-0 transition-transform", pinnedListOpen && "rotate-90")} />
+              <ChevronRight className={cn("w-4 h-4 text-[#8A857C] flex-shrink-0 transition-transform", pinnedListOpen && "rotate-90")} />
             </button>
             {/* Liste déroulante de tous les messages épinglés */}
             {pinnedListOpen && (
               <div className="absolute left-0 right-0 top-full z-30 bg-white border border-[#C9A227]/25 border-t-0 rounded-b-xl shadow-xl max-h-72 overflow-y-auto">
                 {pinnedPreviewMessages.map(pm => (
-                  <div key={pm.id} className="px-4 py-2.5 flex items-start gap-3 hover:bg-[#FAF6EF] border-b border-[#8A8378]/10 last:border-b-0">
+                  <div key={pm.id} className="px-4 py-2.5 flex items-start gap-3 hover:bg-[#F0E9DE] border-b border-[#8A857C]/10 last:border-b-0">
                     <Pin className="w-3 h-3 text-[#A3821C] mt-1 flex-shrink-0" />
                     <button
                       className="min-w-0 flex-1 text-left"
@@ -4290,15 +4290,15 @@ export function MessagingView() {
                       }}
                       title="Aller au message"
                     >
-                      <p className="text-[11px] font-bold text-[#8C5FA8]">
+                      <p className="text-[11px] font-bold text-[#8A857C]">
                         {pm.senderName}
-                        <span className="font-normal text-[#8A8378] ml-1.5">{formatTime(pm.createdAt)}</span>
+                        <span className="font-normal text-[#8A857C] ml-1.5">{formatTime(pm.createdAt)}</span>
                       </p>
-                      <p className="text-xs text-[#1E0F2B]/85 line-clamp-2 leading-snug mt-0.5">{summarizeMessage(pm)}</p>
+                      <p className="text-xs text-[#000000]/85 line-clamp-2 leading-snug mt-0.5">{summarizeMessage(pm)}</p>
                     </button>
                     <button
                       onClick={() => handlePin(pm.id)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-[#8A8378] hover:text-red-600 flex-shrink-0 transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-[#8A857C] hover:text-red-600 flex-shrink-0 transition-colors"
                       title="Désépingler"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -4363,8 +4363,8 @@ export function MessagingView() {
           ) : activeMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <MessageSquare className="w-12 h-12 text-[#C9A227]/40 mb-3" />
-              <p className="text-sm font-semibold text-[#1E0F2B]">Aucun message dans ce canal</p>
-              <p className="text-xs text-[#8A8378] mt-1">Soyez le premier à écrire !</p>
+              <p className="text-sm font-semibold text-[#000000]">Aucun message dans ce canal</p>
+              <p className="text-xs text-[#8A857C] mt-1">Soyez le premier à écrire !</p>
             </div>
           ) : (
             /* ⭐ V2.8 — Colonne de messages PLEINE LARGEUR : la contrainte
@@ -4378,7 +4378,7 @@ export function MessagingView() {
                   <button
                     onClick={loadMoreMessages}
                     disabled={loadingMore}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white border border-stone-200 hover:border-[#C9A227]/40 hover:bg-[#C9A227]/5 text-xs font-medium text-[#1E0F2B] transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white border border-stone-200 hover:border-[#FF7A1A]/40 hover:bg-[#FF7A1A]/5 text-xs font-medium text-[#000000] transition-colors disabled:opacity-50"
                   >
                     {loadingMore ? (
                       <>
@@ -4398,7 +4398,7 @@ export function MessagingView() {
                 const isMine = msg.senderId === currentUserId;
                 const showDateSep = i === 0 || formatDateSeparator(activeMessages[i - 1].createdAt) !== formatDateSeparator(msg.createdAt);
                 // ⭐ V3.1 — COULEURS PROFESSIONNELLES PAR UTILISATEUR :
-                //   - MES messages        → violet maison #8C5FA8 (identité) ;
+                //   - MES messages        → violet maison #8A857C (identité) ;
                 //   - les AUTRES membres  → une couleur STABLE par utilisateur
                 //     (hash djb2 de son ID dans une palette harmonisée — or,
                 //     bleu océan, sarcelle, terracotta, prune, sauge, acier,
@@ -4426,7 +4426,7 @@ export function MessagingView() {
                         <div className="flex items-center justify-center my-5">
                           <div className="flex items-center gap-2 w-full max-w-[520px] mx-auto">
                             <div className="flex-1 h-px bg-[#C9A227]/25" />
-                            <span className="px-3.5 py-1.5 bg-white border border-[#C9A227]/30 rounded-full text-[10px] font-bold text-[#8A8378] uppercase tracking-wider shadow-sm">
+                            <span className="px-3.5 py-1.5 bg-white border border-[#C9A227]/30 rounded-full text-[10px] font-bold text-[#8A857C] uppercase tracking-wider shadow-sm">
                               {formatDateSeparator(msg.createdAt)}
                             </span>
                             <div className="flex-1 h-px bg-[#C9A227]/25" />
@@ -4451,7 +4451,7 @@ export function MessagingView() {
                         <div className="flex items-center justify-center my-5">
                           <div className="flex items-center gap-2 w-full max-w-[520px] mx-auto">
                             <div className="flex-1 h-px bg-[#C9A227]/25" />
-                            <span className="px-3.5 py-1.5 bg-white border border-[#C9A227]/30 rounded-full text-[10px] font-bold text-[#8A8378] uppercase tracking-wider shadow-sm">
+                            <span className="px-3.5 py-1.5 bg-white border border-[#C9A227]/30 rounded-full text-[10px] font-bold text-[#8A857C] uppercase tracking-wider shadow-sm">
                               {formatDateSeparator(msg.createdAt)}
                             </span>
                             <div className="flex-1 h-px bg-[#C9A227]/25" />
@@ -4471,7 +4471,7 @@ export function MessagingView() {
                       <div className="flex items-center justify-center my-5">
                         <div className="flex items-center gap-2 w-full max-w-[520px] mx-auto">
                           <div className="flex-1 h-px bg-[#C9A227]/25" />
-                          <span className="px-3.5 py-1.5 bg-white border border-[#C9A227]/30 rounded-full text-[10px] font-bold text-[#8A8378] uppercase tracking-wider shadow-sm">
+                          <span className="px-3.5 py-1.5 bg-white border border-[#C9A227]/30 rounded-full text-[10px] font-bold text-[#8A857C] uppercase tracking-wider shadow-sm">
                             {formatDateSeparator(msg.createdAt)}
                           </span>
                           <div className="flex-1 h-px bg-[#C9A227]/25" />
@@ -4542,8 +4542,8 @@ export function MessagingView() {
                               // min-content gonflait la bulle w-fit.
                               "mb-1.5 px-2 py-1 rounded-lg text-xs border-l-2 max-w-full min-w-0 overflow-hidden",
                               usePurpleBubble
-                                ? "bg-[#FAF6EF]/15 border-[#FAF6EF] text-[#FAF6EF]"
-                                : "bg-[#1E0F2B]/10 border-[#1E0F2B] text-[#1E0F2B]"
+                                ? "bg-[#F0E9DE]/15 border-[#F0E9DE] text-[#F0E9DE]"
+                                : "bg-[#000000]/10 border-[#000000] text-[#000000]"
                             )}>
                               <p className="font-semibold opacity-90">{msg.replyTo.senderName}</p>
                               <p className="opacity-75 truncate">{msg.replyTo.content}</p>
@@ -4572,8 +4572,8 @@ export function MessagingView() {
                             <div className={cn(
                               "px-3 py-2 rounded-xl border-l-4 my-1 max-w-full",
                               usePurpleBubble
-                                ? "bg-[#FAF6EF]/12 border-[#FAF6EF]"
-                                : "bg-[#1E0F2B]/10 border-[#1E0F2B]"
+                                ? "bg-[#F0E9DE]/12 border-[#F0E9DE]"
+                                : "bg-[#000000]/10 border-[#000000]"
                             )}>
                               <p className="text-xs font-bold opacity-90">{msg.verseRef}</p>
                               <p className="text-sm italic mt-0.5 whitespace-pre-wrap break-words">{msg.verseText}</p>
@@ -4596,17 +4596,17 @@ export function MessagingView() {
                               className={cn(
                                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors min-w-0",
                                 usePurpleBubble
-                                  ? "bg-[#2A0E3D]/40 hover:bg-[#2A0E3D]/60"
-                                  : "bg-[#1E0F2B]/10 hover:bg-[#1E0F2B]/20"
+                                  ? "bg-[#000000]/40 hover:bg-[#000000]/60"
+                                  : "bg-[#000000]/10 hover:bg-[#000000]/20"
                               )}>
                               <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0", getFileIcon(msg.attachmentName).color)}>
                                 {getFileIcon(msg.attachmentName).icon}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className={cn("text-xs font-semibold truncate", usePurpleBubble ? "text-[#FAF6EF]" : "text-[#1E0F2B]")}>{msg.attachmentName || "Fichier"}</p>
-                                <p className={cn("text-[10px]", usePurpleBubble ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/70")}>{formatFileSize(msg.attachmentSize)}</p>
+                                <p className={cn("text-xs font-semibold truncate", usePurpleBubble ? "text-[#F0E9DE]" : "text-[#000000]")}>{msg.attachmentName || "Fichier"}</p>
+                                <p className={cn("text-[10px]", usePurpleBubble ? "text-[#F0E9DE]/70" : "text-[#000000]/70")}>{formatFileSize(msg.attachmentSize)}</p>
                               </div>
-                              <Download className={cn("w-4 h-4 flex-shrink-0", usePurpleBubble ? "text-[#FAF6EF]" : "text-[#1E0F2B]")} />
+                              <Download className={cn("w-4 h-4 flex-shrink-0", usePurpleBubble ? "text-[#F0E9DE]" : "text-[#000000]")} />
                             </a>
                           ) : (
                             // ⭐ V2.1 — Rendu du contenu texte avec mentions surlignées
@@ -4622,7 +4622,7 @@ export function MessagingView() {
                           {/* Timestamp + edited — ⭐ V2.8 : lisibles sur or ET violet */}
                           <div className={cn(
                             "flex items-center gap-1 mt-0.5 justify-end",
-                            usePurpleBubble ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/60"
+                            usePurpleBubble ? "text-[#F0E9DE]/70" : "text-[#000000]/60"
                           )}>
                             {msg.editedAt && <span className="text-[9px] italic">modifié</span>}
                             {pinnedMessages.has(msg.id) && <Pin className="w-2.5 h-2.5" />}
@@ -4639,8 +4639,8 @@ export function MessagingView() {
                                 <span key={r.emoji} className={cn(
                                   "px-1.5 py-0.5 rounded-full text-xs border transition-colors",
                                   usePurpleBubble
-                                    ? "bg-[#FAF6EF]/15 border-[#FAF6EF]/25 text-[#FAF6EF]"
-                                    : "bg-[#1E0F2B]/10 border-[#1E0F2B]/20 text-[#1E0F2B]"
+                                    ? "bg-[#F0E9DE]/15 border-[#F0E9DE]/25 text-[#F0E9DE]"
+                                    : "bg-[#000000]/10 border-[#000000]/20 text-[#000000]"
                                 )}>
                                   {r.emoji} {r.count > 1 && <span className="text-[10px] font-bold">{r.count}</span>}
                                 </span>
@@ -4665,28 +4665,28 @@ export function MessagingView() {
                               {emoji}
                             </button>
                           ))}
-                          <div className="w-px h-4 bg-[#8A8378]/20 mx-0.5" />
-                          <button onClick={(e) => { e.stopPropagation(); setReplyTo(msg); }} className="p-1 hover:bg-[#C9A227]/10 rounded-full" title="Répondre">
-                            <Reply className="w-3.5 h-3.5 text-[#2A0E3D]" />
+                          <div className="w-px h-4 bg-[#8A857C]/20 mx-0.5" />
+                          <button onClick={(e) => { e.stopPropagation(); setReplyTo(msg); }} className="p-1 hover:bg-[#FF7A1A]/10 rounded-full" title="Répondre">
+                            <Reply className="w-3.5 h-3.5 text-[#000000]" />
                           </button>
                           {/* ⭐ V2.1 — Bouton Thread (ouvre le panneau latéral) */}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleOpenThread(msg); }}
                             className={cn(
-                              "relative p-1 hover:bg-[#C9A227]/10 rounded-full",
-                              threadParent?.id === msg.id ? "text-[#C9A227]" : "text-[#2A0E3D]"
+                              "relative p-1 hover:bg-[#FF7A1A]/10 rounded-full",
+                              threadParent?.id === msg.id ? "text-[#C9A227]" : "text-[#000000]"
                             )}
                             title="Répondre dans un thread"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
                             {threadReplyCount > 0 && (
-                              <span className="absolute -top-0.5 -right-0.5 px-1 min-w-[12px] h-3 flex items-center justify-center rounded-full bg-[#C9A227] text-[8px] font-bold text-[#1E0F2B]">
+                              <span className="absolute -top-0.5 -right-0.5 px-1 min-w-[12px] h-3 flex items-center justify-center rounded-full bg-[#C9A227] text-[8px] font-bold text-[#000000]">
                                 {threadReplyCount}
                               </span>
                             )}
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); setShowMsgMenu(prev => prev === msg.id ? null : msg.id); }} className="p-1 hover:bg-[#C9A227]/10 rounded-full" title="Plus d'actions">
-                            <MoreVertical className="w-3.5 h-3.5 text-[#2A0E3D]" />
+                          <button onClick={(e) => { e.stopPropagation(); setShowMsgMenu(prev => prev === msg.id ? null : msg.id); }} className="p-1 hover:bg-[#FF7A1A]/10 rounded-full" title="Plus d'actions">
+                            <MoreVertical className="w-3.5 h-3.5 text-[#000000]" />
                           </button>
                         </div>
 
@@ -4699,21 +4699,21 @@ export function MessagingView() {
                               isMine ? "right-0" : "left-0"
                             )}>
                               <button onClick={() => { handleEdit(msg); setShowMsgMenu(null); setShowActionsFor(null); }}
-                                className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors">
-                                <Edit2 className="w-3.5 h-3.5 text-[#8C5FA8]" /> Modifier
+                                className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-[#000000] hover:bg-[#F0E9DE] transition-colors">
+                                <Edit2 className="w-3.5 h-3.5 text-[#8A857C]" /> Modifier
                               </button>
                               <button onClick={() => { handlePin(msg.id); setShowMsgMenu(null); setShowActionsFor(null); }}
-                                className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors">
-                                <Pin className={cn("w-3.5 h-3.5", pinnedMessages.has(msg.id) ? "text-[#C9A227]" : "text-[#8C5FA8]")} />
+                                className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-[#000000] hover:bg-[#F0E9DE] transition-colors">
+                                <Pin className={cn("w-3.5 h-3.5", pinnedMessages.has(msg.id) ? "text-[#C9A227]" : "text-[#8A857C]")} />
                                 {pinnedMessages.has(msg.id) ? "Désépingler" : "Épingler"}
                               </button>
                               <button onClick={() => { setShowForwardModal(msg.id); setShowMsgMenu(null); setShowActionsFor(null); }}
-                                className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors">
-                                <Forward className="w-3.5 h-3.5 text-[#8C5FA8]" /> Transférer
+                                className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-[#000000] hover:bg-[#F0E9DE] transition-colors">
+                                <Forward className="w-3.5 h-3.5 text-[#8A857C]" /> Transférer
                               </button>
                               {(isMine || canDeleteAny) && (
                                 <button onClick={() => { setDeleteMenuFor(msg.id); setShowMsgMenu(null); }}
-                                  className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-red-600 hover:bg-red-50 border-t border-[#8A8378]/10 mt-1 transition-colors">
+                                  className="w-full px-4 py-2 text-left text-xs font-medium flex items-center gap-2.5 text-red-600 hover:bg-red-50 border-t border-[#8A857C]/10 mt-1 transition-colors">
                                   <Trash2 className="w-3.5 h-3.5" /> Supprimer…
                                 </button>
                               )}
@@ -4732,10 +4732,10 @@ export function MessagingView() {
                               "absolute z-40 top-2 w-60 bg-white rounded-xl shadow-2xl border border-red-200 overflow-hidden",
                               isMine ? "right-0" : "left-0"
                             )}>
-                              <p className="px-4 pt-3 pb-1.5 text-xs font-bold text-[#1E0F2B]">Supprimer ce message ?</p>
+                              <p className="px-4 pt-3 pb-1.5 text-xs font-bold text-[#000000]">Supprimer ce message ?</p>
                               <button onClick={() => handleDelete(msg.id, false)}
-                                className="w-full px-4 py-2.5 text-left text-xs font-medium flex items-center gap-2.5 text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors">
-                                <EyeOff className="w-3.5 h-3.5 text-[#8A8378]" /> Supprimer pour moi
+                                className="w-full px-4 py-2.5 text-left text-xs font-medium flex items-center gap-2.5 text-[#000000] hover:bg-[#F0E9DE] transition-colors">
+                                <EyeOff className="w-3.5 h-3.5 text-[#8A857C]" /> Supprimer pour moi
                               </button>
                               {(isMine || canDeleteAny) && (
                                 <button onClick={() => handleDelete(msg.id, true)}
@@ -4744,7 +4744,7 @@ export function MessagingView() {
                                 </button>
                               )}
                               <button onClick={() => setDeleteMenuFor(null)}
-                                className="w-full px-4 py-2 text-left text-xs text-[#8A8378] hover:bg-[#FAF6EF] border-t border-[#8A8378]/10 transition-colors">
+                                className="w-full px-4 py-2 text-left text-xs text-[#8A857C] hover:bg-[#F0E9DE] border-t border-[#8A857C]/10 transition-colors">
                                 Annuler
                               </button>
                             </div>
@@ -4775,7 +4775,7 @@ export function MessagingView() {
                         <span className="w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
                         <span className="w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                       </div>
-                      <span className="text-[11px] text-[#1E0F2B]/80">{typingLabel}</span>
+                      <span className="text-[11px] text-[#000000]/80">{typingLabel}</span>
                     </div>
                   </div>
                 </div>
@@ -4797,7 +4797,7 @@ export function MessagingView() {
                 Plus d'envoi automatique au collage — l'utilisateur garde le
                 contrôle (légende possible via le champ de saisie). */}
             {pendingFiles.length > 0 && (
-              <div className="mb-2 p-2.5 bg-[#FAF6EF] rounded-xl border border-[#C9A227]/30">
+              <div className="mb-2 p-2.5 bg-[#F0E9DE] rounded-xl border border-[#C9A227]/30">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[11px] font-bold text-[#A3821C] uppercase tracking-wide">
                     {pendingFiles.length} pièce{pendingFiles.length > 1 ? "s" : ""} jointe{pendingFiles.length > 1 ? "s" : ""} prête{pendingFiles.length > 1 ? "s" : ""}
@@ -4818,14 +4818,14 @@ export function MessagingView() {
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-1 px-2">
                           {getFileIcon(pf.file.name).icon}
-                          <p className="text-[9px] text-[#1E0F2B] truncate w-full text-center font-semibold">{pf.file.name}</p>
-                          <p className="text-[8px] text-[#8A8378]">{formatFileSize(pf.file.size)}</p>
+                          <p className="text-[9px] text-[#000000] truncate w-full text-center font-semibold">{pf.file.name}</p>
+                          <p className="text-[8px] text-[#8A857C]">{formatFileSize(pf.file.size)}</p>
                         </div>
                       )}
                       <button
                         onClick={() => removePendingFile(pf.id)}
                         disabled={uploadingFiles}
-                        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-[#2A0E3D] text-[#FAF6EF] flex items-center justify-center shadow-md hover:bg-red-600 transition-colors disabled:opacity-40"
+                        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-[#000000] text-[#F0E9DE] flex items-center justify-center shadow-md hover:bg-red-600 transition-colors disabled:opacity-40"
                         title="Retirer"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -4834,7 +4834,7 @@ export function MessagingView() {
                   ))}
                 </div>
                 {uploadingFiles && (
-                  <div className="flex items-center gap-2 mt-2 text-xs text-[#8C5FA8] font-medium">
+                  <div className="flex items-center gap-2 mt-2 text-xs text-[#8A857C] font-medium">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" /> Envoi en cours…
                   </div>
                 )}
@@ -4844,7 +4844,7 @@ export function MessagingView() {
             {(replyTo || editingMsg) && (
               <div className="mb-2 px-3 py-2 bg-stone-50 rounded-lg border-l-2 border-[#C9A227] flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-[#8C5FA8]">
+                  <p className="text-xs font-semibold text-[#8A857C]">
                     {editingMsg ? "✏️ Modification" : `↩ Réponse à ${replyTo?.senderName}`}
                   </p>
                   <p className="text-xs text-stone-500 truncate">{(editingMsg || replyTo)?.content}</p>
@@ -4874,7 +4874,7 @@ export function MessagingView() {
                 <button
                   onClick={sendRecording}
                   disabled={sendingVoice}
-                  className="p-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40 flex-shrink-0"
+                  className="p-2.5 rounded-xl bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A] transition-colors disabled:opacity-40 flex-shrink-0"
                   title="Envoyer le vocal"
                 >
                   {sendingVoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -5013,13 +5013,13 @@ export function MessagingView() {
                     emojis, champ de saisie, micro/envoi. */}
                 {(inputText.trim() || pendingFiles.length > 0) ? (
                   <button onClick={handleSend} disabled={sending || uploadingFiles}
-                    className="h-10 w-10 md:h-9 md:w-9 p-0 flex items-center justify-center rounded-xl bg-[#8C5FA8] text-[#FAF6EF] hover:bg-[#7B4FA0] disabled:opacity-30 transition-colors flex-shrink-0"
+                    className="h-10 w-10 md:h-9 md:w-9 p-0 flex items-center justify-center rounded-xl bg-[#8A857C] text-[#F0E9DE] hover:bg-[#6B675F] disabled:opacity-30 transition-colors flex-shrink-0"
                     title={pendingFiles.length > 0 ? "Envoyer les pièces jointes (+ légende)" : "Envoyer"}
                     aria-label="Envoyer">
                     {(sending || uploadingFiles) ? <Loader2 className="w-4.5 h-4.5 md:w-4 md:h-4 animate-spin" /> : <Send className="w-4.5 h-4.5 md:w-4 md:h-4" />}
                   </button>
                 ) : (
-                  <button onClick={startRecording} className="h-10 w-10 md:h-9 md:w-9 p-0 flex items-center justify-center rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors flex-shrink-0" title="Message vocal" aria-label="Enregistrer un message vocal">
+                  <button onClick={startRecording} className="h-10 w-10 md:h-9 md:w-9 p-0 flex items-center justify-center rounded-xl bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A] transition-colors flex-shrink-0" title="Message vocal" aria-label="Enregistrer un message vocal">
                     <Mic className="w-4.5 h-4.5 md:w-4 md:h-4" />
                   </button>
                 )}
@@ -5041,7 +5041,7 @@ export function MessagingView() {
             className={cn(
               "fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] px-5 py-3 rounded-xl shadow-2xl border flex items-center gap-2.5 max-w-[90vw]",
               toastMsg.kind === "success"
-                ? "bg-[#2A0E3D] border-[#C9A227]/50 text-[#FAF6EF]"
+                ? "bg-[#000000] border-[#C9A227]/50 text-[#F0E9DE]"
                 : "bg-red-600 border-red-400/50 text-white"
             )}
             role="status"
@@ -5087,7 +5087,7 @@ export function MessagingView() {
                   {globalSearchResults.messages.map((m: any) => (
                     <button key={m.id} onClick={() => { setActiveConvId(m.channelId); setShowGlobalSearch(false); }}
                       className="w-full text-left p-2 hover:bg-stone-50 rounded-lg">
-                      <p className="text-sm text-[#1E0F2B] truncate">{m.content}</p>
+                      <p className="text-sm text-[#000000] truncate">{m.content}</p>
                       <p className="text-xs text-stone-400">{m.senderName} · {m.channelName}</p>
                     </button>
                   ))}
@@ -5099,7 +5099,7 @@ export function MessagingView() {
                   {globalSearchResults.channels.map((c: any) => (
                     <button key={c.id} onClick={() => { setActiveConvId(c.id); setShowGlobalSearch(false); }}
                       className="w-full text-left p-2 hover:bg-stone-50 rounded-lg">
-                      <p className="text-sm font-semibold text-[#1E0F2B]">{c.name}</p>
+                      <p className="text-sm font-semibold text-[#000000]">{c.name}</p>
                       <p className="text-xs text-stone-400">{c.type}</p>
                     </button>
                   ))}
@@ -5114,7 +5114,7 @@ export function MessagingView() {
                         {getInitials(u.name || "?")}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[#1E0F2B] flex items-center gap-1.5">
+                        <p className="text-sm font-semibold text-[#000000] flex items-center gap-1.5">
                           {u.name}
                           {/* ⭐ V3.13 — Icône distinctive des super admins. */}
                           {u.role === "SUPER_ADMIN" && (
@@ -5184,7 +5184,7 @@ export function MessagingView() {
         <Modal onClose={() => setShowNotifPrefs(false)} title="Préférences de notifications">
           <div className="space-y-3">
             <label className="flex items-center justify-between p-3 bg-stone-50 rounded-xl cursor-pointer">
-              <span className="text-sm font-medium text-[#1E0F2B]">Ne pas déranger (DND)</span>
+              <span className="text-sm font-medium text-[#000000]">Ne pas déranger (DND)</span>
               <input type="checkbox" checked={dndEnabled} onChange={(e) => setDndEnabled(e.target.checked)} className="w-5 h-5" />
             </label>
             {mutedConversations.size > 0 && (
@@ -5234,7 +5234,7 @@ export function MessagingView() {
                 <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs", getAvatarColor(c.name))}>
                   {getInitials(c.name)}
                 </div>
-                <span className="text-sm font-medium text-[#1E0F2B]">{c.name}</span>
+                <span className="text-sm font-medium text-[#000000]">{c.name}</span>
               </button>
             ))}
           </div>
@@ -5352,7 +5352,7 @@ export function MessagingView() {
                   label: "Image",
                   desc: "Galerie / photo",
                   icon: <ImageIcon className="w-6 h-6" />,
-                  color: "#8C5FA8",
+                  color: "#8A857C",
                   onClick: () => { setAttachOpen(false); imageInputRef.current?.click(); },
                 },
                 {
@@ -5379,7 +5379,7 @@ export function MessagingView() {
                   label: "Programmé",
                   desc: "Envoi différé",
                   icon: <Calendar className="w-6 h-6" />,
-                  color: "#5B21B6",
+                  color: "#A3821C",
                   onClick: () => setAttachPanel("schedule"),
                 },
                 {
@@ -5387,7 +5387,7 @@ export function MessagingView() {
                   label: "Verset",
                   desc: "Partager la Bible",
                   icon: <BookOpen className="w-6 h-6" />,
-                  color: "#2A0E3D",
+                  color: "#000000",
                   onClick: () => {
                     // ⭐ V2.6 — Ouvre la Bible INTÉGRÉE : l'utilisateur
                     // choisit son verset puis clique sur l'icône d'envoi
@@ -5401,7 +5401,7 @@ export function MessagingView() {
                 <button
                   key={tile.key}
                   onClick={tile.onClick}
-                  className="flex flex-col items-center gap-1.5 p-4 rounded-2xl border border-stone-200 hover:border-[#C9A227]/50 hover:bg-[#C9A227]/5 transition-all cursor-pointer group"
+                  className="flex flex-col items-center gap-1.5 p-4 rounded-2xl border border-stone-200 hover:border-[#FF7A1A]/50 hover:bg-[#FF7A1A]/5 transition-all cursor-pointer group"
                 >
                   <div
                     className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105"
@@ -5409,7 +5409,7 @@ export function MessagingView() {
                   >
                     {tile.icon}
                   </div>
-                  <span className="text-xs font-bold text-[#1E0F2B]">{tile.label}</span>
+                  <span className="text-xs font-bold text-[#000000]">{tile.label}</span>
                   <span className="text-[10px] text-stone-400">{tile.desc}</span>
                 </button>
               ))}
@@ -5422,7 +5422,7 @@ export function MessagingView() {
               <div className="px-1 pb-2">
                 <button
                   onClick={() => setAttachPanel("menu")}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#C9A227] transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#FF7A1A] transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" /> Retour
                 </button>
@@ -5446,13 +5446,13 @@ export function MessagingView() {
             <div className="space-y-3">
               <button
                 onClick={() => setAttachPanel("menu")}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#C9A227] transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#FF7A1A] transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Retour
               </button>
               <div className="px-3 py-2 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/20 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
-                <p className="text-[11px] text-[#1E0F2B]/70">
+                <p className="text-[11px] text-[#000000]/70">
                   Le sondage apparaîtra comme un message votable — cliquez une option pour voter.
                 </p>
               </div>
@@ -5532,7 +5532,7 @@ export function MessagingView() {
                   }
                 }}
                 disabled={!pollQuestion.trim() || submittingPoll}
-                className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-40 transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-[#C9A227] text-[#000000] rounded-xl text-sm font-bold hover:bg-[#FF7A1A] disabled:opacity-40 transition-colors cursor-pointer"
               >
                 {submittingPoll ? "Création..." : "Créer le sondage"}
               </button>
@@ -5544,13 +5544,13 @@ export function MessagingView() {
             <div className="space-y-3">
               <button
                 onClick={() => setAttachPanel("menu")}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#C9A227] transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#FF7A1A] transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Retour
               </button>
-              <div className="px-3 py-2 rounded-xl bg-[#5B21B6]/5 border border-[#5B21B6]/20 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#5B21B6] flex-shrink-0" />
-                <p className="text-[11px] text-[#1E0F2B]/70">
+              <div className="px-3 py-2 rounded-xl bg-[#A3821C]/5 border border-[#A3821C]/20 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#A3821C] flex-shrink-0" />
+                <p className="text-[11px] text-[#000000]/70">
                   Le message sera envoyé automatiquement à la date choisie.
                 </p>
               </div>
@@ -5593,7 +5593,7 @@ export function MessagingView() {
                   }
                 }}
                 disabled={!scheduleContent.trim() || !scheduleAt || submittingSchedule}
-                className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-40 transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-[#C9A227] text-[#000000] rounded-xl text-sm font-bold hover:bg-[#FF7A1A] disabled:opacity-40 transition-colors cursor-pointer"
               >
                 {submittingSchedule ? "Programmation..." : "Programmer l'envoi"}
               </button>
@@ -5645,7 +5645,7 @@ export function MessagingView() {
                         className="flex flex-col items-center justify-center w-full h-full text-stone-500 hover:bg-stone-100"
                         title={`Vidéo: ${m.attachmentName}`}
                       >
-                        <div className="w-10 h-10 rounded-full bg-[#1E0F2B] flex items-center justify-center text-white mb-1">
+                        <div className="w-10 h-10 rounded-full bg-[#000000] flex items-center justify-center text-white mb-1">
                           <Play className="w-4 h-4" />
                         </div>
                         <span className="text-[9px] truncate px-1 w-full text-center">{m.attachmentName || "Vidéo"}</span>
@@ -5810,7 +5810,7 @@ function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversa
 }) {
   return (
     <>
-      <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
+      <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A857C] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
         {icon} {title}
         {/* ⭐ V2.9 — Indicateur DIRECT EN COURS sur la section des canaux
             vocaux : pastille verte qui clignote + photo du diffuseur. */}
@@ -5843,8 +5843,8 @@ function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversa
             className={cn(
               "w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors cursor-pointer group border-l-[3px]",
               isActive
-                ? "bg-[#FAF6EF] border-[#C9A227]"
-                : "border-transparent hover:bg-[#FAF6EF]/70"
+                ? "bg-[#F0E9DE] border-[#C9A227]"
+                : "border-transparent hover:bg-[#F0E9DE]/70"
             )}>
             <div className="relative flex-shrink-0">
               {displayAvatar ? (
@@ -5871,30 +5871,30 @@ function ConvSection({ title, icon, convs, activeConvId, onSelect, mutedConversa
             <div className="flex-1 min-w-0">
               {/* Ligne 1 : nom + heure du dernier message (façon WhatsApp) */}
               <div className="flex items-baseline justify-between gap-2">
-                <p className="text-[15px] font-semibold text-[#1E0F2B] truncate leading-tight">{displayName}</p>
+                <p className="text-[15px] font-semibold text-[#000000] truncate leading-tight">{displayName}</p>
                 <span className={cn(
                   "text-[11px] leading-none flex-shrink-0 font-medium",
-                  conv.unreadCount > 0 ? "text-[#C9A227] font-bold" : "text-[#8A8378]"
+                  conv.unreadCount > 0 ? "text-[#C9A227] font-bold" : "text-[#8A857C]"
                 )}>
                   {formatConvTime(conv.lastMessageAt)}
                 </span>
               </div>
               {/* Ligne 2 : aperçu + badges alignés en bas */}
               <div className="flex items-center justify-between gap-2 mt-1">
-                <p className="text-[13px] text-[#8A8378] truncate leading-snug flex items-center gap-1 min-w-0">
+                <p className="text-[13px] text-[#8A857C] truncate leading-snug flex items-center gap-1 min-w-0">
                   {conv.type === "CHANNEL" && <Hash className="w-3 h-3 text-[#C9A227]/70 flex-shrink-0" />}
                   {conv.type === "GROUP" && <Users className="w-3 h-3 text-[#C9A227]/70 flex-shrink-0" />}
-                  {conv.type === "PASTORS" && <Users className="w-3 h-3 text-[#5B21B6] flex-shrink-0" />}
-                  {conv.type === "DIRECT" && <MessageCircle className="w-3 h-3 text-[#8C5FA8]/70 flex-shrink-0" />}
+                  {conv.type === "PASTORS" && <Users className="w-3 h-3 text-[#A3821C] flex-shrink-0" />}
+                  {conv.type === "DIRECT" && <MessageCircle className="w-3 h-3 text-[#8A857C]/70 flex-shrink-0" />}
                   <span className="truncate">{conv.lastMessagePreview || conv.description || "Aucun message"}</span>
                 </p>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   {conv.isEncrypted && <span className="text-[9px] text-[#C9A227] font-bold bg-[#C9A227]/10 rounded px-1 py-px">E2E</span>}
-                  {isMuted && <BellOff className="w-3.5 h-3.5 text-[#8A8378]" />}
+                  {isMuted && <BellOff className="w-3.5 h-3.5 text-[#8A857C]" />}
                   {/* ⭐ V2.1 — Badge unread (calculé depuis lastReadAt, incrémenté
                       en temps réel via Socket.io) */}
                   {conv.unreadCount > 0 && (
-                    <span className="px-1.5 min-w-[20px] h-[20px] flex items-center justify-center rounded-full text-[10px] font-bold bg-[#C9A227] text-[#1E0F2B] shadow-sm">
+                    <span className="px-1.5 min-w-[20px] h-[20px] flex items-center justify-center rounded-full text-[10px] font-bold bg-[#C9A227] text-[#000000] shadow-sm">
                       {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
                     </span>
                   )}
@@ -5913,7 +5913,7 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-bold text-[#1E0F2B]">{title}</h3>
+          <h3 className="text-base font-bold text-[#000000]">{title}</h3>
           <button onClick={onClose} className="p-1 hover:bg-stone-100 rounded-lg"><X className="w-4 h-4 text-stone-500" /></button>
         </div>
         {children}
@@ -5993,12 +5993,12 @@ function PollMessage({
     <div className="w-full max-w-[320px]">
       {/* En-tête du sondage — ⭐ V2.8 : couleurs adaptées à la bulle */}
       <div className="flex items-center gap-2 mb-2">
-        <BarChart3 className={cn("w-3.5 h-3.5 flex-shrink-0", purple ? "text-[#FAF6EF]" : "text-[#1E0F2B]")} />
-        <span className={cn("text-[10px] font-bold uppercase tracking-wider", purple ? "text-[#FAF6EF]/80" : "text-[#1E0F2B]/70")}>
+        <BarChart3 className={cn("w-3.5 h-3.5 flex-shrink-0", purple ? "text-[#F0E9DE]" : "text-[#000000]")} />
+        <span className={cn("text-[10px] font-bold uppercase tracking-wider", purple ? "text-[#F0E9DE]/80" : "text-[#000000]/70")}>
           Sondage {poll.isMulti ? "· choix multiple" : ""}
         </span>
       </div>
-      <p className={cn("text-sm font-bold mb-3", purple ? "text-[#FAF6EF]" : "text-[#1E0F2B]")}>{poll.question}</p>
+      <p className={cn("text-sm font-bold mb-3", purple ? "text-[#F0E9DE]" : "text-[#000000]")}>{poll.question}</p>
 
       {/* Options avec barres de progression */}
       <div className="space-y-1.5">
@@ -6015,11 +6015,11 @@ function PollMessage({
                 "relative w-full text-left px-3 py-2 rounded-lg border transition-all overflow-hidden group cursor-pointer disabled:opacity-60",
                 purple
                   ? myVote
-                    ? "border-[#FAF6EF]/60 bg-[#FAF6EF]/10"
-                    : "border-[#FAF6EF]/25 hover:border-[#FAF6EF]/50 bg-[#FAF6EF]/[0.04]"
+                    ? "border-[#F0E9DE]/60 bg-[#F0E9DE]/10"
+                    : "border-[#F0E9DE]/25 hover:border-[#F0E9DE]/50 bg-[#F0E9DE]/[0.04]"
                   : myVote
-                    ? "border-[#1E0F2B]/50 bg-[#1E0F2B]/[0.06]"
-                    : "border-[#1E0F2B]/25 hover:border-[#1E0F2B]/50 bg-[#1E0F2B]/[0.04]"
+                    ? "border-[#000000]/50 bg-[#000000]/[0.06]"
+                    : "border-[#000000]/25 hover:border-[#000000]/50 bg-[#000000]/[0.04]"
               )}
               title={myVote ? "Votre vote (cliquez pour changer)" : "Voter pour cette option"}
             >
@@ -6027,16 +6027,16 @@ function PollMessage({
               <div
                 className={cn(
                   "absolute inset-y-0 left-0 transition-all duration-500",
-                  purple ? "bg-[#FAF6EF]/20" : "bg-[#1E0F2B]/15"
+                  purple ? "bg-[#F0E9DE]/20" : "bg-[#000000]/15"
                 )}
                 style={{ width: `${pct}%` }}
               />
               <div className="relative flex items-center justify-between gap-2">
-                <span className={cn("text-sm font-medium truncate flex items-center gap-1.5", purple ? "text-[#FAF6EF]" : "text-[#1E0F2B]")}>
-                  {myVote && <Check className={cn("w-3 h-3 flex-shrink-0", purple ? "text-[#FAF6EF]" : "text-[#1E0F2B]")} />}
+                <span className={cn("text-sm font-medium truncate flex items-center gap-1.5", purple ? "text-[#F0E9DE]" : "text-[#000000]")}>
+                  {myVote && <Check className={cn("w-3 h-3 flex-shrink-0", purple ? "text-[#F0E9DE]" : "text-[#000000]")} />}
                   {o.label}
                 </span>
-                <span className={cn("text-[10px] font-bold flex-shrink-0", purple ? "text-[#FAF6EF]/80" : "text-[#1E0F2B]/70")}>
+                <span className={cn("text-[10px] font-bold flex-shrink-0", purple ? "text-[#F0E9DE]/80" : "text-[#000000]/70")}>
                   {votes > 0 && `${pct}% · ${votes}`}
                 </span>
               </div>
@@ -6047,12 +6047,12 @@ function PollMessage({
 
       {/* Résultat global */}
       <div className="flex items-center justify-between mt-2.5">
-        <span className={cn("text-[10px]", purple ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/60")}>
+        <span className={cn("text-[10px]", purple ? "text-[#F0E9DE]/70" : "text-[#000000]/60")}>
           {totalVotes === 0
             ? "Aucun vote — cliquez une option"
             : `${totalVotes} vote${totalVotes > 1 ? "s" : ""}`}
         </span>
-        <span className={cn("text-[10px] italic", purple ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/60")}>
+        <span className={cn("text-[10px] italic", purple ? "text-[#F0E9DE]/70" : "text-[#000000]/60")}>
           {poll.isMulti ? "Plusieurs réponses possibles" : "Une seule réponse"}
         </span>
       </div>
@@ -6132,7 +6132,7 @@ function AudioPlayer({ src, duration, attachmentName, variant = "gold" }: { src:
         aria-label={playing ? "Mettre en pause" : "Lire le message vocal"}
         className={cn(
           "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors shadow-sm",
-          purple ? "bg-[#2A0E3D] hover:bg-[#3A1E4D]" : "bg-[#1E0F2B] hover:bg-[#2A0E3D]"
+          purple ? "bg-[#000000] hover:bg-[#161513]" : "bg-[#000000] hover:bg-[#000000]"
         )}>
         {playing ? <Pause className="w-4 h-4 text-[#C9A227]" fill="currentColor" /> : <Play className="w-4 h-4 text-[#C9A227] fill-current" />}
       </button>
@@ -6152,7 +6152,7 @@ function AudioPlayer({ src, duration, attachmentName, variant = "gold" }: { src:
                 "flex-1 rounded-full transition-colors",
                 i < playedBars
                   ? "bg-[#C9A227]"
-                  : purple ? "bg-[#FAF6EF]/40" : "bg-[#1E0F2B]/25"
+                  : purple ? "bg-[#F0E9DE]/40" : "bg-[#000000]/25"
               )}
               style={{ height: `${Math.round(h * 100)}%` }}
             />
@@ -6160,7 +6160,7 @@ function AudioPlayer({ src, duration, attachmentName, variant = "gold" }: { src:
         </div>
         {/* ⭐ V3.42 — min-w-0 : les durées + nom de fichier (truncate, nowrap)
             doivent pouvoir rétrécir — sinon min-content ~200px+. */}
-        <div className={cn("flex items-center justify-between min-w-0 text-[11px] tabular-nums px-0.5", purple ? "text-[#FAF6EF]/80" : "text-[#1E0F2B]/70")}>
+        <div className={cn("flex items-center justify-between min-w-0 text-[11px] tabular-nums px-0.5", purple ? "text-[#F0E9DE]/80" : "text-[#000000]/70")}>
           <span>{formatSec(currentTime)}</span>
           {attachmentName && (
             <span className="truncate max-w-[120px] text-[10px] opacity-70">{attachmentName}</span>
@@ -6172,7 +6172,7 @@ function AudioPlayer({ src, duration, attachmentName, variant = "gold" }: { src:
         aria-label="Télécharger l'audio"
         className={cn(
           "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-          purple ? "hover:bg-[#FAF6EF]/20 text-[#FAF6EF]" : "hover:bg-[#1E0F2B]/10 text-[#1E0F2B]"
+          purple ? "hover:bg-[#F0E9DE]/20 text-[#F0E9DE]" : "hover:bg-[#000000]/10 text-[#000000]"
         )}
         title="Télécharger">
         <Download className="w-4 h-4" />
@@ -6194,7 +6194,7 @@ function AnnouncementsModal({ onClose }: { onClose: () => void }) {
        <div className="space-y-3 max-h-96 overflow-y-auto">
          {announcements.map(a => (
            <div key={a.id} className="p-3 bg-stone-50 rounded-xl border-l-2 border-[#C9A227]">
-             <p className="font-bold text-[#1E0F2B] text-sm">{a.title}</p>
+             <p className="font-bold text-[#000000] text-sm">{a.title}</p>
              <p className="text-xs text-stone-600 mt-1">{a.body}</p>
              <p className="text-[10px] text-stone-400 mt-1">{a.authorName} · {formatDateSeparator(a.publishedAt)}</p>
            </div>
@@ -6267,13 +6267,13 @@ function NewChannelModal({ onClose, onCreated }: { onClose: () => void; onCreate
         {/* Indicateur de la communauté cible (communityId résolu) */}
         <div className="px-3 py-2 bg-[#C9A227]/5 border border-[#C9A227]/20 rounded-xl flex items-center gap-2">
           <Users2 className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
-          <span className="text-xs text-[#1E0F2B]">
+          <span className="text-xs text-[#000000]">
             Communauté : <span className="font-semibold">{communityName || communityId === "default" ? (communityName || "Par défaut") : communityId}</span>
           </span>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setType("GROUP")} className={cn("flex-1 py-2 rounded-xl text-sm font-semibold", type === "GROUP" ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-stone-100 text-stone-600")}>Groupe</button>
-          <button onClick={() => setType("CHANNEL")} className={cn("flex-1 py-2 rounded-xl text-sm font-semibold", type === "CHANNEL" ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-stone-100 text-stone-600")}>Canal</button>
+          <button onClick={() => setType("GROUP")} className={cn("flex-1 py-2 rounded-xl text-sm font-semibold", type === "GROUP" ? "bg-[#C9A227] text-[#000000]" : "bg-stone-100 text-stone-600")}>Groupe</button>
+          <button onClick={() => setType("CHANNEL")} className={cn("flex-1 py-2 rounded-xl text-sm font-semibold", type === "CHANNEL" ? "bg-[#C9A227] text-[#000000]" : "bg-stone-100 text-stone-600")}>Canal</button>
         </div>
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Nom..." className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20" />
         <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description..." className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none" rows={2} />
@@ -6281,7 +6281,7 @@ function NewChannelModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <input type="checkbox" checked={isEncrypted} onChange={e => setIsEncrypted(e.target.checked)} className="w-5 h-5" />
           <span className="text-sm">🔒 Chiffré E2E (canal restreint)</span>
         </label>
-        <button onClick={handleCreate} disabled={!name.trim() || creating} className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-30">
+        <button onClick={handleCreate} disabled={!name.trim() || creating} className="w-full py-2.5 bg-[#C9A227] text-[#000000] rounded-xl text-sm font-bold hover:bg-[#FF7A1A] disabled:opacity-30">
           {creating ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Créer"}
         </button>
       </div>
@@ -6526,7 +6526,7 @@ function MembersPanel({
         <button
           onClick={() => onOpenProfile(p.userId)}
           className={cn(
-            "w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors hover:bg-[#FAF6EF]/70",
+            "w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors hover:bg-[#F0E9DE]/70",
             isMe && "bg-[#C9A227]/[0.06]"
           )}
           title={`Profil de ${p.name || "Membre"}`}
@@ -6564,16 +6564,16 @@ function MembersPanel({
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#1E0F2B] truncate flex items-center gap-1.5">
+            <p className="text-sm font-semibold text-[#000000] truncate flex items-center gap-1.5">
               <span className="truncate">{p.name || "Membre"}</span>
               {isMe && (
-                <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-[#C9A227]/15 text-[#8C5FA8]">
+                <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-[#C9A227]/15 text-[#8A857C]">
                   Vous
                 </span>
               )}
               {/* ⭐ V3.13 — Badge « Admin principal » : super admin du site. */}
               {estSuperAdminGlobal && (
-                <span className="flex-shrink-0 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-[#C9A227]/20 text-[#8C5FA8]" title="Administrateur principal du Mouvement">
+                <span className="flex-shrink-0 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-[#C9A227]/20 text-[#8A857C]" title="Administrateur principal du Mouvement">
                   <Crown className="w-2.5 h-2.5 text-[#C9A227]" /> Admin
                 </span>
               )}
@@ -6585,7 +6585,7 @@ function MembersPanel({
                 </span>
               )}
             </p>
-            <p className="text-xs text-[#8A8378] truncate flex items-center gap-1.5 mt-0.5">
+            <p className="text-xs text-[#8A857C] truncate flex items-center gap-1.5 mt-0.5">
               {/* Badge du rôle EFFECTIF (canal ou global) */}
               <span
                 className="inline-flex items-center gap-1 px-1.5 py-px rounded-full font-semibold"
@@ -6597,7 +6597,7 @@ function MembersPanel({
               </span>
               {/* Badge du rôle GLOBAL (Pasteur…) si distinct et notable */}
               {globalLabel && !estAdminEffectif(p) && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-px rounded-full bg-[#8C5FA8]/10 text-[#8C5FA8] font-semibold">
+                <span className="inline-flex items-center gap-1 px-1.5 py-px rounded-full bg-[#8A857C]/10 text-[#8A857C] font-semibold">
                   <Sparkles className="w-2.5 h-2.5" />{globalLabel}
                 </span>
               )}
@@ -6609,7 +6609,7 @@ function MembersPanel({
           </div>
           {/* ⭐ V3.5 — Chevron : le clic ouvre le PROFIL COMPLET (bio,
               pays/ville, actions privées, blocage) — comme Telegram. */}
-          <ChevronRight className="w-4 h-4 text-[#8A8378]/70 flex-shrink-0" />
+          <ChevronRight className="w-4 h-4 text-[#8A857C]/70 flex-shrink-0" />
         </button>
       </div>
     );
@@ -6617,7 +6617,7 @@ function MembersPanel({
 
   return (
     <div
-      className="fixed inset-0 bg-[#1A0826]/60 backdrop-blur-[2px] flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-[#000000]/60 backdrop-blur-[2px] flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
@@ -6639,8 +6639,8 @@ function MembersPanel({
                 )}
               </div>
               <div className="min-w-0">
-                <h3 className="font-bold text-[#1E0F2B] text-base truncate">{conversation.name}</h3>
-                <p className="text-xs text-[#8A8378] flex items-center gap-1.5">
+                <h3 className="font-bold text-[#000000] text-base truncate">{conversation.name}</h3>
+                <p className="text-xs text-[#8A857C] flex items-center gap-1.5">
                   <Users2 className="w-3 h-3 text-[#C9A227]/70" />
                   {participants.length} membres
                   {onlineCount > 0 && (
@@ -6661,8 +6661,8 @@ function MembersPanel({
                   className={cn(
                     "p-1.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-colors",
                     tab === "invite"
-                      ? "bg-[#C9A227]/15 text-[#8C5FA8]"
-                      : "hover:bg-[#C9A227]/10 text-[#8C5FA8]"
+                      ? "bg-[#C9A227]/15 text-[#8A857C]"
+                      : "hover:bg-[#FF7A1A]/10 text-[#8A857C]"
                   )}
                   title={
                     isCercle
@@ -6676,7 +6676,7 @@ function MembersPanel({
               )}
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg hover:bg-stone-100 text-[#8A8378]"
+                className="p-1.5 rounded-lg hover:bg-stone-100 text-[#8A857C]"
                 aria-label="Fermer"
               >
                 <X className="w-5 h-5" />
@@ -6695,7 +6695,7 @@ function MembersPanel({
                 onClick={() => setTab("members")}
                 className={cn(
                   "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors",
-                  tab === "members" ? "bg-white shadow-sm text-[#1E0F2B]" : "text-[#8A8378] hover:text-[#1E0F2B]"
+                  tab === "members" ? "bg-white shadow-sm text-[#000000]" : "text-[#8A857C] hover:text-[#000000]"
                 )}
               >
                 Membres ({participants.length})
@@ -6704,7 +6704,7 @@ function MembersPanel({
                 onClick={() => setTab("invite")}
                 className={cn(
                   "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1",
-                  tab === "invite" ? "bg-white shadow-sm text-[#1E0F2B]" : "text-[#8A8378] hover:text-[#1E0F2B]"
+                  tab === "invite" ? "bg-white shadow-sm text-[#000000]" : "text-[#8A857C] hover:text-[#000000]"
                 )}
               >
                 <UserPlus className="w-3.5 h-3.5" /> Inviter
@@ -6716,10 +6716,10 @@ function MembersPanel({
               NON habilités (l'invitation est réservée aux administrateurs
               principaux — PAM, Pasteur Kongo, admins). */}
           {isDirect === false && isCercle && !cercleGuardian && (
-            <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#2A0E3D]/[0.04] border border-[#2A0E3D]/10">
-              <Lock className="w-3.5 h-3.5 text-[#8C5FA8] flex-shrink-0 mt-0.5" />
-              <p className="text-[11px] text-[#8A8378] leading-snug">
-                <b className="text-[#1E0F2B]">Cercle restreint</b> — seuls les
+            <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#000000]/[0.04] border border-[#000000]/10">
+              <Lock className="w-3.5 h-3.5 text-[#8A857C] flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#8A857C] leading-snug">
+                <b className="text-[#000000]">Cercle restreint</b> — seuls les
                 administrateurs principaux peuvent ajouter des membres dans ce
                 canal.
               </p>
@@ -6762,9 +6762,9 @@ function MembersPanel({
             {isCercle && (
               <div className="mx-3 mt-3 px-3 py-2 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/25 flex items-start gap-2">
                 <Shield className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
-                <p className="text-[11px] text-[#8A8378] leading-snug">
-                  <b className="text-[#1E0F2B]">Cercle restreint</b> — en tant
-                  qu’administrateur principal, vous ajoutez <b className="text-[#1E0F2B]">qui
+                <p className="text-[11px] text-[#8A857C] leading-snug">
+                  <b className="text-[#000000]">Cercle restreint</b> — en tant
+                  qu’administrateur principal, vous ajoutez <b className="text-[#000000]">qui
                   vous voulez</b> : tout membre de la plateforme peut rejoindre ce
                   cercle.
                 </p>
@@ -6779,16 +6779,16 @@ function MembersPanel({
             {inviteLoading && invitable.length === 0 && (
               <div className="py-10 flex flex-col items-center gap-2">
                 <Loader2 className="w-6 h-6 text-[#C9A227] animate-spin" />
-                <p className="text-xs text-[#8A8378]">Recherche des membres invitable…</p>
+                <p className="text-xs text-[#8A857C]">Recherche des membres invitable…</p>
               </div>
             )}
             {!inviteLoading && invitable.length === 0 && (
               <div className="py-10 px-4 text-center">
                 <UserCheck className="w-8 h-8 text-[#C9A227]/40 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-[#1E0F2B]">
+                <p className="text-sm font-semibold text-[#000000]">
                   {inviteQuery.trim() ? "Aucun membre trouvé" : "Tous les membres sont déjà ici"}
                 </p>
-                <p className="text-xs text-[#8A8378] mt-1">
+                <p className="text-xs text-[#8A857C] mt-1">
                   {inviteQuery.trim()
                     ? "Essayez un autre nom"
                     : isCercle
@@ -6803,7 +6803,7 @@ function MembersPanel({
               return (
                 <div
                   key={u.userId}
-                  className="px-3 py-2.5 flex items-center gap-3 border-b border-stone-100/80 last:border-b-0 hover:bg-[#FAF6EF]/60 transition-colors"
+                  className="px-3 py-2.5 flex items-center gap-3 border-b border-stone-100/80 last:border-b-0 hover:bg-[#F0E9DE]/60 transition-colors"
                 >
                   <div className="relative flex-shrink-0">
                     {u.avatarUrl ? (
@@ -6819,8 +6819,8 @@ function MembersPanel({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#1E0F2B] truncate">{u.name || "Membre"}</p>
-                    <p className="text-xs text-[#8A8378] truncate">
+                    <p className="text-sm font-semibold text-[#000000] truncate">{u.name || "Membre"}</p>
+                    <p className="text-xs text-[#8A857C] truncate">
                       {globalRoleLabelFr(u.role) ||
                         (isCercle ? "Membre de la plateforme" : "Membre de la communauté")}
                       {u.isOnline && <span className="text-emerald-600 font-medium"> · en ligne</span>}
@@ -6833,7 +6833,7 @@ function MembersPanel({
                       "flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95",
                       invited
                         ? "bg-emerald-100 text-emerald-700"
-                        : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] disabled:opacity-40"
+                        : "bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A] disabled:opacity-40"
                     )}
                     title={invited ? "Invité ✓" : `Inviter ${u.name || "ce membre"} dans le canal`}
                   >
@@ -6858,13 +6858,13 @@ function MembersPanel({
             {filtered.length === 0 && (
               <div className="py-10 px-4 text-center">
                 <Search className="w-8 h-8 text-[#C9A227]/40 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-[#1E0F2B]">Aucun membre trouvé</p>
-                <p className="text-xs text-[#8A8378] mt-1">Essayez un autre nom</p>
+                <p className="text-sm font-semibold text-[#000000]">Aucun membre trouvé</p>
+                <p className="text-xs text-[#8A857C] mt-1">Essayez un autre nom</p>
               </div>
             )}
             {admins.length > 0 && (
               <>
-                <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
+                <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A857C] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
                   <Shield className="w-3 h-3 text-[#C9A227]" /> Administrateurs
                   <span className="ml-auto font-semibold normal-case">{admins.length}</span>
                 </div>
@@ -6873,7 +6873,7 @@ function MembersPanel({
             )}
             {regulars.length > 0 && (
               <>
-                <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A8378] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
+                <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-[#8A857C] uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-sm flex items-center gap-1.5">
                   <Users className="w-3 h-3 text-[#C9A227]/70" /> Membres
                   <span className="ml-auto font-semibold normal-case">{regulars.length}</span>
                 </div>
@@ -6884,35 +6884,35 @@ function MembersPanel({
         )}
 
         {/* ─── Pied : vocation communautaire ──────────────────────────── */}
-        <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#FAF6EF]">
+        <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#F0E9DE]">
           {tab === "invite" ? (
             isCercle ? (
-              <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
+              <p className="text-[11px] text-[#8A857C] flex items-start gap-2">
                 <Shield className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
                 <span>
-                  Cercle restreint : vous ajoutez <b className="text-[#1E0F2B]">qui vous
+                  Cercle restreint : vous ajoutez <b className="text-[#000000]">qui vous
                   voulez</b>, sur toute la plateforme — « Prenez garde à
                   tout le troupeau » (Actes 20:28) : le cercle garde son
-                  <b className="text-[#1E0F2B]"> caractère restreint</b>.
+                  <b className="text-[#000000]"> caractère restreint</b>.
                 </span>
               </p>
             ) : (
-              <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
+              <p className="text-[11px] text-[#8A857C] flex items-start gap-2">
                 <UserPlus className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
                 <span>
                   Invitez les membres de la communauté dans ce canal — « Allez, faites de
                   toutes les nations des disciples » (Matthieu 28:19) : chaque invitation
-                  fait <b className="text-[#1E0F2B]">grandir la communauté</b>.
+                  fait <b className="text-[#000000]">grandir la communauté</b>.
                 </span>
               </p>
             )
           ) : (
-            <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
+            <p className="text-[11px] text-[#8A857C] flex items-start gap-2">
               <Sparkles className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
               <span>
-                Touchez un membre pour découvrir son <b className="text-[#1E0F2B]">profil</b>, lui
-                <b className="text-[#1E0F2B]"> écrire en privé</b> ou
-                l'<b className="text-[#1E0F2B]">appeler</b> — « qu'ils soient unis » (Jean 17:23) :
+                Touchez un membre pour découvrir son <b className="text-[#000000]">profil</b>, lui
+                <b className="text-[#000000]"> écrire en privé</b> ou
+                l'<b className="text-[#000000]">appeler</b> — « qu'ils soient unis » (Jean 17:23) :
                 les liens personnels font grandir la communauté.
               </span>
             </p>
@@ -7017,7 +7017,7 @@ function MemberProfileModal({
 
   return (
     <div
-      className="fixed inset-0 bg-[#1A0826]/60 backdrop-blur-[2px] flex items-center justify-center z-[60] p-4"
+      className="fixed inset-0 bg-[#000000]/60 backdrop-blur-[2px] flex items-center justify-center z-[60] p-4"
       onClick={onClose}
     >
       <div
@@ -7025,10 +7025,10 @@ function MemberProfileModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* ─── En-tête : grande photo, nom, badges, présence ─────────── */}
-        <div className="px-4 pt-4 pb-3 border-b border-[#C9A227]/15 bg-[#FAF6EF] relative">
+        <div className="px-4 pt-4 pb-3 border-b border-[#C9A227]/15 bg-[#F0E9DE] relative">
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-white/70 text-[#8A8378]"
+            className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-white/70 text-[#8A857C]"
             aria-label="Fermer"
           >
             <X className="w-5 h-5" />
@@ -7036,13 +7036,13 @@ function MemberProfileModal({
           {loading ? (
             <div className="py-8 flex flex-col items-center gap-2">
               <Loader2 className="w-6 h-6 text-[#C9A227] animate-spin" />
-              <p className="text-xs text-[#8A8378]">Chargement du profil…</p>
+              <p className="text-xs text-[#8A857C]">Chargement du profil…</p>
             </div>
           ) : error ? (
             <div className="py-8 text-center">
               <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-[#1E0F2B]">Profil indisponible</p>
-              <p className="text-xs text-[#8A8378] mt-1">{error}</p>
+              <p className="text-sm font-semibold text-[#000000]">Profil indisponible</p>
+              <p className="text-xs text-[#8A857C] mt-1">{error}</p>
             </div>
           ) : profile ? (
             <div className="flex items-center gap-4 pr-8">
@@ -7057,17 +7057,17 @@ function MemberProfileModal({
                 )}
                 <span
                   className={cn(
-                    "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[3px] border-[#FAF6EF]",
+                    "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[3px] border-[#F0E9DE]",
                     profile.isOnline ? "bg-emerald-500" : "bg-stone-300"
                   )}
                   title={profile.isOnline ? "En ligne" : "Hors ligne"}
                 />
               </div>
               <div className="min-w-0">
-                <h3 className="font-bold text-[#1E0F2B] text-lg leading-tight truncate flex items-center gap-2">
+                <h3 className="font-bold text-[#000000] text-lg leading-tight truncate flex items-center gap-2">
                   <span className="truncate">{profile.name}</span>
                   {isMe && (
-                    <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-[#C9A227]/15 text-[#8C5FA8]">
+                    <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-[#C9A227]/15 text-[#8A857C]">
                       Vous
                     </span>
                   )}
@@ -7077,23 +7077,23 @@ function MemberProfileModal({
                       (super admins du site — PAM, Pasteur Kongo) : couronne
                       or + « Admin principal », avant tout autre badge. */}
                   {profile.role === "SUPER_ADMIN" && (
-                    <span className="inline-flex items-center gap-1 px-2 py-px rounded-full bg-[#C9A227]/15 text-[#8C5FA8] text-[10px] font-bold border border-[#C9A227]/40" title="Administrateur principal du Mouvement">
+                    <span className="inline-flex items-center gap-1 px-2 py-px rounded-full bg-[#C9A227]/15 text-[#8A857C] text-[10px] font-bold border border-[#C9A227]/40" title="Administrateur principal du Mouvement">
                       <Crown className="w-3 h-3 text-[#C9A227]" /> Admin principal
                     </span>
                   )}
                   {globalLabel && (
-                    <span className="inline-flex items-center gap-1 px-2 py-px rounded-full bg-[#8C5FA8]/10 text-[#8C5FA8] text-[10px] font-semibold">
+                    <span className="inline-flex items-center gap-1 px-2 py-px rounded-full bg-[#8A857C]/10 text-[#8A857C] text-[10px] font-semibold">
                       <Sparkles className="w-2.5 h-2.5" />{globalLabel}
                     </span>
                   )}
                   <span className={cn(
                     "inline-flex items-center gap-1 text-[10px] font-medium",
-                    profile.isOnline ? "text-emerald-600" : "text-[#8A8378]"
+                    profile.isOnline ? "text-emerald-600" : "text-[#8A857C]"
                   )}>
                     · {profile.isOnline ? "en ligne" : "hors ligne"}
                   </span>
                 </div>
-                <p className="text-[11px] text-[#8A8378] mt-1 flex items-center gap-1">
+                <p className="text-[11px] text-[#8A857C] mt-1 flex items-center gap-1">
                   <Calendar className="w-3 h-3" /> Membre depuis {formatJoinedAtFr(profile.memberSince)}
                 </p>
               </div>
@@ -7108,7 +7108,7 @@ function MemberProfileModal({
             {location && (
               <div className="bg-white border border-[#C9A227]/20 rounded-xl px-3 py-2 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
-                <span className="text-sm text-[#1E0F2B] flex items-center gap-1.5 min-w-0">
+                <span className="text-sm text-[#000000] flex items-center gap-1.5 min-w-0">
                   {flag && <span className="text-base leading-none" aria-hidden>{flag}</span>}
                   <span className="truncate">{location}</span>
                 </span>
@@ -7118,12 +7118,12 @@ function MemberProfileModal({
             {/* Bio (renseignée par le membre dans ses paramètres) */}
             {profile.bio ? (
               <div className="bg-white border border-[#C9A227]/20 rounded-xl px-3 py-2.5">
-                <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-1">Bio</p>
-                <p className="text-sm text-[#1E0F2B] whitespace-pre-wrap leading-relaxed">{profile.bio}</p>
+                <p className="text-[10px] font-bold text-[#8A857C] uppercase tracking-wider mb-1">Bio</p>
+                <p className="text-sm text-[#000000] whitespace-pre-wrap leading-relaxed">{profile.bio}</p>
               </div>
             ) : (
               <div className="bg-white/70 border border-[#C9A227]/10 rounded-xl px-3 py-2">
-                <p className="text-xs text-[#8A8378]">
+                <p className="text-xs text-[#8A857C]">
                   {isMe
                     ? "Ajoutez votre bio et votre localisation depuis le bouton profil de la barre latérale."
                     : "Ce membre n'a pas encore partagé sa bio."}
@@ -7134,7 +7134,7 @@ function MemberProfileModal({
             {/* Canaux communs (« vous êtes tous les deux dans… ») */}
             {profile.sharedChannels.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <p className="text-[10px] font-bold text-[#8A857C] uppercase tracking-wider mb-1.5 flex items-center gap-1">
                   <Users2 className="w-3 h-3 text-[#C9A227]/70" />
                   {isMe ? "Vos canaux" : "Canaux en commun"} ({profile.sharedChannels.length})
                 </p>
@@ -7142,7 +7142,7 @@ function MemberProfileModal({
                   {profile.sharedChannels.slice(0, 6).map((c) => (
                     <span
                       key={c.id}
-                      className="inline-flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-[#FAF6EF] border border-[#C9A227]/20 text-[11px] font-semibold text-[#1E0F2B] max-w-[10rem]"
+                      className="inline-flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-[#F0E9DE] border border-[#C9A227]/20 text-[11px] font-semibold text-[#000000] max-w-[10rem]"
                     >
                       {c.avatarUrl ? (
                         <img src={c.avatarUrl} alt={c.name} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
@@ -7153,7 +7153,7 @@ function MemberProfileModal({
                     </span>
                   ))}
                   {profile.sharedChannels.length > 6 && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 text-[11px] font-semibold text-[#8A8378]">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 text-[11px] font-semibold text-[#8A857C]">
                       +{profile.sharedChannels.length - 6}
                     </span>
                   )}
@@ -7179,7 +7179,7 @@ function MemberProfileModal({
 
         {/* ─── Actions (pied) ─────────────────────────────────────────── */}
         {profile && !isMe && (
-          <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#FAF6EF] space-y-2">
+          <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#F0E9DE] space-y-2">
             {profile.blockedByMe ? (
               /* Bloqué par moi → un seul geste : débloquer. */
               <button
@@ -7193,7 +7193,7 @@ function MemberProfileModal({
             ) : profile.hasBlockedMe ? (
               /* Il m'a bloqué → contact privé indisponible, SANS révéler
                  explicitement le blocage (discrétion, comme Telegram). */
-              <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/70 border border-stone-200 text-[#8A8378] text-xs font-semibold">
+              <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/70 border border-stone-200 text-[#8A857C] text-xs font-semibold">
                 <UserX className="w-4 h-4" />
                 Ce membre ne peut pas être contacté en privé actuellement
               </div>
@@ -7203,7 +7203,7 @@ function MemberProfileModal({
                   <button
                     onClick={() => onOpenDirectMessage(profile.userId, profile.name)}
                     disabled={dmBusy}
-                    className="flex flex-col items-center gap-1 py-2 rounded-xl bg-[#8C5FA8] text-[#FAF6EF] text-[11px] font-semibold hover:bg-[#7A4E96] active:scale-95 transition-all disabled:opacity-40"
+                    className="flex flex-col items-center gap-1 py-2 rounded-xl bg-[#8A857C] text-[#F0E9DE] text-[11px] font-semibold hover:bg-[#6B675F] active:scale-95 transition-all disabled:opacity-40"
                     title={`Ouvrir une conversation privée avec ${profile.name}`}
                   >
                     {dmBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
@@ -7221,7 +7221,7 @@ function MemberProfileModal({
                   <button
                     onClick={() => onCallMember(profile.userId, "video", profile.name, profile.avatarUrl)}
                     disabled={dmBusy}
-                    className="flex flex-col items-center gap-1 py-2 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-[11px] font-semibold hover:bg-[#3A1E4D] active:scale-95 transition-all disabled:opacity-40"
+                    className="flex flex-col items-center gap-1 py-2 rounded-xl bg-[#000000] text-[#F0E9DE] text-[11px] font-semibold hover:bg-[#161513] active:scale-95 transition-all disabled:opacity-40"
                     title={`Appel vidéo privé avec ${profile.name}`}
                   >
                     <Video className="w-4 h-4" />
@@ -7241,7 +7241,7 @@ function MemberProfileModal({
                 </button>
               </>
             )}
-            <p className="text-[10px] text-[#8A8378]/80 text-center">
+            <p className="text-[10px] text-[#8A857C]/80 text-center">
               Le blocage coupe uniquement les échanges privés — les canaux de la
               communauté restent ouverts.
             </p>
@@ -7250,8 +7250,8 @@ function MemberProfileModal({
 
         {/* Fiche « soi-même » : rappel du chemin de modification. */}
         {profile && isMe && (
-          <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#FAF6EF]">
-            <p className="text-[11px] text-[#8A8378] flex items-start gap-2">
+          <div className="px-4 py-3 border-t border-[#C9A227]/15 bg-[#F0E9DE]">
+            <p className="text-[11px] text-[#8A857C] flex items-start gap-2">
               <Sparkles className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0 mt-0.5" />
               <span>
                 C'est vous 😉 Photo, bio, pays et ville se modifient via le bouton
@@ -7307,12 +7307,12 @@ function MentionAutocomplete({
   if (filtered.length === 0) return null;
 
   return (
-    <div className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-2xl shadow-xl border border-[#8A8378]/20 overflow-hidden z-50">
-      <div className="px-4 py-2 bg-[#FAF6EF] border-b border-[#8A8378]/10 flex items-center justify-between">
-        <p className="text-[10px] uppercase tracking-wider font-semibold text-[#8A8378] flex items-center gap-1">
+    <div className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-2xl shadow-xl border border-[#8A857C]/20 overflow-hidden z-50">
+      <div className="px-4 py-2 bg-[#F0E9DE] border-b border-[#8A857C]/10 flex items-center justify-between">
+        <p className="text-[10px] uppercase tracking-wider font-semibold text-[#8A857C] flex items-center gap-1">
           <AtSign className="w-3 h-3" /> Mentions
         </p>
-        <p className="text-[10px] text-[#8A8378]/60">↑↓ · Entrée</p>
+        <p className="text-[10px] text-[#8A857C]/60">↑↓ · Entrée</p>
       </div>
       <div className="max-h-56 overflow-y-auto">
         {filtered.map((m, i) => (
@@ -7322,7 +7322,7 @@ function MentionAutocomplete({
             onMouseEnter={() => onSelectedIndexChange(i)}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2 text-left transition-colors",
-              i === selectedIndex ? "bg-[#C9A227]/10" : "hover:bg-[#FAF6EF]"
+              i === selectedIndex ? "bg-[#C9A227]/10" : "hover:bg-[#F0E9DE]"
             )}
           >
             <div className={cn(
@@ -7332,9 +7332,9 @@ function MentionAutocomplete({
               {getInitials(m.name || "?")}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#1E0F2B] truncate">{m.name}</p>
+              <p className="text-sm font-semibold text-[#000000] truncate">{m.name}</p>
               {m.role && (
-                <p className="text-[10px] text-[#8A8378]">{m.role}</p>
+                <p className="text-[10px] text-[#8A857C]">{m.role}</p>
               )}
             </div>
           </button>
@@ -7425,8 +7425,8 @@ function MessageContentWithMentions({
             className={cn(
               "font-semibold rounded px-0.5",
               variant === "purple"
-                ? "bg-[#FAF6EF]/25 text-[#FAF6EF]"
-                : "bg-[#1E0F2B]/15 text-[#1E0F2B]"
+                ? "bg-[#F0E9DE]/25 text-[#F0E9DE]"
+                : "bg-[#000000]/15 text-[#000000]"
             )}
           >
             {seg.value}
@@ -7458,7 +7458,7 @@ function MessageContentWithMentions({
 // (pour que @"Pasteur" reste surligné même dans un spoiler).
 
 /**
- * CodeBlock — bloc de code stylisé (fond sombre #1E0F2B, police monospace,
+ * CodeBlock — bloc de code stylisé (fond sombre #000000, police monospace,
  * bouton "Copier" qui utilise navigator.clipboard). Le langage (optionnel)
  * est affiché en label en haut à gauche mais aucun syntax highlighting réel
  * n'est fait (conforme au cahier des charges).
@@ -7477,8 +7477,8 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
   };
 
   return (
-    <div className="my-1.5 rounded-lg overflow-hidden border border-stone-700 bg-[#1E0F2B] text-left">
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#2A0E3D]/60 border-b border-stone-700">
+    <div className="my-1.5 rounded-lg overflow-hidden border border-stone-700 bg-[#000000] text-left">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#000000]/60 border-b border-stone-700">
         <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider">
           {lang || "code"}
         </span>
@@ -7533,8 +7533,8 @@ function SpoilerText({
       className={cn(
         "inline rounded px-1 mx-0.5 transition-colors cursor-pointer select-none align-baseline",
         revealed
-          ? "bg-[#8A8378]/25 text-inherit"
-          : "bg-[#1E0F2B] hover:bg-[#1E0F2B]/80"
+          ? "bg-[#8A857C]/25 text-inherit"
+          : "bg-[#000000] hover:bg-[#000000]/80"
       )}
       title={revealed ? "Cliquer pour masquer" : "Cliquer pour révéler le spoiler"}
       aria-pressed={revealed}
@@ -7753,7 +7753,7 @@ function EmojiPicker({ onEmojiSelect }: { onEmojiSelect: (emoji: string) => void
             key={`${emoji}-${i}`}
             type="button"
             onClick={() => onEmojiSelect(emoji)}
-            className="aspect-square flex items-center justify-center text-xl hover:bg-[#C9A227]/15 hover:scale-110 rounded transition-all"
+            className="aspect-square flex items-center justify-center text-xl hover:bg-[#FF7A1A]/15 hover:scale-110 rounded transition-all"
             title={emoji}
           >
             <span aria-hidden="true">{emoji}</span>
@@ -7789,7 +7789,7 @@ function GifPicker({
 }) {
   return (
     <div className="flex flex-col">
-      <div className="px-3 py-2 bg-[#FAF6EF] border-b border-stone-200 flex items-center gap-2">
+      <div className="px-3 py-2 bg-[#F0E9DE] border-b border-stone-200 flex items-center gap-2">
         <Search className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
         <input
           autoFocus
@@ -7817,7 +7817,7 @@ function GifPicker({
                 key={g.id}
                 type="button"
                 onClick={() => onSelect(g.url, `gif-${g.id}.gif`)}
-                className="relative aspect-square rounded-md overflow-hidden bg-stone-100 hover:ring-2 hover:ring-[#C9A227] transition-all"
+                className="relative aspect-square rounded-md overflow-hidden bg-stone-100 hover:ring-2 hover:ring-[#FF7A1A] transition-all"
                 title="Envoyer ce GIF"
               >
                 <img
@@ -7956,7 +7956,7 @@ function VoiceAvatar({
       <span
         className={cn(
           "absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-white",
-          speaking ? "w-3.5 h-3.5 bg-[#C9A227]" : muted ? "w-2.5 h-2.5 bg-[#8A8378]" : "w-2.5 h-2.5 bg-green-500",
+          speaking ? "w-3.5 h-3.5 bg-[#C9A227]" : muted ? "w-2.5 h-2.5 bg-[#8A857C]" : "w-2.5 h-2.5 bg-green-500",
         )}
       />
     </div>
@@ -7990,7 +7990,7 @@ function ParticipantVideoTile({
   }, [participant, participant.isCameraEnabled]);
 
   return (
-    <div className="relative bg-[#2A0E3D] rounded-2xl overflow-hidden aspect-video flex items-center justify-center group">
+    <div className="relative bg-[#000000] rounded-2xl overflow-hidden aspect-video flex items-center justify-center group">
       {/* Vidéo (si caméra active) */}
       <video
         ref={videoRef}
@@ -8008,7 +8008,7 @@ function ParticipantVideoTile({
             size={64}
             muted={!participant.isMicrophoneEnabled}
           />
-          <span className="text-[10px] text-[#FAF6EF]/60">Caméra inactive</span>
+          <span className="text-[10px] text-[#F0E9DE]/60">Caméra inactive</span>
         </div>
       )}
       {/* Badge nom + micro */}
@@ -8100,18 +8100,18 @@ function VoiceChannelView({
     VOICE_MODE_ADMIN_ROLES.has(myChannelRole || "");
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#2A0E3D]/5 to-[#FAF6EF]/30">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#000000]/5 to-[#F0E9DE]/30">
       {/* ─── Bandeau mode + bascule admin ─────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-[#C9A227]/20 bg-white/70 backdrop-blur-sm flex-wrap">
         <div className="flex items-center gap-2 min-w-0">
           {videoMode ? (
-            <Video className="w-4 h-4 text-[#8C5FA8] flex-shrink-0" />
+            <Video className="w-4 h-4 text-[#8A857C] flex-shrink-0" />
           ) : (
             <Volume2 className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
           )}
           <div className="min-w-0">
-            <h3 className="text-sm font-bold text-[#1E0F2B] truncate">{conv.name}</h3>
-            <p className="text-[10px] text-[#8A8378]">
+            <h3 className="text-sm font-bold text-[#000000] truncate">{conv.name}</h3>
+            <p className="text-[10px] text-[#8A857C]">
               {videoMode ? "Mode vidéo · " : "Mode audio · "}
               {conv.participants.length} membres
             </p>
@@ -8121,15 +8121,15 @@ function VoiceChannelView({
         {/* Bascule réservée aux administrateurs (mode WhatsApp) */}
         {canSwitchMode ? (
           <div className="flex items-center gap-1.5">
-            <div className="flex items-center bg-[#FAF6EF] border border-[#8A8378]/25 rounded-full p-0.5">
+            <div className="flex items-center bg-[#F0E9DE] border border-[#8A857C]/25 rounded-full p-0.5">
               <button
                 onClick={() => onSwitchMode("audio")}
                 disabled={modeSwitching || !videoMode}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all",
                   !videoMode
-                    ? "bg-[#1E0F2B] text-[#FAF6EF] shadow"
-                    : "text-[#8A8378] hover:text-[#1E0F2B]",
+                    ? "bg-[#000000] text-[#F0E9DE] shadow"
+                    : "text-[#8A857C] hover:text-[#000000]",
                 )}
                 title="Tout le monde passera en audio"
               >
@@ -8142,8 +8142,8 @@ function VoiceChannelView({
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all",
                   videoMode
-                    ? "bg-[#8C5FA8] text-white shadow"
-                    : "text-[#8A8378] hover:text-[#1E0F2B]",
+                    ? "bg-[#8A857C] text-white shadow"
+                    : "text-[#8A857C] hover:text-[#000000]",
                 )}
                 title="Tout le monde passera en vidéo"
               >
@@ -8155,8 +8155,8 @@ function VoiceChannelView({
           </div>
         ) : (
           /* Indicateur du mode courant pour les non-admins */
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/25 text-[11px] font-bold text-[#8A8378]">
-            {videoMode ? <Video className="w-3.5 h-3.5 text-[#8C5FA8]" /> : <Volume2 className="w-3.5 h-3.5 text-[#C9A227]" />}
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F0E9DE] border border-[#8A857C]/25 text-[11px] font-bold text-[#8A857C]">
+            {videoMode ? <Video className="w-3.5 h-3.5 text-[#8A857C]" /> : <Volume2 className="w-3.5 h-3.5 text-[#C9A227]" />}
             {videoMode ? "Canal en vidéo" : "Canal en audio"}
           </span>
         )}
@@ -8245,7 +8245,7 @@ function VoiceChannelView({
 
       {/* ─── ⭐ V2.9 — Reconnexion réseau en cours (transparence). */}
       {connected && voiceReconnecting && (
-        <div className="mx-4 mt-3 p-2.5 rounded-xl bg-[#2A0E3D]/5 border border-[#C9A227]/30 text-xs text-[#1E0F2B] flex items-center gap-2">
+        <div className="mx-4 mt-3 p-2.5 rounded-xl bg-[#000000]/5 border border-[#C9A227]/30 text-xs text-[#000000] flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin text-[#C9A227] flex-shrink-0" />
           Reconnexion au canal en cours…
         </div>
@@ -8259,7 +8259,7 @@ function VoiceChannelView({
           {onStartJitsi && (
             <button
               onClick={onStartJitsi}
-              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1E0F2B] text-[#FAF6EF] text-[11px] font-bold hover:bg-[#2A0E3D] transition-colors shadow-sm"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#000000] text-[#F0E9DE] text-[11px] font-bold hover:bg-[#000000] transition-colors shadow-sm"
               title="Rejoindre le canal en visio de secours gratuite (Jitsi)"
             >
               <LifeBuoy className="w-3.5 h-3.5 text-[#C9A227]" />
@@ -8276,7 +8276,7 @@ function VoiceChannelView({
           normal (rejoignable à nouveau si LiveKit revient). ──────────── */}
       {jitsiActive && (
         <div className="flex-1 flex flex-col min-h-0">
-          <div className="mx-4 mt-3 mb-1 flex items-center gap-2 p-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-xs font-bold shadow">
+          <div className="mx-4 mt-3 mb-1 flex items-center gap-2 p-2.5 rounded-xl bg-[#000000] text-[#F0E9DE] text-xs font-bold shadow">
             <LifeBuoy className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
             <span className="flex-1 min-w-0 truncate">
               Canal vocal en mode secours (Jitsi) · {conv.name}
@@ -8284,7 +8284,7 @@ function VoiceChannelView({
             {onStopJitsi && (
               <button
                 onClick={onStopJitsi}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/25 text-[#FAF6EF] text-[11px] font-bold hover:bg-white/20 transition-colors"
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/25 text-[#F0E9DE] text-[11px] font-bold hover:bg-white/20 transition-colors"
                 title="Quitter le mode secours et revenir au canal normal"
               >
                 <X className="w-3.5 h-3.5" />
@@ -8314,12 +8314,12 @@ function VoiceChannelView({
                 className="w-20 h-20 mx-auto mb-4 rounded-2xl object-cover shadow-md"
               />
             ) : (
-              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-[#2A0E3D] flex items-center justify-center text-white">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-[#000000] flex items-center justify-center text-white">
                 {videoMode ? <Video className="w-10 h-10" /> : <Volume2 className="w-10 h-10" />}
               </div>
             )}
-            <h3 className="text-lg font-bold text-[#1E0F2B] mb-1">{conv.name}</h3>
-            <p className="text-xs text-[#8A8378] mb-6">
+            <h3 className="text-lg font-bold text-[#000000] mb-1">{conv.name}</h3>
+            <p className="text-xs text-[#8A857C] mb-6">
               Canal {videoMode ? "vidéo" : "vocal"} persistant · {conv.participants.length} membres au total
             </p>
             {/* ⭐ V3.2 — « Rejoindre le canal » SUPPRIMÉ (demande explicite) :
@@ -8335,16 +8335,16 @@ function VoiceChannelView({
               <button
                 onClick={onStartDirect}
                 disabled={directSwitching}
-                className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-60"
+                className="w-full py-3 bg-[#C9A227] text-[#000000] rounded-xl text-sm font-bold hover:bg-[#FF7A1A] flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-60"
               >
                 {directSwitching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
                 Lancer un direct dans le canal
               </button>
             ) : (
-              <div className="p-4 rounded-xl bg-[#FAF6EF] border border-[#C9A227]/25 flex flex-col items-center gap-2">
-                <Radio className="w-5 h-5 text-[#8A8378]/60" />
-                <p className="text-xs font-semibold text-[#1E0F2B]">Aucun direct en cours</p>
-                <p className="text-[11px] text-[#8A8378] leading-relaxed">
+              <div className="p-4 rounded-xl bg-[#F0E9DE] border border-[#C9A227]/25 flex flex-col items-center gap-2">
+                <Radio className="w-5 h-5 text-[#8A857C]/60" />
+                <p className="text-xs font-semibold text-[#000000]">Aucun direct en cours</p>
+                <p className="text-[11px] text-[#8A857C] leading-relaxed">
                   Vous pourrez écouter la diffusion du canal ici dès qu&apos;un direct sera lancé.
                   Pour parler à un membre en privé, utilisez les appels (bouton téléphone du chat).
                 </p>
@@ -8358,7 +8358,7 @@ function VoiceChannelView({
           <div className="flex-1 overflow-y-auto p-3 sm:p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-5xl mx-auto w-full">
               {/* Moi-même : tuile locale (miroir + label « Vous ») */}
-              <div className="relative bg-[#2A0E3D] rounded-2xl overflow-hidden aspect-video flex items-center justify-center">
+              <div className="relative bg-[#000000] rounded-2xl overflow-hidden aspect-video flex items-center justify-center">
                 <LocalVideoTile room={room} enabled={localVideoEnabled} avatarUrl={currentUserAvatar} name={currentUserName} />
                 <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1 px-2 py-1 rounded-lg bg-black/55 backdrop-blur-sm">
                   <span className="text-[11px] font-semibold text-white truncate">
@@ -8380,10 +8380,10 @@ function VoiceChannelView({
                 />
               ))}
               {remoteParticipants.length === 0 && (
-                <div className="sm:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-[#8A8378]/25 rounded-2xl">
+                <div className="sm:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-[#8A857C]/25 rounded-2xl">
                   <Users2 className="w-8 h-8 text-[#C9A227]/50 mb-2" />
-                  <p className="text-xs font-semibold text-[#1E0F2B]">Seul dans le canal</p>
-                  <p className="text-[11px] text-[#8A8378] mt-0.5">
+                  <p className="text-xs font-semibold text-[#000000]">Seul dans le canal</p>
+                  <p className="text-[11px] text-[#8A857C] mt-0.5">
                     Les autres membres verront votre vidéo en rejoignant.
                   </p>
                 </div>
@@ -8397,7 +8397,7 @@ function VoiceChannelView({
               onClick={onToggleMute}
               className={cn(
                 "p-3 rounded-full transition-colors shadow-sm",
-                localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
+                localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A]"
               )}
               title={localAudioMuted ? "Activer le micro" : "Couper le micro"}
             >
@@ -8407,7 +8407,7 @@ function VoiceChannelView({
               onClick={onToggleCamera}
               className={cn(
                 "p-3 rounded-full transition-colors shadow-sm",
-                localVideoEnabled ? "bg-[#8C5FA8] text-white hover:bg-[#7A4E96]" : "bg-red-500 text-white hover:bg-red-600"
+                localVideoEnabled ? "bg-[#8A857C] text-white hover:bg-[#6B675F]" : "bg-red-500 text-white hover:bg-red-600"
               )}
               title={localVideoEnabled ? "Couper ma caméra" : "Activer ma caméra"}
             >
@@ -8417,7 +8417,7 @@ function VoiceChannelView({
               onClick={onToggleSpeaker}
               className={cn(
                 "p-3 rounded-full transition-colors shadow-sm",
-                speakerEnabled ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]" : "bg-[#8A8378] text-white hover:bg-[#757064]"
+                speakerEnabled ? "bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A]" : "bg-[#8A857C] text-white hover:bg-[#757064]"
               )}
               title={speakerEnabled ? "Couper le haut-parleur" : "Activer le haut-parleur"}
             >
@@ -8436,8 +8436,8 @@ function VoiceChannelView({
         /* ═══ MODE AUDIO : participants avec PHOTOS + contrôles ═══ */
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="max-w-md w-full mx-auto">
-            <div className="bg-white rounded-2xl border border-[#8A8378]/15 shadow-sm p-4">
-              <p className="text-xs font-bold text-[#8A8378] uppercase tracking-wider mb-3">
+            <div className="bg-white rounded-2xl border border-[#8A857C]/15 shadow-sm p-4">
+              <p className="text-xs font-bold text-[#8A857C] uppercase tracking-wider mb-3">
                 Participants connectés ({remoteParticipants.length + 1})
               </p>
               <div className="space-y-2">
@@ -8451,10 +8451,10 @@ function VoiceChannelView({
                     speaking={activeSpeakerIds?.has(room?.localParticipant.identity || "")}
                   />
                   <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-semibold text-[#1E0F2B] truncate">
-                      {currentUserName} <span className="text-[10px] text-[#8A8378]">(vous)</span>
+                    <p className="text-sm font-semibold text-[#000000] truncate">
+                      {currentUserName} <span className="text-[10px] text-[#8A857C]">(vous)</span>
                     </p>
-                    <p className="text-[10px] text-[#8A8378]">
+                    <p className="text-[10px] text-[#8A857C]">
                       {localAudioMuted ? "Micro coupé" : "Micro actif"}
                     </p>
                   </div>
@@ -8462,12 +8462,12 @@ function VoiceChannelView({
                 </div>
                 {/* Participants distants — avec leurs VRAIES photos */}
                 {remoteParticipants.length === 0 ? (
-                  <p className="text-xs text-[#8A8378] text-center py-2">
+                  <p className="text-xs text-[#8A857C] text-center py-2">
                     En attente d&apos;autres participants...
                   </p>
                 ) : (
                   remoteParticipants.map((p) => (
-                    <div key={p.identity} className="flex items-center gap-3 p-2 bg-[#FAF6EF] rounded-xl">
+                    <div key={p.identity} className="flex items-center gap-3 p-2 bg-[#F0E9DE] rounded-xl">
                       <VoiceAvatar
                         name={p.name || p.identity || "?"}
                         avatarUrl={participantAvatarUrl(p, channelMembers)}
@@ -8482,7 +8482,7 @@ function VoiceChannelView({
                         >
                           {p.name || p.identity}
                         </p>
-                        <p className="text-[10px] text-[#8A8378]">
+                        <p className="text-[10px] text-[#8A857C]">
                           {p.isMicrophoneEnabled ? "Micro actif" : "Micro coupé"}
                         </p>
                       </div>
@@ -8499,7 +8499,7 @@ function VoiceChannelView({
                 onClick={onToggleMute}
                 className={cn(
                   "p-3 rounded-full transition-colors shadow-sm",
-                  localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
+                  localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A]"
                 )}
                 title={localAudioMuted ? "Activer le micro" : "Couper le micro"}
               >
@@ -8509,7 +8509,7 @@ function VoiceChannelView({
                 onClick={onToggleSpeaker}
                 className={cn(
                   "p-3 rounded-full transition-colors shadow-sm",
-                  speakerEnabled ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]" : "bg-[#8A8378] text-white hover:bg-[#757064]"
+                  speakerEnabled ? "bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A]" : "bg-[#8A857C] text-white hover:bg-[#757064]"
                 )}
                 title={speakerEnabled ? "Couper le haut-parleur" : "Activer le haut-parleur"}
               >
@@ -8523,7 +8523,7 @@ function VoiceChannelView({
                 <PhoneOff className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-[10px] text-[#8A8378] text-center mt-2">
+            <p className="text-[10px] text-[#8A857C] text-center mt-2">
               Le canal reste ouvert même si vous le quittez.
             </p>
           </div>
@@ -8532,7 +8532,7 @@ function VoiceChannelView({
 
       {/* ─── Membres du canal (info, les deux modes) ──────────────────── */}
       {channelMembers.length > 0 && (
-        <div className="px-4 py-2.5 border-t border-[#8A8378]/15 bg-white/50">
+        <div className="px-4 py-2.5 border-t border-[#8A857C]/15 bg-white/50">
           <div className="max-w-md mx-auto flex flex-wrap gap-1.5 justify-center">
             {channelMembers.slice(0, 10).map((m) => {
               // ⭐ V3.13 — Rôle effectif (canal OU global) : les super
@@ -8543,7 +8543,7 @@ function VoiceChannelView({
               return (
                 <span
                   key={m.userId}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/15 text-[10px] font-medium"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F0E9DE] border border-[#8A857C]/15 text-[10px] font-medium"
                   style={{ color: roleColor }}
                 >
                   {superAdmin && (
@@ -8557,7 +8557,7 @@ function VoiceChannelView({
               );
             })}
             {channelMembers.length > 10 && (
-              <span className="text-[10px] text-[#8A8378] self-center">
+              <span className="text-[10px] text-[#8A857C] self-center">
                 +{channelMembers.length - 10}
               </span>
             )}
@@ -8600,7 +8600,7 @@ function LocalVideoTile({
     return (
       <div className="flex flex-col items-center gap-2 py-4">
         <VoiceAvatar name={name} avatarUrl={avatarUrl} size={64} />
-        <span className="text-[10px] text-[#FAF6EF]/60">Caméra coupée</span>
+        <span className="text-[10px] text-[#F0E9DE]/60">Caméra coupée</span>
       </div>
     );
   }
@@ -8788,7 +8788,7 @@ function CallOverlay({
   const isVideoCall = callType === "video";
 
   return (
-    <div className="fixed inset-0 bg-[#2A0E3D] z-[60] flex flex-col items-center justify-between p-3 sm:p-6">
+    <div className="fixed inset-0 bg-[#000000] z-[60] flex flex-col items-center justify-between p-3 sm:p-6">
       {/* Audio element caché pour le rendu audio distant */}
       <audio ref={remoteAudioRef} autoPlay className="hidden" />
       {/* (S5) Sonnerie professionnelle d'appel sortant */}
@@ -8849,7 +8849,7 @@ function CallOverlay({
                 getInitials(convName)
               )}
             </motion.div>
-            <h2 className="text-2xl font-bold text-[#FAF6EF] mb-2">{convName}</h2>
+            <h2 className="text-2xl font-bold text-[#F0E9DE] mb-2">{convName}</h2>
             {/* ⭐ V3.1 — Issue distante (refusé / manqué / terminé /
                 annulé) : affichée en grand AVANT la fermeture de l'overlay. */}
             {endStatus ? (
@@ -8878,7 +8878,7 @@ function CallOverlay({
               </p>
             )}
             {callState === "outgoing" && !endStatus && (
-              <p className="text-xs text-[#FAF6EF]/50 mt-2">
+              <p className="text-xs text-[#F0E9DE]/50 mt-2">
                 En attente que l'autre participant rejoigne l'appel...
               </p>
             )}
@@ -8891,7 +8891,7 @@ function CallOverlay({
               </p>
             )}
             {!mediaSwitching && mediaProvider && !jitsiRoom && !endStatus && (
-              <p className="mt-2 text-[10px] text-[#FAF6EF]/40 flex items-center justify-center gap-1.5">
+              <p className="mt-2 text-[10px] text-[#F0E9DE]/40 flex items-center justify-center gap-1.5">
                 <span className="w-1.5 h-1.5 bg-[#C9A227]/70 rounded-full" />
                 Réseau : {providerLabel(mediaProvider)}
                 {mediaProvider !== "livekit" && " (secours)"}
@@ -9082,7 +9082,7 @@ function IncomingCallOverlay({
   return (
     <div
       onPointerDown={resumeRingtone}
-      className="fixed inset-0 z-[70] bg-[#2A0E3D]/97 backdrop-blur-sm flex flex-col items-center justify-between p-6 sm:p-10"
+      className="fixed inset-0 z-[70] bg-[#000000]/97 backdrop-blur-sm flex flex-col items-center justify-between p-6 sm:p-10"
     >
       {/* ─── Appelant ─────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col items-center justify-center w-full text-center">
@@ -9101,13 +9101,13 @@ function IncomingCallOverlay({
           {isVideo ? <Video className="w-3.5 h-3.5" /> : <Phone className="w-3.5 h-3.5" />}
           {isVideo ? "Appel vidéo entrant" : "Appel audio entrant"}
         </p>
-        <h2 className="text-2xl sm:text-3xl font-bold text-[#FAF6EF]">{displayName}</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-[#F0E9DE]">{displayName}</h2>
         {isDirectCall ? (
-          <p className="text-sm text-[#FAF6EF]/70 mt-1.5">
+          <p className="text-sm text-[#F0E9DE]/70 mt-1.5">
             {displayName} vous appelle
           </p>
         ) : info.convName !== info.initiatorName ? (
-          <p className="text-sm text-[#FAF6EF]/70 mt-1.5">
+          <p className="text-sm text-[#F0E9DE]/70 mt-1.5">
             {info.initiatorName} vous appelle
             {" depuis ce canal"}
           </p>
@@ -9138,7 +9138,7 @@ function IncomingCallOverlay({
           >
             <PhoneOff className="w-7 h-7 sm:w-8 sm:h-8" />
           </motion.button>
-          <span className="text-xs font-semibold text-[#FAF6EF]/70">Refuser</span>
+          <span className="text-xs font-semibold text-[#F0E9DE]/70">Refuser</span>
         </div>
         <div className="flex flex-col items-center gap-2">
           <motion.button
@@ -9151,7 +9151,7 @@ function IncomingCallOverlay({
           >
             {accepting ? <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 animate-spin" /> : (isVideo ? <Video className="w-7 h-7 sm:w-8 sm:h-8" /> : <Phone className="w-7 h-7 sm:w-8 sm:h-8" />)}
           </motion.button>
-          <span className="text-xs font-semibold text-[#FAF6EF]/70">Accepter</span>
+          <span className="text-xs font-semibold text-[#F0E9DE]/70">Accepter</span>
         </div>
       </div>
     </div>
@@ -9234,7 +9234,7 @@ function MemberLogMessage({ msg }: { msg: ChatMessage }) {
     <div className="flex flex-col items-center gap-1.5 max-w-full">
       {/* Pastille d'arrivée — compacte, or, façon WhatsApp */}
       <div
-        className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-[#C9A227]/40 bg-[#C9A227]/10 text-[#8C5FA8] shadow-sm max-w-full"
+        className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-[#C9A227]/40 bg-[#C9A227]/10 text-[#8A857C] shadow-sm max-w-full"
         title={msg.content}
       >
         <UserPlus className="w-4 h-4 flex-shrink-0 text-[#C9A227]" />
@@ -9246,7 +9246,7 @@ function MemberLogMessage({ msg }: { msg: ChatMessage }) {
       </div>
       {/* Message automatique du système : invitation à souhaiter la
           bienvenue — expression hébraïque translittérée. */}
-      <p className="text-[10px] italic text-[#8A8378] text-center px-3">
+      <p className="text-[10px] italic text-[#8A857C] text-center px-3">
         Souhaitez shalom et bienvenue à {nom}, chers frères et sœurs —{" "}
         <span className="not-italic font-semibold text-[#C9A227]">Shalom aleikhem !</span>
       </p>

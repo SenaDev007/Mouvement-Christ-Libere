@@ -82,7 +82,7 @@ const FEASTS_2025_2026: Feast[] = [
       "Le jour où retentit le chofar. Nouvel an civil du calendrier hébraïque (Rosh Hashana). Annonce prophétique du retour du Messie : « le Seigneur lui-même descendra du ciel avec un cri, à la voix d'un archange et au son de la trompette de Dieu » (1 Thessaloniciens 4:16).",
     startDate: "2025-09-23T19:00:00Z",
     endDate: "2025-09-24T19:00:00Z",
-    color: "#8C5FA8",
+    color: "#8A857C",
   },
   {
     name: "Yom Kippour",
@@ -152,7 +152,7 @@ const FEASTS_2025_2026: Feast[] = [
       "Commémoration de la délivrance du peuple juif par l'intermédiaire d'Esther, telle que racontée dans le livre d'Esther. Fête de la joie, de la délivrance et de la providence divine cachée.",
     startDate: "2025-03-14T19:00:00Z",
     endDate: "2025-03-15T19:00:00Z",
-    color: "#8C5FA8",
+    color: "#8A857C",
   },
   {
     name: "Hanoucca",

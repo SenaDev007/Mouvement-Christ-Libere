@@ -89,7 +89,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF]">
+    <div className="min-h-screen bg-[#F0E9DE]">
       {/* ⭐ V3.14 — Page de loading du Mouvement : rendue dans le HTML
           initial (AVANT le landing — jamais de site visible avant elle),
           5 secondes de chargement max (barre en pourcentage, « Christ
@@ -101,7 +101,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
       {/* ⭐ V3.28 — hero-min-h : min-height 90vh avec repli 90svh (les
           barres d'adresse mobiles faussent 100vh — svh mesure le viewport
           réellement visible, fallback vh pour les navigateurs anciens). */}
-      <section className="hero-min-h relative flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
+      <section className="hero-min-h relative flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#000000] text-white">
         {/* Carte flottante du prochain live — en haut du hero */}
         <UpcomingLiveFloat />
         {/* Background image — paramétrable (défaut : Pam et Pasteur Kongo) */}
@@ -111,7 +111,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             alt="Pam et Pasteur Kongo, au son du chofar"
             className="object-cover opacity-60"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/50 via-[#2A0E3D]/60 to-[#1A0826]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#000000]/50 via-[#000000]/60 to-[#000000]" />
         </div>
 
         {/* Particules célestes blanches (du haut vers le bas) + icônes chofar */}
@@ -191,7 +191,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-10"
+            className="text-base md:text-lg text-[#F0E9DE]/70 leading-relaxed max-w-2xl mx-auto mb-10"
           >
             <IsololeText>{hero.subtitle}</IsololeText>
           </motion.p>
@@ -208,21 +208,21 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                 (globals.css : ctaPulseRing/ctaCoeur, prefers-reduced-motion). */}
             <Link
               href="/rendez-vous"
-              className="cta-rdv-pulse group inline-flex items-center justify-center w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-[#C9A227] to-[#DDBE55] hover:from-[#DDBE55] hover:to-[#E8CE74] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300 relative"
+              className="cta-rdv-pulse group inline-flex items-center justify-center w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-[#C9A227] to-[#DDBE55] hover:from-[#FF7A1A] hover:to-[#DDBE55] text-[#000000] font-sans font-bold text-base shadow-lg transition-all duration-300 relative"
             >
               <span className="cta-rdv-coeur inline-flex items-center gap-2">
                 <CalendarCheck className="w-5 h-5" />
                 Demander un rendez-vous
               </span>
               <span className="absolute -top-1.5 -right-1.5 flex h-3 w-3">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-[#FAF6EF] opacity-70 animate-ping" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#FAF6EF]" />
+                <span className="absolute inline-flex h-full w-full rounded-full bg-[#F0E9DE] opacity-70 animate-ping" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#F0E9DE]" />
               </span>
             </Link>
             {hero.ctaLabel && hero.ctaHref && (
               <Link
                 href={hero.ctaHref}
-                className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#FF7A1A]/10 transition-all duration-300"
               >
                 {hero.ctaLabel}
                 <ChevronRight className="w-4 h-4 ml-2" />
@@ -231,7 +231,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             {hero.cta2Label && hero.cta2Href && (
               <Link
                 href={hero.cta2Href}
-                className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#FAF6EF]/25 text-[#FAF6EF]/90 font-sans font-bold text-base hover:bg-[#FAF6EF]/10 transition-all duration-300"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#F0E9DE]/25 text-[#F0E9DE]/90 font-sans font-bold text-base hover:bg-[#F0E9DE]/10 transition-all duration-300"
               >
                 {hero.cta2Label}
                 <ChevronRight className="w-4 h-4 ml-2" />
@@ -242,14 +242,14 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
       </section>
 
       {/* Séparateur oblique ascendant (gauche→droite) entre hero et stats */}
-      <div className="relative bg-[#1A0826]" style={{ height: "30px" }}>
+      <div className="relative bg-[#000000]" style={{ height: "30px" }}>
         <svg className="absolute bottom-0 w-full h-full" viewBox="0 0 1200 30" preserveAspectRatio="none">
-          <polygon points="0,30 1200,0 1200,30" fill="#FAF6EF" />
+          <polygon points="0,30 1200,0 1200,30" fill="#F0E9DE" />
         </svg>
       </div>
 
       {/* ═══ STATS ═══ */}
-      <section className="py-8 bg-[#FAF6EF] relative overflow-hidden">
+      <section className="py-8 bg-[#F0E9DE] relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {STATS.map((stat, i) => (
@@ -268,7 +268,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                     <span className="inline-block w-12 h-8 bg-[#C9A227]/20 rounded animate-pulse" />
                   )}
                 </div>
-                <div className="text-sm text-[#8A8378] font-medium">
+                <div className="text-sm text-[#8A857C] font-medium">
                   {stat.label}
                 </div>
               </motion.div>
@@ -284,7 +284,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-bold mb-3">
               <IsololeText>{d.servantsKicker}</IsololeText>
             </p>
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#1E0F2B]">
+            <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#000000]">
               <IsololeText>{d.servantsTitle}</IsololeText>
             </h2>
           </div>
@@ -293,9 +293,9 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             {/* Pam */}
             <Link
               href="/pam"
-              className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
+              className="group bg-[#F0E9DE] rounded-2xl shadow-sm border border-[#8A857C]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
             >
-              <div className="relative flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#2A0E3D] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#C9A227] transition-all">
+              <div className="relative flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#000000] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#FF7A1A] transition-all">
                 <HeroBackgroundImage
                   src={d.pamPhoto}
                   alt={d.pamName}
@@ -303,13 +303,13 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                   className="object-cover w-full h-full"
                 />
               </div>
-              <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-3">
+              <h3 className="font-serif text-2xl font-bold text-[#000000] mb-3">
                 <IsololeText>{d.pamName}</IsololeText>
               </h3>
               <p className="text-xs uppercase tracking-wide text-[#C9A227] font-semibold mb-3">
                 <IsololeText>{d.pamRole}</IsololeText>
               </p>
-              <p className="text-sm text-[#8A8378] leading-relaxed mb-6">
+              <p className="text-sm text-[#8A857C] leading-relaxed mb-6">
                 <IsololeText>{d.pamDesc}</IsololeText>
               </p>
               <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
@@ -325,7 +325,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                 <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#C9A227]/10 mb-4 mx-auto">
                   <Heart className="w-8 h-8 text-[#C9A227]" />
                 </div>
-                <p className="font-serif text-lg italic text-[#8A8378] text-center max-w-xs">
+                <p className="font-serif text-lg italic text-[#8A857C] text-center max-w-xs">
                   « Deux appels qui se rejoignent, deux ministères distincts qui s&apos;articulent
                   sans se confondre. »
                 </p>
@@ -336,9 +336,9 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             {/* Pasteur Kongo */}
             <Link
               href="/pasteur-kongo"
-              className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
+              className="group bg-[#F0E9DE] rounded-2xl shadow-sm border border-[#8A857C]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
             >
-              <div className="relative flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#2A0E3D] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#C9A227] transition-all">
+              <div className="relative flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#000000] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#FF7A1A] transition-all">
                 <HeroBackgroundImage
                   src={d.kongoPhoto}
                   alt={d.kongoName}
@@ -346,13 +346,13 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                   className="object-cover w-full h-full"
                 />
               </div>
-              <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-3">
+              <h3 className="font-serif text-2xl font-bold text-[#000000] mb-3">
                 <IsololeText>{d.kongoName}</IsololeText>
               </h3>
               <p className="text-xs uppercase tracking-wide text-[#C9A227] font-semibold mb-3">
                 <IsololeText>{d.kongoRole}</IsololeText>
               </p>
-              <p className="text-sm text-[#8A8378] leading-relaxed mb-6">
+              <p className="text-sm text-[#8A857C] leading-relaxed mb-6">
                 <IsololeText>{d.kongoDesc}</IsololeText>
               </p>
               <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
@@ -371,10 +371,10 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             <p className="text-xs uppercase tracking-[0.25em] text-[#C9A227] font-semibold mb-3">
               Ce que cette plateforme rassemble
             </p>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1E0F2B] leading-tight">
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#000000] leading-tight">
               Deux voix, une même vision
             </h2>
-            <p className="text-base text-[#8A8378] mt-4 max-w-2xl mx-auto">
+            <p className="text-base text-[#8A857C] mt-4 max-w-2xl mx-auto">
               PAM et le Pasteur Kongo exercent chacun un ministère distinct, uni par le mariage
               et par une même conviction : préparer les cœurs, transmettre ce qui a été reçu.
             </p>
@@ -393,15 +393,15 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                 >
                   <Link
                     href={feature.href}
-                    className="group block bg-white rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 h-full hover:shadow-xl transition-all duration-500"
+                    className="group block bg-white rounded-2xl shadow-sm border border-[#8A857C]/10 border-t-[3px] border-t-[#C9A227] p-8 h-full hover:shadow-xl transition-all duration-500"
                   >
-                    <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#C9A227]/10 mb-6 group-hover:bg-[#C9A227]/20 transition-colors">
+                    <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#C9A227]/10 mb-6 group-hover:bg-[#FF7A1A]/20 transition-colors">
                       <Icon className="w-7 h-7 text-[#C9A227]" />
                     </div>
-                    <h3 className="font-serif text-xl font-bold text-[#1E0F2B] mb-3">
+                    <h3 className="font-serif text-xl font-bold text-[#000000] mb-3">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-[#8A8378] leading-relaxed mb-4">
+                    <p className="text-sm text-[#8A857C] leading-relaxed mb-4">
                       {feature.description}
                     </p>
                     <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227] group-hover:gap-2 transition-all">
@@ -417,35 +417,35 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
       </section>
 
       {/* ═══ DERNIER ENSEIGNEMENT ═══ */}
-      <section className="py-24 bg-[#2A0E3D] relative overflow-hidden">
+      <section className="py-24 bg-[#000000] relative overflow-hidden">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-12">
             <p className="text-xs uppercase tracking-[0.25em] text-[#C9A227] font-semibold mb-3">
               Le dernier enseignement
             </p>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#FAF6EF] leading-tight">
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#F0E9DE] leading-tight">
               Pour approfondir la Parole
             </h2>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 md:p-12 max-w-3xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-sm border border-[#8A857C]/10 border-t-[3px] border-t-[#C9A227] p-8 md:p-12 max-w-3xl mx-auto">
             <div className="flex items-center gap-2 mb-4">
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#8C5FA8]/10 text-[#8C5FA8] border border-[#8C5FA8]/20">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#8A857C]/10 text-[#8A857C] border border-[#8A857C]/20">
                 Doctrine
               </span>
-              <span className="text-xs text-[#8A8378]">PAM</span>
+              <span className="text-xs text-[#8A857C]">PAM</span>
             </div>
-            <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-4">
+            <h3 className="font-serif text-2xl font-bold text-[#000000] mb-4">
               La Véritable Nature du Saint-Esprit et la Trinité
             </h3>
-            <p className="text-sm md:text-base text-[#1E0F2B]/70 leading-relaxed mb-6">
+            <p className="text-sm md:text-base text-[#000000]/70 leading-relaxed mb-6">
               Au ciel, il n&apos;y a pas trois trônes pour le Père, le Fils et le Saint-Esprit.
               Il n&apos;y a qu&apos;un seul Trône, et c&apos;est la même personne qui s&apos;y manifeste
               sous différentes formes. Le Saint-Esprit est une personne réelle, douce et sensible...
             </p>
             <Link
               href="/enseignements"
-              className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#C9A227] hover:bg-[#A3821C] text-[#1E0F2B] font-sans font-bold text-sm transition-all duration-300"
+              className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#C9A227] hover:bg-[#A3821C] text-[#000000] font-sans font-bold text-sm transition-all duration-300"
             >
               Voir tous les enseignements
               <ChevronRight className="w-4 h-4 ml-2" />
@@ -458,13 +458,13 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
       {/* Section déplacée plus haut — voir après STATS */}
 
       {/* ═══ MARQUEE DE VERSETS ═══ */}
-      <section className="bg-[#2A0E3D] border-y border-[#C9A227]/20 py-6 overflow-hidden">
+      <section className="bg-[#000000] border-y border-[#C9A227]/20 py-6 overflow-hidden">
         <div className="flex items-center gap-8 animate-marquee whitespace-nowrap">
           {VERSES.map((verse, i) => (
             <span key={i} className="inline-flex items-center gap-3">
               <Sparkles className="w-3 h-3 text-[#C9A227]/60 flex-shrink-0" />
               <span className={i % 2 === 0
-                ? "font-serif italic text-[#FAF6EF]/80 text-lg"
+                ? "font-serif italic text-[#F0E9DE]/80 text-lg"
                 : "text-xs uppercase tracking-[0.2em] text-[#C9A227]/60 font-semibold"
               }>
                 {verse}
@@ -476,7 +476,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             <span key={`dup-${i}`} className="inline-flex items-center gap-3">
               <Sparkles className="w-3 h-3 text-[#C9A227]/60 flex-shrink-0" />
               <span className={i % 2 === 0
-                ? "font-serif italic text-[#FAF6EF]/80 text-lg"
+                ? "font-serif italic text-[#F0E9DE]/80 text-lg"
                 : "text-xs uppercase tracking-[0.2em] text-[#C9A227]/60 font-semibold"
               }>
                 {verse}
@@ -487,7 +487,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
       </section>
 
       {/* ═══ CTA COMMUNAUTÉ ═══ */}
-      <section className="py-12 bg-[#FAF6EF] relative overflow-hidden">
+      <section className="py-12 bg-[#F0E9DE] relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#C9A227]/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="relative max-w-4xl mx-auto px-4 text-center">
           <motion.div
@@ -499,10 +499,10 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-semibold mb-4">
               Communauté
             </p>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1E0F2B] leading-tight mb-6">
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#000000] leading-tight mb-6">
               Rejoignez les canaux d&apos;échange
             </h2>
-            <p className="text-base md:text-lg text-[#1E0F2B]/70 leading-relaxed max-w-2xl mx-auto mb-10">
+            <p className="text-base md:text-lg text-[#000000]/70 leading-relaxed max-w-2xl mx-auto mb-10">
               Des espaces d&apos;échange organisés par thème, modérés avec attention,
               pour grandir ensemble dans la foi. Canaux ouverts, canaux restreints chiffrés,
               intercession — à chacun son rythme.
@@ -510,14 +510,14 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/communaute"
-                className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-lg transition-all duration-300"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#FF7A1A] text-[#000000] font-sans font-bold text-base shadow-lg transition-all duration-300"
               >
                 Rejoindre la communauté
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Link>
               <Link
                 href="/yeshua-connect"
-                className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#C9A227]/10 transition-all duration-300"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-[#C9A227]/40 text-[#C9A227] font-sans font-bold text-base hover:bg-[#FF7A1A]/10 transition-all duration-300"
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Yeshua Connect

@@ -206,10 +206,10 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
   const activeCat = categories.find(c => c.id === activeCategory) || categories[0];
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF]">
+    <div className="min-h-screen bg-[#F0E9DE]">
       {/* HERO compact — ⭐ V3.45 : image d'arrière-plan + textes
           paramétrables depuis le back-office (/admin/heroes) */}
-      <section className="relative bg-[#2A0E3D] pt-24 pb-4 overflow-hidden">
+      <section className="relative bg-[#000000] pt-24 pb-4 overflow-hidden">
         {/* Image d'arrière-plan paramétrable (photo du hero) */}
         <div className="absolute inset-0 z-0">
           <HeroBackgroundImage
@@ -218,7 +218,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
             priority={false}
             className="object-cover opacity-25"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/85 to-[#2A0E3D]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#000000]/80 via-[#000000]/85 to-[#000000]" />
         </div>
         {/* Miniature live flottante */}
         <UpcomingLiveFloat />
@@ -229,11 +229,11 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
               <IsololeText>{hero.kicker}</IsololeText>
             </span>
           </div>
-          <h1 className="font-bold text-xl md:text-2xl text-[#FAF6EF]">
+          <h1 className="font-bold text-xl md:text-2xl text-[#F0E9DE]">
             <IsololeText>{hero.title}</IsololeText>
           </h1>
           {hero.subtitle && (
-            <p className="text-sm text-[#FAF6EF]/60 leading-relaxed mt-1 max-w-2xl">
+            <p className="text-sm text-[#F0E9DE]/60 leading-relaxed mt-1 max-w-2xl">
               <IsololeText>{hero.subtitle}</IsololeText>
             </p>
           )}
@@ -245,7 +245,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
           (Pasteur Kongo) : cartes mises en avant pour que les croyants
           suivent ces rendez-vous réguliers. Caché pendant la recherche. */}
       {!searchQuery.trim() && rubriquesCards.length > 0 && (
-        <section className="bg-[#FAF6EF] pt-6 pb-2 border-b border-[#8A8378]/10" aria-label="Rubriques à suivre">
+        <section className="bg-[#F0E9DE] pt-6 pb-2 border-b border-[#8A857C]/10" aria-label="Rubriques à suivre">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center gap-2 mb-3">
               <Star className="w-4 h-4 text-[#C9A227]" />
@@ -273,13 +273,13 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                     )}
                     aria-label={`Voir la rubrique ${name}`}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#2A0E3D] via-[#2A0E3D]/95 to-[#C9A227]/20" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-[#000000]/95 to-[#C9A227]/20" />
                     <div className="relative flex items-start gap-3">
                       <div className="w-10 h-10 rounded-xl bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-5 h-5 text-[#C9A227]" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="font-bold text-sm text-[#FAF6EF] leading-tight">
+                        <div className="font-bold text-sm text-[#F0E9DE] leading-tight">
                           <IsololeText>{name}</IsololeText>
                         </div>
                         {count > 0 ? (
@@ -288,13 +288,13 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                               {count} épisode{count > 1 ? "s" : ""}
                             </div>
                             {latest && (
-                              <div className="text-[11px] text-[#FAF6EF]/60 truncate mt-0.5">
+                              <div className="text-[11px] text-[#F0E9DE]/60 truncate mt-0.5">
                                 Dernier : {latest.title}
                               </div>
                             )}
                           </>
                         ) : (
-                          <div className="text-[11px] text-[#FAF6EF]/70 mt-1 italic">
+                          <div className="text-[11px] text-[#F0E9DE]/70 mt-1 italic">
                             Prochainement — restez connectés
                           </div>
                         )}
@@ -310,7 +310,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
       )}
 
       {/* BARRE DE RECHERCHE + ONGLETS */}
-      <section className="sticky top-16 md:top-20 z-30 bg-[#FAF6EF] border-b border-[#8A8378]/15 py-2 md:py-3">
+      <section className="sticky top-16 md:top-20 z-30 bg-[#F0E9DE] border-b border-[#8A857C]/15 py-2 md:py-3">
         <div className="max-w-7xl mx-auto px-3 md:px-4">
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
@@ -318,12 +318,12 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
               <ServantTabButton active={activeTab === "kongo"} onClick={() => { setActiveTab("kongo"); setActiveCategory(null); }} name="Kongo" count={allVideos.filter(v => v.servant === "kongo").length} photo="/pasteur-kongo.jpeg" />
             </div>
             <div className="flex-1 min-w-[200px] relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
               <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Rechercher une vidéo..."
-                className="w-full pl-9 pr-4 py-2 rounded-full border border-[#8A8378]/25 bg-white text-sm text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/20" />
+                className="w-full pl-9 pr-4 py-2 rounded-full border border-[#8A857C]/25 bg-white text-sm text-[#000000] placeholder:text-[#8A857C]/60 focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/20" />
               {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-[#8A8378]/10">
-                  <X className="w-3.5 h-3.5 text-[#8A8378]" />
+                <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-[#8A857C]/10">
+                  <X className="w-3.5 h-3.5 text-[#8A857C]" />
                 </button>
               )}
             </div>
@@ -331,7 +331,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-              className="px-3 py-2 rounded-full border border-[#8A8378]/25 bg-white text-xs font-semibold text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] flex-shrink-0"
+              className="px-3 py-2 rounded-full border border-[#8A857C]/25 bg-white text-xs font-semibold text-[#000000] focus:outline-none focus:border-[#C9A227] flex-shrink-0"
             >
               <option value="recent">Plus récentes</option>
               <option value="oldest">Plus anciennes</option>
@@ -349,7 +349,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
               <div className="w-8 h-8 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : searchQuery.trim() && filteredVideos.length === 0 ? (
-            <div className="text-center py-20"><p className="text-[#8A8378]">Aucune vidéo ne correspond à votre recherche.</p></div>
+            <div className="text-center py-20"><p className="text-[#8A857C]">Aucune vidéo ne correspond à votre recherche.</p></div>
           ) : (
             <>
             {/* Chips de catégories scrollables horizontalement (mobile) */}
@@ -362,15 +362,15 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                     className={cn(
                       "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0",
                       activeCategory === cat.id
-                        ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                        ? "bg-[#000000] text-[#F0E9DE]"
                         : estRubrique(cat.name)
                           ? "bg-[#C9A227]/15 text-[#A3821C] border border-[#C9A227]/40"
-                          : "bg-white text-[#1E0F2B] border border-[#8A8378]/20"
+                          : "bg-white text-[#000000] border border-[#8A857C]/20"
                     )}
                   >
                     {estRubrique(cat.name) && <Star className="w-3 h-3" />}
                     {cat.name}
-                    <span className={cn("text-[10px]", activeCategory === cat.id ? "text-[#C9A227]" : "text-[#8A8378]")}>{cat.videos.length}</span>
+                    <span className={cn("text-[10px]", activeCategory === cat.id ? "text-[#C9A227]" : "text-[#8A857C]")}>{cat.videos.length}</span>
                   </button>
                 ))}
               </div>
@@ -384,8 +384,8 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                   <div className="mb-8">
                     <div className="flex items-center gap-2 mb-4">
                       <Clock className="w-5 h-5 text-[#C9A227]" />
-                      <h2 className="font-bold text-base md:text-lg text-[#1E0F2B]">Vidéos récentes</h2>
-                      <span className="text-xs text-[#8A8378]">{recentVideos.length} vidéos</span>
+                      <h2 className="font-bold text-base md:text-lg text-[#000000]">Vidéos récentes</h2>
+                      <span className="text-xs text-[#8A857C]">{recentVideos.length} vidéos</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                       {recentVideos.map((video) => (
@@ -404,9 +404,9 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                           {(() => { const RubIcon = rubricIcon(activeCat.name); return <RubIcon className="w-4 h-4 text-[#C9A227]" />; })()}
                         </span>
                       )}
-                      <h2 className="font-bold text-base md:text-lg text-[#1E0F2B]">{activeCat.name}</h2>
+                      <h2 className="font-bold text-base md:text-lg text-[#000000]">{activeCat.name}</h2>
                       {activeCat.videos.length > 0 && (
-                        <span className="text-xs text-[#8A8378]">{activeCat.videos.length} vidéo{activeCat.videos.length > 1 ? "s" : ""}</span>
+                        <span className="text-xs text-[#8A857C]">{activeCat.videos.length} vidéo{activeCat.videos.length > 1 ? "s" : ""}</span>
                       )}
                     </div>
 
@@ -417,10 +417,10 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                         <div className="w-12 h-12 rounded-full bg-[#C9A227]/15 flex items-center justify-center mx-auto mb-3">
                           {(() => { const EmptyIcon = rubricIcon(activeCat.name); return <EmptyIcon className="w-6 h-6 text-[#C9A227]" />; })()}
                         </div>
-                        <p className="font-bold text-[#1E0F2B] text-sm md:text-base">
+                        <p className="font-bold text-[#000000] text-sm md:text-base">
                           Les épisodes de « {activeCat.name} » arrivent bientôt
                         </p>
-                        <p className="text-xs md:text-sm text-[#8A8378] mt-1.5 leading-relaxed">
+                        <p className="text-xs md:text-sm text-[#8A857C] mt-1.5 leading-relaxed">
                           Restez connectés — chaque nouvel épisode de cette rubrique sera publié ici,
                           au service du rassemblement des fils d&#39;Isolélé (Israël) dispersés.
                         </p>
@@ -438,7 +438,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
 
               {/* Sidebar droite : liste des catégories (desktop uniquement) */}
               <div className="hidden lg:block space-y-1.5">
-                <h3 className="font-bold text-xs text-[#1E0F2B] uppercase tracking-wider mb-3">Catégories</h3>
+                <h3 className="font-bold text-xs text-[#000000] uppercase tracking-wider mb-3">Catégories</h3>
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
@@ -446,10 +446,10 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                     className={cn(
                       "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
                       activeCategory === cat.id
-                        ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                        ? "bg-[#000000] text-[#F0E9DE]"
                         : estRubrique(cat.name)
-                          ? "text-[#A3821C] bg-[#C9A227]/10 hover:bg-[#C9A227]/20"
-                          : "text-[#1E0F2B] hover:bg-[#2A0E3D]/5"
+                          ? "text-[#A3821C] bg-[#C9A227]/10 hover:bg-[#FF7A1A]/20"
+                          : "text-[#000000] hover:bg-[#000000]/5"
                     )}
                   >
                     <span className="truncate flex items-center gap-1.5">
@@ -458,7 +458,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                     </span>
                     <span className={cn(
                       "text-xs flex-shrink-0",
-                      activeCategory === cat.id ? "text-[#C9A227]" : "text-[#8A8378]"
+                      activeCategory === cat.id ? "text-[#C9A227]" : "text-[#8A857C]"
                     )}>{cat.videos.length}</span>
                   </button>
                 ))}
@@ -470,10 +470,10 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
       </section>
 
       {/* Citation bas */}
-      <section className="py-10 bg-[#2A0E3D]">
+      <section className="py-10 bg-[#000000]">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <Play className="w-7 h-7 text-[#C9A227] mx-auto mb-3 opacity-40" />
-          <p className="text-base italic text-[#FAF6EF]/80 leading-relaxed mb-2">
+          <p className="text-base italic text-[#F0E9DE]/80 leading-relaxed mb-2">
             « Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe. »
           </p>
           <p className="text-xs uppercase tracking-[0.2em] text-[#C9A227] font-bold">Christ Libère</p>
@@ -543,22 +543,22 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
   const publicShareUrl = `https://mouvement-christ-libere.vercel.app/videos?v=${video.id}`;
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] pt-16 md:pt-20">
+    <div className="min-h-screen bg-[#F0E9DE] pt-16 md:pt-20">
       {/* Barre du haut (titre + recherche, style YouTube) */}
-      <div className="sticky top-16 md:top-20 z-30 bg-[#FAF6EF] border-b border-[#8A8378]/15 py-2 px-4">
+      <div className="sticky top-16 md:top-20 z-30 bg-[#F0E9DE] border-b border-[#8A857C]/15 py-2 px-4">
         <div className="max-w-[1800px] mx-auto flex items-center gap-3">
-          <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors flex-shrink-0">
+          <button onClick={onBack} className="inline-flex items-center gap-1 text-sm font-semibold text-[#000000] hover:text-[#FF7A1A] transition-colors flex-shrink-0">
             <ChevronLeft className="w-4 h-4" />
             Retour
           </button>
-          <div className="h-4 w-px bg-[#8A8378]/20" />
-          <p className="text-sm font-bold text-[#1E0F2B] truncate flex-1">{video.title}</p>
+          <div className="h-4 w-px bg-[#8A857C]/20" />
+          <p className="text-sm font-bold text-[#000000] truncate flex-1">{video.title}</p>
           <div className="relative w-48 md:w-64 flex-shrink-0">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8A8378]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8A857C]" />
             <input
               type="text"
               placeholder="Rechercher..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-full border border-[#8A8378]/25 bg-white text-xs text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227]"
+              className="w-full pl-8 pr-3 py-1.5 rounded-full border border-[#8A857C]/25 bg-white text-xs text-[#000000] placeholder:text-[#8A857C]/60 focus:outline-none focus:border-[#C9A227]"
               onChange={(e) => {
                 const q = e.target.value.toLowerCase();
                 const filtered = allVideos.filter(v =>
@@ -586,7 +586,7 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                 442 px de noir — bandes mortes). Le lecteur video-first
                 (vidéo 9:16 jusqu'à 486 px) se centre seul dans la colonne,
                 sa propre boîte arrondie fait le cadre ; le fond de page
-                (#FAF6EF) respire autour, comme pour une Short. */}
+                (#F0E9DE) respire autour, comme pour une Short. */}
             {video.tiktokId ? (
               <LecteurTikTok
                 tiktokId={video.tiktokId}
@@ -616,7 +616,7 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                   Votre navigateur ne supporte pas la lecture vidéo.
                 </video>
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] text-center p-8">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#000000] to-[#000000] text-center p-8">
                   {video.thumbnailUrl && (
                     <Image
                       src={video.thumbnailUrl}
@@ -628,8 +628,8 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                   )}
                   <div className="relative z-10">
                     <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
-                    <p className="text-sm font-bold text-[#FAF6EF] mb-1">Replay en cours de traitement</p>
-                    <p className="text-xs text-[#FAF6EF]/50">La vidéo sera disponible prochainement</p>
+                    <p className="text-sm font-bold text-[#F0E9DE] mb-1">Replay en cours de traitement</p>
+                    <p className="text-xs text-[#F0E9DE]/50">La vidéo sera disponible prochainement</p>
                   </div>
                 </div>
               )}
@@ -637,17 +637,17 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
             )}
 
             {/* Titre vidéo */}
-            <h1 className="font-bold text-lg md:text-xl text-[#1E0F2B] leading-snug mt-3 mb-2">{video.title}</h1>
+            <h1 className="font-bold text-lg md:text-xl text-[#000000] leading-snug mt-3 mb-2">{video.title}</h1>
 
             {/* Barre actions */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#8A8378]/15">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#8A857C]/15">
               <div className="flex items-center gap-3">
                 <div className="relative w-9 h-9 rounded-full overflow-hidden ring-2 ring-[#C9A227]/30 flex-shrink-0">
                   <Image src={servantPhoto} alt={servantName} width={36} height={36} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-[#1E0F2B]">{servantName}</p>
-                  <p className="text-xs text-[#8A8378]">{video.category}</p>
+                  <p className="text-sm font-bold text-[#000000]">{servantName}</p>
+                  <p className="text-xs text-[#8A857C]">{video.category}</p>
                 </div>
               </div>
 
@@ -655,9 +655,9 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                 {/* Like → cœur rouge */}
                 <button onClick={handleLike} className={cn(
                   "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
-                  liked ? "bg-red-50 text-red-600" : "bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 text-[#1E0F2B]"
+                  liked ? "bg-red-50 text-red-600" : "bg-[#000000]/5 hover:bg-[#000000]/10 text-[#000000]"
                 )}>
-                  <Heart className={cn("w-3.5 h-3.5", liked && "fill-current text-red-600")} style={{ color: liked ? "#dc2626" : "#8A8378" }} />
+                  <Heart className={cn("w-3.5 h-3.5", liked && "fill-current text-red-600")} style={{ color: liked ? "#dc2626" : "#8A857C" }} />
                   {likeCount > 0 ? likeCount.toLocaleString("fr-FR") : "J'aime"}
                 </button>
 
@@ -665,7 +665,7 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                     toutes visibles d'un coup, clic extérieur / Échap pour
                     fermer) — remplace le petit popover tronqué. */}
                 <div className="relative">
-                  <button onClick={() => setShowShare(!showShare)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 text-[#1E0F2B] text-xs font-semibold transition-colors">
+                  <button onClick={() => setShowShare(!showShare)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#000000]/5 hover:bg-[#000000]/10 text-[#000000] text-xs font-semibold transition-colors">
                     <Share2 className="w-3.5 h-3.5" style={{ color: "#C9A227" }} />
                     Partager
                   </button>
@@ -674,8 +674,8 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
             </div>
 
             {/* Description */}
-            <div className="mt-3 p-3 bg-[#2A0E3D]/5 rounded-xl border border-[#8A8378]/10">
-              <div className="flex items-center gap-3 text-xs text-[#8A8378] mb-2">
+            <div className="mt-3 p-3 bg-[#000000]/5 rounded-xl border border-[#8A857C]/10">
+              <div className="flex items-center gap-3 text-xs text-[#8A857C] mb-2">
                 <span className="inline-flex items-center gap-1">
                   <Eye className="w-3.5 h-3.5" style={{ color: "#C9A227" }} />
                   {video.views > 0 ? `${video.views.toLocaleString("fr-FR")} vues` : "Nouveau"}
@@ -685,18 +685,18 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                   contiennent l'URL complète (62 caractères insécables) qui
                   dilatait le paragraphe → scrollWidth 492 px sur mobile
                   390 px (mesuré en prod). Le mot long casse proprement. */}
-              <p className="text-sm text-[#1E0F2B]/80 leading-relaxed break-words">{video.description}</p>
+              <p className="text-sm text-[#000000]/80 leading-relaxed break-words">{video.description}</p>
             </div>
           </div>
 
           {/* Sidebar recommandées scrollable */}
           <div className="lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:sticky lg:top-24 space-y-2 pb-4">
-            <h3 className="font-bold text-xs text-[#1E0F2B] uppercase tracking-wider mb-2 sticky top-0 bg-[#FAF6EF] py-2 z-10">
+            <h3 className="font-bold text-xs text-[#000000] uppercase tracking-wider mb-2 sticky top-0 bg-[#F0E9DE] py-2 z-10">
               Vidéos recommandées
             </h3>
             {recommended.map((rec) => (
-              <button key={rec.id} onClick={() => onSelectVideo(rec)} className="group flex gap-2.5 w-full text-left hover:bg-[#2A0E3D]/5 rounded-lg p-1.5 transition-colors">
-                <div className="relative w-40 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-[#1A0826]">
+              <button key={rec.id} onClick={() => onSelectVideo(rec)} className="group flex gap-2.5 w-full text-left hover:bg-[#000000]/5 rounded-lg p-1.5 transition-colors">
+                <div className="relative w-40 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-[#000000]">
                   {/* ⭐ V3.28 — <img> brut -> next/image (optimisée + lazy) */}
                   {rec.tiktokId ? (
                     <TiktokMiniature src={rec.thumbnailUrl || null} title={rec.title} compact />
@@ -709,9 +709,9 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-[#1E0F2B] line-clamp-2 group-hover:text-[#C9A227] transition-colors leading-snug mb-1">{rec.title}</p>
-                  <p className="text-[10px] text-[#8A8378]">{rec.servantName}</p>
-                  <p className="text-[10px] text-[#8A8378]">{rec.category}</p>
+                  <p className="text-xs font-semibold text-[#000000] line-clamp-2 group-hover:text-[#FF7A1A] transition-colors leading-snug mb-1">{rec.title}</p>
+                  <p className="text-[10px] text-[#8A857C]">{rec.servantName}</p>
+                  <p className="text-[10px] text-[#8A857C]">{rec.category}</p>
                 </div>
               </button>
             ))}
@@ -757,7 +757,7 @@ function TiktokMiniature({ src, title, className, compact = false }: { src?: str
     );
   }
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#111118] via-[#16162a] to-[#0d0d16]">
+    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0B0B0A] via-[#12110F] to-[#070706]">
       <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "radial-gradient(circle at 30% 20%, #25F4EE 0%, transparent 45%), radial-gradient(circle at 75% 80%, #FE2C55 0%, transparent 45%)" }} />
       {/* « Écran mobile » portrait centré */}
       <div className={cn(
@@ -767,7 +767,7 @@ function TiktokMiniature({ src, title, className, compact = false }: { src?: str
         <TiktokNoteIcon size={compact ? 20 : 30} />
         {!compact && (
           <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#C9A227]/90 shadow-md">
-            <Play className="w-4 h-4 text-[#1E0F2B] ml-0.5" fill="currentColor" />
+            <Play className="w-4 h-4 text-[#000000] ml-0.5" fill="currentColor" />
           </div>
         )}
         <span className="text-[8px] font-bold tracking-[0.18em] text-white/70 uppercase">TikTok</span>
@@ -800,7 +800,7 @@ function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () =>
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.3 }}>
       <button onClick={onClick} className="group block w-full text-left">
-        <div className="relative aspect-video rounded-xl overflow-hidden bg-[#1A0826] mb-2.5">
+        <div className="relative aspect-video rounded-xl overflow-hidden bg-[#000000] mb-2.5">
           {/* ⭐ V3.28 — <img> brut -> next/image : AVIF/WebP dimensionné,
               lazy loading natif, plus de miniatures 480px chargées sur mobile.
               ⭐ V3.63 — TikTok : miniature de marque (repli automatique si
@@ -818,7 +818,7 @@ function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () =>
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="flex items-center justify-center w-11 h-11 rounded-full bg-[#C9A227] shadow-lg">
-              <Play className="w-5 h-5 text-[#1E0F2B] ml-0.5" fill="currentColor" />
+              <Play className="w-5 h-5 text-[#000000] ml-0.5" fill="currentColor" />
             </div>
           </div>
         </div>
@@ -827,9 +827,9 @@ function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () =>
             <Image src={video.servant === "pam" ? "/pam.jpeg" : "/pasteur-kongo.jpeg"} alt={video.servantName} width={32} height={32} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-[#1E0F2B] leading-snug line-clamp-2 break-words group-hover:text-[#C9A227] transition-colors mb-0.5">{video.title}</h3>
-            <p className="text-xs text-[#8A8378]">{video.servantName}</p>
-            <p className="text-xs text-[#8A8378]/70">{video.category}</p>
+            <h3 className="text-sm font-semibold text-[#000000] leading-snug line-clamp-2 break-words group-hover:text-[#FF7A1A] transition-colors mb-0.5">{video.title}</h3>
+            <p className="text-xs text-[#8A857C]">{video.servantName}</p>
+            <p className="text-xs text-[#8A857C]/70">{video.category}</p>
           </div>
         </div>
       </button>
@@ -846,13 +846,13 @@ function ServantTabButton({ active, onClick, name, count, photo }: {
   return (
     <button onClick={onClick} className={cn(
       "inline-flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full font-bold transition-all duration-300",
-      active ? "bg-[#2A0E3D] text-[#FAF6EF] shadow-md" : "bg-white text-[#1E0F2B] border border-[#8A8378]/20 hover:border-[#C9A227]/40"
+      active ? "bg-[#000000] text-[#F0E9DE] shadow-md" : "bg-white text-[#000000] border border-[#8A857C]/20 hover:border-[#FF7A1A]/40"
     )}>
       <div className="relative w-6 h-6 md:w-7 md:h-7 rounded-full overflow-hidden ring-1 ring-[#C9A227]/30 flex-shrink-0">
         <Image src={photo} alt={name} width={28} height={28} className="w-full h-full object-cover" />
       </div>
       <span className="text-xs md:text-sm">{name}</span>
-      <span className={cn("text-[10px] font-semibold", active ? "text-[#C9A227]" : "text-[#8A8378]")}>{count}</span>
+      <span className={cn("text-[10px] font-semibold", active ? "text-[#C9A227]" : "text-[#8A857C]")}>{count}</span>
     </button>
   );
 }

@@ -51,13 +51,13 @@ import { IsololeText, isololePlain } from "@/lib/isolole";
 // ============================================================
 // CONSTANTES — Couleurs du royaume
 // ============================================================
-const IMPERIAL = "#2A0E3D";
+const IMPERIAL = "#000000";
 const GOLD = "#C9A227";
 const GOLD_DARK = "#9C7E1E";
-const IVORY = "#FAF6EF";
-const INK = "#1E0F2B";
-const STONE = "#8A8378";
-const LAVENDER = "#7C5CB8";
+const IVORY = "#F0E9DE";
+const INK = "#000000";
+const STONE = "#8A857C";
+const LAVENDER = "#8A857C";
 
 // ============================================================
 // TYPES
@@ -166,8 +166,8 @@ export function BibleWorkspace({
     <div
       className={
         isEmbedded
-          ? "h-full min-h-0 flex flex-col bg-[#FAF6EF] overflow-hidden"
-          : "min-h-screen bg-[#FAF6EF]"
+          ? "h-full min-h-0 flex flex-col bg-[#F0E9DE] overflow-hidden"
+          : "min-h-screen bg-[#F0E9DE]"
       }
     >
       {/* En-tête BibleHub-style */}
@@ -228,7 +228,7 @@ function BibleHeader({ onglet, setOnglet, embedded = false, onClose }: BibleHead
   return (
     <header
       className={cn(
-        "bg-[#2A0E3D] text-[#FAF6EF] shadow-lg shadow-[#2A0E3D]/20",
+        "bg-[#000000] text-[#F0E9DE] shadow-lg shadow-[#000000]/20",
         embedded ? "flex-shrink-0 z-10" : "sticky top-0 z-40"
       )}
     >
@@ -238,7 +238,7 @@ function BibleHeader({ onglet, setOnglet, embedded = false, onClose }: BibleHead
           {/* Logo — cliquable en mode embedded ? non : simple titre */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className={cn("rounded-md bg-[#C9A227] flex items-center justify-center", embedded ? "w-8 h-8" : "w-9 h-9")}>
-              <BookOpen className={cn("text-[#2A0E3D]", embedded ? "w-4 h-4" : "w-5 h-5")} />
+              <BookOpen className={cn("text-[#000000]", embedded ? "w-4 h-4" : "w-5 h-5")} />
             </div>
             <div className={cn(embedded ? "block" : "hidden md:block")}>
               <p className="font-serif text-sm font-bold leading-none">Bible du Royaume</p>
@@ -251,7 +251,7 @@ function BibleHeader({ onglet, setOnglet, embedded = false, onClose }: BibleHead
           {/* Barre de recherche */}
           <div className="flex-1 max-w-2xl mx-auto min-w-0">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FAF6EF]/40" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#F0E9DE]/40" />
               <input
                 type="text"
                 value={quickSearch}
@@ -262,7 +262,7 @@ function BibleHeader({ onglet, setOnglet, embedded = false, onClose }: BibleHead
                   }
                 }}
                 placeholder="Rechercher un verset, un mot, une référence (ex: Jean 3:16)..."
-                className="w-full pl-10 pr-4 py-1.5 md:py-2 rounded-md bg-[#FAF6EF]/8 border border-[#C9A227]/30 text-[#FAF6EF] placeholder:text-[#FAF6EF]/40 text-sm focus:outline-none focus:border-[#C9A227] focus:bg-[#FAF6EF]/12 transition-colors"
+                className="w-full pl-10 pr-4 py-1.5 md:py-2 rounded-md bg-[#F0E9DE]/8 border border-[#C9A227]/30 text-[#F0E9DE] placeholder:text-[#F0E9DE]/40 text-sm focus:outline-none focus:border-[#C9A227] focus:bg-[#F0E9DE]/12 transition-colors"
               />
             </div>
           </div>
@@ -271,13 +271,13 @@ function BibleHeader({ onglet, setOnglet, embedded = false, onClose }: BibleHead
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {embedded ? (
               <>
-                <button className="p-2 rounded hover:bg-[#FAF6EF]/10 transition-colors" title="Marque-pages">
+                <button className="p-2 rounded hover:bg-[#F0E9DE]/10 transition-colors" title="Marque-pages">
                   <Bookmark className="w-4 h-4" />
                 </button>
                 {onClose && (
                   <button
                     onClick={onClose}
-                    className="p-2 rounded hover:bg-[#C9A227]/20 border border-[#C9A227]/40 text-[#FAF6EF] hover:text-[#C9A227] transition-colors"
+                    className="p-2 rounded hover:bg-[#FF7A1A]/20 border border-[#C9A227]/40 text-[#F0E9DE] hover:text-[#FF7A1A] transition-colors"
                     title="Fermer la Bible"
                   >
                     <X className="w-4 h-4" />
@@ -286,10 +286,10 @@ function BibleHeader({ onglet, setOnglet, embedded = false, onClose }: BibleHead
               </>
             ) : (
               <div className="hidden md:flex items-center gap-2">
-                <button className="p-2 rounded hover:bg-[#FAF6EF]/10 transition-colors" title="Marque-pages">
+                <button className="p-2 rounded hover:bg-[#F0E9DE]/10 transition-colors" title="Marque-pages">
                   <Bookmark className="w-4 h-4" />
                 </button>
-                <button className="p-2 rounded hover:bg-[#FAF6EF]/10 transition-colors" title="Paramètres">
+                <button className="p-2 rounded hover:bg-[#F0E9DE]/10 transition-colors" title="Paramètres">
                   <Settings className="w-4 h-4" />
                 </button>
               </div>
@@ -311,8 +311,8 @@ function BibleHeader({ onglet, setOnglet, embedded = false, onClose }: BibleHead
                 className={cn(
                   "flex items-center gap-2 px-3 md:px-4 py-2 text-sm font-semibold whitespace-nowrap transition-all border-b-2",
                   isActive
-                    ? "border-[#C9A227] text-[#FAF6EF]"
-                    : "border-transparent text-[#FAF6EF]/60 hover:text-[#FAF6EF] hover:border-[#C9A227]/40"
+                    ? "border-[#C9A227] text-[#F0E9DE]"
+                    : "border-transparent text-[#F0E9DE]/60 hover:text-[#F0E9DE] hover:border-[#FF7A1A]/40"
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -570,17 +570,17 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
         sidebarOpen ? "block fixed inset-0 z-50 bg-black/50 lg:bg-transparent lg:static" : "hidden"
       )}>
         <div className={cn(
-          "bg-white rounded-lg shadow-md border border-[#8A8378]/15 overflow-hidden",
+          "bg-white rounded-lg shadow-md border border-[#8A857C]/15 overflow-hidden",
           sidebarOpen && "lg:rounded-lg fixed lg:static top-0 left-0 bottom-0 w-80 lg:w-auto max-w-full"
         )}>
-          <div className="flex items-center justify-between px-4 py-3 bg-[#2A0E3D]/5 border-b border-[#8A8378]/15">
-            <h3 className="font-serif text-sm font-bold text-[#1E0F2B] flex items-center gap-2">
+          <div className="flex items-center justify-between px-4 py-3 bg-[#000000]/5 border-b border-[#8A857C]/15">
+            <h3 className="font-serif text-sm font-bold text-[#000000] flex items-center gap-2">
               <List className="w-4 h-4 text-[#C9A227]" />
               Livres
             </h3>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1 rounded hover:bg-[#2A0E3D]/10"
+              className="lg:hidden p-1 rounded hover:bg-[#000000]/10"
             >
               <X className="w-4 h-4" />
             </button>
@@ -599,35 +599,35 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
       {/* COLONNE CENTRALE — Versets */}
       <div className="min-w-0">
         {/* Barre du haut : sélecteurs + nav */}
-        <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-3 mb-4 flex flex-wrap items-center gap-2">
+        <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-3 mb-4 flex flex-wrap items-center gap-2">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded hover:bg-[#2A0E3D]/5"
+            className="lg:hidden p-2 rounded hover:bg-[#000000]/5"
             title="Afficher les livres"
           >
-            <Menu className="w-4 h-4 text-[#2A0E3D]" />
+            <Menu className="w-4 h-4 text-[#000000]" />
           </button>
 
           <select
             value={version}
             onChange={(e) => setVersion(e.target.value)}
-            className="px-3 py-1.5 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-1.5 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
           >
             {VERSIONS.map((v) => (
               <option key={v.code} value={v.code}>{v.label}</option>
             ))}
           </select>
 
-          <div className="h-5 w-px bg-[#8A8378]/20" />
+          <div className="h-5 w-px bg-[#8A857C]/20" />
 
-          <span className="font-serif text-sm font-bold text-[#1E0F2B]">
+          <span className="font-serif text-sm font-bold text-[#000000]">
             {livreOption.nom} {chapitre}
           </span>
 
           <div className="flex items-center gap-1 ml-auto">
             <button
               onClick={() => chapitre > 1 ? changeChapitre(chapitre - 1) : livrePrecedent()}
-              className="p-1.5 rounded hover:bg-[#C9A227]/10 text-[#2A0E3D] disabled:opacity-30"
+              className="p-1.5 rounded hover:bg-[#FF7A1A]/10 text-[#000000] disabled:opacity-30"
               disabled={chapitre <= 1 && LIVRES_OPTIONS.findIndex((l) => l.id === livre) === 0}
               title="Chapitre précédent"
             >
@@ -636,7 +636,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
             <select
               value={chapitre}
               onChange={(e) => changeChapitre(parseInt(e.target.value))}
-              className="px-2 py-1 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
+              className="px-2 py-1 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
             >
               {Array.from({ length: livreOption.chapitres }, (_, i) => i + 1).map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -644,7 +644,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
             </select>
             <button
               onClick={() => chapitre < livreOption.chapitres ? changeChapitre(chapitre + 1) : livreSuivant()}
-              className="p-1.5 rounded hover:bg-[#C9A227]/10 text-[#2A0E3D] disabled:opacity-30"
+              className="p-1.5 rounded hover:bg-[#FF7A1A]/10 text-[#000000] disabled:opacity-30"
               disabled={chapitre >= livreOption.chapitres && LIVRES_OPTIONS.findIndex((l) => l.id === livre) === LIVRES_OPTIONS.length - 1}
               title="Chapitre suivant"
             >
@@ -652,19 +652,19 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
             </button>
           </div>
 
-          <div className="h-5 w-px bg-[#8A8378]/20" />
+          <div className="h-5 w-px bg-[#8A857C]/20" />
 
           {/* Taille du texte */}
           <div className="flex items-center gap-1">
-            <Type className="w-3.5 h-3.5 text-[#8A8378]" />
+            <Type className="w-3.5 h-3.5 text-[#8A857C]" />
             <button
               onClick={() => setFontSize((s) => Math.max(12, s - 1))}
-              className="px-1.5 py-0.5 text-xs rounded hover:bg-[#2A0E3D]/5 font-bold"
+              className="px-1.5 py-0.5 text-xs rounded hover:bg-[#000000]/5 font-bold"
               title="Réduire"
             >A-</button>
             <button
               onClick={() => setFontSize((s) => Math.min(22, s + 1))}
-              className="px-1.5 py-0.5 text-sm rounded hover:bg-[#2A0E3D]/5 font-bold"
+              className="px-1.5 py-0.5 text-sm rounded hover:bg-[#000000]/5 font-bold"
               title="Agrandir"
             >A+</button>
           </div>
@@ -673,7 +673,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
           <select
             value={parallelVersion || ""}
             onChange={(e) => setParallelVersion(e.target.value || null)}
-            className="px-2 py-1.5 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-xs font-semibold focus:outline-none focus:border-[#C9A227]"
+            className="px-2 py-1.5 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-xs font-semibold focus:outline-none focus:border-[#C9A227]"
             title="Afficher une version parallèle"
           >
             <option value="">Parallèle : —</option>
@@ -689,8 +689,8 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
               className={cn(
                 "inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-bold transition-colors",
                 interlinearMode
-                  ? "bg-[#2A0E3D] text-[#C9A227]"
-                  : "border border-[#8A8378]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+                  ? "bg-[#000000] text-[#C9A227]"
+                  : "border border-[#8A857C]/30 text-[#000000] hover:bg-[#000000]/5"
               )}
               title="Afficher l'interlinéaire Hébreu/Français avec numéros Strong"
             >
@@ -702,18 +702,18 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
 
         {/* Contenu du chapitre */}
         {loading ? (
-          <div className="flex items-center justify-center py-32 bg-white rounded-lg border border-[#8A8378]/15">
+          <div className="flex items-center justify-center py-32 bg-white rounded-lg border border-[#8A857C]/15">
             <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
           </div>
         ) : data ? (
-          <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 overflow-hidden">
             {/* Titre du chapitre */}
-            <div className="px-6 py-4 bg-gradient-to-r from-[#2A0E3D]/5 to-transparent border-b border-[#8A8378]/15">
+            <div className="px-6 py-4 bg-gradient-to-r from-[#000000]/5 to-transparent border-b border-[#8A857C]/15">
               <div className="flex items-baseline gap-3 flex-wrap">
-                <h2 className="font-serif text-2xl font-bold text-[#1E0F2B]">
+                <h2 className="font-serif text-2xl font-bold text-[#000000]">
                   {data.livre} {data.chapitre}
                 </h2>
-                <span className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold">
+                <span className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-semibold">
                   {data.version} · {data.nombreVersets} versets
                 </span>
               </div>
@@ -722,7 +722,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
             {/* Versets */}
             <div className="px-6 py-5">
               {data.versets.length === 0 ? (
-                <p className="text-[#8A8378] italic text-center py-12">
+                <p className="text-[#8A857C] italic text-center py-12">
                   Chapitre non disponible dans les versets de secours.
                 </p>
               ) : (
@@ -737,7 +737,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                           "group relative rounded-md transition-all px-3 py-1.5 -mx-3",
                           isSelected
                             ? "bg-[#C9A227]/10 ring-1 ring-[#C9A227]/30"
-                            : "hover:bg-[#2A0E3D]/3"
+                            : "hover:bg-[#000000]/3"
                         )}
                       >
                         {/* Numéro de verset — cliquable (sélection multi-versets) */}
@@ -771,7 +771,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
 
                         {/* Texte du verset — ⭐ V3.45 : « Israël » s'affiche
                             « Isolélé (Israël) », Isolélé en gras */}
-                        <span className="font-serif leading-relaxed text-[#1E0F2B]" style={{ fontSize: `${fontSize}px` }}>
+                        <span className="font-serif leading-relaxed text-[#000000]" style={{ fontSize: `${fontSize}px` }}>
                           <IsololeText>{v.texte}</IsololeText>
                         </span>
 
@@ -784,7 +784,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                               "flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-bold transition-colors",
                               copiedVerse === v.numero
                                 ? "bg-[#5B7052]/10 text-[#5B7052]"
-                                : "hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#2A0E3D]"
+                                : "hover:bg-[#FF7A1A]/10 text-[#8A857C] hover:text-[#000000]"
                             )}
                             title={copiedVerse === v.numero ? "Copié !" : "Copier ce verset"}
                           >
@@ -799,7 +799,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                           {onShareVerse ? (
                             <button
                               onClick={() => handleShareVerset(v.numero, v.texte)}
-                              className="flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-bold hover:bg-[#C9A227]/20 text-[#C9A227] hover:text-[#2A0E3D] transition-colors"
+                              className="flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-bold hover:bg-[#FF7A1A]/20 text-[#C9A227] hover:text-[#000000] transition-colors"
                               title="Envoyer dans la conversation"
                             >
                               <Send className="w-3 h-3" />
@@ -808,14 +808,14 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                           ) : (
                             <button
                               onClick={() => handleCopyVerset(v.numero, v.texte)}
-                              className="p-1 rounded hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#2A0E3D]"
+                              className="p-1 rounded hover:bg-[#FF7A1A]/10 text-[#8A857C] hover:text-[#000000]"
                               title="Partager"
                             >
                               <Share2 className="w-3 h-3" />
                             </button>
                           )}
                           <button
-                            className="p-1 rounded hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#2A0E3D]"
+                            className="p-1 rounded hover:bg-[#FF7A1A]/10 text-[#8A857C] hover:text-[#000000]"
                             title="Imprimer"
                           >
                             <Printer className="w-3 h-3" />
@@ -824,7 +824,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
 
                         {/* Verset parallèle (si activé) */}
                         {parallelVerset && (
-                          <div className="mt-1.5 ml-7 pl-3 border-l-2 border-[#C9A227]/40 text-[#1E0F2B]/70 italic" style={{ fontSize: `${fontSize - 2}px` }}>
+                          <div className="mt-1.5 ml-7 pl-3 border-l-2 border-[#C9A227]/40 text-[#000000]/70 italic" style={{ fontSize: `${fontSize - 2}px` }}>
                             <span className="text-[10px] uppercase tracking-wider font-bold text-[#C9A227] mr-2">
                               {VERSIONS.find((v) => v.code === parallelVersion)?.shortLabel}
                             </span>
@@ -834,7 +834,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
 
                         {/* Interlinéaire Hébreu (si activé) */}
                         {interlinearMode && hebrewChapter?.[v.numero] && (
-                          <div className="mt-2 ml-7 p-2 rounded-md bg-[#FAF6EF]/60 border border-[#C9A227]/20" dir="rtl">
+                          <div className="mt-2 ml-7 p-2 rounded-md bg-[#F0E9DE]/60 border border-[#C9A227]/20" dir="rtl">
                             <div className="flex flex-wrap gap-2 justify-end">
                               {hebrewChapter[v.numero]!.map((mot, i) => (
                                 <span
@@ -843,10 +843,10 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                                   title={`${mot.lemme} — ${mot.morphologie}`}
                                 >
                                   <span
-                                    className="font-serif leading-relaxed group-hover:text-[#C9A227] transition-colors"
+                                    className="font-serif leading-relaxed group-hover:text-[#FF7A1A] transition-colors"
                                     style={{
                                       fontSize: `${fontSize}px`,
-                                      color: mot.lemme.startsWith("H") ? "#2A0E3D" : "#1E0F2B",
+                                      color: mot.lemme.startsWith("H") ? "#000000" : "#000000",
                                     }}
                                   >
                                     {mot.mot}
@@ -867,21 +867,21 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
             </div>
 
             {/* Navigation bas de page */}
-            <div className="px-6 py-4 border-t border-[#8A8378]/15 flex items-center justify-between bg-[#FAF6EF]/50">
+            <div className="px-6 py-4 border-t border-[#8A857C]/15 flex items-center justify-between bg-[#F0E9DE]/50">
               <button
                 onClick={() => chapitre > 1 ? changeChapitre(chapitre - 1) : livrePrecedent()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold text-[#2A0E3D] hover:bg-[#2A0E3D]/5 disabled:opacity-30"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold text-[#000000] hover:bg-[#000000]/5 disabled:opacity-30"
                 disabled={chapitre <= 1 && LIVRES_OPTIONS.findIndex((l) => l.id === livre) === 0}
               >
                 <ChevronLeft className="w-4 h-4" />
                 Précédent
               </button>
-              <span className="text-xs text-[#8A8378] font-semibold">
+              <span className="text-xs text-[#8A857C] font-semibold">
                 {data.livre} {data.chapitre} · {data.nombreVersets} versets
               </span>
               <button
                 onClick={() => chapitre < livreOption.chapitres ? changeChapitre(chapitre + 1) : livreSuivant()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold text-[#2A0E3D] hover:bg-[#2A0E3D]/5 disabled:opacity-30"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold text-[#000000] hover:bg-[#000000]/5 disabled:opacity-30"
                 disabled={chapitre >= livreOption.chapitres && LIVRES_OPTIONS.findIndex((l) => l.id === livre) === LIVRES_OPTIONS.length - 1}
               >
                 Suivant
@@ -890,8 +890,8 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-[#8A8378]/15 py-32 text-center">
-            <p className="text-[#8A8378] italic">Chargement...</p>
+          <div className="bg-white rounded-lg border border-[#8A857C]/15 py-32 text-center">
+            <p className="text-[#8A857C] italic">Chargement...</p>
           </div>
         )}
 
@@ -901,7 +901,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
             Yeshua Connect, ou d'effacer la sélection. */}
         {selectedVersets.size > 0 && data && (
           <div className="sticky bottom-4 z-20 mt-4 pointer-events-none">
-            <div className="mx-auto max-w-xl bg-[#2A0E3D] text-[#FAF6EF] rounded-2xl shadow-2xl border border-[#C9A227]/50 px-4 py-3 flex items-center gap-3 pointer-events-auto">
+            <div className="mx-auto max-w-xl bg-[#000000] text-[#F0E9DE] rounded-2xl shadow-2xl border border-[#C9A227]/50 px-4 py-3 flex items-center gap-3 pointer-events-auto">
               <span className="flex items-center gap-1.5 text-xs font-bold text-[#C9A227] flex-shrink-0">
                 <Check className="w-3.5 h-3.5" />
                 {selectedVersets.size} verset{selectedVersets.size > 1 ? "s" : ""}
@@ -916,7 +916,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                     "flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-bold transition-colors",
                     copiedSelection
                       ? "bg-[#5B7052] text-white"
-                      : "hover:bg-white/10 text-[#FAF6EF]"
+                      : "hover:bg-white/10 text-[#F0E9DE]"
                   )}
                   title={copiedSelection ? "Copié !" : "Copier la sélection"}
                 >
@@ -926,7 +926,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                 {onShareVerse && (
                   <button
                     onClick={handleShareSelection}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-xs font-bold hover:bg-[#DDBE55] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#C9A227] text-[#000000] text-xs font-bold hover:bg-[#FF7A1A] transition-colors"
                     title="Envoyer la sélection dans la conversation"
                   >
                     <Send className="w-3.5 h-3.5" />
@@ -935,7 +935,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                 )}
                 <button
                   onClick={() => setSelectedVersets(new Set())}
-                  className="p-2 rounded-lg hover:bg-white/10 text-[#FAF6EF]/80 transition-colors"
+                  className="p-2 rounded-lg hover:bg-white/10 text-[#F0E9DE]/80 transition-colors"
                   title="Effacer la sélection"
                 >
                   <X className="w-4 h-4" />
@@ -960,12 +960,12 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
       <aside className="hidden lg:block">
         <div
           className={cn(
-            "bg-white rounded-lg shadow-sm border border-[#8A8378]/15 overflow-hidden",
+            "bg-white rounded-lg shadow-sm border border-[#8A857C]/15 overflow-hidden",
             embedded ? "sticky top-2" : "sticky top-32"
           )}
         >
-          <div className="px-4 py-3 bg-[#2A0E3D]/5 border-b border-[#8A8378]/15">
-            <h3 className="font-serif text-sm font-bold text-[#1E0F2B] flex items-center gap-2">
+          <div className="px-4 py-3 bg-[#000000]/5 border-b border-[#8A857C]/15">
+            <h3 className="font-serif text-sm font-bold text-[#000000] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#C9A227]" />
               Étude du verset
             </h3>
@@ -982,8 +982,8 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
               />
             ) : (
               <div className="text-center py-8">
-                <Hash className="w-8 h-8 text-[#8A8378]/30 mx-auto mb-3" />
-                <p className="text-sm text-[#8A8378]">
+                <Hash className="w-8 h-8 text-[#8A857C]/30 mx-auto mb-3" />
+                <p className="text-sm text-[#8A857C]">
                   Cliquez sur un numéro de verset pour afficher les références croisées, les mots Strong, et les versions parallèles.
                 </p>
               </div>
@@ -1015,7 +1015,7 @@ function ListeLivres({ livreActuel, chapitreActuel, onSelectLivre, onSelectChapi
       {/* AT */}
       <button
         onClick={() => setSectionOuverte(sectionOuverte === "AT" ? null : "AT")}
-        className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-[0.18em] font-bold text-[#8A8378] hover:bg-[#2A0E3D]/3"
+        className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-[0.18em] font-bold text-[#8A857C] hover:bg-[#000000]/3"
       >
         <span>Ancien Testament</span>
         <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", sectionOuverte === "AT" && "rotate-180")} />
@@ -1038,7 +1038,7 @@ function ListeLivres({ livreActuel, chapitreActuel, onSelectLivre, onSelectChapi
       {/* NT */}
       <button
         onClick={() => setSectionOuverte(sectionOuverte === "NT" ? null : "NT")}
-        className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-[0.18em] font-bold text-[#8A8378] hover:bg-[#2A0E3D]/3"
+        className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-[0.18em] font-bold text-[#8A857C] hover:bg-[#000000]/3"
       >
         <span>Nouveau Testament</span>
         <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", sectionOuverte === "NT" && "rotate-180")} />
@@ -1090,18 +1090,18 @@ function LivreItem({ livre, estActif, chapitreActuel, onSelectLivre, onSelectCha
         className={cn(
           "w-full flex items-center justify-between px-4 py-1.5 text-sm transition-colors",
           estActif
-            ? "bg-[#C9A227]/10 text-[#2A0E3D] font-bold border-l-2 border-[#C9A227]"
-            : "text-[#1E0F2B] hover:bg-[#2A0E3D]/3 border-l-2 border-transparent"
+            ? "bg-[#C9A227]/10 text-[#000000] font-bold border-l-2 border-[#C9A227]"
+            : "text-[#000000] hover:bg-[#000000]/3 border-l-2 border-transparent"
         )}
       >
         <span>{livre.nom}</span>
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-[#8A8378] font-normal">{livre.chapitres}</span>
+          <span className="text-[10px] text-[#8A857C] font-normal">{livre.chapitres}</span>
           <ChevronRight className={cn("w-3 h-3 transition-transform", expanded && "rotate-90")} />
         </div>
       </button>
       {expanded && (
-        <div className="grid grid-cols-10 gap-0.5 px-3 py-2 bg-[#FAF6EF]/50">
+        <div className="grid grid-cols-10 gap-0.5 px-3 py-2 bg-[#F0E9DE]/50">
           {Array.from({ length: livre.chapitres }, (_, i) => i + 1).map((c) => (
             <button
               key={c}
@@ -1109,8 +1109,8 @@ function LivreItem({ livre, estActif, chapitreActuel, onSelectLivre, onSelectCha
               className={cn(
                 "aspect-square text-[10px] font-semibold rounded transition-colors",
                 c === chapitreActuel
-                  ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                  : "text-[#1E0F2B] hover:bg-[#C9A227]/15"
+                  ? "bg-[#000000] text-[#F0E9DE]"
+                  : "text-[#000000] hover:bg-[#FF7A1A]/15"
               )}
             >
               {c}
@@ -1254,7 +1254,7 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
   return (
     <div className="space-y-4">
       {/* Verset sélectionné + bouton marque-page */}
-      <div className="p-3 rounded-md bg-[#2A0E3D]/5 border border-[#C9A227]/20">
+      <div className="p-3 rounded-md bg-[#000000]/5 border border-[#C9A227]/20">
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#C9A227]">
             {livre} {chapitre}:{verset}
@@ -1266,14 +1266,14 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
               "p-1 rounded transition-colors",
               isBookmarked
                 ? "text-[#C9A227] bg-[#C9A227]/10"
-                : "text-[#8A8378] hover:text-[#C9A227] hover:bg-[#C9A227]/10"
+                : "text-[#8A857C] hover:text-[#FF7A1A] hover:bg-[#FF7A1A]/10"
             )}
             title={isBookmarked ? "Retirer des marque-pages" : "Ajouter aux marque-pages"}
           >
             <Bookmark className={cn("w-3.5 h-3.5", isBookmarked && "fill-current")} />
           </button>
         </div>
-        <p className="font-serif text-sm text-[#1E0F2B] leading-relaxed italic">
+        <p className="font-serif text-sm text-[#000000] leading-relaxed italic">
           « {texte} »
         </p>
       </div>
@@ -1281,11 +1281,11 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
       {/* Interlinéaire Hébreu/Français */}
       {hebrewWords && hebrewWords.length > 0 && (
         <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#8A8378] mb-2 flex items-center gap-1.5">
+          <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#8A857C] mb-2 flex items-center gap-1.5">
             <Scroll className="w-3 h-3" />
             Texte hébraïque
           </p>
-          <div className="p-2 rounded border border-[#8A8378]/15 bg-[#FAF6EF]/40" dir="rtl">
+          <div className="p-2 rounded border border-[#8A857C]/15 bg-[#F0E9DE]/40" dir="rtl">
             <div className="flex flex-wrap gap-1.5 justify-end">
               {hebrewWords.map((mot, i) => (
                 <div
@@ -1293,17 +1293,17 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
                   className="group relative inline-flex flex-col items-center cursor-help"
                   title={`${mot.lemme} — ${mot.morphologie}`}
                 >
-                  <span className="font-serif text-base text-[#1E0F2B] group-hover:text-[#C9A227] transition-colors">
+                  <span className="font-serif text-base text-[#000000] group-hover:text-[#FF7A1A] transition-colors">
                     {mot.mot}
                   </span>
-                  <span className="text-[8px] text-[#8A8378] font-mono mt-0.5">
+                  <span className="text-[8px] text-[#8A857C] font-mono mt-0.5">
                     {mot.lemme.replace(/^H[a-z]*/, "H")}
                   </span>
                 </div>
               ))}
             </div>
           </div>
-          <p className="text-[9px] text-[#8A8378] mt-1 italic">
+          <p className="text-[9px] text-[#8A857C] mt-1 italic">
             Survolez chaque mot pour voir son numéro Strong et sa morphologie
           </p>
         </div>
@@ -1311,20 +1311,20 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
 
       {/* Versions parallèles */}
       <div>
-        <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#8A8378] mb-2 flex items-center gap-1.5">
+        <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#8A857C] mb-2 flex items-center gap-1.5">
           <Columns className="w-3 h-3" />
           Versions parallèles
         </p>
         <div className="space-y-2">
           {paralleles.map((p) => (
-            <div key={p.code} className="p-2 rounded border border-[#8A8378]/15 text-xs">
+            <div key={p.code} className="p-2 rounded border border-[#8A857C]/15 text-xs">
               <p className="text-[10px] font-bold text-[#C9A227] mb-1">{p.label}</p>
               {p.loading ? (
-                <Loader2 className="w-3 h-3 animate-spin text-[#8A8378]" />
+                <Loader2 className="w-3 h-3 animate-spin text-[#8A857C]" />
               ) : p.texte ? (
-                <p className="text-[#1E0F2B] font-serif italic"><IsololeText>{p.texte}</IsololeText></p>
+                <p className="text-[#000000] font-serif italic"><IsololeText>{p.texte}</IsololeText></p>
               ) : (
-                <p className="text-[#8A8378] italic">Non disponible</p>
+                <p className="text-[#8A857C] italic">Non disponible</p>
               )}
             </div>
           ))}
@@ -1333,7 +1333,7 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
 
       {/* Références croisées TSK (Treasury of Scripture Knowledge) */}
       <div>
-        <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#8A8378] mb-2 flex items-center gap-1.5">
+        <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-[#8A857C] mb-2 flex items-center gap-1.5">
           <Share2 className="w-3 h-3" />
           Références croisées (TSK)
         </p>
@@ -1343,7 +1343,7 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
               <a
                 key={i}
                 href={`/bible?v=${version}&l=${ref.livreId}&c=${ref.chapitre}#${ref.verset}`}
-                className="inline-block px-2 py-1 rounded text-[10px] font-mono font-semibold text-[#2A0E3D] bg-[#C9A227]/10 hover:bg-[#C9A227]/20 transition-colors"
+                className="inline-block px-2 py-1 rounded text-[10px] font-mono font-semibold text-[#000000] bg-[#C9A227]/10 hover:bg-[#FF7A1A]/20 transition-colors"
                 title={`${getLivreNom(ref.livreId)} ${ref.chapitre}:${ref.verset}`}
               >
                 {getLivreNom(ref.livreId).slice(0, 3)} {ref.chapitre}:{ref.verset}
@@ -1351,11 +1351,11 @@ function VersetEtude({ livre, livreId, chapitre, verset, texte, version }: Verse
             ))}
           </div>
         ) : (
-          <p className="text-[10px] text-[#8A8378] italic">
+          <p className="text-[10px] text-[#8A857C] italic">
             Aucune référence croisée disponible pour ce verset.
           </p>
         )}
-        <p className="text-[9px] text-[#8A8378] mt-1.5 italic">
+        <p className="text-[9px] text-[#8A857C] mt-1.5 italic">
           Source : Treasury of Scripture Knowledge — {crossRefs.length} référence{crossRefs.length > 1 ? "s" : ""}
         </p>
       </div>
@@ -1392,8 +1392,8 @@ function OngletRecherche({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={cn("max-w-5xl mx-auto", embedded && "max-w-3xl")}>
-      <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-6 mb-6">
-        <h2 className="font-serif text-xl font-bold text-[#1E0F2B] mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-6 mb-6">
+        <h2 className="font-serif text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
           <Search className="w-5 h-5 text-[#C9A227]" />
           Recherche dans la Bible
         </h2>
@@ -1401,7 +1401,7 @@ function OngletRecherche({ embedded = false }: { embedded?: boolean }) {
           <select
             value={version}
             onChange={(e) => setVersion(e.target.value)}
-            className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
           >
             {VERSIONS.map((v) => (
               <option key={v.code} value={v.code}>{v.label}</option>
@@ -1413,11 +1413,11 @@ function OngletRecherche({ embedded = false }: { embedded?: boolean }) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             placeholder="Rechercher un mot ou une phrase..."
-            className="flex-1 min-w-[200px] px-4 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+            className="flex-1 min-w-[200px] px-4 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
           />
           <button
             onClick={handleSearch}
-            className="px-5 py-2 rounded-md bg-[#C9A227] text-[#2A0E3D] text-sm font-bold hover:bg-[#9C7E1E] hover:text-[#FAF6EF] transition-colors"
+            className="px-5 py-2 rounded-md bg-[#C9A227] text-[#000000] text-sm font-bold hover:bg-[#9C7E1E] hover:text-[#F0E9DE] transition-colors"
           >
             Rechercher
           </button>
@@ -1425,30 +1425,30 @@ function OngletRecherche({ embedded = false }: { embedded?: boolean }) {
       </div>
 
       {loading && (
-        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A8378]/15">
+        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A857C]/15">
           <Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" />
         </div>
       )}
 
       {aRecherche && !loading && (
         <div>
-          <p className="text-xs text-[#8A8378] mb-3 px-1">
-            <span className="font-bold text-[#1E0F2B]">{resultats.length}</span> résultat{resultats.length > 1 ? "s" : ""} pour « <span className="font-serif italic text-[#2A0E3D]">{query}</span> » dans {VERSIONS.find((v) => v.code === version)?.label}
+          <p className="text-xs text-[#8A857C] mb-3 px-1">
+            <span className="font-bold text-[#000000]">{resultats.length}</span> résultat{resultats.length > 1 ? "s" : ""} pour « <span className="font-serif italic text-[#000000]">{query}</span> » dans {VERSIONS.find((v) => v.code === version)?.label}
           </p>
           <div className="space-y-2">
             {resultats.map((r, i) => (
-              <div key={i} className="bg-white rounded-md border border-[#8A8378]/15 p-4 hover:border-[#C9A227]/40 transition-colors">
+              <div key={i} className="bg-white rounded-md border border-[#8A857C]/15 p-4 hover:border-[#FF7A1A]/40 transition-colors">
                 <p className="text-xs font-bold text-[#C9A227] mb-1.5 font-mono">
                   {r.livre} {r.chapitre}:{r.verset}
                 </p>
-                <p className="text-sm text-[#1E0F2B] font-serif leading-relaxed">
+                <p className="text-sm text-[#000000] font-serif leading-relaxed">
                   <IsololeText>{r.texte}</IsololeText>
                 </p>
               </div>
             ))}
             {resultats.length === 0 && (
-              <div className="bg-white rounded-md border border-[#8A8378]/15 p-12 text-center">
-                <p className="text-[#8A8378] italic">Aucun résultat.</p>
+              <div className="bg-white rounded-md border border-[#8A857C]/15 p-12 text-center">
+                <p className="text-[#8A857C] italic">Aucun résultat.</p>
               </div>
             )}
           </div>
@@ -1485,8 +1485,8 @@ function OngletStrong({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={cn("max-w-5xl mx-auto", embedded && "max-w-3xl")}>
-      <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-6 mb-6">
-        <h2 className="font-serif text-xl font-bold text-[#1E0F2B] mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-6 mb-6">
+        <h2 className="font-serif text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
           <Hash className="w-5 h-5 text-[#C9A227]" />
           Lexique Strong
         </h2>
@@ -1497,18 +1497,18 @@ function OngletStrong({ embedded = false }: { embedded?: boolean }) {
             onChange={(e) => setNumero(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             placeholder="Numéro Strong (ex: H1, H1961, G2424, G3056)"
-            className="flex-1 px-4 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+            className="flex-1 px-4 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
           />
           <button
             onClick={handleSearch}
-            className="px-5 py-2 rounded-md bg-[#C9A227] text-[#2A0E3D] text-sm font-bold hover:bg-[#9C7E1E] hover:text-[#FAF6EF] transition-colors"
+            className="px-5 py-2 rounded-md bg-[#C9A227] text-[#000000] text-sm font-bold hover:bg-[#9C7E1E] hover:text-[#F0E9DE] transition-colors"
           >
             Chercher
           </button>
         </div>
-        <div className="mt-4 p-3 rounded-md bg-[#2A0E3D]/5 border border-[#C9A227]/20">
-          <p className="text-xs text-[#8A8378] leading-relaxed">
-            <strong className="text-[#1E0F2B]">Dictionnaire Strong</strong> — 8 674 entrées hébraïques (H1-H8674) et 5 523 entrées grecques (G1-G5523).
+        <div className="mt-4 p-3 rounded-md bg-[#000000]/5 border border-[#C9A227]/20">
+          <p className="text-xs text-[#8A857C] leading-relaxed">
+            <strong className="text-[#000000]">Dictionnaire Strong</strong> — 8 674 entrées hébraïques (H1-H8674) et 5 523 entrées grecques (G1-G5523).
             Tapez un numéro avec préfixe H (hébreu) ou G (grec).
             Exemples : <span className="font-mono text-[#C9A227]">H1</span> (père), <span className="font-mono text-[#C9A227]">H1961</span> (marcher), <span className="font-mono text-[#C9A227]">G2424</span> (Jésus), <span className="font-mono text-[#C9A227]">G3056</span> (parole).
           </p>
@@ -1516,21 +1516,21 @@ function OngletStrong({ embedded = false }: { embedded?: boolean }) {
       </div>
 
       {loading && (
-        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A8378]/15">
+        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A857C]/15">
           <Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" />
         </div>
       )}
 
       {result && !loading && (
-        <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-6">
           <div className="flex items-center gap-2 mb-6">
             <span className={cn(
               "inline-flex items-center px-3 py-1 rounded text-sm font-bold",
-              (result.langue as string) === "hebrew" ? "bg-[#C9A227]/15 text-[#9C7E1E]" : "bg-[#7C5CB8]/15 text-[#7C5CB8]"
+              (result.langue as string) === "hebrew" ? "bg-[#C9A227]/15 text-[#9C7E1E]" : "bg-[#8A857C]/15 text-[#8A857C]"
             )}>
               {result.numero as string}
             </span>
-            <span className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-bold">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-bold">
               {(result.langue as string) === "hebrew" ? "Hébreu" : "Grec"}
             </span>
           </div>
@@ -1539,40 +1539,40 @@ function OngletStrong({ embedded = false }: { embedded?: boolean }) {
             <div>
               {Boolean(result.lemma) && (
                 <div className="mb-4">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-1">Lemme</p>
-                  <p className="font-serif text-3xl text-[#1E0F2B]" dir="rtl">{result.lemma as string}</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-1">Lemme</p>
+                  <p className="font-serif text-3xl text-[#000000]" dir="rtl">{result.lemma as string}</p>
                 </div>
               )}
               {Boolean(result.pron) && (
                 <div className="mb-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-1">Prononciation</p>
-                  <p className="text-sm text-[#1E0F2B]">{result.pron as string}</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-1">Prononciation</p>
+                  <p className="text-sm text-[#000000]">{result.pron as string}</p>
                 </div>
               )}
               {Boolean(result.translit) && (
                 <div className="mb-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-1">Translittération</p>
-                  <p className="text-sm text-[#1E0F2B] italic">{result.translit as string}</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-1">Translittération</p>
+                  <p className="text-sm text-[#000000] italic">{result.translit as string}</p>
                 </div>
               )}
             </div>
             <div>
               {Boolean(result.derivation) && (
                 <div className="mb-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-1">Étymologie</p>
-                  <p className="text-sm text-[#1E0F2B]/80">{result.derivation as string}</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-1">Étymologie</p>
+                  <p className="text-sm text-[#000000]/80">{result.derivation as string}</p>
                 </div>
               )}
               {Boolean(result.strongs_def) && (
                 <div className="mb-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-1">Définition Strong</p>
-                  <p className="text-sm text-[#1E0F2B]/80 leading-relaxed">{result.strongs_def as string}</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-1">Définition Strong</p>
+                  <p className="text-sm text-[#000000]/80 leading-relaxed">{result.strongs_def as string}</p>
                 </div>
               )}
               {Boolean(result.kjv_def) && (
                 <div className="mb-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-bold mb-1">Traductions KJV</p>
-                  <p className="text-sm text-[#1E0F2B]/70 italic">{result.kjv_def as string}</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A857C] font-bold mb-1">Traductions KJV</p>
+                  <p className="text-sm text-[#000000]/70 italic">{result.kjv_def as string}</p>
                 </div>
               )}
             </div>
@@ -1638,8 +1638,8 @@ function OngletHebreu({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={cn("max-w-5xl mx-auto", embedded && "max-w-3xl")}>
-      <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-6 mb-6">
-        <h2 className="font-serif text-xl font-bold text-[#1E0F2B] mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-6 mb-6">
+        <h2 className="font-serif text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
           <Scroll className="w-5 h-5 text-[#C9A227]" />
           Texte hébraïque morphologique
         </h2>
@@ -1647,7 +1647,7 @@ function OngletHebreu({ embedded = false }: { embedded?: boolean }) {
           <select
             value={livre}
             onChange={(e) => setLivre(e.target.value)}
-            className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
           >
             {LIVRES_OSHB.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
           </select>
@@ -1656,49 +1656,49 @@ function OngletHebreu({ embedded = false }: { embedded?: boolean }) {
             min={1}
             value={chapitre}
             onChange={(e) => setChapitre(parseInt(e.target.value) || 1)}
-            className="w-20 px-3 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
+            className="w-20 px-3 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm focus:outline-none focus:border-[#C9A227]"
           />
-          <span className="text-[#8A8378]">:</span>
+          <span className="text-[#8A857C]">:</span>
           <input
             type="number"
             min={1}
             value={verset}
             onChange={(e) => setVerset(parseInt(e.target.value) || 1)}
-            className="w-20 px-3 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
+            className="w-20 px-3 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm focus:outline-none focus:border-[#C9A227]"
           />
         </div>
-        <div className="mt-4 p-3 rounded-md bg-[#2A0E3D]/5 border border-[#C9A227]/20">
-          <p className="text-xs text-[#8A8378] leading-relaxed">
-            <strong className="text-[#1E0F2B]">Open Scriptures Hebrew Bible</strong> — Texte massorétique (Westminster Leningrad Codex)
+        <div className="mt-4 p-3 rounded-md bg-[#000000]/5 border border-[#C9A227]/20">
+          <p className="text-xs text-[#8A857C] leading-relaxed">
+            <strong className="text-[#000000]">Open Scriptures Hebrew Bible</strong> — Texte massorétique (Westminster Leningrad Codex)
             avec analyse morphologique complète. Chaque mot affiche son lemme (numéro Strong) et sa forme grammaticale.
           </p>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A8378]/15">
+        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A857C]/15">
           <Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" />
         </div>
       ) : data ? (
-        <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-6">
-          <h3 className="font-serif text-lg font-bold text-[#1E0F2B] mb-4">
+        <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-6">
+          <h3 className="font-serif text-lg font-bold text-[#000000] mb-4">
             {LIVRES_OSHB.find((l) => l.code === livre)?.label || livre} {chapitre}:{verset}
           </h3>
           <div className="space-y-1" dir="rtl">
             {data.mots.map((mot, i) => (
-              <div key={i} className="flex items-center gap-3 p-2 rounded hover:bg-[#C9A227]/5 transition-colors">
-                <span className="font-serif text-xl text-[#1E0F2B]">{mot.mot}</span>
+              <div key={i} className="flex items-center gap-3 p-2 rounded hover:bg-[#FF7A1A]/5 transition-colors">
+                <span className="font-serif text-xl text-[#000000]">{mot.mot}</span>
                 <div className="flex-1 text-left" dir="ltr">
                   <span className="text-xs font-mono text-[#9C7E1E] font-bold">{mot.lemme}</span>
-                  <span className="text-xs text-[#8A8378] ml-2">{mot.morphologie}</span>
+                  <span className="text-xs text-[#8A857C] ml-2">{mot.morphologie}</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-[#8A8378]/15 py-12 text-center">
-          <p className="text-[#8A8378] italic">Verset non trouvé.</p>
+        <div className="bg-white rounded-lg border border-[#8A857C]/15 py-12 text-center">
+          <p className="text-[#8A857C] italic">Verset non trouvé.</p>
         </div>
       )}
     </div>
@@ -1736,8 +1736,8 @@ function OngletPeshitta({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={cn("max-w-5xl mx-auto", embedded && "max-w-3xl")}>
-      <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-6 mb-6">
-        <h2 className="font-serif text-xl font-bold text-[#1E0F2B] mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-6 mb-6">
+        <h2 className="font-serif text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
           <Languages className="w-5 h-5 text-[#C9A227]" />
           Peshitta araméenne
         </h2>
@@ -1746,7 +1746,7 @@ function OngletPeshitta({ embedded = false }: { embedded?: boolean }) {
             type="text"
             value={livre}
             onChange={(e) => setLivre(e.target.value)}
-            className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm focus:outline-none focus:border-[#C9A227]"
             placeholder="Nom du livre (ex: Genesis)"
           />
           <input
@@ -1754,38 +1754,38 @@ function OngletPeshitta({ embedded = false }: { embedded?: boolean }) {
             min={1}
             value={chapitre}
             onChange={(e) => setChapitre(parseInt(e.target.value) || 1)}
-            className="w-24 px-3 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
+            className="w-24 px-3 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm focus:outline-none focus:border-[#C9A227]"
           />
         </div>
-        <div className="mt-4 p-3 rounded-md bg-[#2A0E3D]/5 border border-[#C9A227]/20">
-          <p className="text-xs text-[#8A8378] leading-relaxed">
-            <strong className="text-[#1E0F2B]">Peshitta</strong> — Bible araméenne (syriaque). Langue parlée par Yeshoua et ses disciples.
+        <div className="mt-4 p-3 rounded-md bg-[#000000]/5 border border-[#C9A227]/20">
+          <p className="text-xs text-[#8A857C] leading-relaxed">
+            <strong className="text-[#000000]">Peshitta</strong> — Bible araméenne (syriaque). Langue parlée par Yeshoua et ses disciples.
             Texte de la Peshitta avec lexique SEDRA. La Peshitta est la Bible des églises de tradition syriaque depuis le Ve siècle.
           </p>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A8378]/15">
+        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A857C]/15">
           <Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" />
         </div>
       ) : data ? (
-        <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-6">
-          <h3 className="font-serif text-lg font-bold text-[#1E0F2B] mb-4">
+        <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-6">
+          <h3 className="font-serif text-lg font-bold text-[#000000] mb-4">
             {livre} — Chapter {chapitre}
           </h3>
           <div className="space-y-2">
             {data.versets.map((v) => (
               <div key={v.numero} className="flex gap-3">
                 <span className="text-xs text-[#9C7E1E] font-bold w-8 text-right pt-0.5 flex-shrink-0">{v.numero}</span>
-                <p className="text-sm text-[#1E0F2B] font-serif leading-relaxed" dir="rtl">{v.texte}</p>
+                <p className="text-sm text-[#000000] font-serif leading-relaxed" dir="rtl">{v.texte}</p>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-[#8A8378]/15 py-12 text-center">
-          <p className="text-[#8A8378] italic">Chapitre non trouvé.</p>
+        <div className="bg-white rounded-lg border border-[#8A857C]/15 py-12 text-center">
+          <p className="text-[#8A857C] italic">Chapitre non trouvé.</p>
         </div>
       )}
     </div>
@@ -1817,8 +1817,8 @@ function OngletConcordance({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={cn("max-w-5xl mx-auto", embedded && "max-w-3xl")}>
-      <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-6 mb-6">
-        <h2 className="font-serif text-xl font-bold text-[#1E0F2B] mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-6 mb-6">
+        <h2 className="font-serif text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
           <Shield className="w-5 h-5 text-[#C9A227]" />
           Concordance Strong
         </h2>
@@ -1829,18 +1829,18 @@ function OngletConcordance({ embedded = false }: { embedded?: boolean }) {
             onChange={(e) => setNumero(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             placeholder="Numéro Strong (ex: H1961, H7225, H3068)"
-            className="flex-1 px-4 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
+            className="flex-1 px-4 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
           />
           <button
             onClick={handleSearch}
-            className="px-5 py-2 rounded-md bg-[#C9A227] text-[#2A0E3D] text-sm font-bold hover:bg-[#9C7E1E] hover:text-[#FAF6EF] transition-colors"
+            className="px-5 py-2 rounded-md bg-[#C9A227] text-[#000000] text-sm font-bold hover:bg-[#9C7E1E] hover:text-[#F0E9DE] transition-colors"
           >
             Chercher
           </button>
         </div>
-        <div className="mt-4 p-3 rounded-md bg-[#2A0E3D]/5 border border-[#C9A227]/20">
-          <p className="text-xs text-[#8A8378] leading-relaxed">
-            <strong className="text-[#1E0F2B]">Concordance Strong</strong> — Trouve tous les versets de la Bible hébraïque
+        <div className="mt-4 p-3 rounded-md bg-[#000000]/5 border border-[#C9A227]/20">
+          <p className="text-xs text-[#8A857C] leading-relaxed">
+            <strong className="text-[#000000]">Concordance Strong</strong> — Trouve tous les versets de la Bible hébraïque
             où apparaît un mot identifié par son numéro Strong. Outil d'étude biblique approfondi.
             Exemples : <span className="font-mono text-[#C9A227]">H1961</span> (marcher), <span className="font-mono text-[#C9A227]">H7225</span> (commencement), <span className="font-mono text-[#C9A227]">H3068</span> (YHWH).
           </p>
@@ -1848,28 +1848,28 @@ function OngletConcordance({ embedded = false }: { embedded?: boolean }) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A8378]/15">
+        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A857C]/15">
           <Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" />
         </div>
       ) : data ? (
         <div className="space-y-4">
           {data.strong && (
-            <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-4">
+            <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#C9A227]/15 text-[#9C7E1E]">{data.strong.numero as string}</span>
-                {Boolean(data.strong.lemma) && <span className="font-serif text-lg text-[#1E0F2B]" dir="rtl">{data.strong.lemma as string}</span>}
+                {Boolean(data.strong.lemma) && <span className="font-serif text-lg text-[#000000]" dir="rtl">{data.strong.lemma as string}</span>}
               </div>
-              {Boolean(data.strong.strongs_def) && <p className="text-sm text-[#1E0F2B]/70">{data.strong.strongs_def as string}</p>}
+              {Boolean(data.strong.strongs_def) && <p className="text-sm text-[#000000]/70">{data.strong.strongs_def as string}</p>}
             </div>
           )}
 
-          <p className="text-xs text-[#8A8378] px-1">
-            <span className="font-bold text-[#1E0F2B]">{data.versets.length}</span> verset(s) trouvé(s)
+          <p className="text-xs text-[#8A857C] px-1">
+            <span className="font-bold text-[#000000]">{data.versets.length}</span> verset(s) trouvé(s)
           </p>
 
           <div className="space-y-2">
             {data.versets.map((v, i) => (
-              <div key={i} className="bg-white rounded-md border border-[#8A8378]/15 p-3">
+              <div key={i} className="bg-white rounded-md border border-[#8A857C]/15 p-3">
                 <p className="text-xs font-bold text-[#9C7E1E] mb-1 font-mono">
                   {v.livre} {v.chapitre}:{v.verset}
                 </p>
@@ -1879,7 +1879,7 @@ function OngletConcordance({ embedded = false }: { embedded?: boolean }) {
                       key={j}
                       className={cn(
                         "font-serif text-sm",
-                        m.lemme.includes(numero.replace("H", "")) ? "text-[#9C7E1E] font-bold" : "text-[#1E0F2B]/60"
+                        m.lemme.includes(numero.replace("H", "")) ? "text-[#9C7E1E] font-bold" : "text-[#000000]/60"
                       )}
                     >
                       {m.mot}
@@ -1945,8 +1945,8 @@ function OngletComparatif({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className={cn("max-w-6xl mx-auto", embedded && "max-w-4xl")}>
-      <div className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-6 mb-6">
-        <h2 className="font-serif text-xl font-bold text-[#1E0F2B] mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-6 mb-6">
+        <h2 className="font-serif text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
           <Columns className="w-5 h-5 text-[#C9A227]" />
           Étude comparative multilingue
         </h2>
@@ -1955,7 +1955,7 @@ function OngletComparatif({ embedded = false }: { embedded?: boolean }) {
           <select
             value={livre}
             onChange={(e) => setLivre(e.target.value)}
-            className="px-3 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm font-semibold focus:outline-none focus:border-[#C9A227]"
           >
             {LIVRES_OPTIONS.map((l) => <option key={l.id} value={l.id}>{l.nom}</option>)}
           </select>
@@ -1964,23 +1964,23 @@ function OngletComparatif({ embedded = false }: { embedded?: boolean }) {
             min={1}
             value={chapitre}
             onChange={(e) => setChapitre(parseInt(e.target.value) || 1)}
-            className="w-20 px-3 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
+            className="w-20 px-3 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm focus:outline-none focus:border-[#C9A227]"
           />
-          <span className="text-[#8A8378]">:</span>
+          <span className="text-[#8A857C]">:</span>
           <input
             type="number"
             min={1}
             value={verset}
             onChange={(e) => setVerset(parseInt(e.target.value) || 1)}
-            className="w-20 px-3 py-2 rounded-md border border-[#8A8378]/30 bg-white text-[#1E0F2B] text-sm focus:outline-none focus:border-[#C9A227]"
+            className="w-20 px-3 py-2 rounded-md border border-[#8A857C]/30 bg-white text-[#000000] text-sm focus:outline-none focus:border-[#C9A227]"
           />
-          <span className="ml-auto text-xs text-[#8A8378]">
+          <span className="ml-auto text-xs text-[#8A857C]">
             {livreOption.nom} {chapitre}:{verset}
           </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.18em] text-[#8A8378] font-bold mr-2">Versions :</span>
+          <span className="text-[10px] uppercase tracking-[0.18em] text-[#8A857C] font-bold mr-2">Versions :</span>
           {VERSIONS.map((v) => (
             <button
               key={v.code}
@@ -1988,8 +1988,8 @@ function OngletComparatif({ embedded = false }: { embedded?: boolean }) {
               className={cn(
                 "px-3 py-1.5 rounded text-xs font-bold transition-all",
                 versionsSelectionnees.includes(v.code)
-                  ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                  : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+                  ? "bg-[#000000] text-[#F0E9DE]"
+                  : "border border-[#000000]/30 text-[#000000] hover:bg-[#000000]/5"
               )}
             >
               {v.shortLabel}
@@ -1999,7 +1999,7 @@ function OngletComparatif({ embedded = false }: { embedded?: boolean }) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A8378]/15">
+        <div className="flex items-center justify-center py-12 bg-white rounded-lg border border-[#8A857C]/15">
           <Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" />
         </div>
       ) : (
@@ -2008,22 +2008,22 @@ function OngletComparatif({ embedded = false }: { embedded?: boolean }) {
             const v = VERSIONS.find((ver) => ver.code === version);
             const data = traductions[version];
             return (
-              <div key={version} className="bg-white rounded-lg shadow-sm border border-[#8A8378]/15 p-5">
-                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#8A8378]/15">
+              <div key={version} className="bg-white rounded-lg shadow-sm border border-[#8A857C]/15 p-5">
+                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#8A857C]/15">
                   <span className="px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-[#C9A227]/15 text-[#9C7E1E]">
                     {v?.shortLabel}
                   </span>
-                  <span className="text-xs text-[#8A8378]">{v?.lang}</span>
+                  <span className="text-xs text-[#8A857C]">{v?.lang}</span>
                 </div>
                 {data ? (
                   <>
-                    <p className="text-[10px] text-[#8A8378] mb-2 font-mono">{data.livre} {chapitre}:{verset}</p>
-                    <p className="text-sm text-[#1E0F2B] font-serif leading-relaxed italic">
+                    <p className="text-[10px] text-[#8A857C] mb-2 font-mono">{data.livre} {chapitre}:{verset}</p>
+                    <p className="text-sm text-[#000000] font-serif leading-relaxed italic">
                       « <IsololeText>{data.texte}</IsololeText> »
                     </p>
                   </>
                 ) : (
-                  <p className="text-xs text-[#8A8378] italic">Verset non disponible</p>
+                  <p className="text-xs text-[#8A857C] italic">Verset non disponible</p>
                 )}
               </div>
             );
@@ -2031,10 +2031,10 @@ function OngletComparatif({ embedded = false }: { embedded?: boolean }) {
         </div>
       )}
 
-      <div className="mt-6 p-4 rounded-md bg-[#2A0E3D]/5 border border-[#C9A227]/20">
-        <p className="text-xs text-[#8A8378] leading-relaxed">
-          <strong className="text-[#1E0F2B]">Étude comparative</strong> — Lisez le même verset dans plusieurs langues côte à côte.
-          Sélectionnez jusqu&apos;à 6 versions. Idéal pour les dispersés d&apos;<strong className="text-[#1E0F2B]">Isolélé</strong> (Israël) qui parlent différentes langues
+      <div className="mt-6 p-4 rounded-md bg-[#000000]/5 border border-[#C9A227]/20">
+        <p className="text-xs text-[#8A857C] leading-relaxed">
+          <strong className="text-[#000000]">Étude comparative</strong> — Lisez le même verset dans plusieurs langues côte à côte.
+          Sélectionnez jusqu&apos;à 6 versions. Idéal pour les dispersés d&apos;<strong className="text-[#000000]">Isolélé</strong> (Israël) qui parlent différentes langues
           et pour l&apos;étude comparative des traductions.
         </p>
       </div>

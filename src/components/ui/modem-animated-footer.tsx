@@ -42,7 +42,7 @@ export const Footer = ({
 }: FooterProps) => {
   return (
     <section className={cn("relative w-full mt-0 overflow-hidden", className)}>
-      <footer className="border-t border-[#C9A227]/20 bg-[#2A0E3D] mt-8 relative">
+      <footer className="border-t border-[#C9A227]/20 bg-[#000000] mt-8 relative">
         <div className="max-w-7xl flex flex-col justify-between mx-auto relative p-4 py-10 pb-6">
           <div className="flex flex-col w-full">
             <div className="w-full flex flex-col items-center">
@@ -62,10 +62,10 @@ export const Footer = ({
                     style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
                   >
                     <span style={{ color: "#C9A227" }}>Christ</span>
-                    <span style={{ color: "#FAF6EF" }} className="ml-0.5">Libère</span>
+                    <span style={{ color: "#F0E9DE" }} className="ml-0.5">Libère</span>
                   </span>
                 </div>
-                <p className="text-[#FAF6EF]/60 font-medium text-center w-full max-w-sm sm:w-96 px-4 sm:px-0 text-sm">
+                <p className="text-[#F0E9DE]/60 font-medium text-center w-full max-w-sm sm:w-96 px-4 sm:px-0 text-sm">
                   {brandDescription}
                 </p>
               </div>
@@ -87,12 +87,12 @@ export const Footer = ({
                     <Link
                       key={index}
                       href={link.href}
-                      className="text-[#FAF6EF]/50 hover:text-[#C9A227] transition-colors"
+                      className="text-[#F0E9DE]/50 hover:text-[#FF7A1A] transition-colors"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       {/* ⭐ V3.28 — zone tactile 44x44px (norme accessibilité) */}
-                      <div className="inline-flex items-center justify-center w-11 h-11 rounded-full hover:scale-110 hover:bg-[#FAF6EF]/10 duration-300">
+                      <div className="inline-flex items-center justify-center w-11 h-11 rounded-full hover:scale-110 hover:bg-[#F0E9DE]/10 duration-300">
                         {link.icon}
                       </div>
                       <span className="sr-only">{link.label}</span>
@@ -102,11 +102,11 @@ export const Footer = ({
               )}
 
               {navLinks.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 text-xs font-medium text-[#FAF6EF]/50 max-w-full px-4 z-20 relative">
+                <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 text-xs font-medium text-[#F0E9DE]/50 max-w-full px-4 z-20 relative">
                   {navLinks.map((link, index) => (
                     <Link
                       key={index}
-                      className="inline-flex items-center min-h-11 px-2 hover:text-[#C9A227] duration-300 hover:font-semibold"
+                      className="inline-flex items-center min-h-11 px-2 hover:text-[#FF7A1A] duration-300 hover:font-semibold"
                       href={link.href}
                     >
                       {link.label}
@@ -119,7 +119,7 @@ export const Footer = ({
 
           {/* Copyright */}
           <div className="relative z-20 flex justify-center pt-6 mt-6 border-t border-[#C9A227]/10">
-            <p className="text-xs text-[#FAF6EF]/40 text-center px-4">
+            <p className="text-xs text-[#F0E9DE]/40 text-center px-4">
               © {new Date().getFullYear()} {brandName}. Tous les contenus appartiennent à leurs auteurs. Usage personnel et non commercial.
             </p>
           </div>

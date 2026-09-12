@@ -93,7 +93,7 @@ export function QuoteBlock({ text, reference, variant = "dark" }: QuoteBlockProp
         transition={{ duration: 0.8, delay: 0.2 }}
         className={cn(
           "font-serif text-2xl md:text-3xl lg:text-4xl font-medium leading-relaxed italic mb-6",
-          isDark ? "text-[#FAF6EF]" : "text-[#1E0F2B]"
+          isDark ? "text-[#F0E9DE]" : "text-[#000000]"
         )}
       >
         « {text} »

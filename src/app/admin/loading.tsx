@@ -7,7 +7,7 @@ export default function AdminLoading() {
       <div className="text-center">
         <div className="w-12 h-12 rounded-full border-2 border-[#C9A227]/20 mx-auto mb-3" />
         <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-[#C9A227] animate-spin -mt-12 mx-auto" />
-        <p className="mt-6 text-sm text-[#8A8378] italic">Chargement...</p>
+        <p className="mt-6 text-sm text-[#8A857C] italic">Chargement...</p>
       </div>
     </div>
   );

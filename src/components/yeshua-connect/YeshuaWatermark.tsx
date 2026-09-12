@@ -50,7 +50,7 @@ function generateWatermarkSvg(opacity: number): string {
     // Cœur (heart)
     '<g transform="translate(100,180) scale(0.7)"><path d="M20,30 Q5,20 10,12 Q15,5 20,12 Q25,5 30,12 Q35,20 20,30 Z" fill="none" stroke="#C9A227" stroke-width="2.25"/></g>',
     // Arc-en-ciel (rainbow — alliance)
-    '<g transform="translate(180,175) scale(0.6)"><path d="M5,25 Q20,5 35,25" fill="none" stroke="#C9A227" stroke-width="2.25"/><path d="M8,25 Q20,10 32,25" fill="none" stroke="#8C5FA8" stroke-width="2.25"/></g>',
+    '<g transform="translate(180,175) scale(0.6)"><path d="M5,25 Q20,5 35,25" fill="none" stroke="#C9A227" stroke-width="2.25"/><path d="M8,25 Q20,10 32,25" fill="none" stroke="#8A857C" stroke-width="2.25"/></g>',
   ];
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">

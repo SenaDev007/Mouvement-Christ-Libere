@@ -78,7 +78,7 @@ export function IntercessionActions({
             disabled={!!busy}
             title="Marquer « en prière »"
             aria-label="Marquer en prière"
-            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A8378] hover:bg-[#C9A227]/15 hover:text-[#A3821C] transition-colors disabled:opacity-50"
+            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A857C] hover:bg-[#FF7A1A]/15 hover:text-[#A3821C] transition-colors disabled:opacity-50"
           >
             {busy === "prier" ? <Loader2 className="w-4 h-4 animate-spin" /> : <HandHeart className="w-4 h-4" />}
           </button>
@@ -89,7 +89,7 @@ export function IntercessionActions({
             disabled={!!busy}
             title="Marquer « exaucé »"
             aria-label="Marquer exaucé"
-            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A8378] hover:bg-emerald-100 hover:text-emerald-700 transition-colors disabled:opacity-50"
+            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A857C] hover:bg-emerald-100 hover:text-emerald-700 transition-colors disabled:opacity-50"
           >
             {busy === "exauce" ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
           </button>
@@ -102,7 +102,7 @@ export function IntercessionActions({
           className={`inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors disabled:opacity-50 ${
             showTestimony || temoignageExaucement
               ? "text-[#A3821C] bg-[#C9A227]/15"
-              : "text-[#8A8378] hover:bg-[#C9A227]/15 hover:text-[#A3821C]"
+              : "text-[#8A857C] hover:bg-[#FF7A1A]/15 hover:text-[#A3821C]"
           }`}
         >
           <MessageSquareQuote className="w-4 h-4" />
@@ -113,7 +113,7 @@ export function IntercessionActions({
             disabled={!!busy}
             title="Archiver"
             aria-label="Archiver"
-            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A8378] hover:bg-gray-100 hover:text-gray-600 transition-colors disabled:opacity-50"
+            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A857C] hover:bg-gray-100 hover:text-gray-600 transition-colors disabled:opacity-50"
           >
             {busy === "archive" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Archive className="w-4 h-4" />}
           </button>
@@ -123,7 +123,7 @@ export function IntercessionActions({
             disabled={!!busy}
             title="Réouvrir"
             aria-label="Réouvrir"
-            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A8378] hover:bg-[#C9A227]/15 hover:text-[#A3821C] transition-colors disabled:opacity-50"
+            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A857C] hover:bg-[#FF7A1A]/15 hover:text-[#A3821C] transition-colors disabled:opacity-50"
           >
             {busy === "ouvrir" ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
           </button>
@@ -133,26 +133,26 @@ export function IntercessionActions({
           disabled={!!busy}
           title="Supprimer"
           aria-label="Supprimer"
-          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A8378] hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
+          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-[#8A857C] hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
         >
           {busy === "delete" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
         </button>
       </div>
 
       {showTestimony && (
-        <div className="w-full bg-[#FAF6EF] border border-[#C9A227]/25 rounded-xl p-3">
+        <div className="w-full bg-[#F0E9DE] border border-[#C9A227]/25 rounded-xl p-3">
           <textarea
             value={testimony}
             onChange={(e) => setTestimony(e.target.value)}
             rows={3}
             maxLength={1000}
             placeholder="Comment le Seigneur a répondu…"
-            className="w-full text-xs text-[#1E0F2B] bg-white border border-[#8A8378]/20 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#C9A227]/30 resize-none"
+            className="w-full text-xs text-[#000000] bg-white border border-[#8A857C]/20 rounded-lg p-2 outline-none focus:ring-2 focus:ring-[#C9A227]/30 resize-none"
           />
           <div className="flex justify-end gap-2 mt-2">
             <button
               onClick={() => setShowTestimony(false)}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-[#8A8378] hover:bg-white transition-colors"
+              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-[#8A857C] hover:bg-white transition-colors"
             >
               Annuler
             </button>
@@ -166,7 +166,7 @@ export function IntercessionActions({
                 )
               }
               disabled={!!busy}
-              className="px-3 py-1 rounded-lg text-[11px] font-bold bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-50 inline-flex items-center gap-1"
+              className="px-3 py-1 rounded-lg text-[11px] font-bold bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A] transition-colors disabled:opacity-50 inline-flex items-center gap-1"
             >
               {busy === "temoignage" ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
               Enregistrer

@@ -17,7 +17,7 @@ export default function GlobalError({
 
   return (
     <html lang="fr">
-      <body style={{ margin: 0, padding: 0, backgroundColor: "#2A0E3D", fontFamily: "sans-serif" }}>
+      <body style={{ margin: 0, padding: 0, backgroundColor: "#000000", fontFamily: "sans-serif" }}>
         <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
           <div style={{ maxWidth: "400px", textAlign: "center" }}>
             <div style={{
@@ -34,17 +34,17 @@ export default function GlobalError({
               <AlertTriangle size={32} color="#B5502F" />
             </div>
 
-            <h2 style={{ fontSize: "24px", fontWeight: 600, color: "#FAF6EF", marginBottom: "12px", fontFamily: "serif" }}>
+            <h2 style={{ fontSize: "24px", fontWeight: 600, color: "#F0E9DE", marginBottom: "12px", fontFamily: "serif" }}>
               Une erreur est survenue
             </h2>
 
-            <p style={{ fontSize: "14px", color: "rgba(250, 246, 239, 0.7)", lineHeight: 1.6, marginBottom: "24px" }}>
+            <p style={{ fontSize: "14px", color: "rgba(240, 233, 222, 0.7)", lineHeight: 1.6, marginBottom: "24px" }}>
               Le site rencontre un problème technique. Vous pouvez réessayer
               ou retourner à l&apos;accueil.
             </p>
 
             {error.digest && (
-              <p style={{ fontSize: "12px", color: "rgba(250, 246, 239, 0.4)", marginBottom: "24px", fontFamily: "monospace" }}>
+              <p style={{ fontSize: "12px", color: "rgba(240, 233, 222, 0.4)", marginBottom: "24px", fontFamily: "monospace" }}>
                 Référence : {error.digest}
               </p>
             )}
@@ -60,7 +60,7 @@ export default function GlobalError({
                   padding: "10px 20px",
                   borderRadius: "6px",
                   backgroundColor: "#C9A227",
-                  color: "#1E0F2B",
+                  color: "#000000",
                   fontWeight: 600,
                   fontSize: "14px",
                   border: "none",
@@ -91,7 +91,7 @@ export default function GlobalError({
               </a>
             </div>
 
-            <p style={{ marginTop: "32px", fontSize: "12px", color: "rgba(250, 246, 239, 0.4)", fontStyle: "italic", fontFamily: "serif" }}>
+            <p style={{ marginTop: "32px", fontSize: "12px", color: "rgba(240, 233, 222, 0.4)", fontStyle: "italic", fontFamily: "serif" }}>
               « Soyez forts, ne perdez pas courage, car votre œuvre aura sa récompense. »
               <br />
               2 Chroniques 15:7

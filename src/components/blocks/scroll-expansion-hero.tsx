@@ -286,7 +286,7 @@ const ScrollExpandMedia = ({
                 }`}
               >
                 <motion.h2
-                  className='text-4xl md:text-5xl lg:text-6xl font-bold font-serif text-[#FAF6EF] transition-none'
+                  className='text-4xl md:text-5xl lg:text-6xl font-bold font-serif text-[#F0E9DE] transition-none'
                   style={{ transform: `translateX(-${textTranslateX}vw)` }}
                 >
                   {firstWord}

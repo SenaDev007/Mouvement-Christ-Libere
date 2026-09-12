@@ -81,7 +81,7 @@ export function ScreenShareButton({ conversationId }: { conversationId: string }
       className={`p-2 rounded-lg transition-colors ${
         isSharing
           ? "bg-red-500 text-white hover:bg-red-600"
-          : "hover:bg-[#8A8378]/10 text-[#8A8378] hover:text-[#1E0F2B]"
+          : "hover:bg-[#8A857C]/10 text-[#8A857C] hover:text-[#000000]"
       }`}
       title={isSharing ? "Arrêter le partage" : "Partager mon écran"}
     >

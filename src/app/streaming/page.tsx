@@ -17,11 +17,11 @@ export default function StreamingPage() {
       />
 
       {/* Schéma de flux */}
-      <section className="bg-[#FAF6EF] py-20 md:py-24">
+      <section className="bg-[#F0E9DE] py-20 md:py-24">
         <div className="container mx-auto max-w-5xl px-4">
           <div className="text-center mb-12">
             <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-semibold mb-3">Le schéma</p>
-            <h2 className="font-serif text-3xl md:text-4xl font-semibold text-[#1E0F2B]">
+            <h2 className="font-serif text-3xl md:text-4xl font-semibold text-[#000000]">
               Un stream entrant, cinq sorties
             </h2>
           </div>
@@ -31,11 +31,11 @@ export default function StreamingPage() {
             <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
               {/* Source */}
               <div className="text-center">
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#2A0E3D] text-[#FAF6EF] mb-2">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#000000] text-[#F0E9DE] mb-2">
                   <Radio className="w-7 h-7" />
                 </div>
-                <p className="text-xs font-semibold text-[#1E0F2B]">Pam / Pasteur Kongo</p>
-                <p className="text-[10px] text-[#8A8378]">OBS / Streamlabs</p>
+                <p className="text-xs font-semibold text-[#000000]">Pam / Pasteur Kongo</p>
+                <p className="text-[10px] text-[#8A857C]">OBS / Streamlabs</p>
               </div>
 
               <ArrowRight className="w-6 h-6 text-[#C9A227] rotate-90 lg:rotate-0" />
@@ -45,18 +45,18 @@ export default function StreamingPage() {
                 <div className="flex items-center justify-center w-20 h-20 rounded-full bg-[#C9A227]/15 border-2 border-[#C9A227]">
                   <Server className="w-8 h-8 text-[#C9A227]" />
                 </div>
-                <p className="text-xs font-semibold text-[#1E0F2B] mt-2">Ant Media Server</p>
-                <p className="text-[10px] text-[#8A8378]">RTMP → HLS/DASH</p>
+                <p className="text-xs font-semibold text-[#000000] mt-2">Ant Media Server</p>
+                <p className="text-[10px] text-[#8A857C]">RTMP → HLS/DASH</p>
               </div>
 
               <ArrowRight className="w-6 h-6 text-[#C9A227] rotate-90 lg:rotate-0" />
 
               {/* Sorties */}
               <div className="flex flex-col gap-2">
-                <Platform icon={Video} label="Site (HLS)" color="text-[#2A0E3D]" />
+                <Platform icon={Video} label="Site (HLS)" color="text-[#000000]" />
                 <Platform icon={Youtube} label="YouTube" color="text-state-danger" />
-                <Platform icon={Facebook} label="Facebook" color="text-[#8C5FA8]" />
-                <Platform icon={Radio} label="TikTok" color="text-[#8A8378]" />
+                <Platform icon={Facebook} label="Facebook" color="text-[#8A857C]" />
+                <Platform icon={Radio} label="TikTok" color="text-[#8A857C]" />
                 <Platform icon={Cloud} label="Instagram" color="text-state-success" />
               </div>
             </div>
@@ -71,7 +71,7 @@ export default function StreamingPage() {
 
           {/* Architecture */}
           <div id="architecture" className="card-gold-top p-8 mb-8">
-            <h3 className="font-serif text-xl font-semibold text-[#1E0F2B] mb-6">Architecture détaillée</h3>
+            <h3 className="font-serif text-xl font-semibold text-[#000000] mb-6">Architecture détaillée</h3>
             <div className="space-y-4">
               <Step num="1" title="Source — Encodeur" description="Pam ou le Pasteur Kongo ouvre un live depuis OBS Studio, Streamlabs, ou un encodeur matériel. Le flux RTMP est envoyé vers le serveur Ant Media." />
               <Step num="2" title="Serveur — Ant Media Server" description="Reçoit le flux RTMP, le transcode en plusieurs qualités (ABR : 1080p, 720p, 480p, 240p), et le redistribue en HLS/DASH." />
@@ -84,7 +84,7 @@ export default function StreamingPage() {
 
           {/* Déploiement */}
           <div id="deploiement" className="card-gold-top p-8 mb-8">
-            <h3 className="font-serif text-xl font-semibold text-[#1E0F2B] mb-6">Déploiement Ant Media Server</h3>
+            <h3 className="font-serif text-xl font-semibold text-[#000000] mb-6">Déploiement Ant Media Server</h3>
             <div className="space-y-4 text-sm">
               <DeployStep title="1. Préparer le VPS" code="Ubuntu 22.04 LTS, 4 vCPU, 8GB RAM minimum&#10;Ports ouverts : 1935 (RTMP), 5080 (HTTP), 5443 (HTTPS)" />
               <DeployStep title="2. Installer Ant Media Server" code="wget https://raw.githubusercontent.com/ant-media/Scripts/master/install_ant-media-server.sh&#10;sudo bash install_ant-media-server.sh -i latest" />
@@ -94,17 +94,17 @@ export default function StreamingPage() {
           </div>
 
           {/* Coûts */}
-          <div className="p-6 bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-2xl">
-            <h4 className="font-serif text-base font-semibold text-[#1E0F2B] mb-4">Coûts estimés</h4>
+          <div className="p-6 bg-[#000000]/5 border border-[#C9A227]/20 rounded-2xl">
+            <h4 className="font-serif text-base font-semibold text-[#000000] mb-4">Coûts estimés</h4>
             <div className="grid md:grid-cols-2 gap-3 text-sm">
               <CostItem item="VPS Hetzner CX42 (4 vCPU, 8GB)" cost="15 €/mois" />
               <CostItem item="Bande passante streaming (100h/mois)" cost="20-80 €/mois" />
               <CostItem item="Cloudflare CDN (gratuit jusqu'à usage élevé)" cost="0 €" />
               <CostItem item="Stockage archives (Backblaze B2)" cost="5-15 €/mois" />
               <CostItem item="Domaine + DNS" cost="1 €/mois" />
-              <div className="col-span-2 border-t border-[#8A8378]/15 pt-3 mt-1">
+              <div className="col-span-2 border-t border-[#8A857C]/15 pt-3 mt-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-[#1E0F2B]">Total estimé</span>
+                  <span className="font-semibold text-[#000000]">Total estimé</span>
                   <span className="font-serif text-lg font-semibold text-[#A3821C]">~40-110 €/mois</span>
                 </div>
               </div>
@@ -114,8 +114,8 @@ export default function StreamingPage() {
           {/* Statut */}
           <div className="mt-8 p-6 bg-state-danger/5 border border-state-danger/20 rounded-2xl text-center">
             <Server className="w-8 h-8 text-state-danger mx-auto mb-3" />
-            <h4 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">Statut : Architecture spécifiée</h4>
-            <p className="text-sm text-[#8A8378] leading-relaxed">
+            <h4 className="font-serif text-lg font-semibold text-[#000000] mb-2">Statut : Architecture spécifiée</h4>
+            <p className="text-sm text-[#8A857C] leading-relaxed">
               L&apos;architecture est complète et documentée. L&apos;implémentation nécessite l&apos;achat
               d&apos;un VPS et l&apos;installation d&apos;Ant Media Server. La page vidéos du site est déjà
               compatible avec l&apos;affichage des streams HLS.
@@ -142,9 +142,9 @@ export default function StreamingPage() {
 
 function Platform({ icon: Icon, label, color }: { icon: React.ComponentType<{ className?: string }>; label: string; color: string }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FAF6EF] border border-[#8A8378]/20">
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F0E9DE] border border-[#8A857C]/20">
       <Icon className={`w-3.5 h-3.5 ${color}`} />
-      <span className="text-xs font-semibold text-[#1E0F2B]">{label}</span>
+      <span className="text-xs font-semibold text-[#000000]">{label}</span>
     </div>
   );
 }
@@ -152,11 +152,11 @@ function Platform({ icon: Icon, label, color }: { icon: React.ComponentType<{ cl
 function Card({ icon: Icon, title, description }: { icon: React.ComponentType<{ className?: string }>; title: string; description: string }) {
   return (
     <div className="card-gold-top p-6">
-      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#2A0E3D]/10 mb-4">
-        <Icon className="w-6 h-6 text-[#2A0E3D]" />
+      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#000000]/10 mb-4">
+        <Icon className="w-6 h-6 text-[#000000]" />
       </div>
-      <h3 className="font-serif text-lg font-semibold text-[#1E0F2B] mb-2">{title}</h3>
-      <p className="text-sm text-[#1E0F2B]/70 leading-relaxed">{description}</p>
+      <h3 className="font-serif text-lg font-semibold text-[#000000] mb-2">{title}</h3>
+      <p className="text-sm text-[#000000]/70 leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -168,8 +168,8 @@ function Step({ num, title, description }: { num: string; title: string; descrip
         <span className="text-xs font-semibold text-[#C9A227]">{num}</span>
       </div>
       <div>
-        <h4 className="font-serif text-sm font-semibold text-[#1E0F2B] mb-1">{title}</h4>
-        <p className="text-sm text-[#1E0F2B]/70 leading-relaxed">{description}</p>
+        <h4 className="font-serif text-sm font-semibold text-[#000000] mb-1">{title}</h4>
+        <p className="text-sm text-[#000000]/70 leading-relaxed">{description}</p>
       </div>
     </div>
   );
@@ -178,17 +178,17 @@ function Step({ num, title, description }: { num: string; title: string; descrip
 function DeployStep({ title, code }: { title: string; code: string }) {
   return (
     <div>
-      <p className="font-semibold text-[#1E0F2B] mb-1">{title}</p>
-      <pre className="p-3 rounded-full bg-[#1A0826]/90 text-[#FAF6EF] text-xs font-mono overflow-x-auto whitespace-pre-wrap">{code}</pre>
+      <p className="font-semibold text-[#000000] mb-1">{title}</p>
+      <pre className="p-3 rounded-full bg-[#000000]/90 text-[#F0E9DE] text-xs font-mono overflow-x-auto whitespace-pre-wrap">{code}</pre>
     </div>
   );
 }
 
 function CostItem({ item, cost }: { item: string; cost: string }) {
   return (
-    <div className="flex items-center justify-between border-b border-[#8A8378]/10 pb-2">
-      <span className="text-[#8A8378]">{item}</span>
-      <span className="font-semibold text-[#1E0F2B]">{cost}</span>
+    <div className="flex items-center justify-between border-b border-[#8A857C]/10 pb-2">
+      <span className="text-[#8A857C]">{item}</span>
+      <span className="font-semibold text-[#000000]">{cost}</span>
     </div>
   );
 }

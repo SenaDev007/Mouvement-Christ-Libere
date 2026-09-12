@@ -57,17 +57,17 @@ export function TeachingsSearch({
   };
 
   return (
-    <section className="bg-[#FAF6EF] border-b border-[#8A8378]/15 py-8">
+    <section className="bg-[#F0E9DE] border-b border-[#8A857C]/15 py-8">
       <div className="container mx-auto max-w-7xl px-4">
         {/* Recherche */}
         <form onSubmit={handleSubmit} className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher un enseignement, un thème, un verset..."
-            className="w-full pl-11 pr-12 py-3.5 rounded-2xl border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
+            className="w-full pl-11 pr-12 py-3.5 rounded-2xl border border-[#8A857C]/30 bg-[#F0E9DE] text-[#000000] placeholder:text-[#8A857C]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
           />
           {query && (
             <button
@@ -79,7 +79,7 @@ export function TeachingsSearch({
                 const q = sp.toString();
                 router.push(q ? `/enseignements?${q}` : "/enseignements");
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8A8378] hover:text-[#1E0F2B]"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8A857C] hover:text-[#000000]"
               aria-label="Effacer"
             >
               <X className="w-4 h-4" />
@@ -90,7 +90,7 @@ export function TeachingsSearch({
         {/* Filtres */}
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-semibold">
               Serviteur :
             </span>
             <a
@@ -98,8 +98,8 @@ export function TeachingsSearch({
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                 currentServant === "all"
-                  ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                  : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+                  ? "bg-[#000000] text-[#F0E9DE]"
+                  : "border border-[#000000]/30 text-[#000000] hover:bg-[#000000]/5"
               )}
             >
               Tous
@@ -111,8 +111,8 @@ export function TeachingsSearch({
                 className={cn(
                   "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                   currentServant === s.code
-                    ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                    : "border border-[#2A0E3D]/30 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+                    ? "bg-[#000000] text-[#F0E9DE]"
+                    : "border border-[#000000]/30 text-[#000000] hover:bg-[#000000]/5"
                 )}
               >
                 {s.name}
@@ -121,7 +121,7 @@ export function TeachingsSearch({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs uppercase tracking-[0.18em] text-[#8A8378] font-semibold">
+            <span className="text-xs uppercase tracking-[0.18em] text-[#8A857C] font-semibold">
               Niveau :
             </span>
             {LEVELS.map((l) => {
@@ -133,8 +133,8 @@ export function TeachingsSearch({
                   className={cn(
                     "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                     currentLevel === value
-                      ? "bg-[#C9A227] text-[#1E0F2B]"
-                      : "border border-[#8A8378]/30 text-[#8A8378] hover:border-[#C9A227]/50"
+                      ? "bg-[#C9A227] text-[#000000]"
+                      : "border border-[#8A857C]/30 text-[#8A857C] hover:border-[#FF7A1A]/50"
                   )}
                 >
                   {l}

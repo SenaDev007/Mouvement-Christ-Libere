@@ -335,7 +335,7 @@ export default function R2TestPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B] p-6" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-[#F0E9DE] text-[#000000] p-6" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -344,17 +344,17 @@ export default function R2TestPage() {
               <Cloud className="w-5 h-5 text-[#C9A227]" />
               Test Cloudflare R2
             </h1>
-            <p className="text-xs text-[#8A8378] mt-1">
+            <p className="text-xs text-[#8A857C] mt-1">
               Vérification du stockage des vidéos replays et miniatures
             </p>
           </div>
-          <Link href="/admin" className="text-xs text-[#8A8378] hover:text-[#C9A227]">
+          <Link href="/admin" className="text-xs text-[#8A857C] hover:text-[#FF7A1A]">
             ← Retour admin
           </Link>
         </div>
 
         {/* Status config */}
-        <div className="bg-white rounded-xl p-5 border border-[#8A8378]/15 mb-4">
+        <div className="bg-white rounded-xl p-5 border border-[#8A857C]/15 mb-4">
           <h2 className="text-sm font-bold mb-3 flex items-center gap-2">
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin text-[#C9A227]" />
@@ -367,44 +367,44 @@ export default function R2TestPage() {
           </h2>
 
           {loading ? (
-            <p className="text-xs text-[#8A8378]">Vérification...</p>
+            <p className="text-xs text-[#8A857C]">Vérification...</p>
           ) : status ? (
             <div className="space-y-2">
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Fournisseur</span>
-                <span className="text-xs font-bold text-[#1E0F2B]">{status.provider}</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#8A857C]/10">
+                <span className="text-xs text-[#8A857C]">Fournisseur</span>
+                <span className="text-xs font-bold text-[#000000]">{status.provider}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Statut</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#8A857C]/10">
+                <span className="text-xs text-[#8A857C]">Statut</span>
                 <span className={`text-xs font-bold ${status.configured ? "text-emerald-600" : "text-red-600"}`}>
                   {status.configured ? "✓ Configuré" : "✗ Non configuré"}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Account ID</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.accountId}</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#8A857C]/10">
+                <span className="text-xs text-[#8A857C]">Account ID</span>
+                <span className="text-xs font-mono text-[#000000]">{status.accountId}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Bucket</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.bucket}</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#8A857C]/10">
+                <span className="text-xs text-[#8A857C]">Bucket</span>
+                <span className="text-xs font-mono text-[#000000]">{status.bucket}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">URL publique</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.publicUrl}</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#8A857C]/10">
+                <span className="text-xs text-[#8A857C]">URL publique</span>
+                <span className="text-xs font-mono text-[#000000]">{status.publicUrl}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Access Key ID</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.accessKeyId}</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#8A857C]/10">
+                <span className="text-xs text-[#8A857C]">Access Key ID</span>
+                <span className="text-xs font-mono text-[#000000]">{status.accessKeyId}</span>
               </div>
               <div className="flex items-center justify-between py-1.5">
-                <span className="text-xs text-[#8A8378]">Secret Access Key</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.secretAccessKey}</span>
+                <span className="text-xs text-[#8A857C]">Secret Access Key</span>
+                <span className="text-xs font-mono text-[#000000]">{status.secretAccessKey}</span>
               </div>
 
               {/* Vérification des variables d'environnement */}
               {status.envCheck && (
-                <div className="mt-3 pt-3 border-t border-[#8A8378]/10">
-                  <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-2">
+                <div className="mt-3 pt-3 border-t border-[#8A857C]/10">
+                  <p className="text-[10px] font-bold text-[#8A857C] uppercase tracking-wider mb-2">
                     Variables d'environnement Vercel
                   </p>
                   <div className="grid grid-cols-2 gap-1.5">
@@ -415,7 +415,7 @@ export default function R2TestPage() {
                         ) : (
                           <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
                         )}
-                        <span className={`font-mono ${present ? "text-[#1E0F2B]" : "text-red-600"}`}>{key}</span>
+                        <span className={`font-mono ${present ? "text-[#000000]" : "text-red-600"}`}>{key}</span>
                       </div>
                     ))}
                   </div>
@@ -426,12 +426,12 @@ export default function R2TestPage() {
         </div>
 
         {/* Test upload */}
-        <div className="bg-white rounded-xl p-5 border border-[#8A8378]/15 mb-4">
+        <div className="bg-white rounded-xl p-5 border border-[#8A857C]/15 mb-4">
           <h2 className="text-sm font-bold mb-3 flex items-center gap-2">
             <TestTube className="w-4 h-4 text-[#C9A227]" />
             Test d'upload serveur
           </h2>
-          <p className="text-xs text-[#8A8378] mb-3">
+          <p className="text-xs text-[#8A857C] mb-3">
             Diagnostic complet côté serveur (⭐ V3.52) : sonde de <b>lecture</b> (le token
             peut-il lire le bucket ?), test d&apos;<b>écriture</b> (même mécanisme que les notes
             vocales d&apos;intercession) et sonde <b>multipart</b> (exactement l&apos;opération
@@ -441,7 +441,7 @@ export default function R2TestPage() {
           <button
             onClick={runTest}
             disabled={!status?.configured || testing}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
             {testing ? "Test en cours..." : "Lancer le test serveur"}
@@ -458,7 +458,7 @@ export default function R2TestPage() {
               <div className="space-y-1.5 text-xs">
                 {testResult.credentialsValid !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Credentials :</span>
+                    <span className="text-[#8A857C] w-40">Credentials :</span>
                     {testResult.credentialsValid ? (
                       <span className="text-emerald-600 font-bold">✓ Valides</span>
                     ) : (
@@ -468,13 +468,13 @@ export default function R2TestPage() {
                 )}
                 {testResult.bucketsAccessible && testResult.bucketsAccessible.length > 0 && (
                   <div className="flex items-start gap-2">
-                    <span className="text-[#8A8378] w-40">Buckets accessibles :</span>
-                    <span className="text-[#1E0F2B] font-mono">{testResult.bucketsAccessible.join(", ")}</span>
+                    <span className="text-[#8A857C] w-40">Buckets accessibles :</span>
+                    <span className="text-[#000000] font-mono">{testResult.bucketsAccessible.join(", ")}</span>
                   </div>
                 )}
                 {testResult.bucketExists !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Bucket configuré :</span>
+                    <span className="text-[#8A857C] w-40">Bucket configuré :</span>
                     {testResult.bucketExists ? (
                       <span className="text-emerald-600 font-bold">✓ Existe</span>
                     ) : (
@@ -484,7 +484,7 @@ export default function R2TestPage() {
                 )}
                 {testResult.canRead !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Permission lecture :</span>
+                    <span className="text-[#8A857C] w-40">Permission lecture :</span>
                     {testResult.canRead ? (
                       <span className="text-emerald-600 font-bold">✓ OK</span>
                     ) : (
@@ -494,7 +494,7 @@ export default function R2TestPage() {
                 )}
                 {testResult.canWrite !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Permission écriture :</span>
+                    <span className="text-[#8A857C] w-40">Permission écriture :</span>
                     {testResult.canWrite ? (
                       <span className="text-emerald-600 font-bold">✓ OK</span>
                     ) : (
@@ -504,7 +504,7 @@ export default function R2TestPage() {
                 )}
                 {testResult.canMultipart !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Upload vidéo (multipart) :</span>
+                    <span className="text-[#8A857C] w-40">Upload vidéo (multipart) :</span>
                     {testResult.canMultipart ? (
                       <span className="text-emerald-600 font-bold">✓ OK</span>
                     ) : (
@@ -514,7 +514,7 @@ export default function R2TestPage() {
                 )}
                 {testResult.errorCode && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Code d'erreur :</span>
+                    <span className="text-[#8A857C] w-40">Code d'erreur :</span>
                     <span className="text-red-600 font-mono font-bold">{testResult.errorCode}</span>
                   </div>
                 )}
@@ -522,11 +522,11 @@ export default function R2TestPage() {
 
               {/* Détails techniques */}
               {testResult.details && testResult.details.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-[#8A8378]/20">
-                  <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-2">Détails du diagnostic</p>
+                <div className="mt-3 pt-3 border-t border-[#8A857C]/20">
+                  <p className="text-[10px] font-bold text-[#8A857C] uppercase tracking-wider mb-2">Détails du diagnostic</p>
                   <ul className="space-y-1">
                     {testResult.details.map((d, i) => (
-                      <li key={i} className={`text-[10px] font-mono ${d.startsWith("✗") ? "text-red-600" : d.startsWith("✓") ? "text-emerald-600" : "text-[#8A8378]"}`}>
+                      <li key={i} className={`text-[10px] font-mono ${d.startsWith("✗") ? "text-red-600" : d.startsWith("✓") ? "text-emerald-600" : "text-[#8A857C]"}`}>
                         {d}
                       </li>
                     ))}
@@ -536,7 +536,7 @@ export default function R2TestPage() {
 
               {/* ⭐ V3.52 — PANNEAU DE RÉPARATION GUIDÉE : écriture refusée */}
               {testResult.canWrite === false && testResult.errorCode === "AccessDenied" && (
-                <div className="mt-4 pt-3 border-t border-[#8A8378]/20">
+                <div className="mt-4 pt-3 border-t border-[#8A857C]/20">
                   <div className="bg-red-50 border border-red-300 rounded-lg p-4">
                     <h3 className="text-sm font-bold text-red-800 mb-2 flex items-center gap-2">
                       <KeyRound className="w-4 h-4" />
@@ -608,7 +608,7 @@ export default function R2TestPage() {
             <Globe className="w-4 h-4 text-[#C9A227]" />
             Test d&apos;upload navigateur — le chemin exact du replay
           </h2>
-          <p className="text-xs text-[#8A8378] mb-3">
+          <p className="text-xs text-[#8A857C] mb-3">
             C&apos;est LE test décisif pour les replays de live : votre navigateur uploade un petit
             fichier DIRECTEMENT vers R2 via une URL pré-signée, exactement comme le replay après un
             direct (preflight CORS inclus). Le test serveur peut réussir alors que celui-ci échoue —
@@ -617,7 +617,7 @@ export default function R2TestPage() {
           <button
             onClick={runBrowserTest}
             disabled={!status?.configured || browserTesting}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#C9A227] font-bold text-sm hover:bg-[#3A1E4D] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#000000] text-[#C9A227] font-bold text-sm hover:bg-[#161513] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {browserTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
             {browserTesting ? "Test navigateur en cours..." : "Lancer le test navigateur"}
@@ -632,7 +632,7 @@ export default function R2TestPage() {
               <div className="space-y-1.5 text-xs">
                 {browserResult.status !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Statut HTTP :</span>
+                    <span className="text-[#8A857C] w-40">Statut HTTP :</span>
                     <span className={`font-mono font-bold ${browserResult.ok ? "text-emerald-600" : "text-red-600"}`}>
                       {browserResult.status} {browserResult.ok ? "(accepté)" : "(refusé)"}
                     </span>
@@ -640,19 +640,19 @@ export default function R2TestPage() {
                 )}
                 {browserResult.xmlCode && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Code d&apos;erreur R2 :</span>
+                    <span className="text-[#8A857C] w-40">Code d&apos;erreur R2 :</span>
                     <span className="text-red-600 font-mono font-bold">{browserResult.xmlCode}</span>
                   </div>
                 )}
                 {browserResult.durationMs !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Durée :</span>
-                    <span className="text-[#1E0F2B] font-mono">{browserResult.durationMs} ms</span>
+                    <span className="text-[#8A857C] w-40">Durée :</span>
+                    <span className="text-[#000000] font-mono">{browserResult.durationMs} ms</span>
                   </div>
                 )}
                 {browserResult.urlClean !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">URL pré-signée :</span>
+                    <span className="text-[#8A857C] w-40">URL pré-signée :</span>
                     {browserResult.urlClean ? (
                       <span className="text-emerald-600 font-bold">✓ sans paramètres checksum</span>
                     ) : (
@@ -676,13 +676,13 @@ export default function R2TestPage() {
               <button
                 onClick={() => sonderCors()}
                 disabled={corsProbing}
-                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#8A8378] hover:text-[#C9A227] disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#8A857C] hover:text-[#FF7A1A] disabled:opacity-40"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${corsProbing ? "animate-spin" : ""}`} />
                 Re-tester
               </button>
             </div>
-            <p className="text-xs text-[#8A8378] mb-3">
+            <p className="text-xs text-[#8A857C] mb-3">
               Test automatique à l&apos;ouverture de la page : votre navigateur envoie RÉELLEMENT un
               micro-fichier vers R2 par une URL pré-signée — le chemin EXACT des uploads de vidéos
               par morceaux. Sans règle CORS, Cloudflare R2 refuse TOUT envoi direct du navigateur
@@ -695,17 +695,17 @@ export default function R2TestPage() {
             <div
               className={`p-4 rounded-lg border ${
                 corsProbing
-                  ? "bg-[#2A0E3D]/5 border-[#8A8378]/20"
+                  ? "bg-[#000000]/5 border-[#8A857C]/20"
                   : corsVerdict === "ok"
                     ? "bg-emerald-50 border-emerald-200"
                     : corsVerdict === "bloque"
                       ? "bg-red-50 border-red-200"
-                      : "bg-[#2A0E3D]/5 border-[#8A8378]/20"
+                      : "bg-[#000000]/5 border-[#8A857C]/20"
               }`}
             >
               <p
                 className={`text-sm font-bold mb-2 flex items-start gap-2 ${
-                  corsVerdict === "ok" ? "text-emerald-700" : corsVerdict === "bloque" ? "text-red-700" : "text-[#1E0F2B]"
+                  corsVerdict === "ok" ? "text-emerald-700" : corsVerdict === "bloque" ? "text-red-700" : "text-[#000000]"
                 }`}
               >
                 {corsProbing ? (
@@ -732,7 +732,7 @@ export default function R2TestPage() {
                       ? "text-emerald-700 bg-emerald-100/60"
                       : corsServeur.preflight === "absent"
                         ? "text-red-600 bg-red-100/60"
-                        : "text-[#8A8378] bg-[#2A0E3D]/5"
+                        : "text-[#8A857C] bg-[#000000]/5"
                   }`}
                 >
                   {corsServeur.preflight === "ok"
@@ -790,12 +790,12 @@ export default function R2TestPage() {
                       <li>Revenez ici → le verdict doit passer au ✓ vert (bouton « Re-tester »)</li>
                     </ol>
                     <div className="relative">
-                      <pre className="text-[10px] bg-[#1E0F2B] text-[#C9A227] p-3 pr-24 rounded-lg overflow-x-auto whitespace-pre">
+                      <pre className="text-[10px] bg-[#000000] text-[#C9A227] p-3 pr-24 rounded-lg overflow-x-auto whitespace-pre">
 {REGLE_CORS_JSON}
                       </pre>
                       <button
                         onClick={copierRegle}
-                        className="absolute top-2 right-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold hover:bg-[#DDBE55] transition-colors"
+                        className="absolute top-2 right-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A227] text-[#000000] text-[10px] font-bold hover:bg-[#FF7A1A] transition-colors"
                       >
                         <Copy className="w-3 h-3" />
                         {copieJson ? "Copié !" : "Copier"}
@@ -825,7 +825,7 @@ export default function R2TestPage() {
                         placeholder="Access Key ID du token temporaire"
                         autoComplete="off"
                         spellCheck={false}
-                        className="px-3 py-2 rounded-lg border border-[#8A8378]/30 text-xs font-mono text-[#1E0F2B] bg-white focus:outline-none focus:border-[#C9A227]"
+                        className="px-3 py-2 rounded-lg border border-[#8A857C]/30 text-xs font-mono text-[#000000] bg-white focus:outline-none focus:border-[#C9A227]"
                       />
                       <input
                         type="password"
@@ -833,13 +833,13 @@ export default function R2TestPage() {
                         onChange={(e) => setTempSecret(e.target.value)}
                         placeholder="Secret Access Key du token temporaire"
                         autoComplete="off"
-                        className="px-3 py-2 rounded-lg border border-[#8A8378]/30 text-xs font-mono text-[#1E0F2B] bg-white focus:outline-none focus:border-[#C9A227]"
+                        className="px-3 py-2 rounded-lg border border-[#8A857C]/30 text-xs font-mono text-[#000000] bg-white focus:outline-none focus:border-[#C9A227]"
                       />
                     </div>
                     <button
                       onClick={appliquerCors}
                       disabled={appliquant}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#000000] font-bold text-sm hover:bg-[#FF7A1A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {appliquant ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
                       {appliquant ? "Application en cours..." : "Appliquer la règle et vérifier"}
@@ -878,7 +878,7 @@ export default function R2TestPage() {
                   </div>
                 </div>
 
-                <p className="text-[11px] text-[#8A8378] bg-[#2A0E3D]/5 rounded-lg p-3">
+                <p className="text-[11px] text-[#8A857C] bg-[#000000]/5 rounded-lg p-3">
                   Après réparation : revenez au module Vidéos → « Nouvelle vidéo » → l&apos;envoi
                   reprendra et fonctionnera. La progression affiche « Envoi du fichier… X% ·
                   partie N/M » morceau par morceau, chaque morceau étant réessayé individuellement
@@ -902,14 +902,14 @@ export default function R2TestPage() {
 
         {/* Instructions */}
         {!status?.configured && !loading && (
-          <div className="bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-xl p-4">
-            <h3 className="text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-2">
+          <div className="bg-[#000000]/5 border border-[#C9A227]/20 rounded-xl p-4">
+            <h3 className="text-xs font-bold text-[#000000] uppercase tracking-wider mb-2">
               Configuration requise
             </h3>
-            <p className="text-xs text-[#8A8378] mb-3">
+            <p className="text-xs text-[#8A857C] mb-3">
               Ajoutez ces variables d'environnement sur Vercel :
             </p>
-            <pre className="text-[10px] bg-[#1E0F2B] text-[#C9A227] p-3 rounded-lg overflow-x-auto">
+            <pre className="text-[10px] bg-[#000000] text-[#C9A227] p-3 rounded-lg overflow-x-auto">
 {`R2_ACCOUNT_ID=votre_account_id
 R2_ACCESS_KEY_ID=votre_access_key
 R2_SECRET_ACCESS_KEY=votre_secret
@@ -919,7 +919,7 @@ R2_PUBLIC_URL=https://cdn.mouvementchristlibere.org
 # ou (bucket → Settings → Public Development URL) :
 R2_PUBLIC_DEV_URL=https://pub-<hash-du-bucket>.r2.dev`}
             </pre>
-            <p className="text-[10px] text-[#8A8378] mt-3">
+            <p className="text-[10px] text-[#8A857C] mt-3">
               Docs : <a href="https://developers.cloudflare.com/r2/api/s3/api/" target="_blank" rel="noopener noreferrer" className="text-[#C9A227] hover:underline">R2 S3 API</a>
             </p>
           </div>

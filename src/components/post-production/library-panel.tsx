@@ -326,7 +326,7 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
     <button
       onClick={onClick}
       className={`px-2 py-1 rounded-full text-[10px] font-bold whitespace-nowrap transition-colors ${
-        active ? "bg-[#2A0E3D] text-white" : "bg-[#2A0E3D]/5 text-[#8A8378] hover:bg-[#2A0E3D]/10"
+        active ? "bg-[#000000] text-white" : "bg-[#000000]/5 text-[#8A857C] hover:bg-[#000000]/10"
       }`}
     >
       {children}
@@ -335,7 +335,7 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
 
   const BoutonAjouter = ({ onClick, titre = "Ajouter à la timeline (instantané)" }: { onClick: () => void; titre?: string }) => (
     <button onClick={onClick} title={titre}
-      className="flex-shrink-0 w-7 h-7 rounded-full bg-[#C9A227]/20 text-[#A3821C] hover:bg-[#C9A227]/30 flex items-center justify-center transition-colors">
+      className="flex-shrink-0 w-7 h-7 rounded-full bg-[#C9A227]/20 text-[#A3821C] hover:bg-[#FF7A1A]/30 flex items-center justify-center transition-colors">
       <Plus className="w-3.5 h-3.5" />
     </button>
   );
@@ -351,7 +351,7 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
     return (
       <button onClick={onClick} title={titre}
         className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-          st?.etat === "erreur" ? "bg-red-100 text-red-600 hover:bg-red-200" : "bg-[#2A0E3D]/10 text-[#2A0E3D] hover:bg-[#2A0E3D]/20"
+          st?.etat === "erreur" ? "bg-red-100 text-red-600 hover:bg-red-200" : "bg-[#000000]/10 text-[#000000] hover:bg-[#000000]/20"
         }`}>
         {st?.etat === "erreur" ? <AlertCircle className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
       </button>
@@ -370,7 +370,7 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
       {total > nbAffiches && (
         <button
           onClick={() => setNbAffiches((n) => n + PAGE)}
-          className="w-full py-2 rounded-lg bg-[#2A0E3D]/5 text-[10px] font-bold text-[#8A8378] hover:bg-[#2A0E3D]/10 flex items-center justify-center gap-1 transition-colors"
+          className="w-full py-2 rounded-lg bg-[#000000]/5 text-[10px] font-bold text-[#8A857C] hover:bg-[#000000]/10 flex items-center justify-center gap-1 transition-colors"
         >
           Afficher plus ({total - nbAffiches} restants) <ChevronDown className="w-3 h-3" />
         </button>
@@ -381,20 +381,20 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
   // ═══════ Rendu ═══════
 
   return (
-    <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A8378]/15">
-      <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A8378] flex items-center gap-1.5">
+    <div className="bg-white rounded-xl p-4 space-y-3 border border-[#8A857C]/15">
+      <h3 className="text-xs uppercase tracking-wider font-bold text-[#8A857C] flex items-center gap-1.5">
         <LibraryIcon className="w-3.5 h-3.5" />
         Bibliothèque Mixkit {nbTotal > 0 && <span className="text-[#C9A227]">· {nbTotal} médias</span>}
       </h3>
 
       {/* Sous-onglets */}
-      <div className="grid grid-cols-5 gap-1 bg-[#2A0E3D]/5 rounded-lg p-1">
+      <div className="grid grid-cols-5 gap-1 bg-[#000000]/5 rounded-lg p-1">
         {VUES.map((v) => {
           const Ic = v.icone;
           return (
             <button key={v.id} onClick={() => { setVue(v.id); setNbAffiches(PAGE); setRecherche(""); setVideoApercue(null); }}
               className={`py-1.5 rounded-md text-[9px] font-bold transition-colors flex flex-col items-center gap-0.5 ${
-                vue === v.id ? "bg-[#2A0E3D] text-white" : "text-[#8A8378] hover:bg-[#2A0E3D]/10"
+                vue === v.id ? "bg-[#000000] text-white" : "text-[#8A857C] hover:bg-[#000000]/10"
               }`}>
               <Ic className="w-3.5 h-3.5" />
               {v.label}
@@ -406,12 +406,12 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
       {/* Recherche (toutes vues sauf URL) */}
       {vue !== "url" && (
         <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8A8378]" />
+          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8A857C]" />
           <input
             value={recherche}
             onChange={(e) => { setRecherche(e.target.value); setNbAffiches(PAGE); }}
             placeholder="Rechercher…"
-            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#2A0E3D]/5 text-xs font-bold text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:ring-1 focus:ring-[#C9A227]"
+            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#000000]/5 text-xs font-bold text-[#000000] placeholder:text-[#8A857C]/60 focus:outline-none focus:ring-1 focus:ring-[#C9A227]"
           />
         </div>
       )}
@@ -441,16 +441,16 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
                       }));
                       e.dataTransfer.effectAllowed = "copy";
                     }}
-                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors cursor-grab active:cursor-grabbing">
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#000000]/5 hover:bg-[#000000]/10 transition-colors cursor-grab active:cursor-grabbing">
                     <button onClick={() => toggleLecture(`sfx-${s.id}`, s.p)}
                       title={lectureEnCours === `sfx-${s.id}` ? "Arrêter" : "Écouter"}
                       className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-                        lectureEnCours === `sfx-${s.id}` ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/10 text-[#2A0E3D] hover:bg-[#2A0E3D]/20"
+                        lectureEnCours === `sfx-${s.id}` ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/10 text-[#000000] hover:bg-[#000000]/20"
                       }`}>
                       {lectureEnCours === `sfx-${s.id}` ? <Square className="w-3 h-3 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
                     </button>
                     <span className="text-xs font-bold flex-1 truncate" title={s.n}>{s.n}</span>
-                    <span className="text-[10px] text-[#8A8378] flex-shrink-0">{formaterDuree(s.d)}</span>
+                    <span className="text-[10px] text-[#8A857C] flex-shrink-0">{formaterDuree(s.d)}</span>
                     <BoutonR2 id={`sfx-${s.id}`} onClick={() => ajouterSfx(s, true)} titre="Télécharger le WAV et le stocker sur R2" />
                     <BoutonAjouter onClick={() => ajouterSfx(s)} />
                   </div>
@@ -488,19 +488,19 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
                       }));
                       e.dataTransfer.effectAllowed = "copy";
                     }}
-                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors cursor-grab active:cursor-grabbing">
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#000000]/5 hover:bg-[#000000]/10 transition-colors cursor-grab active:cursor-grabbing">
                     <button onClick={() => toggleLecture(`music-${m.id}`, m.p)}
                       title={lectureEnCours === `music-${m.id}` ? "Arrêter" : "Écouter"}
                       className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-                        lectureEnCours === `music-${m.id}` ? "bg-[#C9A227] text-[#1E0F2B]" : "bg-[#2A0E3D]/10 text-[#2A0E3D] hover:bg-[#2A0E3D]/20"
+                        lectureEnCours === `music-${m.id}` ? "bg-[#C9A227] text-[#000000]" : "bg-[#000000]/10 text-[#000000] hover:bg-[#000000]/20"
                       }`}>
                       {lectureEnCours === `music-${m.id}` ? <Square className="w-3 h-3 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
                     </button>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold truncate" title={m.n}>{m.n}</p>
-                      <p className="text-[9px] text-[#8A8378] truncate">{m.gl}</p>
+                      <p className="text-[9px] text-[#8A857C] truncate">{m.gl}</p>
                     </div>
-                    <span className="text-[10px] text-[#8A8378] flex-shrink-0">{formaterDuree(m.d)}</span>
+                    <span className="text-[10px] text-[#8A857C] flex-shrink-0">{formaterDuree(m.d)}</span>
                     <BoutonR2 id={`music-${m.id}`} onClick={() => ajouterMusique(m, true)} titre="Télécharger le mp3 et le stocker sur R2" />
                     <BoutonAjouter onClick={() => ajouterMusique(m)} />
                   </div>
@@ -539,7 +539,7 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
                     }));
                     e.dataTransfer.effectAllowed = "copy";
                   }}
-                  className="rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors overflow-hidden cursor-grab active:cursor-grabbing">
+                  className="rounded-lg bg-[#000000]/5 hover:bg-[#000000]/10 transition-colors overflow-hidden cursor-grab active:cursor-grabbing">
                   <div className="relative">
                     {videoApercue === v.id ? (
                       <video src={v.p} controls autoPlay muted={false} className="w-full aspect-video bg-black" />
@@ -577,7 +577,7 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
             ))}
           </div>
           {!q && (
-            <div className="flex flex-wrap gap-1 border-t border-[#8A8378]/10 pt-2">
+            <div className="flex flex-wrap gap-1 border-t border-[#8A857C]/10 pt-2">
               {SOUS_CATS_TEMPLATES.map((c) => (
                 <Puce key={c.slug} active={sousCat === c.slug} onClick={() => { setSousCat(c.slug); setNbAffiches(PAGE); setVideoApercue(null); }}>
                   {c.label}
@@ -600,7 +600,7 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
           ) : (
             <ListeAffichee total={templatesFiltres.length}>
               {templatesFiltres.slice(0, nbAffiches).map((t) => (
-                <div key={t.id} className="rounded-lg bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 transition-colors overflow-hidden">
+                <div key={t.id} className="rounded-lg bg-[#000000]/5 hover:bg-[#000000]/10 transition-colors overflow-hidden">
                   <div className="relative">
                     {videoApercue === t.id ? (
                       <video src={t.p} controls autoPlay loop className="w-full aspect-video bg-black" />
@@ -616,18 +616,18 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
                   <div className="px-2 py-1.5 space-y-1">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px] font-bold flex-1 truncate" title={t.n}>{t.n}</span>
-                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-[#2A0E3D]/10 text-[#8A8378] flex-shrink-0">{t.k.replace(`${t.sl} / `, "")}</span>
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-[#000000]/10 text-[#8A857C] flex-shrink-0">{t.k.replace(`${t.sl} / `, "")}</span>
                     </div>
-                    {t.x && <p className="text-[9px] text-[#8A8378] leading-tight line-clamp-2">{t.x}</p>}
+                    {t.x && <p className="text-[9px] text-[#8A857C] leading-tight line-clamp-2">{t.x}</p>}
                     <div className="flex items-center gap-1.5">
                       <BoutonR2 id={`tpl-${t.id}`} onClick={() => telechargerTemplate(t)} titre="Télécharger le .zip du template (stocké sur R2)" />
                       <button onClick={() => telechargerTemplate(t)}
-                        className="flex-1 py-1 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold hover:bg-[#A3821C] flex items-center justify-center gap-1 transition-colors">
+                        className="flex-1 py-1 rounded-lg bg-[#C9A227] text-[#000000] text-[10px] font-bold hover:bg-[#A3821C] flex items-center justify-center gap-1 transition-colors">
                         <Download className="w-3 h-3" /> Télécharger (.zip)
                       </button>
                       {t.u && (
                         <a href={t.u} target="_blank" rel="noopener noreferrer" title="Voir sur Mixkit"
-                          className="flex-shrink-0 w-6 h-6 rounded-full bg-[#2A0E3D]/10 text-[#8A8378] hover:bg-[#2A0E3D]/20 flex items-center justify-center">
+                          className="flex-shrink-0 w-6 h-6 rounded-full bg-[#000000]/10 text-[#8A857C] hover:bg-[#000000]/20 flex items-center justify-center">
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       )}
@@ -646,11 +646,11 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
       {vue === "url" && (
         <div className="space-y-3">
           <div className="bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-lg p-3 space-y-2">
-            <p className="text-[11px] font-bold text-[#1E0F2B] flex items-center gap-1.5">
+            <p className="text-[11px] font-bold text-[#000000] flex items-center gap-1.5">
               <Info className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
               Importer depuis Pixabay (ou toute URL directe)
             </p>
-            <p className="text-[10px] text-[#8A8378] leading-relaxed">
+            <p className="text-[10px] text-[#8A857C] leading-relaxed">
               Pixabay autorise le téléchargement manuel (licence libre de droits) mais interdit
               l&apos;aspiration automatique. Ouvrez la recherche ci-dessous, choisissez un média,
               copiez l&apos;adresse du fichier (clic droit → copier l&apos;adresse) et collez-la ici :
@@ -658,15 +658,15 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
             </p>
             <div className="flex gap-1.5 flex-wrap pt-1">
               <a href={PIXABAY_RECHERCHE.sfx} target="_blank" rel="noopener noreferrer"
-                className="px-2.5 py-1.5 rounded-lg bg-[#2A0E3D] text-white text-[10px] font-bold hover:bg-[#1E0F2B] flex items-center gap-1 transition-colors">
+                className="px-2.5 py-1.5 rounded-lg bg-[#000000] text-white text-[10px] font-bold hover:bg-[#000000] flex items-center gap-1 transition-colors">
                 Sons Pixabay <ExternalLink className="w-3 h-3" />
               </a>
               <a href={PIXABAY_RECHERCHE.music} target="_blank" rel="noopener noreferrer"
-                className="px-2.5 py-1.5 rounded-lg bg-[#2A0E3D] text-white text-[10px] font-bold hover:bg-[#1E0F2B] flex items-center gap-1 transition-colors">
+                className="px-2.5 py-1.5 rounded-lg bg-[#000000] text-white text-[10px] font-bold hover:bg-[#000000] flex items-center gap-1 transition-colors">
                 Musiques Pixabay <ExternalLink className="w-3 h-3" />
               </a>
               <a href={PIXABAY_RECHERCHE.video} target="_blank" rel="noopener noreferrer"
-                className="px-2.5 py-1.5 rounded-lg bg-[#2A0E3D] text-white text-[10px] font-bold hover:bg-[#1E0F2B] flex items-center gap-1 transition-colors">
+                className="px-2.5 py-1.5 rounded-lg bg-[#000000] text-white text-[10px] font-bold hover:bg-[#000000] flex items-center gap-1 transition-colors">
                 Vidéos Pixabay <ExternalLink className="w-3 h-3" />
               </a>
             </div>
@@ -677,13 +677,13 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
               value={urlImport}
               onChange={(e) => setUrlImport(e.target.value)}
               placeholder="https://… (mp3, mp4 ou zip)"
-              className="w-full px-3 py-1.5 rounded-lg bg-[#2A0E3D]/5 text-xs font-bold text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:ring-1 focus:ring-[#C9A227]"
+              className="w-full px-3 py-1.5 rounded-lg bg-[#000000]/5 text-xs font-bold text-[#000000] placeholder:text-[#8A857C]/60 focus:outline-none focus:ring-1 focus:ring-[#C9A227]"
             />
             <input
               value={nomImport}
               onChange={(e) => setNomImport(e.target.value)}
               placeholder="Nom (optionnel)"
-              className="w-full px-3 py-1.5 rounded-lg bg-[#2A0E3D]/5 text-xs font-bold text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:ring-1 focus:ring-[#C9A227]"
+              className="w-full px-3 py-1.5 rounded-lg bg-[#000000]/5 text-xs font-bold text-[#000000] placeholder:text-[#8A857C]/60 focus:outline-none focus:ring-1 focus:ring-[#C9A227]"
             />
             <div className="flex gap-1">
               {(["audio", "video", "fichier"] as const).map((t) => (
@@ -695,7 +695,7 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
             <button
               onClick={importerDepuisUrl}
               disabled={!urlImport.trim() || importStatut.etat === "chargement"}
-              className="w-full py-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-xs font-bold hover:bg-[#A3821C] disabled:opacity-50 flex items-center justify-center gap-1.5 transition-colors">
+              className="w-full py-2 rounded-lg bg-[#C9A227] text-[#000000] text-xs font-bold hover:bg-[#A3821C] disabled:opacity-50 flex items-center justify-center gap-1.5 transition-colors">
               {importStatut.etat === "chargement" ? (
                 <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Téléchargement en cours…</>
               ) : (
@@ -714,9 +714,9 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
             )}
           </div>
 
-          <p className="text-[9px] text-[#8A8378] leading-relaxed border-t border-[#8A8378]/10 pt-2">
+          <p className="text-[9px] text-[#8A857C] leading-relaxed border-t border-[#8A857C]/10 pt-2">
             Mixkit : licence libre de droits, usage commercial, sans attribution
-            (<a href="https://mixkit.co/license/" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#C9A227]">mixkit.co/license</a>).
+            (<a href="https://mixkit.co/license/" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#FF7A1A]">mixkit.co/license</a>).
             Pixabay : licence Pixabay, conditions sur pixabay.com.
           </p>
         </div>
@@ -729,7 +729,7 @@ export function LibraryPanel({ onAddAudio, onAddVideoClip }: LibraryPanelProps) 
 
 function Chargement({ label }: { label: string }) {
   return (
-    <div className="py-8 flex flex-col items-center gap-2 text-[#8A8378]">
+    <div className="py-8 flex flex-col items-center gap-2 text-[#8A857C]">
       <Loader2 className="w-5 h-5 animate-spin" />
       <p className="text-[10px] font-bold">{label}</p>
     </div>
@@ -737,5 +737,5 @@ function Chargement({ label }: { label: string }) {
 }
 
 function Vide({ label }: { label: string }) {
-  return <p className="py-4 text-center text-[10px] text-[#8A8378] font-bold">{label}</p>;
+  return <p className="py-4 text-center text-[10px] text-[#8A857C] font-bold">{label}</p>;
 }

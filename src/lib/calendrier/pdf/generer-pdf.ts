@@ -3,7 +3,7 @@
  *
  * ⭐ V3.10 : remplace l'export iCal par un vrai DOCUMENT PDF généré par le
  * backend (pdf-lib + fontkit), fidèle au design du site :
- *   · nuit #2A0E3D, or #C9A227, crème #FAF6EF, taupe #8A8378 ;
+ *   · nuit #000000, or #C9A227, crème #F0E9DE, taupe #8A857C ;
  *   · titres serif (DejaVu Serif Bold), corps sans (DejaVu Sans) ;
  *   · hébreu sans niquoud rendu par inversion manuelle (le PDF n'a pas
  *     de moteur bidi — exact pour l'hébreu sans ligatures contextuelles).
@@ -45,15 +45,15 @@ import { calculerFetesPourAnnee, type OccurrenceFete } from "../fetes";
 import { libelleAnneeBiblique } from "../conversion";
 import { JOURS_SEMAINE_HEBREU } from "../jours-semaine-hebreu";
 
-// ═══ Palette ═════════════════════════════════════════════════════════════
+// ═══ Palette V3.68 — Noir / Or / Feu (alignement logo) ═══════════════════
 
-const NUIT = rgb(0.165, 0.055, 0.239); // #2A0E3D
-const NUIT_PROFONDE = rgb(0.118, 0.059, 0.169); // #1E0F2B
+const NUIT = rgb(0, 0, 0); // #000000 — noir pur
+const NUIT_PROFONDE = rgb(0, 0, 0); // #000000 — noir pur
 const OR = rgb(0.788, 0.635, 0.153); // #C9A227
 const OR_PALE = rgb(0.937, 0.898, 0.749); // #EFE5BF approx
-const CREME = rgb(0.980, 0.965, 0.937); // #FAF6EF
-const ENCRE = rgb(0.118, 0.059, 0.169); // #1E0F2B
-const TAUPE = rgb(0.541, 0.514, 0.471); // #8A8378
+const CREME = rgb(0.941, 0.914, 0.871); // #F0E9DE — blanc cassé chaud
+const ENCRE = rgb(0, 0, 0); // #000000 — texte noir
+const TAUPE = rgb(0.541, 0.522, 0.486); // #8A857C — gris chaud
 const BLANC = rgb(1, 1, 1);
 
 const A4: [number, number] = [595.28, 841.89];

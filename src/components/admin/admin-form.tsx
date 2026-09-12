@@ -182,7 +182,7 @@ export function AdminForm({
                   <div
                     className={
                       field.type === "image"
-                        ? "relative w-40 h-[100px] rounded-xl bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] flex items-center justify-center text-[#C9A227] overflow-hidden border-2 border-[#C9A227]/30 flex-shrink-0 shadow-md"
+                        ? "relative w-40 h-[100px] rounded-xl bg-gradient-to-br from-[#000000] to-[#000000] flex items-center justify-center text-[#C9A227] overflow-hidden border-2 border-[#C9A227]/30 flex-shrink-0 shadow-md"
                         : "relative w-20 h-20 rounded-full bg-gradient-to-br from-[#C9A227] to-[#A3821C] flex items-center justify-center text-white font-bold text-2xl overflow-hidden border-2 border-[#C9A227]/30 flex-shrink-0"
                     }
                   >
@@ -216,7 +216,7 @@ export function AdminForm({
                       type="button"
                       onClick={() => photoFileRef.current[field.name]?.click()}
                       disabled={photoProcessing === field.name}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-xs font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#000000] text-[#F0E9DE] text-xs font-bold hover:bg-[#161513] transition-colors disabled:opacity-50"
                     >
                       <Camera className="w-3.5 h-3.5" />
                       {photoValues[field.name] ? "Changer la photo" : "Ajouter une photo"}
@@ -301,7 +301,7 @@ export function AdminForm({
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 min-h-[44px] py-2.5 rounded bg-gold text-ink font-semibold text-sm hover:bg-gold-light transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-5 min-h-[44px] py-2.5 rounded bg-gold text-ink font-semibold text-sm hover:bg-[#FF7A1A] transition-colors disabled:opacity-50"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />

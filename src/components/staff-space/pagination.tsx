@@ -27,25 +27,25 @@ export function Pagination({ total, page, parPage, onChange }: PaginationProps) 
 
   return (
     <div className="flex items-center justify-between gap-3 px-1 pt-3">
-      <p className="text-[11px] text-[#8A8378]">
+      <p className="text-[11px] text-[#8A857C]">
         {debut}–{fin} sur {total}
       </p>
       <div className="flex items-center gap-1">
         <button
           onClick={() => onChange(Math.max(1, page - 1))}
           disabled={page <= 1}
-          className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#8A8378]/20 text-[#1E0F2B] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#FAF6EF] transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#8A857C]/20 text-[#000000] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F0E9DE] transition-colors"
           aria-label="Page précédente"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <span className="px-3 text-xs font-semibold text-[#1E0F2B] tabular-nums">
+        <span className="px-3 text-xs font-semibold text-[#000000] tabular-nums">
           {page} / {nbPages}
         </span>
         <button
           onClick={() => onChange(Math.min(nbPages, page + 1))}
           disabled={page >= nbPages}
-          className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#8A8378]/20 text-[#1E0F2B] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#FAF6EF] transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#8A857C]/20 text-[#000000] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F0E9DE] transition-colors"
           aria-label="Page suivante"
         >
           <ChevronRight className="w-4 h-4" />

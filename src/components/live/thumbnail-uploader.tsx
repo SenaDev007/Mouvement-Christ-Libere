@@ -143,19 +143,19 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
 
   return (
     <div>
-      <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">
+      <label className="block text-xs font-bold text-[#000000] uppercase tracking-wider mb-1.5">
         Miniature du live
       </label>
 
       {preview ? (
-        <div className="relative rounded-xl overflow-hidden border-2 border-[#8A8378]/20 group">
+        <div className="relative rounded-xl overflow-hidden border-2 border-[#8A857C]/20 group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="Miniature" className="w-full aspect-video object-cover" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-3 py-1.5 rounded-lg bg-white/90 text-[#1E0F2B] text-xs font-bold hover:bg-white transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-white/90 text-[#000000] text-xs font-bold hover:bg-white transition-colors"
             >
               Changer
             </button>
@@ -177,7 +177,7 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="w-full aspect-video rounded-xl border-2 border-dashed border-[#8A8378]/30 hover:border-[#C9A227] flex flex-col items-center justify-center gap-2 transition-colors bg-[#FAF6EF]"
+          className="w-full aspect-video rounded-xl border-2 border-dashed border-[#8A857C]/30 hover:border-[#FF7A1A] flex flex-col items-center justify-center gap-2 transition-colors bg-[#F0E9DE]"
         >
           {uploading ? (
             <Loader2 className="w-6 h-6 text-[#C9A227] animate-spin" />
@@ -186,9 +186,9 @@ export function ThumbnailUploader({ liveId, currentThumbnail, onThumbnailChange 
               <div className="w-10 h-10 rounded-full bg-[#C9A227]/10 flex items-center justify-center">
                 <Upload className="w-5 h-5 text-[#C9A227]" />
               </div>
-              <span className="text-xs font-medium text-[#8A8378]">Cliquez pour uploader une miniature</span>
-              <span className="text-[10px] text-[#8A8378]/60">JPG, PNG — max 10MB — format 16:9 recommandé</span>
-              <span className="text-[9px] text-[#8A8378]/40">Optimisation automatique (max 80KB)</span>
+              <span className="text-xs font-medium text-[#8A857C]">Cliquez pour uploader une miniature</span>
+              <span className="text-[10px] text-[#8A857C]/60">JPG, PNG — max 10MB — format 16:9 recommandé</span>
+              <span className="text-[9px] text-[#8A857C]/40">Optimisation automatique (max 80KB)</span>
             </>
           )}
         </button>

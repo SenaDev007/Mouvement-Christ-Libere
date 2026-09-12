@@ -35,22 +35,22 @@ export default async function AdminContactRequestsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-1">
           Messagerie entrante
         </p>
-        <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+        <h1 className="text-2xl md:text-3xl font-bold text-[#000000]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
           Demandes de contact
         </h1>
-        <p className="text-sm text-[#8A8378] mt-1">
+        <p className="text-sm text-[#8A857C] mt-1">
           Demandes transmises via le formulaire de contact public.
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-          <div className="text-2xl font-bold text-[#1E0F2B]">{stats.total}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5">Total</div>
+        <div className="bg-white rounded-xl border border-[#8A857C]/15 p-4">
+          <div className="text-2xl font-bold text-[#000000]">{stats.total}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#8A857C] font-semibold mt-0.5">Total</div>
         </div>
         <div className="bg-white rounded-xl border border-[#C9A227]/30 p-4">
           <div className="text-2xl font-bold text-[#A3821C]">{stats.pending}</div>
@@ -60,7 +60,7 @@ export default async function AdminContactRequestsPage() {
           <div className="text-2xl font-bold text-emerald-700">{stats.answered}</div>
           <div className="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold mt-0.5">Traitées</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
+        <div className="bg-white rounded-xl border border-[#8A857C]/15 p-4">
           <div className="text-2xl font-bold text-gray-500">{stats.archived}</div>
           <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mt-0.5">Archivées</div>
         </div>
@@ -68,9 +68,9 @@ export default async function AdminContactRequestsPage() {
 
       {/* Liste */}
       {requests.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-[#8A8378]/30 p-12 text-center">
-          <Inbox className="w-10 h-10 text-[#8A8378]/30 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378] italic">Aucune demande pour l&apos;instant.</p>
+        <div className="bg-white rounded-2xl border border-dashed border-[#8A857C]/30 p-12 text-center">
+          <Inbox className="w-10 h-10 text-[#8A857C]/30 mx-auto mb-3" />
+          <p className="text-sm text-[#8A857C] italic">Aucune demande pour l&apos;instant.</p>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -81,7 +81,7 @@ export default async function AdminContactRequestsPage() {
             return (
               <div
                 key={r.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:shadow-md transition-shadow group"
+                className="bg-white rounded-xl border border-[#8A857C]/15 p-4 hover:shadow-md transition-shadow group"
               >
                 <div className="flex items-start gap-4">
                   {/* Avatar initiales */}
@@ -92,7 +92,7 @@ export default async function AdminContactRequestsPage() {
                         ? "linear-gradient(135deg, #C9A227, #A3821C)"
                         : r.status === "ANSWERED"
                           ? "linear-gradient(135deg, #5B7052, #3F5039)"
-                          : "linear-gradient(135deg, #8A8378, #6B6358)"
+                          : "linear-gradient(135deg, #8A857C, #6B6358)"
                     }}
                   >
                     {r.name.charAt(0).toUpperCase()}
@@ -101,7 +101,7 @@ export default async function AdminContactRequestsPage() {
                   {/* Contenu */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3 mb-1">
-                      <h3 className="font-bold text-sm text-[#1E0F2B]">{r.name}</h3>
+                      <h3 className="font-bold text-sm text-[#000000]">{r.name}</h3>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold border flex-shrink-0 ${status.color}`}>
                         {status.label}
                       </span>
@@ -110,19 +110,19 @@ export default async function AdminContactRequestsPage() {
                     {/* Contact */}
                     <a
                       href={isEmail ? `mailto:${r.contact}` : `tel:${r.contact}`}
-                      className="inline-flex items-center gap-1.5 text-xs text-[#8C5FA8] hover:underline mt-1"
+                      className="inline-flex items-center gap-1.5 text-xs text-[#8A857C] hover:underline mt-1"
                     >
                       {isEmail ? <Mail className="w-3 h-3" /> : <Phone className="w-3 h-3" />}
                       {r.contact}
                     </a>
 
                     {/* Message */}
-                    <div className="mt-2 px-3 py-2 rounded-lg bg-[#FAF6EF] border border-[#8A8378]/10">
-                      <p className="text-xs text-[#1E0F2B]/80 leading-relaxed whitespace-pre-wrap">{r.message}</p>
+                    <div className="mt-2 px-3 py-2 rounded-lg bg-[#F0E9DE] border border-[#8A857C]/10">
+                      <p className="text-xs text-[#000000]/80 leading-relaxed whitespace-pre-wrap">{r.message}</p>
                     </div>
 
                     {/* Date */}
-                    <div className="flex items-center gap-1 text-[11px] text-[#8A8378] mt-2">
+                    <div className="flex items-center gap-1 text-[11px] text-[#8A857C] mt-2">
                       <Clock className="w-3 h-3" />
                       {new Date(r.createdAt).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </div>
@@ -132,7 +132,7 @@ export default async function AdminContactRequestsPage() {
                 {/* ⭐ V3.32 — Actions en pied de carte : le message garde
                     toute la largeur, les boutons s'alignent à droite sur une
                     ligne dédiée (plus de colonne qui écrase le texte). */}
-                <div className="mt-2 pt-2 border-t border-[#8A8378]/10 flex items-center justify-end gap-1 flex-wrap">
+                <div className="mt-2 pt-2 border-t border-[#8A857C]/10 flex items-center justify-end gap-1 flex-wrap">
                   {r.status !== "ANSWERED" && (
                     <UpdateContactStatusButton id={r.id} status="ANSWERED" icon="check" />
                   )}

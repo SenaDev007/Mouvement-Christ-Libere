@@ -59,7 +59,7 @@ export function ShareButtons({ url, title, className, variant = "light" }: Share
               target="_blank"
               rel="noopener noreferrer"
               title={`Partager sur ${link.name}`}
-              className="group inline-flex items-center justify-center w-11 h-11 rounded-xl border border-[#8A8378]/15 transition-all duration-300 hover:scale-110 hover:shadow-lg bg-white"
+              className="group inline-flex items-center justify-center w-11 h-11 rounded-xl border border-[#8A857C]/15 transition-all duration-300 hover:scale-110 hover:shadow-lg bg-white"
             >
               <Icon size={20} />
               <span className="sr-only">{link.name}</span>
@@ -75,8 +75,8 @@ export function ShareButtons({ url, title, className, variant = "light" }: Share
             copied
               ? "bg-[#5B7052] border-[#5B7052] text-white"
               : isDark
-                ? "bg-[#FAF6EF]/5 border-[#FAF6EF]/15 text-[#FAF6EF]/70 hover:bg-[#C9A227] hover:border-[#C9A227] hover:text-[#1E0F2B]"
-                : "bg-[#2A0E3D]/5 border-[#2A0E3D]/15 text-[#2A0E3D] hover:bg-[#C9A227] hover:border-[#C9A227] hover:text-[#1E0F2B]"
+                ? "bg-[#F0E9DE]/5 border-[#F0E9DE]/15 text-[#F0E9DE]/70 hover:bg-[#FF7A1A] hover:border-[#FF7A1A] hover:text-[#000000]"
+                : "bg-[#000000]/5 border-[#000000]/15 text-[#000000] hover:bg-[#FF7A1A] hover:border-[#FF7A1A] hover:text-[#000000]"
           )}
         >
           {copied ? (

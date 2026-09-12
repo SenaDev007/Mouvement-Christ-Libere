@@ -46,7 +46,7 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto bg-[#2A0E3D] text-[#FAF6EF] border-t border-[#C9A227]/20">
+    <footer className="mt-auto bg-[#000000] text-[#F0E9DE] border-t border-[#C9A227]/20">
       {/* Filet or supérieur */}
       <div className="h-[3px] bg-[#C9A227]" />
 
@@ -64,10 +64,10 @@ export function SiteFooter() {
               />
               <span className="font-serif text-2xl font-semibold whitespace-nowrap">
                 <span style={{ color: "#C9A227" }}>Christ</span>
-                <span className="ml-0.5 text-[#FAF6EF]">Libère</span>
+                <span className="ml-0.5 text-[#F0E9DE]">Libère</span>
               </span>
             </div>
-            <p className="text-sm text-[#FAF6EF]/70 leading-relaxed mb-4">
+            <p className="text-sm text-[#F0E9DE]/70 leading-relaxed mb-4">
               Témoignages, enseignements et vie de communauté au service du
               rassemblement.
             </p>
@@ -87,7 +87,7 @@ export function SiteFooter() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-[#FAF6EF]/75 hover:text-[#C9A227] transition-colors"
+                      className="text-sm text-[#F0E9DE]/75 hover:text-[#FF7A1A] transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -99,8 +99,8 @@ export function SiteFooter() {
         </div>
 
         {/* Mention légale */}
-        <div className="mt-10 pt-6 border-t border-[#2A0E3D]-light/40">
-          <p className="text-xs text-[#FAF6EF]/55 text-center">
+        <div className="mt-10 pt-6 border-t border-[#000000]-light/40">
+          <p className="text-xs text-[#F0E9DE]/55 text-center">
             © {year} — Tous les contenus appartiennent à leurs auteurs. Usage
             personnel et non commercial.
           </p>

@@ -88,18 +88,19 @@ export function CinematicHero({
                   transition={{ duration: 0.6 }}
                   className="mb-8"
                 >
+                  {/* V3.68 — badge direct : accent feu (spec : badges « en direct ») */}
                   <Link
                     href="/videos"
-                    className="group inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-state-danger/15 border border-state-danger/40 backdrop-blur-md hover:bg-state-danger/25 transition-all"
+                    className="group inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#FF7A1A]/15 border border-[#FF7A1A]/40 backdrop-blur-md hover:bg-[#FF7A1A]/25 transition-all"
                   >
                     <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-state-danger opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-state-danger" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF7A1A] opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF7A1A]" />
                     </span>
-                    <span className="text-xs uppercase tracking-[0.2em] font-bold text-state-danger">
+                    <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#FF7A1A]">
                       {liveLabel}
                     </span>
-                    <ChevronRight className="w-3.5 h-3.5 text-state-danger transition-transform group-hover:translate-x-1" />
+                    <ChevronRight className="w-3.5 h-3.5 text-[#FF7A1A] transition-transform group-hover:translate-x-1" />
                   </Link>
                 </motion.div>
               )}
@@ -130,7 +131,7 @@ export function CinematicHero({
                 transition={{ duration: 0.9, delay: 0.2 }}
                 className="font-serif text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-semibold leading-[0.95] tracking-tight mb-8"
               >
-                <span className="block text-[#FAF6EF]">{title}</span>
+                <span className="block text-[#F0E9DE]">{title}</span>
               </motion.h1>
 
               {/* Sous-titre */}
@@ -138,7 +139,7 @@ export function CinematicHero({
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.9, delay: 0.4 }}
-                className="text-lg md:text-xl lg:text-2xl text-[#FAF6EF]/70 leading-relaxed max-w-3xl mb-12 font-light"
+                className="text-lg md:text-xl lg:text-2xl text-[#F0E9DE]/70 leading-relaxed max-w-3xl mb-12 font-light"
               >
                 {subtitle}
               </motion.p>
@@ -179,7 +180,7 @@ export function CinematicHero({
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="flex flex-col items-center gap-2"
           >
-            <span className="text-[10px] uppercase tracking-[0.4em] text-[#FAF6EF]/40 font-medium">
+            <span className="text-[10px] uppercase tracking-[0.4em] text-[#F0E9DE]/40 font-medium">
               Défiler
             </span>
             <div className="w-px h-12 bg-gradient-to-b from-[#C9A227]/60 to-transparent" />

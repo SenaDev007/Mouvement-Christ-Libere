@@ -426,7 +426,7 @@ export const VIDEO_FILTERS: {
   { value: "warm", label: "Chaud", icon: "🔥", groupe: "classiques", swatch: "linear-gradient(135deg, #f3c08a, #c05e2a)" },
   { value: "dramatic", label: "Dramatique", icon: "🎭", groupe: "classiques", swatch: "linear-gradient(135deg, #8e8e99, #27272a)" },
   { value: "fade", label: "Fondu", icon: "🌫️", groupe: "classiques", swatch: "linear-gradient(135deg, #e5e0da, #b9b2a7)" },
-  { value: "vivid", label: "Vif", icon: "🌈", groupe: "classiques", swatch: "linear-gradient(135deg, #ff9a8b, #a18cd1)" },
+  { value: "vivid", label: "Vif", icon: "🌈", groupe: "classiques", swatch: "linear-gradient(135deg, #ff9a8b, #DDBE55)" },
   // ⭐ V3.60 — CINÉMA
   { value: "tealorange", label: "Ciné Teal/Orange", icon: "🎬", groupe: "cinema", swatch: "linear-gradient(135deg, #2e8b8b, #e8853d)" },
   { value: "film35", label: "Film 35 mm", icon: "🎞️", groupe: "cinema", swatch: "linear-gradient(135deg, #c9b89a, #6b5b45)" },
@@ -435,10 +435,10 @@ export const VIDEO_FILTERS: {
   { value: "hdr", label: "HDR Punch", icon: "⚡", groupe: "cinema", swatch: "linear-gradient(135deg, #89f7c5, #3c6ef7)" },
   { value: "muted", label: "Cinéma sourd", icon: "🎥", groupe: "cinema", swatch: "linear-gradient(135deg, #9ca3af, #4b5563)" },
   { value: "bluenight", label: "Nuit bleue", icon: "🌃", groupe: "ambiance", swatch: "linear-gradient(135deg, #2c5fa8, #0b1a3a)" },
-  { value: "cyberpunk", label: "Cyberpunk", icon: "🏙️", groupe: "ambiance", swatch: "linear-gradient(135deg, #ff2e97, #3b0fb5)" },
-  { value: "pastel", label: "Pastel doux", icon: "🍬", groupe: "ambiance", swatch: "linear-gradient(135deg, #fbc2eb, #a6c1ee)" },
+  { value: "cyberpunk", label: "Cyberpunk", icon: "🏙️", groupe: "ambiance", swatch: "linear-gradient(135deg, #ff2e97, #A3821C)" },
+  { value: "pastel", label: "Pastel doux", icon: "🍬", groupe: "ambiance", swatch: "linear-gradient(135deg, #F0E9DE, #a6c1ee)" },
   { value: "dreamy", label: "Onirique", icon: "✨", groupe: "ambiance", swatch: "linear-gradient(135deg, #fdf3e7, #d8a7b1)" },
-  { value: "vhs", label: "VHS rétro", icon: "📼", groupe: "ambiance", swatch: "linear-gradient(135deg, #c084fc, #6d28d9)" },
+  { value: "vhs", label: "VHS rétro", icon: "📼", groupe: "ambiance", swatch: "linear-gradient(135deg, #DDBE55, #FF7A1A)" },
   { value: "noirbleu", label: "Acier bleu", icon: "🔵", groupe: "ambiance", swatch: "linear-gradient(135deg, #5b7fa6, #101b2d)" },
 ];
 

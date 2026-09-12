@@ -73,7 +73,7 @@ export default function SecretariatDemandesPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center py-24 text-[#8A8378]">
+        <div className="flex items-center justify-center py-24 text-[#8A857C]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       }
@@ -221,10 +221,10 @@ function DemandesContenu() {
       {/* En-tête */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#000000]">
             Demandes de rencontre
           </h1>
-          <p className="text-sm text-[#8A8378] mt-1">
+          <p className="text-sm text-[#8A857C] mt-1">
             {total} demande{total > 1 ? "s" : ""} — reçues, transmises aux
             serviteurs de Dieu, traitées.
           </p>
@@ -232,7 +232,7 @@ function DemandesContenu() {
         <div className="flex items-center gap-2">
           <button
             onClick={exporterCsv}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#8A8378]/25 text-sm font-medium text-[#1E0F2B] hover:bg-white transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#8A857C]/25 text-sm font-medium text-[#000000] hover:bg-white transition-colors"
             title="Exporter la sélection en CSV (Excel)"
           >
             <Download className="w-4 h-4 text-[#C9A227]" />
@@ -240,7 +240,7 @@ function DemandesContenu() {
           </button>
           <button
             onClick={() => setFormulaireOuvert(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#000000] text-[#F0E9DE] text-sm font-semibold hover:bg-[#161513] transition-colors"
           >
             <Plus className="w-4 h-4" />
             Saisir une demande
@@ -249,7 +249,7 @@ function DemandesContenu() {
       </div>
 
       {/* Filtres */}
-      <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-[#8A857C]/15 p-4 space-y-3">
         <div className="flex flex-wrap gap-2">
           {ONGLET_STATUTS.map((o) => (
             <button
@@ -260,8 +260,8 @@ function DemandesContenu() {
               }}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 statut === o.valeur
-                  ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                  : "bg-[#FAF6EF] text-[#8A8378] hover:bg-[#C9A227]/10 hover:text-[#A3821C]"
+                  ? "bg-[#000000] text-[#F0E9DE]"
+                  : "bg-[#F0E9DE] text-[#8A857C] hover:bg-[#FF7A1A]/10 hover:text-[#A3821C]"
               }`}
             >
               {o.libelle}
@@ -270,7 +270,7 @@ function DemandesContenu() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-48">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]/50" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]/50" />
             <input
               type="search"
               value={recherche}
@@ -279,7 +279,7 @@ function DemandesContenu() {
                 setRecherche(e.target.value);
               }}
               placeholder="Rechercher (nom, objet, contact)…"
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
             />
           </div>
           <select
@@ -288,7 +288,7 @@ function DemandesContenu() {
               setPage(1);
               setServant(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
             aria-label="Filtrer par serviteur"
           >
             <option value="">Tous les serviteurs</option>
@@ -301,7 +301,7 @@ function DemandesContenu() {
               setPage(1);
               setUrgence(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227]"
             aria-label="Filtrer par urgence"
           >
             <option value="">Toutes urgences</option>
@@ -324,13 +324,13 @@ function DemandesContenu() {
 
       {/* Liste */}
       {chargement ? (
-        <div className="flex items-center justify-center py-16 text-[#8A8378]">
+        <div className="flex items-center justify-center py-16 text-[#8A857C]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 px-6 py-14 text-center">
-          <Inbox className="w-8 h-8 text-[#8A8378]/40 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378]">
+        <div className="bg-white rounded-xl border border-[#8A857C]/15 px-6 py-14 text-center">
+          <Inbox className="w-8 h-8 text-[#8A857C]/40 mx-auto mb-3" />
+          <p className="text-sm text-[#8A857C]">
             Aucune demande ne correspond aux filtres.
           </p>
         </div>
@@ -347,17 +347,17 @@ function DemandesContenu() {
             return (
               <div
                 key={demande.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 overflow-hidden"
+                className="bg-white rounded-xl border border-[#8A857C]/15 overflow-hidden"
               >
                 {/* Ligne principale */}
                 <button
                   onClick={() => setDetailOuvert(ouvert ? null : demande.id)}
-                  className="w-full text-left px-4 md:px-5 py-4 hover:bg-[#FAF6EF]/60 transition-colors"
+                  className="w-full text-left px-4 md:px-5 py-4 hover:bg-[#F0E9DE]/60 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="text-sm font-semibold text-[#1E0F2B]">
+                        <span className="text-sm font-semibold text-[#000000]">
                           {demande.requesterName}
                         </span>
                         <span
@@ -376,10 +376,10 @@ function DemandesContenu() {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-[#1E0F2B]/80 font-medium truncate">
+                      <p className="text-sm text-[#000000]/80 font-medium truncate">
                         {demande.subject}
                       </p>
-                      <div className="flex items-center gap-3 mt-1 text-[11px] text-[#8A8378] flex-wrap">
+                      <div className="flex items-center gap-3 mt-1 text-[11px] text-[#8A857C] flex-wrap">
                         <span>→ {serviteur?.libelle ?? demande.servantCode}</span>
                         <span className="inline-flex items-center gap-1">
                           <Clock className="w-3 h-3" />
@@ -391,34 +391,34 @@ function DemandesContenu() {
                           })}
                         </span>
                         {demande.trackingCode && (
-                          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#FAF6EF] text-[#A3821C]">
+                          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#F0E9DE] text-[#A3821C]">
                             {demande.trackingCode}
                           </span>
                         )}
                       </div>
                     </div>
                     <ChevronDown
-                      className={`w-4 h-4 text-[#8A8378] flex-shrink-0 transition-transform ${ouvert ? "rotate-180" : ""}`}
+                      className={`w-4 h-4 text-[#8A857C] flex-shrink-0 transition-transform ${ouvert ? "rotate-180" : ""}`}
                     />
                   </div>
                 </button>
 
                 {/* Détail */}
                 {ouvert && (
-                  <div className="px-4 md:px-5 pb-5 border-t border-[#8A8378]/10 pt-4 space-y-4">
+                  <div className="px-4 md:px-5 pb-5 border-t border-[#8A857C]/10 pt-4 space-y-4">
                     <div className="grid sm:grid-cols-2 gap-3 text-xs">
-                      <div className="flex items-center gap-2 text-[#8A8378]">
+                      <div className="flex items-center gap-2 text-[#8A857C]">
                         <Phone className="w-3.5 h-3.5 text-[#C9A227]" />
                         {demande.contact}
                       </div>
                       {(demande.city || demande.country) && (
-                        <div className="flex items-center gap-2 text-[#8A8378]">
+                        <div className="flex items-center gap-2 text-[#8A857C]">
                           <MapPin className="w-3.5 h-3.5 text-[#C9A227]" />
                           {[demande.city, demande.country].filter(Boolean).join(", ")}
                         </div>
                       )}
                       {demande.trackingCode && (
-                        <div className="flex items-center gap-2 text-[#8A8378]">
+                        <div className="flex items-center gap-2 text-[#8A857C]">
                           <Clock className="w-3.5 h-3.5 text-[#C9A227]" />
                           Code de suivi public :{" "}
                           <span className="font-mono text-[#A3821C] font-semibold">
@@ -428,8 +428,8 @@ function DemandesContenu() {
                       )}
                     </div>
 
-                    <div className="px-4 py-3 rounded-lg bg-[#FAF6EF] border border-[#8A8378]/10">
-                      <p className="text-xs whitespace-pre-wrap leading-relaxed text-[#1E0F2B]/90">
+                    <div className="px-4 py-3 rounded-lg bg-[#F0E9DE] border border-[#8A857C]/10">
+                      <p className="text-xs whitespace-pre-wrap leading-relaxed text-[#000000]/90">
                         {demande.message}
                       </p>
                     </div>
@@ -439,7 +439,7 @@ function DemandesContenu() {
                         <p className="text-[10px] uppercase font-bold text-[#A3821C] mb-1">
                           Note de transmission
                         </p>
-                        <p className="text-xs whitespace-pre-wrap text-[#1E0F2B]/80">
+                        <p className="text-xs whitespace-pre-wrap text-[#000000]/80">
                           {demande.transmissionNote}
                         </p>
                       </div>
@@ -447,7 +447,7 @@ function DemandesContenu() {
 
                     {/* Dates clés */}
                     {(demande.transmittedAt || demande.processedAt) && (
-                      <div className="flex gap-4 text-[11px] text-[#8A8378] flex-wrap">
+                      <div className="flex gap-4 text-[11px] text-[#8A857C] flex-wrap">
                         {demande.transmittedAt && (
                           <span>
                             Transmise le{" "}
@@ -497,7 +497,7 @@ function DemandesContenu() {
                               if (confirm("Archiver cette demande sans la transmettre ?"))
                                 agir(demande, "archiver");
                             }}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#8A8378]/30 text-[#8A8378] text-xs font-semibold hover:bg-[#FAF6EF] transition-colors"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#8A857C]/30 text-[#8A857C] text-xs font-semibold hover:bg-[#F0E9DE] transition-colors"
                           >
                             <Archive className="w-3.5 h-3.5" />
                             Archiver
@@ -509,7 +509,7 @@ function DemandesContenu() {
                           <button
                             onClick={() => agir(demande, "traiter")}
                             disabled={actionEnCours === `traiter:${demande.id}`}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#8C5FA8] text-white text-xs font-semibold hover:bg-[#6B4480] transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#8A857C] text-white text-xs font-semibold hover:bg-[#6B675F] transition-colors disabled:opacity-50"
                           >
                             {actionEnCours === `traiter:${demande.id}` ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -520,7 +520,7 @@ function DemandesContenu() {
                           </button>
                           <button
                             onClick={() => agir(demande, "rouvrir")}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#8A8378]/30 text-[#8A8378] text-xs font-semibold hover:bg-[#FAF6EF] transition-colors"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#8A857C]/30 text-[#8A857C] text-xs font-semibold hover:bg-[#F0E9DE] transition-colors"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
                             Rouvrir
@@ -530,7 +530,7 @@ function DemandesContenu() {
                       {(demande.status === "TRAITEE" || demande.status === "ARCHIVEE") && (
                         <button
                           onClick={() => agir(demande, "rouvrir")}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#8A8378]/30 text-[#8A8378] text-xs font-semibold hover:bg-[#FAF6EF] transition-colors"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#8A857C]/30 text-[#8A857C] text-xs font-semibold hover:bg-[#F0E9DE] transition-colors"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           Rouvrir
@@ -557,21 +557,21 @@ function DemandesContenu() {
 
       {/* ── Modal : transmission avec note ── */}
       {transmettreId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/60">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-bold text-[#1E0F2B]">
+                <h2 className="text-lg font-bold text-[#000000]">
                   Transmettre la demande
                 </h2>
-                <p className="text-xs text-[#8A8378] mt-1">
+                <p className="text-xs text-[#8A857C] mt-1">
                   La demande passe au statut « Transmise » — le serviteur de
                   Dieu concerné la verra à sa connexion.
                 </p>
               </div>
               <button
                 onClick={() => setTransmettreId(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:bg-[#FAF6EF]"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A857C] hover:bg-[#F0E9DE]"
                 aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
@@ -582,12 +582,12 @@ function DemandesContenu() {
               onChange={(e) => setNoteTransmission(e.target.value)}
               rows={4}
               placeholder="Note pour le serviteur (contexte, priorité, éléments de langage…) — facultatif"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] resize-none"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm text-[#000000] focus:outline-none focus:border-[#C9A227] resize-none"
             />
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setTransmettreId(null)}
-                className="px-4 py-2 rounded-lg text-sm text-[#8A8378] hover:text-[#1E0F2B]"
+                className="px-4 py-2 rounded-lg text-sm text-[#8A857C] hover:text-[#000000]"
               >
                 Annuler
               </button>
@@ -611,17 +611,17 @@ function DemandesContenu() {
 
       {/* ── Modal : saisie manuelle ── */}
       {formulaireOuvert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/60 overflow-y-auto">
           <form
             onSubmit={creerDemande}
             className="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 my-8"
           >
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-bold text-[#1E0F2B]">
+                <h2 className="text-lg font-bold text-[#000000]">
                   Saisir une demande reçue
                 </h2>
-                <p className="text-xs text-[#8A8378] mt-1">
+                <p className="text-xs text-[#8A857C] mt-1">
                   Pour les demandes arrivées par téléphone, WhatsApp ou en
                   personne — les demandes du formulaire public arrivent seules.
                 </p>
@@ -629,7 +629,7 @@ function DemandesContenu() {
               <button
                 type="button"
                 onClick={() => setFormulaireOuvert(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:bg-[#FAF6EF]"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A857C] hover:bg-[#F0E9DE]"
                 aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
@@ -638,7 +638,7 @@ function DemandesContenu() {
 
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                <label className="block text-xs font-semibold text-[#000000] mb-1">
                   Nom du demandeur *
                 </label>
                 <input
@@ -646,11 +646,11 @@ function DemandesContenu() {
                   required
                   value={form.requesterName}
                   onChange={(e) => setForm({ ...form, requesterName: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                <label className="block text-xs font-semibold text-[#000000] mb-1">
                   Contact (téléphone / WhatsApp / email) *
                 </label>
                 <input
@@ -658,30 +658,30 @@ function DemandesContenu() {
                   required
                   value={form.contact}
                   onChange={(e) => setForm({ ...form, contact: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                <label className="block text-xs font-semibold text-[#000000] mb-1">
                   Serviteur demandé *
                 </label>
                 <select
                   value={form.servantCode}
                   onChange={(e) => setForm({ ...form, servantCode: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm"
                 >
                   <option value="pam">Sœur Pam</option>
                   <option value="kongo">Pasteur Kongo</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                <label className="block text-xs font-semibold text-[#000000] mb-1">
                   Urgence
                 </label>
                 <select
                   value={form.urgency}
                   onChange={(e) => setForm({ ...form, urgency: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm"
                 >
                   {Object.entries(DEMANDE_URGENCES).map(([v, u]) => (
                     <option key={v} value={v}>
@@ -691,31 +691,31 @@ function DemandesContenu() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                <label className="block text-xs font-semibold text-[#000000] mb-1">
                   Pays
                 </label>
                 <input
                   type="text"
                   value={form.country}
                   onChange={(e) => setForm({ ...form, country: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+                <label className="block text-xs font-semibold text-[#000000] mb-1">
                   Ville
                 </label>
                 <input
                   type="text"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+              <label className="block text-xs font-semibold text-[#000000] mb-1">
                 Objet *
               </label>
               <input
@@ -723,11 +723,11 @@ function DemandesContenu() {
                 required
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1">
+              <label className="block text-xs font-semibold text-[#000000] mb-1">
                 Message *
               </label>
               <textarea
@@ -735,7 +735,7 @@ function DemandesContenu() {
                 rows={5}
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm resize-none"
+                className="w-full px-3 py-2 rounded-lg border border-[#8A857C]/25 bg-[#F0E9DE] text-sm resize-none"
               />
             </div>
 
@@ -747,14 +747,14 @@ function DemandesContenu() {
               <button
                 type="button"
                 onClick={() => setFormulaireOuvert(false)}
-                className="px-4 py-2 rounded-lg text-sm text-[#8A8378] hover:text-[#1E0F2B]"
+                className="px-4 py-2 rounded-lg text-sm text-[#8A857C] hover:text-[#000000]"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={creationEnCours}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#000000] text-[#F0E9DE] text-sm font-semibold hover:bg-[#161513] transition-colors disabled:opacity-50"
               >
                 {creationEnCours && <Loader2 className="w-4 h-4 animate-spin" />}
                 Enregistrer

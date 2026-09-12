@@ -47,7 +47,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-[#1A0826]">
+    <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-[#000000]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -69,7 +69,7 @@ export default function LoginPage() {
             style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
           >
             <span style={{ color: "#C9A227" }}>Christ</span>
-            <span style={{ color: "#FAF6EF" }}>&nbsp;&nbsp;Libère</span>
+            <span style={{ color: "#F0E9DE" }}>&nbsp;&nbsp;Libère</span>
           </h1>
           <p className="text-xs uppercase tracking-[0.25em] font-bold text-[#C9A227]">
             Espace membre
@@ -87,11 +87,11 @@ export default function LoginPage() {
 
           {/* Pseudonyme / email */}
           <div>
-            <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-[#000000] uppercase tracking-wider mb-2">
               Pseudonyme ou email
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
               <input
                 type="text"
                 value={pseudonyme}
@@ -101,18 +101,18 @@ export default function LoginPage() {
                 disabled={loading}
                 placeholder="Votre pseudonyme ou email"
                 autoComplete="username"
-                className="w-full pl-10 pr-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
+                className="w-full pl-10 pr-4 py-3 bg-[#F0E9DE] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
               />
             </div>
           </div>
 
           {/* Mot de passe */}
           <div>
-            <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-[#000000] uppercase tracking-wider mb-2">
               Mot de passe
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A857C]" />
               <input
                 type="password"
                 value={password}
@@ -121,7 +121,7 @@ export default function LoginPage() {
                 disabled={loading}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className="w-full pl-10 pr-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
+                className="w-full pl-10 pr-4 py-3 bg-[#F0E9DE] border border-stone-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
               />
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || !pseudonyme || !password}
-            className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-md hover:bg-[#DDBE55] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-[#C9A227] text-[#000000] font-semibold text-sm rounded-md hover:bg-[#FF7A1A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -143,7 +143,7 @@ export default function LoginPage() {
         </form>
 
         {/* Inscription */}
-        <p className="text-center text-sm text-[#FAF6EF]/70 mt-6">
+        <p className="text-center text-sm text-[#F0E9DE]/70 mt-6">
           Pas encore de compte ?{" "}
           <Link href="/register" className="text-[#C9A227] font-semibold hover:underline">
             Créer un compte
@@ -151,8 +151,8 @@ export default function LoginPage() {
         </p>
 
         {/* Retour à l'accueil */}
-        <p className="text-center text-xs text-[#FAF6EF]/60 mt-4">
-          <Link href="/" className="hover:text-[#C9A227] transition-colors">
+        <p className="text-center text-xs text-[#F0E9DE]/60 mt-4">
+          <Link href="/" className="hover:text-[#FF7A1A] transition-colors">
             ← Retour à l&apos;accueil
           </Link>
         </p>

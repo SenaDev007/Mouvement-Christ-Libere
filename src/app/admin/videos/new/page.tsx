@@ -67,10 +67,10 @@ export default async function NewVideoPage({
       {/* ⭐ V3.47 — Upload direct de fichier : disponible dans le modal
           « Nouvelle vidéo » de la page Vidéos (barre de progression,
           miniature et durée auto-détectées). */}
-      <div className="rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10 px-4 py-3 text-sm text-[#1E0F2B]/80">
+      <div className="rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10 px-4 py-3 text-sm text-[#000000]/80">
         <strong className="font-bold">Pour envoyer directement un fichier vidéo</strong> (sans
         passer par YouTube), utilisez le bouton «&nbsp;Nouvelle vidéo&nbsp;» de la page{" "}
-        <a href="/admin/videos" className="font-bold underline hover:text-[#C9A227]">
+        <a href="/admin/videos" className="font-bold underline hover:text-[#FF7A1A]">
           Vidéos
         </a>{" "}
         puis l&apos;onglet «&nbsp;Fichier vidéo&nbsp;» — l&apos;envoi, la miniature et la durée

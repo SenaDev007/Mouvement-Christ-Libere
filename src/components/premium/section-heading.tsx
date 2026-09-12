@@ -48,7 +48,7 @@ export function PremiumSectionHeading({
         transition={{ duration: 0.6, delay: 0.1 }}
         className={cn(
           "font-serif font-semibold leading-[1.1] tracking-tight text-3xl md:text-4xl lg:text-5xl",
-          light ? "text-[#FAF6EF]" : "text-[#1E0F2B]"
+          light ? "text-[#F0E9DE]" : "text-[#000000]"
         )}
       >
         {title}
@@ -63,7 +63,7 @@ export function PremiumSectionHeading({
           className={cn(
             "mt-5 text-base md:text-lg leading-relaxed max-w-2xl font-light",
             center && "mx-auto",
-            light ? "text-[#FAF6EF]/75" : "text-[#8A8378]"
+            light ? "text-[#F0E9DE]/75" : "text-[#8A857C]"
           )}
         >
           {subtitle}

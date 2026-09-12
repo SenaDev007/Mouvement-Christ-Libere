@@ -75,9 +75,9 @@ export function CTAButton({
       className={cn(
         "inline-flex items-center gap-1.5 px-5 py-2.5 rounded text-sm font-semibold transition-all group",
         variant === "primary"
-          ? "bg-gold text-ink hover:bg-gold-light"
+          ? "bg-gold text-ink hover:bg-[#FF7A1A]"
           : light
-            ? "border border-gold/60 text-gold hover:bg-gold/10"
+            ? "border border-gold/60 text-gold hover:bg-fire/10"
             : "border border-imperial/40 text-imperial hover:bg-imperial/5",
         className
       )}

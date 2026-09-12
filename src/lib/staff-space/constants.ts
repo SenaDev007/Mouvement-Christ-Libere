@@ -30,15 +30,15 @@ export const DEMANDE_STATUTS = {
     valeur: "TRAITEE",
     libelle: "Traitée",
     description: "Réponse formulée / rendez-vous donné",
-    couleur: "bg-[#8C5FA8]/15 text-[#6B4480] border-[#8C5FA8]/30",
-    point: "#8C5FA8",
+    couleur: "bg-[#8A857C]/15 text-[#6B675F] border-[#8A857C]/30",
+    point: "#8A857C",
   },
   ARCHIVEE: {
     valeur: "ARCHIVEE",
     libelle: "Archivée",
     description: "Sortie du registre actif (doublon, indésirable…)",
-    couleur: "bg-[#8A8378]/15 text-[#6B6459] border-[#8A8378]/30",
-    point: "#8A8378",
+    couleur: "bg-[#8A857C]/15 text-[#6B6459] border-[#8A857C]/30",
+    point: "#8A857C",
   },
 } as const;
 
@@ -47,7 +47,7 @@ export const DEMANDE_STATUT_VALEURS = Object.keys(DEMANDE_STATUTS);
 
 /** Niveaux d'urgence d'une demande. */
 export const DEMANDE_URGENCES = {
-  normale: { libelle: "Normale", couleur: "text-[#8A8378]" },
+  normale: { libelle: "Normale", couleur: "text-[#8A857C]" },
   elevee: { libelle: "Élevée", couleur: "text-[#A3821C]" },
   urgente: { libelle: "Urgente", couleur: "text-[#B3452E]" },
 } as const;
@@ -75,7 +75,7 @@ export const SERVITEUR_CODES = Object.keys(SERVITEURS_RENDEZ_VOUS);
 /** Catégories des annonces officielles du ministère. */
 export const ANNONCE_CATEGORIES = {
   generale: { libelle: "Générale", icone: "Megaphone", couleur: "#C9A227" },
-  live: { libelle: "Live / Direct", icone: "Radio", couleur: "#8C5FA8" },
+  live: { libelle: "Live / Direct", icone: "Radio", couleur: "#8A857C" },
   evenement: { libelle: "Événement", icone: "Calendar", couleur: "#5B7052" },
   urgence: { libelle: "Urgente", icone: "AlertTriangle", couleur: "#B3452E" },
 } as const;
@@ -93,7 +93,7 @@ export const MOUVEMENT_TYPES = {
   DEPENSE: { valeur: "DEPENSE", libelle: "Dépense", couleur: "#B3452E" },
   // ⭐ V3.67 — Transfert INTERNE entre deux caisses (aucun effet sur le
   // total consolidé par devise : sortie d'une caisse = entrée dans l'autre).
-  TRANSFERT: { valeur: "TRANSFERT", libelle: "Transfert", couleur: "#8C5FA8" },
+  TRANSFERT: { valeur: "TRANSFERT", libelle: "Transfert", couleur: "#8A857C" },
 } as const;
 
 export type MouvementType = keyof typeof MOUVEMENT_TYPES;
@@ -162,7 +162,7 @@ export const CAISSE_TYPES = {
   banque: {
     libelle: "Compte bancaire",
     description: "Compte de dépôt en banque ou microfinance",
-    couleur: "#8C5FA8",
+    couleur: "#8A857C",
   },
   mobile_money: {
     libelle: "Mobile money",
@@ -172,7 +172,7 @@ export const CAISSE_TYPES = {
   autre: {
     libelle: "Autre",
     description: "Autre encaissement (carte, crypto, tiers…)",
-    couleur: "#8A8378",
+    couleur: "#8A857C",
   },
 } as const;
 
