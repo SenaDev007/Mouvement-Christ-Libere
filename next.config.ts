@@ -45,6 +45,20 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
+  // ⭐ V3.74 — Page /contact RETIRÉE (module « Demandes de contact »
+  // supprimé du back-office) : redirection HTTP 307 vers la demande de
+  // rendez-vous, porte d'entrée du secrétariat. Gérée AU NIVEAU DU
+  // SERVEUR (avant le rendu) — plus propre que le meta-refresh RSC.
+  async redirects() {
+    return [
+      {
+        source: "/contact",
+        destination: "/rendez-vous",
+        permanent: false,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
