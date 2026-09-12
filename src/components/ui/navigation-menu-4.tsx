@@ -89,6 +89,11 @@ const navigationLinks = [
       { href: "/disperses", label: "Dispersés d'Israël" },
       { href: "/contribuer", label: "Contribuer (Don/Dîme)" },
       { href: "/contact", label: "Contact" },
+      // ⭐ V3.67 — Voix publique du secrétariat : annonces officielles du
+      // ministère (page publique /annonces) + demande de rencontre avec un
+      // serviteur de Dieu (/rendez-vous — porte d'entrée du secrétariat).
+      { href: "/annonces", label: "Annonces du ministère" },
+      { href: "/rendez-vous", label: "Demander un rendez-vous" },
     ],
   },
 ];
@@ -269,7 +274,7 @@ export function ContextualNav() {
                         </>
                       ) : (
                         <NavigationMenuLink
-                          href={link.href}
+                          href={(link as { href?: string }).href}
                           className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
                           onClick={() => setMobileOpen(false)}
                         >
@@ -460,7 +465,7 @@ export function ContextualNav() {
               ) : (
                 <Link
                   key={link.label}
-                  href={link.href!}
+                  href={(link as { href?: string }).href!}
                   className="px-2 py-1.5 rounded-md text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors whitespace-nowrap"
                 >
                   <IsololeText>{link.label}</IsololeText>

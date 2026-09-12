@@ -177,8 +177,11 @@ verifie("CTA passe DEVANT les CTA paramétrables", landing.indexOf('href="/rende
 const css = lit("src/app/globals.css");
 verifie("keyframes ctaPulseRing + prefers-reduced-motion", /ctaPulseRing/.test(css) && /prefers-reduced-motion/.test(css));
 const header = lit("src/components/site/site-header.tsx");
+const navReelle = lit("src/components/ui/navigation-menu-4.tsx");
 verifie("CTA Rendez-vous dans le header", /rendez-vous/.test(header));
 verifie("lien Annonces (nav publique)", /\/annonces/.test(header));
+verifie("nav RÉELLE (ContextualNav) : Annonces du ministère", /Annonces du ministère/.test(navReelle));
+verifie("nav RÉELLE : Demander un rendez-vous", /Demander un rendez-vous/.test(navReelle));
 const footer = lit("src/components/site/site-footer.tsx");
 verifie("liens footer (annonces, rendez-vous, suivi)", /\/annonces/.test(footer) && /\/rendez-vous\/suivi/.test(footer));
 verifie("page publique /annonces", existe("src/app/annonces/page.tsx"));

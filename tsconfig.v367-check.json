@@ -18,6 +18,7 @@
     "src/app/rendez-vous/**/*.tsx",
     "src/app/annonces/**/*.tsx",
     "src/components/staff-space/**/*.tsx",
+    "src/components/ui/navigation-menu-4.tsx",
     "src/components/site/site-header.tsx",
     "src/components/site/site-footer.tsx",
     "src/components/site/landing-view.tsx",
