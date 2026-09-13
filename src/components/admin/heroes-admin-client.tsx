@@ -12,7 +12,7 @@
  *   - l'accroche dorée (kicker), le titre, la partie dorée du titre,
  *     le sous-titre ;
  *   - les boutons (libellé + lien) ;
- *   - les champs spécifiques : photos de Pam et du Pasteur Kongo sur
+ *   - les champs spécifiques : photos d'Afrika et du Pasteur Kongo sur
  *     la landing, photo + biographie markdown complète des serviteurs,
  *     badges, libellés des cartes…
  *
@@ -483,7 +483,7 @@ export function HeroesAdminClient() {
         </h1>
         <p className="text-sm text-[#8A8378] mt-1 max-w-2xl leading-relaxed">
           Modifiez la photo d&apos;arrière-plan, les titres et les textes de la
-          grande bannière de chaque page — ainsi que les photos de Pam et du
+          grande bannière de chaque page — ainsi que les photos d'Afrika et du
           Pasteur Kongo et les biographies. Les changements sont visibles
           immédiatement sur le site public.
         </p>

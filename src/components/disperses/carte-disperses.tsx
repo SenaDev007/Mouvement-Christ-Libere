@@ -61,7 +61,7 @@ function getDrapeau(pays: string): string {
  * Les particules élidées (d', l'…) ne comptent pas : on prend la première
  * lettre SIGNIFICATIVE (Sarah d'Abidjan → SA).
  * Exemples : « AKPOVI Sènakpon » → « AS », « Pasteur Kongo » → « PK »,
- * « Pam » → « P », « Élisée de Cotonou » → « ÉC ».
+ * « Afrika » → « P », « Élisée de Cotonou » → « ÉC ».
  */
 function initialeMot(mot: string): string {
   // Particule élidée (d'Abidjan, l'Église…) : initiale de la partie

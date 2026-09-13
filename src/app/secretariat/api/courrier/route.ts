@@ -21,11 +21,11 @@ import {
  *   GET  /secretariat/api/courrier — destinataires + historique des
  *        courriers envoyés + paramétrage des emails (⭐ V3.74).
  *   POST /secretariat/api/courrier
- *        · { action: "parametrer", emailKongo?, emailPam? } — ⭐ V3.74 :
+ *        · { action: "parametrer", emailKongo?, emailAfrika? } — ⭐ V3.74 :
  *          enregistre les VRAIES adresses des serviteurs (StaffSetting) —
  *          prioritaire sur les env vars et les comptes ;
  *        · { toUserId, sujet, message } — envoie un courriel au destinataire
- *          (id « serviteur:kongo » / « serviteur:pam » / « user:<id> ») avec
+ *          (id « serviteur:kongo » / « serviteur:afrika » / « user:<id> ») avec
  *          Reply-To = email de la secrétaire ;
  *        · { action: "test" } — email de test à sa propre adresse.
  *
@@ -48,9 +48,9 @@ export async function GET(request: NextRequest) {
 
     // ⭐ V3.74 — paramétrage actuel des emails serviteurs (bouton
     // « Paramétrage ») + source effective de chaque adresse.
-    const [paramKongo, paramPam] = await Promise.all([
+    const [paramKongo, paramAfrika] = await Promise.all([
       lireEmailParametre("kongo"),
-      lireEmailParametre("pam"),
+      lireEmailParametre("afrika"),
     ]);
 
     const historique = await db.outgoingEmail.findMany({
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       destinataires,
       historique,
-      parametres: { emailKongo: paramKongo, emailPam: paramPam },
+      parametres: { emailKongo: paramKongo, emailAfrika: paramAfrika },
     });
   } catch (error) {
     console.error("[secretariat/api/courrier] GET error:", error);
@@ -92,14 +92,14 @@ export async function POST(request: NextRequest) {
     await ensureEmailTables();
 
     const body = await request.json().catch(() => ({}));
-    const { toUserId, sujet, message, action, emailKongo, emailPam } =
+    const { toUserId, sujet, message, action, emailKongo, emailAfrika } =
       body as {
         toUserId?: string;
         sujet?: string;
         message?: string;
         action?: string;
         emailKongo?: string;
-        emailPam?: string;
+        emailAfrika?: string;
       };
 
     // L'expéditrice (secrétaire connectée) — son email sert de Reply-To.
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
 
       for (const [code, brute] of [
         ["kongo", emailKongo],
-        ["pam", emailPam],
+        ["afrika", emailAfrika],
       ] as const) {
         if (brute === undefined) continue; // champ non modifié
         const nettoyee = brute.trim();
@@ -156,9 +156,9 @@ export async function POST(request: NextRequest) {
           // env/compte par défaut).
           try {
             await db.staffSetting.delete({
-              where: { key: code === "kongo" ? "email_kongo" : "email_pam" },
+              where: { key: code === "kongo" ? "email_kongo" : "email_afrika" },
             });
-            propres.push(code === "kongo" ? "Pasteur Kongo : paramétrage effacé" : "Sœur Pam : paramétrage effacé");
+            propres.push(code === "kongo" ? "Pasteur Kongo : paramétrage effacé" : "Sœur Afrika : paramétrage effacé");
           } catch {
             // clé absente — rien à effacer.
           }
@@ -167,20 +167,20 @@ export async function POST(request: NextRequest) {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nettoyee)) {
           return NextResponse.json(
             {
-              error: `Adresse invalide pour ${code === "kongo" ? "Pasteur Kongo" : "Sœur Pam"} : ${nettoyee}`,
+              error: `Adresse invalide pour ${code === "kongo" ? "Pasteur Kongo" : "Sœur Afrika"} : ${nettoyee}`,
             },
             { status: 400 }
           );
         }
         await enregistrerEmailParametre(code, nettoyee.toLowerCase());
         propres.push(
-          `${code === "kongo" ? "Pasteur Kongo" : "Sœur Pam"} : ${nettoyee}`
+          `${code === "kongo" ? "Pasteur Kongo" : "Sœur Afrika"} : ${nettoyee}`
         );
       }
 
       if (propres.length === 0) {
         return NextResponse.json(
-          { error: "Aucune adresse fournie (emailKongo / emailPam)." },
+          { error: "Aucune adresse fournie (emailKongo / emailAfrika)." },
           { status: 400 }
         );
       }
@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
         message: `Paramétrage enregistré — ${propres.join(" · ")}. Les prochains courriers partiront à ces adresses.`,
         parametres: {
           emailKongo: await lireEmailParametre("kongo"),
-          emailPam: await lireEmailParametre("pam"),
+          emailAfrika: await lireEmailParametre("afrika"),
         },
       });
     }
@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * ⭐ V3.74 — Résolution d'un destinataire de courrier depuis son
- * identifiant de liste : « serviteur:kongo » / « serviteur:pam » (adresse
+ * identifiant de liste : « serviteur:kongo » / « serviteur:afrika » (adresse
  * résolue : paramétrage → env → compte) ou « user:<id> » (compte
  * SUPER_ADMIN — délégués éventuels).
  */
@@ -310,10 +310,12 @@ async function resoudreDestinataireCourrier(
 ): Promise<{ id: string; name: string | null; email: string } | null> {
   if (identifiant.startsWith("serviteur:")) {
     const code = identifiant.slice("serviteur:".length).toLowerCase();
-    if (code !== "kongo" && code !== "pam") return null;
+    // ⭐ V3.76 — alias historique « pam » accepté → normalisé « afrika ».
+    const codeNormalise = code === "pam" ? "afrika" : code;
+    if (codeNormalise !== "kongo" && codeNormalise !== "afrika") return null;
     const resolu = await (
       await import("@/lib/email")
-    ).resoudreEmailServiteur(code);
+    ).resoudreEmailServiteur(codeNormalise);
     return { id: identifiant, name: resolu.nom, email: resolu.email };
   }
 

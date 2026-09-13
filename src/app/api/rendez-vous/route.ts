@@ -8,7 +8,7 @@ import { genererCodeSuiviUnique } from "@/lib/staff-space/multicaisse";
  * ⭐ V3.66 — POST /api/rendez-vous (PUBLIC — sans authentification).
  *
  * Entrée publique du secrétariat : « quand quelqu'un veut rencontrer le
- * pasteur Congo ou la sœur Pam, c'est par le secrétaire ». La demande
+ * pasteur Congo ou la sœur Afrika, c'est par le secrétaire ». La demande
  * atterrit directement dans le registre du secrétariat
  * (secretariat.mouvementchristlibere.com → Demandes) au statut RECUE.
  *
@@ -118,7 +118,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!servantCode || !SERVITEUR_CODES.includes(servantCode)) {
+    // ⭐ V3.76 — alias historique « pam » (page publique en cache) → « afrika ».
+    const codeServiteurFinal =
+      servantCode === "pam" ? "afrika" : servantCode;
+    if (!codeServiteurFinal || !SERVITEUR_CODES.includes(codeServiteurFinal)) {
       return NextResponse.json(
         { error: "Serviteur de Dieu demandé invalide." },
         { status: 400 }
@@ -139,7 +142,7 @@ export async function POST(request: NextRequest) {
       data: {
         requesterName: requesterName.trim(),
         contact: contact.trim(),
-        servantCode,
+        servantCode: codeServiteurFinal,
         subject: subject.trim().substring(0, 200),
         message: message.trim(),
         urgency: urgenceFinale,

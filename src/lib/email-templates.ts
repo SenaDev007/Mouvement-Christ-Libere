@@ -161,7 +161,7 @@ Ce code est valable ${minutes} minutes et ne peut être utilisé qu'une seule fo
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// ② Courrier du secrétariat au serviteur (Pasteur Kongo / Sœur Pam)
+// ② Courrier du secrétariat au serviteur (Pasteur Kongo / Sœur Afrika)
 // ═══════════════════════════════════════════════════════════════════════
 
 export interface OptionsCourrier {

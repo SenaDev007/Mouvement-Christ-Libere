@@ -82,8 +82,8 @@ export default async function AdminTestimoniesPage() {
           {testimonies.map((t) => {
             const status = STATUS_CONFIG[t.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.TO_DISCERN;
             const StatusIcon = status.icon;
-            const isPam = t.servant.code === "pam";
-            const accentColor = isPam ? "#C9A227" : "#8C5FA8";
+            const isAfrika = t.servant.code === "afrika";
+            const accentColor = isAfrika ? "#C9A227" : "#8C5FA8";
 
             return (
               <div

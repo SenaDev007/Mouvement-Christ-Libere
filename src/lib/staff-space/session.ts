@@ -12,7 +12,7 @@
  *
  * Les rôles autorisés diffèrent de /admin/api/login : la secrétaire
  * n'accède qu'au secrétariat, le trésorier qu'à la trésorerie — et les
- * deux super admins (Pam, Pasteur Kongo) accèdent à tout (directive :
+ * deux super admins (Afrika, Pasteur Kongo) accèdent à tout (directive :
  * « les deux pasteurs ont le contrôle sur le secrétariat… ils ont accès »).
  */
 
@@ -51,14 +51,14 @@ export interface SessionStaff {
 }
 
 /**
- * ⭐ V3.74 — Résout le code serviteur (« kongo » | « pam » | null) d'un
+ * ⭐ V3.74 — Résout le code serviteur (« kongo » | « afrika » | null) d'un
  * compte User, depuis son nom (le module de réception /admin/demandes
- * montre au pasteur Congo SES demandes, à la sœur Pam les siennes).
+ * montre au pasteur Congo SES demandes, à la sœur Afrika les siennes).
  * Best-effort : compte introuvable → null (vue complète en secours).
  */
 export async function resoudreCodeServiteur(
   userId: string
-): Promise<"kongo" | "pam" | null> {
+): Promise<"kongo" | "afrika" | null> {
   try {
     const { db } = await import("@/lib/db");
     const utilisateur = await db.user.findUnique({
@@ -67,8 +67,16 @@ export async function resoudreCodeServiteur(
     });
     const nom = (utilisateur?.name || "").toLowerCase();
     if (nom.includes("kongo")) return "kongo";
-    if (nom === "pam" || nom.startsWith("pam") || nom.includes("pam"))
-      return "pam";
+    if (
+      nom === "afrika" ||
+      nom.startsWith("afrika") ||
+      nom.includes("afrika") ||
+      // ⭐ V3.76 — filet historique : compte encore nommé « Pam »
+      // (pré-migration de la base) → serviteur Afrika.
+      nom === "pam" ||
+      nom.startsWith("pam")
+    )
+      return "afrika";
     return null;
   } catch {
     return null;

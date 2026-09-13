@@ -10,7 +10,7 @@ import { createHmac, timingSafeEqual } from "crypto";
  *
  * Le pseudonyme peut être :
  *  - l'email du compte (ex: "pam@christ-libere.org")
- *  - ou le name/pseudonyme choisi à l'inscription (ex: "Pam")
+ *  - ou le name/pseudonyme choisi à l'inscription (ex: "Afrika")
  *
  * Le compte doit être validé par un admin (isVerified = true) pour se connecter.
  */

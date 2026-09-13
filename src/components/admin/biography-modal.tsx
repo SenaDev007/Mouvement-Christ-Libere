@@ -12,14 +12,14 @@
  * Contient, en plus des champs classiques du jalon (date, titre, récit,
  * verset, ordre) :
  *   1. LA PHOTO DU JALON — nouvelle colonne Biography.photoUrl, affichée
- *      sur la frise chronologique de la page publique (/pam, /pasteur-kongo).
+ *      sur la frise chronologique de la page publique (/afrika, /pasteur-kongo).
  *      Upload compressé côté client (ratio préservé, ≤ 150 Ko —
  *      compressHeroImage, HEIC/EXIF robustes).
  *   2. LA PHOTO DE BIOGRAPHIE DE LA PAGE PUBLIQUE — le grand portrait
  *      affiché à côté du texte biographique (HeroSection.dataJson.bioPhoto,
  *      configurable jusqu'ici uniquement via /admin/heroes). Le pasteur
  *      peut désormais la changer DIRECTEMENT depuis le modal biographique
- *      du serviteur concerné (Pam → page « pam », Pasteur Kongo → page
+ *      du serviteur concerné (Afrika → page « afrika », Pasteur Kongo → page
  *      « pasteur-kongo ») : la modification est enregistrée en même temps
  *      que le jalon (une seule action « Enregistrer »).
  */
@@ -59,7 +59,7 @@ interface HeroRowLite {
 
 /** Page hero (sections paramétrables) correspondant au code serviteur. */
 function heroPageForCode(code: string): string | null {
-  if (code === "pam") return "pam";
+  if (code === "afrika") return "afrika";
   if (code === "kongo") return "pasteur-kongo";
   return null;
 }
@@ -420,8 +420,8 @@ export function BiographyModal({
               </p>
             </div>
             <p className="text-[11px] text-[#8A8378] mb-3 leading-relaxed">
-              {selectedServant?.code === "pam"
-                ? "Grand portrait affiché à côté du texte biographique sur /pam — commun à toute la frise de Pam."
+              {selectedServant?.code === "afrika"
+                ? "Grand portrait affiché à côté du texte biographique sur /afrika — commun à toute la frise d'Afrika."
                 : "Grand portrait affiché à côté du texte biographique sur /pasteur-kongo — commun à toute la frise du Pasteur Kongo."}
             </p>
             <div className="flex items-center gap-4">
@@ -498,7 +498,7 @@ export function BiographyModal({
         {heroRows !== null && !heroPage && form.servantId && (
           <p className="text-[11px] text-[#8A8378] italic px-1">
             Ce serviteur n&apos;a pas de page publique dédiée — la photo de biographie
-            publique ne s&apos;applique qu&apos;à Pam et au Pasteur Kongo.
+            publique ne s&apos;applique qu&apos;à Afrika et au Pasteur Kongo.
           </p>
         )}
 

@@ -50,7 +50,7 @@ export interface VideoItem {
 // === BIOGRAPHIES ===
 
 export const BIOGRAPHIES: Record<Exclude<ServantId, "commun">, BiographyMilestone[]> = {
-  pam: [
+  afrika: [
     {
       date: "Enfance",
       title: "Les premières intuitions",
@@ -118,7 +118,7 @@ export const BIOGRAPHIES: Record<Exclude<ServantId, "commun">, BiographyMileston
     },
     {
       date: "La rencontre",
-      title: "La rencontre avec Pam",
+      title: "La rencontre avec Afrika",
       description:
         "La reconnaissance de deux appels complémentaires. Le ministère pastoral et le ministère prophétique qui se rencontrent sans se confondre. Une alliance dans le Seigneur.",
       verseRef: "Amos 3:3",
@@ -128,7 +128,7 @@ export const BIOGRAPHIES: Record<Exclude<ServantId, "commun">, BiographyMileston
       date: "Aujourd'hui",
       title: "Servir dans la continuité",
       description:
-        "Poursuite du ministère pastoral, en harmonie avec le ministère prophétique de Pam. Enseignements, partages, accompagnement des frères et sœurs dans la foi.",
+        "Poursuite du ministère pastoral, en harmonie avec le ministère prophétique d'Afrika. Enseignements, partages, accompagnement des frères et sœurs dans la foi.",
       verseRef: "2 Timothée 4:2",
       verseText:
         "Prêche la parole, insiste en temps et hors de temps, reprends, censure, exhorte.",
@@ -144,7 +144,7 @@ export const TESTIMONIES: Testimony[] = [
     title: "Le ciel ouvert au milieu de la nuit",
     short:
       "Une vision nocturne où le ciel s'est déchiré et où une lumière s'est fait entendre.",
-    servant: "pam",
+    servant: "afrika",
     date: "2025-03-14",
     status: "confirmed",
     themes: ["Vision", "Ciel", " Lumière"],
@@ -156,7 +156,7 @@ export const TESTIMONIES: Testimony[] = [
     title: "Visite au Paradis — troisième ciel",
     short:
       "Un enlèvement où le Seigneur m'a fait visiter un lieu qui correspond à ce que Paul décrit.",
-    servant: "pam",
+    servant: "afrika",
     date: "2025-02-08",
     status: "confirmed",
     themes: ["Enlèvement", "Paradis", "Révélation"],
@@ -168,7 +168,7 @@ export const TESTIMONIES: Testimony[] = [
     title: "Le chofar qui retentit",
     short:
       "Le son du chofar entendu de manière surnaturelle, accompagné d'une instruction claire.",
-    servant: "pam",
+    servant: "afrika",
     date: "2025-04-22",
     status: "confirmed",
     themes: ["Chofar", "Instruction", "Retour"],
@@ -192,7 +192,7 @@ export const TESTIMONIES: Testimony[] = [
     title: "Récit récent d'une visite angélique",
     short:
       "Un récit transmis il y a quelques jours, encore en cours de discernement pastoral.",
-    servant: "pam",
+    servant: "afrika",
     date: "2025-08-15",
     status: "to_discern",
     themes: ["Ange", "Visite", "À discerner"],
@@ -221,7 +221,7 @@ export const TEACHINGS: Teaching[] = [
     title: "Marcher avec Dieu à la manière d'Hénoch",
     excerpt:
       "Étude sur Genèse 5:24 et le témoignage d'Hénoch. Que signifie marcher avec Dieu au quotidien, et comment cela se vit-il concrètement aujourd'hui ?",
-    servant: "pam",
+    servant: "afrika",
     theme: "Marche spirituelle",
     book: "Genèse",
     level: "Intermédiaire",
@@ -245,7 +245,7 @@ export const TEACHINGS: Teaching[] = [
     title: "Le rassemblement des dispersés d'Israël",
     excerpt:
       "Étude des promesses prophétiques sur le rassemblement des fils d'Israël et leur signification pour notre temps.",
-    servant: "pam",
+    servant: "afrika",
     theme: "Prophétie",
     book: "Ésaïe",
     level: "Avancé",
@@ -269,7 +269,7 @@ export const TEACHINGS: Teaching[] = [
     title: "Le chofar dans la Bible et aujourd'hui",
     excerpt:
       "Étude sur la signification du chofar dans l'Écriture, depuis le mont Sinaï jusqu'au retour du Messie.",
-    servant: "pam",
+    servant: "afrika",
     theme: "Symbolique biblique",
     book: "Exode",
     level: "Découverte",
@@ -298,7 +298,7 @@ export const VIDEOS: VideoItem[] = [
     title: "Enseignement sur le retour de Yeshoua",
     description:
       "Étude approfondie des signes des temps et de l'espérance du retour du Maître.",
-    servant: "pam",
+    servant: "afrika",
     duration: "1:24:30",
     thumbnail: "",
     date: "2025-08-18",
@@ -321,7 +321,7 @@ export const VIDEOS: VideoItem[] = [
     title: "Témoignage d'enlèvement au ciel",
     description:
       "Récit détaillé d'une visite au ciel et des instructions reçues.",
-    servant: "pam",
+    servant: "afrika",
     duration: "42:15",
     thumbnail: "",
     date: "2025-08-10",
@@ -354,7 +354,7 @@ export const CHANNELS: Channel[] = [
   {
     id: "c1",
     name: "Annonces officielles",
-    description: "Communications officielles de Pam et du Pasteur Kongo.",
+    description: "Communications officielles d'Afrika et du Pasteur Kongo.",
     type: "annonce",
     members: 0,
     encrypted: false,

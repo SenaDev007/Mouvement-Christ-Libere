@@ -70,7 +70,7 @@ model User {
 }
 
 enum UserRole {
-  SUPER_ADMIN     // PAM, Pasteur Kongo
+  SUPER_ADMIN     // Afrika, Pasteur Kongo
   ADMIN           // Délégués
   MODERATOR       // Bénévoles modération
   ANIMATOR        // Animateurs de canaux
@@ -87,7 +87,7 @@ enum UserRole {
 
 model Servant {
   id          String   @id @default(cuid())
-  code        String   @unique // "pam" | "kongo"
+  code        String   @unique // "afrika" | "kongo"
   fullName    String
   shortName   String
   role        String
@@ -120,7 +120,7 @@ model Biography {
   verseRef    String?
   verseText   String?
   // ⭐ V3.47 — Photo du jalon affichée sur la page publique du serviteur
-  // (frise chronologique /pam et /pasteur-kongo) : uploadée depuis le modal
+  // (frise chronologique /afrika et /pasteur-kongo) : uploadée depuis le modal
   // biographique du back-office (/admin/biographies), compressée côté
   // client (ratio préservé, ≤ 150 Ko — cf. compressHeroImage).
   photoUrl    String?
@@ -221,7 +221,7 @@ model Video {
   publishedAt DateTime?
   // ⭐ V3.46 — Rubrique/catégorie EXPLICITE (null = catégorisation
   // automatique par mots-clés du titre, comportement historique).
-  // Rubriques signatures : « Saint-Esprit réponds-moi » (Pam), « Rhema du
+  // Rubriques signatures : « Saint-Esprit réponds-moi » (Afrika), « Rhema du
   // matin » / « Rhema du soir » (Pasteur Kongo) — définies dans
   // src/lib/video-rubrics.ts. Assignée depuis le back-office (module
   // Vidéos : sélecteur en ligne + formulaires) ou HÉRITÉE du live
@@ -669,7 +669,7 @@ enum CallStatus {
 // --- V3.74 — Paramétrage des espaces (clé/valeur) ---
 
 // Stocke les réglages persistants des espaces Secrétariat/Trésorerie.
-// Clés actuelles : email_kongo / email_pam — adresses réelles de contact
+// Clés actuelles : email_kongo / email_afrika — adresses réelles de contact
 // des serviteurs de Dieu pour les courriers et transmissions de demandes
 // (bouton « Paramétrage » du module Courrier au serviteur).
 model StaffSetting {
@@ -949,7 +949,7 @@ model BibleBookmark {
 // valeurs par défaut du code (src/lib/hero-defaults.ts).
 model HeroSection {
   id              String   @id @default(cuid())
-  page            String   @unique // "landing", "pam", "pasteur-kongo", "temoignages", …
+  page            String   @unique // "landing", "afrika", "pasteur-kongo", "temoignages", …
   kicker          String?  // petit texte doré au-dessus du titre
   title           String?  // titre principal
   titleAccent     String?  // partie dorée/accent du titre
@@ -961,7 +961,7 @@ model HeroSection {
   cta2Label       String?  // bouton secondaire — libellé
   cta2Href        String?  // bouton secondaire — lien
   // Champs spécifiques par page (photo de biographie, badges, texte
-  // markdown complet, photos Pam/Kongo de la landing…) — JSON libre :
+  // markdown complet, photos Afrika/Kongo de la landing…) — JSON libre :
   // { bioText, bioPhoto, badge1, badge2, … }
   dataJson        String?  @db.Text
   createdAt       DateTime @default(now())
@@ -973,7 +973,7 @@ model HeroSection {
 // ============================================================
 // Deux espaces indépendants — secretariat.mouvementchristlibere.com et
 // tresorerie.mouvementchristlibere.com — sous l'autorité des deux super
-// admins (Pam, Pasteur Kongo) qui accréditent leurs titulaires depuis
+// admins (Afrika, Pasteur Kongo) qui accréditent leurs titulaires depuis
 // le back-office (/admin/staff). Même schéma de session signée que le
 // back-office (cookie « admin_session » — host-scoped : chaque
 // sous-domaine possède SA session), mêmes tables PostgreSQL auto-créées
@@ -984,7 +984,7 @@ model HeroSection {
 // Parcours : un croyant dépose sa demande sur la page publique /rendez-vous
 // (ou par tout autre canal retranscrit par la secrétaire) → statut RECUE.
 // La secrétaire l'étudie puis la TRANSMET au serviteur concerné (pasteur
-// Kongo ou sœur Pam) avec une note éventuelle. Le serviteur (ou la
+// Kongo ou sœur Afrika) avec une note éventuelle. Le serviteur (ou la
 // secrétaire sur instruction) marque la demande TRAITEE une fois le
 // rendez-vous donné / la réponse formulée. ARCHIVEE = sortie du registre
 // actif sans être traitée (doublon, indésirable…).
@@ -992,7 +992,7 @@ model MeetingRequest {
   id                String    @id @default(cuid())
   requesterName     String    // nom complet du demandeur
   contact           String    // téléphone / WhatsApp / email du demandeur
-  servantCode       String    // "pam" | "kongo" — serviteur demandé
+  servantCode       String    // "afrika" | "kongo" — serviteur demandé
   subject           String    // objet / motif de la demande
   message           String    @db.Text
   urgency           String    @default("normale") // normale | elevee | urgente

@@ -74,8 +74,8 @@ const DEMO_MESSAGES: Record<string, Message[]> = {
   default: [
     {
       id: "1",
-      sender: "pam",
-      senderName: "Pam",
+      sender: "afrika",
+      senderName: "Afrika",
       content: "Shalom à tous. Que la paix du Seigneur soit avec vous.",
       timestamp: Date.now() - 60 * 60 * 1000,
       isEncrypted: true,
@@ -177,8 +177,8 @@ export function ChannelView({ channels, initialChannelId }: ChannelViewProps) {
       setIsTyping(false);
       const reply: Message = {
         id: (Date.now() + 1).toString(),
-        sender: "pam",
-        senderName: "Pam",
+        sender: "afrika",
+        senderName: "Afrika",
         content: "Que le Seigneur vous bénisse. Nous prions pour vous.",
         timestamp: Date.now(),
         isEncrypted: selectedChannel?.isEncrypted || false,
@@ -362,7 +362,7 @@ export function ChannelView({ channels, initialChannelId }: ChannelViewProps) {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#8A8378] animate-bounce" style={{ animationDelay: "150ms" }} />
                 <span className="w-1.5 h-1.5 rounded-full bg-[#8A8378] animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
-              Pam écrit...
+              Afrika écrit...
             </motion.div>
           )}
 

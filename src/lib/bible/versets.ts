@@ -1,7 +1,7 @@
 /**
  * Base de versets bibliques — Christ Libère (V3)
  *
- * Contient les versets les plus cités dans le ministère de Pam et du Pasteur Kongo.
+ * Contient les versets les plus cités dans le ministère d'Afrika et du Pasteur Kongo.
  * Traduction : Louis Segond 1910 (domaine public).
  *
  * En production, cette base serait étendue pour couvrir toute la Bible,
@@ -45,7 +45,7 @@ export const VERSETS_DB: VersetBiblique[] = [
     chapitre: 5,
     verset: 24,
     texte: "Hénoch marcha avec Dieu ; et il ne fut plus, car Dieu le prit.",
-    contexte: "Le patriarche Hénoch, figure centrale du ministère de Pam. Marche avec Dieu et enlèvement au ciel.",
+    contexte: "Le patriarche Hénoch, figure centrale du ministère d'Afrika. Marche avec Dieu et enlèvement au ciel.",
   },
   {
     reference: "Genèse 12:3",
@@ -200,7 +200,7 @@ export const VERSETS_DB: VersetBiblique[] = [
     chapitre: 11,
     verset: 12,
     texte: "Il élèvera une bannière pour les nations, il rassemblera les exilés d'Israël, et il recueillera les dispersés de Juda des quatre extrémités de la terre.",
-    contexte: "Le rassemblement des dispersés d'Israël — mission centrale du ministère de Pam.",
+    contexte: "Le rassemblement des dispersés d'Israël — mission centrale du ministère d'Afrika.",
   },
   {
     reference: "Ésaïe 40:3",
@@ -389,7 +389,7 @@ export const VERSETS_DB: VersetBiblique[] = [
     chapitre: 12,
     verset: 2,
     texte: "Je connais un homme en Christ, qui fut, il y a quatorze ans, ravi jusqu'au troisième ciel (si ce fut dans son corps je ne sais, si ce fut hors de son corps je ne sais, Dieu le sait).",
-    contexte: "L'apôtre Paul transporté au troisième ciel — comme Pam.",
+    contexte: "L'apôtre Paul transporté au troisième ciel — comme Afrika.",
   },
 
   // === GALATES ===

@@ -27,7 +27,7 @@ export function NewServantButton({ accentColor = "#C9A227" }: NewServantButtonPr
       name: "code",
       label: "Code",
       type: "text",
-      placeholder: "pam ou kongo",
+      placeholder: "afrika ou kongo",
       help: "Identifiant unique (minuscules, sans espaces)",
       required: true,
     },
@@ -35,7 +35,7 @@ export function NewServantButton({ accentColor = "#C9A227" }: NewServantButtonPr
       name: "shortName",
       label: "Nom court",
       type: "text",
-      placeholder: "Pam",
+      placeholder: "Afrika",
       required: true,
     },
     {

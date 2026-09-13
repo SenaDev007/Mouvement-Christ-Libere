@@ -215,7 +215,7 @@ export function JournalAuditView({
         <p className="text-[11px] text-[#8A8378] leading-relaxed">
           Ce journal est la source de vérité de la gouvernance : il ne peut
           être ni modifié ni supprimé depuis les espaces. Les super admins
-          (Sœur Pam, Pasteur Kongo) en conservent la supervision complète.
+          (Sœur Afrika, Pasteur Kongo) en conservent la supervision complète.
         </p>
       </div>
     </div>

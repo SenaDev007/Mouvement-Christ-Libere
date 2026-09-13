@@ -1,7 +1,7 @@
 {
   "Nav": {
     "Accueil": "Accueil",
-    "Pam": "Pam",
+    "Afrika": "Afrika",
     "Pasteur Kongo": "Pasteur Kongo",
     "Témoignages": "Témoignages",
     "Enseignements": "Enseignements",
@@ -16,7 +16,7 @@
     "kicker": "UN MÊME APPEL, DEUX SERVITEURS",
     "h1": "Afrika Alkebulane Pamela Dali & Pasteur Kongo",
     "subtitle": "Témoignages, enseignements et vie de communauté, au service du rassemblement.",
-    "ctaPam": "Découvrir le témoignage de PAM",
+    "ctaAfrika": "Découvrir le témoignage d'Afrika",
     "ctaKongo": "Découvrir le ministère du Pasteur Kongo"
   },
   "Auth": {

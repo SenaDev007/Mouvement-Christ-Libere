@@ -5,7 +5,7 @@ import { LoginView } from "@/components/staff-space/login-view";
  * ⭐ V3.66 — Connexion à l'espace Secrétariat
  * (secretariat.mouvementchristlibere.com/login → /secretariat/login).
  *
- * Rôles : SECRETARY (secrétaire accréditée) + SUPER_ADMIN (Pam, Pasteur
+ * Rôles : SECRETARY (secrétaire accréditée) + SUPER_ADMIN (Afrika, Pasteur
  * Kongo). La page s'affiche SEULE (pas de sidebar) — cf. proxy V3.44.1.
  */
 export const dynamic = "force-dynamic";

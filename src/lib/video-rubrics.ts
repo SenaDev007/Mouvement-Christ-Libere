@@ -2,7 +2,7 @@
  * ⭐ V3.46 — RUBRIQUES VIDÉO (partagées site public ↔ back-office)
  *
  * Demandes du pasteur :
- *  - Page Vidéos, section Pam → rubrique « Saint-Esprit réponds-moi » ;
+ *  - Page Vidéos, section Afrika → rubrique « Saint-Esprit réponds-moi » ;
  *  - Section Pasteur Kongo → rubriques « Rhema du matin » et « Rhema du soir » ;
  *  - ces rubriques sont gérées depuis le back-office (module Vidéos et
  *    module Lives — le replay d'un live hérite de la rubrique du live) ;
@@ -19,7 +19,7 @@
 
 /** Rubriques signatures par serviteur (code Servant). */
 export const RUBRIQUES: Record<string, string[]> = {
-  pam: ["Saint-Esprit réponds-moi"],
+  afrika: ["Saint-Esprit réponds-moi"],
   kongo: ["Rhema du matin", "Rhema du soir"],
 };
 
@@ -45,8 +45,8 @@ export function rubriquesDe(servantCode: string | null | undefined): string[] {
  * les rubriques signatures en TÊTE (elles sont la vitrine du ministère),
  * puis les catégories historiques dans leur ordre d'origine.
  */
-export const CATEGORY_ORDER_PAM: string[] = [
-  ...RUBRIQUES.pam,
+export const CATEGORY_ORDER_AFRIKA: string[] = [
+  ...RUBRIQUES.afrika,
   "Paroles & Exhortations",
   "Lives & Directs",
   "Prière & Délivrance",
@@ -68,7 +68,7 @@ export const CATEGORY_ORDER_KONGO: string[] = [
 
 /** Ordre des catégories pour un serviteur donné. */
 export function categoryOrder(servantCode: string | null | undefined): string[] {
-  return servantCode === "kongo" ? CATEGORY_ORDER_KONGO : CATEGORY_ORDER_PAM;
+  return servantCode === "kongo" ? CATEGORY_ORDER_KONGO : CATEGORY_ORDER_AFRIKA;
 }
 
 /**
@@ -79,7 +79,7 @@ export function categoryOrder(servantCode: string | null | undefined): string[] 
  */
 export const RUBRIQUE_OPTIONS: { value: string; label: string }[] = [
   { value: "", label: "Automatique (mots-clés du titre)" },
-  { value: "Saint-Esprit réponds-moi", label: "★ Saint-Esprit réponds-moi (Pam)" },
+  { value: "Saint-Esprit réponds-moi", label: "★ Saint-Esprit réponds-moi (Afrika)" },
   { value: "Rhema du matin", label: "★ Rhema du matin (Pasteur Kongo)" },
   { value: "Rhema du soir", label: "★ Rhema du soir (Pasteur Kongo)" },
   { value: "Paroles & Exhortations", label: "Paroles & Exhortations" },

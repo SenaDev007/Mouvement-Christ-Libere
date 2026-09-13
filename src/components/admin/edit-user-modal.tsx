@@ -5,7 +5,7 @@
  *
  * Outre le rôle et la vérification (existant), permet désormais de
  * MODIFIER LA PHOTO de l'utilisateur (upload compressé ≤ 60 KB en data URL
- * → User.avatarUrl) — notamment les serviteurs (Pam, Pasteur Kongo) dont la
+ * → User.avatarUrl) — notamment les serviteurs (Afrika, Pasteur Kongo) dont la
  * photo s'affiche dans les canaux vocaux Yeshua Connect et les bulles de chat.
  */
 

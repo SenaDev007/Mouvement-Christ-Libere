@@ -3,7 +3,7 @@
 /**
  * ⭐ V3.66 — Interface d'accréditation Secrétariat & Trésorerie.
  *
- * Réservée aux super admins (Pam, Pasteur Kongo) :
+ * Réservée aux super admins (Afrika, Pasteur Kongo) :
  *  · créer le compte de la secrétaire / du trésorier (rôle dédié) ;
  *  · réinitialiser un mot de passe ;
  *  · révoquer l'accès (retour au rôle membre) / le réactiver.
@@ -176,7 +176,7 @@ export function StaffClient() {
         </h1>
         <p className="text-sm text-[#8A8378]">
           Accréditation des espaces dédiés du ministère — réservé aux super
-          administrateurs (Pam, Pasteur Kongo).
+          administrateurs (Afrika, Pasteur Kongo).
         </p>
       </div>
 

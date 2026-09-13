@@ -56,6 +56,13 @@ const nextConfig: NextConfig = {
         destination: "/rendez-vous",
         permanent: false,
       },
+      // ⭐ V3.76 — Page /pam renommée /afrika (prénom réel de la servante
+      // de Dieu) : redirection 307 pour les liens/bookmarks historiques.
+      {
+        source: "/pam",
+        destination: "/afrika",
+        permanent: false,
+      },
     ];
   },
 

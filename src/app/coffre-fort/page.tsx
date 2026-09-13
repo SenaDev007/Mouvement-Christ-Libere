@@ -167,7 +167,7 @@ export default function CoffreFortPage() {
                   suppression Facebook, saisie de domaine, compromission du serveur — les
                   contenus doivent rester accessibles et vérifiables. Arweave répond à cette
                   exigence : une fois ancré, un contenu est immuable et indestructible.
-                  Même si le site Christ Libère disparaît, les témoignages de Pam
+                  Même si le site Christ Libère disparaît, les témoignages d'Afrika
                   et les enseignements du Pasteur Kongo subsistent sur la blockchain.
                 </p>
               </div>
@@ -346,7 +346,7 @@ export default function CoffreFortPage() {
                   value={form.auteur}
                   onChange={(e) => setForm({ ...form, auteur: e.target.value })}
                   required
-                  placeholder="PAM, Pasteur Kongo, ou autre"
+                  placeholder="Afrika, Pasteur Kongo, ou autre"
                   className="w-full px-4 py-3 rounded-full border border-[#8A8378]/30 bg-[#FAF6EF] text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20"
                 />
               </div>

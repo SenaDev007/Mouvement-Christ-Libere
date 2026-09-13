@@ -33,7 +33,7 @@ export const maxDuration = 30;
  * ⭐ V3.74 — Trésorerie en CONSULTATION depuis le back-office des
  * serviteurs de Dieu.
  *
- * Directive : « le pasteur Congo et la sœur Pam doivent pouvoir jeter un
+ * Directive : « le pasteur Congo et la sœur Afrika doivent pouvoir jeter un
  * coup d'œil à la trésorerie depuis leur back-office, sans devoir entrer
  * dans l'espace Trésorerie ou Secrétariat ». Cette page est donc :
  *  · LECTURE SEULE — aucune saisie, aucun bouton d'action ;
@@ -61,7 +61,7 @@ export default async function AdminTresorerieConsultationPage() {
         </h1>
         <p className="text-sm text-[#8A8378] leading-relaxed">
           La situation de trésorerie n&apos;est visible que par les comptes
-          super administrateurs (Pasteur Kongo et Sœur Pam). Le trésorier
+          super administrateurs (Pasteur Kongo et Sœur Afrika). Le trésorier
           gère les mouvements depuis l&apos;espace Trésorerie dédié.
         </p>
       </div>

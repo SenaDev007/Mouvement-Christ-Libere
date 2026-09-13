@@ -776,7 +776,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
     };
   }, [isLive, live.id, live.livekitRoomName, liveYoutubeUrl, hasJoined]);
 
-  const accentColor = live.servantCode === "pam" ? "#C9A227" : "#8C5FA8";
+  const accentColor = live.servantCode === "afrika" ? "#C9A227" : "#8C5FA8";
   // ⭐ V3.33 — Regex étendue (embed/, live/, shorts/ comme /stats) +
   // autoplay muet : les navigateurs bloquent l'autoplay non muet — le
   // lecteur démarre ainsi systématiquement et le viewer active le son

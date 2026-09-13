@@ -173,9 +173,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (!servantCode || !SERVITEUR_CODES.includes(servantCode)) {
+    // ⭐ V3.76 — alias historique « pam » accepté → normalisé « afrika ».
+    const codeServiteurFinal =
+      servantCode === "pam" ? "afrika" : servantCode;
+    if (!codeServiteurFinal || !SERVITEUR_CODES.includes(codeServiteurFinal)) {
       return NextResponse.json(
-        { error: "Serviteur demandé invalide (pam ou kongo)" },
+        { error: "Serviteur demandé invalide (afrika ou kongo)" },
         { status: 400 }
       );
     }
@@ -188,7 +191,7 @@ export async function POST(request: NextRequest) {
       data: {
         requesterName: requesterName.trim().substring(0, 120),
         contact: contact.trim().substring(0, 160),
-        servantCode,
+        servantCode: codeServiteurFinal,
         subject: subject.trim().substring(0, 200),
         message: message.trim().substring(0, 5000),
         urgency: urgenceFinale,
@@ -213,7 +216,7 @@ export async function POST(request: NextRequest) {
           targetId: nouvelle.id,
           metadata: {
             demandeur: nouvelle.requesterName,
-            serviteur: servantCode,
+            serviteur: codeServiteurFinal,
             canal: "saisie secrétariat",
             codeSuivi,
           },

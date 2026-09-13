@@ -12,7 +12,7 @@ export default async function NewVideoPage({
   const params = await searchParams;
   const servants = await db.servant.findMany({ where: { isActive: true } });
 
-  // Si ?servant=pam ou ?servant=kongo, pré-remplir le serviteur
+  // Si ?servant=afrika ou ?servant=kongo, pré-remplir le serviteur
   const preselectedServant = params.servant
     ? servants.find((s) => s.code === params.servant)
     : null;
@@ -27,7 +27,7 @@ export default async function NewVideoPage({
     },
     {
       // ⭐ V3.46 — Rubrique signature de la vidéo (« Saint-Esprit réponds-moi »
-      // Pam, « Rhema du matin »/« Rhema du soir » Pasteur Kongo…). Vide =
+      // Afrika, « Rhema du matin »/« Rhema du soir » Pasteur Kongo…). Vide =
       // catégorisation automatique par mots-clés du titre (historique).
       name: "category",
       label: "Rubrique",

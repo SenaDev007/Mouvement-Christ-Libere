@@ -4,7 +4,7 @@
  * ⭐ V2: Plus de données mock — tout vient de la base de données via les
  *    API routes /api/yeshua-connect/*.
  *
- * Contextualisé pour la communauté spirituelle de Pam et du Pasteur Kongo.
+ * Contextualisé pour la communauté spirituelle d'Afrika et du Pasteur Kongo.
  * Pas de "read receipts" — remplacé par "Bénédiction" (✋) et "Amen" (🙏).
  */
 
@@ -20,7 +20,7 @@ export interface ChatParticipant {
    * (l'API conversations/members le renvoie réellement depuis la base). */
   role: "SUPER_ADMIN" | "ADMIN" | "MODERATOR" | "ANIMATOR" | "MEMBER_VERIFIED" | "MEMBER";
   /** ⭐ V3.13 — Rôle GLOBAL du compte (UserRole) : les super admins
-   * (PAM, Pasteur Kongo) figurent dans la section « Admin » de TOUS les
+   * (Afrika, Pasteur Kongo) figurent dans la section « Admin » de TOUS les
    * canaux et portent l'icône distinctive, même si leur rôle de canal
    * est simple « MEMBER ». */
   userRole?: string;
@@ -40,7 +40,7 @@ export interface ChatConversation {
   id: string;
   type: ConversationType;
   /** ⭐ V3.7 — Canal RESTREINT (cercle des pasteurs) : seuls les
-   * administrateurs principaux (SUPER_ADMIN/ADMIN — PAM, Pasteur Kongo)
+   * administrateurs principaux (SUPER_ADMIN/ADMIN — Afrika, Pasteur Kongo)
    * peuvent y inviter, et ils ajoutent qui ils veulent (toute la
    * plateforme, pas seulement la communauté du canal). */
   isRestricted?: boolean;

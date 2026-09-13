@@ -12,7 +12,7 @@ const NAV_GROUPS = [
   {
     label: "Serviteurs",
     items: [
-      { label: "Pam", href: "/pam" },
+      { label: "Afrika", href: "/afrika" },
       { label: "Pasteur Kongo", href: "/pasteur-kongo" },
     ],
   },
@@ -102,9 +102,9 @@ export function SiteHeader() {
           </span>
           <div className="flex items-center gap-3">
             <ServantMedal
-              id="pam"
-              active={current === "pam" || current === "commun"}
-              onClick={() => handleSwitch("pam")}
+              id="afrika"
+              active={current === "afrika" || current === "commun"}
+              onClick={() => handleSwitch("afrika")}
               scrolled={scrolled}
             />
             <span className={cn("text-xs", scrolled ? "text-[#C9A227]/40" : "text-[#8A8378]/50")}>·</span>
@@ -124,7 +124,7 @@ export function SiteHeader() {
           {/* Logo — espacement serré */}
           <Link href="/" className="flex items-center gap-1 group" onClick={() => handleSwitch("commun")}>
             <Image
-              src="/logo-christ-libere-v2.png"
+              src="/logo-christ-libere-v3.png"
               alt="Christ Libère"
               width={28}
               height={28}

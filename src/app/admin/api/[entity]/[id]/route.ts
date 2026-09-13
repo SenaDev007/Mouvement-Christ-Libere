@@ -40,14 +40,14 @@ function getDelegate(entity: EntityName) {
 /**
  * ⭐ V2.7 — SYNCHRO PHOTO serviteur ↔ compte utilisateur.
  *
- * Une seule « personne » possède UNE photo (ex. Pam) : quand le back-office
+ * Une seule « personne » possède UNE photo (ex. Afrika) : quand le back-office
  * modifie la photo du serviteur (Servant.portraitUrl), le compte User
  * correspondant reçoit la même photo (User.avatarUrl) — c'est elle qui
  * s'affiche dans les canaux vocaux Yeshua Connect et les bulles de chat.
  * Et réciproquement quand la photo est modifiée depuis /admin/users.
  *
  * Correspondance pragmatique : email commençant par "<code>@" OU nom
- * insensible à la casse égal au shortName / fullName (Pam, Pasteur Kongo).
+ * insensible à la casse égal au shortName / fullName (Afrika, Pasteur Kongo).
  */
 async function syncServantUserPhoto(
   side: "servant" | "user",
@@ -238,7 +238,7 @@ export async function PATCH(
     const updated = await delegate.update({ where: { id }, data: body });
 
     // ⭐ V2.7 — Propagation de la photo vers l'autre « versant » de la
-    // personne (Pam serviteur ↔ Pam compte : une seule photo partout).
+    // personne (Afrika serviteur ↔ Afrika compte : une seule photo partout).
     if (syncSide === "servant") {
       await syncServantUserPhoto("servant", (body as { portraitUrl?: string | null }).portraitUrl ?? null, syncMatch);
     } else if (syncSide === "user") {

@@ -14,12 +14,12 @@ import {
  *
  * Authentifie l'utilisateur contre la table User en DB.
  * Rôles autorisés à se connecter au back-office :
- *  - SUPER_ADMIN (Pam, Pasteur Kongo)
+ *  - SUPER_ADMIN (Afrika, Pasteur Kongo)
  *  - ADMIN (délégués créés par un super admin)
  *  - MODERATOR (bénévoles modération)
  *
  * Le `name` peut être :
- *  - le nom du compte (ex: "Pam", "Pasteur Kongo")
+ *  - le nom du compte (ex: "Afrika", "Pasteur Kongo")
  *  - ou l'email (ex: "pam@christ-libere.org")
  */
 const ALLOWED_ADMIN_ROLES = ["SUPER_ADMIN", "ADMIN", "MODERATOR"];

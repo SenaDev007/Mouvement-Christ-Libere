@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PAM_HOSTS = new Set(["amela.dali", "ameladali", "pam"]);
+// ⭐ V3.76 — « pam » (et ses alias historiques) restent acceptés en
+// sous-domaine par compatibilité ; le code serviteur émis est « afrika ».
+const AFRIKA_HOSTS = new Set(["afrika", "amela.dali", "ameladali", "pam"]);
 const KONGO_HOSTS = new Set(["pasteurkongo", "kongo"]);
 const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/api/login"];
 
@@ -45,7 +47,7 @@ const PUBLIC_TRESORERIE_PATHS = ["/tresorerie/login", "/tresorerie/api/login", "
 
 // Fichiers servis depuis /public (logo du back-office, manifest, sons…) et
 // assets divers : ils restent accessibles TELS QUELS sur le sous-domaine admin —
-// jamais réécrits vers /admin/* (sinon /logo-christ-libere-v2.png renverrait 404).
+// jamais réécrits vers /admin/* (sinon /logo-christ-libere-v3.png renverrait 404).
 const FICHIER_STATIQUE =
   /\.(png|jpe?g|gif|svg|webp|avif|ico|bmp|heic|mp3|wav|ogg|m4a|mp4|webm|js|mjs|css|json|txt|xml|webmanifest|woff2?|ttf|otf|eot|map|wasm|pdf|dat)$/i;
 
@@ -203,7 +205,7 @@ export function proxy(request: NextRequest) {
 
   const subdomain = hostname.split(".")[0];
   let servant = "commun";
-  if (PAM_HOSTS.has(subdomain)) servant = "pam";
+  if (AFRIKA_HOSTS.has(subdomain)) servant = "afrika";
   else if (KONGO_HOSTS.has(subdomain)) servant = "kongo";
 
   const currentHeader = request.headers.get("x-servant");

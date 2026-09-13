@@ -96,7 +96,7 @@ export async function GET(
     // encore membre (utilisateur existant créé avant le backfill V2.9, ou
     // inscription manuelle), on l'inscrit AUTOMATIQUEMENT au premier accès.
     // Avant : 403 « Vous n'êtes pas membre » → « je ne vois pas les messages
-    // de Pam » alors que le canal s'affichait dans la sidebar.
+    // d'Afrika » alors que le canal s'affichait dans la sidebar.
     // ⭐ V3.20 — L'auto-join ne s'applique JAMAIS à un PRIVÉ (isDirect) :
     // un privé n'accepte que ses 2 membres, quels que soient les rôles.
     if (!PRIVILEGED_ROLES.has(userRole || "")) {

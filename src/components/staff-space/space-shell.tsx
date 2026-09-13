@@ -104,7 +104,7 @@ export function SpaceShell({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Image
-                  src="/logo-christ-libere-v2.png"
+                  src="/logo-christ-libere-v3.png"
                   alt="Christ Libère"
                   width={40}
                   height={40}
@@ -222,7 +222,7 @@ export function SpaceShell({
           </button>
           <div className="flex items-center gap-2">
             <Image
-              src="/logo-christ-libere-v2.png"
+              src="/logo-christ-libere-v3.png"
               alt="Christ Libère"
               width={24}
               height={24}

@@ -83,7 +83,7 @@ const NAV_SECTIONS = [
     items: [
       { label: "Secrétariat & Trésorerie", href: "/admin/staff", icon: Building2 },
       // ⭐ V3.74 — Consultation de la trésorerie SANS entrer dans l'espace
-      // dédié (directive : le pasteur Congo et la sœur Pam veulent un
+      // dédié (directive : le pasteur Congo et la sœur Afrika veulent un
       // simple coup d'œil depuis leur back-office — lecture seule).
       { label: "Trésorerie (consultation)", href: "/admin/tresorerie", icon: Wallet },
     ],
@@ -151,7 +151,7 @@ export default function AdminLayout({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Image
-                  src="/logo-christ-libere-v2.png"
+                  src="/logo-christ-libere-v3.png"
                   alt="Christ Libère"
                   width={40}
                   height={40}
@@ -259,7 +259,7 @@ export default function AdminLayout({
           </button>
           <div className="flex items-center gap-2">
             <Image
-              src="/logo-christ-libere-v2.png"
+              src="/logo-christ-libere-v3.png"
               alt="Christ Libère"
               width={24}
               height={24}

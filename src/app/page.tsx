@@ -4,7 +4,7 @@ import { LandingView } from "@/components/site/landing-view";
 /**
  * ⭐ V3.45 — PAGE SERVEUR / (landing).
  *
- * Charge la config du hero de la page d'accueil + les photos de Pam et
+ * Charge la config du hero de la page d'accueil + les photos d'Afrika et
  * du Pasteur Kongo (back-office /admin/heroes) et la transmet à la vue
  * cliente. force-dynamic : modifications visibles immédiatement.
  */

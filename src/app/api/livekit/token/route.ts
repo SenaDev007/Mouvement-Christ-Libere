@@ -10,7 +10,7 @@ import { getLiveKitConfig } from "@/lib/livekit-config";
 /**
  * POST /api/livekit/token
  *
- * Génère un token LiveKit pour qu'un serviteur (Pam, Pasteur Kongo) diffuse un live,
+ * Génère un token LiveKit pour qu'un serviteur (Afrika, Pasteur Kongo) diffuse un live,
  * qu'un visiteur regarde le live sur le site public, OU qu'un utilisateur authentifié
  * Yeshua Connect initie/rejoigne un appel audio/vidéo ou un canal vocal persistant.
  *
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
         name = participantName || session.user.name || "Membre";
 
         // ⭐ V2.7 — Photo de profil réelle : priorité à l'avatar fourni par le
-        // client, sinon on lit User.avatarUrl (photos de Pam, Pasteur Kongo,
+        // client, sinon on lit User.avatarUrl (photos d'Afrika, Pasteur Kongo,
         // membres…) pour l'embarquer dans les métadonnées du participant.
         let avatarUrl = avatarUrlFromBody ?? null;
         if (!avatarUrl) {

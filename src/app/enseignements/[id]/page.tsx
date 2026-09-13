@@ -198,7 +198,7 @@ export default async function TeachingDetailPage({ params }: PageProps) {
               Tous les enseignements
             </Link>
             <Link
-              href={teaching.servant.code === "pam" ? "/pam" : "/pasteur-kongo"}
+              href={teaching.servant.code === "afrika" ? "/afrika" : "/pasteur-kongo"}
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2A0E3D] hover:text-[#C9A227] transition-colors"
             >
               Voir {teaching.servant.shortName}

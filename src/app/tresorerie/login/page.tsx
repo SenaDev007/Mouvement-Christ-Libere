@@ -5,7 +5,7 @@ import { LoginView } from "@/components/staff-space/login-view";
  * ⭐ V3.66 — Connexion à l'espace Trésorerie
  * (tresorerie.mouvementchristlibere.com/login → /tresorerie/login).
  *
- * Rôles : TREASURER (trésorier accrédité) + SUPER_ADMIN (Pam, Pasteur
+ * Rôles : TREASURER (trésorier accrédité) + SUPER_ADMIN (Afrika, Pasteur
  * Kongo). Journal financier du ministère — accès hautement restreint.
  */
 export const dynamic = "force-dynamic";

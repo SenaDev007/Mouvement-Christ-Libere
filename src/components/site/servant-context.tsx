@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 
-export type ServantId = "pam" | "kongo" | "commun";
+export type ServantId = "afrika" | "kongo" | "commun";
 
 export interface Servant {
   id: ServantId;
@@ -21,14 +21,14 @@ export interface Servant {
 }
 
 const SERVANTS: Record<ServantId, Servant> = {
-  pam: {
-    id: "pam",
-    name: "Pam",
+  afrika: {
+    id: "afrika",
+    name: "Afrika",
     fullName: "Afrika Alkebulane Pamela Dali",
-    shortName: "Pam",
+    shortName: "Afrika",
     role: "Servante de l'Éternel",
     bio: "Témoignages d'enlèvements au ciel, instructions reçues du Seigneur Yeshoua, conformité à la Parole.",
-    portrait: "AP",
+    portrait: "AA",
   },
   kongo: {
     id: "kongo",
@@ -42,8 +42,8 @@ const SERVANTS: Record<ServantId, Servant> = {
   commun: {
     id: "commun",
     name: "Commun",
-    fullName: "Pam & Pasteur Kongo",
-    shortName: "Pam & Pasteur Kongo",
+    fullName: "Afrika & Pasteur Kongo",
+    shortName: "Afrika & Pasteur Kongo",
     role: "Ministère conjoint",
     bio: "Déclarations officielles, enseignements communs, vision partagée du couple.",
     portrait: "MC",

@@ -403,7 +403,7 @@ export function LandingIntro() {
                     déclarés + w-36 h-auto → zéro CLS (comportement du <img>
                     d'origine conservé), priority car premier élément visible. */}
                 <Image
-                  src="/logo-christ-libere-v2.png"
+                  src="/logo-christ-libere-v3.png"
                   alt="Logo Christ Libère"
                   width={168}
                   height={178}

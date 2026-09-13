@@ -3,9 +3,9 @@
 /**
  * ⭐ V3.45 — LANDING PAGE (vue cliente).
  *
- * Hero de la page d'accueil (image d'arrière-plan Pam + Pasteur
+ * Hero de la page d'accueil (image d'arrière-plan Afrika + Pasteur
  * Kongo, accroche, titre, sous-titre, boutons) et section « Deux
- * serviteurs » (photos de Pam et du Pasteur Kongo, noms, rôles,
+ * serviteurs » (photos d'Afrika et du Pasteur Kongo, noms, rôles,
  * descriptions) — tout est PARAMÉTRABLE depuis le back-office
  * (/admin/heroes → page « landing »).
  */
@@ -104,11 +104,11 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
       <section className="hero-min-h relative flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-white">
         {/* Carte flottante du prochain live — en haut du hero */}
         <UpcomingLiveFloat />
-        {/* Background image — paramétrable (défaut : Pam et Pasteur Kongo) */}
+        {/* Background image — paramétrable (défaut : Afrika et Pasteur Kongo) */}
         <div className="absolute inset-0 z-0">
           <HeroBackgroundImage
             src={hero.backgroundImage}
-            alt="Pam et Pasteur Kongo, au son du chofar"
+            alt="Afrika et Pasteur Kongo, au son du chofar"
             className="object-cover opacity-60"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/50 via-[#2A0E3D]/60 to-[#1A0826]" />
@@ -204,7 +204,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
           >
             {/* ⭐ V3.67 — CTA « Rendez-vous » pulsant vers /rendez-vous :
                 l'entrée publique du secrétariat (demande de rencontre avec
-                Sœur Pam ou le Pasteur Kongo). Effet double anneau doré
+                Sœur Afrika ou le Pasteur Kongo). Effet double anneau doré
                 (globals.css : ctaPulseRing/ctaCoeur, prefers-reduced-motion). */}
             <Link
               href="/rendez-vous"
@@ -290,9 +290,9 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-            {/* Pam */}
+            {/* Afrika */}
             <Link
-              href="/pam"
+              href="/afrika"
               className="group bg-[#FAF6EF] rounded-2xl shadow-sm border border-[#8A8378]/10 border-t-[3px] border-t-[#C9A227] p-8 hover:shadow-xl transition-all duration-500"
             >
               <div className="relative flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-[#2A0E3D] mb-6 ring-2 ring-[#C9A227]/30 group-hover:ring-[#C9A227] transition-all">
@@ -375,7 +375,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
               Deux voix, une même vision
             </h2>
             <p className="text-base text-[#8A8378] mt-4 max-w-2xl mx-auto">
-              PAM et le Pasteur Kongo exercent chacun un ministère distinct, uni par le mariage
+              Afrika et le Pasteur Kongo exercent chacun un ministère distinct, uni par le mariage
               et par une même conviction : préparer les cœurs, transmettre ce qui a été reçu.
             </p>
           </div>
@@ -433,7 +433,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#8C5FA8]/10 text-[#8C5FA8] border border-[#8C5FA8]/20">
                 Doctrine
               </span>
-              <span className="text-xs text-[#8A8378]">PAM</span>
+              <span className="text-xs text-[#8A8378]">Afrika</span>
             </div>
             <h3 className="font-serif text-2xl font-bold text-[#1E0F2B] mb-4">
               La Véritable Nature du Saint-Esprit et la Trinité

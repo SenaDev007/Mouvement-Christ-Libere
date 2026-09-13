@@ -266,13 +266,25 @@ async function envoyerViaRelaisBackend(options: OptionsEnvoi): Promise<ResultatE
 /** Fallbacks historiques (seed prisma/seed-super-admins.ts). */
 const EMAILS_SERVITEURS_DEFAUT: Record<string, string> = {
   kongo: "pasteur.kongo@christ-libere.org",
+  afrika: "pam@christ-libere.org",
+  // ⭐ V3.76 — alias historique « pam » (données/URLs pré-V3.76) → même
+  // adresse ; le code canonique est désormais « afrika ».
   pam: "pam@christ-libere.org",
 };
+
+/** Normalise un code serviteur : « pam » (historique) → « afrika ». */
+export function normaliserCodeServiteur(code: string): string {
+  const c = (code || "").trim().toLowerCase();
+  return c === "pam" ? "afrika" : c;
+}
 
 /** Clés du paramétrage des emails serviteurs (table StaffSetting). */
 export const CLES_PARAMETRAGE_EMAIL: Record<string, string> = {
   kongo: "email_kongo",
-  pam: "email_pam",
+  afrika: "email_afrika",
+  // ⭐ V3.76 — alias historique (StaffSetting email_pam renommée en base
+  // par la migration V3.76 — la clé ci-dessous n'est qu'un filet de sécurité).
+  pam: "email_afrika",
 };
 
 /**
@@ -306,8 +318,10 @@ export async function enregistrerEmailParametre(
   servantCode: string,
   email: string
 ): Promise<void> {
-  const cle = CLES_PARAMETRAGE_EMAIL[servantCode?.trim().toLowerCase() || ""];
-  if (!cle) throw new Error("Serviteur inconnu (pam ou kongo).");
+  // ⭐ V3.76 — normalisation de l'alias historique « pam ».
+  const cle =
+    CLES_PARAMETRAGE_EMAIL[normaliserCodeServiteur(servantCode) || ""];
+  if (!cle) throw new Error("Serviteur inconnu (afrika ou kongo).");
   await db.staffSetting.upsert({
     where: { key: cle },
     update: { value: email },
@@ -317,19 +331,19 @@ export async function enregistrerEmailParametre(
 
 /**
  * Résout l'adresse email du serviteur destinataire d'une demande
- * (« pam » | « kongo ») :
+ * (« afrika » | « kongo ») :
  *   ① ⭐ V3.74 paramétrage du secrétariat (StaffSetting — bouton
  *      « Paramétrage » du Courrier) : la VRAIE adresse choisie ;
- *   ② variable d'environnement EMAIL_KONGO / EMAIL_PAM ;
+ *   ② variable d'environnement EMAIL_KONGO / EMAIL_AFRIKA ;
  *   ③ compte SUPER_ADMIN correspondant en base (recherche par nom) ;
  *   ④ adresse historique du seed (dernier recours).
  */
 export async function resoudreEmailServiteur(
   servantCode: string
 ): Promise<{ email: string; nom: string }> {
-  const code = servantCode?.trim().toLowerCase() || "kongo";
+  const code = normaliserCodeServiteur(servantCode) || "kongo";
   const nomParDefaut =
-    code === "pam" ? "Sœur Pam" : "Pasteur Kongo";
+    code === "afrika" ? "Sœur Afrika" : "Pasteur Kongo";
 
   // ① Paramétrage du secrétariat (prioritaire — adresses réelles).
   const parametre = await lireEmailParametre(code);
@@ -339,7 +353,9 @@ export async function resoudreEmailServiteur(
 
   // ② Variable d'environnement explicite.
   const envVar =
-    code === "pam" ? process.env.EMAIL_PAM : process.env.EMAIL_KONGO;
+    code === "afrika"
+      ? process.env.EMAIL_AFRIKA || process.env.EMAIL_PAM
+      : process.env.EMAIL_KONGO;
   if (envVar && envVar.includes("@")) {
     return {
       email: envVar,
@@ -356,8 +372,10 @@ export async function resoudreEmailServiteur(
     });
     const correspondance = supers.find((s) => {
       const nom = (s.name || "").toLowerCase();
-      return code === "pam"
-        ? nom === "pam" || nom.startsWith("pam") || nom.includes("pam")
+      return code === "afrika"
+        ? nom === "afrika" || nom.startsWith("afrika") || nom.includes("afrika") ||
+          // filet historique : compte encore nommé « Pam » (pre-migration)
+          nom === "pam" || nom.startsWith("pam")
         : nom.includes("kongo");
     });
     if (correspondance?.email) {
@@ -379,17 +397,17 @@ export async function resoudreEmailServiteur(
 
 /**
  * Liste des destinataires « serviteurs » pour le courrier du secrétariat :
- *  · ⭐ V3.74 Pasteur Kongo et Sœur Pam TOUJOURS présents (id
- *    « serviteur:kongo » / « serviteur:pam ») avec l'adresse résolue
+ *  · ⭐ V3.74 Pasteur Kongo et Sœur Afrika TOUJOURS présents (id
+ *    « serviteur:kongo » / « serviteur:afrika ») avec l'adresse résolue
  *    (paramétrage → env → compte) — même sans compte SUPER_ADMIN ;
  *  · les autres comptes SUPER_ADMIN disposant d'un email (id « user:… »).
  */
 export async function listerServiteursDestinataires(): Promise<
   Array<{ id: string; nom: string; email: string; parametre?: boolean }>
 > {
-  const [emailKongo, emailPam] = await Promise.all([
+  const [emailKongo, emailAfrika] = await Promise.all([
     resoudreEmailServiteur("kongo"),
-    resoudreEmailServiteur("pam"),
+    resoudreEmailServiteur("afrika"),
   ]);
   const result: Array<{
     id: string;
@@ -403,9 +421,9 @@ export async function listerServiteursDestinataires(): Promise<
       email: emailKongo.email,
     },
     {
-      id: "serviteur:pam",
-      nom: emailPam.nom,
-      email: emailPam.email,
+      id: "serviteur:afrika",
+      nom: emailAfrika.nom,
+      email: emailAfrika.email,
     },
   ];
 
@@ -418,8 +436,15 @@ export async function listerServiteursDestinataires(): Promise<
     });
     for (const s of supers) {
       const nom = (s.name || "").toLowerCase();
-      // Les deux serviteurs référencés ci-dessus ne sont pas dupliqués.
-      if (nom.includes("kongo") || nom === "pam" || nom.startsWith("pam")) {
+      // Les deux serviteurs référencés ci-dessus ne sont pas dupliqués
+      // (« pam » : filet historique pré-migration V3.76).
+      if (
+        nom.includes("kongo") ||
+        nom === "afrika" ||
+        nom.startsWith("afrika") ||
+        nom === "pam" ||
+        nom.startsWith("pam")
+      ) {
         continue;
       }
       result.push({ id: `user:${s.id}`, nom: s.name || s.email, email: s.email });

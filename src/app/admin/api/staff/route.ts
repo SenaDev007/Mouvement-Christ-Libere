@@ -14,7 +14,7 @@ import { exigerSession } from "@/lib/staff-space/session";
  *                                          · revoke         : retire le rôle (→ MEMBER)
  *                                          · reactivate     : restaure le rôle
  *
- * ⚠️ Réservé aux SUPER_ADMIN (Pam, Pasteur Kongo) — directive : « c'est à eux
+ * ⚠️ Réservé aux SUPER_ADMIN (Afrika, Pasteur Kongo) — directive : « c'est à eux
  * de pouvoir donner l'accréditation, créer un compte pour le secrétaire ou
  * la secrétaire » / « au comptable, à leur trésorier ».
  *

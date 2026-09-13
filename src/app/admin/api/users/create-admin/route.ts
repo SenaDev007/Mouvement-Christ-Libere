@@ -7,7 +7,7 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
  * POST /admin/api/users/create-admin
  * Crée un nouveau compte administrateur.
  *
- * ⚠️ Réservé aux SUPER_ADMIN (Pam, Pasteur Kongo).
+ * ⚠️ Réservé aux SUPER_ADMIN (Afrika, Pasteur Kongo).
  *
  * Body: { name, email, password, role, bio? }
  *  - role: "ADMIN" | "MODERATOR" | "ANIMATOR"
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Seuls les super administrateurs (Pam et Pasteur Kongo) peuvent créer des comptes administrateur.",
+            "Seuls les super administrateurs (Afrika et Pasteur Kongo) peuvent créer des comptes administrateur.",
         },
         { status: 403 }
       );

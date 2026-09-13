@@ -1,5 +1,5 @@
 /**
- * VRAIES vidéos YouTube — Pam (295) + Pasteur Kongo (249) = 544 vidéos
+ * VRAIES vidéos YouTube — Afrika (295) + Pasteur Kongo (249) = 544 vidéos
  * Titres récupérés via YouTube oEmbed API
  */
 
@@ -12,3262 +12,3262 @@ export interface VideoItem {
   views: number;
   publishedAt: string;
   category: string;
-  servant: "pam" | "kongo";
+  servant: "afrika" | "kongo";
 }
 
 export interface VideoCategory {
   id: string;
   name: string;
   description: string;
-  servant: "pam" | "kongo";
+  servant: "afrika" | "kongo";
   videos: VideoItem[];
 }
 
-const PAM_VIDEOS: VideoItem[] = [
+const AFRIKA_VIDEOS: VideoItem[] = [
   {
-    "id": "pam-1",
+    "id": "afrika-1",
     "youtubeId": "8V_IO6CI-ZA",
     "title": "26 août 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 26 août 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 26 août 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-2",
+    "id": "afrika-2",
     "youtubeId": "-KORQyPfhlU",
     "title": "Une ancienne vidéo mais à recouter",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Une ancienne vidéo mais à recouter",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Une ancienne vidéo mais à recouter",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-3",
+    "id": "afrika-3",
     "youtubeId": "RE4owf6pesw",
     "title": "16 août 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 16 août 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 16 août 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-4",
+    "id": "afrika-4",
     "youtubeId": "f7EaPg8STMs",
     "title": "12 août 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 12 août 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 12 août 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-5",
+    "id": "afrika-5",
     "youtubeId": "eUUteiB9QCI",
     "title": "Mes brebis reconnaissent ma voix.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Mes brebis reconnaissent ma voix.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Mes brebis reconnaissent ma voix.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-6",
+    "id": "afrika-6",
     "youtubeId": "SjNXku2_5vE",
     "title": "Baptême du 8 août 2026 a grand bassam.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Baptême du 8 août 2026 a grand bassam.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Baptême du 8 août 2026 a grand bassam.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-7",
+    "id": "afrika-7",
     "youtubeId": "KTCkAMTM2uw",
     "title": "8 août 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 8 août 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 8 août 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-8",
+    "id": "afrika-8",
     "youtubeId": "EbTKg3unRPk",
     "title": "Prière de délivrance et appel au salut",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Prière de délivrance et appel au salut",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Prière de délivrance et appel au salut",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Prière & Délivrance",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-9",
+    "id": "afrika-9",
     "youtubeId": "GdTeCJddVjY",
     "title": "Que L'ÉTERNEL protège vos familles",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Que L'ÉTERNEL protège vos familles",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Que L'ÉTERNEL protège vos familles",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-10",
+    "id": "afrika-10",
     "youtubeId": "23Cf6IVwBus",
     "title": "Je réponds à une question Sur la danse des éléments a L'ÉTERNEL",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Je réponds à une question Sur la danse des éléments a L'ÉTERNEL",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Je réponds à une question Sur la danse des éléments a L'ÉTERNEL",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-11",
+    "id": "afrika-11",
     "youtubeId": "FLl3GWAPrFE",
     "title": "18 juillet 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 18 juillet 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 18 juillet 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-12",
+    "id": "afrika-12",
     "youtubeId": "6r0vZjoQAS8",
     "title": "10 juillet 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 10 juillet 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 10 juillet 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-13",
+    "id": "afrika-13",
     "youtubeId": "8M0HMhslaps",
     "title": "Nous avons besoin de votre soutien.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Nous avons besoin de votre soutien.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Nous avons besoin de votre soutien.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-14",
+    "id": "afrika-14",
     "youtubeId": "TnzLCOcCd0U",
     "title": "Prédication du vendredi",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Prédication du vendredi",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Prédication du vendredi",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Enseignements & Prédications",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-15",
+    "id": "afrika-15",
     "youtubeId": "-36eAHYRBHg",
     "title": "24 juin 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 24 juin 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 24 juin 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-16",
+    "id": "afrika-16",
     "youtubeId": "ojtkhoDh6rg",
     "title": "JÉSUS CHRIST TA DONNÉ LE POUVOIR DE DOMINÉ",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. JÉSUS CHRIST TA DONNÉ LE POUVOIR DE DOMINÉ",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. JÉSUS CHRIST TA DONNÉ LE POUVOIR DE DOMINÉ",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-17",
+    "id": "afrika-17",
     "youtubeId": "5yIUsa2c184",
     "title": "Une autre confirmation que Juda est un démon",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Une autre confirmation que Juda est un démon",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Une autre confirmation que Juda est un démon",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-18",
+    "id": "afrika-18",
     "youtubeId": "O9TsQbngibY",
     "title": "Nous reprenons les lives ce mercredi à 22h00",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Nous reprenons les lives ce mercredi à 22h00",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Nous reprenons les lives ce mercredi à 22h00",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-19",
+    "id": "afrika-19",
     "youtubeId": "X_kJguWOF8I",
     "title": "Le 24 Mai n'est pas la vraie date de la Pentecôte.   C'est le 12 juin",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Le 24 Mai n'est pas la vraie date de la Pentecôte.   C'est le 12 juin",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Le 24 Mai n'est pas la vraie date de la Pentecôte.   C'est le 12 juin",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-20",
+    "id": "afrika-20",
     "youtubeId": "o_-bSXmi14Q",
     "title": "Merci Martinique",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Merci Martinique",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Merci Martinique",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-21",
+    "id": "afrika-21",
     "youtubeId": "03M3sNYliEg",
     "title": "5 mai 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 5 mai 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 5 mai 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-22",
+    "id": "afrika-22",
     "youtubeId": "5OHLp6xIL-U",
     "title": "29 avril 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 29 avril 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 29 avril 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-23",
+    "id": "afrika-23",
     "youtubeId": "yGZaedONLeQ",
     "title": "Attention attention",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Attention attention",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Attention attention",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-24",
+    "id": "afrika-24",
     "youtubeId": "ZZkFPGxuc6k",
     "title": "22 avril 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 22 avril 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 22 avril 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-25",
+    "id": "afrika-25",
     "youtubeId": "1GYUUiJuW3k",
     "title": "SAINT ESPRIT RÉPOND MOI",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. SAINT ESPRIT RÉPOND MOI",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. SAINT ESPRIT RÉPOND MOI",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-26",
+    "id": "afrika-26",
     "youtubeId": "gttvMzBMQjE",
     "title": "SAINT ESPRIT RÉPOND MOI",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. SAINT ESPRIT RÉPOND MOI",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. SAINT ESPRIT RÉPOND MOI",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-27",
+    "id": "afrika-27",
     "youtubeId": "oPBqXkKtVLU",
     "title": "SAINT ESPRIT RÉPOND MOI",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. SAINT ESPRIT RÉPOND MOI",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. SAINT ESPRIT RÉPOND MOI",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-28",
+    "id": "afrika-28",
     "youtubeId": "-gnKDnPGZvc",
     "title": "SAINT ESPRIT RÉPOND MOI . Qui a introduit la polygamie chez les adamique Je précise .",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. SAINT ESPRIT RÉPOND MOI . Qui a introduit la polygamie chez les adamique Je précise .",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. SAINT ESPRIT RÉPOND MOI . Qui a introduit la polygamie chez les adamique Je précise .",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-29",
+    "id": "afrika-29",
     "youtubeId": "3xx1Lg0r_5Q",
     "title": "La nouvelle émission , SAINT ESPRIT RÉPOND MOI",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. La nouvelle émission , SAINT ESPRIT RÉPOND MOI",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. La nouvelle émission , SAINT ESPRIT RÉPOND MOI",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-30",
+    "id": "afrika-30",
     "youtubeId": "XAYvZ1sq9xs",
     "title": "L'ouverture de l'église",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. L'ouverture de l'église",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. L'ouverture de l'église",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-31",
+    "id": "afrika-31",
     "youtubeId": "fRVKqN0GU5I",
     "title": "Programme de la pessa.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Programme de la pessa.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Programme de la pessa.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-32",
+    "id": "afrika-32",
     "youtubeId": "v7ePUuInbeY",
     "title": "6 mars 2026",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 6 mars 2026",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 6 mars 2026",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-33",
+    "id": "afrika-33",
     "youtubeId": "kyhKYNiR5Uc",
     "title": "J'ai reçu des menaces de mort.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. J'ai reçu des menaces de mort.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. J'ai reçu des menaces de mort.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-34",
+    "id": "afrika-34",
     "youtubeId": "sjFQ62V9NiE",
     "title": "Le travail",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Le travail",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Le travail",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-35",
+    "id": "afrika-35",
     "youtubeId": "hvrEo2gRU0k",
     "title": "29 décembre 2025",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 29 décembre 2025",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 29 décembre 2025",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-36",
+    "id": "afrika-36",
     "youtubeId": "FEViyzQMmyg",
     "title": "ATTENTION AU ANARQUEUR",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. ATTENTION AU ANARQUEUR",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. ATTENTION AU ANARQUEUR",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-37",
+    "id": "afrika-37",
     "youtubeId": "lv0Y8bpk2p4",
     "title": "Lieu du culte.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Lieu du culte.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Lieu du culte.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-38",
+    "id": "afrika-38",
     "youtubeId": "UomZNPtJhqo",
     "title": "Confirmer l'instruction pour le premier mois",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Confirmer l'instruction pour le premier mois",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Confirmer l'instruction pour le premier mois",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-39",
+    "id": "afrika-39",
     "youtubeId": "1LUmM6K8nfs",
     "title": "5 décembre 2025",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 5 décembre 2025",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 5 décembre 2025",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-40",
+    "id": "afrika-40",
     "youtubeId": "eQJEhTPxwEE",
     "title": "Tous nos frères de la Martinique, Guadeloupe, guiane. Contactez-nous en inbox. +225 0142762017 .",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Tous nos frères de la Martinique, Guadeloupe, guiane. Contactez-nous en inbox. +225 0142762017 .",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Tous nos frères de la Martinique, Guadeloupe, guiane. Contactez-nous en inbox. +225 0142762017 .",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-41",
+    "id": "afrika-41",
     "youtubeId": "J5CZcUEQKK8",
     "title": "Merci JÉSUS CHRIST pour la sagesse que tu nous donnes.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Merci JÉSUS CHRIST pour la sagesse que tu nous donnes.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Merci JÉSUS CHRIST pour la sagesse que tu nous donnes.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-42",
+    "id": "afrika-42",
     "youtubeId": "h8_JqK3MJDg",
     "title": "VISITATION DIVINE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-43",
+    "id": "afrika-43",
     "youtubeId": "_aToY8T4-a0",
     "title": "Ce que le PÈRE attend de toi Côte d'Ivoire.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Ce que le PÈRE attend de toi Côte d'Ivoire.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Ce que le PÈRE attend de toi Côte d'Ivoire.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-44",
+    "id": "afrika-44",
     "youtubeId": "YRWRlfk1Kf0",
     "title": "SAINT ESPRIT RÉPOND MOI. UNE ÉMISSION DE FACEBOOK",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. SAINT ESPRIT RÉPOND MOI. UNE ÉMISSION DE FACEBOOK",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. SAINT ESPRIT RÉPOND MOI. UNE ÉMISSION DE FACEBOOK",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-45",
+    "id": "afrika-45",
     "youtubeId": "CbIjzAtodeM",
     "title": "13 octobre 2025",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 13 octobre 2025",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 13 octobre 2025",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-46",
+    "id": "afrika-46",
     "youtubeId": "KwL4A_kVhx0",
     "title": "VISITATION DIVINE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-47",
+    "id": "afrika-47",
     "youtubeId": "E4YrwXTQncE",
     "title": "POUR L'ÉGLISE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. POUR L'ÉGLISE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. POUR L'ÉGLISE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-48",
+    "id": "afrika-48",
     "youtubeId": "GrmXw9oaVug",
     "title": "Regarder jusqu'à la fin svp. Des apparitions, et des signes",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Regarder jusqu'à la fin svp. Des apparitions, et des signes",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Regarder jusqu'à la fin svp. Des apparitions, et des signes",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-49",
+    "id": "afrika-49",
     "youtubeId": "9y-np3FXu6g",
     "title": "MARTINIQUE JÉSUS CHRIST T'AIME",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. MARTINIQUE JÉSUS CHRIST T'AIME",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. MARTINIQUE JÉSUS CHRIST T'AIME",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-50",
+    "id": "afrika-50",
     "youtubeId": "hmoJqaGLhkY",
     "title": "VISITATION DIVINE .  PASTEUR KONGO",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. VISITATION DIVINE .  PASTEUR KONGO",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. VISITATION DIVINE .  PASTEUR KONGO",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-51",
+    "id": "afrika-51",
     "youtubeId": "ePtPkwH2n6s",
     "title": "Juste un bout",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Juste un bout",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Juste un bout",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-52",
+    "id": "afrika-52",
     "youtubeId": "Fxf6RFCoqCI",
     "title": "Je réponds aux ouvriers de la 3 ème heure. Nouvelle émission sur Facebook",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Je réponds aux ouvriers de la 3 ème heure. Nouvelle émission sur Facebook",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Je réponds aux ouvriers de la 3 ème heure. Nouvelle émission sur Facebook",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-53",
+    "id": "afrika-53",
     "youtubeId": "Qtz-NaxbjdA",
     "title": "Un debrief de la croisade. Très bientôt les images professionnelles.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Un debrief de la croisade. Très bientôt les images professionnelles.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Un debrief de la croisade. Très bientôt les images professionnelles.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-54",
+    "id": "afrika-54",
     "youtubeId": "kFg5xfjj4do",
     "title": "23 juillet 2025",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 23 juillet 2025",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 23 juillet 2025",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-55",
+    "id": "afrika-55",
     "youtubeId": "T6zuPp0yz5Q",
     "title": "Les dimensions",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Les dimensions",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Les dimensions",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-56",
+    "id": "afrika-56",
     "youtubeId": "v9P-_NmeHMY",
     "title": "Je béni LE VÉRITABLE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Je béni LE VÉRITABLE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Je béni LE VÉRITABLE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-57",
+    "id": "afrika-57",
     "youtubeId": "KUOMunaq9r0",
     "title": "16 juillet 2025",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 16 juillet 2025",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 16 juillet 2025",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-58",
+    "id": "afrika-58",
     "youtubeId": "ZJfyFN9FBLU",
     "title": "Alléluia alléluia",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Alléluia alléluia",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Alléluia alléluia",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-59",
+    "id": "afrika-59",
     "youtubeId": "48s6cCi6TJY",
     "title": "Une nouvelle émission sur Facebook.  Sur le dépouillement .",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Une nouvelle émission sur Facebook.  Sur le dépouillement .",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Une nouvelle émission sur Facebook.  Sur le dépouillement .",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-60",
+    "id": "afrika-60",
     "youtubeId": "BXL80_IJgfg",
     "title": "25 juin 2025",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 25 juin 2025",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 25 juin 2025",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-61",
+    "id": "afrika-61",
     "youtubeId": "e0tDUbWjXv8",
     "title": "VISITATION DIVINE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-62",
+    "id": "afrika-62",
     "youtubeId": "gaLu1TJynao",
     "title": "16 juin 2025",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 16 juin 2025",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 16 juin 2025",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-63",
+    "id": "afrika-63",
     "youtubeId": "t_iQxTpNm8w",
     "title": "La réelle Pentecôte",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. La réelle Pentecôte",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. La réelle Pentecôte",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-64",
+    "id": "afrika-64",
     "youtubeId": "eWWOAf39dq0",
     "title": "VISITATION DIVINE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-65",
+    "id": "afrika-65",
     "youtubeId": "Mmn0zrmzZFc",
     "title": "VISITATION DIVINE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-66",
+    "id": "afrika-66",
     "youtubeId": "IfDX6p_RLfU",
     "title": "VISITATION DIVINE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-67",
+    "id": "afrika-67",
     "youtubeId": "LEWeLitYVyM",
     "title": "VISITATION DIVINE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. VISITATION DIVINE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-68",
+    "id": "afrika-68",
     "youtubeId": "7mEA3I1Gy_w",
     "title": "Visitation divine.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Visitation divine.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Visitation divine.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-69",
+    "id": "afrika-69",
     "youtubeId": "ystjM-SQp2U",
     "title": "Deux informations. Élie pada, et une nouvelle émission de guérison.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Deux informations. Élie pada, et une nouvelle émission de guérison.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Deux informations. Élie pada, et une nouvelle émission de guérison.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-70",
+    "id": "afrika-70",
     "youtubeId": "kpHYMbtDoHE",
-    "title": "Spécial interview  sur Africa Pam Dali.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Spécial interview  sur Africa Pam Dali.",
+    "title": "Spécial interview  sur Africa Afrika Dali.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Spécial interview  sur Africa Afrika Dali.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-71",
+    "id": "afrika-71",
     "youtubeId": "OwVTZXVKTIk",
     "title": "JÉSUS JE T'OUVRE MON CŒUR",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. JÉSUS JE T'OUVRE MON CŒUR",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. JÉSUS JE T'OUVRE MON CŒUR",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-72",
+    "id": "afrika-72",
     "youtubeId": "x44bKOaCn0M",
     "title": "A réécouter, avec image et versé biblique a la pui. Apocalypse 9 v7 a 9.  Matt 20 v 1 a 9.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. A réécouter, avec image et versé biblique a la pui. Apocalypse 9 v7 a 9.  Matt 20 v 1 a 9.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. A réécouter, avec image et versé biblique a la pui. Apocalypse 9 v7 a 9.  Matt 20 v 1 a 9.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-73",
+    "id": "afrika-73",
     "youtubeId": "fWcICC-l2eQ",
     "title": "Une annonce par rapport  au live de ce vendredi (  osiris )",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Une annonce par rapport  au live de ce vendredi (  osiris )",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Une annonce par rapport  au live de ce vendredi (  osiris )",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-74",
+    "id": "afrika-74",
     "youtubeId": "cIi4-IOfeSs",
     "title": "Pourquoi l'anneau au doigt. Genèse 41 v 42  Luc 15 v 22.   2 Samuel 1v 10.  Esther 3 v 8  -10.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Pourquoi l'anneau au doigt. Genèse 41 v 42  Luc 15 v 22.   2 Samuel 1v 10.  Esther 3 v 8  -10.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Pourquoi l'anneau au doigt. Genèse 41 v 42  Luc 15 v 22.   2 Samuel 1v 10.  Esther 3 v 8  -10.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-75",
+    "id": "afrika-75",
     "youtubeId": "U221qSar-Bc",
     "title": "Suite du programme",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Suite du programme",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Suite du programme",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-76",
+    "id": "afrika-76",
     "youtubeId": "TpYMYgbJIdk",
     "title": "Je réponds à une question.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Je réponds à une question.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Je réponds à une question.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-77",
+    "id": "afrika-77",
     "youtubeId": "iyQ5dj9mnLI",
     "title": "On ne sépare pas ce que L'ÉTERNEL a uni",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. On ne sépare pas ce que L'ÉTERNEL a uni",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. On ne sépare pas ce que L'ÉTERNEL a uni",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-78",
+    "id": "afrika-78",
     "youtubeId": "HJMaO1naAF0",
     "title": "emploi du temps pour les appels et visite.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. emploi du temps pour les appels et visite.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. emploi du temps pour les appels et visite.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-79",
+    "id": "afrika-79",
     "youtubeId": "O417Xe63seo",
     "title": "ce soir fin du jeûne.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. ce soir fin du jeûne.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. ce soir fin du jeûne.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-80",
+    "id": "afrika-80",
     "youtubeId": "LOeaaOngZ4Q",
     "title": "programme de prière",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. programme de prière",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. programme de prière",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Prière & Délivrance",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-81",
+    "id": "afrika-81",
     "youtubeId": "20aKFZd-7so",
     "title": "les instructions pour le premier mois.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. les instructions pour le premier mois.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. les instructions pour le premier mois.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-82",
+    "id": "afrika-82",
     "youtubeId": "fFaOnFNoIBs",
     "title": "proverbe 14 v 1",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. proverbe 14 v 1",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. proverbe 14 v 1",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-83",
+    "id": "afrika-83",
     "youtubeId": "oghcBqhkf8o",
     "title": "le premier mois",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. le premier mois",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. le premier mois",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-84",
+    "id": "afrika-84",
     "youtubeId": "IQkZ6GdaswA",
     "title": "L'ÉTERNEL exauce un cœur obéissant",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. L'ÉTERNEL exauce un cœur obéissant",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. L'ÉTERNEL exauce un cœur obéissant",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-85",
+    "id": "afrika-85",
     "youtubeId": "pF3g6YB0s5M",
     "title": "même dans la maladie adorons JÉSUS CHRIST",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. même dans la maladie adorons JÉSUS CHRIST",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. même dans la maladie adorons JÉSUS CHRIST",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-86",
+    "id": "afrika-86",
     "youtubeId": "5SmMptXzq6U",
     "title": "les parfums naturels ont été faits par L'ÉTERNEL.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. les parfums naturels ont été faits par L'ÉTERNEL.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. les parfums naturels ont été faits par L'ÉTERNEL.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-87",
+    "id": "afrika-87",
     "youtubeId": "N7_KTPMDwpo",
     "title": "De JOB,  à la FEMME de JAPHÉ FILS DE NOÉ",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. De JOB,  à la FEMME de JAPHÉ FILS DE NOÉ",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. De JOB,  à la FEMME de JAPHÉ FILS DE NOÉ",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-88",
+    "id": "afrika-88",
     "youtubeId": "PKJi9nOGYVA",
     "title": "Comment entendre la voix de L'ÉTERNEL",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Comment entendre la voix de L'ÉTERNEL",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Comment entendre la voix de L'ÉTERNEL",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-89",
+    "id": "afrika-89",
     "youtubeId": "bsCEYrCvMfo",
     "title": "JÉSUS CHRIST te dit ne crains point",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. JÉSUS CHRIST te dit ne crains point",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. JÉSUS CHRIST te dit ne crains point",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-90",
+    "id": "afrika-90",
     "youtubeId": "jVsi84UdSkI",
     "title": "une prière",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. une prière",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. une prière",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Prière & Délivrance",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-91",
+    "id": "afrika-91",
     "youtubeId": "v33rU-fFnz8",
     "title": "Ne te taire point",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Ne te taire point",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Ne te taire point",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-92",
+    "id": "afrika-92",
     "youtubeId": "ubcaZs1bsQA",
     "title": "je réponds à une question. sur les adamique. ( JÉSUS CHRIST DANS LE SÉJOUR DES MORTS)",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. je réponds à une question. sur les adamique. ( JÉSUS CHRIST DANS LE SÉJOUR DES MORTS)",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. je réponds à une question. sur les adamique. ( JÉSUS CHRIST DANS LE SÉJOUR DES MORTS)",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-93",
+    "id": "afrika-93",
     "youtubeId": "YrbXe2UsKfM",
     "title": "Que ta volonté soit",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Que ta volonté soit",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Que ta volonté soit",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-94",
+    "id": "afrika-94",
     "youtubeId": "FeJrnHADsvY",
     "title": "le prophétique Jérémie 13 v 1 a17 act 21v 11 act16v9  Josué 5v13  osee12  jean11",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. le prophétique Jérémie 13 v 1 a17 act 21v 11 act16v9  Josué 5v13  osee12  jean11",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. le prophétique Jérémie 13 v 1 a17 act 21v 11 act16v9  Josué 5v13  osee12  jean11",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-95",
+    "id": "afrika-95",
     "youtubeId": "sDkaYsrQvfg",
     "title": "message poussé par L'ESPRIT SAINT",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. message poussé par L'ESPRIT SAINT",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. message poussé par L'ESPRIT SAINT",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-96",
+    "id": "afrika-96",
     "youtubeId": "P54Yhyn991s",
     "title": "JESUS CHRIST est aussi le DIEU de Salomon.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. JESUS CHRIST est aussi le DIEU de Salomon.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. JESUS CHRIST est aussi le DIEU de Salomon.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-97",
+    "id": "afrika-97",
     "youtubeId": "zPICG85iIhM",
     "title": "la profondeur de L'ÉTERNEL",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. la profondeur de L'ÉTERNEL",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. la profondeur de L'ÉTERNEL",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-98",
+    "id": "afrika-98",
     "youtubeId": "HWLZ3KqwXqI",
     "title": "la polygamie n'est pas de L'ÉTERNEL",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. la polygamie n'est pas de L'ÉTERNEL",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. la polygamie n'est pas de L'ÉTERNEL",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-99",
+    "id": "afrika-99",
     "youtubeId": "K9bbTgIhJPk",
     "title": "La bible est l'histoire de la PAROLE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. La bible est l'histoire de la PAROLE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. La bible est l'histoire de la PAROLE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-100",
+    "id": "afrika-100",
     "youtubeId": "VeZk5pISHXk",
     "title": "N'abandonne pas tes rêves. JESUS CHRIST me fredonne ce chant à l'oreille.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. N'abandonne pas tes rêves. JESUS CHRIST me fredonne ce chant à l'oreille.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. N'abandonne pas tes rêves. JESUS CHRIST me fredonne ce chant à l'oreille.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-101",
+    "id": "afrika-101",
     "youtubeId": "GcUf9OuVZ24",
     "title": "je répond à une question.  Pourquoi prier sens cesse.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. je répond à une question.  Pourquoi prier sens cesse.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. je répond à une question.  Pourquoi prier sens cesse.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-102",
+    "id": "afrika-102",
     "youtubeId": "TcpAJUZ5MNQ",
     "title": "je répond à 2 questions",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. je répond à 2 questions",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. je répond à 2 questions",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-103",
+    "id": "afrika-103",
     "youtubeId": "KdsWBtyx-ws",
     "title": "ma conversation avec la mort",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. ma conversation avec la mort",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. ma conversation avec la mort",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-104",
+    "id": "afrika-104",
     "youtubeId": "a4kV8uViaT0",
     "title": "comment construire sa maison dans le ROYAUME DES CIEUX",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. comment construire sa maison dans le ROYAUME DES CIEUX",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. comment construire sa maison dans le ROYAUME DES CIEUX",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-105",
+    "id": "afrika-105",
     "youtubeId": "pIsd3wOO6RM",
     "title": "libère les captifs et  delivre les prisonnier.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. libère les captifs et  delivre les prisonnier.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. libère les captifs et  delivre les prisonnier.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-106",
+    "id": "afrika-106",
     "youtubeId": "X-jnaV48L5c",
     "title": "Un message du SAINT ESPRIT,  à  ces ouvriers",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Un message du SAINT ESPRIT,  à  ces ouvriers",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Un message du SAINT ESPRIT,  à  ces ouvriers",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-107",
+    "id": "afrika-107",
     "youtubeId": "bDfeXctQWrE",
     "title": "Conspiration et  confusion",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Conspiration et  confusion",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Conspiration et  confusion",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-108",
+    "id": "afrika-108",
     "youtubeId": "ZyQrsr7orBA",
     "title": "cour demonologie  1 .  a suivre ...",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. cour demonologie  1 .  a suivre ...",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. cour demonologie  1 .  a suivre ...",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-109",
+    "id": "afrika-109",
     "youtubeId": "SWAzsdxQpGk",
     "title": "Le mariage selon ADONAÏ",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Le mariage selon ADONAÏ",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Le mariage selon ADONAÏ",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-110",
+    "id": "afrika-110",
     "youtubeId": "oZCZlzeIy-U",
     "title": "terre beni",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. terre beni",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. terre beni",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-111",
+    "id": "afrika-111",
     "youtubeId": "2jbVWC_nPWY",
     "title": "un message poussé  par  L' ESPRIT DE  L' ETERNEL",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. un message poussé  par  L' ESPRIT DE  L' ETERNEL",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. un message poussé  par  L' ESPRIT DE  L' ETERNEL",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-112",
+    "id": "afrika-112",
     "youtubeId": "XgNCy9Ks0a4",
     "title": "LAVE TA ROBE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. LAVE TA ROBE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. LAVE TA ROBE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-113",
+    "id": "afrika-113",
     "youtubeId": "uYF_SdbXmz8",
     "title": "remise de la couronne",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. remise de la couronne",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. remise de la couronne",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-114",
+    "id": "afrika-114",
     "youtubeId": "SqNhIb0QTt0",
     "title": "Je repond a une question",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Je repond a une question",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Je repond a une question",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-115",
+    "id": "afrika-115",
     "youtubeId": "N4hMQv69lIc",
     "title": "le couronnement de L\"eglise",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. le couronnement de L\"eglise",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. le couronnement de L\"eglise",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-116",
+    "id": "afrika-116",
     "youtubeId": "lT0SXiu-7RU",
     "title": "La CONSECRATION selon  ADONAÏ.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. La CONSECRATION selon  ADONAÏ.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. La CONSECRATION selon  ADONAÏ.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-117",
+    "id": "afrika-117",
     "youtubeId": "bAc9U0yfyYA",
     "title": "le pardom est divin",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. le pardom est divin",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. le pardom est divin",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-118",
+    "id": "afrika-118",
     "youtubeId": "Yn10RrxK3vE",
     "title": "le code de la reussite",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. le code de la reussite",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. le code de la reussite",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-119",
+    "id": "afrika-119",
     "youtubeId": "StkBLDdTdjU",
     "title": "L'ÉTERNEL dit non ! au retour à l'envoyeur",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. L'ÉTERNEL dit non ! au retour à l'envoyeur",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. L'ÉTERNEL dit non ! au retour à l'envoyeur",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-120",
+    "id": "afrika-120",
     "youtubeId": "xBylOg06JiE",
-    "title": "afrika Pam Dali",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. afrika Pam Dali",
+    "title": "afrika Afrika Dali",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. afrika Afrika Dali",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-121",
+    "id": "afrika-121",
     "youtubeId": "XpEgXonpz9U",
     "title": "JESUS CHRIST dans le séjour des morts. fosse manipulations des l'effet sur la vidéo .",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. JESUS CHRIST dans le séjour des morts. fosse manipulations des l'effet sur la vidéo .",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. JESUS CHRIST dans le séjour des morts. fosse manipulations des l'effet sur la vidéo .",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-122",
+    "id": "afrika-122",
     "youtubeId": "aPCiUS11s3E",
     "title": "L'humilité précède la GLOIRE",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. L'humilité précède la GLOIRE",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. L'humilité précède la GLOIRE",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-123",
+    "id": "afrika-123",
     "youtubeId": "qJl1BIkFsy4",
     "title": "3 jour de jeune d' hadassa.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 3 jour de jeune d' hadassa.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 3 jour de jeune d' hadassa.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-124",
+    "id": "afrika-124",
     "youtubeId": "DNNj3zBFuT4",
-    "title": "AFRIKA PAM DALI MUSIC",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. AFRIKA PAM DALI MUSIC",
+    "title": "AFRIKA Afrika DALI MUSIC",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. AFRIKA Afrika DALI MUSIC",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-125",
+    "id": "afrika-125",
     "youtubeId": "jMsrQqnyWsI",
     "title": "comment vaincre les esprits exode 32 v 18 et ésaïe 51 v 1",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. comment vaincre les esprits exode 32 v 18 et ésaïe 51 v 1",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. comment vaincre les esprits exode 32 v 18 et ésaïe 51 v 1",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-126",
+    "id": "afrika-126",
     "youtubeId": "rZ1hN5x3BKc",
     "title": "Mon droit de réponse",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Mon droit de réponse",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Mon droit de réponse",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-127",
+    "id": "afrika-127",
     "youtubeId": "Etcd0CogaUY",
     "title": "L 'esprit de Vérité",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. L 'esprit de Vérité",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. L 'esprit de Vérité",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-128",
+    "id": "afrika-128",
     "youtubeId": "A2uJ656OenU",
     "title": "ADONAÏ n'es pas un homme",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. ADONAÏ n'es pas un homme",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. ADONAÏ n'es pas un homme",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-129",
+    "id": "afrika-129",
     "youtubeId": "UeoGbMQKjY4",
     "title": "je répond à une question.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. je répond à une question.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. je répond à une question.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-130",
+    "id": "afrika-130",
     "youtubeId": "gDrmFuHHD4Y",
     "title": "je répond à une question",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. je répond à une question",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. je répond à une question",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-131",
+    "id": "afrika-131",
     "youtubeId": "MFOrTnzWWS4",
     "title": "l'absence des père",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. l'absence des père",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. l'absence des père",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-132",
+    "id": "afrika-132",
     "youtubeId": "6iXOwOQz_GY",
     "title": "As tu le Saint Esprit ?",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. As tu le Saint Esprit ?",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. As tu le Saint Esprit ?",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-133",
+    "id": "afrika-133",
     "youtubeId": "-xMoX0mybeM",
     "title": "L' enfant à ADONAÏ",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. L' enfant à ADONAÏ",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. L' enfant à ADONAÏ",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-134",
+    "id": "afrika-134",
     "youtubeId": "zFh82Nrnikw",
     "title": "tu aimera L'ÉTERNEL de TOUT ton cœur, TOUT ton âme, et de TOUTE ta pensée.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. tu aimera L'ÉTERNEL de TOUT ton cœur, TOUT ton âme, et de TOUTE ta pensée.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. tu aimera L'ÉTERNEL de TOUT ton cœur, TOUT ton âme, et de TOUTE ta pensée.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-135",
+    "id": "afrika-135",
     "youtubeId": "lKYGdr6bxeQ",
-    "title": "Afrika Pam Dali. Music",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika Pam Dali. Music",
+    "title": "Afrika Afrika Dali. Music",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika Afrika Dali. Music",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-136",
+    "id": "afrika-136",
     "youtubeId": "67aSKk_SoMY",
     "title": "au pied de la croix",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. au pied de la croix",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. au pied de la croix",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-137",
+    "id": "afrika-137",
     "youtubeId": "8O8CWr8hR8E",
     "title": "un message pour les femmes. une seule chair",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. un message pour les femmes. une seule chair",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. un message pour les femmes. une seule chair",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-138",
+    "id": "afrika-138",
     "youtubeId": "nrGIAPNBWZs",
     "title": "JESUS est ressuscité",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. JESUS est ressuscité",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. JESUS est ressuscité",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-139",
+    "id": "afrika-139",
     "youtubeId": "3P9dtZdques",
     "title": "l'état de ton âme.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. l'état de ton âme.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. l'état de ton âme.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-140",
+    "id": "afrika-140",
     "youtubeId": "IVgNnsGQJw8",
     "title": "la préparation",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. la préparation",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. la préparation",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-141",
+    "id": "afrika-141",
     "youtubeId": "4xaREEBCEe4",
     "title": "un versé biblique répétés à plusieurs reprises opérer le miracle.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. un versé biblique répétés à plusieurs reprises opérer le miracle.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. un versé biblique répétés à plusieurs reprises opérer le miracle.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-142",
+    "id": "afrika-142",
     "youtubeId": "m6xFed2vBRw",
     "title": "ton aura",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. ton aura",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. ton aura",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-143",
+    "id": "afrika-143",
     "youtubeId": "JVQTHrfpcWw",
     "title": "comment faire pour reconnaître la voix de Dieu.  quel  différence entre le don de prophétie et...",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. comment faire pour reconnaître la voix de Dieu.  quel  différence entre le don de prophétie et...",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. comment faire pour reconnaître la voix de Dieu.  quel  différence entre le don de prophétie et...",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-144",
+    "id": "afrika-144",
     "youtubeId": "7xwXZUL1r5o",
     "title": "Que ta volonté soit faite sur la terre comme au ciel.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Que ta volonté soit faite sur la terre comme au ciel.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Que ta volonté soit faite sur la terre comme au ciel.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-145",
+    "id": "afrika-145",
     "youtubeId": "0XaJpdZMGfY",
     "title": "je répond à une question. les livres chrétiens et la couleur du Christ.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. je répond à une question. les livres chrétiens et la couleur du Christ.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. je répond à une question. les livres chrétiens et la couleur du Christ.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-146",
+    "id": "afrika-146",
     "youtubeId": "YUjuLP4hOyk",
     "title": "j'ai assisté à une réunion de de l'enfer",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai assisté à une réunion de de l'enfer",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai assisté à une réunion de de l'enfer",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-147",
+    "id": "afrika-147",
     "youtubeId": "psw_MDGytt4",
     "title": "une réponse sur le baptême et le retour d'agar.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. une réponse sur le baptême et le retour d'agar.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. une réponse sur le baptême et le retour d'agar.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-148",
+    "id": "afrika-148",
     "youtubeId": "IFlhmkEW_Aw",
-    "title": "afrika Pam Dali  Music.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. afrika Pam Dali  Music.",
+    "title": "afrika Afrika Dali  Music.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. afrika Afrika Dali  Music.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-149",
+    "id": "afrika-149",
     "youtubeId": "1WmG9T6lI_I",
     "title": "qui est Pamela (Afrika) pour HACHEM ADONAÏ",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. qui est Pamela (Afrika) pour HACHEM ADONAÏ",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. qui est Pamela (Afrika) pour HACHEM ADONAÏ",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-150",
+    "id": "afrika-150",
     "youtubeId": "uZYE_0XXsC8",
     "title": "une réponse sur le chabate",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. une réponse sur le chabate",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. une réponse sur le chabate",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-151",
+    "id": "afrika-151",
     "youtubeId": "1yL9O-ORx_0",
     "title": "26 septembre 2022",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 26 septembre 2022",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 26 septembre 2022",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-152",
+    "id": "afrika-152",
     "youtubeId": "DnX10XpeiQE",
     "title": "une réponse sur la dîme.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. une réponse sur la dîme.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. une réponse sur la dîme.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-153",
+    "id": "afrika-153",
     "youtubeId": "ySFQecyXfWg",
     "title": "pour répondre à quelques questions",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. pour répondre à quelques questions",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. pour répondre à quelques questions",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-154",
+    "id": "afrika-154",
     "youtubeId": "08OnVEd6dKA",
     "title": "le livre de vi",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. le livre de vi",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. le livre de vi",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-155",
+    "id": "afrika-155",
     "youtubeId": "3RSiurHF07w",
     "title": "le ;baptême de l'esprit ( parlé en langue)",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. le ;baptême de l'esprit ( parlé en langue)",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. le ;baptême de l'esprit ( parlé en langue)",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-156",
+    "id": "afrika-156",
     "youtubeId": "wUmkONIdfqs",
     "title": "le figuier maudis",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. le figuier maudis",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. le figuier maudis",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-157",
+    "id": "afrika-157",
     "youtubeId": "Pr3ZJ9I8lQc",
     "title": "Pamela Dali Music",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Pamela Dali Music",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Pamela Dali Music",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-158",
+    "id": "afrika-158",
     "youtubeId": "RMaEashkVJ8",
     "title": "les actions  prophétique. dans le domaine de la guérison",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. les actions  prophétique. dans le domaine de la guérison",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. les actions  prophétique. dans le domaine de la guérison",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-159",
+    "id": "afrika-159",
     "youtubeId": "Nu-go9gE5O8",
     "title": "JESUS ma envoyé dans le jardin. l'arbre de la connaissance c'est DIEU.  adan 40 et eve  15 ans",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. JESUS ma envoyé dans le jardin. l'arbre de la connaissance c'est DIEU.  adan 40 et eve  15 ans",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. JESUS ma envoyé dans le jardin. l'arbre de la connaissance c'est DIEU.  adan 40 et eve  15 ans",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-160",
+    "id": "afrika-160",
     "youtubeId": "DWMYxMIp1XQ",
     "title": "quelques témoin s'exprime  sur  l'enlèvement  de 2003.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. quelques témoin s'exprime  sur  l'enlèvement  de 2003.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. quelques témoin s'exprime  sur  l'enlèvement  de 2003.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-161",
+    "id": "afrika-161",
     "youtubeId": "nVNHDTIHOh4",
     "title": "chercher  premièrement  le  Royaume des cieux  et sa justice.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. chercher  premièrement  le  Royaume des cieux  et sa justice.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. chercher  premièrement  le  Royaume des cieux  et sa justice.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-162",
+    "id": "afrika-162",
     "youtubeId": "_w9r3LB5xCQ",
     "title": "la fin du lien  de famille  est YESHUA !  mais  en toi.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. la fin du lien  de famille  est YESHUA !  mais  en toi.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. la fin du lien  de famille  est YESHUA !  mais  en toi.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-163",
+    "id": "afrika-163",
     "youtubeId": "UWgM2ELFI3M",
     "title": "Pamela Dali Music. la vision de l'apôtre Jean.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Pamela Dali Music. la vision de l'apôtre Jean.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Pamela Dali Music. la vision de l'apôtre Jean.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-164",
+    "id": "afrika-164",
     "youtubeId": "V3OoQ1TcNNg",
     "title": "pour tout ceux qui veulent me contacter.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. pour tout ceux qui veulent me contacter.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. pour tout ceux qui veulent me contacter.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-165",
+    "id": "afrika-165",
     "youtubeId": "vUK4Zh3EvmU",
     "title": "Pamela Dali Music",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Pamela Dali Music",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Pamela Dali Music",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-166",
+    "id": "afrika-166",
     "youtubeId": "6W8yjMoVvdk",
     "title": "Fin de la deuxième rencontre avec Dieu.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Fin de la deuxième rencontre avec Dieu.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Fin de la deuxième rencontre avec Dieu.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-167",
+    "id": "afrika-167",
     "youtubeId": "3wurfcYI7RE",
     "title": "j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu. partie 4",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu. partie 4",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu. partie 4",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-168",
+    "id": "afrika-168",
     "youtubeId": "A8LUSKFn6Fc",
     "title": "j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu. partie 3",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu. partie 3",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu. partie 3",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-169",
+    "id": "afrika-169",
     "youtubeId": "eq_I4GVBeyA",
     "title": "j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu. partie 2",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu. partie 2",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu. partie 2",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-170",
+    "id": "afrika-170",
     "youtubeId": "_aTzTw0pEEs",
     "title": "JESUS est en colère contre les ouvriers de la troisième heure.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. JESUS est en colère contre les ouvriers de la troisième heure.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. JESUS est en colère contre les ouvriers de la troisième heure.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-171",
+    "id": "afrika-171",
     "youtubeId": "eS6-XOpx_cU",
     "title": "j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. ma deuxième rencontre avec Dieu",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-172",
+    "id": "afrika-172",
     "youtubeId": "96wtXtDmYMc",
     "title": "mon peuple péri par manque de connaissances",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. mon peuple péri par manque de connaissances",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. mon peuple péri par manque de connaissances",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-173",
+    "id": "afrika-173",
     "youtubeId": "DlUgtljgoho",
     "title": "une prière pour tous ceux qui n'arrive pas à maintenir la flamme. YESHUA a dit VENEZ à MOI",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. une prière pour tous ceux qui n'arrive pas à maintenir la flamme. YESHUA a dit VENEZ à MOI",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. une prière pour tous ceux qui n'arrive pas à maintenir la flamme. YESHUA a dit VENEZ à MOI",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Prière & Délivrance",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-174",
+    "id": "afrika-174",
     "youtubeId": "c4S0IefgZ9s",
     "title": "un message sur l'identité de l'huile et le vin.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. un message sur l'identité de l'huile et le vin.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. un message sur l'identité de l'huile et le vin.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-175",
+    "id": "afrika-175",
     "youtubeId": "097B-BPDJes",
     "title": "un message sur la patience du Roi David",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. un message sur la patience du Roi David",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. un message sur la patience du Roi David",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-176",
+    "id": "afrika-176",
     "youtubeId": "04VPa_bU3pU",
     "title": "un message sur la conversion qui est relier au porte spirituelle 2v1 19  Matt 2v1",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. un message sur la conversion qui est relier au porte spirituelle 2v1 19  Matt 2v1",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. un message sur la conversion qui est relier au porte spirituelle 2v1 19  Matt 2v1",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-177",
+    "id": "afrika-177",
     "youtubeId": "P_Tedq8Ydes",
     "title": "un message pour les mariés en JESUS CHRIST.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. un message pour les mariés en JESUS CHRIST.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. un message pour les mariés en JESUS CHRIST.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-178",
+    "id": "afrika-178",
     "youtubeId": "m0aUQ740Dzk",
     "title": "Partager un message très fort. interdit au âme sensible.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Partager un message très fort. interdit au âme sensible.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Partager un message très fort. interdit au âme sensible.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-179",
+    "id": "afrika-179",
     "youtubeId": "T3W5Buog_cc",
     "title": "je soupir après toi.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. je soupir après toi.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. je soupir après toi.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-180",
+    "id": "afrika-180",
     "youtubeId": "_RK67xvIxkA",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. dernière partie.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. dernière partie.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. dernière partie.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-181",
+    "id": "afrika-181",
     "youtubeId": "q3sfQiygyDA",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali 11ème partie",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali 11ème partie",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali 11ème partie",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-182",
+    "id": "afrika-182",
     "youtubeId": "kNkPllkMCKI",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali 10ème partie.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali 10ème partie.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali 10ème partie.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-183",
+    "id": "afrika-183",
     "youtubeId": "XWLF7GC7F1g",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela. 9ème partie",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela. 9ème partie",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela. 9ème partie",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-184",
+    "id": "afrika-184",
     "youtubeId": "tojDCeg0ebU",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. 8ème partie.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. 8ème partie.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. 8ème partie.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-185",
+    "id": "afrika-185",
     "youtubeId": "z6-BmISahJI",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. 7ème partie",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. 7ème partie",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. 7ème partie",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-186",
+    "id": "afrika-186",
     "youtubeId": "YhCtj-360BY",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. sixième partie.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. sixième partie.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. sixième partie.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-187",
+    "id": "afrika-187",
     "youtubeId": "1NnRYFJ5qDw",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. cinquième partie.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. cinquième partie.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. cinquième partie.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-188",
+    "id": "afrika-188",
     "youtubeId": "Ln0IHknLXSE",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. quatrième partie.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. quatrième partie.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. quatrième partie.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-189",
+    "id": "afrika-189",
     "youtubeId": "K1J3ROrGf-A",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant de la chantre Pamela Dali. troisième partie.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant de la chantre Pamela Dali. troisième partie.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant de la chantre Pamela Dali. troisième partie.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-190",
+    "id": "afrika-190",
     "youtubeId": "mY6sedXwRUU",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali deuxième partie.",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali deuxième partie.",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali deuxième partie.",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-191",
+    "id": "afrika-191",
     "youtubeId": "c3TTxB-ETqA",
     "title": "j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. première partie",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. première partie",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. j'ai visité le royaume des cieux. témoignage édifiant, de la chantre Pamela Dali. première partie",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-192",
+    "id": "afrika-192",
     "youtubeId": "EeBQSRB0D5Q",
     "title": "17 avril 2022",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 17 avril 2022",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 17 avril 2022",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-193",
+    "id": "afrika-193",
     "youtubeId": "N3b-2ijxaos",
     "title": "Partager",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Partager",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Partager",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Témoignages & Visions",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-194",
+    "id": "afrika-194",
     "youtubeId": "9PBNafjpt4M",
     "title": "je veux marcher",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. je veux marcher",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. je veux marcher",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-195",
+    "id": "afrika-195",
     "youtubeId": "nQD2TbpZQH0",
     "title": "YESHUA soit loué",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. YESHUA soit loué",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. YESHUA soit loué",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-196",
+    "id": "afrika-196",
     "youtubeId": "nDsk6sm5XMY",
     "title": "11 septembre 2021",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. 11 septembre 2021",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. 11 septembre 2021",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-197",
+    "id": "afrika-197",
     "youtubeId": "EzvGVs1syo4",
-    "title": "Pam.D Eyo yo instrumental",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Pam.D Eyo yo instrumental",
+    "title": "Afrika.D Eyo yo instrumental",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika.D Eyo yo instrumental",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-198",
+    "id": "afrika-198",
     "youtubeId": "Dy2hmR-h-yU",
-    "title": "Pam.D Eyo yo",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Pam.D Eyo yo",
+    "title": "Afrika.D Eyo yo",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika.D Eyo yo",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-199",
+    "id": "afrika-199",
     "youtubeId": "eBIUvYP-_Zg",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-200",
+    "id": "afrika-200",
     "youtubeId": "g3FyRcAOtl8",
     "title": "Programme du baptême. Samedi 8 Août 2026.  Rassemblement a modeste bassam  à midi.  0788880353",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Programme du baptême. Samedi 8 Août 2026.  Rassemblement a modeste bassam  à midi.  0788880353",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Programme du baptême. Samedi 8 Août 2026.  Rassemblement a modeste bassam  à midi.  0788880353",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-201",
+    "id": "afrika-201",
     "youtubeId": "_w4Rz29atIU",
     "title": "+225 0788880353  SŒUR REINE  :+225 0142762017 SŒUR AFRIKA   QUE DIEU VOUS BÉNIS",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. +225 0788880353  SŒUR REINE  :+225 0142762017 SŒUR AFRIKA   QUE DIEU VOUS BÉNIS",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. +225 0788880353  SŒUR REINE  :+225 0142762017 SŒUR AFRIKA   QUE DIEU VOUS BÉNIS",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-202",
+    "id": "afrika-202",
     "youtubeId": "mkyRqw1_nSw",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-203",
+    "id": "afrika-203",
     "youtubeId": "IluK6BYNzhM",
     "title": "LE REGARD DE L'ÉTERNEL  EST DIFFÉRENT DU REGARD DES HOMMES",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. LE REGARD DE L'ÉTERNEL  EST DIFFÉRENT DU REGARD DES HOMMES",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. LE REGARD DE L'ÉTERNEL  EST DIFFÉRENT DU REGARD DES HOMMES",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-204",
+    "id": "afrika-204",
     "youtubeId": "rgTze2f1y2I",
     "title": "Ria . western. Money gram. Nom: Dali. Prénom : OBOU PAMELA.  Wave    0142762017 .  0788880353",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Ria . western. Money gram. Nom: Dali. Prénom : OBOU PAMELA.  Wave    0142762017 .  0788880353",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Ria . western. Money gram. Nom: Dali. Prénom : OBOU PAMELA.  Wave    0142762017 .  0788880353",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-205",
+    "id": "afrika-205",
     "youtubeId": "ZxWn-Oc_Jv4",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-206",
+    "id": "afrika-206",
     "youtubeId": "kTV7MEK2y_k",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-207",
+    "id": "afrika-207",
     "youtubeId": "COvaMM5srac",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-208",
+    "id": "afrika-208",
     "youtubeId": "IihJXpGXzF0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-209",
+    "id": "afrika-209",
     "youtubeId": "yLxsTJdZZJo",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-210",
+    "id": "afrika-210",
     "youtubeId": "dfgVQzxvtuE",
     "title": "JÉSUS CHRIST DANS LE SÉJOUR DES MOTS",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. JÉSUS CHRIST DANS LE SÉJOUR DES MOTS",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. JÉSUS CHRIST DANS LE SÉJOUR DES MOTS",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-211",
+    "id": "afrika-211",
     "youtubeId": "a0GkzJcPL6k",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-212",
+    "id": "afrika-212",
     "youtubeId": "o4nFS32k-ZU",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-213",
+    "id": "afrika-213",
     "youtubeId": "FXD77U68mxI",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-214",
+    "id": "afrika-214",
     "youtubeId": "-hVRWOBxaoU",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-215",
+    "id": "afrika-215",
     "youtubeId": "mU2fWr0FKjg",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-216",
+    "id": "afrika-216",
     "youtubeId": "y1zs4SyO-CI",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-217",
+    "id": "afrika-217",
     "youtubeId": "G553MwtL8j8",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-218",
+    "id": "afrika-218",
     "youtubeId": "-d_evum25fw",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-219",
+    "id": "afrika-219",
     "youtubeId": "hIqQnEmXSFM",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-220",
+    "id": "afrika-220",
     "youtubeId": "wJkV69LWSQs",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-221",
+    "id": "afrika-221",
     "youtubeId": "slFs2Jy3HYA",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-222",
+    "id": "afrika-222",
     "youtubeId": "i3wNyzfGExk",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-223",
+    "id": "afrika-223",
     "youtubeId": "kJqBGd-LoV0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-224",
+    "id": "afrika-224",
     "youtubeId": "QWM7AO8Pae0",
     "title": "Psm7v18 psm9v2a3 psm18v49a50 psm30v12a13 psm35v18 psm42v6 psm54v8a9 psm86v12a13",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Psm7v18 psm9v2a3 psm18v49a50 psm30v12a13 psm35v18 psm42v6 psm54v8a9 psm86v12a13",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Psm7v18 psm9v2a3 psm18v49a50 psm30v12a13 psm35v18 psm42v6 psm54v8a9 psm86v12a13",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-225",
+    "id": "afrika-225",
     "youtubeId": "YwXtsgRm6bc",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-226",
+    "id": "afrika-226",
     "youtubeId": "m0V9AJ8EYjI",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-227",
+    "id": "afrika-227",
     "youtubeId": "jWXc8-Thtf0",
     "title": "Psm 7:18 psm9:2a3 psm 18:49a50 psm 30:12a13 a13 psm 35:18 psm 42:6 psm 54:8a9 psm 86:12a13",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Psm 7:18 psm9:2a3 psm 18:49a50 psm 30:12a13 a13 psm 35:18 psm 42:6 psm 54:8a9 psm 86:12a13",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Psm 7:18 psm9:2a3 psm 18:49a50 psm 30:12a13 a13 psm 35:18 psm 42:6 psm 54:8a9 psm 86:12a13",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Paroles & Exhortations",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-228",
+    "id": "afrika-228",
     "youtubeId": "Fkal0U4rFZw",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-229",
+    "id": "afrika-229",
     "youtubeId": "yLJ9fVS9GAs",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-230",
+    "id": "afrika-230",
     "youtubeId": "M2OuPOWoAZA",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-231",
+    "id": "afrika-231",
     "youtubeId": "r1k5VWHeZkI",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-232",
+    "id": "afrika-232",
     "youtubeId": "-71F_m4bVQo",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-233",
+    "id": "afrika-233",
     "youtubeId": "DYw19rNCY68",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-234",
+    "id": "afrika-234",
     "youtubeId": "sKGfv-tTxHA",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-235",
+    "id": "afrika-235",
     "youtubeId": "0BXYJdrVQCI",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-236",
+    "id": "afrika-236",
     "youtubeId": "WAUD2Vg5_P8",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-237",
+    "id": "afrika-237",
     "youtubeId": "Lby3wgeXkpE",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-238",
+    "id": "afrika-238",
     "youtubeId": "x-Wgk14YmcU",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-239",
+    "id": "afrika-239",
     "youtubeId": "8imd90slqyk",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-240",
+    "id": "afrika-240",
     "youtubeId": "MZGbDSEaB9s",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-241",
+    "id": "afrika-241",
     "youtubeId": "IQXqIKXKeWk",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-242",
+    "id": "afrika-242",
     "youtubeId": "H_aUOaLbgVg",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-243",
+    "id": "afrika-243",
     "youtubeId": "j6pOirIwuvo",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-244",
+    "id": "afrika-244",
     "youtubeId": "I-zxNZ_hHHo",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-245",
+    "id": "afrika-245",
     "youtubeId": "QhlJDUiTwv4",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-246",
+    "id": "afrika-246",
     "youtubeId": "6B4vT-iBllY",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-247",
+    "id": "afrika-247",
     "youtubeId": "SxgRSKtfQXo",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-248",
+    "id": "afrika-248",
     "youtubeId": "51VBX8wDWAA",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-249",
+    "id": "afrika-249",
     "youtubeId": "FRySZMtHkV4",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-250",
+    "id": "afrika-250",
     "youtubeId": "uXMIVoAFoSI",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-251",
+    "id": "afrika-251",
     "youtubeId": "QyCj0IvociY",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-252",
+    "id": "afrika-252",
     "youtubeId": "5lbr18rLwE0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-253",
+    "id": "afrika-253",
     "youtubeId": "98Zm5Rs3UVM",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-254",
+    "id": "afrika-254",
     "youtubeId": "PwvCVHUBMHc",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-255",
+    "id": "afrika-255",
     "youtubeId": "MsoqH9WzUG0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-256",
+    "id": "afrika-256",
     "youtubeId": "cu1eClEdRp0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-257",
+    "id": "afrika-257",
     "youtubeId": "RKuzsCraR-Y",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-258",
+    "id": "afrika-258",
     "youtubeId": "kAfcm34JdS0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct!nom Dali. Prénom Obou Paméla. +2250142762017",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct!nom Dali. Prénom Obou Paméla. +2250142762017",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct!nom Dali. Prénom Obou Paméla. +2250142762017",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct!nom Dali. Prénom Obou Paméla. +2250142762017",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-259",
+    "id": "afrika-259",
     "youtubeId": "ytacIRDo8TI",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-260",
+    "id": "afrika-260",
     "youtubeId": "tyfR1K8QNew",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-261",
+    "id": "afrika-261",
     "youtubeId": "oOVxGrEa1C4",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-262",
+    "id": "afrika-262",
     "youtubeId": "T4uFNWZ5A_U",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-263",
+    "id": "afrika-263",
     "youtubeId": "kyg2cR6EuDU",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-264",
+    "id": "afrika-264",
     "youtubeId": "7fvOFZ7hpLM",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-265",
+    "id": "afrika-265",
     "youtubeId": "3zrwH2tiwHs",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-266",
+    "id": "afrika-266",
     "youtubeId": "vkcoy7vzAts",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-267",
+    "id": "afrika-267",
     "youtubeId": "Yqi93E5EJa8",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-268",
+    "id": "afrika-268",
     "youtubeId": "RRf6mawCsN0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-269",
+    "id": "afrika-269",
     "youtubeId": "QuJwf2lPZzI",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-270",
+    "id": "afrika-270",
     "youtubeId": "HXmuOVMKYKM",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-271",
+    "id": "afrika-271",
     "youtubeId": "JzWTFc-xqCs",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-272",
+    "id": "afrika-272",
     "youtubeId": "goMMUF0cZt4",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-273",
+    "id": "afrika-273",
     "youtubeId": "WefSUYmESH0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-274",
+    "id": "afrika-274",
     "youtubeId": "XvgoK9Vil-w",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-275",
+    "id": "afrika-275",
     "youtubeId": "4LP470mfCW0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-276",
+    "id": "afrika-276",
     "youtubeId": "Z60jF-qITwY",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-277",
+    "id": "afrika-277",
     "youtubeId": "qGqVHdw8LtI",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-278",
+    "id": "afrika-278",
     "youtubeId": "gfCVhlX_cU0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-279",
+    "id": "afrika-279",
     "youtubeId": "bYkvBhhph0s",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-280",
+    "id": "afrika-280",
     "youtubeId": "avMkDSLXkug",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-281",
+    "id": "afrika-281",
     "youtubeId": "gcIsjJa4g7E",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-282",
+    "id": "afrika-282",
     "youtubeId": "oyUKIECRpS0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-283",
+    "id": "afrika-283",
     "youtubeId": "GwJIq6wiUHk",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-284",
+    "id": "afrika-284",
     "youtubeId": "RKNksJLA6aQ",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct ! Suite et fin",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct ! Suite et fin",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct ! Suite et fin",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct ! Suite et fin",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-285",
+    "id": "afrika-285",
     "youtubeId": "K2GOHy9vHQk",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct ! première partie",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct ! première partie",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct ! première partie",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct ! première partie",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-286",
+    "id": "afrika-286",
     "youtubeId": "G3qis8W3DPo",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-287",
+    "id": "afrika-287",
     "youtubeId": "jCCwsGWh0zk",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-288",
+    "id": "afrika-288",
     "youtubeId": "HUbTg9imxnc",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-289",
+    "id": "afrika-289",
     "youtubeId": "kSMRWcp3Pyo",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-290",
+    "id": "afrika-290",
     "youtubeId": "xztP7rGD-6E",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-291",
+    "id": "afrika-291",
     "youtubeId": "bfpEJd0KC3A",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-292",
+    "id": "afrika-292",
     "youtubeId": "E-GJUDH0qF0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-293",
+    "id": "afrika-293",
     "youtubeId": "bCwg74bNkY0",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-294",
+    "id": "afrika-294",
     "youtubeId": "Gn4xXeHrWqo",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   },
   {
-    "id": "pam-295",
+    "id": "afrika-295",
     "youtubeId": "QQeqDgvATs4",
-    "title": "Afrika  Alkebulane Pam. Dali est en direct !",
-    "description": "Vidéo de Pam — Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Pam. Dali est en direct !",
+    "title": "Afrika  Alkebulane Afrika. Dali est en direct !",
+    "description": "Vidéo d'Afrika Alkebulane Pamela Dali. Afrika  Alkebulane Afrika. Dali est en direct !",
     "duration": "",
     "views": 0,
     "publishedAt": "2024-01-01",
     "category": "Lives & Directs",
-    "servant": "pam"
+    "servant": "afrika"
   }
 ];
 
@@ -6013,8 +6013,8 @@ const KONGO_VIDEOS: VideoItem[] = [
   }
 ];
 
-export function getCategoriesByServant(servant: "pam" | "kongo"): VideoCategory[] {
-  const vids = servant === "pam" ? PAM_VIDEOS : KONGO_VIDEOS;
+export function getCategoriesByServant(servant: "afrika" | "kongo"): VideoCategory[] {
+  const vids = servant === "afrika" ? AFRIKA_VIDEOS : KONGO_VIDEOS;
   const catsMap = new Map<string, VideoItem[]>();
   for (const v of vids) {
     if (!catsMap.has(v.category)) catsMap.set(v.category, []);
@@ -6023,14 +6023,14 @@ export function getCategoriesByServant(servant: "pam" | "kongo"): VideoCategory[
   return Array.from(catsMap.entries()).map(([name, vs], i) => ({
     id: `${servant}-cat-${i}`,
     name,
-    description: {"Lives & Directs":"Diffusions en direct de Pam — enseignements, prières et partages en temps réel.","Prière & Délivrance":"Sessions de prière fervente, délivrance spirituelle et intercession.","Enseignements & Prédications":"Enseignements bibliques approfondis et prédications.","Témoignages & Visions":"Témoignages authentiques, visions célestes et révélations.","Fêtes & Shabbat":"Enseignements sur les fêtes de l'Éternel et le calendrier biblique.","Discernement Spirituel":"Formation au discernement des esprits et protection contre la séduction.","Paroles & Exhortations":"Paroles d'exhortation, encouragements et instructions prophétiques."}[name] || "",
+    description: {"Lives & Directs":"Diffusions en direct d'Afrika — enseignements, prières et partages en temps réel.","Prière & Délivrance":"Sessions de prière fervente, délivrance spirituelle et intercession.","Enseignements & Prédications":"Enseignements bibliques approfondis et prédications.","Témoignages & Visions":"Témoignages authentiques, visions célestes et révélations.","Fêtes & Shabbat":"Enseignements sur les fêtes de l'Éternel et le calendrier biblique.","Discernement Spirituel":"Formation au discernement des esprits et protection contre la séduction.","Paroles & Exhortations":"Paroles d'exhortation, encouragements et instructions prophétiques."}[name] || "",
     servant,
     videos: vs,
   }));
 }
 
 export function getAllVideos(): VideoItem[] {
-  return [...PAM_VIDEOS, ...KONGO_VIDEOS];
+  return [...AFRIKA_VIDEOS, ...KONGO_VIDEOS];
 }
 
 export function getVideoById(id: string): VideoItem | undefined {

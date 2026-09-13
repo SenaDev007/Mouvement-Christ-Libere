@@ -79,7 +79,7 @@ export default function NewAdminUserPage() {
           Créer un compte administrateur
         </h1>
         <p className="text-sm text-[#8A8378]">
-          Réservé aux super administrateurs (Pam, Pasteur Kongo).
+          Réservé aux super administrateurs (Afrika, Pasteur Kongo).
         </p>
       </div>
 

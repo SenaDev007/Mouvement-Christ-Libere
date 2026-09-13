@@ -20,7 +20,7 @@
  * qui affiche « Isolélé (Israël) » avec « Isolélé » en gras.
  */
 
-import { BIO_PAM, BIO_KONGO } from "@/lib/data/servant-bios";
+import { BIO_AFRIKA, BIO_KONGO } from "@/lib/data/servant-bios";
 
 // ============================================================
 // TYPES
@@ -60,8 +60,8 @@ export interface HeroPageMeta {
 // ============================================================
 
 export const HERO_PAGES: HeroPageMeta[] = [
-  { page: "landing", label: "Accueil (landing)", href: "/", description: "Grand hero de la page d'accueil + photos de Pam et du Pasteur Kongo" },
-  { page: "pam", label: "Pam — Servante", href: "/pam", description: "Hero, photo et biographie de Pam" },
+  { page: "landing", label: "Accueil (landing)", href: "/", description: "Grand hero de la page d'accueil + photos d'Afrika et du Pasteur Kongo" },
+  { page: "afrika", label: "Afrika — Servante", href: "/afrika", description: "Hero, photo et biographie d'Afrika" },
   { page: "pasteur-kongo", label: "Pasteur Kongo", href: "/pasteur-kongo", description: "Hero, photo et biographie du Pasteur Kongo" },
   { page: "temoignages", label: "Témoignages", href: "/temoignages", description: "Hero de la page des témoignages" },
   { page: "enseignements", label: "Enseignements", href: "/enseignements", description: "Hero de la page des enseignements" },
@@ -91,8 +91,8 @@ export const DEFAULT_HEROES: Record<string, HeroConfig> = {
     subtitle:
       "Témoignages, enseignements et vie de communauté, au service du rassemblement des fils d'Israël dispersés — en préparation au retour du Maître Yeshua, au son du chofar.",
     backgroundImage: "/pam-kongo-hero.webp",
-    ctaLabel: "Découvrir Pam",
-    ctaHref: "/pam",
+    ctaLabel: "Découvrir Afrika",
+    ctaHref: "/afrika",
     cta2Label: "Découvrir le Pasteur Kongo",
     cta2Href: "/pasteur-kongo",
     data: {
@@ -111,8 +111,8 @@ export const DEFAULT_HEROES: Record<string, HeroConfig> = {
     },
   },
 
-  pam: {
-    page: "pam",
+  afrika: {
+    page: "afrika",
     kicker: "Servante de l'Éternel",
     title: "Afrika Alkebulane",
     titleAccent: "Pamela Dali",
@@ -131,7 +131,7 @@ export const DEFAULT_HEROES: Record<string, HeroConfig> = {
       bioTitle: "La Marche d'une Élue",
       bioQuote:
         "« À l'image du patriarche Hénoch qui marcha avec Dieu, elle a été saisie par le Créateur pour être le témoin direct des réalités invisibles du Royaume des Cieux. »",
-      bioText: BIO_PAM,
+      bioText: BIO_AFRIKA,
       bioPhoto: "/pam.jpeg",
       bioPhotoBadge: "Servante de l'Éternel",
       bioPhotoFirstName: "Afrika Alkebulane",
@@ -336,7 +336,7 @@ export const DEFAULT_HEROES: Record<string, HeroConfig> = {
   appels: {
     page: "appels",
     kicker: "Appels audio & vidéo",
-    title: "Appeler Pam ou le Pasteur Kongo",
+    title: "Appeler Afrika ou le Pasteur Kongo",
     titleAccent: "",
     titleSuffix: "",
     subtitle:
@@ -427,16 +427,16 @@ export const HERO_FIELDS: Record<string, HeroFieldDef[]> = {
     ...COMMON_HERO_FIELDS,
     { key: "data.servantsKicker", label: "Section « Deux serviteurs » — accroche", type: "text" },
     { key: "data.servantsTitle", label: "Section « Deux serviteurs » — titre", type: "text" },
-    { key: "data.pamPhoto", label: "Photo de Pam (carte serviteurs)", type: "image", help: "Photo circulaire de la carte Pam, sur la page d'accueil." },
-    { key: "data.pamName", label: "Pam — nom", type: "text" },
-    { key: "data.pamRole", label: "Pam — rôle", type: "text" },
-    { key: "data.pamDesc", label: "Pam — description", type: "textarea", rows: 3 },
+    { key: "data.pamPhoto", label: "Photo d'Afrika (carte serviteurs)", type: "image", help: "Photo circulaire de la carte Afrika, sur la page d'accueil." },
+    { key: "data.pamName", label: "Afrika — nom", type: "text" },
+    { key: "data.pamRole", label: "Afrika — rôle", type: "text" },
+    { key: "data.pamDesc", label: "Afrika — description", type: "textarea", rows: 3 },
     { key: "data.kongoPhoto", label: "Photo du Pasteur Kongo (carte serviteurs)", type: "image", help: "Photo circulaire de la carte Pasteur Kongo, sur la page d'accueil." },
     { key: "data.kongoName", label: "Pasteur Kongo — nom", type: "text" },
     { key: "data.kongoRole", label: "Pasteur Kongo — rôle", type: "text" },
     { key: "data.kongoDesc", label: "Pasteur Kongo — description", type: "textarea", rows: 3 },
   ],
-  pam: [...COMMON_HERO_FIELDS, ...SERVANT_BIO_FIELDS],
+  afrika: [...COMMON_HERO_FIELDS, ...SERVANT_BIO_FIELDS],
   "pasteur-kongo": [...COMMON_HERO_FIELDS, ...SERVANT_BIO_FIELDS],
   disperses: [
     ...COMMON_HERO_FIELDS,

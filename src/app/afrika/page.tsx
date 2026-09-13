@@ -1,11 +1,11 @@
 import { db } from "@/lib/db";
 import { getHero } from "@/lib/heroes";
-import { PamView } from "@/components/site/pam-view";
+import { AfrikaView } from "@/components/site/afrika-view";
 // ⭐ V3.47 — colonne Biography.photoUrl sélectionnée ci-dessous.
 import { ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
 
 /**
- * ⭐ V3.45 — PAGE SERVEUR /pam.
+ * ⭐ V3.45 — PAGE SERVEUR /afrika.
  *
  * Charge la config de la section hero + biographie (paramétrable dans
  * le back-office /admin/heroes) et la transmet à la vue cliente.
@@ -19,13 +19,13 @@ import { ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Pam — Afrika Alkebulane Pamela Dali | Christ Libère",
+  title: "Afrika Alkebulane Pamela Dali | Christ Libère",
   description:
-    "Servante de Dieu marquée dès le sein maternel — biographie, frise chronologique, témoignages et enseignements de Pam.",
+    "Servante de Dieu marquée dès le sein maternel — biographie, frise chronologique, témoignages et enseignements d'Afrika.",
 };
 
-export default async function PamPage() {
-  const hero = await getHero("pam");
+export default async function AfrikaPage() {
+  const hero = await getHero("afrika");
 
   // ⭐ V3.47 — jalons biographiques (frise chronologique publique).
   // Garde idempotente : la colonne photoUrl se crée à la volée si absente.
@@ -42,7 +42,7 @@ export default async function PamPage() {
   try {
     await ensureBiographyPhotoColumn().catch(() => {});
     milestones = await db.biography.findMany({
-      where: { servant: { code: "pam" } },
+      where: { servant: { code: "afrika" } },
       orderBy: [{ order: "asc" }, { date: "asc" }],
       select: {
         id: true,
@@ -57,8 +57,8 @@ export default async function PamPage() {
     });
   } catch (e) {
     // La frise ne doit JAMAIS casser la page.
-    console.warn("[pam] Frise chronologique indisponible :", e instanceof Error ? e.message : e);
+    console.warn("[afrika] Frise chronologique indisponible :", e instanceof Error ? e.message : e);
   }
 
-  return <PamView hero={hero} milestones={milestones} />;
+  return <AfrikaView hero={hero} milestones={milestones} />;
 }

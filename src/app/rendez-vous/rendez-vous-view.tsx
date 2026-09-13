@@ -4,7 +4,7 @@
  * ⭐ V3.66 — Formulaire public de demande de rendez-vous.
  *
  * Design public du site (nuit → crème, or, serif) : choix du serviteur de
- * Dieu (Sœur Pam / Pasteur Kongo), urgence, coordonnées + message. POST
+ * Dieu (Sœur Afrika / Pasteur Kongo), urgence, coordonnées + message. POST
  * /api/rendez-vous (public, rate-limité, honeypot anti-robots).
  *
  * ⭐ V3.73 — Deux retours pasteur :
@@ -40,7 +40,7 @@ export function RendezVousView() {
   const [form, setForm] = useState({
     requesterName: "",
     contact: "",
-    servantCode: "pam",
+    servantCode: "afrika",
     subject: "",
     message: "",
     urgency: "normale",
@@ -185,7 +185,7 @@ export function RendezVousView() {
                   setForm({
                     requesterName: "",
                     contact: "",
-                    servantCode: "pam",
+                    servantCode: "afrika",
                     subject: "",
                     message: "",
                     urgency: "normale",
@@ -260,7 +260,7 @@ export function RendezVousView() {
                       >
                         <div className="flex items-center gap-3">
                           <Image
-                            src={s.code === "pam" ? "/pam.jpeg" : "/pasteur-kongo.jpeg"}
+                            src={s.code === "afrika" ? "/pam.jpeg" : "/pasteur-kongo.jpeg"}
                             alt={s.libelle}
                             width={40}
                             height={40}

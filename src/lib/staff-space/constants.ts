@@ -83,9 +83,9 @@ export const DEMANDE_URGENCE_VALEURS = Object.keys(DEMANDE_URGENCES);
 
 /** Serviteurs de Dieu joignables via le secrétariat. */
 export const SERVITEURS_RENDEZ_VOUS = {
-  pam: {
-    code: "pam",
-    libelle: "Sœur Pam",
+  afrika: {
+    code: "afrika",
+    libelle: "Sœur Afrika",
     titre: "Servante de l'Éternel",
   },
   kongo: {

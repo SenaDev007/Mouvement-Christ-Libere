@@ -5,7 +5,7 @@
  *
  * Directive : « envoyer des mails au pasteur depuis le secrétariat ».
  * La secrétaire rédige un message à destination de Pasteur Kongo ou de
- * Sœur Pam ; le courriel part de noreply@mouvementchristlibere.com avec
+ * Sœur Afrika ; le courriel part de noreply@mouvementchristlibere.com avec
  * l'email de la secrétaire en Reply-To — la réponse lui revient
  * directement. Chaque envoi est journalisé (OutgoingEmail + audit) et
  * l'historique des 30 derniers courriers est visible en bas de page.
@@ -72,10 +72,10 @@ export default function SecretariatCourrierPage() {
   // ⭐ V3.74 — Paramétrage des adresses email des serviteurs.
   const [parametres, setParametres] = useState<{
     emailKongo: string | null;
-    emailPam: string | null;
+    emailAfrika: string | null;
   } | null>(null);
   const [paramModalOuvert, setParamModalOuvert] = useState(false);
-  const [formParam, setFormParam] = useState({ emailKongo: "", emailPam: "" });
+  const [formParam, setFormParam] = useState({ emailKongo: "", emailAfrika: "" });
   const [paramEnCours, setParamEnCours] = useState(false);
   const [retourParam, setRetourParam] = useState<{
     type: "succes" | "erreur";
@@ -176,7 +176,7 @@ export default function SecretariatCourrierPage() {
         body: JSON.stringify({
           action: "parametrer",
           emailKongo: formParam.emailKongo.trim(),
-          emailPam: formParam.emailPam.trim(),
+          emailAfrika: formParam.emailAfrika.trim(),
         }),
       });
       const data = await res.json();
@@ -232,12 +232,12 @@ export default function SecretariatCourrierPage() {
               const kongoResolu = destinataires.find(
                 (d) => d.id === "serviteur:kongo"
               )?.email;
-              const pamResolue = destinataires.find(
-                (d) => d.id === "serviteur:pam"
+              const afrikaResolue = destinataires.find(
+                (d) => d.id === "serviteur:afrika"
               )?.email;
               setFormParam({
                 emailKongo: parametres?.emailKongo || kongoResolu || "",
-                emailPam: parametres?.emailPam || pamResolue || "",
+                emailAfrika: parametres?.emailAfrika || afrikaResolue || "",
               });
               setRetourParam(null);
               setParamModalOuvert(true);
@@ -250,7 +250,7 @@ export default function SecretariatCourrierPage() {
           </button>
         </div>
         <p className="text-sm text-[#8A8378]">
-          Écrire directement à Pasteur Kongo ou à Sœur Pam — le message part
+          Écrire directement à Pasteur Kongo ou à Sœur Afrika — le message part
           de noreply@mouvementchristlibere.com et le serviteur peut vous
           répondre par email.
         </p>
@@ -510,20 +510,20 @@ export default function SecretariatCourrierPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#1E0F2B] mb-1.5">
-                  Email de Sœur Pam
+                  Email de Sœur Afrika
                 </label>
                 <input
                   type="email"
-                  value={formParam.emailPam}
+                  value={formParam.emailAfrika}
                   onChange={(e) =>
-                    setFormParam({ ...formParam, emailPam: e.target.value })
+                    setFormParam({ ...formParam, emailAfrika: e.target.value })
                   }
                   placeholder="exemple@gmail.com"
                   className="w-full px-3.5 py-2.5 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
                 />
-                {parametres?.emailPam && (
+                {parametres?.emailAfrika && (
                   <p className="text-[10px] text-[#5B7052] mt-1">
-                    ✓ Adresse paramétrée : {parametres.emailPam}
+                    ✓ Adresse paramétrée : {parametres.emailAfrika}
                   </p>
                 )}
               </div>

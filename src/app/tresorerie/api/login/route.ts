@@ -7,7 +7,7 @@ import { handlerConnexionStaff, ROLES_TRESORERIE } from "@/lib/staff-space/sessi
  *
  * Connexion à l'espace Trésorerie. Rôles autorisés :
  *  - TREASURER (trésorier / comptable accrédité via /admin/staff)
- *  - SUPER_ADMIN (Pam, Pasteur Kongo — contrôle total sur la trésorerie)
+ *  - SUPER_ADMIN (Afrika, Pasteur Kongo — contrôle total sur la trésorerie)
  *
  * Même logique que /admin/api/login (cf. handlerConnexionStaff) ; le
  * cookie « admin_session » posé ici est HOST-SCOPED à

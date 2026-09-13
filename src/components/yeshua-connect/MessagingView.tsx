@@ -2765,7 +2765,7 @@ export function MessagingView() {
     // ⭐ V3.20 — PRIVÉ 1-1 : l'overlay d'appel (pendant TOUT l'appel) doit
     // afficher l'APPELANT chez le destinataire — avant : convName = nom du
     // canal privé = nom du DESTINATAIRE → Ora voyait « Ora » pendant que
-    // Pam l'appelait. Sur un canal/groupe, le nom du canal reste pertinent.
+    // Afrika l'appelait. Sur un canal/groupe, le nom du canal reste pertinent.
     setCallConvInfo(
       info.isDirect
         ? { name: info.initiatorName, avatarUrl: info.initiatorAvatarUrl ?? info.convAvatarUrl }
@@ -6311,7 +6311,7 @@ const MEMBERS_PANEL_ADMIN_ROLES = new Set([
 ]);
 
 /** ⭐ V3.13 — Vrai si le membre est un admin DE FAÇON EFFECTIVE : rôle
- * DANS le canal OU rôle GLOBAL du compte. C'est ce qui place PAM et le
+ * DANS le canal OU rôle GLOBAL du compte. C'est ce qui place Afrika et le
  * Pasteur Kongo (super admins du site, simples « MEMBER » de canal) dans
  * la section « Admin » de TOUS les canaux — « eux ne doivent pas être mis
  * dans la catégorie des membres comme ça » — demande explicite. */
@@ -6370,7 +6370,7 @@ function MembersPanel({
   currentUserId: string;
   /** ⭐ V3.7 — Rôle GLOBAL de l'utilisateur connecté : dans les canaux
    * restreints (cercle des pasteurs), seuls les administrateurs principaux
-   * (SUPER_ADMIN/ADMIN — PAM, Pasteur Kongo) peuvent inviter. */
+   * (SUPER_ADMIN/ADMIN — Afrika, Pasteur Kongo) peuvent inviter. */
   currentUserRole?: string;
   dmBusy: boolean;
   blockBusy: boolean;
@@ -6418,7 +6418,7 @@ function MembersPanel({
     });
 
   // ⭐ V3.13 — Admin EFFECTIF = rôle de canal OU rôle GLOBAL : les super
-  // admins du site (PAM, Pasteur Kongo) figurent dans la section « Admin »
+  // admins du site (Afrika, Pasteur Kongo) figurent dans la section « Admin »
   // de TOUS les canaux, même membres simples du canal.
   const admins = bySection(filtered.filter(p => estAdminEffectif(p)));
   const regulars = bySection(filtered.filter(p => !estAdminEffectif(p)));
@@ -6427,7 +6427,7 @@ function MembersPanel({
   const isDirect = conversation.type === "DIRECT" && participants.length <= 2;
 
   // ⭐ V3.7 — CERCLE RESTREINT (cercle des pasteurs) : seuls les
-  // administrateurs principaux (super admins — PAM, Pasteur Kongo — et
+  // administrateurs principaux (super admins — Afrika, Pasteur Kongo — et
   // admins) peuvent ajouter QUI ILS VEULENT ; les autres membres ne voient
   // même pas l'onglet « Inviter » (le serveur valide de son côté).
   const isCercle =
@@ -6541,7 +6541,7 @@ function MembersPanel({
               </div>
             )}
             {/* ⭐ V3.13 — Icône DISTINCTIVE des super admins du site
-                (PAM, Pasteur Kongo) : couronne or en badge sur l'avatar. */}
+                (Afrika, Pasteur Kongo) : couronne or en badge sur l'avatar. */}
             {estSuperAdminGlobal && (
               <span
                 className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-[#C9A227] border-2 border-white flex items-center justify-center shadow-sm"
@@ -6714,7 +6714,7 @@ function MembersPanel({
 
           {/* ⭐ V3.7 — Cercle restreint : note explicative pour les membres
               NON habilités (l'invitation est réservée aux administrateurs
-              principaux — PAM, Pasteur Kongo, admins). */}
+              principaux — Afrika, Pasteur Kongo, admins). */}
           {isDirect === false && isCercle && !cercleGuardian && (
             <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#2A0E3D]/[0.04] border border-[#2A0E3D]/10">
               <Lock className="w-3.5 h-3.5 text-[#8C5FA8] flex-shrink-0 mt-0.5" />
@@ -7074,7 +7074,7 @@ function MemberProfileModal({
                 </h3>
                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                   {/* ⭐ V3.13 — Badge DISTINCTIF des administrateurs principaux
-                      (super admins du site — PAM, Pasteur Kongo) : couronne
+                      (super admins du site — Afrika, Pasteur Kongo) : couronne
                       or + « Admin principal », avant tout autre badge. */}
                   {profile.role === "SUPER_ADMIN" && (
                     <span className="inline-flex items-center gap-1 px-2 py-px rounded-full bg-[#C9A227]/15 text-[#8C5FA8] text-[10px] font-bold border border-[#C9A227]/40" title="Administrateur principal du Mouvement">
@@ -7899,7 +7899,7 @@ function formatAuditMetadata(metadata: any): string {
 //
 // Photos : métadonnées du token LiveKit (JSON { avatarUrl }) en priorité,
 // fallback sur la liste des membres du canal (User.avatarUrl en base).
-// Pam et Pasteur Kongo ont leurs VRAIES photos (synchronisées depuis
+// Afrika et Pasteur Kongo ont leurs VRAIES photos (synchronisées depuis
 // Servant.portraitUrl).
 
 /** Rôles autorisés à basculer le mode du canal vocal. */
@@ -9068,7 +9068,7 @@ function IncomingCallOverlay({
   };
 
   // ⭐ V3.20 — PRIVE 1-1 : c'est l'APPELANT que le destinataire doit voir
-  // en GRAND (« Pam » appelle), pas le nom du canal — le nom stocké d'un
+  // en GRAND (« Afrika » appelle), pas le nom du canal — le nom stocké d'un
   // privé est celui du DESTINATAIRE vu par le créateur, l'écran du
   // destinataire montrait donc son PROPRE nom (« Ora »). Sur un appel de
   // canal/groupe, on garde le nom du canal (avec l'appelant en sous-ligne).

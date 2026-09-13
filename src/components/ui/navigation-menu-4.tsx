@@ -46,8 +46,8 @@ const navigationLinks = [
     type: "description",
     items: [
       {
-        href: "/pam",
-        label: "Pam — Afrika Alkebulane Pamela Dali",
+        href: "/afrika",
+        label: "Afrika Alkebulane Pamela Dali",
         description: "Servante de l'Éternel, biographie, témoignages et révélations prophétiques.",
       },
       {
@@ -340,7 +340,7 @@ export function ContextualNav() {
               logo + wordmark + icône connexion tiennent sur iPhone SE (320px) */}
           <Link href="/" className="flex items-center gap-1 group/logo">
             <Image
-              src="/logo-christ-libere-v2.png"
+              src="/logo-christ-libere-v3.png"
               alt="Christ Libère"
               width={56}
               height={56}

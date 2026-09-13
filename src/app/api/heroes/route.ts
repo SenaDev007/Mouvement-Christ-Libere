@@ -2,7 +2,7 @@
  * API PUBLIQUE — Sections hero paramétrables (V3.45).
  *
  *   GET /api/heroes            → toutes les configs fusionnées (défauts + DB)
- *   GET /api/heroes?page=pam   → la config d'une seule page
+ *   GET /api/heroes?page=afrika   → la config d'une seule page
  *
  * Lecture seule, publique (aucune donnée sensible : textes + images des
  * bannières du site). Les modifications passent par le back-office

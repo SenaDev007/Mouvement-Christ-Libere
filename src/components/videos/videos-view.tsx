@@ -21,7 +21,7 @@ import { HeroBackgroundImage } from "@/components/site/page-hero";
 import { IsololeText } from "@/lib/isolole";
 import type { HeroConfig } from "@/lib/hero-defaults";
 // ⭐ V3.46 — Rubriques signatures (partagées avec le back-office) :
-// « Saint-Esprit réponds-moi » (Pam), « Rhema du matin »/« Rhema du soir »
+// « Saint-Esprit réponds-moi » (Afrika), « Rhema du matin »/« Rhema du soir »
 // (Pasteur Kongo). La rubrique EXPLICITE (assignée en back-office, ou
 // héritée du live pour les replays) prime sur la catégorisation
 // automatique par mots-clés du titre.
@@ -45,14 +45,14 @@ interface VideoItem {
   likes?: number;
   publishedAt: string;
   category: string;
-  servant: "pam" | "kongo";
+  servant: "afrika" | "kongo";
   servantName: string;
   thumbnailUrl?: string;
   isLive?: boolean;
   hasNativeVideo?: boolean;
 }
 
-type ServantTab = "pam" | "kongo";
+type ServantTab = "afrika" | "kongo";
 
 /**
  * Icône de chaque rubrique signature (bandeau + catégories épinglées).
@@ -66,7 +66,7 @@ function rubricIcon(name: string) {
 
 /**
  * ⭐ V3.46 — Catégories triées PAR SERVITEUR : les rubriques signatures
- * (« Saint-Esprit réponds-moi » Pam ; « Rhema du matin »/« Rhema du soir »
+ * (« Saint-Esprit réponds-moi » Afrika ; « Rhema du matin »/« Rhema du soir »
  * Pasteur Kongo) sont ÉPINGLÉES EN TÊTE et restent visibles MÊME VIDES
  * (les croyants peuvent les suivre et voir les prochains épisodes
  * apparaître) — sauf en mode recherche (données pures). Les catégories
@@ -111,7 +111,7 @@ type SortOrder = "recent" | "oldest" | "title";
  */
 export function VideosView({ hero }: { hero: HeroConfig }) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<ServantTab>("pam");
+  const [activeTab, setActiveTab] = useState<ServantTab>("afrika");
   const [currentVideo, setCurrentVideo] = useState<VideoItem | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [allVideos, setAllVideos] = useState<VideoItem[]>([]);
@@ -163,7 +163,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
   const currentVideos = filteredVideos.filter(v => v.servant === activeTab);
 
   // ─── ⭐ V3.46 — RUBRIQUES DU SERVITEUR (bandeau « à suivre ») ───
-  // « Saint-Esprit réponds-moi » (Pam) / « Rhema du matin » + « Rhema du
+  // « Saint-Esprit réponds-moi » (Afrika) / « Rhema du matin » + « Rhema du
   // soir » (Pasteur Kongo) : cartes mises en avant sous le hero, avec le
   // nombre d'épisodes et le dernier épisode publié.
   const rubriquesServant = rubriquesDe(activeTab);
@@ -241,7 +241,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
       </section>
 
       {/* ─── ⭐ V3.46 — RUBRIQUES SIGNATURES « À SUIVRE » ───
-          Saint-Esprit réponds-moi (Pam) · Rhema du matin / Rhema du soir
+          Saint-Esprit réponds-moi (Afrika) · Rhema du matin / Rhema du soir
           (Pasteur Kongo) : cartes mises en avant pour que les croyants
           suivent ces rendez-vous réguliers. Caché pendant la recherche. */}
       {!searchQuery.trim() && rubriquesCards.length > 0 && (
@@ -250,7 +250,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
             <div className="flex items-center gap-2 mb-3">
               <Star className="w-4 h-4 text-[#C9A227]" />
               <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#C9A227]">
-                Les rubriques de {activeTab === "pam" ? "Pam" : "Pasteur Kongo"}
+                Les rubriques de {activeTab === "afrika" ? "Afrika" : "Pasteur Kongo"}
               </span>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -314,7 +314,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
         <div className="max-w-7xl mx-auto px-3 md:px-4">
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-              <ServantTabButton active={activeTab === "pam"} onClick={() => { setActiveTab("pam"); setActiveCategory(null); }} name="Pam" count={allVideos.filter(v => v.servant === "pam").length} photo="/pam.jpeg" />
+              <ServantTabButton active={activeTab === "afrika"} onClick={() => { setActiveTab("afrika"); setActiveCategory(null); }} name="Afrika" count={allVideos.filter(v => v.servant === "afrika").length} photo="/pam.jpeg" />
               <ServantTabButton active={activeTab === "kongo"} onClick={() => { setActiveTab("kongo"); setActiveCategory(null); }} name="Kongo" count={allVideos.filter(v => v.servant === "kongo").length} photo="/pasteur-kongo.jpeg" />
             </div>
             <div className="flex-1 min-w-[200px] relative">
@@ -501,8 +501,8 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
   const [likeCount, setLikeCount] = useState(video.likes || 0);
   const [showShare, setShowShare] = useState(false);
 
-  const servantName = video.servant === "pam" ? "Pam" : "Pasteur Kongo";
-  const servantPhoto = video.servant === "pam" ? "/pam.jpeg" : "/pasteur-kongo.jpeg";
+  const servantName = video.servant === "afrika" ? "Afrika" : "Pasteur Kongo";
+  const servantPhoto = video.servant === "afrika" ? "/pam.jpeg" : "/pasteur-kongo.jpeg";
   const recommended = allVideos.filter(v => v.id !== video.id).slice(0, 15);
 
   // Charger le like depuis localStorage
@@ -702,7 +702,7 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
                     <TiktokMiniature src={rec.thumbnailUrl || null} title={rec.title} compact />
                   ) : (
                     <ThumbWithFallback
-                      src={rec.thumbnailUrl || (rec.youtubeId ? `https://img.youtube.com/vi/${rec.youtubeId}/mqdefault.jpg` : "/logo-christ-libere-v2.png")}
+                      src={rec.thumbnailUrl || (rec.youtubeId ? `https://img.youtube.com/vi/${rec.youtubeId}/mqdefault.jpg` : "/logo-christ-libere-v3.png")}
                       title={rec.title}
                       sizes="160px"
                     />
@@ -786,7 +786,7 @@ function ThumbWithFallback({ src, title, sizes, className }: { src: string; titl
   const [failed, setFailed] = useState(false);
   return (
     <Image
-      src={failed ? "/logo-christ-libere-v2.png" : src}
+      src={failed ? "/logo-christ-libere-v3.png" : src}
       alt={title}
       fill
       sizes={sizes}
@@ -809,7 +809,7 @@ function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () =>
             <TiktokMiniature src={video.thumbnailUrl || null} title={video.title} />
           ) : (
             <ThumbWithFallback
-              src={video.thumbnailUrl || (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg` : "/logo-christ-libere-v2.png")}
+              src={video.thumbnailUrl || (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg` : "/logo-christ-libere-v3.png")}
               title={video.title}
               sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 300px"
               className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -824,7 +824,7 @@ function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () =>
         </div>
         <div className="flex gap-2.5">
           <div className="relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-[#C9A227]/20 flex-shrink-0">
-            <Image src={video.servant === "pam" ? "/pam.jpeg" : "/pasteur-kongo.jpeg"} alt={video.servantName} width={32} height={32} className="w-full h-full object-cover" />
+            <Image src={video.servant === "afrika" ? "/pam.jpeg" : "/pasteur-kongo.jpeg"} alt={video.servantName} width={32} height={32} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-[#1E0F2B] leading-snug line-clamp-2 break-words group-hover:text-[#C9A227] transition-colors mb-0.5">{video.title}</h3>

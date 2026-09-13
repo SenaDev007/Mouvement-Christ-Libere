@@ -25,7 +25,7 @@ export default async function CommunautePage() {
   });
 
   const roles = [
-    { role: "Super-admin", holder: "Pam / Pasteur Kongo", color: "bg-[#C9A227]" },
+    { role: "Super-admin", holder: "Afrika / Pasteur Kongo", color: "bg-[#C9A227]" },
     { role: "Modérateur", holder: "Bénévoles validés", color: "bg-[#8C5FA8]" },
     { role: "Membre", holder: "Croyant inscrit", color: "bg-[#8A8378]" },
   ];

@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * ⭐ V3.45 — PAGE PAM (vue cliente).
+ * ⭐ V3.45 — PAGE Afrika (vue cliente).
  *
  * L'intégralité de la section hero (image d'arrière-plan, accroche,
  * titre, sous-titre, badges) et de la biographie (photo, citation,
  * texte markdown complet, libellés de la carte) est PARAMÉTRABLE
- * depuis le back-office (/admin/heroes → page « pam »).
+ * depuis le back-office (/admin/heroes → page « afrika »).
  *
- * La page serveur /pam charge la config (getHero) et la transmet ici —
+ * La page serveur /afrika charge la config (getHero) et la transmet ici —
  * aucune valeur n'est codée en dur : hero.xxx est déjà fusionné avec
  * les valeurs par défaut (src/lib/hero-defaults.ts).
  */
@@ -23,7 +23,7 @@ import { IsololeText } from "@/lib/isolole";
 import type { HeroConfig } from "@/lib/hero-defaults";
 import { ChevronRight, FileText, BookOpen, Video, Sparkles, MapPin, Calendar, Quote } from "lucide-react";
 
-export function PamView({ hero, milestones = [] }: { hero: HeroConfig; milestones?: BioMilestone[] }) {
+export function AfrikaView({ hero, milestones = [] }: { hero: HeroConfig; milestones?: BioMilestone[] }) {
   const d = hero.data;
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -268,7 +268,7 @@ export function PamView({ hero, milestones = [] }: { hero: HeroConfig; milestone
       <BioTimeline
         milestones={milestones}
         accentColor="#C9A227"
-        title="Les étapes du parcours de Pam"
+        title="Les étapes du parcours d'Afrika"
       />
 
       {/* ═══ LIENS VERS AUTRES CONTENUS ═══ */}
@@ -279,12 +279,12 @@ export function PamView({ hero, milestones = [] }: { hero: HeroConfig; milestone
               Aller plus loin
             </p>
             <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#FAF6EF]">
-              Découvrir le ministère de Pam
+              Découvrir le ministère d'Afrika
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Link
-              href="/temoignages?servant=pam"
+              href="/temoignages?servant=afrika"
               className="group bg-[#FAF6EF]/5 hover:bg-[#FAF6EF]/10 border border-[#C9A227]/20 hover:border-[#C9A227]/40 rounded-xl p-6 transition-all"
             >
               <FileText className="w-6 h-6 text-[#C9A227] mb-3" />
@@ -299,7 +299,7 @@ export function PamView({ hero, milestones = [] }: { hero: HeroConfig; milestone
               </span>
             </Link>
             <Link
-              href="/enseignements?servant=pam"
+              href="/enseignements?servant=afrika"
               className="group bg-[#FAF6EF]/5 hover:bg-[#FAF6EF]/10 border border-[#C9A227]/20 hover:border-[#C9A227]/40 rounded-xl p-6 transition-all"
             >
               <BookOpen className="w-6 h-6 text-[#C9A227] mb-3" />
@@ -314,7 +314,7 @@ export function PamView({ hero, milestones = [] }: { hero: HeroConfig; milestone
               </span>
             </Link>
             <Link
-              href="/videos?servant=pam"
+              href="/videos?servant=afrika"
               className="group bg-[#FAF6EF]/5 hover:bg-[#FAF6EF]/10 border border-[#C9A227]/20 hover:border-[#C9A227]/40 rounded-xl p-6 transition-all"
             >
               <Video className="w-6 h-6 text-[#C9A227] mb-3" />

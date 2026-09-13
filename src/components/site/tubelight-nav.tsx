@@ -15,7 +15,7 @@ import {
 
 const navItems = [
   { name: "Accueil", url: "/", icon: Home },
-  { name: "Pam", url: "/pam", icon: User },
+  { name: "Afrika", url: "/afrika", icon: User },
   { name: "Pasteur Kongo", url: "/pasteur-kongo", icon: User },
   { name: "Témoignages", url: "/temoignages", icon: FileText },
   { name: "Enseignements", url: "/enseignements", icon: BookOpen },

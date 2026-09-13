@@ -13,7 +13,7 @@ const FIELDS: FieldDef[] = [
     name: "code",
     label: "Code",
     type: "text",
-    placeholder: "pam ou kongo",
+    placeholder: "afrika ou kongo",
     help: "Identifiant unique du serviteur",
     required: true,
   },
@@ -28,7 +28,7 @@ const FIELDS: FieldDef[] = [
     name: "shortName",
     label: "Nom court",
     type: "text",
-    placeholder: "Pam",
+    placeholder: "Afrika",
     required: true,
   },
   {

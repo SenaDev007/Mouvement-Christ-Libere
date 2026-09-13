@@ -14,7 +14,7 @@ async function getStats() {
     servants, biographies, testimonies, teachings, videos, channels,
     donations, liveStreams, pendingTestimonies,
     meetingTransmises,
-    pamServant, kongoServant,
+    afrikaServant, kongoServant,
     totalDonations, totalViews,
     recentTestimonies, recentMeetingRequests, upcomingLives,
   ] = await Promise.all([
@@ -30,7 +30,7 @@ async function getStats() {
     // ⭐ V3.74 — « Demandes de contact » remplacées par les demandes de
     // rencontre TRANSMISES par la secrétaire (réception /admin/demandes).
     db.meetingRequest.count({ where: { status: "TRANSMISE" } }),
-    db.servant.findFirst({ where: { code: "pam" }, include: { _count: { select: { videos: true, testimonies: true, teachings: true } } } }),
+    db.servant.findFirst({ where: { code: "afrika" }, include: { _count: { select: { videos: true, testimonies: true, teachings: true } } } }),
     db.servant.findFirst({ where: { code: "kongo" }, include: { _count: { select: { videos: true, testimonies: true, teachings: true } } } }),
     db.donation.aggregate({ _sum: { amount: true } }),
     db.video.aggregate({ _sum: { views: true } }),
@@ -49,7 +49,7 @@ async function getStats() {
     donations, liveStreams, pendingTestimonies, meetingTransmises,
     totalDonationsAmount: totalDonations._sum.amount || 0,
     totalViews: totalViews._sum.views || 0,
-    pam: pamServant,
+    afrika: afrikaServant,
     kongo: kongoServant,
     recentTestimonies,
     recentMeetingRequests,
@@ -173,9 +173,9 @@ export default async function AdminDashboardPage() {
         })}
       </div>
 
-      {/* Section serviteurs (Pam & Kongo) */}
+      {/* Section serviteurs (Afrika & Kongo) */}
       <div className="grid md:grid-cols-2 gap-4">
-        {stats.pam && (
+        {stats.afrika && (
           <div className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-[#C9A227]/10 to-transparent border-b border-[#8A8378]/10">
               <div className="flex items-center gap-3">
@@ -183,8 +183,8 @@ export default async function AdminDashboardPage() {
                   <Crown className="w-5 h-5 text-[#C9A227]" />
                 </div>
                 <div>
-                  <div className="font-bold text-[#1E0F2B]">{stats.pam.shortName}</div>
-                  <div className="text-xs text-[#8A8378]">{stats.pam.role}</div>
+                  <div className="font-bold text-[#1E0F2B]">{stats.afrika.shortName}</div>
+                  <div className="text-xs text-[#8A8378]">{stats.afrika.role}</div>
                 </div>
               </div>
               <Link href="/admin/servants" className="text-xs text-[#C9A227] font-semibold hover:underline">
@@ -192,16 +192,16 @@ export default async function AdminDashboardPage() {
               </Link>
             </div>
             <div className="grid grid-cols-3 divide-x divide-[#8A8378]/10">
-              <Link href="/admin/videos?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
-                <div className="text-xl font-bold text-[#1E0F2B]">{stats.pam._count.videos}</div>
+              <Link href="/admin/videos?servant=afrika" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
+                <div className="text-xl font-bold text-[#1E0F2B]">{stats.afrika._count.videos}</div>
                 <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Vidéos</div>
               </Link>
-              <Link href="/admin/testimonies?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
-                <div className="text-xl font-bold text-[#1E0F2B]">{stats.pam._count.testimonies}</div>
+              <Link href="/admin/testimonies?servant=afrika" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
+                <div className="text-xl font-bold text-[#1E0F2B]">{stats.afrika._count.testimonies}</div>
                 <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Témoignages</div>
               </Link>
-              <Link href="/admin/teachings?servant=pam" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
-                <div className="text-xl font-bold text-[#1E0F2B]">{stats.pam._count.teachings}</div>
+              <Link href="/admin/teachings?servant=afrika" className="p-3 md:p-4 text-center hover:bg-[#FAF6EF] transition-colors">
+                <div className="text-xl font-bold text-[#1E0F2B]">{stats.afrika._count.teachings}</div>
                 <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8A8378] mt-0.5">Enseignements</div>
               </Link>
             </div>
@@ -306,7 +306,7 @@ export default async function AdminDashboardPage() {
                   <div className="min-w-0 flex-1 mr-3">
                     <p className="text-sm font-medium text-[#1E0F2B] truncate">{c.requesterName}</p>
                     <p className="text-xs text-[#8A8378] truncate">
-                      {c.subject} · {c.servantCode === "pam" ? "Sœur Pam" : "Pasteur Kongo"}
+                      {c.subject} · {c.servantCode === "afrika" ? "Sœur Afrika" : "Pasteur Kongo"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">

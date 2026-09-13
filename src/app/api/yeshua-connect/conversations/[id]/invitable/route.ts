@@ -9,7 +9,7 @@ const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
 
 /** ⭐ V3.7 — Rôles pouvant inviter dans les canaux RESTRICTED (cercle des
  * pasteurs) : les ADMINISTRATEURS PRINCIPAUX — c'est-à-dire les super admins
- * (PAM et Pasteur Kongo portent SUPER_ADMIN) et les admins/délégués.
+ * (Afrika et Pasteur Kongo portent SUPER_ADMIN) et les admins/délégués.
  * Groupe restreint : ce sont EUX SEULS qui ajoutent qui ils veulent. */
 const INVITE_RESTRICTED_ROLES = new Set(["SUPER_ADMIN", "ADMIN"]);
 
@@ -65,7 +65,7 @@ export async function GET(
 
     // 🔒 Permission : membre du canal OU rôle privilégié. ⭐ V3.7 — un canal
     // RESTRICTED (cercle des pasteurs) n'est invitable QUE par les
-    // administrateurs principaux (super admins — PAM, Pasteur Kongo — et
+    // administrateurs principaux (super admins — Afrika, Pasteur Kongo — et
     // admins) : c'est un groupe restreint, ce sont eux qui ajoutent qui ils
     // veulent.
     const privileged = PRIVILEGED_ROLES.has(userRole || "");

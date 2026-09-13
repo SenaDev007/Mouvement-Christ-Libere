@@ -1,13 +1,13 @@
 /**
- * ⭐ V3.45 — Biographies officielles des serviteurs (Pam & Pasteur Kongo).
+ * ⭐ V3.45 — Biographies officielles des serviteurs (Afrika & Pasteur Kongo).
  *
- * Extraites VERBATIM des pages publiques /pam et /pasteur-kongo pour
+ * Extraites VERBATIM des pages publiques /afrika et /pasteur-kongo pour
  * devenir les VALEURS PAR DÉFAUT des sections hero paramétrables
  * (back-office /admin/heroes → data.bioText). Modifiables depuis le
  * back-office ; ce fichier ne sert que de repli si la base est vide.
  */
 
-export const BIO_PAM = `La vie d'Afrika Alkebulane Pamela Dali n'est pas le récit d'un parcours ordinaire. À l'image du patriarche Hénoch qui marcha avec Dieu, elle a été saisie par le Créateur pour être le témoin direct des réalités invisibles du Royaume des Cieux.
+export const BIO_AFRIKA = `La vie d'Afrika Alkebulane Pamela Dali n'est pas le récit d'un parcours ordinaire. À l'image du patriarche Hénoch qui marcha avec Dieu, elle a été saisie par le Créateur pour être le témoin direct des réalités invisibles du Royaume des Cieux.
 
 ## Les Origines : La Terre d'Alkebulan
 

@@ -74,7 +74,7 @@ export default function AdminLoginPage() {
         {/* En-tête : logo Christ Libère + nom */}
         <div className="flex flex-col items-center mb-8">
           <Image
-            src="/logo-christ-libere-v2.png"
+            src="/logo-christ-libere-v3.png"
             alt="Christ Libère"
             width={80}
             height={80}

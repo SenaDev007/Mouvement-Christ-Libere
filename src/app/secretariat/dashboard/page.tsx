@@ -34,7 +34,7 @@ interface StatsSecretariat {
     traitees: number;
     archivees: number;
     urgentesAttente: number;
-    pourPam: number;
+    pourAfrika: number;
     pourKongo: number;
   };
   annonces: { publiees: number; brouillons: number };
@@ -225,7 +225,7 @@ export default function SecretariatDashboardPage() {
           (code) => {
             const serviteur = SERVITEURS_RENDEZ_VOUS[code];
             const actives =
-              code === "pam" ? d?.pourPam ?? 0 : d?.pourKongo ?? 0;
+              code === "afrika" ? d?.pourAfrika ?? 0 : d?.pourKongo ?? 0;
             return (
               <Link
                 key={code}

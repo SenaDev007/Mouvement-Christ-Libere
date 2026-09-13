@@ -14,7 +14,7 @@
  *    notifiée (cloche de l'espace Secrétariat + email) et le demandeur
  *    voit l'étape « Validée » sur /rendez-vous/suivi ;
  *  · « Marquer traitée » clôt après le rendez-vous ;
- *  · le compte connecté voit SES demandes (Pasteur Kongo / Sœur Pam
+ *  · le compte connecté voit SES demandes (Pasteur Kongo / Sœur Afrika
  *    résolus depuis le nom du compte) — un filtre permet la vue complète.
  *
  * Données : /admin/api/demandes (garde SUPER_ADMIN — 401/403 JSON).
@@ -64,13 +64,13 @@ interface DemandeRecue {
 
 interface ReponseApi {
   items: DemandeRecue[];
-  monServiteur: "kongo" | "pam" | null;
+  monServiteur: "kongo" | "afrika" | null;
   compteur: { enAttente: number; validees: number };
 }
 
 export default function AdminDemandesPage() {
   const [items, setItems] = useState<DemandeRecue[]>([]);
-  const [monServiteur, setMonServiteur] = useState<"kongo" | "pam" | null>(
+  const [monServiteur, setMonServiteur] = useState<"kongo" | "afrika" | null>(
     null
   );
   const [compteur, setCompteur] = useState({
@@ -178,7 +178,7 @@ export default function AdminDemandesPage() {
         </h1>
         <p className="text-sm text-[#8A8378] leading-relaxed">
           Les demandes transmises par le secrétariat ne sont consultables que
-          par les comptes super administrateurs (Pasteur Kongo et Sœur Pam).
+          par les comptes super administrateurs (Pasteur Kongo et Sœur Afrika).
         </p>
       </div>
     );

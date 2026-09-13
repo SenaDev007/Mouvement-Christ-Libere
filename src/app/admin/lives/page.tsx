@@ -99,8 +99,8 @@ export default async function AdminLivesPage() {
         <div className="grid gap-3">
           {lives.map((l) => {
             const status = STATUS_CONFIG[l.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.SCHEDULED;
-            const isPam = l.servant.code === "pam";
-            const accentColor = isPam ? "#C9A227" : "#8C5FA8";
+            const isAfrika = l.servant.code === "afrika";
+            const accentColor = isAfrika ? "#C9A227" : "#8C5FA8";
             const isUpcoming = l.status === "SCHEDULED" && l.scheduledAt > now;
 
             return (

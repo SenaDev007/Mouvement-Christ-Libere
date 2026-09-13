@@ -7,7 +7,7 @@ import { handlerConnexionStaff, ROLES_SECRETARIAT } from "@/lib/staff-space/sess
  *
  * Connexion à l'espace Secrétariat. Rôles autorisés :
  *  - SECRETARY (compte créé par un super admin via /admin/staff)
- *  - SUPER_ADMIN (Pam, Pasteur Kongo — « ils ont le contrôle… ils ont accès »)
+ *  - SUPER_ADMIN (Afrika, Pasteur Kongo — « ils ont le contrôle… ils ont accès »)
  *
  * Même logique que /admin/api/login (bcrypt, recherche nom OU email) :
  * cf. handlerConnexionStaff — le cookie « admin_session » posé ici est

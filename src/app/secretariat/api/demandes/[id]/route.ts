@@ -152,7 +152,7 @@ export async function PATCH(
 
     // ⭐ V3.69 — Courriel automatique au serviteur destinataire lors de la
     // transmission (directive : « envoyer des mails au pasteur depuis le
-    // secrétariat ») : Pasteur Kongo / Sœur Pam reçoivent la demande dans
+    // secrétariat ») : Pasteur Kongo / Sœur Afrika reçoivent la demande dans
     // leur boîte mail, avec la note de la secrétaire. Best-effort : un échec
     // d'envoi n'annule PAS la transmission — il est signalé dans la réponse
     // pour que la secrétaire puisse prévenir autrement.

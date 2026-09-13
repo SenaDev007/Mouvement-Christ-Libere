@@ -6,7 +6,7 @@
  * Hero (image, accroche, titre, sous-titre, badges) et biographie
  * (photo, citation, texte markdown, libellés de la carte)
  * entièrement paramétrables depuis /admin/heroes (page
- * « pasteur-kongo »). Même structure que PamView.
+ * « pasteur-kongo »). Même structure que AfrikaView.
  *
  * NB : sur cette page, la partie DORÉE du titre (« Pasteur ») vient
  * AVANT le nom (« Kongo »).
@@ -331,17 +331,17 @@ export function PasteurKongoView({ hero, milestones = [] }: { hero: HeroConfig; 
         </div>
       </section>
 
-      {/* ═══ CTA PAM ═══ */}
+      {/* ═══ CTA Afrika ═══ */}
       <section className="py-12 bg-[#1A0826]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-[#C9A227] font-bold mb-3">
             Découvrez également
           </p>
           <Link
-            href="/pam"
+            href="/afrika"
             className="inline-flex items-center gap-2 text-[#FAF6EF] hover:text-[#C9A227] font-serif text-lg font-bold transition-colors"
           >
-            Pam — Afrika Alkebulane Pamela Dali <ChevronRight className="w-4 h-4" />
+            Afrika Alkebulane Pamela Dali <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
       </section>

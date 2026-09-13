@@ -9,10 +9,10 @@ import { exigerSession, resoudreCodeServiteur } from "@/lib/staff-space/session"
  *
  * La secrétaire TRANSMET une demande (espace Secrétariat) → elle atterrit
  * directement ici, pré-remplie, pour le serviteur concerné : Pasteur Kongo
- * / Sœur Pam la lisent, la VALIDENT, la marquent traitée.
+ * / Sœur Afrika la lisent, la VALIDENT, la marquent traitée.
  *
  * Résolution du serviteur : depuis le NOM du compte connecté (contient
- * « kongo » ou « pam ») — le pasteur Congo voit ses demandes, la sœur Pam
+ * « kongo » ou « afrika ») — le pasteur Congo voit ses demandes, la sœur Afrika
  * les siennes. Un compte SUPER_ADMIN non rattaché voit tout (secours).
  *
  * ⚠️ Rôles : SUPER_ADMIN (les deux serviteurs de Dieu — données
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     await ensureStaffSpaces();
 
     const url = new URL(request.url);
-    // Filtre explicite (« pam », « kongo ») ; sinon le serviteur résolu ;
+    // Filtre explicite (« afrika », « kongo ») ; sinon le serviteur résolu ;
     // « tous » force la vue complète (compte non rattaché).
     const filtre = url.searchParams.get("servant") || "";
     const monCode = await resoudreCodeServiteur(userId);

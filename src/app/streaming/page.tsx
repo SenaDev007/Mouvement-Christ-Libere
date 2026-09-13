@@ -34,7 +34,7 @@ export default function StreamingPage() {
                 <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#2A0E3D] text-[#FAF6EF] mb-2">
                   <Radio className="w-7 h-7" />
                 </div>
-                <p className="text-xs font-semibold text-[#1E0F2B]">Pam / Pasteur Kongo</p>
+                <p className="text-xs font-semibold text-[#1E0F2B]">Afrika / Pasteur Kongo</p>
                 <p className="text-[10px] text-[#8A8378]">OBS / Streamlabs</p>
               </div>
 
@@ -73,7 +73,7 @@ export default function StreamingPage() {
           <div id="architecture" className="card-gold-top p-8 mb-8">
             <h3 className="font-serif text-xl font-semibold text-[#1E0F2B] mb-6">Architecture détaillée</h3>
             <div className="space-y-4">
-              <Step num="1" title="Source — Encodeur" description="Pam ou le Pasteur Kongo ouvre un live depuis OBS Studio, Streamlabs, ou un encodeur matériel. Le flux RTMP est envoyé vers le serveur Ant Media." />
+              <Step num="1" title="Source — Encodeur" description="Afrika ou le Pasteur Kongo ouvre un live depuis OBS Studio, Streamlabs, ou un encodeur matériel. Le flux RTMP est envoyé vers le serveur Ant Media." />
               <Step num="2" title="Serveur — Ant Media Server" description="Reçoit le flux RTMP, le transcode en plusieurs qualités (ABR : 1080p, 720p, 480p, 240p), et le redistribue en HLS/DASH." />
               <Step num="3" title="Site web — Lecteur HLS" description="Le flux HLS est servi au lecteur vidéo intégré du site, via Cloudflare CDN pour la mise en cache et la scalabilité." />
               <Step num="4" title="Restreamer — Multi-destination" description="Un module restreamer (FFmpeg) envoie une copie du flux RTMP vers YouTube, Facebook, TikTok et Instagram simultanément." />
@@ -131,7 +131,7 @@ export default function StreamingPage() {
         <div className="relative">
           <QuoteBlock
             text="Ce qui est reçu du ciel doit être transmis avant que la nuit ne tombe."
-            reference="Pam — Christ Libère"
+            reference="Afrika — Christ Libère"
             variant="dark"
           />
         </div>

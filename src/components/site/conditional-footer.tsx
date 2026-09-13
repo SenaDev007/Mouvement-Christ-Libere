@@ -28,7 +28,7 @@ const socialLinks = [
 ];
 
 const navLinks = [
-  { label: "Pam", href: "/pam" },
+  { label: "Afrika", href: "/afrika" },
   { label: "Pasteur Kongo", href: "/pasteur-kongo" },
   { label: "Témoignages", href: "/temoignages" },
   { label: "Enseignements", href: "/enseignements" },

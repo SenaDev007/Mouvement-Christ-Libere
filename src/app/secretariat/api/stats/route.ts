@@ -8,7 +8,7 @@ import { exigerSession, ROLES_SECRETARIAT } from "@/lib/staff-space/session";
  *
  * KPIs du tableau de bord secrétariat :
  *  · demandes par statut (reçues / transmises / traitées / archivées) ;
- *  · demandes par serviteur (Pam / Pasteur Kongo) ;
+ *  · demandes par serviteur (Afrika / Pasteur Kongo) ;
  *  · demandes urgentes en attente ;
  *  · annonces publiées / brouillons ;
  *  · dernières demandes reçues (aperçu) + prochaines annonces.
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       traitees,
       archivees,
       urgentesAttente,
-      pourPam,
+      pourAfrika,
       pourKongo,
       annoncesPubliees,
       annoncesBrouillons,
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         where: { urgency: "urgente", status: { in: ["RECUE", "TRANSMISE"] } },
       }),
       db.meetingRequest.count({
-        where: { servantCode: "pam", status: { in: ["RECUE", "TRANSMISE"] } },
+        where: { servantCode: "afrika", status: { in: ["RECUE", "TRANSMISE"] } },
       }),
       db.meetingRequest.count({
         where: { servantCode: "kongo", status: { in: ["RECUE", "TRANSMISE"] } },
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
         traitees,
         archivees,
         urgentesAttente,
-        pourPam,
+        pourAfrika,
         pourKongo,
       },
       annonces: { publiees: annoncesPubliees, brouillons: annoncesBrouillons },

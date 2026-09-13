@@ -2,7 +2,7 @@
  * Seed des super admins — Christ Libère
  *
  * Crée les deux comptes super admin :
- *  - Pam (Afrika Alkebulane Pamela Dali)
+ *  - Afrika (Afrika Alkebulane Pamela Dali)
  *  - Pasteur Kongo
  *
  * Exécuter avec : bun run db:seed:admins
@@ -20,15 +20,21 @@ config({ path: ".env", override: true });
 const db = new PrismaClient();
 
 // Mots de passe initiaux — à changer impérativement après première connexion
-const PAM_PASSWORD = process.env.PAM_INITIAL_PASSWORD || "PamChristLibere2026!";
+// ⭐ V3.76 — AFRIKA_INITIAL_PASSWORD (nouveau nom) avec repli sur
+// PAM_INITIAL_PASSWORD (variable historique) — le mot de passe par défaut
+// est inchangé : c'est l'identifiant de connexion de la servante.
+const AFRIKA_PASSWORD =
+  process.env.AFRIKA_INITIAL_PASSWORD ||
+  process.env.PAM_INITIAL_PASSWORD ||
+  "PamChristLibere2026!";
 const KONGO_PASSWORD =
   process.env.KONGO_INITIAL_PASSWORD || "KongoChristLibere2026!";
 
 const SUPER_ADMINS = [
   {
-    name: "Pam",
+    name: "Afrika",
     email: "pam@christ-libere.org",
-    password: PAM_PASSWORD,
+    password: AFRIKA_PASSWORD,
     bio: "Servante de l'Éternel — Afrika Alkebulane Pamela Dali. Fondatrice du Mouvement Christ Libère.",
   },
   {

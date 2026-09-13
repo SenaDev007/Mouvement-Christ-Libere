@@ -5,7 +5,7 @@
  *
  * Module central du poste de secrétaire :
  *  · registre filtrable (statut, serviteur, urgence, recherche) ;
- *  · TRANSMISSION d'une demande au serviteur concerné (Pam / Pasteur
+ *  · TRANSMISSION d'une demande au serviteur concerné (Afrika / Pasteur
  *    Kongo) avec note éventuelle — cœur de la directive : « c'est la
  *    secrétaire qui reçoit ces demandes et pourra les transmettre » ;
  *  · marquage traitée / archivage / réouverture ;
@@ -128,7 +128,7 @@ function DemandesContenu() {
   const [form, setForm] = useState({
     requesterName: "",
     contact: "",
-    servantCode: "pam",
+    servantCode: "afrika",
     subject: "",
     message: "",
     urgency: "normale",
@@ -232,7 +232,7 @@ function DemandesContenu() {
       setForm({
         requesterName: "",
         contact: "",
-        servantCode: "pam",
+        servantCode: "afrika",
         subject: "",
         message: "",
         urgency: "normale",
@@ -351,7 +351,7 @@ function DemandesContenu() {
             aria-label="Filtrer par serviteur"
           >
             <option value="">Tous les serviteurs</option>
-            <option value="pam">Sœur Pam</option>
+            <option value="afrika">Sœur Afrika</option>
             <option value="kongo">Pasteur Kongo</option>
           </select>
           <select
@@ -745,7 +745,7 @@ function DemandesContenu() {
                   onChange={(e) => setForm({ ...form, servantCode: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
                 >
-                  <option value="pam">Sœur Pam</option>
+                  <option value="afrika">Sœur Afrika</option>
                   <option value="kongo">Pasteur Kongo</option>
                 </select>
               </div>

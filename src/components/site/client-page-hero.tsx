@@ -9,7 +9,7 @@
  * réelle (back-office) via /api/heroes?page=… et met à jour si elle
  * diffère. Chute douce : échec réseau → défauts conservés.
  *
- * Les pages importantes (landing, pam, pasteur-kongo, temoignages,
+ * Les pages importantes (landing, afrika, pasteur-kongo, temoignages,
  * enseignements, bible, calendrier, vidéos, intercession, disperses,
  * contribuer, contact) utilisent le chemin SERVEUR (getHero) — ce
  * composant n'est prévu que pour les pages outils secondaires.

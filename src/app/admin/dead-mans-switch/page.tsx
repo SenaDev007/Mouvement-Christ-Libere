@@ -106,7 +106,7 @@ export default function DeadMansSwitchAdminPage() {
           <div>
             <p className="text-sm font-semibold text-[#1E0F2B] mb-1">Comment ça fonctionne</p>
             <p className="text-xs text-[#8A8378] leading-relaxed">
-              Si PAM et le Pasteur Kongo cessent de manifester leur présence pendant {form.delaiJours} jours
+              Si Afrika et le Pasteur Kongo cessent de manifester leur présence pendant {form.delaiJours} jours
               (paramétrable), le contenu réservé est automatiquement publié.
               Un cron job (Vercel) vérifie chaque jour à 3h00 UTC.
               Cliquer sur « Signaler activité » réinitialise le compteur.

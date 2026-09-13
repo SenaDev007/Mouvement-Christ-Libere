@@ -1026,7 +1026,7 @@ let inflightHeroSection: Promise<void> | null = null;
 
 /**
  * ⭐ V3.45 — S'assure que la table `HeroSection` existe (une ligne par
- * page publique : landing, pam, pasteur-kongo, temoignages, …) puis
+ * page publique : landing, afrika, pasteur-kongo, temoignages, …) puis
  * SÈME les lignes manquantes avec les valeurs par défaut du code
  * (src/lib/hero-defaults.ts — import sans dépendance Prisma).
  *
@@ -1070,6 +1070,11 @@ export function ensureHeroSectionsTable(): Promise<void> {
       await db.$executeRawUnsafe(
         `CREATE UNIQUE INDEX IF NOT EXISTS "HeroSection_page_key" ON "HeroSection"("page")`
       );
+
+      // ⭐ V3.76 — AVANT le semis : renomme la ligne historique page
+      // « pam » en « afrika » (les personnalisations du back-office sont
+      // ainsi conservées — le semis « afrika » passe en ON CONFLICT SKIP).
+      await ensureRenommageAfrika();
 
       // ── Semis des pages connues (idempotent) ──────────────────────
       const { DEFAULT_HEROES } = await import("@/lib/hero-defaults");
@@ -1121,7 +1126,7 @@ let inflightVideoCategory: Promise<void> | null = null;
  * existe.
  *
  * Contexte : rubriques signatures des vidéos — « Saint-Esprit réponds-moi »
- * (Pam), « Rhema du matin » / « Rhema du soir » (Pasteur Kongo). La
+ * (Afrika), « Rhema du matin » / « Rhema du soir » (Pasteur Kongo). La
  * rubrique est assignée depuis le back-office (module Vidéos) ou héritée
  * du live (LiveStream.category) à l'archivage du replay. NULL = technique
  * historique de catégorisation par mots-clés du titre (aucune régression
@@ -1211,7 +1216,7 @@ let inflightBiographyPhoto: Promise<void> | null = null;
  *
  * Contexte : photo de chaque jalon de la frise biographique, uploadée
  * depuis le modal du back-office (/admin/biographies) et affichée sur
- * les pages publiques /pam et /pasteur-kongo. NULL = jalon sans photo.
+ * les pages publiques /afrika et /pasteur-kongo. NULL = jalon sans photo.
  * Le client Prisma généré sélectionne désormais cette colonne (findMany
  * / findUnique / create / update) → P2022 sur une base froide sans
  * cette garde (même pattern que Video.category, V3.46).
@@ -1451,7 +1456,7 @@ export function ensureStaffSpaces(): Promise<void> {
       );
 
       // ⑨ V3.74 — Paramétrage des espaces (clé/valeur). Clés actuelles :
-      // email_kongo / email_pam (bouton « Paramétrage » du Courrier).
+      // email_kongo / email_afrika (bouton « Paramétrage » du Courrier).
       await db.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "StaffSetting" (
           "key" TEXT NOT NULL,
@@ -1488,6 +1493,10 @@ export function ensureStaffSpaces(): Promise<void> {
       // Trésorerie les finances). La table et son contenu disparaissent —
       // la page publique /contact redirige vers /rendez-vous.
       await db.$executeRawUnsafe(`DROP TABLE IF EXISTS "ContactRequest"`);
+
+      // ⑫ ⭐ V3.76 — Renommage « Pam » → « Afrika » des données (une fois
+      // les tables ci-dessus garanties exister — MeetingRequest/StaffSetting).
+      await ensureRenommageAfrika();
     })()
       .then(() => {
         staffSpacesOk = true;
@@ -1587,4 +1596,214 @@ export function ensureEmailTables(): Promise<void> {
       });
   }
   return inflightEmailTables;
+}
+
+// ============================================================
+// ⭐ V3.76 — RENOMMAGE « Pam » → « Afrika » (données existantes)
+// ============================================================
+
+let renommageAfrikaOk = false;
+let inflightRenommageAfrika: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.76 — Migration des DONNÉES existantes vers le renommage de la
+ * servante de Dieu : son prénom réel « Afrika » (Afrika Alkebulane
+ * Pamela Dali) remplace partout le surnom « Pam » (décision du
+ * 2026-09-14 — landing, navbar, back-office, Yeshua Connect, base).
+ *
+ * Portée (idempotent — chaque statement ne matche que les valeurs
+ * pré-V3.76) :
+ *  · Servant : code « pam » → « afrika » + textes (shortName / fullName /
+ *    role / bio — frontière de mot \y, « Pamela » et les clés internes
+ *    pamPhoto/pamName… du hero ne sont PAS touchées) ;
+ *  · User : compte de la servante → name « Afrika » (⚠️ l'email de
+ *    connexion pam@christ-libere.org et le mot de passe sont INCHANGÉS) ;
+ *  · MeetingRequest : servantCode « pam » → « afrika » ;
+ *  · HeroSection : page « pam » → « afrika », ctaHref « /pam » →
+ *    « /afrika », textes affichés + dataJson ;
+ *  · StaffSetting : clé « email_pam » → « email_afrika » (l'adresse
+ *    réelle paramétrée par le secrétariat est conservée) ;
+ *  · Contenus : Biography / Testimony / Teaching / Video / LiveStream —
+ *    mot « Pam » → « Afrika » (élision « de Pam » → « d'Afrika »).
+ *
+ * ⚠️ Les journaux (AuditLog, OutgoingEmail, StaffNotification) gardent
+ * leur texte historique : trace d'audit intangible.
+ *
+ * Mêmes garanties que les autres helpers : mémoïsé, un seul vol en
+ * concurrence, chaque statement protégé (échec loggué, jamais de crash
+ * de page — les statements ratés seront rejoués au prochain cold start).
+ */
+export function ensureRenommageAfrika(): Promise<void> {
+  if (renommageAfrikaOk) return Promise.resolve();
+  if (!inflightRenommageAfrika) {
+    inflightRenommageAfrika = (async () => {
+      let echecs = 0;
+      const pas = async (libelle: string, sql: string) => {
+        try {
+          await db.$executeRawUnsafe(sql);
+        } catch (e: unknown) {
+          echecs++;
+          console.warn(
+            `[ensure-schema] V3.76 (${libelle}) :`,
+            e instanceof Error ? e.message : e
+          );
+        }
+      };
+
+      // ── 1. Servant : code serviteur + textes ──────────────────────
+      await pas(
+        "Servant.code",
+        `UPDATE "Servant" SET code = 'afrika' WHERE code = 'pam'`
+      );
+      await pas(
+        "Servant.PAM",
+        `UPDATE "Servant" SET "shortName" = regexp_replace("shortName", '\\yPAM\\y', 'Afrika', 'g')
+         WHERE "shortName" ~ '\\yPAM\\y'`
+      );
+      // Élision française d'abord (« de Pam » → « d'Afrika »)…
+      await pas(
+        "Servant.elision",
+        `UPDATE "Servant" SET
+           "shortName" = regexp_replace("shortName", '\\yde Pam\\y', 'd''Afrika', 'g'),
+           "fullName"  = regexp_replace("fullName",  '\\yde Pam\\y', 'd''Afrika', 'g'),
+           "role"      = regexp_replace("role",      '\\yde Pam\\y', 'd''Afrika', 'g'),
+           "bio"       = regexp_replace("bio",       '\\yde Pam\\y', 'd''Afrika', 'g')
+         WHERE "shortName" ~ '\\yde Pam\\y' OR "fullName" ~ '\\yde Pam\\y'
+            OR "role" ~ '\\yde Pam\\y' OR "bio" ~ '\\yde Pam\\y'`
+      );
+      // …puis le mot isolé (« Pamela » intact : frontière de mot).
+      await pas(
+        "Servant.textes",
+        `UPDATE "Servant" SET
+           "shortName" = regexp_replace("shortName", '\\yPam\\y', 'Afrika', 'g'),
+           "fullName"  = regexp_replace("fullName",  '\\yPam\\y', 'Afrika', 'g'),
+           "role"      = regexp_replace("role",      '\\yPam\\y', 'Afrika', 'g'),
+           "bio"       = regexp_replace("bio",       '\\yPam\\y', 'Afrika', 'g')
+         WHERE "shortName" ~ '\\yPam\\y' OR "fullName" ~ '\\yPam\\y'
+            OR "role" ~ '\\yPam\\y' OR "bio" ~ '\\yPam\\y'`
+      );
+
+      // ── 2. User : nom d'affichage (email + mot de passe inchangés) ─
+      await pas(
+        "User.name",
+        `UPDATE "User" SET name = 'Afrika'
+         WHERE email = 'pam@christ-libere.org' AND name IS DISTINCT FROM 'Afrika'`
+      );
+
+      // ── 3. MeetingRequest : code serviteur des demandes ───────────
+      await pas(
+        "MeetingRequest.servantCode",
+        `UPDATE "MeetingRequest" SET "servantCode" = 'afrika' WHERE "servantCode" = 'pam'`
+      );
+
+      // ── 4. HeroSection : clé de page + liens + textes ─────────────
+      await pas(
+        "HeroSection.page",
+        `UPDATE "HeroSection" SET page = 'afrika' WHERE page = 'pam'`
+      );
+      await pas(
+        "HeroSection.liens",
+        `UPDATE "HeroSection" SET
+           "ctaHref"  = '/afrika' WHERE "ctaHref"  = '/pam'`
+      );
+      await pas(
+        "HeroSection.liens2",
+        `UPDATE "HeroSection" SET
+           "cta2Href" = '/afrika' WHERE "cta2Href" = '/pam'`
+      );
+      await pas(
+        "HeroSection.elision",
+        `UPDATE "HeroSection" SET
+           "kicker"     = regexp_replace("kicker",     '\\yde Pam\\y', 'd''Afrika', 'g'),
+           "title"      = regexp_replace("title",      '\\yde Pam\\y', 'd''Afrika', 'g'),
+           "titleAccent"= regexp_replace("titleAccent",'\\yde Pam\\y', 'd''Afrika', 'g'),
+           "titleSuffix"= regexp_replace("titleSuffix",'\\yde Pam\\y', 'd''Afrika', 'g'),
+           "subtitle"   = regexp_replace("subtitle",   '\\yde Pam\\y', 'd''Afrika', 'g'),
+           "ctaLabel"   = regexp_replace("ctaLabel",   '\\yde Pam\\y', 'd''Afrika', 'g'),
+           "cta2Label"  = regexp_replace("cta2Label",  '\\yde Pam\\y', 'd''Afrika', 'g'),
+           "dataJson"   = regexp_replace("dataJson",   '\\yde Pam\\y', 'd''Afrika', 'g')
+         WHERE "kicker" ~ '\\yde Pam\\y' OR "title" ~ '\\yde Pam\\y' OR "titleAccent" ~ '\\yde Pam\\y'
+            OR "titleSuffix" ~ '\\yde Pam\\y' OR "subtitle" ~ '\\yde Pam\\y'
+            OR "ctaLabel" ~ '\\yde Pam\\y' OR "cta2Label" ~ '\\yde Pam\\y' OR "dataJson" ~ '\\yde Pam\\y'`
+      );
+      await pas(
+        "HeroSection.textes",
+        `UPDATE "HeroSection" SET
+           "kicker"     = regexp_replace("kicker",     '\\yPam\\y', 'Afrika', 'g'),
+           "title"      = regexp_replace("title",      '\\yPam\\y', 'Afrika', 'g'),
+           "titleAccent"= regexp_replace("titleAccent",'\\yPam\\y', 'Afrika', 'g'),
+           "titleSuffix"= regexp_replace("titleSuffix",'\\yPam\\y', 'Afrika', 'g'),
+           "subtitle"   = regexp_replace("subtitle",   '\\yPam\\y', 'Afrika', 'g'),
+           "ctaLabel"   = regexp_replace("ctaLabel",   '\\yPam\\y', 'Afrika', 'g'),
+           "cta2Label"  = regexp_replace("cta2Label",  '\\yPam\\y', 'Afrika', 'g'),
+           "dataJson"   = regexp_replace("dataJson",   '\\yPam\\y', 'Afrika', 'g')
+         WHERE "kicker" ~ '\\yPam\\y' OR "title" ~ '\\yPam\\y' OR "titleAccent" ~ '\\yPam\\y'
+            OR "titleSuffix" ~ '\\yPam\\y' OR "subtitle" ~ '\\yPam\\y'
+            OR "ctaLabel" ~ '\\yPam\\y' OR "cta2Label" ~ '\\yPam\\y' OR "dataJson" ~ '\\yPam\\y'`
+      );
+
+      // ── 5. StaffSetting : clé du paramétrage email ────────────────
+      await pas(
+        "StaffSetting.key",
+        `UPDATE "StaffSetting" SET key = 'email_afrika'
+         WHERE key = 'email_pam'
+           AND NOT EXISTS (SELECT 1 FROM "StaffSetting" s2 WHERE s2.key = 'email_afrika')`
+      );
+
+      // ── 6. Contenus (mot « Pam » ; élision puis mot isolé) ────────
+      const tablesTextes: Array<[string, string[]]> = [
+        ["Biography", ["title", "description"]],
+        ["Testimony", ["title", "short", "content"]],
+        ["Teaching", ["title", "excerpt", "content"]],
+        ["Video", ["title", "description"]],
+        ["LiveStream", ["title", "description"]],
+      ];
+      for (const [table, cols] of tablesTextes) {
+        const setEli = cols
+          .map((c) => `"${c}" = regexp_replace("${c}", '\\yde Pam\\y', 'd''Afrika', 'g')`)
+          .join(",\n           ");
+        const whereEli = cols
+          .map((c) => `"${c}" ~ '\\yde Pam\\y'`)
+          .join(" OR ");
+        await pas(
+          `${table}.elision`,
+          `UPDATE "${table}" SET ${setEli} WHERE ${whereEli}`
+        );
+        const setMot = cols
+          .map((c) => `"${c}" = regexp_replace("${c}", '\\yPam\\y', 'Afrika', 'g')`)
+          .join(",\n           ");
+        const whereMot = cols
+          .map((c) => `"${c}" ~ '\\yPam\\y'`)
+          .join(" OR ");
+        await pas(
+          `${table}.textes`,
+          `UPDATE "${table}" SET ${setMot} WHERE ${whereMot}`
+        );
+      }
+
+      if (echecs === 0) {
+        console.log(
+          "[ensure-schema] V3.76 : renommage Pam → Afrika appliqué (Servant, User, MeetingRequest, HeroSection, StaffSetting, contenus) ✓"
+        );
+      } else {
+        console.warn(
+          `[ensure-schema] V3.76 : ${echecs} statement(s) en échec — rejoués au prochain cold start`
+        );
+        throw new Error(`renommage V3.76 incomplet (${echecs} échecs)`);
+      }
+    })()
+      .then(() => {
+        renommageAfrikaOk = true;
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] V3.76 : migration renommage Afrika impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightRenommageAfrika = null;
+      });
+  }
+  return inflightRenommageAfrika;
 }

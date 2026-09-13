@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Vidéos & Lives | Christ Libère",
   description:
-    "Enseignements vidéo et directs de Pam et du Pasteur Kongo, conservés intégralement.",
+    "Enseignements vidéo et directs d'Afrika et du Pasteur Kongo, conservés intégralement.",
 };
 
 export default async function VideosPage() {

@@ -5,7 +5,7 @@ const FOOTER_LINKS = {
   discover: {
     title: "Découvrir",
     links: [
-      { label: "Pam — Biographie", href: "/pam" },
+      { label: "Afrika — Biographie", href: "/afrika" },
       { label: "Pasteur Kongo", href: "/pasteur-kongo" },
       { label: "Témoignages", href: "/temoignages" },
       { label: "Enseignements", href: "/enseignements" },
@@ -58,7 +58,7 @@ export function SiteFooter() {
           <div className="md:col-span-1">
             <div className="flex items-center gap-1 mb-2">
               <Image
-                src="/logo-christ-libere-v2.png"
+                src="/logo-christ-libere-v3.png"
                 alt="Christ Libère"
                 width={28}
                 height={28}

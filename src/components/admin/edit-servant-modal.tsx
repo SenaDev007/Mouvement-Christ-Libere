@@ -203,7 +203,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
               className={inputClass}
               value={form.code}
               onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-              placeholder="pam"
+              placeholder="afrika"
             />
           </ModalField>
           <ModalField label="Nom court" required>
@@ -211,7 +211,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
               className={inputClass}
               value={form.shortName}
               onChange={(e) => setForm((f) => ({ ...f, shortName: e.target.value }))}
-              placeholder="Pam"
+              placeholder="Afrika"
             />
           </ModalField>
           <ModalField label="Nom complet" required fullWidth>
@@ -219,7 +219,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
               className={inputClass}
               value={form.fullName}
               onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
-              placeholder="Pam (Servante de Dieu)"
+              placeholder="Afrika (Servante de Dieu)"
             />
           </ModalField>
           <ModalField label="Rôle" fullWidth>

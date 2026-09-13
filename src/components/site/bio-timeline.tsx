@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * ⭐ V3.47 — FRISE CHRONOLOGIQUE PUBLIQUE (pages /pam et /pasteur-kongo).
+ * ⭐ V3.47 — FRISE CHRONOLOGIQUE PUBLIQUE (pages /afrika et /pasteur-kongo).
  *
  * Affiche les jalons biographiques (module « Biographies » du back-office)
  * avec leur photo (Biography.photoUrl, uploadée depuis le modal
@@ -32,7 +32,7 @@ export interface BioMilestone {
 interface BioTimelineProps {
   milestones: BioMilestone[];
   accentColor?: string;
-  /** Titre de la section (ex. « Les étapes du parcours de Pam »). */
+  /** Titre de la section (ex. « Les étapes du parcours d'Afrika »). */
   title?: string;
   kicker?: string;
 }

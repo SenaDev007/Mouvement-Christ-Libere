@@ -8,7 +8,7 @@ import { ensureChannelIsDirectColumn } from "@/lib/ensure-schema";
 const PRIVILEGED_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MODERATOR"]);
 
 /** ⭐ V3.7 — Rôles pouvant inviter dans les canaux RESTRICTED (cercle des
- * pasteurs) : les ADMINISTRATEURS PRINCIPAUX — super admins (PAM et
+ * pasteurs) : les ADMINISTRATEURS PRINCIPAUX — super admins (Afrika et
  * Pasteur Kongo portent SUPER_ADMIN) et admins/délégués. Groupe restreint :
  * ce sont EUX SEULS qui ajoutent qui ils veulent. */
 const INVITE_RESTRICTED_ROLES = new Set(["SUPER_ADMIN", "ADMIN"]);
@@ -94,7 +94,7 @@ export async function POST(
 
     // 🔒 Permission : membre du canal OU rôle privilégié ; ⭐ V3.7 —
     // RESTRICTED (cercle des pasteurs) → administrateurs principaux
-    // UNIQUEMENT (super admins — PAM, Pasteur Kongo — et admins) : c'est un
+    // UNIQUEMENT (super admins — Afrika, Pasteur Kongo — et admins) : c'est un
     // groupe restreint, ce sont eux qui ajoutent qui ils veulent.
     const privileged = PRIVILEGED_ROLES.has(userRole || "");
     const canInviteRestricted = INVITE_RESTRICTED_ROLES.has(userRole || "");

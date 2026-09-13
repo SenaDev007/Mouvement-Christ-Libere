@@ -48,7 +48,7 @@ export function urlEmbedTiktok(tiktokId: string): string {
 export interface OembedTikTok {
   /** Légende TikTok (titre réel de la vidéo). */
   titre: string;
-  /** Nom d'auteur (ex. « Pam »). */
+  /** Nom d'auteur (ex. « Afrika »). */
   auteur: string;
   /** Profil TikTok de l'auteur. */
   auteurUrl: string;

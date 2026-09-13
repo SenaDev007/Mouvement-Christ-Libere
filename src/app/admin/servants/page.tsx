@@ -51,9 +51,9 @@ export default async function AdminServantsPage() {
       {/* Cartes serviteurs */}
       <div className="grid md:grid-cols-2 gap-5">
         {servants.map((s) => {
-          const isPam = s.code === "pam";
-          const accentColor = isPam ? "#C9A227" : "#8C5FA8";
-          const initials = isPam ? "PAM" : "PK";
+          const isAfrika = s.code === "afrika";
+          const accentColor = isAfrika ? "#C9A227" : "#8C5FA8";
+          const initials = isAfrika ? "Afrika" : "PK";
 
           return (
             <div
@@ -92,7 +92,7 @@ export default async function AdminServantsPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-bold text-[#1E0F2B]">{s.fullName}</h2>
-                        {isPam && <Crown className="w-4 h-4 text-[#C9A227]" />}
+                        {isAfrika && <Crown className="w-4 h-4 text-[#C9A227]" />}
                       </div>
                       <p className="text-xs uppercase tracking-[0.15em] font-semibold mt-0.5" style={{ color: accentColor }}>
                         {s.shortName} · {s.role}

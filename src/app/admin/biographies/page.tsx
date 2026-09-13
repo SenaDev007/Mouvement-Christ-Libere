@@ -54,8 +54,8 @@ export default async function AdminBiographiesPage() {
       {/* Sections par serviteur */}
       <div className="space-y-6">
         {Object.entries(byServant).map(([servantName, items]) => {
-          const isPam = items[0]?.servant.code === "pam";
-          const accentColor = isPam ? "#C9A227" : "#8C5FA8";
+          const isAfrika = items[0]?.servant.code === "afrika";
+          const accentColor = isAfrika ? "#C9A227" : "#8C5FA8";
 
           return (
             <div key={servantName} className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
@@ -69,7 +69,7 @@ export default async function AdminBiographiesPage() {
                     className="w-9 h-9 rounded-xl flex items-center justify-center"
                     style={{ background: `${accentColor}20` }}
                   >
-                    {isPam ? <Crown className="w-4 h-4 text-[#C9A227]" /> : <BookOpen className="w-4 h-4 text-[#8C5FA8]" />}
+                    {isAfrika ? <Crown className="w-4 h-4 text-[#C9A227]" /> : <BookOpen className="w-4 h-4 text-[#8C5FA8]" />}
                   </div>
                   <div>
                     <h2 className="text-base font-bold text-[#1E0F2B]">{servantName}</h2>

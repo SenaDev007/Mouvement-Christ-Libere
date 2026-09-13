@@ -12,7 +12,7 @@ interface VideoCardProProps {
   views: number;
   publishedAt: string;
   servantName: string;
-  servantCode: "pam" | "kongo";
+  servantCode: "afrika" | "kongo";
   category: string;
   delay?: number;
   onClick: () => void;
@@ -87,7 +87,7 @@ export function VideoCardPro({
           {/* Badge serviteur en haut à droite */}
           <div className={cn(
             "absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-bold backdrop-blur-sm border",
-            servantCode === "pam"
+            servantCode === "afrika"
               ? "bg-[#8C5FA8]/30 text-[#FAF6EF] border-[#8C5FA8]/40"
               : "bg-[#5B7052]/30 text-[#FAF6EF] border-[#5B7052]/40"
           )}>

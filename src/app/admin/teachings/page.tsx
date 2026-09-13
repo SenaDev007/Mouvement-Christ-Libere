@@ -81,8 +81,8 @@ export default async function AdminTeachingsPage() {
         <div className="grid md:grid-cols-2 gap-3">
           {teachings.map((t) => {
             const level = LEVEL_CONFIG[t.level as keyof typeof LEVEL_CONFIG] || LEVEL_CONFIG.DECOUVERTE;
-            const isPam = t.servant.code === "pam";
-            const accentColor = isPam ? "#C9A227" : "#8C5FA8";
+            const isAfrika = t.servant.code === "afrika";
+            const accentColor = isAfrika ? "#C9A227" : "#8C5FA8";
 
             return (
               <div

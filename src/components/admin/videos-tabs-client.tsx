@@ -14,7 +14,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 // ⭐ V3.46 — Rubriques signatures (partagées site public ↔ back-office) :
-// « Saint-Esprit réponds-moi » (Pam), « Rhema du matin »/« Rhema du soir »
+// « Saint-Esprit réponds-moi » (Afrika), « Rhema du matin »/« Rhema du soir »
 // (Pasteur Kongo). La rubrique EXPLICITE (Video.category) prime sur le
 // devin historique par mots-clés du titre.
 import {
@@ -99,14 +99,14 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
   // Ordre d'affichage selon l'onglet : rubriques signatures en tête.
   const ordreCategories = useMemo(() => {
     if (activeTab === "kongo") return categoryOrder("kongo");
-    if (activeTab === "pam") return categoryOrder("pam");
+    if (activeTab === "afrika") return categoryOrder("afrika");
     // « Toutes » : rubriques signatures (tous serviteurs) puis catégories
     // historiques (fusion sans doublons).
     return [
       ...TOUTES_RUBRIQUES,
-      ...categoryOrder("pam").filter((c) => !estRubrique(c)),
+      ...categoryOrder("afrika").filter((c) => !estRubrique(c)),
       ...categoryOrder("kongo").filter(
-        (c) => !estRubrique(c) && !categoryOrder("pam").includes(c)
+        (c) => !estRubrique(c) && !categoryOrder("afrika").includes(c)
       ),
     ];
   }, [activeTab]);
@@ -145,13 +145,13 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
 
   const counts = {
     all: videosLocal.length,
-    pam: videosLocal.filter((v) => v.servant.code === "pam").length,
+    afrika: videosLocal.filter((v) => v.servant.code === "afrika").length,
     kongo: videosLocal.filter((v) => v.servant.code === "kongo").length,
   };
 
   const tabs = [
     { id: "all", label: "Toutes", count: counts.all, icon: VideoIcon },
-    { id: "pam", label: "Pam", count: counts.pam, icon: Crown, color: "#C9A227" },
+    { id: "afrika", label: "Afrika", count: counts.afrika, icon: Crown, color: "#C9A227" },
     { id: "kongo", label: "Pasteur Kongo", count: counts.kongo, icon: Crown, color: "#8C5FA8" },
   ];
 
@@ -376,8 +376,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           <Plus className="w-4 h-4" />
           {activeTab === "all"
             ? "Nouvelle vidéo"
-            : activeTab === "pam"
-              ? "Nouvelle vidéo · Pam"
+            : activeTab === "afrika"
+              ? "Nouvelle vidéo · Afrika"
               : "Nouvelle vidéo · Pasteur Kongo"}
         </button>
       </div>
@@ -477,14 +477,14 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
               ? `Aucune vidéo dans la catégorie "${activeCategory}".`
               : activeTab === "all"
                 ? "Aucune vidéo enregistrée."
-                : `Aucune vidéo pour ${activeTab === "pam" ? "Pam" : "le Pasteur Kongo"}.`}
+                : `Aucune vidéo pour ${activeTab === "afrika" ? "Afrika" : "le Pasteur Kongo"}.`}
           </p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredVideos.map((v) => {
-            const isPam = v.servant.code === "pam";
-            const accentColor = isPam ? "#C9A227" : "#8C5FA8";
+            const isAfrika = v.servant.code === "afrika";
+            const accentColor = isAfrika ? "#C9A227" : "#8C5FA8";
 
             return (
               <div
@@ -1188,7 +1188,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
       title="Nouvelle vidéo"
       subtitle={
         preselectedServantCode
-          ? `Ajouter une vidéo pour ${preselectedServantCode === "pam" ? "Pam" : "Pasteur Kongo"}`
+          ? `Ajouter une vidéo pour ${preselectedServantCode === "afrika" ? "Afrika" : "Pasteur Kongo"}`
           : "Ajouter une vidéo ou un live enregistré"
       }
       size="lg"

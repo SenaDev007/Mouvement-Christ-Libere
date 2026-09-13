@@ -1,6 +1,6 @@
 /**
  * Seed V2 — Christ Libère
- * Contenus authentiques enrichis pour PAM et Pasteur Kongo.
+ * Contenus authentiques enrichis pour Afrika et Pasteur Kongo.
  * Exécuter avec : bun run db:seed
  */
 
@@ -18,7 +18,7 @@ type TeachingLevel = "DECOUVERTE" | "INTERMEDIAIRE" | "AVANCE";
 type ChannelType = "TEXT" | "VOICE" | "VIDEO" | "ANNOUNCEMENT" | "RESTRICTED";
 
 // Import des contenus authentiques
-import { PAM_BIOGRAPHY, KONGO_BIOGRAPHY, AUTHENTIC_TESTIMONIES, AUTHENTIC_TEACHINGS } from "../src/lib/data/authentic-content";
+import { AFRIKA_BIOGRAPHY, KONGO_BIOGRAPHY, AUTHENTIC_TESTIMONIES, AUTHENTIC_TEACHINGS } from "../src/lib/data/authentic-content";
 
 async function main() {
   console.log("🌱 Début du seed V2 (contenus authentiques)...");
@@ -44,11 +44,11 @@ async function main() {
   // ============================================================
   // 1. SERVITEURS
   // ============================================================
-  const pam = await db.servant.create({
+  const afrika = await db.servant.create({
     data: {
-      code: "pam",
+      code: "afrika",
       fullName: "Afrika Alkebulane Pamela Dali",
-      shortName: "PAM",
+      shortName: "Afrika",
       role: "Servante de l'Éternel",
       bio: "Témoignages d'enlèvements au ciel, instructions reçues du Seigneur Yeshoua, conformité à la Parole. Figure contemporaine du patriarche Hénoch — celle qui marche avec Dieu et qui est conduite au ciel pour recevoir et transmettre.",
       isActive: true,
@@ -61,20 +61,20 @@ async function main() {
       fullName: "Pasteur Kongo",
       shortName: "Pasteur Kongo",
       role: "Époux, ministre pastoral",
-      bio: "Ministère pastoral complémentaire au ministère prophétique de PAM. Enseignements bibliques structurés, accompagnement spirituel, transmission rigoureuse de la Parole.",
+      bio: "Ministère pastoral complémentaire au ministère prophétique d'Afrika. Enseignements bibliques structurés, accompagnement spirituel, transmission rigoureuse de la Parole.",
       isActive: true,
     },
   });
 
-  console.log(`  ✓ Serviteurs: ${pam.shortName}, ${kongo.shortName}`);
+  console.log(`  ✓ Serviteurs: ${afrika.shortName}, ${kongo.shortName}`);
 
   // ============================================================
   // 2. BIOGRAPHIES AUTHENTIQUES
   // ============================================================
-  for (const b of PAM_BIOGRAPHY) {
-    await db.biography.create({ data: { ...b, servantId: pam.id } });
+  for (const b of AFRIKA_BIOGRAPHY) {
+    await db.biography.create({ data: { ...b, servantId: afrika.id } });
   }
-  console.log(`  ✓ ${PAM_BIOGRAPHY.length} jalons biographiques PAM (authentiques)`);
+  console.log(`  ✓ ${AFRIKA_BIOGRAPHY.length} jalons biographiques Afrika (authentiques)`);
 
   for (const b of KONGO_BIOGRAPHY) {
     await db.biography.create({ data: { ...b, servantId: kongo.id } });
@@ -82,7 +82,7 @@ async function main() {
   console.log(`  ✓ ${KONGO_BIOGRAPHY.length} jalons biographiques Pasteur Kongo (authentiques)`);
 
   // ============================================================
-  // 3. TÉMOIGNAGES AUTHENTIQUES (tous — 31 témoignages de Pam)
+  // 3. TÉMOIGNAGES AUTHENTIQUES (tous — 31 témoignages d'Afrika)
   // ============================================================
   const testimonyData: Array<{
     servantId: string;
@@ -95,7 +95,7 @@ async function main() {
     readingTime: string;
     publishedAt: Date;
   }> = AUTHENTIC_TESTIMONIES.map((t, i) => ({
-    servantId: pam.id,
+    servantId: afrika.id,
     ...t,
     status: "CONFIRMED" as TestimonyStatus,
     publishedAt: new Date(2025, 0, 1 + i * 10), // stagger dates
@@ -107,7 +107,7 @@ async function main() {
   console.log(`  ✓ ${testimonyData.length} témoignages authentiques`);
 
   // ============================================================
-  // 4. ENSEIGNEMENTS AUTHENTIQUES (Pam) + enseignements Kongo
+  // 4. ENSEIGNEMENTS AUTHENTIQUES (Afrika) + enseignements Kongo
   // ============================================================
   const teachings: Array<{
     servantId: string;
@@ -120,9 +120,9 @@ async function main() {
     readingTime: string;
     publishedAt: Date;
   }> = [
-    // ⭐ Enseignements authentiques de Pam (transcriptions réelles)
+    // ⭐ Enseignements authentiques d'Afrika (transcriptions réelles)
     ...AUTHENTIC_TEACHINGS.map((t) => ({
-      servantId: pam.id,
+      servantId: afrika.id,
       title: t.title,
       excerpt: t.excerpt,
       content: t.content,
@@ -144,7 +144,7 @@ async function main() {
   // ============================================================
   const videos = [
     {
-      servantId: pam.id,
+      servantId: afrika.id,
       title: "Enseignement sur le retour de Yeshoua",
       description:
         "Étude approfondie des signes des temps et de l'espérance du retour du Maître. Enseignement prophétique à partir des paroles reçues.",
@@ -154,7 +154,7 @@ async function main() {
       publishedAt: new Date("2025-08-18"),
     },
     {
-      servantId: pam.id,
+      servantId: afrika.id,
       title: "Témoignage d'enlèvement au ciel",
       description:
         "Récit détaillé d'une visite au ciel et des instructions reçues du Seigneur Yeshoua.",
@@ -192,7 +192,7 @@ async function main() {
     {
       name: "Annonces officielles",
       description:
-        "Communications officielles de PAM et du Pasteur Kongo. Lecture seule pour les membres.",
+        "Communications officielles d'Afrika et du Pasteur Kongo. Lecture seule pour les membres.",
       type: "ANNOUNCEMENT",
       isEncrypted: false,
       isRestricted: false,
@@ -249,9 +249,9 @@ async function main() {
 
   await db.liveStream.create({
     data: {
-      servantId: pam.id,
+      servantId: afrika.id,
       title: "Enseignement hebdomadaire — Tenir ferme",
-      description: "Direct hebdomadaire de Pam sur la persévérance dans les temps difficiles.",
+      description: "Direct hebdomadaire d'Afrika sur la persévérance dans les temps difficiles.",
       scheduledAt: nextLive,
       status: "SCHEDULED",
     } as const,
@@ -260,7 +260,7 @@ async function main() {
 
   console.log("\n✅ Seed V2 terminé avec succès !");
   console.log(`   - 2 serviteurs`);
-  console.log(`   - ${PAM_BIOGRAPHY.length + KONGO_BIOGRAPHY.length} jalons biographiques authentiques`);
+  console.log(`   - ${AFRIKA_BIOGRAPHY.length + KONGO_BIOGRAPHY.length} jalons biographiques authentiques`);
   console.log(`   - ${testimonyData.length} témoignages authentiques`);
   console.log(`   - ${teachings.length} enseignements`);
   console.log(`   - ${videos.length} vidéos`);
