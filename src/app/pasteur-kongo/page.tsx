@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getHero } from "@/lib/heroes";
+import { photosServiteurs } from "@/lib/servant-photos";
 import { PasteurKongoView } from "@/components/site/pasteur-kongo-view";
 // ⭐ V3.47 — colonne Biography.photoUrl sélectionnée ci-dessous.
 import { ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
@@ -24,7 +25,14 @@ export const metadata = {
 };
 
 export default async function PasteurKongoPage() {
-  const hero = await getHero("pasteur-kongo");
+  // ⭐ V3.77 — photo de profil unifiée (« partout où il y a profil ») :
+  // photosServiteurs() — module /admin/servants en priorité, sinon la
+  // photo « cadre doré » déjà configurée (idempotent ici), repli statique.
+  const [hero, photos] = await Promise.all([
+    getHero("pasteur-kongo"),
+    photosServiteurs(),
+  ]);
+  hero.data.bioPhoto = photos.kongo;
 
   // ⭐ V3.47 — jalons biographiques (frise chronologique publique).
   // Garde idempotente : la colonne photoUrl se crée à la volée si absente.

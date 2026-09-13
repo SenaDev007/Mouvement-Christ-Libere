@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import Image from "next/image";
+import { photosServiteurs } from "@/lib/servant-photos";
 import { RendezVousView } from "./rendez-vous-view";
 
 /**
@@ -19,10 +19,12 @@ export const metadata: Metadata = {
     "Vous souhaitez rencontrer la sœur Afrika ou le pasteur Kongo ? Déposez votre demande auprès du secrétariat du Mouvement Christ Libère — elle sera transmise au serviteur de Dieu concerné.",
 };
 
-export default function RendezVousPage() {
+export default async function RendezVousPage() {
+  // ⭐ V3.77 — photos de profil du module serviteur (back-office).
+  const photos = await photosServiteurs();
   return (
     <Suspense>
-      <RendezVousView />
+      <RendezVousView photos={photos} />
     </Suspense>
   );
 }

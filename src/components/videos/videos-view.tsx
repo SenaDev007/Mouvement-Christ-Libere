@@ -18,6 +18,10 @@ import { LecteurTikTok } from "@/components/tiktok/lecteur-tiktok";
 import { TiktokNoteIcon, BadgeTikTok } from "@/components/tiktok/tiktok-note-icon";
 import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 import { HeroBackgroundImage } from "@/components/site/page-hero";
+// ⭐ V3.77 — Photos de profil du module serviteur (data URL-compatible).
+import { SmartImage } from "@/components/site/smart-image";
+// Type uniquement (ce module importe Prisma — effacé à la compilation).
+import type { PhotosServiteurs } from "@/lib/servant-photos";
 import { IsololeText } from "@/lib/isolole";
 import type { HeroConfig } from "@/lib/hero-defaults";
 // ⭐ V3.46 — Rubriques signatures (partagées avec le back-office) :
@@ -108,8 +112,14 @@ type SortOrder = "recent" | "oldest" | "title";
  * sous-titre) paramétrable depuis le back-office (/admin/heroes →
  * page « videos »). La page serveur /videos charge la config (getHero)
  * et la transmet ici.
+ *
+ * ⭐ V3.77 — `photos` : photos de profil des serviteurs chargées par la
+ * page serveur (module /admin/servants → Servant.portraitUrl, repli
+ * fichiers historiques). Affichées dans les onglets Afrika / Kongo
+ * (« barre de navigation » de la page), la barre du lecteur et les
+ * avatars des cartes — « partout où il y a profil ».
  */
-export function VideosView({ hero }: { hero: HeroConfig }) {
+export function VideosView({ hero, photos }: { hero: HeroConfig; photos: PhotosServiteurs }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<ServantTab>("afrika");
   const [currentVideo, setCurrentVideo] = useState<VideoItem | null>(null);
@@ -197,6 +207,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
       <VideoPlayerView
         video={currentVideo}
         allVideos={currentVideos}
+        photos={photos}
         onBack={() => { setCurrentVideo(null); router.push("/videos"); }}
         onSelectVideo={(v) => { setCurrentVideo(v); router.push(`/videos?v=${v.id}`); window.scrollTo(0, 0); }}
       />
@@ -314,8 +325,8 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
         <div className="max-w-7xl mx-auto px-3 md:px-4">
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-              <ServantTabButton active={activeTab === "afrika"} onClick={() => { setActiveTab("afrika"); setActiveCategory(null); }} name="Afrika" count={allVideos.filter(v => v.servant === "afrika").length} photo="/pam.jpeg" />
-              <ServantTabButton active={activeTab === "kongo"} onClick={() => { setActiveTab("kongo"); setActiveCategory(null); }} name="Kongo" count={allVideos.filter(v => v.servant === "kongo").length} photo="/pasteur-kongo.jpeg" />
+              <ServantTabButton active={activeTab === "afrika"} onClick={() => { setActiveTab("afrika"); setActiveCategory(null); }} name="Afrika" count={allVideos.filter(v => v.servant === "afrika").length} photo={photos.afrika} />
+              <ServantTabButton active={activeTab === "kongo"} onClick={() => { setActiveTab("kongo"); setActiveCategory(null); }} name="Kongo" count={allVideos.filter(v => v.servant === "kongo").length} photo={photos.kongo} />
             </div>
             <div className="flex-1 min-w-[200px] relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]" />
@@ -389,7 +400,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                       {recentVideos.map((video) => (
-                        <YouTubeStyleCard key={`recent-${video.id}`} video={video} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
+                        <YouTubeStyleCard key={`recent-${video.id}`} video={video} photos={photos} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
                       ))}
                     </div>
                   </div>
@@ -428,7 +439,7 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                         {activeCat.videos.map((video) => (
-                          <YouTubeStyleCard key={video.id} video={video} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
+                          <YouTubeStyleCard key={video.id} video={video} photos={photos} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
                         ))}
                       </div>
                     )}
@@ -486,9 +497,10 @@ export function VideosView({ hero }: { hero: HeroConfig }) {
 // ============================================================
 // VUE LECTEUR VIDÉO
 // ============================================================
-function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
+function VideoPlayerView({ video, allVideos, photos, onBack, onSelectVideo }: {
   video: VideoItem;
   allVideos: VideoItem[];
+  photos: PhotosServiteurs;
   onBack: () => void;
   onSelectVideo: (v: VideoItem) => void;
 }) {
@@ -502,7 +514,8 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
   const [showShare, setShowShare] = useState(false);
 
   const servantName = video.servant === "afrika" ? "Afrika" : "Pasteur Kongo";
-  const servantPhoto = video.servant === "afrika" ? "/pam.jpeg" : "/pasteur-kongo.jpeg";
+  // ⭐ V3.77 — photo de profil du module serviteur (repli historique).
+  const servantPhoto = video.servant === "afrika" ? photos.afrika : photos.kongo;
   const recommended = allVideos.filter(v => v.id !== video.id).slice(0, 15);
 
   // Charger le like depuis localStorage
@@ -643,7 +656,9 @@ function VideoPlayerView({ video, allVideos, onBack, onSelectVideo }: {
             <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#8A8378]/15">
               <div className="flex items-center gap-3">
                 <div className="relative w-9 h-9 rounded-full overflow-hidden ring-2 ring-[#C9A227]/30 flex-shrink-0">
-                  <Image src={servantPhoto} alt={servantName} width={36} height={36} className="w-full h-full object-cover" />
+                  {/* ⭐ V3.77 — SmartImage : la photo du module serviteur est
+                      une data URL (JPEG base64) que next/image n'optimise pas. */}
+                  <SmartImage src={servantPhoto} alt={servantName} width={36} height={36} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-[#1E0F2B]">{servantName}</p>
@@ -796,7 +811,7 @@ function ThumbWithFallback({ src, title, sizes, className }: { src: string; titl
   );
 }
 
-function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () => void }) {
+function YouTubeStyleCard({ video, photos, onClick }: { video: VideoItem; photos: PhotosServiteurs; onClick: () => void }) {
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.3 }}>
       <button onClick={onClick} className="group block w-full text-left">
@@ -824,7 +839,9 @@ function YouTubeStyleCard({ video, onClick }: { video: VideoItem; onClick: () =>
         </div>
         <div className="flex gap-2.5">
           <div className="relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-[#C9A227]/20 flex-shrink-0">
-            <Image src={video.servant === "afrika" ? "/pam.jpeg" : "/pasteur-kongo.jpeg"} alt={video.servantName} width={32} height={32} className="w-full h-full object-cover" />
+            {/* ⭐ V3.77 — photo de profil du module serviteur (SmartImage :
+                data URL-compatible). */}
+            <SmartImage src={video.servant === "afrika" ? photos.afrika : photos.kongo} alt={video.servantName} width={32} height={32} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-[#1E0F2B] leading-snug line-clamp-2 break-words group-hover:text-[#C9A227] transition-colors mb-0.5">{video.title}</h3>
@@ -849,7 +866,8 @@ function ServantTabButton({ active, onClick, name, count, photo }: {
       active ? "bg-[#2A0E3D] text-[#FAF6EF] shadow-md" : "bg-white text-[#1E0F2B] border border-[#8A8378]/20 hover:border-[#C9A227]/40"
     )}>
       <div className="relative w-6 h-6 md:w-7 md:h-7 rounded-full overflow-hidden ring-1 ring-[#C9A227]/30 flex-shrink-0">
-        <Image src={photo} alt={name} width={28} height={28} className="w-full h-full object-cover" />
+        {/* ⭐ V3.77 — SmartImage : photo du module serviteur (data URL). */}
+        <SmartImage src={photo} alt={name} width={28} height={28} className="w-full h-full object-cover" />
       </div>
       <span className="text-xs md:text-sm">{name}</span>
       <span className={cn("text-[10px] font-semibold", active ? "text-[#C9A227]" : "text-[#8A8378]")}>{count}</span>

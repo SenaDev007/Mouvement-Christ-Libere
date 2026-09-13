@@ -18,7 +18,6 @@
  */
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -35,8 +34,17 @@ import {
 import { DEMANDE_URGENCES, SERVITEURS_RENDEZ_VOUS } from "@/lib/staff-space/constants";
 import { COUNTRIES } from "@/lib/data/countries";
 import { flagFromCountryCode } from "@/lib/data/flags";
+// ⭐ V3.77 — Photo de profil du module serviteur (SmartImage : data URL).
+import { SmartImage } from "@/components/site/smart-image";
+// Type uniquement (module serveur — effacé à la compilation).
+import type { PhotosServiteurs } from "@/lib/servant-photos";
 
-export function RendezVousView() {
+/**
+ * ⭐ V3.77 — `photos` : photos de profil chargées par la page serveur
+ * (module /admin/servants → Servant.portraitUrl, repli fichiers
+ * historiques) — le choix du serviteur affiche la photo du back-office.
+ */
+export function RendezVousView({ photos }: { photos: PhotosServiteurs }) {
   const [form, setForm] = useState({
     requesterName: "",
     contact: "",
@@ -259,8 +267,10 @@ export function RendezVousView() {
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <Image
-                            src={s.code === "afrika" ? "/pam.jpeg" : "/pasteur-kongo.jpeg"}
+                          {/* ⭐ V3.77 — photo de profil du module serviteur
+                              (SmartImage : gère les data URLs). */}
+                          <SmartImage
+                            src={s.code === "afrika" ? photos.afrika : photos.kongo}
                             alt={s.libelle}
                             width={40}
                             height={40}

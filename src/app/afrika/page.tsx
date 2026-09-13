@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getHero } from "@/lib/heroes";
+import { photosServiteurs } from "@/lib/servant-photos";
 import { AfrikaView } from "@/components/site/afrika-view";
 // ⭐ V3.47 — colonne Biography.photoUrl sélectionnée ci-dessous.
 import { ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
@@ -25,7 +26,11 @@ export const metadata = {
 };
 
 export default async function AfrikaPage() {
-  const hero = await getHero("afrika");
+  // ⭐ V3.77 — photo de profil unifiée (« partout où il y a profil ») :
+  // photosServiteurs() — module /admin/servants en priorité, sinon la
+  // photo « cadre doré » déjà configurée (idempotent ici), repli statique.
+  const [hero, photos] = await Promise.all([getHero("afrika"), photosServiteurs()]);
+  hero.data.bioPhoto = photos.afrika;
 
   // ⭐ V3.47 — jalons biographiques (frise chronologique publique).
   // Garde idempotente : la colonne photoUrl se crée à la volée si absente.
