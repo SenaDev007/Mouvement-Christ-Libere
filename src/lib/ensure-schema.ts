@@ -1657,8 +1657,25 @@ export function ensureRenommageAfrika(): Promise<void> {
       );
       await pas(
         "Servant.PAM",
-        `UPDATE "Servant" SET "shortName" = regexp_replace("shortName", '\\yPAM\\y', 'Afrika', 'g')
-         WHERE "shortName" ~ '\\yPAM\\y'`
+        `UPDATE "Servant" SET
+           "shortName" = regexp_replace("shortName", '\\yPAM\\y', 'Afrika', 'g'),
+           "fullName"  = regexp_replace("fullName",  '\\yPAM\\y', 'Afrika', 'g'),
+           "role"      = regexp_replace("role",      '\\yPAM\\y', 'Afrika', 'g'),
+           "bio"       = regexp_replace("bio",       '\\yPAM\\y', 'Afrika', 'g')
+         WHERE "shortName" ~ '\\yPAM\\y' OR "fullName" ~ '\\yPAM\\y'
+            OR "role" ~ '\\yPAM\\y' OR "bio" ~ '\\yPAM\\y'`
+      );
+      // ⭐ V3.76-bis — élision MAJUSCULE (« de PAM » → « d'Afrika » — la bio
+      // de Pasteur Kongo en base contient « ministère prophétique de PAM »).
+      await pas(
+        "Servant.elisionPAM",
+        `UPDATE "Servant" SET
+           "shortName" = regexp_replace("shortName", '\\yde PAM\\y', 'd''Afrika', 'g'),
+           "fullName"  = regexp_replace("fullName",  '\\yde PAM\\y', 'd''Afrika', 'g'),
+           "role"      = regexp_replace("role",      '\\yde PAM\\y', 'd''Afrika', 'g'),
+           "bio"       = regexp_replace("bio",       '\\yde PAM\\y', 'd''Afrika', 'g')
+         WHERE "shortName" ~ '\\yde PAM\\y' OR "fullName" ~ '\\yde PAM\\y'
+            OR "role" ~ '\\yde PAM\\y' OR "bio" ~ '\\yde PAM\\y'`
       );
       // Élision française d'abord (« de Pam » → « d'Afrika »)…
       await pas(
@@ -1741,6 +1758,37 @@ export function ensureRenommageAfrika(): Promise<void> {
             OR "titleSuffix" ~ '\\yPam\\y' OR "subtitle" ~ '\\yPam\\y'
             OR "ctaLabel" ~ '\\yPam\\y' OR "cta2Label" ~ '\\yPam\\y' OR "dataJson" ~ '\\yPam\\y'`
       );
+      // ⭐ V3.76-bis — HeroSection en MAJUSCULES aussi.
+      await pas(
+        "HeroSection.elisionPAM",
+        `UPDATE "HeroSection" SET
+           "kicker"     = regexp_replace("kicker",     '\\yde PAM\\y', 'd''Afrika', 'g'),
+           "title"      = regexp_replace("title",      '\\yde PAM\\y', 'd''Afrika', 'g'),
+           "titleAccent"= regexp_replace("titleAccent",'\\yde PAM\\y', 'd''Afrika', 'g'),
+           "titleSuffix"= regexp_replace("titleSuffix",'\\yde PAM\\y', 'd''Afrika', 'g'),
+           "subtitle"   = regexp_replace("subtitle",   '\\yde PAM\\y', 'd''Afrika', 'g'),
+           "ctaLabel"   = regexp_replace("ctaLabel",   '\\yde PAM\\y', 'd''Afrika', 'g'),
+           "cta2Label"  = regexp_replace("cta2Label",  '\\yde PAM\\y', 'd''Afrika', 'g'),
+           "dataJson"   = regexp_replace("dataJson",   '\\yde PAM\\y', 'd''Afrika', 'g')
+         WHERE "kicker" ~ '\\yde PAM\\y' OR "title" ~ '\\yde PAM\\y' OR "titleAccent" ~ '\\yde PAM\\y'
+            OR "titleSuffix" ~ '\\yde PAM\\y' OR "subtitle" ~ '\\yde PAM\\y'
+            OR "ctaLabel" ~ '\\yde PAM\\y' OR "cta2Label" ~ '\\yde PAM\\y' OR "dataJson" ~ '\\yde PAM\\y'`
+      );
+      await pas(
+        "HeroSection.PAM",
+        `UPDATE "HeroSection" SET
+           "kicker"     = regexp_replace("kicker",     '\\yPAM\\y', 'Afrika', 'g'),
+           "title"      = regexp_replace("title",      '\\yPAM\\y', 'Afrika', 'g'),
+           "titleAccent"= regexp_replace("titleAccent",'\\yPAM\\y', 'Afrika', 'g'),
+           "titleSuffix"= regexp_replace("titleSuffix",'\\yPAM\\y', 'Afrika', 'g'),
+           "subtitle"   = regexp_replace("subtitle",   '\\yPAM\\y', 'Afrika', 'g'),
+           "ctaLabel"   = regexp_replace("ctaLabel",   '\\yPAM\\y', 'Afrika', 'g'),
+           "cta2Label"  = regexp_replace("cta2Label",  '\\yPAM\\y', 'Afrika', 'g'),
+           "dataJson"   = regexp_replace("dataJson",   '\\yPAM\\y', 'Afrika', 'g')
+         WHERE "kicker" ~ '\\yPAM\\y' OR "title" ~ '\\yPAM\\y' OR "titleAccent" ~ '\\yPAM\\y'
+            OR "titleSuffix" ~ '\\yPAM\\y' OR "subtitle" ~ '\\yPAM\\y'
+            OR "ctaLabel" ~ '\\yPAM\\y' OR "cta2Label" ~ '\\yPAM\\y' OR "dataJson" ~ '\\yPAM\\y'`
+      );
 
       // ── 5. StaffSetting : clé du paramétrage email ────────────────
       await pas(
@@ -1757,28 +1805,32 @@ export function ensureRenommageAfrika(): Promise<void> {
         ["Teaching", ["title", "excerpt", "content"]],
         ["Video", ["title", "description"]],
         ["LiveStream", ["title", "description"]],
+        // ⭐ V3.76-bis — chaînes (description « Communications officielles
+        // de PAM… » du seed) et annonces officielles du ministère.
+        ["Channel", ["name", "description"]],
+        ["MinistryAnnouncement", ["title", "content"]],
       ];
       for (const [table, cols] of tablesTextes) {
-        const setEli = cols
-          .map((c) => `"${c}" = regexp_replace("${c}", '\\yde Pam\\y', 'd''Afrika', 'g')`)
-          .join(",\n           ");
-        const whereEli = cols
-          .map((c) => `"${c}" ~ '\\yde Pam\\y'`)
-          .join(" OR ");
-        await pas(
-          `${table}.elision`,
-          `UPDATE "${table}" SET ${setEli} WHERE ${whereEli}`
-        );
-        const setMot = cols
-          .map((c) => `"${c}" = regexp_replace("${c}", '\\yPam\\y', 'Afrika', 'g')`)
-          .join(",\n           ");
-        const whereMot = cols
-          .map((c) => `"${c}" ~ '\\yPam\\y'`)
-          .join(" OR ");
-        await pas(
-          `${table}.textes`,
-          `UPDATE "${table}" SET ${setMot} WHERE ${whereMot}`
-        );
+        // ⭐ V3.76-bis — 4 passes : élisions + mots isolés, casse mixte ET
+        // MAJUSCULES (« de Pam », « de PAM », « Pam », « PAM »).
+        const variantes: Array<[string, string]> = [
+          ["de Pam", "d''Afrika"],
+          ["de PAM", "d''Afrika"],
+          ["Pam", "Afrika"],
+          ["PAM", "Afrika"],
+        ];
+        for (const [motif, remplacement] of variantes) {
+          const set = cols
+            .map((c) => `"${c}" = regexp_replace("${c}", '\\y${motif}\\y', '${remplacement}', 'g')`)
+            .join(",\n           ");
+          const where = cols
+            .map((c) => `"${c}" ~ '\\y${motif}\\y'`)
+            .join(" OR ");
+          await pas(
+            `${table}.${motif.replace(/\s/g, "_")}`,
+            `UPDATE "${table}" SET ${set} WHERE ${where}`
+          );
+        }
       }
 
       if (echecs === 0) {
