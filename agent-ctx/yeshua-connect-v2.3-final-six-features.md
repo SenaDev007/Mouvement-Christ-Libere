@@ -90,12 +90,12 @@ les 6 dernières fonctionnalités manquantes de Yeshua Connect.
 ### 6. ✅ RÔLES COULEURS SUR LES NOMS
 - Fonction `getRoleColor(role?: string)` retourne un hex selon le rôle :
   - SUPER_ADMIN → #C9A227 (or)
-  - ADMIN → #8A857C (violet)
+  - ADMIN → #8C5FA8 (violet)
   - MODERATOR → #5B7052 (vert)
   - ANIMATOR → #3b82f6 (bleu)
-  - MEMBER / MEMBER_VERIFIED / défaut → #8A857C (gris)
+  - MEMBER / MEMBER_VERIFIED / défaut → #8A8378 (gris)
 - Appliqué via `style={{ color: senderColor }}` sur le `<p>` du senderName dans le rendu
-  des messages (remplace l'ancien `text-[#8A857C]` hardcodé).
+  des messages (remplace l'ancien `text-[#8C5FA8]` hardcodé).
 - Aussi appliqué dans :
   - Galerie médias (overlay sender info).
   - Audit log modal (user name).

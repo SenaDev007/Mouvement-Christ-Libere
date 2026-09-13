@@ -52,14 +52,14 @@ export default async function AdminTresorerieConsultationPage() {
 
   if (!session || session.role !== "SUPER_ADMIN") {
     return (
-      <div className="max-w-xl mx-auto mt-8 bg-white rounded-2xl border border-[#8A857C]/15 p-8 text-center">
+      <div className="max-w-xl mx-auto mt-8 bg-white rounded-2xl border border-[#8A8378]/15 p-8 text-center">
         <div className="w-12 h-12 rounded-full bg-[#C9A227]/10 flex items-center justify-center mx-auto mb-4">
           <Lock className="w-6 h-6 text-[#A3821C]" />
         </div>
-        <h1 className="text-xl font-bold text-[#000000] mb-2">
+        <h1 className="text-xl font-bold text-[#1E0F2B] mb-2">
           Consultation réservée aux serviteurs de Dieu
         </h1>
-        <p className="text-sm text-[#8A857C] leading-relaxed">
+        <p className="text-sm text-[#8A8378] leading-relaxed">
           La situation de trésorerie n&apos;est visible que par les comptes
           super administrateurs (Pasteur Kongo et Sœur Pam). Le trésorier
           gère les mouvements depuis l&apos;espace Trésorerie dédié.
@@ -109,7 +109,7 @@ export default async function AdminTresorerieConsultationPage() {
   return (
     <div className="space-y-8">
       {/* En-tête */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#000000] via-[#161513] to-[#000000] p-6 md:p-8 text-white">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2A0E3D] via-[#3D1A54] to-[#2A0E3D] p-6 md:p-8 text-white">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="relative z-10 flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -141,7 +141,7 @@ export default async function AdminTresorerieConsultationPage() {
       </div>
 
       {/* Bandeau lecture seule */}
-      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30 text-sm text-[#000000]/80">
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30 text-sm text-[#1E0F2B]/80">
         <ShieldCheck className="w-4 h-4 text-[#A3821C] flex-shrink-0 mt-0.5" />
         <p className="leading-relaxed">
           Vous consultez la trésorerie en simple coup d&apos;œil. La saisie
@@ -153,14 +153,14 @@ export default async function AdminTresorerieConsultationPage() {
 
       {/* Soldes consolidés par devise */}
       <div>
-        <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-3 px-1">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-3 px-1">
           Soldes consolidés
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {situation.consolide.length === 0 && (
-            <div className="col-span-full bg-white rounded-xl border border-dashed border-[#8A857C]/30 p-8 text-center">
-              <PiggyBank className="w-8 h-8 text-[#8A857C]/40 mx-auto mb-2" />
-              <p className="text-sm text-[#8A857C]">
+            <div className="col-span-full bg-white rounded-xl border border-dashed border-[#8A8378]/30 p-8 text-center">
+              <PiggyBank className="w-8 h-8 text-[#8A8378]/40 mx-auto mb-2" />
+              <p className="text-sm text-[#8A8378]">
                 Aucune caisse enregistrée pour l&apos;instant.
               </p>
             </div>
@@ -168,21 +168,21 @@ export default async function AdminTresorerieConsultationPage() {
           {situation.consolide.map((c) => (
             <div
               key={c.devise}
-              className="group relative bg-white rounded-xl border border-[#8A857C]/15 p-4 overflow-hidden"
+              className="group relative bg-white rounded-xl border border-[#8A8378]/15 p-4 overflow-hidden"
             >
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C] opacity-80" />
               <div className="flex items-start justify-between mb-3">
                 <div className="p-2 rounded-lg bg-[#C9A227]/10">
-                  <Wallet className="w-4 h-4 text-[#000000]" />
+                  <Wallet className="w-4 h-4 text-[#1E0F2B]" />
                 </div>
-                <span className="text-[10px] text-[#8A857C] font-semibold">
+                <span className="text-[10px] text-[#8A8378] font-semibold">
                   {c.nbCaisses} caisse{c.nbCaisses > 1 ? "s" : ""}
                 </span>
               </div>
-              <div className="text-2xl font-bold text-[#000000] leading-tight">
+              <div className="text-2xl font-bold text-[#1E0F2B] leading-tight">
                 {formaterMontant(c.solde, c.devise)}
               </div>
-              <div className="text-[11px] text-[#8A857C] mt-0.5">
+              <div className="text-[11px] text-[#8A8378] mt-0.5">
                 Total {c.devise}
                 {c.soldeNonAffecte !== 0 && (
                   <span className="block text-[10px] text-[#A3821C]">
@@ -215,7 +215,7 @@ export default async function AdminTresorerieConsultationPage() {
           <p className="text-xl font-bold text-[#3F5039]">
             {formaterMontant(recettesMois, "EUR")}
           </p>
-          <p className="text-[10px] text-[#8A857C] mt-0.5 flex items-center gap-1">
+          <p className="text-[10px] text-[#8A8378] mt-0.5 flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             {debutMois.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
           </p>
@@ -232,24 +232,24 @@ export default async function AdminTresorerieConsultationPage() {
           <p className="text-xl font-bold text-[#B3452E]">
             {formaterMontant(depensesMois, "EUR")}
           </p>
-          <p className="text-[10px] text-[#8A857C] mt-0.5 flex items-center gap-1">
+          <p className="text-[10px] text-[#8A8378] mt-0.5 flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             {debutMois.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-[#8A857C]/15 p-4">
+        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
           <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 rounded-lg bg-[#8A857C]/10">
-              <PiggyBank className="w-3.5 h-3.5 text-[#8A857C]" />
+            <div className="p-1.5 rounded-lg bg-[#8A8378]/10">
+              <PiggyBank className="w-3.5 h-3.5 text-[#8A8378]" />
             </div>
-            <span className="text-[10px] uppercase tracking-wider text-[#8A857C] font-bold">
+            <span className="text-[10px] uppercase tracking-wider text-[#8A8378] font-bold">
               Caisses actives
             </span>
           </div>
-          <p className="text-xl font-bold text-[#000000]">
+          <p className="text-xl font-bold text-[#1E0F2B]">
             {caissesActives.length}
           </p>
-          <p className="text-[10px] text-[#8A857C] mt-0.5">
+          <p className="text-[10px] text-[#8A8378] mt-0.5">
             sur {situation.caisses.length} au total
           </p>
         </div>
@@ -262,11 +262,11 @@ export default async function AdminTresorerieConsultationPage() {
               Écritures totales
             </span>
           </div>
-          <p className="text-xl font-bold text-[#000000]">
+          <p className="text-xl font-bold text-[#1E0F2B]">
             {situation.caisses.reduce((s, c) => s + c.nbMouvements, 0) +
               situation.nonAffecte.reduce((s, n) => s + n.nbMouvements, 0)}
           </p>
-          <p className="text-[10px] text-[#8A857C] mt-0.5">
+          <p className="text-[10px] text-[#8A8378] mt-0.5">
             depuis l&apos;ouverture des caisses
           </p>
         </div>
@@ -274,7 +274,7 @@ export default async function AdminTresorerieConsultationPage() {
 
       {/* Caisses */}
       <div>
-        <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold mb-3 px-1">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-3 px-1">
           Situation par caisse
         </h2>
         <div className="grid md:grid-cols-2 gap-3">
@@ -282,33 +282,33 @@ export default async function AdminTresorerieConsultationPage() {
             <div
               key={c.id}
               className={`bg-white rounded-xl border p-4 ${
-                c.isActive ? "border-[#8A857C]/15" : "border-dashed border-[#8A857C]/25 opacity-70"
+                c.isActive ? "border-[#8A8378]/15" : "border-dashed border-[#8A8378]/25 opacity-70"
               }`}
             >
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-lg bg-[#000000]/5 flex items-center justify-center flex-shrink-0">
-                    <Wallet className="w-4 h-4 text-[#000000]" />
+                  <div className="w-9 h-9 rounded-lg bg-[#2A0E3D]/5 flex items-center justify-center flex-shrink-0">
+                    <Wallet className="w-4 h-4 text-[#1E0F2B]" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-[#000000] truncate">
+                    <p className="text-sm font-bold text-[#1E0F2B] truncate">
                       {c.name}
                       {!c.isActive && (
-                        <span className="ml-1.5 text-[10px] font-semibold text-[#8A857C]">
+                        <span className="ml-1.5 text-[10px] font-semibold text-[#8A8378]">
                           (fermée)
                         </span>
                       )}
                     </p>
-                    <p className="text-[11px] text-[#8A857C]">
+                    <p className="text-[11px] text-[#8A8378]">
                       {libelleCaisseType(c.type)} · {c.currency}
                     </p>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-lg font-bold text-[#000000] leading-tight">
+                  <p className="text-lg font-bold text-[#1E0F2B] leading-tight">
                     {formaterMontant(c.solde, c.currency)}
                   </p>
-                  <p className="text-[10px] text-[#8A857C]">
+                  <p className="text-[10px] text-[#8A8378]">
                     ouverture {formaterMontant(c.openingBalance, c.currency)}
                   </p>
                 </div>
@@ -318,20 +318,20 @@ export default async function AdminTresorerieConsultationPage() {
                   <p className="text-[10px] text-[#5B7052] font-bold">
                     + {formaterMontant(c.recettes, c.currency)}
                   </p>
-                  <p className="text-[9px] text-[#8A857C]">recettes</p>
+                  <p className="text-[9px] text-[#8A8378]">recettes</p>
                 </div>
                 <div className="rounded-lg bg-[#B3452E]/5 py-1.5">
                   <p className="text-[10px] text-[#B3452E] font-bold">
                     − {formaterMontant(c.depenses, c.currency)}
                   </p>
-                  <p className="text-[9px] text-[#8A857C]">dépenses</p>
+                  <p className="text-[9px] text-[#8A8378]">dépenses</p>
                 </div>
-                <div className="rounded-lg bg-[#8A857C]/5 py-1.5">
-                  <p className="text-[10px] text-[#8A857C] font-bold">
+                <div className="rounded-lg bg-[#8A8378]/5 py-1.5">
+                  <p className="text-[10px] text-[#8A8378] font-bold">
                     {c.transfertsEntrants - c.transfertsSortants >= 0 ? "+" : ""}
                     {formaterMontant(c.transfertsEntrants - c.transfertsSortants, c.currency)}
                   </p>
-                  <p className="text-[9px] text-[#8A857C]">transferts nets</p>
+                  <p className="text-[9px] text-[#8A8378]">transferts nets</p>
                 </div>
               </div>
             </div>
@@ -339,18 +339,18 @@ export default async function AdminTresorerieConsultationPage() {
           {situation.nonAffecte.map((n) => (
             <div
               key={`na-${n.devise}`}
-              className="bg-white rounded-xl border border-dashed border-[#8A857C]/25 p-4"
+              className="bg-white rounded-xl border border-dashed border-[#8A8378]/25 p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-bold text-[#000000]">
+                  <p className="text-sm font-bold text-[#1E0F2B]">
                     Écritures non affectées
                   </p>
-                  <p className="text-[11px] text-[#8A857C]">
+                  <p className="text-[11px] text-[#8A8378]">
                     antérieures à la multicaisse · {n.devise}
                   </p>
                 </div>
-                <p className="text-lg font-bold text-[#8A857C]">
+                <p className="text-lg font-bold text-[#8A8378]">
                   {formaterMontant(n.solde, n.devise)}
                 </p>
               </div>
@@ -362,30 +362,30 @@ export default async function AdminTresorerieConsultationPage() {
       {/* Derniers mouvements */}
       <div>
         <div className="flex items-center justify-between mb-3 px-1">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A857C] font-bold">
+          <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold">
             Derniers mouvements
           </h2>
-          <span className="text-[10px] text-[#8A857C]">
+          <span className="text-[10px] text-[#8A8378]">
             12 dernières écritures du journal
           </span>
         </div>
-        <div className="bg-white rounded-xl border border-[#8A857C]/15 overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#8A8378]/15 overflow-hidden">
           {dernieres.length === 0 ? (
-            <p className="text-sm text-[#8A857C] italic p-6 text-center">
+            <p className="text-sm text-[#8A8378] italic p-6 text-center">
               Aucun mouvement enregistré pour l&apos;instant.
             </p>
           ) : (
-            <div className="divide-y divide-[#8A857C]/10">
+            <div className="divide-y divide-[#8A8378]/10">
               {dernieres.map((t) => {
                 const type = MOUVEMENT_TYPES[t.type as keyof typeof MOUVEMENT_TYPES];
                 return (
                   <div
                     key={t.id}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-[#F0E9DE]/60 transition-colors"
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-[#FAF6EF]/60 transition-colors"
                   >
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: `${type?.couleur ?? "#8A857C"}18` }}
+                      style={{ backgroundColor: `${type?.couleur ?? "#8A8378"}18` }}
                     >
                       {t.type === "RECETTE" ? (
                         <ArrowUpRight
@@ -405,10 +405,10 @@ export default async function AdminTresorerieConsultationPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#000000] truncate">
+                      <p className="text-sm font-medium text-[#1E0F2B] truncate">
                         {t.label}
                       </p>
-                      <p className="text-xs text-[#8A857C] truncate">
+                      <p className="text-xs text-[#8A8378] truncate">
                         {type?.libelle ?? t.type} ·{" "}
                         {libelleCategorie(t.category, t.type)}
                         {t.caisseId && nomsCaisses.get(t.caisseId)
@@ -425,13 +425,13 @@ export default async function AdminTresorerieConsultationPage() {
                               ? "#5B7052"
                               : t.type === "DEPENSE"
                                 ? "#B3452E"
-                                : "#8A857C",
+                                : "#8A8378",
                         }}
                       >
                         {t.type === "DEPENSE" ? "−" : t.type === "RECETTE" ? "+" : ""}
                         {formaterMontant(t.amount, t.currency)}
                       </p>
-                      <p className="text-[10px] text-[#8A857C]">
+                      <p className="text-[10px] text-[#8A8378]">
                         {new Date(t.date).toLocaleDateString("fr-FR", {
                           day: "numeric",
                           month: "short",
@@ -451,7 +451,7 @@ export default async function AdminTresorerieConsultationPage() {
       <div className="text-center">
         <Link
           href="/admin/dashboard"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-[#8A857C] hover:text-[#A3821C] transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-[#8A8378] hover:text-[#A3821C] transition-colors"
         >
           ← Retour au tableau de bord
         </Link>

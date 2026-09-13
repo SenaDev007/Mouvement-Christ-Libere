@@ -49,33 +49,33 @@ export function MotDePasseOublie({ variante = "claire" }: Props) {
   // Classes conditionnelles selon l'habillage de la page hôte.
   const classes = {
     lien: sombre
-      ? "text-xs text-[#C9A227] hover:text-[#FF7A1A] transition-colors"
-      : "text-xs text-[#8A857C] hover:text-[#FF7A1A] transition-colors",
+      ? "text-xs text-[#C9A227] hover:text-[#DDBE55] transition-colors"
+      : "text-xs text-[#8A8378] hover:text-[#DDBE55] transition-colors",
     bloc:
       "mt-4 pt-4 border-t space-y-3 " +
       (sombre ? "border-[#C9A227]/15" : "border-stone-200"),
-    titre: sombre ? "text-sm font-semibold text-[#F0E9DE]" : "text-sm font-semibold text-[#000000]",
-    sousTitre: sombre ? "text-xs text-[#F0E9DE]/50" : "text-xs text-[#8A857C]",
+    titre: sombre ? "text-sm font-semibold text-[#FAF6EF]" : "text-sm font-semibold text-[#1E0F2B]",
+    sousTitre: sombre ? "text-xs text-[#FAF6EF]/50" : "text-xs text-[#8A8378]",
     champ:
       "w-full px-3.5 py-2.5 text-sm outline-none transition-colors " +
       (sombre
-        ? "rounded-xl bg-[#000000]/60 border border-[#C9A227]/20 text-[#F0E9DE] placeholder:text-[#F0E9DE]/25 focus:border-[#C9A227]/60 focus:ring-1 focus:ring-[#C9A227]/30"
-        : "rounded-md bg-[#F0E9DE] border border-stone-200 text-[#000000] focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"),
+        ? "rounded-xl bg-[#2A0E3D]/60 border border-[#C9A227]/20 text-[#FAF6EF] placeholder:text-[#FAF6EF]/25 focus:border-[#C9A227]/60 focus:ring-1 focus:ring-[#C9A227]/30"
+        : "rounded-md bg-[#FAF6EF] border border-stone-200 text-[#1E0F2B] focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"),
     bouton:
       "w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed " +
       (sombre
-        ? "bg-[#C9A227] text-[#000000] hover:bg-[#FF7A1A]"
-        : "bg-[#C9A227] text-[#000000] rounded-md font-semibold hover:bg-[#FF7A1A]"),
+        ? "bg-[#C9A227] text-[#2A0E3D] hover:bg-[#DDBE55]"
+        : "bg-[#C9A227] text-[#2A0E3D] rounded-md font-semibold hover:bg-[#DDBE55]"),
     erreur: sombre
       ? "flex items-start gap-2 px-3.5 py-2.5 rounded-lg bg-[#B3452E]/10 border border-[#B3452E]/30 text-[#F3A08E] text-xs leading-relaxed"
       : "flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm",
     info: sombre
       ? "flex items-start gap-2 px-3.5 py-2.5 rounded-lg bg-[#5B7052]/10 border border-[#5B7052]/30 text-[#A8C39A] text-xs leading-relaxed"
       : "flex items-start gap-2 p-3 rounded-lg bg-[#5B7052]/10 border border-[#5B7052]/30 text-[#3F5039] text-sm",
-    label: sombre ? "block text-xs font-semibold text-[#F0E9DE]/70 mb-1.5" : "block text-xs font-semibold text-[#000000] mb-1.5",
+    label: sombre ? "block text-xs font-semibold text-[#FAF6EF]/70 mb-1.5" : "block text-xs font-semibold text-[#1E0F2B] mb-1.5",
     retour:
       "inline-flex items-center gap-1.5 text-xs " +
-      (sombre ? "text-[#F0E9DE]/40 hover:text-[#FF7A1A]" : "text-[#8A857C] hover:text-[#FF7A1A]") +
+      (sombre ? "text-[#FAF6EF]/40 hover:text-[#DDBE55]" : "text-[#8A8378] hover:text-[#DDBE55]") +
       " transition-colors",
   };
 
@@ -200,7 +200,7 @@ export function MotDePasseOublie({ variante = "claire" }: Props) {
               <Mail
                 className={
                   "absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 " +
-                  (sombre ? "text-[#F0E9DE]/30" : "text-[#8A857C]")
+                  (sombre ? "text-[#FAF6EF]/30" : "text-[#8A8378]")
                 }
               />
               <input

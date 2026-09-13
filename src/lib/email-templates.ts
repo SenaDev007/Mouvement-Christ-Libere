@@ -1,18 +1,18 @@
 /**
  * ⭐ V3.69 — Templates HTML des emails transactionnels (Resend).
- *
- * Palette V3.68 (logo) : noir #000000 / or #C9A227 / feu #FF7A1A / ivoire
- * #F0E9DE / gris chaud #8A857C. Mise en page « email-safe » : tableaux,
- * styles en ligne, polices système (Arial) — pas de CSS externe ni de
- * média queries, pour un rendu identique dans Gmail, Outlook, Yahoo…
+ * ⭐ V3.75 — Palette restaurée « Concept D » : violet impérial #2A0E3D /
+ * or #C9A227 / or clair #DDBE55 / ivoire #FAF6EF / stone #8A8378.
+ * Mise en page « email-safe » : tableaux, styles en ligne, polices
+ * système (Arial) — pas de CSS externe ni de média queries, pour un
+ * rendu identique dans Gmail, Outlook, Yahoo…
  */
 
 const OR = "#C9A227";
 const OR_BOUTON = "#C9A227";
-const FEU = "#FF7A1A";
-const NOIR = "#000000";
-const IVOIRE = "#F0E9DE";
-const GRIS = "#8A857C";
+const OR_CLAIR = "#DDBE55";
+const VIOLET = "#2A0E3D";
+const IVOIRE = "#FAF6EF";
+const GRIS = "#8A8378";
 
 /** Échappe les caractères HTML d'un texte utilisateur. */
 export function echapperHtml(texte: string): string {
@@ -49,7 +49,7 @@ function enveloppe(titre: string, contenu: string): string {
 
   <!-- Bandeau noir + or -->
   <tr>
-    <td style="background-color:${NOIR}; padding:26px 32px; text-align:center;">
+    <td style="background-color:${VIOLET}; padding:26px 32px; text-align:center;">
       <div style="font-size:22px; font-weight:bold; color:${OR}; letter-spacing:1px; font-family:Georgia, 'Times New Roman', serif;">CHRIST LIB&Egrave;RE</div>
       <div style="font-size:10px; color:${IVOIRE}; letter-spacing:3px; text-transform:uppercase; margin-top:6px;">Mouvement Christ Lib&eacute;r&eacute;</div>
     </td>
@@ -58,7 +58,7 @@ function enveloppe(titre: string, contenu: string): string {
   <!-- Titre -->
   <tr>
     <td style="padding:28px 32px 0 32px;">
-      <h1 style="margin:0; font-size:19px; color:${NOIR}; font-family:Georgia, 'Times New Roman', serif;">${echapperHtml(titre)}</h1>
+      <h1 style="margin:0; font-size:19px; color:${VIOLET}; font-family:Georgia, 'Times New Roman', serif;">${echapperHtml(titre)}</h1>
     </td>
   </tr>
 
@@ -72,7 +72,7 @@ function enveloppe(titre: string, contenu: string): string {
   <!-- Pied de page -->
   <tr>
     <td style="padding:22px 32px 28px 32px;">
-      <div style="height:2px; background:linear-gradient(90deg, ${OR}, ${FEU}); border-radius:2px; margin-bottom:16px; font-size:0; line-height:0;">&nbsp;</div>
+      <div style="height:2px; background:linear-gradient(90deg, ${OR}, ${OR_CLAIR}); border-radius:2px; margin-bottom:16px; font-size:0; line-height:0;">&nbsp;</div>
       <p style="margin:0; font-size:11px; line-height:17px; color:${GRIS};">
         Mouvement Christ Lib&eacute;r&eacute; &mdash; <a href="https://mouvementchristlibere.com" style="color:${OR}; text-decoration:none;">mouvementchristlibere.com</a><br />
         Cet email automatique est envoy&eacute; depuis noreply@mouvementchristlibere.com &mdash; merci d&apos;utiliser les formulaires du site pour toute r&eacute;ponse.
@@ -97,7 +97,7 @@ function blocInfo(lignes: Array<{ libelle: string; valeur: string }>): string {
         (l) => `
     <tr>
       <td style="padding:9px 14px; font-size:12px; color:${GRIS}; width:150px; border-bottom:1px solid rgba(0,0,0,0.06);">${echapperHtml(l.libelle)}</td>
-      <td style="padding:9px 14px; font-size:13px; color:${NOIR}; font-weight:bold; border-bottom:1px solid rgba(0,0,0,0.06);">${echapperHtml(l.valeur)}</td>
+      <td style="padding:9px 14px; font-size:13px; color:${VIOLET}; font-weight:bold; border-bottom:1px solid rgba(0,0,0,0.06);">${echapperHtml(l.valeur)}</td>
     </tr>`
       )
       .join("")}
@@ -135,7 +135,7 @@ export function templateOtp(options: OptionsOtp): { html: string; text: string }
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px 0;">
       <tr>
-        <td align="center" style="background-color:${NOIR}; border:1px solid ${OR}; border-radius:10px; padding:22px 16px;">
+        <td align="center" style="background-color:${VIOLET}; border:1px solid ${OR}; border-radius:10px; padding:22px 16px;">
           <div style="font-size:13px; color:${IVOIRE}; letter-spacing:2px; text-transform:uppercase; margin-bottom:10px;">Code de v&eacute;rification</div>
           <div style="font-size:34px; font-weight:bold; letter-spacing:10px; color:${OR}; font-family:'Courier New', Courier, monospace;">${echapperHtml(options.code)}</div>
         </td>
@@ -240,9 +240,9 @@ export function templateDemandeTransmise(
   const urgence = options.demande.urgency;
   const urgenceStyle =
     urgence === "urgente"
-      ? `background-color:${FEU}; color:${NOIR};`
+      ? `background-color:${OR_CLAIR}; color:${VIOLET};`
       : urgence === "elevee"
-        ? `background-color:${OR}; color:${NOIR};`
+        ? `background-color:${OR}; color:${VIOLET};`
         : `background-color:${IVOIRE}; color:#2c2c2c;`;
 
   const html = enveloppe(
