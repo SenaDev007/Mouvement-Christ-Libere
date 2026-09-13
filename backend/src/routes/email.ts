@@ -15,9 +15,11 @@
  *      DOIT porter le header X-Email-Secret identique (à définir aussi côté
  *      Vercel pour verrouiller totalement le relais — recommandé) ;
  *   2. Anti-relais : le destinataire doit être un COMPTE existant en base
- *      (User.email — membre, secrétaire, trésorier, admin…) OU une adresse
- *      EMAIL_KONGO / EMAIL_PAM / PASTEUR_EMAIL configurée — impossible
- *      d'arbitrairement spammer depuis noreply@mouvementchristlibere.com ;
+ *      (User.email — membre, secrétaire, trésorier, admin…), une adresse
+ *      EMAIL_KONGO / EMAIL_PAM / PASTEUR_EMAIL configurée, OU ⭐ V3.74.1
+ *      une adresse du paramétrage des serviteurs (StaffSetting — bouton
+ *      « Paramétrage » du Courrier) — impossible d'arbitrairement spammer
+ *      depuis noreply@mouvementchristlibere.com ;
  *   3. Tailles plafonnées : objet ≤ 200, html/text ≤ 60 000 ;
  *   4. Rate-limit mémoire (fenêtre glissante) : 30/h par IP, 12/h par
  *      destinataire ;
@@ -90,6 +92,25 @@ async function destinataireAutorise(adresse: string): Promise<boolean> {
     ].filter((v): v is string => Boolean(v && v.trim())),
   );
   if (autorises.has(adresse)) return true;
+  // ⭐ V3.74.1 — Paramétrage des emails serviteurs (bouton « Paramétrage »
+  // du Courrier au serviteur, côté Secrétariat) : la secrétaire y consigne
+  // les VRAIES adresses (table StaffSetting, clés email_kongo / email_pam).
+  // La table est créée par l'app principale (ensure-schema) sur la MÊME base
+  // que ce backend — lue en SQL BRUT car le schéma Prisma du backend n'a pas
+  // le modèle. Sans cette autorisation, tout courrier / transmission de
+  // demande vers une adresse paramétrée (ex. gmail) serait REFUSÉ par le
+  // relais (« Destinataire inconnu de la plateforme », 403).
+  try {
+    const reglages = await db.$queryRawUnsafe<Array<{ value: string }>>(
+      `SELECT "value" FROM "StaffSetting"
+        WHERE "key" IN ('email_kongo', 'email_pam')
+          AND LOWER(TRIM("value")) = $1`,
+      adresse.trim().toLowerCase(),
+    );
+    if (Array.isArray(reglages) && reglages.length > 0) return true;
+  } catch {
+    // Table absente (base non partagée) ou indisponible — on continue.
+  }
   try {
     const compte = await db.user.findFirst({
       where: { email: adresse },
