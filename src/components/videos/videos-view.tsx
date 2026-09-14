@@ -29,8 +29,11 @@ import type { HeroConfig } from "@/lib/hero-defaults";
 // (Pasteur Kongo). La rubrique EXPLICITE (assignée en back-office, ou
 // héritée du live pour les replays) prime sur la catégorisation
 // automatique par mots-clés du titre.
+// ⭐ V3.79 — estCategorieAdoration : les médias « Adoration »/« Louanges »
+// d'Afrika vivent désormais sur la PAGE DÉDIÉE /adoration-louanges — ils
+// sont EXCLUS d'ici (scission demandée par le pasteur).
 import {
-  categoryOrder, estRubrique, rubriquesDe,
+  categoryOrder, estRubrique, rubriquesDe, estCategorieAdoration,
 } from "@/lib/video-rubrics";
 
 interface VideoItem {
@@ -133,7 +136,18 @@ export function VideosView({ hero, photos }: { hero: HeroConfig; photos: PhotosS
     const fetchVideos = () => {
       apiFetch("/api/videos")
         .then(r => r.json())
-        .then(data => { setAllVideos(data.videos || []); setLoading(false); })
+        .then(data => {
+          // ⭐ V3.79 — SCISION : les chants d'adoration & louanges d'Afrika
+          // (catégories « Adoration »/« Louanges ») ont leur PROPRE page
+          // (/adoration-louanges) — ils n'apparaissent PLUS dans la
+          // médiathèque /videos, qui reste concentrée sur les enseignements,
+          // témoignages, vies et directs.
+          const medias = (data.videos || []).filter(
+            (v: VideoItem) => !estCategorieAdoration(v.category)
+          );
+          setAllVideos(medias);
+          setLoading(false);
+        })
         .catch(() => setLoading(false));
     };
     fetchVideos();

@@ -10,6 +10,8 @@ const FOOTER_LINKS = {
       { label: "Témoignages", href: "/temoignages" },
       { label: "Enseignements", href: "/enseignements" },
       { label: "Vidéos & Lives", href: "/videos" },
+      // ⭐ V3.79 — Page dédiée Adoration & Louanges (Afrika, chantre de l'Éternel).
+      { label: "Adoration & Louanges", href: "/adoration-louanges" },
       { label: "Bible interconnectée", href: "/bible" },
       { label: "Calendrier biblique 364", href: "/calendrier-biblique" },
     ],

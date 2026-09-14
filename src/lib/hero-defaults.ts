@@ -68,6 +68,8 @@ export const HERO_PAGES: HeroPageMeta[] = [
   { page: "bible", label: "Bible", href: "/bible", description: "Hero de la Bible du Royaume" },
   { page: "calendrier-biblique", label: "Calendrier biblique", href: "/calendrier-biblique", description: "Hero du calendrier de l'Éternel" },
   { page: "videos", label: "Vidéos & Lives", href: "/videos", description: "Hero de la médiathèque vidéo" },
+  // ⭐ V3.79 — Page dédiée Adoration & Louanges (Afrika, chantre de l'Éternel)
+  { page: "adoration-louanges", label: "Adoration & Louanges", href: "/adoration-louanges", description: "Hero de la page d'adoration et louanges d'Afrika" },
   { page: "intercession", label: "Intercession", href: "/intercession", description: "Hero de la chaîne d'intercession" },
   { page: "disperses", label: "Dispersés", href: "/disperses", description: "Hero de la carte des dispersés" },
   { page: "contribuer", label: "Contribuer", href: "/contribuer", description: "Hero de la page des dons" },
@@ -243,6 +245,26 @@ export const DEFAULT_HEROES: Record<string, HeroConfig> = {
     titleSuffix: "",
     subtitle: "",
     backgroundImage: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?q=80&w=1920&auto=format&fit=crop",
+    ctaLabel: "",
+    ctaHref: "",
+    cta2Label: "",
+    cta2Href: "",
+    data: {},
+  },
+
+  // ⭐ V3.79 — Page dédiée Adoration & Louanges (Afrika, chantre de
+  // l'Éternel) : clips, chants d'adoration et louanges, jouables
+  // directement sur la plateforme.
+  "adoration-louanges": {
+    page: "adoration-louanges",
+    kicker: "Chantre de l'Éternel",
+    title: "Adoration &",
+    titleAccent: "Louanges",
+    titleSuffix: "",
+    subtitle:
+      "Les chants, clips et moments d'adoration d'Afrika — l'adoration d'un côté, les louanges de l'autre, à écouter et jouer directement sur la plateforme.",
+    backgroundImage:
+      "https://images.unsplash.com/photo-1470229722913-7ea0def03564?q=80&w=1920&auto=format&fit=crop",
     ctaLabel: "",
     ctaHref: "",
     cta2Label: "",

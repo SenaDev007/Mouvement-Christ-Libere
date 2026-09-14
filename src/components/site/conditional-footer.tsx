@@ -33,6 +33,8 @@ const navLinks = [
   { label: "Témoignages", href: "/temoignages" },
   { label: "Enseignements", href: "/enseignements" },
   { label: "Vidéos & Lives", href: "/videos" },
+  // ⭐ V3.79 — Page dédiée Adoration & Louanges (Afrika, chantre de l'Éternel).
+  { label: "Adoration & Louanges", href: "/adoration-louanges" },
   { label: "Communauté", href: "/communaute" },
   { label: "Contribuer", href: "/contribuer" },
   // ⭐ V3.74 — page /contact retirée (redirigée) : contact = rendez-vous.

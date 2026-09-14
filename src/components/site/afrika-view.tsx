@@ -21,7 +21,7 @@ import { HeroBackgroundImage } from "@/components/site/page-hero";
 import { BioTimeline, type BioMilestone } from "@/components/site/bio-timeline";
 import { IsololeText } from "@/lib/isolole";
 import type { HeroConfig } from "@/lib/hero-defaults";
-import { ChevronRight, FileText, BookOpen, Video, Sparkles, MapPin, Calendar, Quote } from "lucide-react";
+import { ChevronRight, FileText, BookOpen, Video, Music, Sparkles, MapPin, Calendar, Quote } from "lucide-react";
 
 export function AfrikaView({ hero, milestones = [] }: { hero: HeroConfig; milestones?: BioMilestone[] }) {
   const d = hero.data;
@@ -282,7 +282,7 @@ export function AfrikaView({ hero, milestones = [] }: { hero: HeroConfig; milest
               Découvrir le ministère d'Afrika
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <Link
               href="/temoignages?servant=afrika"
               className="group bg-[#FAF6EF]/5 hover:bg-[#FAF6EF]/10 border border-[#C9A227]/20 hover:border-[#C9A227]/40 rounded-xl p-6 transition-all"
@@ -326,6 +326,23 @@ export function AfrikaView({ hero, milestones = [] }: { hero: HeroConfig; milest
               </p>
               <span className="inline-flex items-center gap-1 text-xs font-bold text-[#C9A227] group-hover:gap-2 transition-all">
                 Regarder <ChevronRight className="w-3 h-3" />
+              </span>
+            </Link>
+            {/* ⭐ V3.79 — Afrika est aussi ARTISTE et CHANTRE de l'Éternel :
+                sa page dédiée d'adoration et de louanges. */}
+            <Link
+              href="/adoration-louanges"
+              className="group bg-[#C9A227]/10 hover:bg-[#C9A227]/20 border border-[#C9A227]/40 hover:border-[#C9A227]/70 rounded-xl p-6 transition-all"
+            >
+              <Music className="w-6 h-6 text-[#C9A227] mb-3" />
+              <h3 className="font-serif text-base font-bold text-[#FAF6EF] mb-1">
+                Adoration & Louanges
+              </h3>
+              <p className="text-xs text-[#FAF6EF]/60 leading-relaxed mb-3">
+                Ses chants et clips — adorations d'un côté, louanges de l'autre, joués ici.
+              </p>
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-[#C9A227] group-hover:gap-2 transition-all">
+                Écouter <ChevronRight className="w-3 h-3" />
               </span>
             </Link>
           </div>

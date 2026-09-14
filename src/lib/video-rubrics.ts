@@ -15,6 +15,10 @@
  * Ce module est le SEUL point de vérité : la page publique, l'API
  * /api/videos et le back-office importent les mêmes définitions —
  * impossible de diverger.
+ *
+ * ⭐ V3.79 — Adoration & Louanges : catégories « Adoration » et
+ * « Louanges » (page dédiée /adoration-louanges d'Afrika, chantre de
+ * l'Éternel) — voir CATEGORIES_ADORATION ci-dessous.
  */
 
 /** Rubriques signatures par serviteur (code Servant). */
@@ -22,6 +26,29 @@ export const RUBRIQUES: Record<string, string[]> = {
   afrika: ["Saint-Esprit réponds-moi"],
   kongo: ["Rhema du matin", "Rhema du soir"],
 };
+
+// ────────────────────────────────────────────────────────────────
+// ⭐ V3.79 — ADORATION & LOUANGES (page dédiée d'Afrika)
+// ────────────────────────────────────────────────────────────────
+// Afrika est aussi ARTISTE et CHANTRE de l'Éternel : ses clips,
+// adoration et louanges vivent sur une PAGE À PART ENTIÈRE
+// (/adoration-louanges), avec la catégorie ADORATION d'un côté et la
+// catégorie LOUANGES de l'autre — jamais mélangées sur /videos.
+//
+// Ces catégories ne sont PAS des rubriques signatures « classiques » :
+// elles ne sont pas épinglées sur /videos (la page publique /videos les
+// EXCLUT même — scission demandée par le pasteur), elles ne
+// s'attribuent PAS par mots-clés (uniquement en EXPLICITE depuis le
+// module dédié /admin/adoration) et le module back-office les gère
+// séparément (bascule Adoration ↔ Louanges en ligne, comme RubricSelect).
+
+/** Les deux catégories de la page Adoration & Louanges (ordre d'affichage). */
+export const CATEGORIES_ADORATION: string[] = ["Adoration", "Louanges"];
+
+/** Cette catégorie appartient-elle à la page Adoration & Louanges ? */
+export function estCategorieAdoration(name: string | null | undefined): boolean {
+  return !!name && CATEGORIES_ADORATION.includes(name);
+}
 
 /** Toutes les rubriques signatures, tous serviteurs (ordre d'affichage). */
 export const TOUTES_RUBRIQUES: string[] = [
@@ -82,6 +109,10 @@ export const RUBRIQUE_OPTIONS: { value: string; label: string }[] = [
   { value: "Saint-Esprit réponds-moi", label: "★ Saint-Esprit réponds-moi (Afrika)" },
   { value: "Rhema du matin", label: "★ Rhema du matin (Pasteur Kongo)" },
   { value: "Rhema du soir", label: "★ Rhema du soir (Pasteur Kongo)" },
+  // ⭐ V3.79 — Catégories de la page dédiée Adoration & Louanges (Afrika) :
+  // assignables ici (module Vidéos) ou depuis le module dédié /admin/adoration.
+  { value: "Adoration", label: "♪ Adoration (Afrika — page Adoration & Louanges)" },
+  { value: "Louanges", label: "♪ Louanges (Afrika — page Adoration & Louanges)" },
   { value: "Paroles & Exhortations", label: "Paroles & Exhortations" },
   { value: "Lives & Directs", label: "Lives & Directs" },
   { value: "Prière & Délivrance", label: "Prière & Délivrance" },

@@ -74,6 +74,9 @@ const navigationLinks = [
     type: "simple",
     items: [
       { href: "/videos", label: "Vidéos & Lives" },
+      // ⭐ V3.79 — Page dédiée Adoration & Louanges (Afrika, chantre de
+      // l'Éternel) : chants joués directement sur la plateforme.
+      { href: "/adoration-louanges", label: "Adoration & Louanges" },
     ],
   },
   {

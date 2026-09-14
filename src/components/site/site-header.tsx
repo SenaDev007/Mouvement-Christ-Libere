@@ -28,6 +28,9 @@ const NAV_GROUPS = [
     label: "Média",
     items: [
       { label: "Vidéos & Lives", href: "/videos" },
+      // ⭐ V3.79 — Page dédiée Adoration & Louanges (Afrika, chantre de
+      // l'Éternel) : clips, adoration et louanges jouables sur place.
+      { label: "Adoration & Louanges", href: "/adoration-louanges" },
       { label: "Calendrier 364", href: "/calendrier-biblique" },
     ],
   },

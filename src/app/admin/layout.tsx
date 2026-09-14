@@ -10,6 +10,7 @@ import {
   FileText,
   Video,
   Radio,
+  Music,
   MessageSquare,
   UserCog,
   Inbox,
@@ -52,6 +53,10 @@ const NAV_SECTIONS = [
     items: [
       { label: "Vidéos", href: "/admin/videos", icon: Video },
       { label: "Lives", href: "/admin/lives", icon: Radio },
+      // ⭐ V3.79 — Module dédié Adoration & Louanges (Afrika, chantre de
+      // l'Éternel) : upload/édition de ses chants → page publique
+      // /adoration-louanges.
+      { label: "Adoration & Louanges", href: "/admin/adoration", icon: Music },
     ],
   },
   {
