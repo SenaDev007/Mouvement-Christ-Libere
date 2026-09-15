@@ -1998,3 +1998,55 @@ export function ensureDonsTables(): Promise<void> {
   }
   return inflightDonsTables;
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V3.83 — Configuration des passerelles de paiement (back-office).
+// ─────────────────────────────────────────────────────────────────────
+
+let paiementsTableOk = false;
+let inflightPaiementsTable: Promise<void> | null = null;
+
+/**
+ * S'assure que la table PaymentGatewayConfig existe (config FedaPay /
+ * Paystack depuis /admin/paiements). Même contrat que ensureDonsTables :
+ * DDL idempotent, mémoïsé, échec loggué sans casser la requête courante
+ * (repli sur les variables d'environnement V3.82).
+ */
+export function ensurePaiementsTable(): Promise<void> {
+  if (paiementsTableOk) return Promise.resolve();
+  if (!inflightPaiementsTable) {
+    inflightPaiementsTable = (async () => {
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "PaymentGatewayConfig" (
+          "provider" TEXT NOT NULL,
+          "enabled" BOOLEAN NOT NULL DEFAULT false,
+          "environment" TEXT NOT NULL DEFAULT 'sandbox',
+          "secretKeyEnc" TEXT,
+          "webhookSecretEnc" TEXT,
+          "cleLast4" TEXT,
+          "webhookLast4" TEXT,
+          "updatedBy" TEXT,
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "PaymentGatewayConfig_pkey" PRIMARY KEY ("provider")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        `CREATE INDEX IF NOT EXISTS "PaymentGatewayConfig_updatedAt_idx" ON "PaymentGatewayConfig"("updatedAt")`
+      );
+    })()
+      .then(() => {
+        paiementsTableOk = true;
+        console.log("[ensure-schema] V3.83 : table PaymentGatewayConfig vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] V3.83 : migration PaymentGatewayConfig impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightPaiementsTable = null;
+      });
+  }
+  return inflightPaiementsTable;
+}

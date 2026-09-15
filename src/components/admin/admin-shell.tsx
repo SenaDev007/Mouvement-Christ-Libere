@@ -25,6 +25,7 @@ import {
   Image as ImageIcon,
   Building2,
   Wallet,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -77,6 +78,10 @@ const NAV_SECTIONS = [
       // transmises par la secrétaire (validation → notification).
       { label: "Demandes reçues", href: "/admin/demandes", icon: Inbox },
       { label: "Dons", href: "/admin/donations", icon: Heart },
+      // ⭐ V3.83 — Configuration des passerelles de paiement (FedaPay /
+      // Paystack : clés API chiffrées, webhooks, activation, test) —
+      // réservée aux super admins (Pasteur Kongo & Sœur Afrika).
+      { label: "Passerelles de paiement", href: "/admin/paiements", icon: CreditCard },
       // ⭐ V3.2 — Intercession : les demandes arrivent DIRECTEMENT ici
       // (plus de redirection vers la page publique — confidentialité).
       { label: "Intercession", href: "/admin/intercession", icon: Heart },

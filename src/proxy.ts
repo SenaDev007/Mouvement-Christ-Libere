@@ -15,9 +15,12 @@ const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/api/login"];
 // /admin/api/[entity] n'en ont PAS et dépendent de la garde du proxy.
 // ⭐ V3.74 — /admin/api/demandes : module de réception des serviteurs
 // (garde exigerSession SUPER_ADMIN — 401/403 JSON).
+// ⭐ V3.83 — /admin/api/paiements : configuration des passerelles de
+// paiement FedaPay/Paystack (garde exigerSession SUPER_ADMIN — 401/403 JSON).
 const ADMIN_API_AVEC_GARDE_PROPRE = [
   "/admin/api/staff",
   "/admin/api/demandes",
+  "/admin/api/paiements",
 ];
 
 // ⭐ V3.44 — Back-office sur son propre sous-domaine : admin.mouvementchristlibere.com

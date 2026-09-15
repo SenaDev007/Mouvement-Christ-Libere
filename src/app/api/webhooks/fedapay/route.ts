@@ -51,15 +51,17 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get("x-fedapay-signature");
 
   // ① Signature : aucun traitement tant qu'elle n'est pas prouvée.
-  if (!fedapayWebhookConfigure()) {
+  // ⭐ V3.83 — Secret résolu depuis le back-office (/admin/paiements)
+  // avec repli sur FEDAPAY_WEBHOOK_SECRET (environnement).
+  if (!(await fedapayWebhookConfigure())) {
     console.error(
-      "[webhooks/fedapay] Rejet : FEDAPAY_WEBHOOK_SECRET absent — configurez-le (Vercel) puis redéclarez le webhook dans le dashboard FedaPay."
+      "[webhooks/fedapay] Rejet : secret de webhook absent — configurez-le depuis le back-office (/admin/paiements) ou via FEDAPAY_WEBHOOK_SECRET, puis déclarez le webhook dans le dashboard FedaPay."
     );
     await journaliserWebhook({
       provider: "fedapay",
       event: "(secret absent)",
       statut: "SIGNE_INVALIDE",
-      erreur: "FEDAPAY_WEBHOOK_SECRET non configuré",
+      erreur: "secret de webhook non configuré (back-office ni environnement)",
       corpsBrut,
     });
     return NextResponse.json(
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest) {
       { status: 503 }
     );
   }
-  if (!verifierSignatureFedapay(corpsBrut, signature)) {
+  if (!(await verifierSignatureFedapay(corpsBrut, signature))) {
     await journaliserWebhook({
       provider: "fedapay",
       event: "(signature invalide)",

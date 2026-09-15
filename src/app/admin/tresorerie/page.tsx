@@ -361,14 +361,23 @@ export default async function AdminTresorerieConsultationPage() {
 
       {/* Derniers mouvements */}
       <div>
-        <div className="flex items-center justify-between mb-3 px-1">
+        <div className="flex items-center justify-between gap-3 mb-3 px-1 flex-wrap">
           <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold">
             Derniers mouvements
           </h2>
-          <span className="text-[10px] text-[#8A8378]">
-            12 dernières écritures du journal
-          </span>
+          {/* ⭐ V3.83 — Journal complet consultable depuis le back-office
+              (lecture seule) — remplace l'ancien lien vers l'espace dédié. */}
+          <Link
+            href="/admin/tresorerie/transactions"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A3821C] hover:underline"
+          >
+            Tout le journal
+            <ExternalLink className="w-3 h-3" />
+          </Link>
         </div>
+        <p className="text-[11px] text-[#8A8378] mb-3 px-1">
+          12 dernières écritures du journal
+        </p>
         <div className="bg-white rounded-xl border border-[#8A8378]/15 overflow-hidden">
           {dernieres.length === 0 ? (
             <p className="text-sm text-[#8A8378] italic p-6 text-center">

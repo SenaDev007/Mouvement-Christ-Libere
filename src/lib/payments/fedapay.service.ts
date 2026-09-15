@@ -1,18 +1,17 @@
 /**
- * ⭐ V3.82 — Wrapper FedaPay (paiement local : Afrique de l'Ouest).
+ * ⭐ V3.82/V3.83 — Wrapper FedaPay (paiement local : Afrique de l'Ouest).
  *
  * Couverture : Mobile Money (MTN, Orange, Moov, Wave), cartes bancaires
  * régionales, zone UEMOA — règlement en XOF.
  *
  * Implémentation REST native (fetch) : aucune dépendance SDK, comportement
- * identique en sandbox et en production, sérialisation maîtrisée. Les
- * clés ne vivent QUE côté serveur (variables d'environnement).
+ * identique en sandbox et en production, sérialisation maîtrisée.
  *
- * Variables d'environnement :
- *   FEDAPAY_SECRET_KEY     sk_live_xxx | sk_sandbox_xxx (requis)
- *   FEDAPAY_ENV            sandbox | live (défaut : sandbox)
- *   FEDAPAY_API_BASE       surcharge explicite de l'API (optionnel)
- *   FEDAPAY_WEBHOOK_SECRET secret des webhooks (requis en production)
+ * ⭐ V3.83 — La configuration vient du BACK-OFFICE (/admin/paiements) :
+ *   · lireConfigPasserelle("fedapay") résout la clé (base chiffrée puis
+ *     variables d'environnement en repli — FEDAPAY_SECRET_KEY,
+ *     FEDAPAY_ENV, FEDAPAY_API_BASE, FEDAPAY_WEBHOOK_SECRET) ;
+ *   · les clés ne vivent QUE côté serveur (jamais envoyées au client).
  *
  * Ce service ne connaît PAS Paystack — le routage passe par
  * /api/dons/initier (payment-types.ts est le seul terrain partagé).
@@ -29,25 +28,29 @@ import {
   libelleTypeDon,
   urlSite,
 } from "./payment-types";
+import { lireConfigPasserelle } from "./gateway-config";
 
 const API_LIVE = "https://api.fedapay.com";
 const API_SANDBOX = "https://sandbox-api.fedapay.com";
 const TIMEOUT_MS = 20_000;
 
-function baseApi(): string {
+/** Base API selon l'environnement (surcharge FEDAPAY_API_BASE respectée). */
+function baseApi(environment: "sandbox" | "live"): string {
   if (process.env.FEDAPAY_API_BASE) {
     return process.env.FEDAPAY_API_BASE.replace(/\/$/, "");
   }
-  return process.env.FEDAPAY_ENV === "live" ? API_LIVE : API_SANDBOX;
+  return environment === "live" ? API_LIVE : API_SANDBOX;
 }
 
-/** Vrai si la clé secrète FedaPay est configurée. */
-export function fedapayConfigure(): boolean {
-  return Boolean(process.env.FEDAPAY_SECRET_KEY);
+/** Vrai si la clé secrète FedaPay est configurée (back-office ou env). */
+export async function fedapayConfigure(): Promise<boolean> {
+  const config = await lireConfigPasserelle("fedapay");
+  return Boolean(config.secretKey);
 }
 
-/** Nom de la variable manquante (message d'aide pour l'administrateur). */
-export const FEDAPAY_CLE_ENV = "FEDAPAY_SECRET_KEY";
+/** Libellé d'aide (où configurer la passerelle). */
+export const FEDAPAY_AIDE_CONFIG =
+  "Clé à configurer depuis le back-office → Passerelles de paiement (/admin/paiements) ou variable FEDAPAY_SECRET_KEY (Vercel).";
 
 /**
  * Crée la transaction chez FedaPay puis génère le token de paiement.
@@ -64,29 +67,33 @@ export async function creerTransactionFedapay(
   demande: DemandeDon,
   reference: string
 ): Promise<TransactionDon> {
-  const cle = process.env.FEDAPAY_SECRET_KEY;
-  if (!cle) {
+  const config = await lireConfigPasserelle("fedapay");
+  if (!config.secretKey) {
     throw new ErreurPasserelle(
-      "La passerelle FedaPay n'est pas encore configurée (FEDAPAY_SECRET_KEY absente)."
+      "La passerelle FedaPay n'est pas encore configurée (aucune clé API — voir /admin/paiements)."
     );
   }
 
   const urlRetour = `${urlSite()}/contribuer/merci?ref=${reference}`;
 
-  const reponse = await appelApi("/v1/transactions", {
-    description: `${libelleTypeDon(demande.type_don)} — ${reference}`,
-    amount: demande.montant,
-    currency: { iso: demande.devise },
-    callback_url: urlRetour,
-    customer: {
-      email: demande.email.trim(),
-      ...(demande.nom ? { firstname: demande.nom.slice(0, 80) } : {}),
-    },
-    custom_metadata: {
-      reference,
-      type_don: demande.type_don,
-    },
-  });
+  const reponse = await appelApi(
+    { base: baseApi(config.environment), cle: config.secretKey },
+    "/v1/transactions",
+    {
+      description: `${libelleTypeDon(demande.type_don)} — ${reference}`,
+      amount: demande.montant,
+      currency: { iso: demande.devise },
+      callback_url: urlRetour,
+      customer: {
+        email: demande.email.trim(),
+        ...(demande.nom ? { firstname: demande.nom.slice(0, 80) } : {}),
+      },
+      custom_metadata: {
+        reference,
+        type_don: demande.type_don,
+      },
+    }
+  );
 
   const racine = (reponse.transaction ?? reponse) as
     | Record<string, unknown>
@@ -101,6 +108,7 @@ export async function creerTransactionFedapay(
   }
 
   const tokenRacine = (await appelApi(
+    { base: baseApi(config.environment), cle: config.secretKey },
     `/v1/transactions/${idFournisseur}/token`,
     {},
     "POST"
@@ -126,8 +134,70 @@ export async function creerTransactionFedapay(
   };
 }
 
+/**
+ * ⭐ V3.83 — Test de connexion depuis /admin/paiements.
+ * Interroge une route légère en lecture (GET /v1/transactions, limite 1) :
+ * 200 = la clé est acceptée ; 401/403 = clé invalide ; autre = incident.
+ * Aucune écriture, aucun coût, aucun paiement créé.
+ */
+export async function testerConnexionFedapay(params: {
+  cle?: string | null;
+  environment: "sandbox" | "live";
+}): Promise<{ ok: boolean; message: string }> {
+  const cle =
+    params.cle?.trim() ||
+    (await lireConfigPasserelle("fedapay")).secretKey;
+  if (!cle) {
+    return {
+      ok: false,
+      message:
+        "Aucune clé à tester — collez d'abord la clé secrète API puis enregistrez-la.",
+    };
+  }
+  try {
+    const reponse = await fetch(
+      `${baseApi(params.environment)}/v1/transactions?limit=1`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${cle}`,
+          Accept: "application/json",
+        },
+        signal: AbortSignal.timeout(15_000),
+      }
+    );
+    if (reponse.ok) {
+      return {
+        ok: true,
+        message: `Connexion réussie — FedaPay accepte cette clé (environnement ${
+          params.environment === "live" ? "production" : "sandbox"
+        }).`,
+      };
+    }
+    if (reponse.status === 401 || reponse.status === 403) {
+      return {
+        ok: false,
+        message:
+          "FedaPay a refusé cette clé (401/403) — vérifiez la clé secrète et l'environnement sélectionné.",
+      };
+    }
+    return {
+      ok: false,
+      message: `FedaPay a répondu ${reponse.status} — réessayez dans un instant.`,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: `Impossible de joindre FedaPay : ${
+        e instanceof Error ? e.message : String(e)
+      }`,
+    };
+  }
+}
+
 /** Appel JSON signé Bearer vers l'API FedaPay (timeout global 20 s). */
 async function appelApi(
+  identifiants: { base: string; cle: string },
   chemin: string,
   corps: unknown,
   methode: "POST" = "POST"
@@ -135,10 +205,10 @@ async function appelApi(
   const controle = new AbortController();
   const minuteur = setTimeout(() => controle.abort(), TIMEOUT_MS);
   try {
-    const reponse = await fetch(`${baseApi()}${chemin}`, {
+    const reponse = await fetch(`${identifiants.base}${chemin}`, {
       method: methode,
       headers: {
-        Authorization: `Bearer ${process.env.FEDAPAY_SECRET_KEY}`,
+        Authorization: `Bearer ${identifiants.cle}`,
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -181,15 +251,17 @@ async function appelApi(
  * Vérifie la signature d'un webhook FedaPay.
  *
  * L'en-tête `X-FEDAPAY-SIGNATURE` porte le HMAC-SHA256 (hex) du corps BRUT
- * de la requête, calculé avec le secret configuré dans le dashboard
- * FedaPay (FEDAPAY_WEBHOOK_SECRET). Comparaison à temps constant —
- * une longueur différente est un rejet immédiat (jamais traité).
+ * de la requête, calculé avec le secret configuré dans le dashboard FedaPay
+ * (back-office /admin/paiements, ou FEDAPAY_WEBHOOK_SECRET en repli).
+ * Comparaison à temps constant — une longueur différente est un rejet
+ * immédiat (jamais traité).
  */
-export function verifierSignatureFedapay(
+export async function verifierSignatureFedapay(
   corpsBrut: string,
   signatureEnTete: string | null
-): boolean {
-  const secret = process.env.FEDAPAY_WEBHOOK_SECRET;
+): Promise<boolean> {
+  const config = await lireConfigPasserelle("fedapay");
+  const secret = config.webhookSecret;
   if (!secret) return false;
   if (!signatureEnTete) return false;
 
@@ -204,7 +276,8 @@ export function verifierSignatureFedapay(
   }
 }
 
-/** Vrai si le secret de webhook FedaPay est configuré. */
-export function fedapayWebhookConfigure(): boolean {
-  return Boolean(process.env.FEDAPAY_WEBHOOK_SECRET);
+/** Vrai si le secret de webhook FedaPay est configuré (back-office ou env). */
+export async function fedapayWebhookConfigure(): Promise<boolean> {
+  const config = await lireConfigPasserelle("fedapay");
+  return Boolean(config.webhookSecret);
 }

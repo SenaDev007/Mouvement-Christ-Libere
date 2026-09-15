@@ -751,6 +751,27 @@ model WebhookLog {
   @@index([reference])
 }
 
+// ⭐ V3.83 — Configuration des passerelles de paiement depuis le back-office
+// (/admin/paiements — réservé aux super admins Pasteur Kongo & Sœur Afrika).
+// Les clés secrètes n'y sont JAMAIS stockées en clair : AES-256-GCM (voir
+// src/lib/payments/gateway-config.ts — clé maîtresse PAYMENTS_MASTER_KEY ou
+// SESSION_SECRET). Seuls les 4 derniers caractères sont conservés en clair
+// pour l'affichage masqué. Les variables d'environnement V3.82 restent
+// valables en SECOURS : la configuration back-office PRIME sur elles.
+model PaymentGatewayConfig {
+  provider         String   @id // 'fedapay' | 'paystack'
+  enabled          Boolean  @default(false) // passerelle activée (clé utilisée par /api/dons/initier)
+  environment      String   @default("sandbox") // 'sandbox' | 'live' (FedaPay ; indicatif pour Paystack)
+  secretKeyEnc     String?  @db.Text // clé secrète API chiffrée (AES-256-GCM)
+  webhookSecretEnc String?  @db.Text // secret de vérification webhook chiffré (facultatif)
+  cleLast4         String? // 4 derniers caractères de la clé — affichage masqué
+  webhookLast4     String? // idem pour le secret webhook
+  updatedBy        String? // id du compte super admin ayant modifié
+  updatedAt        DateTime @updatedAt
+
+  @@index([updatedAt])
+}
+
 // --- Calendrier liturgique (V2) ---
 
 model LiturgicalEvent {

@@ -7,7 +7,7 @@ import { PremiumSectionHeading } from "@/components/premium/section-heading";
 import { SectionDivider, QuoteBlock } from "@/components/premium/section-divider";
 import {
   FileText,
-  Send,
+  Banknote,
   ShieldCheck,
   Loader2,
   AlertCircle,
@@ -92,7 +92,9 @@ const CANAUX: Array<{
     zone: "Côte d'Ivoire · Afrique de l'Ouest",
     detail:
       "Mobile Money (MTN, Orange, Moov, Wave) et cartes bancaires régionales.",
-    bouton: "Payer depuis la Côte d'Ivoire / Afrique de l'Ouest",
+    // ⭐ V3.83 — Libellé simple « Payer » (directive) : la carte elle-même
+    // précise la zone et le prestataire — le bouton reste sobre.
+    bouton: "Payer",
     icon: Smartphone,
   },
   {
@@ -101,7 +103,7 @@ const CANAUX: Array<{
     zone: "International",
     detail:
       "Cartes Visa / Mastercard émises n'importe où dans le monde — règlement en FCFA.",
-    bouton: "Faire un don depuis l'étranger",
+    bouton: "Payer",
     icon: Globe,
   },
 ];
@@ -432,7 +434,7 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
                           </>
                         ) : (
                           <>
-                            <Send className="w-4 h-4" />
+                            <Banknote className="w-4 h-4" />
                             {canal.bouton}
                           </>
                         )}

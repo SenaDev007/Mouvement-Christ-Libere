@@ -48,15 +48,17 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get("x-paystack-signature");
 
   // ① Signature : aucun traitement tant qu'elle n'est pas prouvée.
-  if (!paystackWebhookConfigure()) {
+  // ⭐ V3.83 — Secret résolu depuis le back-office (/admin/paiements)
+  // avec repli sur PAYSTACK_WEBHOOK_SECRET (par convention : la clé du compte).
+  if (!(await paystackWebhookConfigure())) {
     console.error(
-      "[webhooks/paystack] Rejet : PAYSTACK_SECRET_KEY absente — configurez-la (Vercel) puis redéclarez le webhook dans le dashboard Paystack."
+      "[webhooks/paystack] Rejet : secret absent — configurez la clé depuis le back-office (/admin/paiements) ou via PAYSTACK_SECRET_KEY, puis déclarez le webhook dans le dashboard Paystack."
     );
     await journaliserWebhook({
       provider: "paystack",
       event: "(secret absent)",
       statut: "SIGNE_INVALIDE",
-      erreur: "PAYSTACK_SECRET_KEY non configurée",
+      erreur: "clé/secret Paystack non configuré (back-office ni environnement)",
       corpsBrut,
     });
     return NextResponse.json(
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
       { status: 503 }
     );
   }
-  if (!verifierSignaturePaystack(corpsBrut, signature)) {
+  if (!(await verifierSignaturePaystack(corpsBrut, signature))) {
     await journaliserWebhook({
       provider: "paystack",
       event: "(signature invalide)",

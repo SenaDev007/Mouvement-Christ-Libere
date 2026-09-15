@@ -4,12 +4,12 @@ import { ensureDonsTables } from "@/lib/ensure-schema";
 import {
   creerTransactionFedapay,
   fedapayConfigure,
-  FEDAPAY_CLE_ENV,
+  FEDAPAY_AIDE_CONFIG,
 } from "@/lib/payments/fedapay.service";
 import {
   initialiserTransactionPaystack,
   paystackConfigure,
-  PAYSTACK_CLE_ENV,
+  PAYSTACK_AIDE_CONFIG,
 } from "@/lib/payments/paystack.service";
 import {
   DemandeDon,
@@ -139,22 +139,24 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Passerelle configurée ? (message d'aide précis pour l'admin) ──
-  if (provider === "fedapay" && !fedapayConfigure()) {
+  // ⭐ V3.83 — La configuration se fait désormais depuis le back-office
+  // (/admin/paiements) ; les variables d'environnement restent un repli.
+  if (provider === "fedapay" && !(await fedapayConfigure())) {
     return NextResponse.json(
       {
         error:
-          "Le paiement depuis l'Afrique de l'Ouest (FedaPay) n'est pas encore activé — configuration manquante côté serveur.",
-        detail: `Variable d'environnement ${FEDAPAY_CLE_ENV} absente.`,
+          "Le paiement depuis l'Afrique de l'Ouest (FedaPay) n'est pas encore activé — configuration manquante.",
+        detail: FEDAPAY_AIDE_CONFIG,
       },
       { status: 503 }
     );
   }
-  if (provider === "paystack" && !paystackConfigure()) {
+  if (provider === "paystack" && !(await paystackConfigure())) {
     return NextResponse.json(
       {
         error:
-          "Le paiement depuis l'étranger (Paystack) n'est pas encore activé — configuration manquante côté serveur.",
-        detail: `Variable d'environnement ${PAYSTACK_CLE_ENV} absente.`,
+          "Le paiement depuis l'étranger (Paystack) n'est pas encore activé — configuration manquante.",
+        detail: PAYSTACK_AIDE_CONFIG,
       },
       { status: 503 }
     );

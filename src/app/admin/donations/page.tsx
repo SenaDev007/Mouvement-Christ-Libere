@@ -178,8 +178,12 @@ export default async function AdminDonationsPage({
             enregistré dans la trésorerie : recette catégorisée (offrande, dîme
             ou don) dans la caisse « Dons en ligne (FedaPay / Paystack) », et le
             reçu est envoyé par email au donateur.{" "}
+            {/* ⭐ V3.83 — Lien corrigé : l'ancien href /tresorerie/transactions
+                était réécrit en /admin/tresorerie/transactions par le proxy du
+                sous-domaine admin → 404. La page de consultation (lecture
+                seule, super admins) vit désormais à cette adresse. */}
             <Link
-              href="/tresorerie/transactions"
+              href="/admin/tresorerie/transactions"
               className="font-semibold text-[#A3821C] hover:underline"
             >
               Voir le journal de la trésorerie
