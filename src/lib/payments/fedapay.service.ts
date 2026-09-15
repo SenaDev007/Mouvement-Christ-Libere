@@ -53,6 +53,53 @@ export const FEDAPAY_AIDE_CONFIG =
   "Clé à configurer depuis le back-office → Passerelles de paiement (/admin/paiements) ou variable FEDAPAY_SECRET_KEY (Vercel).";
 
 /**
+ * ⭐ V3.84 — Extrait l'objet transaction de la réponse FedaPay.
+ *
+ * L'API RÉELLE enveloppe la ressource sous une clé VERSIONNÉE
+ * « v1/transaction » — confirmé par les SDK officiels PHP et Node
+ * (Util::convertToFedaPayObject lit resp['klass'] = "v1/transaction",
+ * puis refreshFrom/stripApiVersion déballe l'objet sous cette clé avant
+ * que Create::create() ne retourne $object->transaction). La
+ * documentation, elle, présente l'objet à plat — les DEUX formes sont
+ * donc acceptées, ainsi que deux enveloppes défensives :
+ *   ① { "klass": "v1/transaction", "v1/transaction": { id, … } } ← réelle
+ *   ② { "transaction": { id, … } }
+ *   ③ { "data": { id, … } }
+ *   ④ { id, … } (plate — documentation)
+ */
+function extraireTransaction(
+  reponse: Record<string, unknown>
+): Record<string, unknown> | null {
+  const enveloppes: unknown[] = [
+    reponse["v1/transaction"], // ← forme réelle de l'API (clé versionnée)
+    reponse.transaction, // enveloppe non versionnée
+    reponse.data, // enveloppe « data » (défensive)
+    reponse, // objet plat (présenté par la documentation)
+  ];
+  for (const enveloppe of enveloppes) {
+    if (!enveloppe || typeof enveloppe !== "object") continue;
+    const objet = enveloppe as Record<string, unknown>;
+    // Certains niveaux imbriquent encore un « data » (défensif).
+    const internes: unknown[] = [
+      objet,
+      typeof objet.data === "object" && objet.data !== null
+        ? objet.data
+        : undefined,
+    ];
+    for (const interne of internes) {
+      if (
+        interne &&
+        typeof interne === "object" &&
+        (interne as Record<string, unknown>).id != null
+      ) {
+        return interne as Record<string, unknown>;
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Crée la transaction chez FedaPay puis génère le token de paiement.
  *
  * ① POST /v1/transactions — description « <Type> — <référence> »,
@@ -95,15 +142,20 @@ export async function creerTransactionFedapay(
     }
   );
 
-  const racine = (reponse.transaction ?? reponse) as
-    | Record<string, unknown>
-    | undefined;
-  const sousRacine = racine?.data as Record<string, unknown> | undefined;
-  const idFournisseur =
-    racine?.id ?? sousRacine?.id ?? null;
+  // ⭐ V3.84 — la réponse réelle est enveloppée sous « v1/transaction »
+  // (les SDK officiels la déballe) : l'extraction multi-formes remplace
+  // l'ancien parsing qui ne voyait que « transaction » ou l'objet plat.
+  const transaction = extraireTransaction(reponse);
+  const idFournisseur = transaction?.id;
   if (idFournisseur === null || idFournisseur === undefined) {
+    // Clés SEULEMENT (jamais les valeurs) : diagnostiquer sans rien exposer.
+    const clesRecues = Object.keys(reponse)
+      .slice(0, 6)
+      .join(", ");
     throw new ErreurPasserelle(
-      "FedaPay n'a pas renvoyé d'identifiant de transaction."
+      `FedaPay n'a pas renvoyé d'identifiant de transaction (clés reçues : ${
+        clesRecues || "réponse vide"
+      }).`
     );
   }
 
@@ -113,13 +165,26 @@ export async function creerTransactionFedapay(
     {},
     "POST"
   )) as Record<string, unknown>;
-  const tokenImbrique = (tokenRacine.token ?? tokenRacine.data) as
-    | Record<string, unknown>
-    | undefined;
-  const paymentUrl =
-    (tokenRacine.url as string | undefined) ??
-    (tokenImbrique?.url as string | undefined) ??
-    null;
+
+  // ⭐ V3.84 — URL de paiement multi-formes : la réponse réelle est plate
+  // (token + url sont des chaînes au premier niveau — cf. generateToken()
+  // des SDK officiels qui lit ->token / ->url directement) ; les
+  // enveloppes « v1/token », « token » et « data » restent acceptées.
+  const candidatsUrl: unknown[] = [
+    tokenRacine.url,
+    typeof tokenRacine["v1/token"] === "object" && tokenRacine["v1/token"] !== null
+      ? (tokenRacine["v1/token"] as Record<string, unknown>).url
+      : undefined,
+    typeof tokenRacine.token === "object" && tokenRacine.token !== null
+      ? (tokenRacine.token as Record<string, unknown>).url
+      : undefined,
+    typeof tokenRacine.data === "object" && tokenRacine.data !== null
+      ? (tokenRacine.data as Record<string, unknown>).url
+      : undefined,
+  ];
+  const paymentUrl = candidatsUrl.find(
+    (u): u is string => typeof u === "string" && u.length > 0
+  );
   if (!paymentUrl) {
     throw new ErreurPasserelle(
       "FedaPay n'a pas renvoyé d'URL de paiement."
