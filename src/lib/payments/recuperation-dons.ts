@@ -112,6 +112,8 @@ async function verifierEtFinaliser(
   source: "statut" | "cron"
 ): Promise<"approved" | "failed" | "pending"> {
   const verification = await verifierTransactionFedapay(fedapayRef);
+  noterStatutFournisseur(verification.statut);
+  compteurs.dernierDetail = `vérifié ${fedapayRef} → ${verification.statut}`;
 
   // Montant EXACT exigé (même règle que /api/dons/fedapay/confirmation) :
   // impossible d'approuver un don de 100 000 payé 100.
@@ -186,6 +188,9 @@ async function rapprocherParDescription(
         : null;
     if (!idFournisseur) continue;
 
+    compteurs.rapproches += 1;
+    compteurs.dernierDetail = `rapproché ${don.reference} → ${idFournisseur}`;
+
     // Mémoriser le rapprochement (les prochaines re-vérifications passeront
     // directement par le providerRef — plus de liste).
     await db.donation
@@ -201,6 +206,47 @@ async function rapprocherParDescription(
 }
 
 // ── API publique ──────────────────────────────────────────────────────
+
+// ── Compteurs de diagnostic (retournés par le cron — aucun secret) ──
+
+export interface CompteursRecuperation {
+  traites: number;
+  approuves: number;
+  echecs: number;
+  avecRef: number;
+  rapproches: number;
+  statutsFournisseur: Record<string, number>;
+  dernierDetail: string | null;
+}
+
+const compteurs: CompteursRecuperation = {
+  traites: 0,
+  approuves: 0,
+  echecs: 0,
+  avecRef: 0,
+  rapproches: 0,
+  statutsFournisseur: {},
+  dernierDetail: null,
+};
+
+function noterStatutFournisseur(statut: string): void {
+  compteurs.statutsFournisseur[statut] =
+    (compteurs.statutsFournisseur[statut] || 0) + 1;
+}
+
+export function lireCompteurs(): CompteursRecuperation {
+  return { ...compteurs, statutsFournisseur: { ...compteurs.statutsFournisseur } };
+}
+
+export function reinitialiserCompteurs(): void {
+  compteurs.traites = 0;
+  compteurs.approuves = 0;
+  compteurs.echecs = 0;
+  compteurs.avecRef = 0;
+  compteurs.rapproches = 0;
+  compteurs.statutsFournisseur = {};
+  compteurs.dernierDetail = null;
+}
 
 /**
  * Tente de faire avancer un don FedaPay « pending » vers son statut réel.
@@ -233,21 +279,28 @@ export async function retenterVerificationDon(
     }
 
     // Anti-hammering : au plus une vérification FedaPay par fenêtre.
-    if (!(await reclamerVerification(don.id))) return "pending";
+    if (!(await reclamerVerification(don.id))) {
+      compteurs.dernierDetail = `throttle actif (${reference})`;
+      return "pending";
+    }
 
     // ① providerRef connu → vérification directe.
     if (don.providerRef) {
+      compteurs.avecRef += 1;
       return await verifierEtFinaliser(don, don.providerRef, source);
     }
 
     // ② Aucun providerRef → rapprochement par description.
     return await rapprocherParDescription(don, source);
   } catch (e) {
+    compteurs.echecs += 1;
+    const detail = e instanceof Error ? e.message : String(e);
+    compteurs.dernierDetail = detail.slice(0, 200);
     console.warn(
       "[recuperation-dons] Re-vérification impossible (",
       reference,
       ") :",
-      e instanceof Error ? e.message : e
+      detail
     );
     return "pending";
   }
@@ -256,14 +309,19 @@ export async function retenterVerificationDon(
 /**
  * Passage du cron : re-vérifie les dons FedaPay « pending » récents
  * (≤ 48 h). Budget-borné pour respecter la limite serverless.
+ *
+ * La réponse inclut des compteurs de diagnostic (aucun secret) :
+ * avecRef (dons rattachés à une transaction), rapproches (retrouvés par
+ * description), statutsFournisseur (statuts FedaPay constatés),
+ * dernierDetail (dernier événement notable — tronqué, sans clé).
  */
 export async function recupererDonsPendantsFedapay(params: {
   budgetMs?: number;
-}): Promise<{ traites: number; approuves: number }> {
+}): Promise<CompteursRecuperation> {
   const budgetMs = params.budgetMs ?? 25_000;
   const debut = Date.now();
-  let traites = 0;
-  let approuves = 0;
+
+  reinitialiserCompteurs();
 
   try {
     await ensureColonneVerificationDon();
@@ -282,16 +340,20 @@ export async function recupererDonsPendantsFedapay(params: {
     for (const don of dons) {
       if (Date.now() - debut > budgetMs) break;
       if (!don.reference) continue;
-      traites += 1;
+      compteurs.traites += 1;
       const statut = await retenterVerificationDon(don.reference, "cron");
-      if (statut === "approved") approuves += 1;
+      if (statut === "approved") compteurs.approuves += 1;
     }
   } catch (e) {
+    compteurs.echecs += 1;
+    compteurs.dernierDetail = (
+      e instanceof Error ? e.message : String(e)
+    ).slice(0, 200);
     console.warn(
       "[recuperation-dons] Passage cron impossible :",
       e instanceof Error ? e.message : e
     );
   }
 
-  return { traites, approuves };
+  return lireCompteurs();
 }
