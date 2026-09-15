@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/jsx-runtime": [
+        "./node_modules/@types/react/jsx-runtime"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "files": [
+    "src/lib/payments/payment-types.ts",
+    "src/lib/payments/gateway-config.ts",
+    "src/lib/payments/fedapay.service.ts",
+    "src/lib/payments/paystack.service.ts",
+    "src/lib/payments/dons-webhook.ts",
+    "src/app/api/dons/initier/route.ts",
+    "src/app/api/webhooks/fedapay/route.ts",
+    "src/app/api/webhooks/paystack/route.ts",
+    "src/components/site/contribuer-view.tsx",
+    "src/app/admin/api/paiements/route.ts",
+    "src/app/admin/paiements/page.tsx",
+    "src/components/admin/paiements-client.tsx",
+    "src/app/admin/tresorerie/transactions/page.tsx",
+    "src/app/admin/tresorerie/page.tsx",
+    "src/app/admin/donations/page.tsx",
+    "src/components/admin/admin-shell.tsx",
+    "src/proxy.ts",
+    "src/lib/ensure-schema.ts"
+  ]
+}

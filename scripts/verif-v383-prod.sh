@@ -36,7 +36,7 @@ verifie "Page /contribuer accessible (200)" "$([ "$CODE" = "200" ] && echo vrai 
 verifie "Nouveau libellé sobre « Payer » rendu" "$(rg -c '>Payer<' /tmp/v383-contribuer.html >/dev/null 2>&1 && echo vrai || echo faux)"
 verifie "Ancien libellé long FedaPay SUPPRIMÉ" "$(rg -c "Payer depuis la Côte d" /tmp/v383-contribuer.html >/dev/null 2>&1 && echo faux || echo vrai)"
 verifie "Ancien libellé long Paystack SUPPRIMÉ" "$(rg -c "Faire un don depuis l" /tmp/v383-contribuer.html >/dev/null 2>&1 && echo faux || echo vrai)"
-verifie "Cartes toujours distinguées : FedaPay + zone locale" "$(rg -c 'FedaPay' /tmp/v383-contribuer.html >/dev/null 2>&1 && rg -c 'Afrique de l.Ouest' /tmp/v383-contribuer.html >/dev/null 2>&1 && echo vrai || echo faux)"
+verifie "Cartes toujours distinguées : FedaPay + zone locale" "$(rg -c 'FedaPay' /tmp/v383-contribuer.html >/dev/null 2>&1 && rg -c "Afrique de l.{1,8}Ouest" /tmp/v383-contribuer.html >/dev/null 2>&1 && echo vrai || echo faux)"
 verifie "Cartes toujours distinguées : Paystack + International" "$(rg -c 'Paystack' /tmp/v383-contribuer.html >/dev/null 2>&1 && rg -c 'International' /tmp/v383-contribuer.html >/dev/null 2>&1 && echo vrai || echo faux)"
 ICONE=false
 for c in $(rg -o 'static/chunks/[^"]+\.js' /tmp/v383-contribuer.html | sort -u); do
@@ -81,18 +81,10 @@ verifie "Page journal sur www → 307 login (plus JAMAIS 404)" "$([ "$CODE" = "3
 CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$DOMAINE_ADMIN/admin/tresorerie/transactions")
 verifie "Page journal sur admin.mouvementchristlibere.com → 307 login (l'ancien chemin du 404)" "$([ "$CODE" = "307" ] && echo vrai || echo faux)"
 
-# Lien corrigé dans /admin/donations : la page de connexion redirige avant,
-# mais le HTML du login public (sans session) n'est PAS la page donations —
-# on vérifie le lien côté bundle serveur rendu : le chemin de redirection
-# « from=/admin/tresorerie/transactions » depuis le clic du lien du module
-# ne peut être observé sans session ; on contrôle donc la PRÉSENCE du
-# chemin corrigé dans les sources publiées (JS du bundle admin).
-CHEMIN=false
-for c in $(rg -o 'static/chunks/[^"]+\.js' /tmp/v383-contribuer.html 2>/dev/null | sort -u); do
-  if curl -fsSL --max-time 20 "$DOMAINE/_next/$c" 2>/dev/null | rg -q 'admin/tresorerie/transactions'; then CHEMIN=true; break; fi
-done
-# Le lien vit dans la page serveur /admin/donations (307 → login) : le
-# paramètre « from » du login conserve le chemin demandé.
+# Lien corrigé dans /admin/donations : la page est derrière la garde de
+# session (307 → login) — la page de connexion redirige APRÈS authent
+# vers le chemin demandé, le lien corrigé est vérifié par les sources
+# (validate-v383.cjs A7) et par la page journal elle-même ci-dessous.
 CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$DOMAINE/admin/donations")
 verifie "/admin/donations → 307 login (page intacte)" "$([ "$CODE" = "307" ] && echo vrai || echo faux)"
 
@@ -102,8 +94,11 @@ for chemin in "/" "/videos" "/admin/login" "/adoration-louanges" "/contribuer/me
   CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$DOMAINE$chemin")
   verifie "$chemin → 200" "$([ "$CODE" = "200" ] && echo vrai || echo faux)"
 done
-R=$(curl -s -o /tmp/v383-statut.json -w "%{http_code}" --max-time 30 "$DOMAINE/api/dons/statut/don_inconnu_aaaaaaaa_bbbbbbbbbb")
-verifie "/api/dons/statut référence inconnue → 404 JSON (comportement V3.82 conservé)" "$([ "$R" = "404" ] && echo vrai || echo faux)"
+R=$(curl -s -o /tmp/v383-statut.json -w "%{http_code}" --max-time 30 "$DOMAINE/api/dons/statut/don_lz3k9f2a_4b1c2d3e4f")
+verifie "/api/dons/statut référence bien formée inconnue → 404 JSON (V3.82 conservé)" "$([ "$R" = "404" ] && echo vrai || echo faux)"
+verifie "404 sans AUCUNE donnée personnelle" "$(rg -c 'Don introuvable' /tmp/v383-statut.json >/dev/null 2>&1 && echo vrai || echo faux)"
+R=$(curl -s -o /tmp/v383-statut-3.json -w "%{http_code}" --max-time 30 "$DOMAINE/api/dons/statut/n-importe-quoi")
+verifie "/api/dons/statut référence mal formée → 400 (validation conservée)" "$([ "$R" = "400" ] && echo vrai || echo faux)"
 
 echo
 echo "════════════════════════════════════════════════"
