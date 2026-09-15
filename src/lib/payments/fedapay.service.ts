@@ -200,10 +200,17 @@ export async function creerTransactionFedapay(
 }
 
 /**
- * ⭐ V3.83 — Test de connexion depuis /admin/paiements.
- * Interroge une route légère en lecture (GET /v1/transactions, limite 1) :
- * 200 = la clé est acceptée ; 401/403 = clé invalide ; autre = incident.
- * Aucune écriture, aucun coût, aucun paiement créé.
+ * ⭐ V3.85/V3.87 — Test de connexion depuis /admin/paiements.
+ * Interroge une route légère en lecture (GET /v1/transactions/search,
+ * limite 1) : 200 = la clé est acceptée ; 401/403 = clé invalide ; autre
+ * = incident. Aucune écriture, aucun coût, aucun paiement créé.
+ *
+ * ⭐ V3.87 — L'ANCIEN GET /v1/transactions (listage simple) est DÉPRÉCIÉ
+ * par FedaPay (« Invoquer /v1/transactions est obsolète. Utiliser plutôt
+ * /v1/transactions/search. ») — constaté en production le 15/09/2026 :
+ * le test et le listage passent désormais par /v1/transactions/search
+ * (route GET avec query params — vérifiée sur api.fedapay.com ET
+ * sandbox-api.fedapay.com).
  */
 export async function testerConnexionFedapay(params: {
   cle?: string | null;
@@ -221,7 +228,7 @@ export async function testerConnexionFedapay(params: {
   }
   try {
     const reponse = await fetch(
-      `${baseApi(params.environment)}/v1/transactions?limit=1`,
+      `${baseApi(params.environment)}/v1/transactions/search?limit=1`,
       {
         method: "GET",
         headers: {
@@ -365,8 +372,17 @@ export async function verifierTransactionFedapay(
  * un don à sa transaction réelle côté FedaPay puis de la vérifier
  * individuellement (verifierTransactionFedapay — montant exact exigé).
  *
- * La réponse de liste est lue multi-formes ( « v1/transactions », « data »,
- * « transactions » ou tableau plat — même robustesse que extraireTransaction).
+ * ⚠️ DÉPRÉCIATION FEDAPAY (constatée en production 15/09/2026) : le listage
+ * simple GET /v1/transactions renvoie « Invoquer /v1/transactions est
+ * obsolète. Utiliser plutôt /v1/transactions/search. » — l'appel passe
+ * donc par GET /v1/transactions/search?limit=N (route vérifiée sur api
+ * .fedapay.com ET sandbox-api.fedapay.com).
+ *
+ * La réponse est extraite de façon AGNOSTIQUE à l'enveloppe : candidats
+ * explicites ( « v1/transactions », « transactions », « data », « results »,
+ * « items », tableau racine) puis, en dernier recours, PREMIER tableau
+ * d'objets du premier niveau (les éléments doivent porter un id ou un
+ * status) — quel que soit le nom de clé choisi par l'API ce jour-là.
  */
 export async function listerTransactionsFedapayRecentes(
   limite = 25
@@ -380,34 +396,48 @@ export async function listerTransactionsFedapayRecentes(
 
   const reponse = await appelApi(
     { base: baseApi(config.environment), cle: config.secretKey },
-    `/v1/transactions?limit=${encodeURIComponent(String(Math.min(Math.max(limite, 1), 100)))}`,
+    `/v1/transactions/search?limit=${encodeURIComponent(String(Math.min(Math.max(limite, 1), 100)))}`,
     undefined,
     "GET"
   );
 
   // Extraction multi-formes du tableau de transactions.
+  const estTransaction = (t: unknown): t is Record<string, unknown> =>
+    t !== null &&
+    typeof t === "object" &&
+    ((t as Record<string, unknown>).id != null ||
+      (t as Record<string, unknown>).status != null);
+
   const candidats: unknown[] = [
     reponse["v1/transactions"],
     reponse.transactions,
     reponse.data,
+    reponse.results,
+    reponse.items,
     Array.isArray(reponse) ? reponse : undefined,
   ];
   for (const candidat of candidats) {
     if (Array.isArray(candidat)) {
-      return candidat.filter(
-        (t): t is Record<string, unknown> =>
-          t !== null && typeof t === "object"
-      );
+      return candidat.filter(estTransaction);
     }
     // Une enveloppe objet peut encore contenir le tableau sous « data ».
     if (candidat && typeof candidat === "object") {
       const interne = (candidat as Record<string, unknown>).data;
       if (Array.isArray(interne)) {
-        return interne.filter(
-          (t): t is Record<string, unknown> =>
-            t !== null && typeof t === "object"
-        );
+        return interne.filter(estTransaction);
       }
+    }
+  }
+
+  // Dernier recours : PREMIER tableau d'objets ressemblant à des
+  // transactions, quel que soit le nom de la clé d'enveloppe.
+  for (const valeur of Object.values(reponse)) {
+    if (
+      Array.isArray(valeur) &&
+      valeur.length > 0 &&
+      valeur.every((t) => estTransaction(t))
+    ) {
+      return valeur.filter(estTransaction);
     }
   }
   return [];

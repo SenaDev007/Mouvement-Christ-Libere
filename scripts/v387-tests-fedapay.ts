@@ -177,12 +177,31 @@ reponseSimulee = { inattendu: true };
 liste = await listerTransactionsFedapayRecentes(25);
 verifie("Forme inconnue → liste vide (jamais d'exception)", liste.length === 0);
 
-// L'appel porte la limite et la méthode GET.
+// L'appel porte la limite, la méthode GET et le endpoint NON DÉPRÉCIÉ.
 verifie(
-  "Le fetch vise GET /v1/transactions?limit=…",
-  dernierAppel?.url.includes("/v1/transactions?limit=") === true &&
+  "Le fetch vise GET /v1/transactions/search?limit=… (endpoint actuel)",
+  dernierAppel?.url.includes("/v1/transactions/search?limit=") === true &&
     dernierAppel?.methode === "GET",
   `url=${dernierAppel?.url} methode=${dernierAppel?.methode}`
+);
+verifie(
+  "JAMAIS l'endpoint déprécié /v1/transactions?limit (sans /search)",
+  dernierAppel?.url.includes("/v1/transactions?limit=") === false
+);
+
+// Enveloppe INCONNUE (dernier recours) : premier tableau d'objets avec id/status.
+reponseSimulee = {
+  nimporte_quelle_cle: [
+    { id: 71, status: "approved", description: "Dîme — don_rec_71" },
+    { id: 72, status: "pending", description: "Don — don_rec_72" },
+  ],
+  meta: { page: 1 },
+};
+liste = await listerTransactionsFedapayRecentes(25);
+verifie(
+  "Enveloppe inconnue → dernier recours : 2 transactions extraites",
+  liste.length === 2 && liste[0].id === 71,
+  `longueur=${liste.length}`
 );
 
 // La clé secrète est exigée.
@@ -325,6 +344,18 @@ verifie(
 verifie(
   "service : limite bornée 1..100",
   serviceCode.includes("Math.min(Math.max(limite, 1), 100)")
+);
+verifie(
+  "service : listage via /v1/transactions/search (endpoint actuel)",
+  serviceCode.includes("/v1/transactions/search?limit=")
+);
+verifie(
+  "service : plus AUCUN appel au listage déprécié /v1/transactions?limit",
+  !serviceCode.includes("/v1/transactions?limit=")
+);
+verifie(
+  "service : test de connexion également passé au endpoint search",
+  serviceCode.includes("/v1/transactions/search?limit=1")
 );
 
 const recuperation = fs.readFileSync(
