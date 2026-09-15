@@ -36,7 +36,7 @@ const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
 const EXPEDITEUR = () =>
   process.env.EMAIL_EXPEDITEUR ||
-  "Mouvement Christ Libéré <noreply@mouvementchristlibere.com>";
+  "Mouvement Christ Libère <noreply@mouvementchristlibere.com>";
 
 const LIMITES = {
   sujet: 200,
@@ -257,6 +257,178 @@ router.post("/send", async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.error("[email/send] Error:", error);
+    return res.status(500).json({ error: "Erreur interne du relais email" });
+  }
+});
+
+// ------------------------------------------------------------------
+// ⭐ V3.81 — Anti-relais DÉDIÉ aux emails de vérification : la nouvelle
+// adresse d'un changement d'email n'a PAS (encore) de compte — le relais
+// classique la refuserait. Ici, le destinataire est autorisé SSI un OTP
+// EMAIL_CHANGE ACTIF existe en base partagée pour cette adresse : ces
+// OTP ne sont créés que par l'app principale APRÈS vérification de la
+// session + du mot de passe actuel — impossible de spammer une adresse
+// arbitraire depuis noreply@mouvementchristlibere.com.
+// (SQL brut : le schéma Prisma du backend n'a pas ce modèle.)
+// ------------------------------------------------------------------
+async function destinataireVerificationAutorise(
+  adresse: string,
+): Promise<boolean> {
+  try {
+    const otp = await db.$queryRawUnsafe<Array<{ id: string }>>(
+      `SELECT "id" FROM "PasswordResetOtp"
+        WHERE "email" = $1 AND "purpose" = 'EMAIL_CHANGE'
+          AND "consumedAt" IS NULL AND "expiresAt" > now()`,
+      adresse.trim().toLowerCase(),
+    );
+    return Array.isArray(otp) && otp.length > 0;
+  } catch {
+    // Table absente (V3.81 du frontend pas encore déployée) — refus.
+    return false;
+  }
+}
+
+// ------------------------------------------------------------------
+// POST /api/email/send-verification
+// Body: { to, subject, html, text?, replyTo?, category? }
+// Destinataire : la NOUVELLE adresse d'un changement d'email (OTP actif
+// requis en base — voir destinataireVerificationAutorise).
+// ------------------------------------------------------------------
+router.post("/send-verification", async (req: Request, res: Response) => {
+  try {
+    // 1) Secret partagé (si configuré).
+    if (process.env.EMAIL_SERVICE_SECRET) {
+      const secret = req.headers["x-email-secret"];
+      if (
+        typeof secret !== "string" ||
+        secret !== process.env.EMAIL_SERVICE_SECRET
+      ) {
+        return res.status(401).json({ error: "Secret de service invalide" });
+      }
+    }
+
+    const { to, subject, html, text, replyTo } = req.body || {};
+
+    // 2) Validations de forme (identiques au relais classique).
+    const destinataire = typeof to === "string" ? to.trim().toLowerCase() : "";
+    const adresseNue = destinataire.match(/<([^>]+)>/)?.[1] ?? destinataire;
+    if (!EMAIL_RE.test(adresseNue)) {
+      return res.status(400).json({ error: "Adresse destinataire invalide" });
+    }
+    if (typeof subject !== "string" || !subject.trim()) {
+      return res.status(400).json({ error: "Objet requis" });
+    }
+    if (typeof html !== "string" || !html.trim()) {
+      return res.status(400).json({ error: "Contenu html requis" });
+    }
+    if (subject.length > LIMITES.sujet) {
+      return res
+        .status(400)
+        .json({ error: `Objet trop long (max ${LIMITES.sujet})` });
+    }
+    if (html.length > LIMITES.html) {
+      return res
+        .status(400)
+        .json({ error: `Contenu trop long (max ${LIMITES.html})` });
+    }
+    if (text && String(text).length > LIMITES.texte) {
+      return res
+        .status(400)
+        .json({ error: `Texte trop long (max ${LIMITES.texte})` });
+    }
+    if (replyTo && !EMAIL_RE.test(String(replyTo).trim())) {
+      return res.status(400).json({ error: "Reply-To invalide" });
+    }
+
+    // 3) Rate-limits (fenêtres propres à ce relais).
+    if (
+      !autoriser(
+        `verify-ip:${ipDe(req)}`,
+        LIMITES.parIp,
+        LIMITES.fenetreMs,
+      )
+    ) {
+      return res
+        .status(429)
+        .json({ error: "Trop d'envois depuis cette adresse — réessayez plus tard." });
+    }
+    if (
+      !autoriser(
+        `verify-to:${adresseNue}`,
+        LIMITES.parDestinataire,
+        LIMITES.fenetreMs,
+      )
+    ) {
+      return res
+        .status(429)
+        .json({ error: "Trop d'envois vers ce destinataire — réessayez plus tard." });
+    }
+
+    // 4) Anti-relais : OTP EMAIL_CHANGE ACTIF en base pour cette adresse.
+    const autorise = await destinataireVerificationAutorise(adresseNue);
+    if (!autorise) {
+      return res.status(403).json({
+        error: "Aucun changement d'email en attente pour ce destinataire",
+      });
+    }
+
+    // 5) Clé présente ?
+    const cle = process.env.RESEND_API_KEY;
+    if (!cle) {
+      return res.status(503).json({
+        error:
+          "RESEND_API_KEY absente de ce backend (Railway) — ajoutez la variable sur Railway",
+      });
+    }
+
+    // 6) Envoi via Resend (expéditeur FIXE).
+    const controle = new AbortController();
+    const minuteur = setTimeout(() => controle.abort(), 12_000);
+    try {
+      const reponse = await fetch(RESEND_ENDPOINT, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${cle}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: EXPEDITEUR(),
+          to: [destinataire],
+          subject: subject.trim(),
+          html,
+          ...(typeof text === "string" && text.trim() ? { text } : {}),
+          ...(typeof replyTo === "string" && replyTo.trim()
+            ? { reply_to: replyTo.trim() }
+            : {}),
+        }),
+        signal: controle.signal,
+      });
+
+      const corps = (await reponse.json().catch(() => ({}))) as {
+        id?: string;
+        message?: string;
+        name?: string;
+      };
+
+      if (!reponse.ok) {
+        console.error(
+          `[email/send-verification] Resend a refusé (${reponse.status}) : ${corps.message || corps.name || "?"}`,
+        );
+        return res.status(502).json({
+          error: "Resend a refusé l'envoi",
+          detail: corps.message || corps.name || `HTTP ${reponse.status}`,
+        });
+      }
+
+      console.log(
+        `[email/send-verification] Code de changement d'email envoyé à ${adresseNue} — id Resend ${corps.id ?? "?"}`,
+      );
+      return res.json({ success: true, id: corps.id });
+    } finally {
+      clearTimeout(minuteur);
+    }
+  } catch (error) {
+    console.error("[email/send-verification] Error:", error);
     return res.status(500).json({ error: "Erreur interne du relais email" });
   }
 });

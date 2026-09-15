@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     // ① Anti-harcèlement : au moins 1 minute entre deux envois.
     const dernier = await db.passwordResetOtp.findFirst({
-      where: { email: emailNormalise },
+      where: { email: emailNormalise, purpose: "PASSWORD_RESET" },
       orderBy: { createdAt: "desc" },
       select: { createdAt: true },
     });
@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
     const envoisRecent = await db.passwordResetOtp.count({
       where: {
         email: emailNormalise,
+        purpose: "PASSWORD_RESET",
         createdAt: {
           gte: new Date(maintenant.getTime() - 60 * 60 * 1000),
         },
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
     // ④ Invalider les codes non consommés précédents (usage unique, un
     // seul code actif à la fois).
     await db.passwordResetOtp.updateMany({
-      where: { email: emailNormalise, consumedAt: null },
+      where: { email: emailNormalise, purpose: "PASSWORD_RESET", consumedAt: null },
       data: { consumedAt: maintenant },
     });
 
@@ -126,6 +127,7 @@ export async function POST(request: NextRequest) {
         codeHash: hacherCode(code),
         userId: utilisateur.id,
         expiresAt: new Date(maintenant.getTime() + VALIDITE_CODE_MIN * 60_000),
+        purpose: "PASSWORD_RESET",
       },
     });
 

@@ -55,10 +55,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = (user as { id: string }).id;
         token.role = (user as { role: string }).role;
+      }
+      // ⭐ V3.81 — Changement d'adresse email depuis /profil : la page
+      // appelle update({ email }) (next-auth/react) après vérification du
+      // code reçu à la nouvelle adresse — le jeton est rafraîchi et la
+      // session (navbar, profil) affiche immédiatement le nouvel email,
+      // sans re-connexion.
+      if (trigger === "update" && session) {
+        const email = (session as { email?: unknown }).email;
+        if (typeof email === "string" && email.includes("@")) {
+          token.email = email;
+        }
       }
       return token;
     },
@@ -66,6 +77,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
         (session.user as { role?: string }).role = token.role as string;
+        // ⭐ V3.81 — l'email du JETON prime sur celui du login initial :
+        // reflète un éventuel changement d'email effectué dans /profil.
+        if (token.email) {
+          (session.user as { email?: string }).email = token.email as string;
+        }
       }
       return session;
     },

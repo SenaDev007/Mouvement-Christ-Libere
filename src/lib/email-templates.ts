@@ -2,6 +2,9 @@
  * ⭐ V3.69 — Templates HTML des emails transactionnels (Resend).
  * ⭐ V3.75 — Palette restaurée « Concept D » : violet impérial #2A0E3D /
  * or #C9A227 / or clair #DDBE55 / ivoire #FAF6EF / stone #8A8378.
+ * ⭐ V3.81 — Logo du Mouvement intégré au bandeau de TOUS les emails
+ * (URL absolue — les clients mail ne chargent ni images relatives
+ * ni data URL : Gmail/Outlook exigent du https).
  * Mise en page « email-safe » : tableaux, styles en ligne, polices
  * système (Arial) — pas de CSS externe ni de média queries, pour un
  * rendu identique dans Gmail, Outlook, Yahoo…
@@ -13,6 +16,9 @@ const OR_CLAIR = "#DDBE55";
 const VIOLET = "#2A0E3D";
 const IVOIRE = "#FAF6EF";
 const GRIS = "#8A8378";
+
+/** Logo du site (PNG transparent 220×233, affiché à 110 px — @2x). */
+const LOGO_EMAIL_URL = "https://www.mouvementchristlibere.com/logo-email.png";
 
 /** Échappe les caractères HTML d'un texte utilisateur. */
 export function echapperHtml(texte: string): string {
@@ -47,11 +53,12 @@ function enveloppe(titre: string, contenu: string): string {
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; background-color:#ffffff; border-radius:12px; overflow:hidden; border:1px solid rgba(0,0,0,0.08);">
 
-  <!-- Bandeau noir + or -->
+  <!-- Bandeau violet + or + logo du Mouvement -->
   <tr>
-    <td style="background-color:${VIOLET}; padding:26px 32px; text-align:center;">
+    <td style="background-color:${VIOLET}; padding:22px 32px 20px 32px; text-align:center;">
+      <img src="${LOGO_EMAIL_URL}" width="110" height="117" alt="Mouvement Christ Lib&egrave;re" style="display:block; margin:0 auto 12px auto; width:110px; height:117px; max-width:110px; max-height:117px;" />
       <div style="font-size:22px; font-weight:bold; color:${OR}; letter-spacing:1px; font-family:Georgia, 'Times New Roman', serif;">CHRIST LIB&Egrave;RE</div>
-      <div style="font-size:10px; color:${IVOIRE}; letter-spacing:3px; text-transform:uppercase; margin-top:6px;">Mouvement Christ Lib&eacute;r&eacute;</div>
+      <div style="font-size:10px; color:${IVOIRE}; letter-spacing:3px; text-transform:uppercase; margin-top:6px;">Mouvement Christ Lib&eacute;re</div>
     </td>
   </tr>
 
@@ -74,7 +81,7 @@ function enveloppe(titre: string, contenu: string): string {
     <td style="padding:22px 32px 28px 32px;">
       <div style="height:2px; background:linear-gradient(90deg, ${OR}, ${OR_CLAIR}); border-radius:2px; margin-bottom:16px; font-size:0; line-height:0;">&nbsp;</div>
       <p style="margin:0; font-size:11px; line-height:17px; color:${GRIS};">
-        Mouvement Christ Lib&eacute;r&eacute; &mdash; <a href="https://mouvementchristlibere.com" style="color:${OR}; text-decoration:none;">mouvementchristlibere.com</a><br />
+        Mouvement Christ Lib&eacute;re &mdash; <a href="https://mouvementchristlibere.com" style="color:${OR}; text-decoration:none;">mouvementchristlibere.com</a><br />
         Cet email automatique est envoy&eacute; depuis noreply@mouvementchristlibere.com &mdash; merci d&apos;utiliser les formulaires du site pour toute r&eacute;ponse.
       </p>
     </td>
@@ -149,13 +156,13 @@ export function templateOtp(options: OptionsOtp): { html: string; text: string }
 
   const text = `Shalom${options.nom ? " " + options.nom : ""},
 
-Vous avez demandé la réinitialisation du mot de passe de votre compte sur la plateforme du Mouvement Christ Libéré.
+Vous avez demandé la réinitialisation du mot de passe de votre compte sur la plateforme du Mouvement Christ Libère.
 
 Code de vérification : ${options.code}
 
 Ce code est valable ${minutes} minutes et ne peut être utilisé qu'une seule fois. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe reste inchangé.
 
-— Mouvement Christ Libéré (mouvementchristlibere.com)`;
+— Mouvement Christ Libère (mouvementchristlibere.com)`;
 
   return { html, text };
 }
@@ -204,7 +211,7 @@ Sujet : ${options.sujet}
 
 ${options.message}
 
-— Mouvement Christ Libéré (mouvementchristlibere.com)`;
+— Mouvement Christ Libère (mouvementchristlibere.com)`;
 
   return { html, text };
 }
@@ -305,7 +312,7 @@ Message :
 ${options.demande.message}
 
 ${options.noteTransmission ? "Note de la secrétaire : " + options.noteTransmission + "\n" : ""}
-— Mouvement Christ Libéré (mouvementchristlibere.com)`;
+— Mouvement Christ Libère (mouvementchristlibere.com)`;
 
   return { html, text };
 }
@@ -324,7 +331,7 @@ export function templateTest(): { html: string; text: string } {
   );
   return {
     html,
-    text: `Email de test — l'envoi depuis noreply@mouvementchristlibere.com fonctionne. — Mouvement Christ Libéré`,
+    text: `Email de test — l'envoi depuis noreply@mouvementchristlibere.com fonctionne. — Mouvement Christ Libère`,
   };
 }
 
@@ -388,7 +395,79 @@ Objet : ${options.demande.subject}
 ${options.demande.trackingCode ? "Code de suivi : " + options.demande.trackingCode + "\n" : ""}
 La demande passe au statut « Validée » dans le registre du secrétariat.
 
-— Mouvement Christ Libéré (mouvementchristlibere.com)`;
+— Mouvement Christ Libère (mouvementchristlibere.com)`;
+
+  return { html, text };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ⑥ ⭐ V3.81 — OTP de CHANGEMENT D'ADRESSE EMAIL (depuis /profil)
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface OptionsOtpEmail {
+  /** Prénom/nom du titulaire du compte. */
+  nom?: string | null;
+  /** Code à 6 chiffres. */
+  code: string;
+  /** Adresse email ACTUELLE du compte (avant changement). */
+  emailActuel: string;
+  /** Validité en minutes (10 par défaut). */
+  minutesValidite?: number;
+}
+
+export function sujetEmailOtpChangement(): string {
+  return "Confirmez votre nouvelle adresse email — Christ Libère";
+}
+
+export function templateOtpChangementEmail(
+  options: OptionsOtpEmail
+): { html: string; text: string } {
+  const minutes = options.minutesValidite ?? 10;
+  const salutation = options.nom
+    ? `Shalom ${echapperHtml(options.nom)},`
+    : "Shalom,";
+
+  const html = enveloppe(
+    "Changement de votre adresse email",
+    `
+    <p style="margin:0 0 6px 0;">${salutation}</p>
+    <p style="margin:0 0 14px 0;">Vous avez demand&eacute; &agrave; remplacer l&apos;adresse email de votre compte sur la plateforme du Mouvement Christ Lib&egrave;re&nbsp;:</p>
+
+    ${blocInfo([
+      { libelle: "Email actuel", valeur: options.emailActuel },
+      { libelle: "Nouvel email", valeur: "cette adresse" },
+    ])}
+
+    <p style="margin:0 0 18px 0;">Saisissez ce code sur la page <strong>Mon profil</strong> pour confirmer que cette adresse vous appartient&nbsp;:</p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px 0;">
+      <tr>
+        <td align="center" style="background-color:${VIOLET}; border:1px solid ${OR}; border-radius:10px; padding:22px 16px;">
+          <div style="font-size:13px; color:${IVOIRE}; letter-spacing:2px; text-transform:uppercase; margin-bottom:10px;">Code de confirmation</div>
+          <div style="font-size:34px; font-weight:bold; letter-spacing:10px; color:${OR}; font-family:'Courier New', Courier, monospace;">${echapperHtml(options.code)}</div>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 8px 0;">Ce code est valable <strong>${minutes} minutes</strong> et ne peut &ecirc;tre utilis&eacute; qu&apos;une seule fois. Une fois confirm&eacute;, <strong>cette adresse deviendra l&apos;email de connexion de votre compte</strong> (l&apos;ancienne ne fonctionnera plus).</p>
+    <p style="margin:0;">Si vous n&apos;&ecirc;tes pas &agrave; l&apos;origine de cette demande, ignorez cet email&nbsp;: votre adresse actuelle restera inchang&eacute;e.</p>
+    `
+  );
+
+  const text = `Shalom${options.nom ? " " + options.nom : ""},
+
+Vous avez demandé à remplacer l'adresse email de votre compte sur la plateforme du Mouvement Christ Libère.
+
+Email actuel : ${options.emailActuel}
+Nouvel email : cette adresse
+
+Code de confirmation : ${options.code}
+
+Ce code est valable ${minutes} minutes et ne peut être utilisé qu'une seule fois. Une fois confirmé, cette adresse deviendra l'email de connexion de votre compte (l'ancienne ne fonctionnera plus).
+
+Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre adresse actuelle restera inchangée.
+
+— Mouvement Christ Libère (mouvementchristlibere.com)`;
 
   return { html, text };
 }

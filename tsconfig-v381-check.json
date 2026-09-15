@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/jsx-runtime": [
+        "./node_modules/@types/react/jsx-runtime"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "files": [
+    "src/app/profil/page.tsx",
+    "src/app/api/user/change-password/route.ts",
+    "src/app/api/user/email-change/route.ts",
+    "src/app/api/user/email-change/verify/route.ts",
+    "src/app/api/user/profile/route.ts",
+    "src/app/api/auth/forgot-password/route.ts",
+    "src/app/api/auth/reset-password/route.ts",
+    "src/auth.ts",
+    "src/lib/email.ts",
+    "src/lib/email-templates.ts",
+    "src/lib/ensure-schema.ts",
+    "src/lib/hero-defaults.ts",
+    "src/components/auth/mot-de-passe-oublie.tsx",
+    "src/components/post-production/templates-integres.ts",
+    "src/components/site/landing-view.tsx",
+    "src/components/site/page-hero.tsx"
+  ]
+}

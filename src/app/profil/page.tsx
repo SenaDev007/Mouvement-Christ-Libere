@@ -10,9 +10,11 @@
  *   - Nom, téléphone, pays (sélecteur 191 pays), ville, bio.
  *   - Préférences de notifications (existant) + déconnexion.
  *
- * Tout est persisté en PostgreSQL et visible par les administrateurs dans
- * le back-office /admin/users (photo, téléphone, pays, ville, bio) —
- * la photo s'affiche aussi dans Yeshua Connect (canaux vocaux + chat).
+ * ⭐ V3.81 — CARTE « SÉCURITÉ DU COMPTE » :
+ *   - changer son MOT DE PASSE (mot de passe actuel exigé) ;
+ *   - changer son ADRESSE EMAIL : code de confirmation envoyé à la
+ *     NOUVELLE adresse (preuve de propriété) puis session rafraîchie
+ *     immédiatement (next-auth update) — plus besoin de se reconnecter.
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -22,14 +24,17 @@ import { motion } from "framer-motion";
 import {
   Loader2, User, Mail, MapPin, Phone as PhoneIcon, Camera, Trash2,
   Bell, BellOff, Save, LogOut, CheckCircle2, AlertCircle,
+  KeyRound, ShieldCheck, ArrowLeft, RefreshCw,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { api } from "@/lib/api-client";
 import { compressAvatar } from "@/lib/avatar-upload";
 import { COUNTRIES } from "@/lib/data/countries";
 
+type EtapeEmail = "ferme" | "saisie" | "code" | "succes";
+
 export default function ProfilPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -53,6 +58,29 @@ export default function ProfilPage() {
   const [notifLive, setNotifLive] = useState(true);
   const [notifCommunity, setNotifCommunity] = useState(true);
   const [dndEnabled, setDndEnabled] = useState(false);
+
+  // ⭐ V3.81 — Sécurité du compte : changement de mot de passe
+  const [mdpOuvert, setMdpOuvert] = useState(false);
+  const [mdpActuel, setMdpActuel] = useState("");
+  const [mdpNouveau, setMdpNouveau] = useState("");
+  const [mdpConfirmation, setMdpConfirmation] = useState("");
+  const [mdpChargement, setMdpChargement] = useState(false);
+  const [mdpSucces, setMdpSucces] = useState("");
+  const [mdpErreur, setMdpErreur] = useState("");
+
+  // ⭐ V3.81 — Sécurité du compte : changement d'adresse email (OTP)
+  const [emailCompte, setEmailCompte] = useState("");
+  const [etapeEmail, setEtapeEmail] = useState<EtapeEmail>("ferme");
+  const [nouvelEmail, setNouvelEmail] = useState("");
+  const [emailMotDePasse, setEmailMotDePasse] = useState("");
+  const [codeEmail, setCodeEmail] = useState("");
+  const [emailChargement, setEmailChargement] = useState(false);
+  const [emailSucces, setEmailSucces] = useState("");
+  const [emailErreur, setEmailErreur] = useState("");
+
+  useEffect(() => {
+    if (session?.user?.email) setEmailCompte(session.user.email);
+  }, [session?.user?.email]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -127,6 +155,110 @@ export default function ProfilPage() {
     }
   };
 
+  /** ⭐ V3.81 — Change le mot de passe (mot de passe actuel exigé). */
+  const changerMotDePasse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mdpChargement) return;
+    setMdpErreur("");
+    setMdpSucces("");
+    if (mdpNouveau !== mdpConfirmation) {
+      setMdpErreur("Les deux mots de passe ne correspondent pas.");
+      return;
+    }
+    setMdpChargement(true);
+    try {
+      const res = await fetch(api.url("/api/user/change-password"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: mdpActuel,
+          newPassword: mdpNouveau,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur lors du changement");
+      setMdpSucces(data.message || "Mot de passe mis à jour.");
+      setMdpActuel("");
+      setMdpNouveau("");
+      setMdpConfirmation("");
+    } catch (err) {
+      setMdpErreur(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setMdpChargement(false);
+    }
+  };
+
+  /** ⭐ V3.81 — Étape 1 : demande du code envoyé à la NOUVELLE adresse. */
+  const demanderCodeEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (emailChargement) return;
+    setEmailErreur("");
+    setEmailSucces("");
+    setMdpErreur("");
+    setEmailChargement(true);
+    try {
+      const res = await fetch(api.url("/api/user/email-change"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          newEmail: nouvelEmail.trim(),
+          currentPassword: emailMotDePasse,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur lors de l'envoi du code");
+      setEmailSucces(data.message || "Code envoyé.");
+      setEtapeEmail("code");
+    } catch (err) {
+      setEmailErreur(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setEmailChargement(false);
+    }
+  };
+
+  /** ⭐ V3.81 — Étape 2 : confirme le code et applique le changement. */
+  const confirmerChangementEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (emailChargement) return;
+    setEmailErreur("");
+    setEmailChargement(true);
+    try {
+      const res = await fetch(api.url("/api/user/email-change/verify"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: codeEmail.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur lors de la confirmation");
+      // La session (JWT) est rafraîchie : la navbar affiche le nouvel email.
+      try {
+        await update({ email: data.email });
+      } catch { /* la session se rafraîchira à la prochaine connexion */ }
+      setEmailCompte(data.email);
+      setEmailSucces(
+        data.message ||
+          `Votre adresse email est désormais ${data.email}.`
+      );
+      setEtapeEmail("succes");
+      setCodeEmail("");
+      setEmailMotDePasse("");
+      try { window.dispatchEvent(new Event("profile-updated")); } catch { /* ignore */ }
+    } catch (err) {
+      setEmailErreur(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setEmailChargement(false);
+    }
+  };
+
+  const annulerChangementEmail = () => {
+    setEtapeEmail("ferme");
+    setNouvelEmail("");
+    setEmailMotDePasse("");
+    setCodeEmail("");
+    setEmailErreur("");
+    setEmailSucces("");
+  };
+
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -186,7 +318,7 @@ export default function ProfilPage() {
           <h1 className="font-serif text-3xl font-semibold text-[#1E0F2B] mb-1">
             Mon profil
           </h1>
-          <p className="text-sm text-[#8A8378]">{session.user?.email}</p>
+          <p className="text-sm text-[#8A8378]">{emailCompte || session.user?.email}</p>
           <div className="flex items-center justify-center gap-3 mt-3">
             {avatarUrl ? (
               <button
@@ -337,6 +469,191 @@ export default function ProfilPage() {
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : savedMsg ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
           {savedMsg ? "Enregistré" : saving ? "Enregistrement..." : "Enregistrer"}
         </button>
+
+        {/* ⭐ V3.81 — Sécurité du compte : mot de passe + adresse email */}
+        <div className="bg-white rounded-lg border border-stone-200 border-t-[3px] border-t-[#C9A227] p-8 space-y-6 mb-6">
+          <h2 className="font-serif text-lg font-semibold text-[#1E0F2B] flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-[#C9A227]" /> Sécurité du compte
+          </h2>
+
+          {/* ── Bloc 1 : mot de passe ─────────────────────────────── */}
+          <div className="border border-stone-100 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <KeyRound className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-[#1E0F2B]">Mot de passe</p>
+                  <p className="text-[11px] text-[#8A8378]">Votre mot de passe actuel est exigé.</p>
+                </div>
+              </div>
+              {!mdpOuvert && (
+                <button
+                  type="button"
+                  onClick={() => { setMdpOuvert(true); setMdpSucces(""); setMdpErreur(""); }}
+                  className="text-xs font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 px-3 py-1.5 rounded-full transition-colors flex-shrink-0"
+                >
+                  Changer
+                </button>
+              )}
+            </div>
+
+            {mdpOuvert && (
+              <form onSubmit={changerMotDePasse} className="space-y-3">
+                {mdpErreur && (
+ <p className="text-xs text-red-600 flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />{mdpErreur}</p>
+                )}
+                {mdpSucces && (
+ <p className="text-xs text-[#3F5039] flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />{mdpSucces}</p>
+                )}
+                <div>
+                  <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Mot de passe actuel</label>
+                  <input
+                    type="password" value={mdpActuel} onChange={(e) => setMdpActuel(e.target.value)}
+                    placeholder="••••••••" autoComplete="current-password" required
+                    className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Nouveau</label>
+                    <input
+                      type="password" value={mdpNouveau} onChange={(e) => setMdpNouveau(e.target.value)}
+                      placeholder="8 caractères min." autoComplete="new-password" required minLength={8}
+                      className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Confirmation</label>
+                    <input
+                      type="password" value={mdpConfirmation} onChange={(e) => setMdpConfirmation(e.target.value)}
+                      placeholder="••••••••" autoComplete="new-password" required minLength={8}
+                      className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 pt-1">
+                  <button type="submit" disabled={mdpChargement}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors"
+                  >
+                    {mdpChargement ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                    {mdpChargement ? "Mise à jour…" : "Mettre à jour"}
+                  </button>
+                  <button type="button" onClick={() => { setMdpOuvert(false); setMdpErreur(""); setMdpActuel(""); setMdpNouveau(""); setMdpConfirmation(""); }}
+                    className="inline-flex items-center gap-1.5 text-xs text-[#8A8378] hover:text-[#DDBE55] transition-colors"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Annuler
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
+          {/* ── Bloc 2 : adresse email ────────────────────────────── */}
+          <div className="border border-stone-100 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Mail className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[#1E0F2B] truncate">{emailCompte || session.user?.email}</p>
+                  <p className="text-[11px] text-[#8A8378]">Un code de confirmation est envoyé à la nouvelle adresse.</p>
+                </div>
+              </div>
+              {(etapeEmail === "ferme" || etapeEmail === "succes") && (
+                <button
+                  type="button"
+                  onClick={() => { setEtapeEmail("saisie"); setEmailSucces(""); setEmailErreur(""); setNouvelEmail(""); }}
+                  className="text-xs font-semibold text-[#1E0F2B] hover:bg-[#C9A227]/10 px-3 py-1.5 rounded-full transition-colors flex-shrink-0"
+                >
+                  Changer
+                </button>
+              )}
+            </div>
+
+            {etapeEmail === "saisie" && (
+              <form onSubmit={demanderCodeEmail} className="space-y-3">
+                {emailErreur && (
+                  <p className="text-xs text-red-600 flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />{emailErreur}</p>
+                )}
+                <div>
+                  <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Nouvelle adresse email</label>
+                  <input
+                    type="email" value={nouvelEmail} onChange={(e) => setNouvelEmail(e.target.value)}
+                    placeholder="nouvelle@email.com" autoComplete="email" required
+                    className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Mot de passe actuel</label>
+                  <input
+                    type="password" value={emailMotDePasse} onChange={(e) => setEmailMotDePasse(e.target.value)}
+                    placeholder="••••••••" autoComplete="current-password" required
+                    className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30"
+                  />
+                </div>
+                <div className="flex items-center gap-3 pt-1">
+                  <button type="submit" disabled={emailChargement || !nouvelEmail.trim()}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors"
+                  >
+                    {emailChargement ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                    {emailChargement ? "Envoi du code…" : "Envoyer le code"}
+                  </button>
+                  <button type="button" onClick={annulerChangementEmail}
+                    className="inline-flex items-center gap-1.5 text-xs text-[#8A8378] hover:text-[#DDBE55] transition-colors"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Annuler
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {etapeEmail === "code" && (
+              <form onSubmit={confirmerChangementEmail} className="space-y-3">
+                {emailErreur && (
+                  <p className="text-xs text-red-600 flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />{emailErreur}</p>
+                )}
+                {emailSucces && (
+                  <p className="text-xs text-[#3F5039] flex items-start gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />{emailSucces}</p>
+                )}
+                <p className="text-xs text-[#8A8378] leading-relaxed">
+                  Saisissez le code à 6 chiffres envoyé à <strong className="text-[#1E0F2B]">{nouvelEmail.trim()}</strong> pour finaliser le changement. Sans code, votre adresse actuelle reste inchangée.
+                </p>
+                <div>
+                  <label className="block text-xs font-semibold text-[#1E0F2B] uppercase tracking-wider mb-2">Code de confirmation</label>
+                  <input
+                    type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6}
+                    value={codeEmail} onChange={(e) => setCodeEmail(e.target.value.replace(/\D/g, ""))}
+                    placeholder="••••••" autoComplete="one-time-code" required autoFocus
+                    className="w-full px-4 py-3 bg-[#FAF6EF] border border-stone-200 rounded-full text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/30 text-center tracking-[0.5em] font-mono"
+                  />
+                </div>
+                <div className="flex items-center gap-3 pt-1">
+                  <button type="submit" disabled={emailChargement || codeEmail.length !== 6}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors"
+                  >
+                    {emailChargement ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    {emailChargement ? "Confirmation…" : "Confirmer le changement"}
+                  </button>
+                  <button type="button" onClick={annulerChangementEmail}
+                    className="inline-flex items-center gap-1.5 text-xs text-[#8A8378] hover:text-[#DDBE55] transition-colors"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Annuler
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {etapeEmail === "succes" && emailSucces && (
+              <p className="text-xs text-[#3F5039] flex items-start gap-1.5 bg-[#5B7052]/10 border border-[#5B7052]/30 rounded-xl px-4 py-3 leading-relaxed">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />{emailSucces}
+              </p>
+            )}
+          </div>
+
+          <p className="text-[10px] text-[#8A8378] flex items-center gap-1.5">
+            <RefreshCw className="w-3 h-3 flex-shrink-0" />
+            Ces réglages valent pour tous les espaces : membre, secrétariat, trésorerie et back-office.
+          </p>
+        </div>
 
         {/* Logout */}
         <button

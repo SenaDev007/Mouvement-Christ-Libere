@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     // ① Dernier code actif pour cet email.
     const otp = await db.passwordResetOtp.findFirst({
-      where: { email: emailNormalise, consumedAt: null },
+      where: { email: emailNormalise, purpose: "PASSWORD_RESET", consumedAt: null },
       orderBy: { createdAt: "desc" },
     });
 
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
       data: { consumedAt: maintenant },
     });
     await db.passwordResetOtp.updateMany({
-      where: { email: emailNormalise, consumedAt: null },
+      where: { email: emailNormalise, purpose: "PASSWORD_RESET", consumedAt: null },
       data: { consumedAt: maintenant },
     });
 

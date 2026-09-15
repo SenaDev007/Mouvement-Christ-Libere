@@ -91,7 +91,7 @@ export const TEMPLATES_INTEGRES: TemplateIntegre[] = [
           animation: "fade-in", animationDuration: 1,
         }),
         texte({
-          content: "Mouvement Christ Libéré",
+          content: "Mouvement Christ Libère",
           y: 56, fontSize: 26, fontColor: "#FFFFFF",
           startTime: 0.6, endTime: Math.min(4, dureeVideo),
           animation: "fade-in", animationDuration: 1,

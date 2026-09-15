@@ -702,7 +702,7 @@ export async function genererRecuDon(recu: RecuDonPdf): Promise<Uint8Array> {
   // ── Mention + signature ──
   dessinerTexte(
     ctx,
-    "Ce document confirme l'encaissement du don ci-dessus par la trésorerie du Mouvement Christ Libéré. Il est délivré à la demande du donateur et ne constitue pas un reçu fiscal.",
+    "Ce document confirme l'encaissement du don ci-dessus par la trésorerie du Mouvement Christ Libère. Il est délivré à la demande du donateur et ne constitue pas un reçu fiscal.",
     MARGE,
     ctx.y,
     { taille: 8, couleur: TAUPE }

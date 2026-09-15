@@ -891,6 +891,11 @@ model PasswordResetOtp {
   expiresAt  DateTime  // validité : 10 minutes
   consumedAt DateTime? // date de consommation — usage unique
   attempts   Int       @default(0) // tentatives échouées (max 5)
+  // ⭐ V3.81 — Usage du code : PASSWORD_RESET (mot de passe oublié) ou
+  // EMAIL_CHANGE (changement d'adresse email depuis /profil). La colonne
+  // est créée/ajoutée par ensureEmailTables() (défaut PASSWORD_RESET —
+  // les lignes existantes restent valables).
+  purpose    String    @default("PASSWORD_RESET")
   createdAt  DateTime  @default(now())
 
   @@index([email, createdAt])

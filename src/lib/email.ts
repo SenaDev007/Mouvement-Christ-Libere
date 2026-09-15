@@ -34,13 +34,15 @@ export const CATEGORIES_EMAIL = {
   DEMANDE_TRANSMISE: "DEMANDE_TRANSMISE",
   // ⭐ V3.74 — serviteur a validé une demande : notification secrétaire.
   DEMANDE_VALIDEE: "DEMANDE_VALIDEE",
+  // ⭐ V3.81 — code de confirmation d'un changement d'adresse email.
+  EMAIL_CHANGE: "EMAIL_CHANGE",
   TEST: "TEST",
 } as const;
 
 export type CategorieEmail = (typeof CATEGORIES_EMAIL)[keyof typeof CATEGORIES_EMAIL];
 
 /** Expéditeur par défaut (surchargable via EMAIL_EXPEDITEUR). */
-const EXPEDITEUR_PAR_DEFAUT = "Mouvement Christ Libéré <noreply@mouvementchristlibere.com>";
+const EXPEDITEUR_PAR_DEFAUT = "Mouvement Christ Libère <noreply@mouvementchristlibere.com>";
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
@@ -59,6 +61,24 @@ function urlRelaisBackend(): string {
     BACKEND_EMAIL_URL_PAR_DEFAUT
   ).replace(/\/$/, "");
   return `${base}/api/email/send`;
+}
+
+/**
+ * ⭐ V3.81 — URL du relais DÉDIÉ aux emails de vérification vers une
+ * adresse NON encore rattachée à un compte (changement d'email) : le
+ * relais classique /api/email/send refuse ces destinataires (anti-relais
+ * : « destinataire inconnu de la plateforme »). Ce relais dédié vérifie
+ * au contraire qu'un OTP EMAIL_CHANGE ACTIF existe en base partagée —
+ * preuve que la demande vient bien de l'app (session + mot de passe
+ * actuel vérifiés AVANT la création de l'OTP).
+ */
+function urlRelaisVerification(): string {
+  const base = (
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    BACKEND_EMAIL_URL_PAR_DEFAUT
+  ).replace(/\/$/, "");
+  return `${base}/api/email/send-verification`;
 }
 
 export interface ResultatEnvoi {
@@ -198,8 +218,11 @@ export async function envoyerEmail(options: OptionsEnvoi): Promise<ResultatEnvoi
  * serviteur ; rate-limit ; tailles plafonnées ; secret X-Email-Secret si
  * EMAIL_SERVICE_SECRET est partagé).
  */
-async function envoyerViaRelaisBackend(options: OptionsEnvoi): Promise<ResultatEnvoi> {
-  const url = urlRelaisBackend();
+async function envoyerViaRelaisBackend(
+  options: OptionsEnvoi,
+  urlRelais?: string
+): Promise<ResultatEnvoi> {
+  const url = urlRelais || urlRelaisBackend();
   const controle = new AbortController();
   const minuteur = setTimeout(() => controle.abort(), 12_000);
 
@@ -257,6 +280,33 @@ async function envoyerViaRelaisBackend(options: OptionsEnvoi): Promise<ResultatE
   } finally {
     clearTimeout(minuteur);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ⭐ V3.81 — ENVOI VERS UNE ADRESSE PAS ENCORE ENREGISTRÉE
+// (code de confirmation d'un changement d'email)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Envoie le code de confirmation d'un changement d'adresse email vers la
+ * NOUVELLE adresse (qui, par définition, n'a pas encore de compte).
+ *
+ * Double chemin, comme envoyerEmail() :
+ *  ① RESEND_API_KEY présente sur Vercel → envoi direct (envoyerEmail) ;
+ *  ② sinon → RELAIS DÉDIÉ du backend Railway : POST /api/email/send-verification
+ *     (au lieu de /api/email/send). L'anti-relais du backend vérifie ici
+ *     qu'un OTP EMAIL_CHANGE ACTIF existe en base pour cette adresse —
+ *     preuve que la demande émane bien de l'app (session + mot de passe
+ *     actuel vérifiés avant création de l'OTP). L'envoi est journalisé
+ *     dans OutgoingEmail (catégorie EMAIL_CHANGE) comme les autres.
+ */
+export async function envoyerEmailVerification(
+  options: OptionsEnvoi
+): Promise<ResultatEnvoi> {
+  if (cleResendPresente()) {
+    return envoyerEmail(options);
+  }
+  return envoyerViaRelaisBackend(options, urlRelaisVerification());
 }
 
 // ═══════════════════════════════════════════════════════════════════════

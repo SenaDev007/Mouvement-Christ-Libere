@@ -1546,15 +1546,25 @@ export function ensureEmailTables(): Promise<void> {
           "expiresAt" TIMESTAMPTZ NOT NULL,
           "consumedAt" TIMESTAMPTZ,
           "attempts" INTEGER NOT NULL DEFAULT 0,
+          "purpose" TEXT NOT NULL DEFAULT 'PASSWORD_RESET',
           "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
           CONSTRAINT "PasswordResetOtp_pkey" PRIMARY KEY ("id")
         )`
+      );
+      // ⭐ V3.81 — colonne « purpose » (PASSWORD_RESET | EMAIL_CHANGE)
+      // pour la table préexistante : ALTER idempotent.
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "PasswordResetOtp"
+           ADD COLUMN IF NOT EXISTS "purpose" TEXT NOT NULL DEFAULT 'PASSWORD_RESET'`
       );
       await db.$executeRawUnsafe(
         'CREATE INDEX IF NOT EXISTS "PasswordResetOtp_email_createdAt_idx" ON "PasswordResetOtp"("email", "createdAt")'
       );
       await db.$executeRawUnsafe(
         'CREATE INDEX IF NOT EXISTS "PasswordResetOtp_expiresAt_idx" ON "PasswordResetOtp"("expiresAt")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "PasswordResetOtp_userId_purpose_idx" ON "PasswordResetOtp"("userId", "purpose")'
       );
 
       // ② Journal des emails sortants (traçabilité des expéditions).
