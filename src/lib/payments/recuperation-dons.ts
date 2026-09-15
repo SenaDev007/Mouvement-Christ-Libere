@@ -217,6 +217,10 @@ export interface CompteursRecuperation {
   rapproches: number;
   statutsFournisseur: Record<string, number>;
   dernierDetail: string | null;
+  /** Erreur la plus récente (persistante — n'est PAS écrasée par les
+   *  vérifications suivantes qui réussissent). Aucun secret : messages
+   *  d'erreur FedaPay/Prisma tronqués. */
+  derniereErreur: string | null;
 }
 
 const compteurs: CompteursRecuperation = {
@@ -227,6 +231,7 @@ const compteurs: CompteursRecuperation = {
   rapproches: 0,
   statutsFournisseur: {},
   dernierDetail: null,
+  derniereErreur: null,
 };
 
 function noterStatutFournisseur(statut: string): void {
@@ -246,6 +251,7 @@ export function reinitialiserCompteurs(): void {
   compteurs.rapproches = 0;
   compteurs.statutsFournisseur = {};
   compteurs.dernierDetail = null;
+  compteurs.derniereErreur = null;
 }
 
 /**
@@ -296,6 +302,7 @@ export async function retenterVerificationDon(
     compteurs.echecs += 1;
     const detail = e instanceof Error ? e.message : String(e);
     compteurs.dernierDetail = detail.slice(0, 200);
+    compteurs.derniereErreur = detail.slice(0, 300);
     console.warn(
       "[recuperation-dons] Re-vérification impossible (",
       reference,
@@ -346,9 +353,10 @@ export async function recupererDonsPendantsFedapay(params: {
     }
   } catch (e) {
     compteurs.echecs += 1;
-    compteurs.dernierDetail = (
+    compteurs.derniereErreur = (
       e instanceof Error ? e.message : String(e)
-    ).slice(0, 200);
+    ).slice(0, 300);
+    compteurs.dernierDetail = compteurs.derniereErreur;
     console.warn(
       "[recuperation-dons] Passage cron impossible :",
       e instanceof Error ? e.message : e
