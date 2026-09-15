@@ -421,3 +421,25 @@
     animation: none;
   }
 }
+
+/* ⭐ V3.84 — Toast de proposition d'installation PWA (InstallToast) :
+   montée douce depuis le bas (translation + fondu), respecte
+   prefers-reduced-motion. */
+@keyframes toastInstallEntree {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-toast-install {
+  animation: toastInstallEntree 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-toast-install {
+    animation: none;
+  }
+}

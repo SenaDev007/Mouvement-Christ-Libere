@@ -93,8 +93,11 @@ function formaterDate(iso: string): string {
 export function PaiementsClient({ etats, webhooks }: Props) {
   const [etatsActuels, setEtatsActuels] = useState<EtatPasserelle[]>(etats);
 
+  // ⭐ V3.84 — mx-auto : le module est CENTRÉ dans la zone de contenu du
+  // back-office (comme /admin/staff) — avant, la colonne restait collée à
+  // gauche avec un grand vide à droite sur les écrans larges.
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* En-tête */}
       <div>
         <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1">
@@ -369,9 +372,16 @@ function CartePasserelle({
             <>
               <span className="inline-flex items-center gap-1.5">
                 <KeyRound className="w-3.5 h-3.5 text-[#A3821C]" />
-                Clé enregistrée :{" "}
+                Clé enregistrée :
                 <span className="font-mono text-[#1E0F2B]">
                   {etat.backOffice.cleMasquee}
+                </span>
+                {/* ⭐ V3.84 — preuve visible du chiffrement au repos : la
+                    matière stockée en base est le texte chiffré AES-256-GCM
+                    « v1:<sel>:<iv>:<tag>:<données> », jamais la clé brute. */}
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#A3821C] font-bold">
+                  <Lock className="w-3 h-3" aria-hidden="true" />
+                  chiffrée AES-256
                 </span>
               </span>
               {etat.backOffice.majLe && (
@@ -385,6 +395,10 @@ function CartePasserelle({
             <span className="inline-flex items-center gap-1.5 italic">
               <KeyRound className="w-3.5 h-3.5 text-[#8A8378]/60" />
               Aucune clé enregistrée depuis le back-office
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#A3821C] font-bold not-italic">
+                <Lock className="w-3 h-3" aria-hidden="true" />
+                stockage chiffré AES-256-GCM
+              </span>
             </span>
           )}
         </div>

@@ -8,6 +8,12 @@ import { ScrollProgress } from "@/components/magic/scroll-progress";
 import { NextAuthProvider } from "@/components/auth/next-auth-provider";
 import { LayoutShell } from "@/components/site/layout-shell";
 import { PageLoader } from "@/components/site/page-loader";
+// ⭐ V3.84 — PWA : toast de proposition d'installation (« Site public
+// Christ Libère ») — remplace le bouton retiré de la barre de navigation.
+// Auto-gardé : invisible sur /admin, /secretariat, /tresorerie, /login,
+// /register, si l'application est déjà installée, ou après « Ne plus
+// afficher » (mémoire locale) / fermeture (mémoire de session).
+import { InstallToast } from "@/components/pwa/install-toast";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -148,6 +154,10 @@ export default function RootLayout({
                pour TOUS les appels toast de sonner de l'application. */}
         <Toaster />
         <SonnerToaster richColors position="top-center" closeButton />
+        {/* ⭐ V3.84 — Proposition d'installation PWA du site public :
+            toast avec « Installer » + « Ne plus afficher » (voir
+            install-toast.tsx pour les conditions d'affichage). */}
+        <InstallToast />
       </body>
     </html>
   );
