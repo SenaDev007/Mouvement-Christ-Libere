@@ -10,6 +10,10 @@ import {
   Instagram,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+// ⭐ V3.80 — PWA : bouton « Installer l'application » — rend l'installation
+// du site public (« Site public Christ Libère », icône = logo) découvrable
+// sur smartphone comme sur desktop.
+import { InstallAppButton } from "@/components/pwa/install-app-button";
 
 interface FooterLink {
   label: string;
@@ -100,6 +104,15 @@ export const Footer = ({
                   ))}
                 </div>
               )}
+
+              {/* ⭐ V3.80 — Installation PWA : la plateforme s'installe comme
+                  une application (icône sur l'écran d'accueil / le bureau,
+                  ouverture directe sans passer par le lien). Toujours visible :
+                  le clic déclenche l'installation native (Chrome/Edge/Android)
+                  ou ouvre les instructions (iOS, Firefox). */}
+              <div className="mb-6 mt-3 flex justify-center">
+                <InstallAppButton contexte="public" variante="or" toujoursVisible />
+              </div>
 
               {navLinks.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 text-xs font-medium text-[#FAF6EF]/50 max-w-full px-4 z-20 relative">

@@ -1,8 +1,10 @@
 {
-  "name": "Site public Christ Libère",
-  "short_name": "Christ Libère",
-  "description": "Site public du Mouvement Christ Libère — Afrika & Pasteur Kongo : adorations, louanges, témoignages, enseignements et communauté de foi.",
-  "id": "/",
+  "name": "Back-office Christ Libère",
+  "short_name": "Back-office",
+  "description": "Back-office du Mouvement Christ Libère — gestion du contenu, des lives, des médias et des modules du ministère (Afrika & Pasteur Kongo).",
+  "id": "/admin/dashboard",
+  "start_url": "/admin/dashboard",
+  "scope": "/admin/",
   "icons": [
     {
       "src": "/manifest-192.png",
@@ -32,7 +34,5 @@
   "theme_color": "#2A0E3D",
   "background_color": "#FAF6EF",
   "display": "standalone",
-  "start_url": "/",
-  "scope": "/",
   "lang": "fr"
 }

@@ -33,6 +33,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useCallback, useEffect, useRef, useState } from "react";
+// ⭐ V3.80 — PWA : bouton « Installer l'application » (manifest « Site public
+// Christ Libère ») — icône compacte desktop + CTA dans le menu burger.
+import { InstallAppButton } from "@/components/pwa/install-app-button";
 
 // Navigation links — contextualisés pour Christ Libère
 // ⭐ V3.45 — Accueil SUPPRIMÉ (directive : « supprimer le bouton Accueil
@@ -334,6 +337,19 @@ export function ContextualNav() {
                       </ul>
                     </NavigationMenuItem>
                   )}
+
+                  {/* ⭐ V3.80 — Installation PWA « Site public Christ Libère » :
+                      CTA doré complet dans le menu burger mobile (toujours
+                      visible — le clic déclenche l'installation native quand
+                      le navigateur le permet, sinon les instructions). */}
+                  <div className="pt-2 px-1">
+                    <InstallAppButton
+                      contexte="public"
+                      variante="or"
+                      toujoursVisible
+                      className="w-full"
+                    />
+                  </div>
                 </NavigationMenuList>
               </NavigationMenu>
             </PopoverContent>
@@ -481,6 +497,11 @@ export function ContextualNav() {
 
         {/* Right side — Auth + CTA */}
         <div className="flex items-center gap-2">
+          {/* ⭐ V3.80 — Installation PWA (desktop uniquement : le menu burger
+              porte le CTA complet sur mobile). N'apparaît que si le
+              navigateur peut installer (Chrome/Edge) ou sur iOS (instructions
+              « Sur l'écran d'accueil »). */}
+          <InstallAppButton contexte="public" variante="icone" />
           {isAuthenticated ? (
             /* ═══ Utilisateur connecté — avatar + menu déroulant ═══ */
             <div className="relative">

@@ -123,7 +123,10 @@ const nextConfig: NextConfig = {
         // (Avant : max-age=1 an immutable sur ces fichiers — les visiteurs
         // auraient gardé l'ancien logo un an entier.) Le suffixe ?v=2026-09
         // dans les <link> des métadonnées gère la transition immédiate.
-        source: "/(favicon.ico|apple-icon.png|apple-touch-icon.png|icon-32.png|icon.png|manifest-192.png|manifest-512.png|manifest.webmanifest|og-image.png)",
+        // ⭐ V3.80 — manifest-back-office.webmanifest ajouté au groupe cache
+        // court (même statut que manifest.webmanifest : remplacé à même URL
+        // lors des évolutions du nom/description → 1 h + revalidation).
+        source: "/(favicon.ico|apple-icon.png|apple-touch-icon.png|icon-32.png|icon.png|manifest-192.png|manifest-512.png|manifest.webmanifest|manifest-back-office.webmanifest|og-image.png)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=3600, must-revalidate" },
         ],

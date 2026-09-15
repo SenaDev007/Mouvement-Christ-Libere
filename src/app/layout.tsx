@@ -40,6 +40,24 @@ export const metadata: Metadata = {
     "communauté de foi",
   ],
   authors: [{ name: "Mouvement Christ Libère" }],
+  // ⭐ V3.80 — PWA : identité « Site public Christ Libère ».
+  //  · manifest.webmanifest renommé (name) → l'app installée depuis le site
+  //    public s'appelle « Site public Christ Libère » (l'icône reste le logo
+  //    du site) ; le back-office possède SON manifest dédié (lié par
+  //    src/app/admin/layout.tsx → « Back-office Christ Libère ») → deux
+  //    applications distinctes, même logo, sur mobile comme sur desktop.
+  //  · appleWebApp : iOS « Ajouter à l'écran d'accueil » → ouverture PLEIN
+  //    ÉCRAN (standalone) avec le titre « Site public Christ Libère » (iOS
+  //    n'émet jamais beforeinstallprompt : le bouton « Installer
+  //    l'application » du site ouvre les instructions Partager → « Sur
+  //    l'écran d'accueil »). Nécessaire aussi pour les notifications push
+  //    iOS (≥ 16.4) qui n'existent que dans la PWA installée.
+  applicationName: "Site public Christ Libère",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Site public Christ Libère",
+  },
   // ⭐ V3.76 — LOGO « AriseAfrika » MIS À JOUR (2026-09-13) : favicon + icônes
   // LIÉS. Le suffixe ?v=2026-09-13 force le re-téléchargement par les navigateurs
   // qui avaient mis en cache l'ancienne icône (cache immutable 1 an de la
