@@ -8,7 +8,7 @@ import {
 } from "@/lib/payments/dons-webhook";
 
 /**
- * ⭐ V3.85 — POST /api/dons/fedapay/confirmation (modèle Academia-Helm).
+ * ⭐ V3.85/V3.87 — POST /api/dons/fedapay/confirmation (modèle Academia-Helm).
  *
  * Le widget checkout.js s'ouvre SUR LA PAGE /contribuer (clé publique) ;
  * quand le donateur termine (ou abandonne), le navigateur appelle cette
@@ -25,8 +25,17 @@ import {
  *      webhooks (traiterEvenementDon) : idempotence, écriture trésorerie
  *      unique, reçu email unique, journal WebhookLog.
  *
+ * ⭐ V3.87 — l'identifiant de transaction est désormais lu dans
+ * retour.transaction.id du widget (forme réelle du source checkout.js —
+ * l'ancienne lecture retour.reference/retour.id était TOUJOURS nulle, le
+ * don restait donc « pending » indéfiniment). En outre, le providerRef est
+ * PERSISTÉ AVANT la vérification : même si celle-ci échoue (FedaPay
+ * injoignable, Mobile Money encore en cours), les consultations suivantes
+ * (/api/dons/statut — page merci) re-vérifieront de elles-mêmes sans
+ * dépendre du webhook (qui n'est pas toujours envoyé, cf. Academia-Helm).
+ *
  * Le webhook signé reste valable en parallèle (sécurité) — le premier des
- * deux à traiter le don gagne, l'autre constate « déjà traité ».
+ * trois canaux à traiter le don gagne, les autres constatent « déjà traité ».
  */
 
 export const runtime = "nodejs";
@@ -70,7 +79,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let corps: { reference?: string; fedapayRef?: string | number | null };
+  let corps: {
+    reference?: string;
+    fedapayRef?: string | number | null;
+    statutWidget?: string | null;
+  };
   try {
     corps = (await request.json()) as typeof corps;
   } catch {
@@ -114,13 +127,28 @@ export async function POST(request: NextRequest) {
 
     const fedapayRef = fedapayRefFourni || don.providerRef;
     if (!fedapayRef) {
-      // Aucune référence fournisseur : le webhook (s'il est déclaré) reste
-      // le canal de confirmation — la page merci continue de scruter.
+      // Aucune référence fournisseur : la re-vérification automatique
+      // (V3.87 — /api/dons/statut + cron) tentera le rapprochement par
+      // description ; le webhook (s'il est déclaré) reste aussi en jeu.
       return NextResponse.json({
         ok: true,
         statut: "pending",
         detail: "confirmation-en-attente",
       });
+    }
+
+    // ⭐ V3.87 — Persister le providerRef AVANT toute vérification : si le
+    // paiement est encore « pending » chez FedaPay (Mobile Money en cours)
+    // ou si la vérification échoue (réseau), les consultations suivantes du
+    // statut (/api/dons/statut — page merci) re-vérifieront avec CET
+    // identifiant sans redemander quoi que ce soit au navigateur.
+    if (!don.providerRef) {
+      await db.donation
+        .updateMany({
+          where: { id: don.id, statut: "pending", providerRef: null },
+          data: { providerRef: String(fedapayRef).slice(0, 120) },
+        })
+        .catch(() => undefined);
     }
 
     // ② Vérification AUTORITAIRE auprès de FedaPay (clé secrète).
@@ -203,6 +231,8 @@ export async function POST(request: NextRequest) {
         fedapayRef,
         statutFournisseur: verification.statut,
         montantFournisseur: verification.montant,
+        // Indice rapporté par le widget (journalisé — jamais une preuve).
+        statutWidget: (corps.statutWidget || "").toString().slice(0, 40) || null,
       }),
     });
 

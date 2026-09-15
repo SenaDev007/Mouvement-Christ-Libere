@@ -355,6 +355,64 @@ export async function verifierTransactionFedapay(
   };
 }
 
+/**
+ * ⭐ V3.87 — Liste des transactions FedaPay récentes (rapprochement).
+ *
+ * Utilisée par la récupération des dons « pending » SANS providerRef (le
+ * POST de confirmation du navigateur n'est jamais arrivé — onglet fermé,
+ * réseau coupé) : la description de chaque transaction contient la
+ * référence interne ( « <Type> — don_xxx » ), ce qui permet de raccrocher
+ * un don à sa transaction réelle côté FedaPay puis de la vérifier
+ * individuellement (verifierTransactionFedapay — montant exact exigé).
+ *
+ * La réponse de liste est lue multi-formes ( « v1/transactions », « data »,
+ * « transactions » ou tableau plat — même robustesse que extraireTransaction).
+ */
+export async function listerTransactionsFedapayRecentes(
+  limite = 25
+): Promise<Array<Record<string, unknown>>> {
+  const config = await lireConfigPasserelle("fedapay");
+  if (!config.secretKey) {
+    throw new ErreurPasserelle(
+      "La passerelle FedaPay n'est pas encore configurée (aucune clé API — voir /admin/paiements)."
+    );
+  }
+
+  const reponse = await appelApi(
+    { base: baseApi(config.environment), cle: config.secretKey },
+    `/v1/transactions?limit=${encodeURIComponent(String(Math.min(Math.max(limite, 1), 100)))}`,
+    undefined,
+    "GET"
+  );
+
+  // Extraction multi-formes du tableau de transactions.
+  const candidats: unknown[] = [
+    reponse["v1/transactions"],
+    reponse.transactions,
+    reponse.data,
+    Array.isArray(reponse) ? reponse : undefined,
+  ];
+  for (const candidat of candidats) {
+    if (Array.isArray(candidat)) {
+      return candidat.filter(
+        (t): t is Record<string, unknown> =>
+          t !== null && typeof t === "object"
+      );
+    }
+    // Une enveloppe objet peut encore contenir le tableau sous « data ».
+    if (candidat && typeof candidat === "object") {
+      const interne = (candidat as Record<string, unknown>).data;
+      if (Array.isArray(interne)) {
+        return interne.filter(
+          (t): t is Record<string, unknown> =>
+            t !== null && typeof t === "object"
+        );
+      }
+    }
+  }
+  return [];
+}
+
 /** Appel JSON signé Bearer vers l'API FedaPay (timeout global 20 s). */
 async function appelApi(
   identifiants: { base: string; cle: string },

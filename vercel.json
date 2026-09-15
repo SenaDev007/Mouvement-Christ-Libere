@@ -81,6 +81,10 @@
     {
       "path": "/api/cron/backfill-miniatures-tiktok",
       "schedule": "17 3 * * *"
+    },
+    {
+      "path": "/api/cron/recuperer-dons-fedapay",
+      "schedule": "*/30 * * * *"
     }
   ]
 }

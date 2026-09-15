@@ -119,9 +119,27 @@ const LIBELLES_TYPES: Record<TypeDon, string> = {
   don: "Don",
 };
 
-// ── ⭐ V3.85 — Widget FedaPay checkout.js (modèle Academia-Helm) ──────────
+// ── ⭐ V3.85/V3.87 — Widget FedaPay checkout.js (modèle Academia-Helm) ─────
 // Le script officiel est chargé UNE fois par page, à la demande, et le widget
 // s'ouvre en surcouche SUR LA PAGE : le donateur ne quitte plus le site.
+//
+// ⭐ V3.87 — FORME RÉELLE du callback onComplete (lue dans le source de
+// checkout.js v1.1.7) : le widget appelle
+//   onComplete({ reason: "CHECKOUT_COMPLETED" | "DIALOG DISMISSED",
+//                transaction: { id, status, … } })
+// L'identifiant de transaction est dans retour.transaction.id (et SON statut
+// dans retour.transaction.status — "approved" / "transferred" / "declined" /
+// "pending"), PAS au premier niveau de l'objet.
+interface RetourWidgetFedapay {
+  reason?: string;
+  transaction?: {
+    id?: string | number;
+    status?: string;
+    [cle: string]: unknown;
+  };
+  [cle: string]: unknown;
+}
+
 interface FenetreFedaPay {
   FedaPay?: {
     init: (options: Record<string, unknown>) => {
@@ -166,6 +184,9 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
   const [nom, setNom] = useState("");
   const [soumission, setSoumission] = useState<ProviderId | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
+  // ⭐ V3.87 — Phase affichée sur le bouton pendant la confirmation serveur
+  // (le widget est terminé, le serveur vérifie auprès de FedaPay ~1-3 s).
+  const [phaseConfirmation, setPhaseConfirmation] = useState(false);
 
   const montantFinal = montantLibre ? parseInt(montantLibre, 10) : montantChoisi;
   const montantOk =
@@ -258,12 +279,10 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
             ...(nom.trim() ? { firstname: nom.trim().slice(0, 80) } : {}),
             email: email.trim(),
           },
-          onComplete: (retour: {
-            reason?: string;
-            reference?: string | number;
-            id?: string | number;
-          }) => {
-            // Annulation : le donateur a fermé le widget sans payer.
+          onComplete: (retour: RetourWidgetFedapay) => {
+            // Annulation : le donateur a fermé le widget sans payer
+            // (valeur exacte du source checkout.js : "DIALOG DISMISSED" ;
+            // "USERCANCELLED" conservé pour compatibilité documentaire).
             if (
               retour?.reason === "DIALOG DISMISSED" ||
               retour?.reason === "USERCANCELLED"
@@ -274,23 +293,41 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
               );
               return;
             }
-            // Paiement terminé : confirmation serveur (FedaPay tranche avec
-            // la clé secrète) puis redirection vers la page d'état réelle.
+            // ⭐ V3.87 — Paiement terminé : l'identifiant de transaction vit
+            // dans retour.transaction.id (source checkout.js v1.1.7) — c'est
+            // LUI que le serveur vérifie auprès de FedaPay avec la clé
+            // secrète. Le statut du widget n'est qu'un indice (journalisé,
+            // jamais cru — seul FedaPay tranche côté serveur).
+            const transactionWidget = retour?.transaction;
             const fedapayRef =
-              retour?.reference ?? retour?.id ?? null;
+              transactionWidget?.id !== undefined &&
+              transactionWidget?.id !== null
+                ? String(transactionWidget.id).slice(0, 120)
+                : null;
+            const statutWidget =
+              typeof transactionWidget?.status === "string"
+                ? transactionWidget.status.slice(0, 40)
+                : null;
             (async () => {
+              setPhaseConfirmation(true);
               try {
+                // 12 s max : si la confirmation serveur traîne (FedaPay
+                // lent), on part quand même vers la page merci — elle
+                // re-vérifie d'elle-même toutes les 4 s (V3.87).
                 await fetch("/api/dons/fedapay/confirmation", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     reference: referenceDon,
                     fedapayRef,
+                    statutWidget,
                   }),
+                  signal: AbortSignal.timeout(12_000),
                 });
               } catch {
                 // Best-effort : la page merci scrute le statut réel et le
-                // webhook signé reste le canal de secours.
+                // serveur re-vérifie de lui-même auprès de FedaPay (V3.87)
+                // — le webhook signé reste le canal de secours.
               } finally {
                 window.location.assign(
                   `/contribuer/merci?ref=${encodeURIComponent(referenceDon)}`
@@ -529,6 +566,13 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
                   const Icon = canal.icon;
                   const enCours = soumission === canal.id;
                   const pret = montantOk && emailOk && !soumission;
+                  // ⭐ V3.87 — Pendant la confirmation FedaPay (après la
+                  // fermeture du widget), le bouton affiche une phase dédiée
+                  // plutôt que « Ouverture du paiement… ».
+                  const libellePhase =
+                    enCours && phaseConfirmation && canal.id === "fedapay"
+                      ? "Confirmation de votre paiement…"
+                      : canal.chargement;
                   return (
                     <button
                       key={canal.id}
@@ -567,7 +611,7 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
                         {enCours ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            {canal.chargement}
+                            {libellePhase}
                           </>
                         ) : (
                           <>
