@@ -73,8 +73,9 @@ export async function POST(request: NextRequest) {
       type && (CAISSE_TYPE_VALEURS as readonly string[]).includes(type)
         ? type
         : "especes";
+    // ⭐ V3.88 — devise par défaut : XOF (franc CFA).
     const deviseFinale =
-      currency && DEVISE_CODES.includes(currency) ? currency : "EUR";
+      currency && DEVISE_CODES.includes(currency) ? currency : "XOF";
     const ouverture =
       typeof openingBalance === "number" && Number.isFinite(openingBalance)
         ? Math.round(openingBalance * 100) / 100

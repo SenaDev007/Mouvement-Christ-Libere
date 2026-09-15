@@ -12,16 +12,29 @@ import {
   TRANSFERT_CATEGORIE,
 } from "@/lib/staff-space/constants";
 import { libelleCategorie, libelleMethode } from "@/lib/staff-space/constants";
+import {
+  DEVISE_PAR_DEFAUT,
+  convertirMontant,
+  deviseAdmise,
+} from "@/lib/staff-space/devises";
 
 /**
- * ⭐ V3.66/V3.67 — Trésorerie : journal des recettes et dépenses.
+ * ⭐ V3.66/V3.67/V3.88 — Trésorerie : journal des recettes et dépenses.
  *
- *   GET   /tresorerie/api/transactions?type=&categorie=&devise=&caisse=&du=&au=&q=&limit=&offset=
+ *   GET   /tresorerie/api/transactions?type=&categorie=&devise=&caisse=&du=&au=&q=&limit=&offset=&afficher=
  *         — registre filtrable ; les lignes portent le NOM des caisses
  *           (source/destination) pour l'affichage ;
+ *         — ⭐ V3.88 — &afficher= : devise d'AFFICHAGE des totaux (défaut
+ *           XOF) : les recettes/dépenses de TOUTES les devises filtrées
+ *           sont converties vers elle (taux de référence) ; le détail
+ *           natif par devise accompagne (totauxParDevise) ;
+ *         — ⭐ V3.88 — chaque RECETTE liée à un don en ligne (référence
+ *           don_xxx) est enrichie des coordonnées complètes du donateur
+ *           (nom, email, message, passerelle, statut) depuis la table
+ *           Donation — tout ce que voit le back-office est visible ici ;
  *         — &format=csv : export CSV complet des écritures FILTRÉES
  *           (insécables français, BOM UTF-8 pour Excel — V3.67).
- *   POST  /tresorerie/api/transactions — création :
+ *   POST  /tresorerie/api/transactions — création (défaut devise : XOF) :
  *         · RECETTE / DEPENSE { type, category, amount, currency, method?,
  *           label, date?, reference?, donorName?, isAnonymous?, note?, caisseId? }
  *         · TRANSFERT (V3.67) { type: "TRANSFERT", caisseId (source),
@@ -52,6 +65,12 @@ export async function GET(request: NextRequest) {
     const format = url.searchParams.get("format") || "";
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 200);
     const offset = parseInt(url.searchParams.get("offset") || "0");
+    // ⭐ V3.88 — devise d'affichage des totaux (défaut XOF) : les montants
+    // de toutes les devises de la sélection y sont convertis automatiquement.
+    const paramAffichage = url.searchParams.get("afficher") || "";
+    const deviseAffichage = deviseAdmise(paramAffichage)
+      ? paramAffichage
+      : DEVISE_PAR_DEFAUT;
 
     const where: Record<string, unknown> = {};
     if (type && (MOUVEMENT_TYPE_TOUS as readonly string[]).includes(type))
@@ -80,38 +99,95 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [items, total, sommeRecettes, sommeDepenses, caisses] =
-      await Promise.all([
-        format === "csv"
-          ? db.treasuryTransaction.findMany({ where, orderBy: { date: "desc" } })
-          : db.treasuryTransaction.findMany({
-              where,
-              orderBy: { date: "desc" },
-              take: limit,
-              skip: offset,
-            }),
-        db.treasuryTransaction.count({ where }),
-        db.treasuryTransaction.aggregate({
-          where: { ...where, type: "RECETTE" },
-          _sum: { amount: true },
-        }),
-        db.treasuryTransaction.aggregate({
-          where: { ...where, type: "DEPENSE" },
-          _sum: { amount: true },
-        }),
-        db.treasuryCashAccount.findMany({
-          select: { id: true, name: true },
-        }),
-      ]);
+    // ⭐ V3.88 — Totaux PAR DEVISE (jamais de mélange sauvage de montants
+    // de devises différentes) : groupés nativement puis convertis vers la
+    // devise d'affichage — plus aucun « 0 € » quand le journal est en XOF.
+    const [items, total, parTypeDevise, caisses] = await Promise.all([
+      format === "csv"
+        ? db.treasuryTransaction.findMany({ where, orderBy: { date: "desc" } })
+        : db.treasuryTransaction.findMany({
+            where,
+            orderBy: { date: "desc" },
+            take: limit,
+            skip: offset,
+          }),
+      db.treasuryTransaction.count({ where }),
+      db.treasuryTransaction.groupBy({
+        by: ["type", "currency"],
+        where,
+        _sum: { amount: true },
+      }),
+      db.treasuryCashAccount.findMany({
+        select: { id: true, name: true },
+      }),
+    ]);
+
+    let totauxRecettes = 0;
+    let totauxDepenses = 0;
+    const totauxParDevise: { devise: string; recettes: number; depenses: number }[] =
+      [];
+    const cumulParDevise = new Map<string, { recettes: number; depenses: number }>();
+    for (const g of parTypeDevise) {
+      if (g.type !== "RECETTE" && g.type !== "DEPENSE") continue;
+      const montant = g._sum.amount || 0;
+      const natif = cumulParDevise.get(g.currency) || { recettes: 0, depenses: 0 };
+      const converti = convertirMontant(montant, g.currency, deviseAffichage);
+      if (g.type === "RECETTE") {
+        totauxRecettes += converti;
+        natif.recettes += montant;
+      } else {
+        totauxDepenses += converti;
+        natif.depenses += montant;
+      }
+      cumulParDevise.set(g.currency, natif);
+    }
+    for (const [code, v] of cumulParDevise) {
+      totauxParDevise.push({ devise: code, ...v });
+    }
+
+    // ⭐ V3.88 — Enrichissement donateurs : les RECETTEs dont la référence
+    // est celle d'un don en ligne (don_xxx) récupèrent les coordonnées
+    // complètes du donateur (table Donation) — nom, email, message,
+    // passerelle, statut, date de confirmation. Une seule requête pour
+    // toute la page.
+    const referencesDon = items
+      .filter((t) => t.type === "RECETTE" && t.reference?.startsWith("don_"))
+      .map((t) => t.reference as string);
+    const donsLies = referencesDon.length
+      ? await db.donation.findMany({
+          where: { reference: { in: referencesDon } },
+        })
+      : [];
+    const donsParReference = new Map(donsLies.map((d) => [d.reference, d]));
 
     const nomsCaisses = new Map(caisses.map((c) => [c.id, c.name]));
-    const enrichies = items.map((t) => ({
-      ...t,
-      caisseNom: t.caisseId ? nomsCaisses.get(t.caisseId) || null : null,
-      caisseDestinationNom: t.caisseDestinationId
-        ? nomsCaisses.get(t.caisseDestinationId) || null
-        : null,
-    }));
+    const enrichies = items.map((t) => {
+      const don =
+        t.type === "RECETTE" && t.reference
+          ? donsParReference.get(t.reference) || null
+          : null;
+      return {
+        ...t,
+        caisseNom: t.caisseId ? nomsCaisses.get(t.caisseId) || null : null,
+        caisseDestinationNom: t.caisseDestinationId
+          ? nomsCaisses.get(t.caisseDestinationId) || null
+          : null,
+        // ⭐ V3.88 — coordonnées complètes du donateur (dons en ligne).
+        don: don
+          ? {
+              donorName: don.donorName || null,
+              donorEmail: don.donorEmail || null,
+              message: don.message || null,
+              provider: don.provider || null,
+              typeDon: don.typeDon || null,
+              statut: don.statut,
+              confirmedAt: don.confirmedAt ? don.confirmedAt.toISOString() : null,
+            }
+          : null,
+        // ⭐ V3.88 — équivalent converti dans la devise d'affichage.
+        montantConverti: convertirMontant(t.amount, t.currency, deviseAffichage),
+      };
+    });
 
     // ── Export CSV (filtres actifs, toutes les lignes — pas de pagination). ──
     if (format === "csv") {
@@ -179,9 +255,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       items: enrichies,
       total,
+      deviseAffichage,
       totaux: {
-        recettes: sommeRecettes._sum.amount || 0,
-        depenses: sommeDepenses._sum.amount || 0,
+        recettes: totauxRecettes,
+        depenses: totauxDepenses,
+        parDevise: totauxParDevise,
       },
     });
   } catch (error) {
@@ -384,7 +462,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const deviseFinale = currency && DEVISE_CODES.includes(currency) ? currency : "EUR";
+    // ⭐ V3.88 — devise par défaut : XOF (franc CFA).
+    const deviseFinale = currency && DEVISE_CODES.includes(currency) ? currency : DEVISE_PAR_DEFAUT;
     if (method && !(MOUVEMENT_METHOD_VALEURS as readonly string[]).includes(method)) {
       return NextResponse.json({ error: "Méthode invalide" }, { status: 400 });
     }

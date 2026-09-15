@@ -52,6 +52,7 @@ import {
   DEVISES,
   DEVISE_CODES,
 } from "@/lib/staff-space/constants";
+import { DEVISE_PAR_DEFAUT } from "@/lib/staff-space/devises";
 
 interface LigneCaisse {
   id: string;
@@ -133,7 +134,8 @@ function FormulaireCaisse({
       : CAISSES_PREDEFINIES[0].nom
   );
   const [type, setType] = useState(caisseInitiale?.type || "especes");
-  const [devise, setDevise] = useState(caisseInitiale?.currency || "EUR");
+  // ⭐ V3.88 — franc CFA par défaut à la création d'une caisse.
+  const [devise, setDevise] = useState(caisseInitiale?.currency || DEVISE_PAR_DEFAUT);
   const [ouverture, setOuverture] = useState(
     caisseInitiale ? String(caisseInitiale.openingBalance) : "0"
   );

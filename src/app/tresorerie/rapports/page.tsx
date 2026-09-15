@@ -15,6 +15,7 @@
 import { useState } from "react";
 import { FileText, Loader2, Download, CalendarRange, Info, ShieldCheck } from "lucide-react";
 import { DEVISE_CODES, DEVISES } from "@/lib/staff-space/constants";
+import { DEVISE_PAR_DEFAUT } from "@/lib/staff-space/devises";
 
 function dateInputDefaut(jours: number): string {
   const d = new Date(Date.now() - jours * 86400_000);
@@ -28,7 +29,8 @@ function dateInputAujourdhui(): string {
 export default function TresorerieRapportsPage() {
   const [du, setDu] = useState(dateInputDefaut(90));
   const [au, setAu] = useState(dateInputAujourdhui());
-  const [devise, setDevise] = useState("EUR");
+  // ⭐ V3.88 — franc CFA par défaut.
+  const [devise, setDevise] = useState(DEVISE_PAR_DEFAUT);
   const [generation, setGeneration] = useState(false);
   const [erreur, setErreur] = useState("");
   const [succes, setSucces] = useState("");

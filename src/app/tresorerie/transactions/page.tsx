@@ -1,13 +1,22 @@
 "use client";
 
 /**
- * ⭐ V3.66/V3.67 — Journal des mouvements (Trésorerie).
+ * ⭐ V3.66/V3.67/V3.88 — Journal des mouvements (Trésorerie).
  *
  * Registre comptable complet :
  *  · filtres (type, catégorie, devise, CAISSE, période, recherche) + totaux
  *    de la sélection calculés côté serveur ;
- *  · saisie d'un mouvement (recette / dépense, catégorie, montant, devise,
- *    méthode, référence, donateur, note, CAISSE de rattachement) ;
+ *  · ⭐ V3.88 — CONVERSION AUTOMATIQUE : devise d'affichage des totaux
+ *    (défaut XOF, bascule XOF/EUR/USD) — toutes les devises de la
+ *    sélection sont converties (taux de référence), le détail natif par
+ *    devise reste affiché ; équivalent converti sous chaque montant ;
+ *  · ⭐ V3.88 — INFORMATIONS DU DONATEUR : nom + email visibles sur chaque
+ *    recette (dons en ligne rattachés par référence) ; le bouton
+ *    « détails » (icône donateur) ouvre le retracement COMPLET —
+ *    coordonnées, message, passerelle, statut — et le reçu PDF y est
+ *    téléchargeable (téléchargement direct, plus d'onglet bloqué) ;
+ *  · saisie d'un mouvement (recette / dépense, catégorie, montant, devise
+ *    XOF par défaut, méthode, référence, donateur, note, CAISSE) ;
  *  · ⭐ V3.67 — TRANSFERT INTERNE entre caisses (source → destination, même
  *    devise, fonds suffisants vérifiés) ;
  *  · correction d'une écriture (type et devise figés — principe comptable :
@@ -15,8 +24,7 @@
  *    rattachée/recorrigée) ;
  *  · suppression avec MOTIF obligatoire (gouvernance V3.67 — trace complète
  *    dans le journal d'audit) ;
- *  · ⭐ V3.67 — pagination, export CSV (filtres actifs) et REÇU DE DON PDF
- *    sur chaque recette.
+ *  · ⭐ V3.67 — pagination, export CSV (filtres actifs).
  *
  * Données : /tresorerie/api/transactions · /tresorerie/api/caisses.
  */
@@ -37,6 +45,11 @@ import {
   ArrowLeftRight,
   Download,
   FileText,
+  UserRound,
+  Mail,
+  MessageSquare,
+  Globe,
+  Sparkles,
 } from "lucide-react";
 import {
   formaterMontant,
@@ -49,7 +62,23 @@ import {
   DEVISE_CODES,
   DEVISES,
 } from "@/lib/staff-space/constants";
+import {
+  DEVISE_PAR_DEFAUT,
+  equivalentFormate,
+  noteTauxReference,
+} from "@/lib/staff-space/devises";
 import { Pagination } from "@/components/staff-space/pagination";
+
+/** ⭐ V3.88 — Coordonnées du donateur d'un don en ligne (table Donation). */
+interface DonLie {
+  donorName: string | null;
+  donorEmail: string | null;
+  message: string | null;
+  provider: string | null;
+  typeDon: string | null;
+  statut: string;
+  confirmedAt: string | null;
+}
 
 interface Transaction {
   id: string;
@@ -68,6 +97,8 @@ interface Transaction {
   caisseDestinationId?: string | null;
   caisseNom?: string | null;
   caisseDestinationNom?: string | null;
+  don?: DonLie | null;
+  montantConverti?: number;
 }
 
 interface CaisseLegere {
@@ -85,7 +116,8 @@ const FORM_VIDE = {
   type: "RECETTE",
   category: "don",
   amount: "",
-  currency: "EUR",
+  // ⭐ V3.88 — franc CFA par défaut.
+  currency: DEVISE_PAR_DEFAUT,
   method: "",
   label: "",
   date: new Date().toISOString().slice(0, 10),
@@ -126,9 +158,17 @@ function TransactionsContenu() {
   const [items, setItems] = useState<Transaction[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [totaux, setTotaux] = useState({ recettes: 0, depenses: 0 });
+  const [totaux, setTotaux] = useState<{
+    recettes: number;
+    depenses: number;
+    parDevise?: { devise: string; recettes: number; depenses: number }[];
+  }>({ recettes: 0, depenses: 0 });
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
+
+  // ⭐ V3.88 — devise d'AFFICHAGE (totaux convertis, défaut XOF) —
+  // indépendante du FILTRE par devise qui reste disponible ci-dessous.
+  const [deviseAffichage, setDeviseAffichage] = useState(DEVISE_PAR_DEFAUT);
 
   const [caisses, setCaisses] = useState<CaisseLegere[]>([]);
 
@@ -194,6 +234,8 @@ function TransactionsContenu() {
       if (recherche.trim()) params.set("q", recherche.trim());
       params.set("limit", String(PAR_PAGE));
       params.set("offset", String((page - 1) * PAR_PAGE));
+      // ⭐ V3.88 — devise d'affichage des totaux (conversion automatique).
+      params.set("afficher", deviseAffichage);
       const res = await fetch(`/tresorerie/api/transactions?${params}`, {
         cache: "no-store",
       });
@@ -207,7 +249,7 @@ function TransactionsContenu() {
     } finally {
       setChargement(false);
     }
-  }, [type, categorie, devise, caisseFiltre, du, au, recherche, page]);
+  }, [type, categorie, devise, caisseFiltre, du, au, recherche, page, deviseAffichage]);
 
   useEffect(() => {
     const t = setTimeout(charger, recherche ? 300 : 0);
@@ -217,7 +259,7 @@ function TransactionsContenu() {
   const ouvrirCreation = () => {
     setEditionId(null);
     const caissesDevise = caisses.filter(
-      (c) => c.isActive && c.currency === (devise || "EUR")
+      (c) => c.isActive && c.currency === (devise || DEVISE_PAR_DEFAUT)
     );
     setForm({
       ...FORM_VIDE,
@@ -226,7 +268,7 @@ function TransactionsContenu() {
         type === "DEPENSE"
           ? Object.keys(DEPENSE_CATEGORIES)[0]
           : Object.keys(RECETTE_CATEGORIES)[0],
-      currency: devise || "EUR",
+      currency: devise || DEVISE_PAR_DEFAUT,
       caisseId: caissesDevise[0]?.id || "",
     });
     setErreurForm("");
@@ -374,8 +416,14 @@ function TransactionsContenu() {
     window.location.href = `/tresorerie/api/transactions?${params}`;
   };
 
-  /** Reçu de don PDF : POST → blob → nouvel onglet (imprimable). */
-  const ouvrirRecu = async (t: Transaction) => {
+  /** ⭐ V3.88 — Détails du donateur : modal de retracement (remplace le
+   *  reçu PDF au clic — le PDF reste téléchargeable DEPUIS la modal, via
+   *  un lien direct : plus de window.open bloqué par les anti-popup). */
+  const [details, setDetails] = useState<Transaction | null>(null);
+  const [telechargementRecu, setTelechargementRecu] = useState(false);
+
+  const telechargerRecu = async (t: Transaction) => {
+    setTelechargementRecu(true);
     try {
       const res = await fetch(`/tresorerie/api/rapports/recu/${t.id}`, {
         method: "POST",
@@ -386,10 +434,17 @@ function TransactionsContenu() {
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `recu-don-${(t.reference || t.id).toUpperCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (err) {
       setErreur(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setTelechargementRecu(false);
     }
   };
 
@@ -447,34 +502,77 @@ function TransactionsContenu() {
         </div>
       </div>
 
-      {/* Totaux de la sélection */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
+      {/* Totaux de la sélection — ⭐ V3.88 : conversion automatique vers la
+          devise d'affichage (défaut XOF) ; le détail natif par devise reste
+          visible dessous (le montant d'origine n'est JAMAIS remplacé). */}
+      <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
-            Recettes (filtre)
+            Totaux de la sélection — toutes devises converties en
           </p>
-          <p className="text-lg font-bold text-[#3F5039] mt-1">
-            {formaterMontant(totaux.recettes, devise || "EUR")}
-          </p>
+          <div className="flex items-center gap-1.5">
+            {DEVISE_CODES.map((d) => (
+              <button
+                key={d}
+                onClick={() => setDeviseAffichage(d)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
+                  deviseAffichage === d
+                    ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                    : "bg-[#FAF6EF] text-[#8A8378] hover:bg-[#C9A227]/10"
+                }`}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-          <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
-            Dépenses (filtre)
-          </p>
-          <p className="text-lg font-bold text-[#B3452E] mt-1">
-            {formaterMontant(totaux.depenses, devise || "EUR")}
-          </p>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl border border-[#5B7052]/20 bg-[#5B7052]/5 p-3">
+            <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
+              Recettes (filtre)
+            </p>
+            <p className="text-lg font-bold text-[#3F5039] mt-1">
+              {formaterMontant(totaux.recettes, deviseAffichage)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#B3452E]/20 bg-[#B3452E]/5 p-3">
+            <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
+              Dépenses (filtre)
+            </p>
+            <p className="text-lg font-bold text-[#B3452E] mt-1">
+              {formaterMontant(totaux.depenses, deviseAffichage)}
+            </p>
+          </div>
+          <div className="rounded-xl bg-[#2A0E3D] border border-[#C9A227]/20 p-3">
+            <p className="text-[10px] uppercase font-bold text-[#DDBE55] tracking-wider">
+              Solde (filtre)
+            </p>
+            <p
+              className={`text-lg font-bold mt-1 ${
+                totaux.recettes - totaux.depenses >= 0 ? "text-[#DDBE55]" : "text-[#E88A76]"
+              }`}
+            >
+              {formaterMontant(totaux.recettes - totaux.depenses, deviseAffichage)}
+            </p>
+          </div>
         </div>
-        <div className="bg-[#2A0E3D] rounded-xl border border-[#C9A227]/20 p-4">
-          <p className="text-[10px] uppercase font-bold text-[#DDBE55] tracking-wider">
-            Solde (filtre)
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Détail natif par devise : le montant saisi reste visible. */}
+          <p className="text-[11px] text-[#8A8378]">
+            {(totaux.parDevise?.length ?? 0) > 0
+              ? totaux.parDevise!
+                  .map(
+                    (d) =>
+                      `${d.devise} : ${formaterMontant(
+                        d.recettes - d.depenses,
+                        d.devise
+                      )}`
+                  )
+                  .join(" · ")
+              : "Aucune écriture dans la sélection."}
           </p>
-          <p
-            className={`text-lg font-bold mt-1 ${
-              totaux.recettes - totaux.depenses >= 0 ? "text-[#DDBE55]" : "text-[#E88A76]"
-            }`}
-          >
-            {formaterMontant(totaux.recettes - totaux.depenses, devise || "EUR")}
+          <p className="text-[10px] text-[#8A8378]/70 italic">
+            {noteTauxReference(deviseAffichage)}
           </p>
         </div>
       </div>
@@ -652,6 +750,10 @@ function TransactionsContenu() {
           {items.map((t) => {
             const estRecette = t.type === "RECETTE";
             const estTransfert = t.type === "TRANSFERT";
+            // ⭐ V3.88 — donateur affichable : nom saisi OU don en ligne lié.
+            const nomDonateur = t.don?.donorName || t.donorName;
+            const emailDonateur = t.don?.donorEmail || null;
+            const equivalent = equivalentFormate(t.amount, t.currency, deviseAffichage);
             return (
               <div
                 key={t.id}
@@ -681,15 +783,19 @@ function TransactionsContenu() {
                         {t.caisseNom || "?"} → {t.caisseDestinationNom || "?"}
                         {t.reference ? ` · réf. ${t.reference}` : ""}
                       </>
-                    ) : (
+                    ) : estRecette ? (
                       <>
+                        {/* ⭐ V3.88 — toutes les informations du donateur :
+                            nom, email, coordonnées complètes via le bouton
+                            « détails » (espèce ou don en ligne). */}
                         {t.reference ? `réf. ${t.reference} · ` : ""}
-                        {estRecette
-                          ? t.isAnonymous
-                            ? "don anonyme"
-                            : t.donorName || "donateur non précisé"
-                          : t.note?.substring(0, 60) || ""}
+                        {t.isAnonymous && !emailDonateur
+                          ? "don anonyme"
+                          : nomDonateur || emailDonateur || "donateur non précisé"}
+                        {emailDonateur ? ` · ${emailDonateur}` : ""}
                       </>
+                    ) : (
+                      <>{t.note?.substring(0, 60) || ""}</>
                     )}
                   </p>
                 </div>
@@ -714,16 +820,23 @@ function TransactionsContenu() {
                 >
                   {estRecette ? "+" : "−"}
                   {formaterMontant(t.amount, t.currency)}
+                  {/* ⭐ V3.88 — équivalent converti (jamais de « 0 » quand on
+                      change de devise d'affichage). */}
+                  {equivalent && (
+                    <span className="block text-[10px] font-medium text-[#8A8378]/80">
+                      {equivalent}
+                    </span>
+                  )}
                 </span>
                 <div className="flex gap-1 md:justify-end">
                   {estRecette && (
                     <button
-                      onClick={() => ouvrirRecu(t)}
+                      onClick={() => setDetails(t)}
                       className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#8C5FA8] hover:bg-[#8C5FA8]/10 transition-colors"
-                      aria-label="Reçu PDF"
-                      title="Reçu de don PDF"
+                      aria-label="Détails du donateur"
+                      title="Retracer le donateur et le don (coordonnées complètes)"
                     >
-                      <FileText className="w-3.5 h-3.5" />
+                      <UserRound className="w-3.5 h-3.5" />
                     </button>
                   )}
                   {!estTransfert && (
@@ -1251,6 +1364,189 @@ function TransactionsContenu() {
                 className="px-5 py-2 rounded-lg bg-[#B3452E] text-white text-sm font-semibold hover:bg-[#9A3B26] transition-colors"
               >
                 Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── ⭐ V3.88 — Détails du donateur (retracement complet) ── */}
+      {details && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 my-8">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-[#1E0F2B] flex items-center gap-2">
+                  <UserRound className="w-5 h-5 text-[#8C5FA8]" />
+                  Détails du don
+                </h2>
+                <p className="text-[11px] text-[#8A8378] mt-0.5">
+                  Toutes les informations du donateur — pour le retracement et
+                  la prière.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDetails(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:bg-[#FAF6EF]"
+                aria-label="Fermer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Donateur */}
+            <div className="rounded-xl border border-[#C9A227]/30 bg-[#C9A227]/5 p-4 space-y-2">
+              <p className="text-[10px] uppercase font-bold text-[#A3821C] tracking-wider">
+                Donateur
+              </p>
+              <p className="text-sm font-bold text-[#1E0F2B]">
+                {details.don?.donorName || details.donorName ||
+                  (details.isAnonymous ? "Don anonyme" : "Donateur non précisé")}
+              </p>
+              {details.don?.donorEmail && (
+                <a
+                  href={`mailto:${details.don.donorEmail}`}
+                  className="inline-flex items-center gap-1.5 text-xs text-[#8C5FA8] hover:underline"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  {details.don.donorEmail}
+                </a>
+              )}
+              {details.don?.message && (
+                <div className="px-3 py-2 rounded-lg bg-white border border-[#8A8378]/10 flex items-start gap-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-[#8A8378] flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-[#1E0F2B]/70 italic">
+                    {details.don.message}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Caractéristiques du don */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="rounded-lg border border-[#8A8378]/15 px-3 py-2">
+                <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
+                  Montant
+                </p>
+                <p className="font-bold text-[#3F5039] mt-0.5">
+                  {formaterMontant(details.amount, details.currency)}
+                  {details.montantConverti != null &&
+                    details.montantConverti !== details.amount && (
+                      <span className="block text-[10px] font-medium text-[#8A8378]">
+                        ≈ {formaterMontant(details.montantConverti, deviseAffichage)}
+                      </span>
+                    )}
+                </p>
+              </div>
+              <div className="rounded-lg border border-[#8A8378]/15 px-3 py-2">
+                <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
+                  Nature
+                </p>
+                <p className="font-semibold text-[#1E0F2B] mt-0.5">
+                  {libelleCategorie(details.category, details.type)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-[#8A8378]/15 px-3 py-2">
+                <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
+                  Date
+                </p>
+                <p className="font-semibold text-[#1E0F2B] mt-0.5">
+                  {new Date(details.date).toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+              <div className="rounded-lg border border-[#8A8378]/15 px-3 py-2">
+                <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
+                  Méthode
+                </p>
+                <p className="font-semibold text-[#1E0F2B] mt-0.5">
+                  {libelleMethode(details.method)}
+                </p>
+              </div>
+            </div>
+
+            {/* Dons en ligne : passerelle + statut + référence */}
+            {details.don && (
+              <div className="rounded-xl border border-[#8C5FA8]/25 bg-[#8C5FA8]/5 p-4 space-y-1.5 text-xs">
+                <p className="text-[10px] uppercase font-bold text-[#6B4480] tracking-wider flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5" />
+                  Don en ligne
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[#1E0F2B]/80">
+                  <span>
+                    Passerelle :{" "}
+                    <b>
+                      {details.don.provider === "fedapay"
+                        ? "FedaPay"
+                        : details.don.provider === "paystack"
+                          ? "Paystack"
+                          : "—"}
+                    </b>
+                  </span>
+                  <span>
+                    Statut :{" "}
+                    <b>
+                      {details.don.statut === "approved"
+                        ? "Confirmé"
+                        : details.don.statut === "pending"
+                          ? "En attente"
+                          : "Échoué"}
+                    </b>
+                  </span>
+                  {details.don.confirmedAt && (
+                    <span>
+                      Confirmé le{" "}
+                      <b>
+                        {new Date(details.don.confirmedAt).toLocaleDateString(
+                          "fr-FR",
+                          { day: "numeric", month: "long", year: "numeric" }
+                        )}
+                      </b>
+                    </span>
+                  )}
+                </div>
+                {details.reference && (
+                  <p className="text-[10px] text-[#8A8378] break-all">
+                    Référence : {details.reference}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Caisse + note du trésorier */}
+            <div className="text-xs text-[#1E0F2B]/70 space-y-1">
+              <p>
+                Caisse :{" "}
+                <b>{details.caisseNom || "non affectée"}</b>
+              </p>
+              {details.note && (
+                <p className="italic text-[#8A8378]">« {details.note} »</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#8A8378]/10">
+              <a
+                href="/tresorerie/donateurs"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#C9A227] hover:text-[#A3821C]"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Historique des donateurs
+              </a>
+              <button
+                type="button"
+                onClick={() => telechargerRecu(details)}
+                disabled={telechargementRecu}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#8A8378]/25 text-xs font-medium text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors disabled:opacity-50"
+              >
+                {telechargementRecu ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileText className="w-3.5 h-3.5" />
+                )}
+                Reçu PDF
               </button>
             </div>
           </div>

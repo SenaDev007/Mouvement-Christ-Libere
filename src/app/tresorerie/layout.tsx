@@ -1,13 +1,21 @@
 "use client";
 
 import { SpaceShell, type SectionNav } from "@/components/staff-space/space-shell";
-import { LayoutDashboard, BookOpen, Wallet, FileText, ShieldCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  BookOpen,
+  Wallet,
+  FileText,
+  ShieldCheck,
+  HeartHandshake,
+} from "lucide-react";
 
 /**
- * ⭐ V3.66/V3.67 — Layout de l'espace Trésorerie.
+ * ⭐ V3.66/V3.67/V3.88 — Layout de l'espace Trésorerie.
  *
  * Navigation propre à l'espace (tableau de bord, journal des mouvements,
- * situation de caisse multicaisse, rapports financiers, journal d'audit).
+ * ⭐ V3.88 donateurs — historique pour la prière, situation de caisse
+ * multicaisse, rapports financiers, journal d'audit).
  * Coquille partagée avec le secrétariat — cf. space-shell.tsx.
  */
 
@@ -29,6 +37,13 @@ const SECTIONS: SectionNav[] = [
         label: "Journal des mouvements",
         href: "/tresorerie/transactions",
         icon: BookOpen,
+      },
+      {
+        // ⭐ V3.88 — tous ceux qui ont donné, sur une période, pour que
+        // les serviteurs de Dieu puissent prier pour eux.
+        label: "Donateurs",
+        href: "/tresorerie/donateurs",
+        icon: HeartHandshake,
       },
       {
         label: "Situation de caisse",

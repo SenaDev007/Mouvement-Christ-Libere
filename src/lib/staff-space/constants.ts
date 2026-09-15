@@ -164,10 +164,15 @@ export const MOUVEMENT_METHODS = {
 
 export const MOUVEMENT_METHOD_VALEURS = Object.keys(MOUVEMENT_METHODS);
 
-/** Devises admises (le ministère est présent en Europe et en Afrique). */
+/**
+ * Devises admises (le ministère est présent en Europe et en Afrique).
+ * ⭐ V3.88 — XOF EN TÊTE et devise PAR DÉFAUT : le ministère opère en
+ * francs CFA (toutes les créations de caisses, écritures et KPIs
+ * démarrent en XOF ; EUR et USD restent disponibles).
+ */
 export const DEVISES = {
-  EUR: { code: "EUR", symbole: "€", libelle: "Euro" },
   XOF: { code: "XOF", symbole: "F", libelle: "Franc CFA (UEMOA)" },
+  EUR: { code: "EUR", symbole: "€", libelle: "Euro" },
   USD: { code: "USD", symbole: "$", libelle: "Dollar US" },
 } as const;
 

@@ -32,6 +32,11 @@ import {
   MOUVEMENT_TYPES,
 } from "@/lib/staff-space/constants";
 import {
+  DEVISE_PAR_DEFAUT,
+  equivalentFormate,
+  noteTauxReference,
+} from "@/lib/staff-space/devises";
+import {
   GrapheMensuel,
   GrapheCategories,
   type SerieMensuelle,
@@ -56,9 +61,13 @@ interface StatsTresorerie {
       name: string;
       type: string;
       isActive: boolean;
+      devise: string;
       solde: number;
+      soldeConverti: number;
     }[];
   };
+  // ⭐ V3.88 — détail natif par devise (transparence des conversions).
+  detailParDevise?: { devise: string; recettes: number; depenses: number }[];
   moisCourant: { recettes: number; depenses: number };
   serie6Mois: SerieMensuelle[];
   categories: DonneeCategorie[];
@@ -72,11 +81,14 @@ interface StatsTresorerie {
     label: string;
     date: string;
     reference: string | null;
+    donorName?: string | null;
+    isAnonymous?: boolean;
   }[];
 }
 
 export default function TresorerieDashboardPage() {
-  const [devise, setDevise] = useState("EUR");
+  // ⭐ V3.88 — franc CFA par défaut (le ministère opère en XOF).
+  const [devise, setDevise] = useState(DEVISE_PAR_DEFAUT);
   const [stats, setStats] = useState<StatsTresorerie | null>(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState("");
@@ -166,6 +178,16 @@ export default function TresorerieDashboardPage() {
         <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-3 px-1">
           Indicateurs clés — {stats?.devise}
         </h2>
+        {/* ⭐ V3.88 — conversion automatique : les totaux regroupent toutes
+            les devises, converties vers la devise d'affichage (jamais de
+            « 0 € » quand le journal est tenu en francs CFA). */}
+        {(stats?.detailParDevise?.length ?? 0) > 1 && (
+          <p className="text-[11px] text-[#8A8378] mb-2 px-1">
+            Toutes devises confondues ·{" "}
+            {stats!.detailParDevise!.map((d) => d.devise).join(" + ")} —{" "}
+            {noteTauxReference(devise)}
+          </p>
+        )}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Link
             href={`/tresorerie/transactions?type=RECETTE&devise=${devise}`}
@@ -227,12 +249,12 @@ export default function TresorerieDashboardPage() {
         </div>
       </div>
 
-      {/* ⭐ V3.67 — Panneau multicaisse */}
+      {/* ⭐ V3.67 — Panneau multicaisse (V3.88 : toutes devises, équivalents) */}
       {stats?.multicaisse && stats.multicaisse.nbCaisses > 0 && (
         <div className="bg-white rounded-xl border border-[#8A8378]/15 p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold">
-              Caisses — {devise} ({stats.multicaisse.nbCaisses})
+              Caisses ({stats.multicaisse.nbCaisses}) — solde natif · équivalent en {devise}
             </h2>
             <Link
               href="/tresorerie/caisse"
@@ -252,25 +274,29 @@ export default function TresorerieDashboardPage() {
                     : "border-[#8A8378]/10 opacity-60"
                 }`}
               >
-                <span className="text-xs font-semibold text-[#1E0F2B] truncate">
-                  {c.name}
-                </span>
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-[#1E0F2B] truncate block">
+                    {c.name}
+                  </span>
+                  {c.devise !== devise && c.soldeConverti !== c.solde && (
+                    <span className="text-[10px] text-[#8A8378]">
+                      ≈ {formaterMontant(c.soldeConverti, devise)}
+                    </span>
+                  )}
+                </div>
                 <span
                   className={`text-sm font-bold flex-shrink-0 ${
                     c.solde >= 0 ? "text-[#3F5039]" : "text-[#B3452E]"
                   }`}
                 >
-                  {formaterMontant(c.solde, devise)}
+                  {formaterMontant(c.solde, c.devise)}
                 </span>
               </Link>
             ))}
           </div>
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#8A8378]/10">
             <span className="text-xs text-[#8A8378]">
-              Solde réel (ouvertures incluses)
-              {stats.multicaisse.soldeNonAffecte !== 0
-                ? " + écritures non affectées"
-                : ""}
+              Solde réel consolidé (ouvertures incluses, converti en {devise})
             </span>
             <span
               className={`text-lg font-bold ${
@@ -380,10 +406,18 @@ export default function TresorerieDashboardPage() {
                   <p className="text-sm font-semibold text-[#1E0F2B] truncate">
                     {mouvement.label}
                   </p>
-                  <p className="text-[11px] text-[#8A8378]">
+                  <p className="text-[11px] text-[#8A8378] truncate">
                     {libelleCategorie(mouvement.category, mouvement.type)} ·{" "}
                     {libelleMethode(mouvement.method)}
                     {mouvement.reference ? ` · réf. ${mouvement.reference}` : ""}
+                    {mouvement.type === "RECETTE" && mouvement.donorName
+                      ? ` · ${mouvement.donorName}`
+                      : ""}
+                    {mouvement.type === "RECETTE" &&
+                    !mouvement.donorName &&
+                    !mouvement.isAnonymous
+                      ? " · donateur non précisé"
+                      : ""}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -399,6 +433,16 @@ export default function TresorerieDashboardPage() {
                     {estRecette ? "+" : "−"}
                     {formaterMontant(mouvement.amount, mouvement.currency)}
                   </p>
+                  {/* ⭐ V3.88 — équivalent converti sous le montant natif. */}
+                  {equivalentFormate(
+                    mouvement.amount,
+                    mouvement.currency,
+                    devise
+                  ) && (
+                    <p className="text-[10px] text-[#8A8378]/70">
+                      {equivalentFormate(mouvement.amount, mouvement.currency, devise)}
+                    </p>
+                  )}
                   <p className="text-[10px] text-[#8A8378]/70">
                     {new Date(mouvement.date).toLocaleDateString("fr-FR", {
                       day: "numeric",

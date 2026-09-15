@@ -37,8 +37,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { du, au, devise } = body as { du?: string; au?: string; devise?: string };
 
+    // ⭐ V3.88 — franc CFA par défaut (une devise par document reste la règle).
     const deviseFinale =
-      devise && DEVISE_CODES.includes(devise) ? devise : "EUR";
+      devise && DEVISE_CODES.includes(devise) ? devise : "XOF";
 
     const dateDu = parseDate(du) || new Date(Date.now() - 90 * 86400_000);
     const dateAu = parseDate(au)
