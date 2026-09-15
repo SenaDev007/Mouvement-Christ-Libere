@@ -314,7 +314,7 @@ export const DEFAULT_HEROES: Record<string, HeroConfig> = {
     titleAccent: "",
     titleSuffix: "",
     subtitle:
-      "Vos dons soutiennent le fonctionnement de cette plateforme et la diffusion des enseignements. Leur usage est publié chaque année, avec transparence totale.",
+      "Offrande, dîme ou don — soutenez le ministère et la diffusion des enseignements, depuis l'Afrique de l'Ouest comme depuis l'étranger. Chaque contribution est enregistrée et publiée avec transparence.",
     backgroundImage: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=1920&auto=format&fit=crop",
     ctaLabel: "Faire un don",
     ctaHref: "#don",

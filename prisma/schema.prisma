@@ -699,11 +699,16 @@ model StaffNotification {
 
 // --- Dons ---
 
+// ⭐ V3.82 — Passerelles de paiement réelles (FedaPay + Paystack).
+// Le modèle Donation EST la table « dons » de la spécification : une seule
+// source de vérité partagée entre la page publique /contribuer, le
+// back-office /admin/donations et le dispatch automatique vers la
+// trésorerie (TreasuryTransaction créé par le webhook à l'approbation).
 model Donation {
   id        String   @id @default(cuid())
   amount    Float
   currency  String   @default("EUR")
-  method    String   // card, transfer, mobile_money, crypto
+  method    String   // card, transfer, mobile_money, crypto — ⭐ V3.82 : nom du fournisseur (fedapay | paystack) pour les dons en ligne
   donorName String?
   donorEmail String?
   donorUserId String?
@@ -711,7 +716,39 @@ model Donation {
   isAnonymous Boolean @default(false)
   createdAt DateTime @default(now())
 
+  // ┊ V3.82 — Colonnes de la passerelle de paiement.
+  // reference : générée côté serveur AVANT tout appel externe (don_xxxx) ;
+  // c'est la clé de rapprochement du webhook, du retour navigateur
+  // (/contribuer/merci) et de l'écriture trésorerie.
+  reference  String?  @unique
+  provider   String?  // 'fedapay' | 'paystack' (null = saisie antérieure à V3.82)
+  providerRef String? // id de transaction côté fournisseur (si connu)
+  typeDon    String?  // 'offrande' | 'dime' | 'don' (null = antérieur à V3.82)
+  statut     String   @default("pending") // 'pending' | 'approved' | 'failed'
+  recurrent  Boolean  @default(false)     // don mensuel (réservé — pas d'UI pour l'instant)
+  confirmedAt DateTime? // date d'approbation du paiement (webhook)
+
   @@index([createdAt])
+  @@index([providerRef])
+  @@index([statut])
+}
+
+// ⭐ V3.82 — Journal des webhooks paiement (traçabilité + rejeu manuel).
+// Chaque événement reçu de FedaPay/Paystack y est consigné : signature
+// invalide, don introuvable, déjà traité (idempotence), ou traité.
+model WebhookLog {
+  id          String   @id @default(cuid())
+  provider    String   // 'fedapay' | 'paystack'
+  event       String   // transaction.approved, charge.success…
+  statut      String   // SIGNE_INVALIDE | DON_INCONNU | DEJA_TRAITE | TRAITE | IGNORE | ERREUR | CORPS_INVALIDE
+  reference   String?  // référence interne du don, si résolue
+  providerRef String?  // id transaction côté fournisseur
+  erreur      String?  @db.Text
+  payload     String?  @db.Text // corps brut tronqué (20 Ko) — pour rejouer un événement en cas d'incident
+  createdAt   DateTime @default(now())
+
+  @@index([provider, createdAt])
+  @@index([reference])
 }
 
 // --- Calendrier liturgique (V2) ---

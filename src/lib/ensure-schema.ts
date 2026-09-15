@@ -1869,3 +1869,132 @@ export function ensureRenommageAfrika(): Promise<void> {
   }
   return inflightRenommageAfrika;
 }
+
+// ============================================================
+// ⭐ V3.82 — PASSERELLES DE PAIEMENT (DONS EN LIGNE)
+// ============================================================
+
+let donsTablesOk = false;
+let inflightDonsTables: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.82 — Colonnes de la table « dons » (modèle Donation) + journal
+ * des webhooks paiement (WebhookLog).
+ *
+ * Donation existait déjà (page /contribuer antérieure) : les colonnes de
+ * la passerelle (reference, provider, providerRef, typeDon, statut,
+ * recurrent, confirmedAt) sont ajoutées par ALTER idempotent.
+ *
+ * Les éventuelles lignes saisies AVANT V3.82 (page de simulation — elle
+ * n'écrivait jamais en base, mais par précaution) sont marquées
+ * « approved » : elles ne doivent pas apparaître « en attente » dans le
+ * back-office (la colonne reference reste NULL = non issues de la
+ * passerelle).
+ *
+ * La caisse trésorerie « Dons en ligne » est également créée si elle
+ * n'existe pas encore : c'est là que le webhook dispatch chaque don
+ * approuvé (TreasuryTransaction RECETTE, catégorie offrande/dime/don).
+ */
+export function ensureDonsTables(): Promise<void> {
+  if (donsTablesOk) return Promise.resolve();
+  if (!inflightDonsTables) {
+    inflightDonsTables = (async () => {
+      // ① Colonnes de la passerelle sur Donation.
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "Donation" ADD COLUMN IF NOT EXISTS "reference" TEXT`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "Donation" ADD COLUMN IF NOT EXISTS "provider" TEXT`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "Donation" ADD COLUMN IF NOT EXISTS "providerRef" TEXT`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "Donation" ADD COLUMN IF NOT EXISTS "typeDon" TEXT`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "Donation" ADD COLUMN IF NOT EXISTS "statut" TEXT NOT NULL DEFAULT 'pending'`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "Donation" ADD COLUMN IF NOT EXISTS "recurrent" BOOLEAN NOT NULL DEFAULT false`
+      );
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "Donation" ADD COLUMN IF NOT EXISTS "confirmedAt" TIMESTAMPTZ`
+      );
+
+      // ② Index (reference est UNIQUE — les lignes antérieures restent NULL,
+      // Postgres autorise plusieurs NULL dans un index unique).
+      await db.$executeRawUnsafe(
+        `CREATE UNIQUE INDEX IF NOT EXISTS "Donation_reference_key" ON "Donation"("reference")`
+      );
+      await db.$executeRawUnsafe(
+        `CREATE INDEX IF NOT EXISTS "Donation_providerRef_idx" ON "Donation"("providerRef")`
+      );
+      await db.$executeRawUnsafe(
+        `CREATE INDEX IF NOT EXISTS "Donation_statut_idx" ON "Donation"("statut")`
+      );
+
+      // ③ Lignes antérieures à V3.82 : jamais passées par la passerelle →
+      // considérées comme traitées (no-op après la première exécution).
+      await db.$executeRawUnsafe(
+        `UPDATE "Donation" SET "statut" = 'approved' WHERE "reference" IS NULL AND "statut" = 'pending'`
+      );
+
+      // ④ Journal des webhooks paiement (rejeu manuel en cas d'incident).
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "WebhookLog" (
+          "id" TEXT NOT NULL,
+          "provider" TEXT NOT NULL,
+          "event" TEXT NOT NULL,
+          "statut" TEXT NOT NULL,
+          "reference" TEXT,
+          "providerRef" TEXT,
+          "erreur" TEXT,
+          "payload" TEXT,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "WebhookLog_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        `CREATE INDEX IF NOT EXISTS "WebhookLog_provider_createdAt_idx" ON "WebhookLog"("provider", "createdAt")`
+      );
+      await db.$executeRawUnsafe(
+        `CREATE INDEX IF NOT EXISTS "WebhookLog_reference_idx" ON "WebhookLog"("reference")`
+      );
+
+      // ⑤ Caisse trésorerie dédiée aux dons en ligne (code stable "dons-en-ligne").
+      await db.$executeRawUnsafe(`
+        INSERT INTO "TreasuryCashAccount"
+          ("id", "code", "name", "type", "currency", "openingBalance", "isActive", "description", "createdBy", "createdAt", "updatedAt")
+        VALUES (
+          'caisse-dons-en-ligne-v382',
+          'dons-en-ligne',
+          'Dons en ligne (FedaPay / Paystack)',
+          'autre',
+          'XOF',
+          0,
+          true,
+          'Encaissements automatiques de la page /contribuer : offrandes, dîmes et dons payés via FedaPay (Afrique de l''Ouest) ou Paystack (international). Écritures créées automatiquement à l''approbation du paiement.',
+          'system-v382',
+          now(),
+          now()
+        )
+        ON CONFLICT ("code") DO NOTHING
+      `);
+    })()
+      .then(() => {
+        donsTablesOk = true;
+        console.log("[ensure-schema] V3.82 : table dons (passerelle) + WebhookLog + caisse « Dons en ligne » vérifiées/créées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] V3.82 : migration table dons impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightDonsTables = null;
+      });
+  }
+  return inflightDonsTables;
+}

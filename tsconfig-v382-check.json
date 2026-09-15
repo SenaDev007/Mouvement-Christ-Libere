@@ -1,0 +1,50 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/jsx-runtime": [
+        "./node_modules/@types/react/jsx-runtime"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "files": [
+    "src/lib/payments/payment-types.ts",
+    "src/lib/payments/fedapay.service.ts",
+    "src/lib/payments/paystack.service.ts",
+    "src/lib/payments/dons-webhook.ts",
+    "src/app/api/dons/initier/route.ts",
+    "src/app/api/dons/statut/[reference]/route.ts",
+    "src/app/api/webhooks/fedapay/route.ts",
+    "src/app/api/webhooks/paystack/route.ts",
+    "src/app/contribuer/page.tsx",
+    "src/app/contribuer/merci/page.tsx",
+    "src/components/site/contribuer-view.tsx",
+    "src/components/site/contribuer-merci-view.tsx",
+    "src/app/admin/donations/page.tsx",
+    "src/lib/email-templates.ts",
+    "src/lib/email.ts",
+    "src/lib/ensure-schema.ts",
+    "src/lib/hero-defaults.ts"
+  ]
+}

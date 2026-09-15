@@ -36,6 +36,8 @@ export const CATEGORIES_EMAIL = {
   DEMANDE_VALIDEE: "DEMANDE_VALIDEE",
   // ⭐ V3.81 — code de confirmation d'un changement d'adresse email.
   EMAIL_CHANGE: "EMAIL_CHANGE",
+  // ⭐ V3.82 — reçu d'un don approuvé (page Contribuer, passerelles).
+  RECU_DON: "RECU_DON",
   TEST: "TEST",
 } as const;
 

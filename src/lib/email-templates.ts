@@ -471,3 +471,116 @@ Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre adr
 
   return { html, text };
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// ⭐ V3.82 — REÇU DE DON (page Contribuer)
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface OptionsRecuDon {
+  /** Prénom/nom du donateur si connu. */
+  nom?: string | null;
+  /** Montant du don (XOF). */
+  montant: number;
+  /** Code devise (XOF). */
+  devise: string;
+  /** Type de don : offrande | dime | don. */
+  typeDon?: string | null;
+  /** Référence interne du don (don_xxx). */
+  reference?: string | null;
+  /** Fournisseur de paiement : fedapay | paystack. */
+  provider?: string | null;
+  /** Date d'approbation du paiement. */
+  date: Date;
+}
+
+/** Regroupement des milliers à espace fine insécable (rendu stable). */
+function formaterMontantRecu(montant: number, devise: string): string {
+  const entier = Math.round(Math.abs(montant))
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, "\u202F");
+  const symbole = devise === "XOF" ? "FCFA" : devise === "EUR" ? "€" : devise;
+  return `${entier}\u00A0${symbole}`;
+}
+
+export function sujetRecuDon(): string {
+  return "Reçu de votre don — Mouvement Christ Libère";
+}
+
+/**
+ * Reçu de don — déclenché UNIQUEMENT depuis le webhook d'approbation du
+ * paiement (jamais depuis le front, jamais en double). Contenu minimal
+ * conforme à la spécification : nom du mouvement, date, référence,
+ * montant, devise, type de don + mention « à conserver pour vos archives ».
+ */
+export function templateRecuDon(
+  options: OptionsRecuDon
+): { html: string; text: string } {
+  const salutation = options.nom
+    ? `Shalom ${echapperHtml(options.nom)},`
+    : "Shalom,";
+
+  const libelleType =
+    options.typeDon === "offrande"
+      ? "Offrande"
+      : options.typeDon === "dime"
+        ? "Dîme"
+        : "Don";
+
+  const libelleMoyen =
+    options.provider === "fedapay"
+      ? "FedaPay (Afrique de l'Ouest)"
+      : options.provider === "paystack"
+        ? "Paystack (international)"
+        : "Paiement en ligne";
+
+  const dateTxt = new Date(options.date).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
+  const montantTxt = formaterMontantRecu(options.montant, options.devise);
+
+  const html = enveloppe(
+    "Reçu de votre don",
+    `
+    <p style="margin:0 0 6px 0;">${salutation}</p>
+    <p style="margin:0 0 14px 0;">Nous confirmons la r&eacute;ception de votre ${echapperHtml(libelleType.toLowerCase())} aupr&egrave;s du Mouvement Christ Lib&egrave;re. Que le Seigneur vous b&eacute;nisse et vous rende au centuple ce que vous avez sem&eacute; avec joie.</p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px 0;">
+      <tr>
+        <td align="center" style="background-color:${VIOLET}; border:1px solid ${OR}; border-radius:10px; padding:20px 16px;">
+          <div style="font-size:13px; color:${IVOIRE}; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;">${echapperHtml(libelleType)}</div>
+          <div style="font-size:30px; font-weight:bold; color:${OR}; font-family:Georgia, 'Times New Roman', serif;">${echapperHtml(montantTxt)}</div>
+        </td>
+      </tr>
+    </table>
+
+    ${blocInfo([
+      { libelle: "Date", valeur: dateTxt },
+      { libelle: "Référence", valeur: options.reference || "—" },
+      { libelle: "Nature", valeur: libelleType },
+      { libelle: "Moyen de paiement", valeur: libelleMoyen },
+    ])}
+
+    <p style="margin:0 0 8px 0;">Conservez cet email comme re&ccedil;u de votre ${libelleType.toLowerCase()} pour vos archives.</p>
+    <p style="margin:0; font-size:12px; color:${GRIS};">Ce document atteste de l&apos;encaissement du paiement ; il ne s&apos;agit pas d&apos;un re&ccedil;u fiscal.</p>
+    `
+  );
+
+  const text = `Shalom${options.nom ? " " + options.nom : ""},
+
+Nous confirmons la réception de votre ${libelleType.toLowerCase()} auprès du Mouvement Christ Libère. Que le Seigneur vous bénisse et vous rende au centuple ce que vous avez semé avec joie.
+
+${libelleType} : ${montantTxt}
+Date : ${dateTxt}
+Référence : ${options.reference || "—"}
+Nature : ${libelleType}
+Moyen de paiement : ${libelleMoyen}
+
+Conservez cet email comme reçu de votre ${libelleType.toLowerCase()} pour vos archives. Ce document atteste de l'encaissement du paiement ; il ne s'agit pas d'un reçu fiscal.
+
+— Mouvement Christ Libère (mouvementchristlibere.com)`;
+
+  return { html, text };
+}
