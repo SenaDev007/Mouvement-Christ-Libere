@@ -4,6 +4,9 @@ import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { getLiveKitConfig } from "@/lib/livekit-config";
 import { ensureLiveYoutubeIngestColumn, ensureRubriquesColumns } from "@/lib/ensure-schema";
+// ⭐ V3.86 — Suppression définitive : un replay supprimé du back-office
+// n'est jamais recréé à l'arrêt du live.
+import { estVideoSupprimee } from "@/lib/suppression-video";
 
 // ⭐ V3.34 — le nettoyage LiveKit (éjections + egress + room) peut prendre
 // plusieurs dizaines de secondes : sans cette marge, la fonction était tuée
@@ -224,7 +227,12 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      if (!existingReplay) {
+      // ⭐ V3.86 — GARDE ANTI-RÉSURRECTION : si le replay de CE média a déjà
+      // été supprimé du back-office, ne PAS le recréer au stop (mémoire des
+      // suppressions — cf. src/lib/suppression-video.ts).
+      const replaySupprime = replayUrl ? await estVideoSupprimee(replayUrl) : false;
+
+      if (!existingReplay && !replaySupprime) {
         await db.video.create({
           data: {
             servantId: live.servantId,
@@ -244,7 +252,7 @@ export async function POST(req: NextRequest) {
           },
         });
         console.log(`[live/stop] Replay archivé pour le live ${liveId} (compteurs à zéro — données réelles uniquement)`);
-      } else {
+      } else if (existingReplay) {
         // Mettre à jour le replay existant — URL/durée/miniature (les
         // compteurs ne sont JAMAIS écrasés : ils continuent de refléter les
         // interactions réelles sur la vidéo publiée).
@@ -258,6 +266,10 @@ export async function POST(req: NextRequest) {
           },
         });
         console.log(`[live/stop] Replay mis à jour pour le live ${liveId}`);
+      } else {
+        // Replay supprimé volontairement (mémoire V3.86) : rien à créer ni
+        // mettre à jour — la suppression du pasteur reste définitive.
+        console.log(`[live/stop] Replay NON recréé pour le live ${liveId} (vidéo supprimée volontairement — mémoire V3.86)`);
       }
     } catch (err) {
       console.error("[live/stop] Failed to archive replay:", err);

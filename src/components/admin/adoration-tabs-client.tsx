@@ -30,7 +30,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Plus, Pencil, Music, Sparkles, Eye, Clock, X,
-  Loader2, Tag, Star,
+  Loader2, Tag, Star, AlertCircle,
   // ⭐ V3.47 — upload direct de fichiers vidéo dans le modal.
   Upload, FileVideo, Link as LinkIcon, Camera,
   // ⭐ V3.48 — champ d'upload de la miniature.
@@ -602,6 +602,13 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
   const [detailsProgression, setDetailsProgression] = useState<{ partie: number; total: number; tentatives: number } | null>(null);
   // Fiche déjà créée après un échec d'envoi → bouton « Réessayer l'envoi ».
   const [ficheCreeeId, setFicheCreeeId] = useState<string | null>(null);
+  // ⭐ V3.86 — SUPPRESSION CONNUE : le serveur refuse (409) la re-création
+  // d'un média dont l'URL a déjà été supprimée du back-office — confirmation
+  // de réintégration requise, en clair (même garde que le module Vidéos).
+  const [suppressionConnue, setSuppressionConnue] = useState<{
+    supprimeLe: string;
+    titreExistant?: string | null;
+  } | null>(null);
 
   // Pré-remplir le serviteur (Afrika) + la catégorie (onglet actif) quand
   // le modal s'ouvre.
@@ -693,7 +700,7 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
     await envoyer(false);
   };
 
-  const envoyer = async (estReessai: boolean) => {
+  const envoyer = async (estReessai: boolean, reintegration = false) => {
     if (!form.servantId || !form.title) {
       setError("Serviteur et titre sont requis");
       return;
@@ -743,11 +750,23 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
             category: form.category,
             // Publié maintenant (tri publishedAt desc côté public).
             publishedAt: new Date().toISOString(),
+            // ⭐ V3.86 — réintégration EXPLICITE d'un média précédemment
+            // supprimé (confirmée par l'administrateur ci-dessous).
+            ...(reintegration ? { reintegration: true } : {}),
           }),
         });
 
         if (!res.ok) {
-          const data = await res.json();
+          const data = await res.json().catch(() => ({}) as { error?: string; code?: string; supprimeLe?: string; titreExistant?: string | null });
+          // ⭐ V3.86 — média supprimé auparavant : demander la confirmation
+          // de réintégration au lieu d'un simple message d'erreur.
+          if (res.status === 409 && data.code === "VIDEO_SUPPRIMEE") {
+            setSuppressionConnue({
+              supprimeLe: data.supprimeLe || new Date().toISOString(),
+              titreExistant: data.titreExistant ?? null,
+            });
+            return;
+          }
           throw new Error(data.error || "Erreur lors de la création");
         }
         const data = await res.json();
@@ -1108,6 +1127,46 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
         )}
 
         <ModalError error={error} />
+
+        {/* ⭐ V3.86 — Média précédemment supprimé : confirmation de
+            réintégration requise (même garde que le module Vidéos). */}
+        {suppressionConnue && !loading && (
+          <div className="px-4 py-3 rounded-xl border-2 border-[#A3821C]/40 bg-[#C9A227]/10">
+            <p className="text-sm font-bold text-[#7A6414] flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              Ce média a été supprimé de la plateforme
+            </p>
+            <p className="text-xs text-[#7A6414]/90 mt-1">
+              Supprimé le{" "}
+              {new Date(suppressionConnue.supprimeLe).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+              {suppressionConnue.titreExistant ? " — « " + suppressionConnue.titreExistant + " »" : ""}
+              . Il a été volontairement retiré : pour le faire revenir, confirmez la réintégration.
+            </p>
+            <div className="flex items-center justify-end gap-2 mt-3">
+              <button
+                type="button"
+                onClick={() => setSuppressionConnue(null)}
+                className="px-3 py-2 rounded-lg text-xs font-bold text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
+              >
+                Ne pas réintégrer
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSuppressionConnue(null);
+                  envoyer(false, true);
+                }}
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-[#A3821C] text-white hover:bg-[#8a6d18] transition-colors"
+              >
+                Réintégrer ce média
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ⭐ V3.47 — Progression de l'envoi */}
         {loading && (phase === "envoi" || phase === "fiche" || phase === "finalisation") && (

@@ -13,6 +13,9 @@ import { annoncerLiveProgramme, annoncerLiveAnnule } from "@/lib/live-announceme
 // ⭐ V3.85 — Miniature TikTok automatique à la modification d'une vidéo.
 import { estUrlTiktok } from "@/lib/tiktok";
 import { replicquerMiniatureTiktok } from "@/lib/tiktok-miniature";
+// ⭐ V3.86 — Suppression définitive : mémoire des vidéos supprimées
+// (anti-résurrection à la modification + mémorisation à la suppression).
+import { enregistrerSuppressionVideo, verifierSuppressionVideo, leverSuppressionVideo, cleMediaDe } from "@/lib/suppression-video";
 
 const ENTITY_MAP = {
   servants: "servant",
@@ -160,6 +163,10 @@ export async function PATCH(
 
   try {
     const body = await request.json();
+    // ⭐ V3.86 — drapeau de contrôle (réintégration confirmée) : JAMAIS
+    // transmis à Prisma (champ inconnu du modèle → erreur update sinon).
+    // Le reste du corps passe tel quel à l'update.
+    const { reintegration, ...donnees } = body;
     // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl (cf. ensure-schema.ts)
     if (entity === "channels") { await ensureChannelAvatarUrl(); await ensureChannelIsDirectColumn(); }
     // ⭐ V2.7 — Auto-réparation colonnes V2.7 (User.phone, Channel.videoMode)
@@ -238,7 +245,45 @@ export async function PATCH(
       })) as typeof ancienLive;
     }
 
-    const updated = await delegate.update({ where: { id }, data: body });
+    // ─── ⭐ V3.86 — GARDE ANTI-RÉSURRECTION (modification) ───
+    // Si la modification change l'URL d'une vidéo vers le média d'une
+    // vidéo précédemment SUPPRIMÉE, refuser (sauf réintégration explicite
+    // reintegration: true) : sans cette garde, « modifier » une autre vidéo
+    // en collant l'URL supprimée ferait revenir le média supprimé.
+    if (entity === "videos" && typeof donnees.videoUrl === "string" && donnees.videoUrl) {
+      const videoActuelle = await db.video.findUnique({
+        where: { id },
+        select: { videoUrl: true },
+      });
+      // Clé du média CIBLE (celle qu'on veut poser) vs clé ACTUELLE :
+      // même média (autre forme d'URL) → pas un changement → pas de garde.
+      const cleCible = cleMediaDe(donnees.videoUrl);
+      const cleActuelle = cleMediaDe(videoActuelle?.videoUrl);
+      if (cleCible && cleCible !== cleActuelle) {
+        const suppressionConnue = await verifierSuppressionVideo(donnees.videoUrl);
+        if (suppressionConnue && !reintegration) {
+          return NextResponse.json(
+            {
+              error:
+                "Cette URL correspond à une vidéo supprimée de la plateforme le " +
+                new Date(suppressionConnue.supprimeLe).toLocaleDateString("fr-FR", {
+                  day: "numeric", month: "long", year: "numeric",
+                }) +
+                ". Confirmez la réintégration pour l'utiliser à nouveau.",
+              code: "VIDEO_SUPPRIMEE",
+              supprimeLe: suppressionConnue.supprimeLe,
+              titreExistant: suppressionConnue.titre,
+            },
+            { status: 409 }
+          );
+        }
+        if (reintegration) {
+          await leverSuppressionVideo(donnees.videoUrl);
+        }
+      }
+    }
+
+    const updated = await delegate.update({ where: { id }, data: donnees });
 
     // ⭐ V3.85 — MINIATURE TIKTOK AUTOMATIQUE (modification) : l'URL vient
     // d'être changée en une URL TikTok sans miniature → récupérer la VRAIE
@@ -421,12 +466,33 @@ export async function DELETE(
     let urlsPurge: (string | null | undefined)[] = [];
     let prefixesPurge: string[] = [];
     let purgeR2: Awaited<ReturnType<typeof purgerArtefactsR2>> | null = null;
+    // ⭐ V3.86 — Lecture TOUJOURS effectuée pour les vidéos (même sans R2) :
+    // l'URL supprimée est MÉMORISÉE (table SuppressionVideo) pour qu'aucun
+    // flux de re-création (script d'import, récupération de replay, POST
+    // manuel) ne puisse faire « revenir » cette vidéo sans confirmation
+    // explicite — c'est la garantie demandée : « supprimée = supprimée ».
+    let videoSupprimee: {
+      videoUrl: string | null;
+      hlsUrl: string | null;
+      thumbnailUrl: string | null;
+      title: string;
+      servantId: string;
+    } | null = null;
+    if (entity === "videos") {
+      videoSupprimee = await db.video.findUnique({
+        where: { id },
+        select: {
+          videoUrl: true,
+          hlsUrl: true,
+          thumbnailUrl: true,
+          title: true,
+          servantId: true,
+        },
+      });
+    }
     if (isR2Configured()) {
       if (entity === "videos") {
-        const v = await db.video.findUnique({
-          where: { id },
-          select: { videoUrl: true, hlsUrl: true, thumbnailUrl: true },
-        });
+        const v = videoSupprimee;
         if (v) {
           urlsPurge = [v.videoUrl, v.hlsUrl, v.thumbnailUrl];
           // Fichier principal + rendus post-production (rendered-videos/…).
@@ -457,6 +523,20 @@ export async function DELETE(
 
     const delegate = getDelegate(entity as EntityName);
     await delegate.delete({ where: { id } });
+
+    // ⭐ V3.86 — MÉMORISATION DE LA SUPPRESSION (après le DELETE physique,
+    // best-effort absolu : la ligne est déjà supprimée, la mémoire ne sert
+    // qu'à empêcher les re-créations futures). Couvre les liens YouTube
+    // (clé canonique youtube:<id> — toutes formes d'URL confondues) et
+    // TikTok (tiktok:<id> — /video/ comme /photo/).
+    if (entity === "videos" && videoSupprimee) {
+      await enregistrerSuppressionVideo({
+        videoId: id,
+        videoUrl: videoSupprimee.videoUrl,
+        titre: videoSupprimee.title,
+        servantId: videoSupprimee.servantId,
+      });
+    }
 
     if (urlsPurge.length > 0 || prefixesPurge.length > 0) {
       try {

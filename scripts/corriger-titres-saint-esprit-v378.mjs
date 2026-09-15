@@ -174,7 +174,7 @@ async function main() {
   // ⑤ INSERT des manquantes
   const aInserer = cibles.filter((m) => !existantes.has(m.url));
   console.log(`── ⑤ Insertion des ${aInserer.length} médias manquants ──`);
-  let insereOk = 0, insereKo = 0;
+  let insereOk = 0, insereKo = 0, ignoreesSupprimees = 0;
   for (const m of aInserer) {
     const corps = {
       servantId: serviteur.id,
@@ -193,13 +193,19 @@ async function main() {
         body: JSON.stringify(corps),
       });
       if (r.status === 201) insereOk++;
+      else if (r.status === 409) {
+        // ⭐ V3.86 — mémoire des suppressions : ce média a été VOLONTAIREMENT
+        // supprimé du back-office → ne JAMAIS le ré-insérer (c'est la cause
+        // historique des « vidéos supprimées qui reviennent »).
+        ignoreesSupprimees++;
+      }
       else insereKo++;
     } catch {
       insereKo++;
     }
     await attendre(150);
   }
-  console.log(`  ✅ insérés : ${insereOk} · échecs : ${insereKo}`);
+  console.log(`  ✅ insérés : ${insereOk} · supprimés volontairement (ignorés) : ${ignoreesSupprimees} · échecs : ${insereKo}`);
 
   // ⑥ PATCH des existantes de la rubrique (@pamela.dali7)
   console.log(`── ⑥ Titres précis des médias déjà en base ──`);

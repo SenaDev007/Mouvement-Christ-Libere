@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/jsx-runtime": [
+        "./node_modules/@types/react/jsx-runtime"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "files": [
+    "src/lib/suppression-video.ts",
+    "src/lib/live-replay-recovery.ts",
+    "src/app/admin/api/[entity]/route.ts",
+    "src/app/admin/api/[entity]/[id]/route.ts",
+    "src/app/api/live/stop/route.ts",
+    "src/app/api/live/webhook/route.ts",
+    "src/components/admin/videos-tabs-client.tsx",
+    "src/components/admin/adoration-tabs-client.tsx"
+  ]
+}

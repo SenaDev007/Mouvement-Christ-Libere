@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ensureRubriquesColumns } from "@/lib/ensure-schema";
+// ⭐ V3.86 — Suppression définitive : un replay supprimé du back-office
+// n'est jamais recréé par le webhook LiveKit.
+import { estVideoSupprimee } from "@/lib/suppression-video";
 
 /**
  * POST /api/live/webhook
@@ -78,21 +81,27 @@ export async function POST(req: NextRequest) {
           });
 
           // Créer une entrée Video pour le replay
-          await db.video.create({
-            data: {
-              servantId: live.servantId,
-              title: `${live.title} (Replay)`,
-              description: `Replay du live du ${new Date(live.startedAt || live.scheduledAt).toLocaleDateString("fr-FR")} — ${live.description || ""}`,
-              duration: "",
-              views: 0,
-              isLive: false,
-              // ⭐ V3.46 — le replay HÉRITE de la rubrique du live.
-              category: live.category || null,
-              videoUrl: recordingUrl,
-              publishedAt: new Date(),
-            },
-          });
-          console.log(`[live/webhook] Replay archivé pour le live ${live.id}`);
+          // ⭐ V3.86 — GARDE ANTI-RÉSURRECTION : un replay supprimé du
+          // back-office n'est JAMAIS recréé par le webhook LiveKit.
+          if (!(await estVideoSupprimee(recordingUrl))) {
+            await db.video.create({
+              data: {
+                servantId: live.servantId,
+                title: `${live.title} (Replay)`,
+                description: `Replay du live du ${new Date(live.startedAt || live.scheduledAt).toLocaleDateString("fr-FR")} — ${live.description || ""}`,
+                duration: "",
+                views: 0,
+                isLive: false,
+                // ⭐ V3.46 — le replay HÉRITE de la rubrique du live.
+                category: live.category || null,
+                videoUrl: recordingUrl,
+                publishedAt: new Date(),
+              },
+            });
+            console.log(`[live/webhook] Replay archivé pour le live ${live.id}`);
+          } else {
+            console.log(`[live/webhook] Replay NON recréé pour le live ${live.id} (vidéo supprimée volontairement — mémoire V3.86)`);
+          }
         }
         break;
 

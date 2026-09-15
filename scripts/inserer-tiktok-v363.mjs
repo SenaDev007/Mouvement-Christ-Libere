@@ -123,7 +123,7 @@ async function main() {
   console.log(`  ${dejaLa} déjà en base (ignorés) · ${aCreer.length} à insérer`);
 
   console.log("── ⑤ Insertion ──");
-  let ok = 0, ko = 0;
+  let ok = 0, ko = 0, supprimees = 0;
   const erreurs = [];
   for (let i = 0; i < aCreer.length; i++) {
     const [id, v] = aCreer[i];
@@ -150,6 +150,10 @@ async function main() {
         if (ok % 25 === 0 || i === aCreer.length - 1) {
           console.log(`  … ${ok}/${aCreer.length} insérés`);
         }
+      } else if (r.status === 409) {
+        // ⭐ V3.86 — mémoire des suppressions : média VOLONTAIREMENT supprimé
+        // du back-office → ne JAMAIS le ré-insérer (anti-résurrection).
+        supprimees++;
       } else {
         ko++;
         const msg = await r.text().catch(() => "");
@@ -164,6 +168,9 @@ async function main() {
 
   console.log(`── Résultat ──`);
   console.log(`  ✅ insérées : ${ok}`);
+  if (supprimees > 0) {
+    console.log(`  🚫 supprimées volontairement (ignorées — mémoire V3.86) : ${supprimees}`);
+  }
   if (ko > 0) {
     console.log(`  ❌ échecs : ${ko}`);
     for (const e of erreurs.slice(0, 10)) console.log(`     ${e}`);

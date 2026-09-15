@@ -49,6 +49,9 @@
  */
 import { db } from "@/lib/db";
 import { ensureRubriquesColumns } from "@/lib/ensure-schema";
+// ⭐ V3.86 — Suppression définitive : un replay supprimé du back-office ne
+// doit JAMAIS être recréé par la récupération différée.
+import { estVideoSupprimee } from "@/lib/suppression-video";
 
 /** Regex locale — identique à extractYoutubeId de lib/youtube.ts, sans
  *  l'import googleapis. */
@@ -172,6 +175,17 @@ export async function appliquerUrlReplaySurLiveEtVideo(
       },
     });
     console.log(`[replay-recovery] Replay mis à jour pour ${liveId} → ${youtubeUrl}`);
+  } else if (await estVideoSupprimee(youtubeUrl)) {
+    // ⭐ V3.86 — le replay de CE média a été volontairement supprimé du
+    // back-office : NE PAS le recréer (la Passe 1 n'a pas de fenêtre
+    // temporelle — sans cette garde, chaque visite du module Vidéos ou de la
+    // page publique /videos ressuscitait l'entrée supprimée).
+    console.log(
+      `[replay-recovery] Replay NON recréé pour ${liveId} → ${youtubeUrl} (vidéo supprimée volontairement — mémoire V3.86)`
+    );
+    // L'URL du LiveStream reste mise à jour (métadonnée du live, pas une
+    // vidéo affichée) — mais AUCUNE entrée Vidéo n'est créée.
+    return false;
   } else {
     const dateLive = new Date(live.startedAt || live.endedAt || Date.now());
     const dateStr = dateLive.toLocaleDateString("fr-FR", {

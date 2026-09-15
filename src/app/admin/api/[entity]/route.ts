@@ -13,6 +13,10 @@ import { annoncerLiveProgramme } from "@/lib/live-announcement-relay";
 // ⭐ V3.85 — Miniature TikTok automatique à la création d'une vidéo.
 import { estUrlTiktok } from "@/lib/tiktok";
 import { replicquerMiniatureTiktok } from "@/lib/tiktok-miniature";
+// ⭐ V3.86 — Suppression définitive : mémoire des vidéos supprimées
+// (empêche TOUTE ré-insertion — scripts d'import, POST manuel — sans
+// confirmation explicite de réintégration).
+import { verifierSuppressionVideo, leverSuppressionVideo } from "@/lib/suppression-video";
 
 // Force runtime Node.js (pas edge) pour Prisma
 export const runtime = "nodejs";
@@ -108,6 +112,10 @@ export async function POST(
 
   try {
     const body = await request.json();
+    // ⭐ V3.86 — drapeau de contrôle (réintégration confirmée d'une vidéo
+    // précédemment supprimée) : JAMAIS transmis à Prisma (champ inconnu du
+    // modèle → erreur create sinon). Le reste du corps passe tel quel.
+    const { reintegration, ...donnees } = body;
     // ⭐ V2.6.1 — Auto-réparation colonne avatarUrl avant création (cf. ensure-schema.ts)
     if (entity === "channels") { await ensureChannelAvatarUrl(); await ensureVoiceVideoColumns(); await ensureChannelIsDirectColumn(); } else if (entity === "users" || entity === "servants") { await ensureVoiceVideoColumns(); }
     // ⭐ V3.3 — Auto-réparation colonnes Servant.pays / Servant.ville avant création
@@ -128,7 +136,40 @@ export async function POST(
     // ⭐ V3.47 — colonne photo des jalons biographiques (même pattern).
     if (entity === "biographies") await ensureBiographyPhotoColumn();
     const delegate = getDelegate(entity as EntityName);
-    const created = await delegate.create({ data: body });
+
+    // ─── ⭐ V3.86 — GARDE ANTI-RÉSURRECTION (création) ───
+    // Une vidéo dont l'URL a déjà été supprimée du back-office ne peut PAS
+    // être re-créée telle quelle : les scripts d'import/correction
+    // (inserer-tiktok-*, corriger-titres-*) insèrent tout média « absent »
+    // de la base sans distinguer « jamais intégré » de « volontairement
+    // supprimé » — c'est ainsi que des vidéos supprimées REVENAIENT. La
+    // réintégration n'est possible qu'avec une confirmation EXPLICITE
+    // (reintegration: true — demandée en clair par le modal du back-office).
+    if (entity === "videos" && typeof donnees.videoUrl === "string" && donnees.videoUrl) {
+      const suppressionConnue = await verifierSuppressionVideo(donnees.videoUrl);
+      if (suppressionConnue && !reintegration) {
+        return NextResponse.json(
+          {
+            error:
+              "Cette vidéo a été supprimée de la plateforme le " +
+              new Date(suppressionConnue.supprimeLe).toLocaleDateString("fr-FR", {
+                day: "numeric", month: "long", year: "numeric",
+              }) +
+              ". Pour la réintégrer, confirmez la réintégration dans le formulaire.",
+            code: "VIDEO_SUPPRIMEE",
+            supprimeLe: suppressionConnue.supprimeLe,
+            titreExistant: suppressionConnue.titre,
+          },
+          { status: 409 }
+        );
+      }
+      if (reintegration) {
+        // Réintégration confirmée : lever la mémoire pour CE média précis.
+        await leverSuppressionVideo(donnees.videoUrl);
+      }
+    }
+
+    const created = await delegate.create({ data: donnees });
 
     // ⭐ V3.85 — MINIATURE TIKTOK AUTOMATIQUE : une vidéo TikTok créée sans
     // miniature (le pasteur colle simplement l'URL) reçoit immédiatement sa

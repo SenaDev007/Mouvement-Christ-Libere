@@ -1008,6 +1008,15 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
   const [detailsProgression, setDetailsProgression] = useState<{ partie: number; total: number; tentatives: number } | null>(null);
   // Fiche déjà créée après un échec d'envoi → bouton « Réessayer l'envoi ».
   const [ficheCreeeId, setFicheCreeeId] = useState<string | null>(null);
+  // ⭐ V3.86 — SUPPRESSION CONNUE : le serveur refuse (409) la re-création
+  // d'une vidéo dont l'URL a déjà été supprimée du back-office (c'est ainsi
+  // que des vidéos supprimées « revenaient » via les ré-imports).
+  // L'administrateur doit confirmer la réintégration EN CLAIR — sans cette
+  // confirmation, une vidéo supprimée reste supprimée, définitivement.
+  const [suppressionConnue, setSuppressionConnue] = useState<{
+    supprimeLe: string;
+    titreExistant?: string | null;
+  } | null>(null);
 
   // Pré-remplir le serviteur quand le modal s'ouvre
   useEffect(() => {
@@ -1076,7 +1085,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
     await envoyer(false);
   };
 
-  const envoyer = async (estReessai: boolean) => {
+  const envoyer = async (estReessai: boolean, reintegration = false) => {
     if (!form.servantId || !form.title) {
       setError("Serviteur et titre sont requis");
       return;
@@ -1124,11 +1133,24 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
             // ⭐ V3.47 — publiée maintenant (sinon null → reléguée en fin de
             // liste, tri publishedAt desc côté public).
             publishedAt: new Date().toISOString(),
+            // ⭐ V3.86 — réintégration EXPLICITE d'une vidéo précédemment
+            // supprimée (confirmée par l'administrateur ci-dessous).
+            ...(reintegration ? { reintegration: true } : {}),
           }),
         });
 
         if (!res.ok) {
-          const data = await res.json();
+          const data = await res.json().catch(() => ({}) as { error?: string; code?: string; supprimeLe?: string; titreExistant?: string | null });
+          // ⭐ V3.86 — vidéo supprimée auparavant : demander la confirmation
+          // de réintégration au lieu d'un simple message d'erreur — le
+          // bouton « Réintégrer » relance la création avec le drapeau.
+          if (res.status === 409 && data.code === "VIDEO_SUPPRIMEE") {
+            setSuppressionConnue({
+              supprimeLe: data.supprimeLe || new Date().toISOString(),
+              titreExistant: data.titreExistant ?? null,
+            });
+            return;
+          }
           throw new Error(data.error || "Erreur lors de la création");
         }
         const data = await res.json();
@@ -1508,6 +1530,47 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
         </label>
 
         <ModalError error={error} />
+
+        {/* ⭐ V3.86 — Vidéo précédemment supprimée : confirmation de
+            réintégration requise. Sans elle, une vidéo supprimée ne peut
+            JAMAIS revenir (ni par une nouvelle saisie, ni par un import). */}
+        {suppressionConnue && !loading && (
+          <div className="px-4 py-3 rounded-xl border-2 border-[#A3821C]/40 bg-[#C9A227]/10">
+            <p className="text-sm font-bold text-[#7A6414] flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              Cette vidéo a été supprimée de la plateforme
+            </p>
+            <p className="text-xs text-[#7A6414]/90 mt-1">
+              Supprimée le{" "}
+              {new Date(suppressionConnue.supprimeLe).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+              {suppressionConnue.titreExistant ? " — « " + suppressionConnue.titreExistant + " »" : ""}
+              . Elle a été volontairement retirée : pour la faire revenir, confirmez la réintégration.
+            </p>
+            <div className="flex items-center justify-end gap-2 mt-3">
+              <button
+                type="button"
+                onClick={() => setSuppressionConnue(null)}
+                className="px-3 py-2 rounded-lg text-xs font-bold text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
+              >
+                Ne pas réintégrer
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSuppressionConnue(null);
+                  envoyer(false, true);
+                }}
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-[#A3821C] text-white hover:bg-[#8a6d18] transition-colors"
+              >
+                Réintégrer cette vidéo
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ⭐ V3.47 — Progression de l'envoi */}
         {loading && (phase === "envoi" || phase === "fiche" || phase === "finalisation") && (
