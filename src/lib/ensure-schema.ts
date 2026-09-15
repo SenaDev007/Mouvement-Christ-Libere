@@ -2030,6 +2030,12 @@ export function ensurePaiementsTable(): Promise<void> {
           CONSTRAINT "PaymentGatewayConfig_pkey" PRIMARY KEY ("provider")
         )`
       );
+      // ⭐ V3.85 — colonne publicKey (clé PUBLIQUE FedaPay pour le widget
+      // checkout.js — modèle Academia-Helm). Publique par nature : stockage
+      // en clair, contrairement aux clés secrètes chiffrées AES-256-GCM.
+      await db.$executeRawUnsafe(
+        `ALTER TABLE "PaymentGatewayConfig" ADD COLUMN IF NOT EXISTS "publicKey" TEXT`
+      );
       await db.$executeRawUnsafe(
         `CREATE INDEX IF NOT EXISTS "PaymentGatewayConfig_updatedAt_idx" ON "PaymentGatewayConfig"("updatedAt")`
       );

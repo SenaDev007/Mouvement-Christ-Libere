@@ -84,6 +84,7 @@ const CANAUX: Array<{
   zone: string;
   detail: string;
   bouton: string;
+  chargement: string;
   icon: typeof Smartphone;
 }> = [
   {
@@ -95,6 +96,8 @@ const CANAUX: Array<{
     // ⭐ V3.83 — Libellé simple « Payer » (directive) : la carte elle-même
     // précise la zone et le prestataire — le bouton reste sobre.
     bouton: "Payer",
+    // ⭐ V3.85 — le widget FedaPay s'ouvre SUR LA PAGE (modèle Academia-Helm).
+    chargement: "Ouverture du paiement…",
     icon: Smartphone,
   },
   {
@@ -104,9 +107,49 @@ const CANAUX: Array<{
     detail:
       "Cartes Visa / Mastercard émises n'importe où dans le monde — règlement en FCFA.",
     bouton: "Payer",
+    chargement: "Redirection en cours…",
     icon: Globe,
   },
 ];
+
+/** Libellés des types de don (description du paiement FedaPay). */
+const LIBELLES_TYPES: Record<TypeDon, string> = {
+  offrande: "Offrande",
+  dime: "Dîme",
+  don: "Don",
+};
+
+// ── ⭐ V3.85 — Widget FedaPay checkout.js (modèle Academia-Helm) ──────────
+// Le script officiel est chargé UNE fois par page, à la demande, et le widget
+// s'ouvre en surcouche SUR LA PAGE : le donateur ne quitte plus le site.
+interface FenetreFedaPay {
+  FedaPay?: {
+    init: (options: Record<string, unknown>) => {
+      open: () => void;
+    };
+  };
+}
+
+let promesseCheckout: Promise<void> | null = null;
+
+function chargerCheckoutFedapay(): Promise<void> {
+  if (promesseCheckout) return promesseCheckout;
+  promesseCheckout = new Promise((resoudre, rejeter) => {
+    const fenetre = window as unknown as FenetreFedaPay;
+    if (fenetre.FedaPay) {
+      resoudre();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://cdn.fedapay.com/checkout.js?v=1.1.7";
+    script.async = true;
+    script.onload = () => resoudre();
+    script.onerror = () =>
+      rejeter(new Error("Chargement du module FedaPay impossible."));
+    document.head.appendChild(script);
+  });
+  return promesseCheckout;
+}
 
 /** Regroupement des milliers à espace fine insécable — « 10 000 ». */
 function formaterFcfa(montant: number): string {
@@ -163,9 +206,12 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
       });
       const corps = (await reponse.json().catch(() => ({}))) as {
         paymentUrl?: string;
+        reference?: string;
+        mode?: "widget";
+        publicKey?: string;
         error?: string;
       };
-      if (!reponse.ok || !corps.paymentUrl) {
+      if (!reponse.ok || (!corps.paymentUrl && !corps.publicKey)) {
         setSoumission(null);
         setErreur(
           corps.error ||
@@ -173,8 +219,99 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
         );
         return;
       }
-      // Redirection immédiate vers la page de paiement du prestataire.
-      window.location.assign(corps.paymentUrl);
+
+      // ── ⭐ V3.85 — MODE WIDGET FedaPay (modèle Academia-Helm) ──
+      // Le paiement s'ouvre en surcouche SUR LA PAGE : aucune redirection,
+      // aucune dépendance à la forme des réponses de l'API serveur FedaPay.
+      if (corps.mode === "widget" && corps.publicKey && corps.reference) {
+        const referenceDon = corps.reference;
+        const montantDon = montantFinal as number;
+        try {
+          await chargerCheckoutFedapay();
+        } catch {
+          setSoumission(null);
+          setErreur(
+            "Le module de paiement FedaPay n'a pas pu être chargé — vérifiez votre connexion puis réessayez."
+          );
+          return;
+        }
+        const fenetre = window as unknown as FenetreFedaPay;
+        if (!fenetre.FedaPay) {
+          setSoumission(null);
+          setErreur(
+            "Le module de paiement FedaPay est indisponible — réessayez dans un instant."
+          );
+          return;
+        }
+        const widget = fenetre.FedaPay.init({
+          public_key: corps.publicKey,
+          transaction: {
+            amount: montantDon,
+            // Même format que le flux serveur — le webhook (secours)
+            // retrouve la référence interne depuis la description.
+            description: `${LIBELLES_TYPES[typeDon]} — ${referenceDon}`.slice(
+              0,
+              100
+            ),
+          },
+          customer: {
+            ...(nom.trim() ? { firstname: nom.trim().slice(0, 80) } : {}),
+            email: email.trim(),
+          },
+          onComplete: (retour: {
+            reason?: string;
+            reference?: string | number;
+            id?: string | number;
+          }) => {
+            // Annulation : le donateur a fermé le widget sans payer.
+            if (
+              retour?.reason === "DIALOG DISMISSED" ||
+              retour?.reason === "USERCANCELLED"
+            ) {
+              setSoumission(null);
+              setErreur(
+                "Paiement annulé — votre don n'a pas été débité. Vous pouvez réessayer quand vous le souhaitez."
+              );
+              return;
+            }
+            // Paiement terminé : confirmation serveur (FedaPay tranche avec
+            // la clé secrète) puis redirection vers la page d'état réelle.
+            const fedapayRef =
+              retour?.reference ?? retour?.id ?? null;
+            (async () => {
+              try {
+                await fetch("/api/dons/fedapay/confirmation", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    reference: referenceDon,
+                    fedapayRef,
+                  }),
+                });
+              } catch {
+                // Best-effort : la page merci scrute le statut réel et le
+                // webhook signé reste le canal de secours.
+              } finally {
+                window.location.assign(
+                  `/contribuer/merci?ref=${encodeURIComponent(referenceDon)}`
+                );
+              }
+            })();
+          },
+        });
+        widget.open();
+        return;
+      }
+
+      // ── Flux redirection (Paystack, ou FedaPay sans clé publique) ──
+      if (corps.paymentUrl) {
+        window.location.assign(corps.paymentUrl);
+        return;
+      }
+      setSoumission(null);
+      setErreur(
+        "Le paiement n'a pas pu être initié — réessayez dans un instant."
+      );
     } catch {
       setSoumission(null);
       setErreur(
@@ -430,7 +567,7 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
                         {enCours ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            Redirection en cours…
+                            {canal.chargement}
                           </>
                         ) : (
                           <>
@@ -457,8 +594,9 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
 
               <p className="text-xs text-[#8A8378] mt-4 text-center italic flex items-center justify-center gap-1.5 flex-wrap">
                 <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-                Paiement sécurisé — vous serez redirigé vers la plateforme de notre
-                prestataire ; aucune donnée bancaire ne transite par nos serveurs.
+                Paiement sécurisé — FedaPay s'ouvre directement ici (Mobile
+                Money, carte) ; Paystack vous redirige vers sa plateforme.
+                Aucune donnée bancaire ne transite par nos serveurs.
               </p>
             </fieldset>
           </form>

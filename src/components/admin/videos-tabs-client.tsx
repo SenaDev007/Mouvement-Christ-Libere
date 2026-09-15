@@ -89,6 +89,70 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
   const [videosLocal, setVideosLocal] = useState<VideoWithServant[]>(videos);
   useEffect(() => setVideosLocal(videos), [videos]);
 
+  // ⭐ V3.85 — AUTO-RÉPARATION DES MINIATURES TIKTOK : à l'ouverture du
+  // module, les vidéos TikTok sans vraie miniature (fond noir « TikTok »)
+  // sont récupérées automatiquement — oEmbed officiel → réplication R2
+  // permanente — en boucle de lots (l'API traite ~30-40 vidéos par appel
+  // sous garde-fou horloge). Une seule passe par session d'onglet ;
+  // rafraîchissement des props quand des miniatures ont été récupérées.
+  const [retourMiniatures, setRetourMiniatures] = useState<{
+    recuperees: number;
+    restantes: number;
+  } | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const CLE_SESSION = "mcl-backfill-miniatures-tiktok-v385";
+    try {
+      if (sessionStorage.getItem(CLE_SESSION)) return;
+      sessionStorage.setItem(CLE_SESSION, "1");
+    } catch {
+      // sessionStorage indisponible — on continue quand même.
+    }
+    let annule = false;
+    (async () => {
+      const exclus = new Set<string>();
+      let recupereesTotales = 0;
+      let restantesConnues = 0;
+      // Boucle de lots : tant que du progrès est fait et qu'il reste du
+      // travail (garde de sécurité : 15 lots maximum).
+      for (let tour = 0; tour < 15 && !annule; tour++) {
+        try {
+          const res = await fetch("/api/tiktok/backfill", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ limite: 40, exclure: [...exclus] }),
+          });
+          if (!res.ok) break; // 401/503 : pas de session ou R2 absent — rien à faire
+          const corps = (await res.json()) as {
+            misesAJour?: number;
+            restantes?: number;
+            idsEchecs?: string[];
+          };
+          const misesAJour = corps.misesAJour || 0;
+          recupereesTotales += misesAJour;
+          restantesConnues = corps.restantes || 0;
+          (corps.idsEchecs || []).forEach((id) => exclus.add(id));
+          setRetourMiniatures({
+            recuperees: recupereesTotales,
+            restantes: restantesConnues,
+          });
+          if (restantesConnues <= 0) break; // terminé
+          if (misesAJour === 0) break; // plus aucun progrès (vidéos privées…)
+        } catch {
+          break; // réseau instable — le cron quotidien reprendra
+        }
+      }
+      // Des miniatures ont été récupérées → recharger les props serveur
+      // pour que la grille affiche les vraies images immédiatement.
+      if (recupereesTotales > 0 && !annule) {
+        router.refresh();
+      }
+    })();
+    return () => {
+      annule = true;
+    };
+  }, []);
+
   // Filtrer par serviteur
   const videosByServant = useMemo(() => {
     return activeTab === "all"
@@ -348,6 +412,30 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
             <p className="text-xs text-[#1E0F2B]/60 mt-0.5">
               YouTube publie la vidéo quelques minutes après la fin du direct — cette page se met
               à jour automatiquement et la vidéo apparaîtra ici toute seule.
+            </p>
+          </div>
+        </div>
+      )}
+      {/* ⭐ V3.85 — bandeau d'auto-réparation des miniatures TikTok : les
+          vidéos sans vraie miniature (fond noir « TikTok ») sont récupérées
+          en ce moment même (oEmbed → R2) — la grille se rafraîchit seule. */}
+      {retourMiniatures && retourMiniatures.recuperees > 0 && (
+        <div className="flex items-start gap-3 rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10 px-4 py-3">
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#C9A227] mt-0.5" />
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-[#1E0F2B]">
+              Récupération des miniatures TikTok en cours —{" "}
+              {retourMiniatures.recuperees > 1
+                ? `${retourMiniatures.recuperees} miniatures déjà récupérées`
+                : "1 miniature déjà récupérée"}
+              {retourMiniatures.restantes > 0
+                ? `, ${retourMiniatures.restantes} restante${retourMiniatures.restantes > 1 ? "s" : ""}`
+                : " — c'est terminé"}
+            </p>
+            <p className="text-xs text-[#1E0F2B]/60 mt-0.5">
+              Les vraies miniatures sont téléchargées depuis TikTok puis stockées de façon
+              permanente — la grille se met à jour toute seule au fur et à mesure (un cron
+              quotidien complète silencieusement le reste si besoin).
             </p>
           </div>
         </div>

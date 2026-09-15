@@ -61,6 +61,7 @@ export async function PUT(request: NextRequest) {
     activee?: boolean;
     environment?: string;
     secretKey?: string;
+    publicKey?: string;
     webhookSecret?: string;
   };
   try {
@@ -90,6 +91,10 @@ export async function PUT(request: NextRequest) {
       activee: corps.activee === true,
       environment,
       secretKey: typeof corps.secretKey === "string" ? corps.secretKey : null,
+      // ⭐ V3.85 — clé publique (widget FedaPay) : chaîne vide = retrait
+      // explicite ; absence = conservation.
+      publicKey:
+        typeof corps.publicKey === "string" ? corps.publicKey : undefined,
       webhookSecret:
         typeof corps.webhookSecret === "string" ? corps.webhookSecret : null,
       par: userId,
@@ -112,6 +117,8 @@ export async function PUT(request: NextRequest) {
             environnement: environment,
             cleMasquee: resultat.masque,
             cleFournie: typeof corps.secretKey === "string" && corps.secretKey.trim().length > 0,
+            clePubliqueFournie:
+              typeof corps.publicKey === "string" && corps.publicKey.trim().length > 0,
             webhookFourni:
               typeof corps.webhookSecret === "string" && corps.webhookSecret.trim().length > 0,
           } as never,

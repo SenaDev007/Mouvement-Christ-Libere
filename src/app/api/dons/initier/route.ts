@@ -11,6 +11,7 @@ import {
   paystackConfigure,
   PAYSTACK_AIDE_CONFIG,
 } from "@/lib/payments/paystack.service";
+import { lireConfigPasserelle } from "@/lib/payments/gateway-config";
 import {
   DemandeDon,
   DEVISE_DON,
@@ -176,6 +177,54 @@ export async function POST(request: NextRequest) {
     };
     const reference = genererReferenceDon();
     let donCree = false;
+
+    // ── ⭐ V3.85 — MODE WIDGET FedaPay (modèle Academia-Helm) ──
+    // Quand une clé PUBLIQUE est configurée, le paiement se déroule dans le
+    // widget checkout.js ouvert sur la page : AUCUN appel serveur vers
+    // FedaPay ici (zéro dépendance à la forme des réponses API), le don est
+    // enregistré en attente et la confirmation passe par
+    // /api/dons/fedapay/confirmation + le webhook signé.
+    if (provider === "fedapay") {
+      const config = await lireConfigPasserelle("fedapay");
+      if (config.publicKey) {
+        try {
+          await ensureDonsTables();
+          await db.donation.create({
+            data: {
+              reference,
+              provider,
+              typeDon,
+              amount: montant,
+              currency: devise,
+              method: provider,
+              donorEmail: email,
+              donorName: nom,
+              isAnonymous: !nom,
+              statut: "pending",
+              recurrent,
+            },
+          });
+        } catch (e) {
+          console.error("[dons/initier] Écriture du don impossible :", e);
+          return NextResponse.json(
+            {
+              error:
+                "Le don n'a pas pu être enregistré — réessayez dans un instant.",
+            },
+            { status: 500 }
+          );
+        }
+        return NextResponse.json(
+          {
+            reference,
+            mode: "widget",
+            publicKey: config.publicKey,
+            environment: config.environment,
+          },
+          { status: 200 }
+        );
+      }
+    }
 
     try {
       // ① Ligne « en attente » AVANT l'appel externe — source de vérité.

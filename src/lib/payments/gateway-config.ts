@@ -107,6 +107,13 @@ export interface ConfigPasserelle {
   secretKey: string | null;
   /** Secret de vérification de webhook (null = webhook non vérifiable). */
   webhookSecret: string | null;
+  /**
+   * ⭐ V3.85 — Clé PUBLIQUE FedaPay (pk_live_/pk_sandbox_) : alimente le
+   * widget checkout.js ouvert directement sur /contribuer (modèle
+   * Academia-Helm). Null = la page redirige vers la plateforme FedaPay
+   * (flux serveur historique, toujours valable).
+   */
+  publicKey: string | null;
   /** Environnement FedaPay (sandbox | live) — indicatif pour Paystack. */
   environment: "sandbox" | "live";
   /** La ligne back-office est-elle activée ? (false → repli env) */
@@ -128,6 +135,8 @@ function configEnv(provider: ProviderId): ConfigPasserelle {
       source: process.env.FEDAPAY_SECRET_KEY ? "environnement" : "absente",
       secretKey: process.env.FEDAPAY_SECRET_KEY || null,
       webhookSecret: process.env.FEDAPAY_WEBHOOK_SECRET || null,
+      // ⭐ V3.85 — repli environnement de la clé publique (widget).
+      publicKey: process.env.FEDAPAY_PUBLIC_KEY || null,
       environment: process.env.FEDAPAY_ENV === "live" ? "live" : "sandbox",
       activee: false,
     };
@@ -140,6 +149,7 @@ function configEnv(provider: ProviderId): ConfigPasserelle {
       process.env.PAYSTACK_WEBHOOK_SECRET ||
       process.env.PAYSTACK_SECRET_KEY ||
       null,
+    publicKey: null,
     environment: "live",
     activee: false,
   };
@@ -183,6 +193,14 @@ export async function lireConfigPasserelle(
             provider === "paystack"
               ? webhookBrut || cle
               : webhookBrut,
+          // ⭐ V3.85 — clé publique (stockée en clair : publique par nature).
+          // Si la ligne back-office n'en a pas mais que l'environnement en
+          // fournit une, elle sert de complément (aucune incohérence possible
+          // pour une valeur non secrète).
+          publicKey:
+            provider === "fedapay"
+              ? ligne.publicKey || process.env.FEDAPAY_PUBLIC_KEY || null
+              : null,
           environment:
             provider === "fedapay"
               ? ligne.environment === "live"
@@ -218,6 +236,8 @@ export interface EtatPasserelle {
     cleMasquee: string | null; // « •••• 1234 »
     webhookMasque: string | null;
     webhooksSecretDefini: boolean;
+    /** ⭐ V3.85 — clé publique FedaPay (widget) : masque + présence. */
+    clePubliqueMasquee: string | null; // « pk_live_… abcd »
     majPar: string | null; // nom du compte admin
     majLe: string | null; // date ISO
   } | null;
@@ -232,6 +252,8 @@ export interface EtatPasserelle {
     source: SourceConfig;
     prete: boolean; // une clé est disponible
     webhookPret: boolean;
+    /** ⭐ V3.85 — clé publique disponible pour le widget FedaPay ? */
+    clePubliquePrete: boolean;
   };
 }
 
@@ -285,6 +307,9 @@ export async function lireEtatPasserelles(): Promise<EtatPasserelle[]> {
               ? `•••• ${ligne.webhookLast4}`
               : null,
             webhooksSecretDefini: Boolean(ligne.webhookSecretEnc),
+            clePubliqueMasquee: ligne.publicKey
+              ? `${ligne.publicKey.slice(0, 11)}… ${ligne.publicKey.slice(-4)}`
+              : null,
             majPar,
             majLe: ligne.updatedAt
               ? new Date(ligne.updatedAt).toISOString()
@@ -309,6 +334,7 @@ export async function lireEtatPasserelles(): Promise<EtatPasserelle[]> {
         source: config.source,
         prete: Boolean(config.secretKey),
         webhookPret: Boolean(config.webhookSecret),
+        clePubliquePrete: Boolean(config.publicKey),
       },
     });
   }
@@ -335,11 +361,19 @@ const PREFIXES_CLES: Record<ProviderId, { live: RegExp; sandbox: RegExp }> = {
   },
 };
 
+/** ⭐ V3.85 — Préfixes des clés PUBLIQUES FedaPay (widget checkout.js). */
+const PREFIXES_CLES_PUBLIQUES: Record<"live" | "sandbox", RegExp> = {
+  live: /^pk_live_[A-Za-z0-9_-]+$/,
+  sandbox: /^pk_sandbox_[A-Za-z0-9_-]+$/,
+};
+
 /**
  * Enregistre la configuration d'une passerelle (appelé par
  * PUT /admin/api/paiements APRÈS la garde exigerSession SUPER_ADMIN).
  *
  *   · secretKey facultatif : absent = conserver la clé actuelle ;
+ *   · publicKey facultatif (⭐ V3.85, FedaPay) : absent = conserver ;
+ *     chaîne vide = la RETIRER (retour au flux redirection) ;
  *   · webhookSecret facultatif : absent = conserver ; "" = le supprimer ;
  *   · cohérence environnement ↔ préfixe de clé vérifiée (refus sinon) ;
  *   · cachet d'audit : updatedBy (id du compte), jamais le secret.
@@ -349,6 +383,7 @@ export async function enregistrerConfigPasserelle(params: {
   activee: boolean;
   environment: "sandbox" | "live";
   secretKey?: string | null;
+  publicKey?: string | null;
   webhookSecret?: string | null;
   par: string;
 }): Promise<ResultatEnregistrement> {
@@ -443,6 +478,46 @@ export async function enregistrerConfigPasserelle(params: {
     webhookEnClair = dechiffrerSecret(existante.webhookSecretEnc);
   }
 
+  // ── ⭐ V3.85 — Clé PUBLIQUE FedaPay (widget checkout.js) ──
+  // undefined = conserver ; "" = retirer (retour au flux redirection) ;
+  // valeur = valider le préfixe contre l'ENVIRONNEMENT (une clé pk_sandbox_
+  // ne peut pas ouvrir un widget live, et réciproquement).
+  let clePublique: string | null | undefined;
+  if (typeof params.publicKey === "string") {
+    const nettoye = params.publicKey.trim();
+    if (nettoye) {
+      if (provider !== "fedapay") {
+        return {
+          ok: false,
+          erreur: "Seule la passerelle FedaPay utilise une clé publique.",
+        };
+      }
+      if (nettoye.length < 20 || nettoye.length > 300) {
+        return {
+          ok: false,
+          erreur: "La clé publique paraît invalide (longueur inattendue).",
+        };
+      }
+      const motif =
+        environment === "live"
+          ? PREFIXES_CLES_PUBLIQUES.live
+          : PREFIXES_CLES_PUBLIQUES.sandbox;
+      if (!motif.test(nettoye)) {
+        return {
+          ok: false,
+          erreur: `Cette clé publique ne correspond pas à l'environnement « ${
+            environment === "live" ? "Production" : "Sandbox (test)"
+          } » — une clé ${
+            environment === "live" ? "pk_live_…" : "pk_sandbox_…"
+          } est attendue.`,
+        };
+      }
+      clePublique = nettoye;
+    } else {
+      clePublique = null; // champ vidé exprès → retrait
+    }
+  }
+
   // ── Garde : activer sans clé (ni en base, ni en entrée) est interdit ──
   if (activee && !cleEnClair) {
     return {
@@ -457,6 +532,7 @@ export async function enregistrerConfigPasserelle(params: {
     environment: string;
     secretKeyEnc?: string | null;
     webhookSecretEnc?: string | null;
+    publicKey?: string | null;
     cleLast4?: string | null;
     webhookLast4?: string | null;
     updatedBy: string;
@@ -469,6 +545,11 @@ export async function enregistrerConfigPasserelle(params: {
   if (cleEnClair) {
     donnees.secretKeyEnc = chiffrerSecret(cleEnClair);
     donnees.cleLast4 = cleEnClair.slice(-4);
+  }
+  // ⭐ V3.85 — clé publique : écrite seulement quand elle est fournie
+  // (valeur ou retrait explicite) — jamais touchée sinon.
+  if (clePublique !== undefined) {
+    donnees.publicKey = clePublique;
   }
   if (webhookEnClair) {
     donnees.webhookSecretEnc = chiffrerSecret(webhookEnClair);

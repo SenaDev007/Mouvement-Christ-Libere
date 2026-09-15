@@ -764,6 +764,10 @@ model PaymentGatewayConfig {
   environment      String   @default("sandbox") // 'sandbox' | 'live' (FedaPay ; indicatif pour Paystack)
   secretKeyEnc     String?  @db.Text // clé secrète API chiffrée (AES-256-GCM)
   webhookSecretEnc String?  @db.Text // secret de vérification webhook chiffré (facultatif)
+  // ⭐ V3.85 — Clé PUBLIQUE FedaPay (pk_live_/pk_sandbox_) : ouvre le widget
+  // checkout.js directement sur /contribuer (modèle Academia-Helm). Publique
+  // par nature (elle équipe le navigateur du donateur) → stockage en clair.
+  publicKey        String?
   cleLast4         String? // 4 derniers caractères de la clé — affichage masqué
   webhookLast4     String? // idem pour le secret webhook
   updatedBy        String? // id du compte super admin ayant modifié

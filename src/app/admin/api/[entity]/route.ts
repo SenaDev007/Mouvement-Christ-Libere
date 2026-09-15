@@ -10,6 +10,9 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme } from "@/lib/live-announcement-relay";
+// ⭐ V3.85 — Miniature TikTok automatique à la création d'une vidéo.
+import { estUrlTiktok } from "@/lib/tiktok";
+import { replicquerMiniatureTiktok } from "@/lib/tiktok-miniature";
 
 // Force runtime Node.js (pas edge) pour Prisma
 export const runtime = "nodejs";
@@ -126,6 +129,46 @@ export async function POST(
     if (entity === "biographies") await ensureBiographyPhotoColumn();
     const delegate = getDelegate(entity as EntityName);
     const created = await delegate.create({ data: body });
+
+    // ⭐ V3.85 — MINIATURE TIKTOK AUTOMATIQUE : une vidéo TikTok créée sans
+    // miniature (le pasteur colle simplement l'URL) reçoit immédiatement sa
+    // VRAIE miniature (oEmbed officiel → réplication R2 permanente) — plus
+    // JAMAIS de fond noir « TikTok » dans la grille du back-office ni sur
+    // le site public. Best-effort : un échec (vidéo privée, TikTok lent)
+    // n'empêche PAS la création — l'auto-réparation du module Vidéos et le
+    // cron quotidien rattraperont.
+    if (entity === "videos") {
+      const videoCreee = created as unknown as {
+        id: string;
+        videoUrl?: string | null;
+        thumbnailUrl?: string | null;
+      };
+      if (
+        videoCreee?.videoUrl &&
+        !videoCreee.thumbnailUrl &&
+        estUrlTiktok(videoCreee.videoUrl)
+      ) {
+        const miniature = await replicquerMiniatureTiktok(
+          videoCreee.id,
+          videoCreee.videoUrl
+        );
+        if (miniature) {
+          try {
+            await db.video.update({
+              where: { id: videoCreee.id },
+              data: { thumbnailUrl: miniature },
+            });
+            (created as { thumbnailUrl?: string | null }).thumbnailUrl =
+              miniature;
+          } catch (e) {
+            console.warn(
+              "[admin/api/videos] Enregistrement de la miniature TikTok impossible :",
+              e instanceof Error ? e.message : e
+            );
+          }
+        }
+      }
+    }
 
     // ⭐ V3.36 — ANNONCE AUTOMATIQUE DANS YESHUA CONNECT : quand un admin
     // programme un live depuis le back-office (bouton « Programmer un live »

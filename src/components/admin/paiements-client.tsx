@@ -62,7 +62,7 @@ const META_PASSERELLES: Record<
     titre: "FedaPay",
     zone: "Côte d'Ivoire · Afrique de l'Ouest",
     detail:
-      "Mobile Money (MTN, Orange, Moov, Wave) et cartes bancaires régionales — règlement en FCFA.",
+      "Mobile Money (MTN, Orange, Moov, Wave) et cartes bancaires régionales — règlement en FCFA. Avec une clé publique, le paiement s'ouvre directement sur la page Contribuer.",
     placeholderCle: "sk_live_… ou sk_sandbox_…",
     aideWebhook:
       "Secret défini dans le dashboard FedaPay (Paramètres → Webhooks → Secret key). Sans lui, les webhooks sont rejetés.",
@@ -185,6 +185,10 @@ function CartePasserelle({
     etat?.backOffice?.environment === "live" ? "live" : "sandbox"
   );
   const [cle, setCle] = useState("");
+  // ⭐ V3.85 — clé PUBLIQUE FedaPay (widget checkout.js sur /contribuer).
+  const [clePublique, setClePublique] = useState("");
+  const [clePubliqueTouche, setClePubliqueTouche] = useState(false);
+  const [afficherClePublique, setAfficherClePublique] = useState(false);
   const [webhookSecret, setWebhookSecret] = useState("");
   // « Touché » = l'utilisateur a réellement modifié le champ : seule
   // condition pour transmettre la valeur (chaîne vide = suppression
@@ -245,6 +249,9 @@ function CartePasserelle({
           // Champs vides et jamais touchés = conservation des valeurs
           // enregistrées ; le secret webhook vidé exprès = suppression.
           secretKey: cle.trim() || undefined,
+          // ⭐ V3.85 — clé publique : touchée = envoyée (vide = retrait
+          // explicite) ; jamais touchée = conservation de l'enregistrée.
+          publicKey: clePubliqueTouche ? clePublique : undefined,
           webhookSecret: webhookTouche ? webhookSecret : undefined,
         }),
       });
@@ -264,6 +271,9 @@ function CartePasserelle({
       }
       // Succès : champs vidés (jamais de secret qui traîne), état rafraîchi.
       setCle("");
+      setClePublique("");
+      setClePubliqueTouche(false);
+      setAfficherClePublique(false);
       setWebhookSecret("");
       setWebhookTouche(false);
       setAfficherCle(false);
@@ -542,6 +552,70 @@ function CartePasserelle({
               </button>
             </div>
           </div>
+
+          {/* ⭐ V3.85 — Clé PUBLIQUE (FedaPay uniquement) : widget checkout.js */}
+          {provider === "fedapay" && (
+            <div>
+              <label
+                htmlFor={`cle-publique-${provider}`}
+                className="flex items-center gap-1.5 text-xs font-semibold text-[#2A0E3D] mb-1.5"
+              >
+                <Globe className="w-3.5 h-3.5 text-[#C9A227]" />
+                Clé publique (paiement sur la page)
+                <span className="text-[#8A8378] font-normal">(recommandée)</span>
+              </label>
+              <div className="relative">
+                <input
+                  id={`cle-publique-${provider}`}
+                  type={afficherClePublique ? "text" : "password"}
+                  value={clePublique}
+                  onChange={(e) => {
+                    setClePublique(e.target.value);
+                    setClePubliqueTouche(true);
+                  }}
+                  placeholder="pk_live_… ou pk_sandbox_…"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/30 bg-white text-[#1E0F2B] font-mono text-sm placeholder:text-[#8A8378]/50 placeholder:font-sans focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setAfficherClePublique(!afficherClePublique)}
+                  aria-label={
+                    afficherClePublique
+                      ? "Masquer la clé publique"
+                      : "Afficher la clé publique"
+                  }
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#1E0F2B] hover:bg-[#8A8378]/10 transition-colors"
+                >
+                  {afficherClePublique ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              {etat.backOffice?.clePubliqueMasquee ? (
+                <p className="text-[11px] text-[#8A8378] mt-1.5">
+                  Clé publique enregistrée :{" "}
+                  <span className="font-mono text-[#1E0F2B]">
+                    {etat.backOffice.clePubliqueMasquee}
+                  </span>{" "}
+                  — le paiement s'ouvre directement sur la page Contribuer.
+                  Vider le champ puis enregistrer pour revenir à la redirection
+                  vers FedaPay.
+                </p>
+              ) : (
+                <p className="text-[11px] text-[#8A8378] mt-1.5 leading-relaxed">
+                  Avec cette clé (dashboard FedaPay → Paramètres → API → clé
+                  publique), le paiement s'ouvre dans une fenêtre directement
+                  sur la page Contribuer — sans quitter le site. Sans elle, le
+                  donateur est redirigé vers la plateforme FedaPay (l'ancien
+                  mode reste valable).
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Secret webhook */}
           <div>

@@ -10,6 +10,9 @@ import { db } from "@/lib/db";
 import { isR2Configured, purgerArtefactsR2 } from "@/lib/r2";
 import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme, annoncerLiveAnnule } from "@/lib/live-announcement-relay";
+// ⭐ V3.85 — Miniature TikTok automatique à la modification d'une vidéo.
+import { estUrlTiktok } from "@/lib/tiktok";
+import { replicquerMiniatureTiktok } from "@/lib/tiktok-miniature";
 
 const ENTITY_MAP = {
   servants: "servant",
@@ -236,6 +239,42 @@ export async function PATCH(
     }
 
     const updated = await delegate.update({ where: { id }, data: body });
+
+    // ⭐ V3.85 — MINIATURE TIKTOK AUTOMATIQUE (modification) : l'URL vient
+    // d'être changée en une URL TikTok sans miniature → récupérer la VRAIE
+    // miniature immédiatement (même mécanique qu'à la création).
+    if (entity === "videos") {
+      const videoMAJ = updated as unknown as {
+        id: string;
+        videoUrl?: string | null;
+        thumbnailUrl?: string | null;
+      };
+      if (
+        videoMAJ?.videoUrl &&
+        !videoMAJ.thumbnailUrl &&
+        estUrlTiktok(videoMAJ.videoUrl)
+      ) {
+        const miniature = await replicquerMiniatureTiktok(
+          videoMAJ.id,
+          videoMAJ.videoUrl
+        );
+        if (miniature) {
+          try {
+            await db.video.update({
+              where: { id: videoMAJ.id },
+              data: { thumbnailUrl: miniature },
+            });
+            (updated as { thumbnailUrl?: string | null }).thumbnailUrl =
+              miniature;
+          } catch (e) {
+            console.warn(
+              "[admin/api/videos] Enregistrement de la miniature TikTok impossible :",
+              e instanceof Error ? e.message : e
+            );
+          }
+        }
+      }
+    }
 
     // ⭐ V2.7 — Propagation de la photo vers l'autre « versant » de la
     // personne (Afrika serviteur ↔ Afrika compte : une seule photo partout).

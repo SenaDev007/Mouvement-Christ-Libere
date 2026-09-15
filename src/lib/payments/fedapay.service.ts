@@ -260,12 +260,107 @@ export async function testerConnexionFedapay(params: {
   }
 }
 
+/**
+ * ⭐ V3.85 — Vérification AUTORITAIRE d'une transaction FedaPay (modèle
+ * Academia-Helm : GET /v1/transactions/{id} avec la clé SECRÈTE).
+ *
+ * Utilisée par /api/dons/fedapay/confirmation APRÈS le retour du widget
+ * checkout.js : le navigateur ne fait JAMAIS foi — seul FedaPay tranche.
+ * La réponse est lue multi-formes (enveloppe « v1/transaction », « data »,
+ * « transaction » ou objet plat — même robustesse que extraireTransaction).
+ */
+export async function verifierTransactionFedapay(
+  referenceFournisseur: string
+): Promise<{
+  statut: "approved" | "declined" | "pending" | "cancelled" | "inconnu";
+  montant: number | null;
+  id: string | null;
+}> {
+  const config = await lireConfigPasserelle("fedapay");
+  if (!config.secretKey) {
+    throw new ErreurPasserelle(
+      "La passerelle FedaPay n'est pas encore configurée (aucune clé API — voir /admin/paiements)."
+    );
+  }
+
+  const reponse = await appelApi(
+    { base: baseApi(config.environment), cle: config.secretKey },
+    `/v1/transactions/${encodeURIComponent(referenceFournisseur)}`,
+    undefined,
+    "GET"
+  );
+
+  // Extraction multi-formes (l'API réelle enveloppe sous « v1/transaction »).
+  const enveloppes: unknown[] = [
+    reponse["v1/transaction"],
+    reponse.transaction,
+    reponse.data,
+    reponse,
+  ];
+  let transaction: Record<string, unknown> | null = null;
+  for (const enveloppe of enveloppes) {
+    if (!enveloppe || typeof enveloppe !== "object") continue;
+    const objet = enveloppe as Record<string, unknown>;
+    const internes: unknown[] = [
+      objet,
+      typeof objet.data === "object" && objet.data !== null
+        ? objet.data
+        : undefined,
+    ];
+    for (const interne of internes) {
+      if (
+        interne &&
+        typeof interne === "object" &&
+        (interne as Record<string, unknown>).status != null
+      ) {
+        transaction = interne as Record<string, unknown>;
+        break;
+      }
+    }
+    if (transaction) break;
+  }
+
+  if (!transaction) {
+    return { statut: "inconnu", montant: null, id: null };
+  }
+
+  // Statuts FedaPay v1 : pending / approved / declined / canceled
+  // (le webhook mappe aussi canceled → échec — même convention ici).
+  const brut = String(transaction.status || "").toLowerCase();
+  let statut: "approved" | "declined" | "pending" | "cancelled" | "inconnu" =
+    "inconnu";
+  if (brut === "approved" || brut === "success" || brut === "transferred") {
+    statut = "approved";
+  } else if (brut === "declined" || brut === "failed") {
+    statut = "declined";
+  } else if (brut === "pending") {
+    statut = "pending";
+  } else if (brut === "canceled" || brut === "cancelled") {
+    statut = "cancelled";
+  }
+
+  const montantBrut = transaction.amount;
+  const montant =
+    montantBrut !== undefined && montantBrut !== null
+      ? Number(montantBrut)
+      : null;
+
+  return {
+    statut,
+    montant: montant !== null && Number.isFinite(montant) ? montant : null,
+    id:
+      transaction.id !== undefined && transaction.id !== null
+        ? String(transaction.id)
+        : null,
+  };
+}
+
 /** Appel JSON signé Bearer vers l'API FedaPay (timeout global 20 s). */
 async function appelApi(
   identifiants: { base: string; cle: string },
   chemin: string,
   corps: unknown,
-  methode: "POST" = "POST"
+  methode: "POST" | "GET" = "POST"
 ): Promise<Record<string, unknown>> {
   const controle = new AbortController();
   const minuteur = setTimeout(() => controle.abort(), TIMEOUT_MS);
@@ -277,7 +372,7 @@ async function appelApi(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify(corps),
+      ...(methode === "POST" ? { body: JSON.stringify(corps) } : {}),
       signal: controle.signal,
     });
 
