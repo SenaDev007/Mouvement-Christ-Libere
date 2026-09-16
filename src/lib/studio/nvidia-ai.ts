@@ -70,7 +70,7 @@ const URL_DIRECTEUR =
 const MODELE_DIRECTEUR = process.env.NVIDIA_DIRECTEUR_MODELE || "openai/gpt-oss-20b";
 
 const DELAI_TIMEOUT_MS = Number(process.env.NVIDIA_TIMEOUT_MS || 40_000);
-const DELAI_DIRECTEUR_MS = Number(process.env.NVIDIA_DIRECTEUR_TIMEOUT_MS || 30_000);
+const DELAI_DIRECTEUR_MS = Number(process.env.NVIDIA_DIRECTEUR_TIMEOUT_MS || 45_000);
 
 export class ErreurNvidia extends Error {
   constructor(

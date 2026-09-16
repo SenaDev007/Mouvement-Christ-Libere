@@ -1187,7 +1187,10 @@ export async function handlerDirecteurIA(
     });
   } catch (e) {
     console.error("[studio/ai/directeur] :", e);
-    return erreurJson(messageIA(e), 422, "IA_ECHEC");
+    return NextResponse.json(
+      { error: messageIA(e), code: "IA_ECHEC", ...diagnosticIA(e) },
+      { status: 422 }
+    );
   }
 }
 
@@ -1197,6 +1200,16 @@ export async function handlerDirecteurIA(
 //     DÉTOURAGE AUTOMATIQUE par notre moteur (cutout.ts) ;
 //   · générer un fond (FLUX.1 [dev]) à la palette du ministère.
 // ─────────────────────────────────────────────────────────────────────
+
+/** Champ de diagnostic ajouté aux erreurs IA (dépannage admin — l'UI ne
+ * l'affiche jamais, elle ne lit que `error` ; il contient le statut et le
+ * début de la réponse NVIDIA, sans aucune clé). */
+function diagnosticIA(e: unknown): Record<string, string> {
+  if (e instanceof ErreurNvidia) {
+    return { diagnostic: `${e.statut} :: ${(e.detail || e.message).substring(0, 400)}` };
+  }
+  return { diagnostic: `nom :: ${e instanceof Error ? e.message : "?"}`.substring(0, 400) };
+}
 
 /** Traduit une erreur NVIDIA en message pastoral (jamais technique). */
 function messageIA(e: unknown): string {
@@ -1248,7 +1261,10 @@ export async function handlerPeaufinerPhotoIA(
       pngIA = await peaufinerPhotoNvidia(origine.originalUrl, consigne);
     } catch (e) {
       console.error("[studio/ai/peaufiner] NVIDIA :", e);
-      return erreurJson(messageIA(e), 422, "IA_ECHEC");
+      return NextResponse.json(
+        { error: messageIA(e), code: "IA_ECHEC", ...diagnosticIA(e) },
+        { status: 422 }
+      );
     }
     if (pngIA.length < 1024) {
       return erreurJson("L'IA a renvoyé un résultat inexploitable — réessayez.", 422, "IA_ECHEC");
@@ -1360,7 +1376,10 @@ export async function handlerGenererFondIA(
       );
     } catch (e) {
       console.error("[studio/ai/fond] NVIDIA :", e);
-      return erreurJson(messageIA(e), 422, "IA_ECHEC");
+      return NextResponse.json(
+        { error: messageIA(e), code: "IA_ECHEC", ...diagnosticIA(e) },
+        { status: 422 }
+      );
     }
     if (pngIA.length < 1024) {
       return erreurJson("L'IA a renvoyé un résultat inexploitable — reformulez et réessayez.", 422, "IA_ECHEC");
