@@ -196,9 +196,6 @@ async function appelerNvidia(
           prompt: corps.prompt as string,
         };
         if (typeof corps.image === "string") minimal.image = corps.image;
-        if (corps.aspect_ratio) minimal.aspect_ratio = corps.aspect_ratio;
-        if (corps.steps) minimal.steps = corps.steps;
-        if (corps.seed !== undefined) minimal.seed = corps.seed;
         try {
           return await tenter(minimal);
         } catch {
@@ -265,17 +262,20 @@ export async function genererFondNvidia(consigne: string): Promise<Buffer> {
   const cleApi = process.env.NVIDIA_API_KEY?.trim();
   if (!cleApi) throw new ErreurNvidia("Clé NVIDIA absente (NVIDIA_API_KEY).", 503);
 
+  // ⭐ V3.91 — schéma STRICT du endpoint /v1/genai (preuve 422 du
+  // 16/09/2026 : « aspect_ratio » et « output_format » sont
+  // « Extra inputs are not permitted » sur flux.1-dev — seul Kontext les
+  // accepte). Paramètres valides : prompt, cfg_scale, steps, seed, mode.
+  // Le fond sort au ratio natif du modèle ; notre pipeline sharp le
+  // recentre en 1920×1080 « cover » (§ handlerGenererFondIA).
   const corps = await appelerNvidia(
     URLS_FLUX,
     {
       prompt: consigne,
       mode: "base",
-      aspect_ratio: "16:9",
-      // ⭐ V3.91 — cfg_scale (schéma officiel), seed fixe pour itérer.
       cfg_scale: 3.5,
       steps: 30,
       seed: 0,
-      output_format: "png",
     },
     cleApi
   );
@@ -431,28 +431,46 @@ export async function directeurIA(
   const cleApi = process.env.NVIDIA_API_KEY?.trim();
   if (!cleApi) throw new ErreurNvidia("Clé NVIDIA absente (NVIDIA_API_KEY).", 503);
 
-  const res = await fetch(URL_DIRECTEUR, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${cleApi}`,
-      "content-type": "application/json",
-      accept: "application/json",
-    },
-    body: JSON.stringify({
-      model: MODELE_DIRECTEUR,
-      messages: [
-        { role: "system", content: SYSTEME_DIRECTEUR },
-        ...historique.slice(-12), // borné : la mémoire d'itération reste légère
-        { role: "user", content: messageUtilisateur.substring(0, 4000) },
-      ],
-      temperature: 0.6,
-      top_p: 0.95,
-      max_tokens: 2048,
-      stream: false,
-    }),
-    signal: AbortSignal.timeout(DELAI_DIRECTEUR_MS),
-  });
-  const texte = await res.text();
+  // ⭐ gpt-oss-20b est un modèle à RAISONNEMENT : à l'effort par défaut,
+  // il dépasse 45 s (preuve du 16/09/2026 : « The operation was aborted due
+  // to timeout »). Effort LEGER : la tâche (JSON de spécification) est
+  // simple — quelques secondes suffisent.
+  const appeler = async (charge: Record<string, unknown>) => {
+    const res = await fetch(URL_DIRECTEUR, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${cleApi}`,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify(charge),
+      signal: AbortSignal.timeout(DELAI_DIRECTEUR_MS),
+    });
+    const texte = await res.text();
+    return { res, texte };
+  };
+
+  const base: Record<string, unknown> = {
+    model: MODELE_DIRECTEUR,
+    messages: [
+      { role: "system", content: SYSTEME_DIRECTEUR },
+      ...historique.slice(-12), // borné : la mémoire d'itération reste légère
+      { role: "user", content: messageUtilisateur.substring(0, 4000) },
+    ],
+    // Réglages de l'exemple officiel build.nvidia.com (gpt-oss : temp 1).
+    temperature: 1,
+    top_p: 1,
+    max_tokens: 1600,
+    stream: false,
+  };
+
+  let { res, texte } = await appeler({ ...base, reasoning_effort: "low" });
+  if (res.status === 400 || res.status === 422) {
+    // Le endpoint n'accepte pas reasoning_effort ? Repli sans le paramètre.
+    const second = await appeler(base);
+    res = second.res;
+    texte = second.texte;
+  }
   if (!res.ok) {
     throw new ErreurNvidia(
       `Le directeur IA a répondu ${res.status}.`,
