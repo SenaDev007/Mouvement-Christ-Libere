@@ -17,10 +17,17 @@ const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/api/login"];
 // (garde exigerSession SUPER_ADMIN — 401/403 JSON).
 // ⭐ V3.83 — /admin/api/paiements : configuration des passerelles de
 // paiement FedaPay/Paystack (garde exigerSession SUPER_ADMIN — 401/403 JSON).
+// ⭐ V3.89 — /admin/api/annonces : registre partagé des annonces du
+// ministère (garde exigerSession SUPER_ADMIN — 401/403 JSON ; mêmes
+// données que le secrétariat, cf. annonces-api.ts).
+// ⭐ V3.89 — /admin/api/studio : MCL Creative Studio (miniatures &
+// affiches — garde exigerSession SUPER_ADMIN — 401/403 JSON).
 const ADMIN_API_AVEC_GARDE_PROPRE = [
   "/admin/api/staff",
   "/admin/api/demandes",
   "/admin/api/paiements",
+  "/admin/api/annonces",
+  "/admin/api/studio",
 ];
 
 // ⭐ V3.44 — Back-office sur son propre sous-domaine : admin.mouvementchristlibere.com
@@ -47,6 +54,55 @@ const TRESORERIE_HOSTS = new Set([
 ]);
 const PUBLIC_SECRETARIAT_PATHS = ["/secretariat/login", "/secretariat/api/login", "/secretariat/api/logout"];
 const PUBLIC_TRESORERIE_PATHS = ["/tresorerie/login", "/tresorerie/api/login", "/tresorerie/api/logout"];
+
+// ⭐ V3.89 — Pages PUBLIQUES du site : sur un sous-domaine d'espace (admin,
+// secrétariat, trésorerie), elles n'ont RIEN à faire — la redirection générique
+// les préfixait (/rendez-vous → /admin/rendez-vous → 404, signalé par le
+// pasteur). Elles sont désormais REDIRIGÉES vers le site public (même domaine,
+// sans le préfixe de sous-domaine) : la page de demande de rendez-vous et le
+// registre public des annonces restent accessibles depuis N'IMPORTE QUEL
+// espace, dans un onglet classique.
+// NB : /annonces fait exception sur les hôtes admin et secrétariat — ces
+// deux espaces possèdent leur PROPRE module d'annonces (/admin/annonces
+// V3.89, /secretariat/annonces V3.66) que la redirection générique sert.
+const PAGES_PUBLIQUES_ESPACE = [
+  "/rendez-vous",
+  "/annonces",
+  "/contact",
+  "/temoignages",
+  "/enseignements",
+  "/videos",
+  "/live",
+  "/communaute",
+  "/contribuer",
+  "/calendrier",
+  "/calendrier-biblique",
+  "/bible",
+  "/intercession",
+  "/adoration-louanges",
+  "/afrika",
+  "/pasteur-kongo",
+];
+
+/** Le chemin correspond-il à une page publique à réexpédier au site www ? */
+function estPagePublique(pathname: string): boolean {
+  return PAGES_PUBLIQUES_ESPACE.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+}
+
+/** URL du site public pour un hôte d'espace (admin.x → x, localhost en dev).
+ * Protocole : x-forwarded-proto (Cloudflare/Vercel) sinon http (dev local). */
+function urlSitePublic(request: NextRequest): string {
+  const host = request.headers.get("host") || "";
+  const hostname = host.split(":")[0].toLowerCase();
+  const port = host.includes(":") ? host.split(":")[1] : "";
+  const proto = request.headers.get("x-forwarded-proto")?.split(",")[0] || "http";
+  // admin.mouvementchristlibere.com → mouvementchristlibere.com
+  // secretariat.localhost:3000 (dev) → localhost:3000
+  const sansSousDomaine = hostname.split(".").slice(1).join(".") || hostname;
+  return `${proto}://${sansSousDomaine}${port ? `:${port}` : ""}`;
+}
 
 // Fichiers servis depuis /public (logo du back-office, manifest, sons…) et
 // assets divers : ils restent accessibles TELS QUELS sur le sous-domaine admin —
@@ -100,6 +156,28 @@ export function proxy(request: NextRequest) {
   const hoteAdmin = ADMIN_HOSTS.has(hostname);
   const hoteSecretariat = SECRETARIAT_HOSTS.has(hostname);
   const hoteTresorerie = TRESORERIE_HOSTS.has(hostname);
+  const hoteEspace = hoteAdmin || hoteSecretariat || hoteTresorerie;
+
+  // ------------------------------------------------------------------
+  // ⭐ V3.89 — Pages PUBLIQUES sur un sous-domaine d'espace : redirection
+  // vers le site public (fix « /rendez-vous et /annonces → 404 »).
+  // AVANT la redirection générique d'espace, sinon /rendez-vous devenait
+  // /admin/rendez-vous → 404. Exception : /annonces sur les hôtes admin et
+  // secrétariat, qui tombent volontairement sur leurs modules respectifs.
+  // ------------------------------------------------------------------
+  if (
+    hoteEspace &&
+    !pathname.startsWith("/_next") &&
+    !FICHIER_STATIQUE.test(pathname) &&
+    estPagePublique(pathname) &&
+    !(
+      (hoteAdmin || hoteSecretariat) &&
+      (pathname === "/annonces" || pathname.startsWith("/annonces/"))
+    )
+  ) {
+    const url = new URL(`${urlSitePublic(request)}${pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(url, 307);
+  }
 
   // ------------------------------------------------------------------
   // ⭐ V3.66 — Sous-domaines secrétariat / trésorerie (même mécanisme

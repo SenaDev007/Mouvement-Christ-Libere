@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/jsx-runtime": [
+        "./node_modules/@types/react/jsx-runtime"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "files": [
+    "src/components/pwa/install-app-button.tsx",
+    "src/components/pwa/instructions-installation.tsx",
+    "src/components/pwa/install-toast.tsx",
+    "src/components/staff-space/space-shell.tsx",
+    "src/components/staff-space/secretariat-layout-client.tsx",
+    "src/components/staff-space/tresorerie-layout-client.tsx",
+    "src/app/secretariat/layout.tsx",
+    "src/app/tresorerie/layout.tsx"
+  ]
+}

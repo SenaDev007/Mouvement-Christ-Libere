@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { LogOut, Menu, X, ExternalLink } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InstallAppButton } from "@/components/pwa/install-app-button";
 
 export interface SectionNav {
   title: string;
@@ -43,6 +44,10 @@ export interface SpaceShellProps {
    *  rendues dans la sidebar, à droite du logo, visibles sur TOUTES les
    *  pages de l'espace. */
   actionsSupplementaires?: React.ReactNode;
+  /** ⭐ V3.89 — Contexte PWA : affiche le bouton « Installer l'application »
+   *  dans le pied de la sidebar (manifest dédié de l'espace — ex.
+   *  « secretariat » pour manifest-secretariat.webmanifest). */
+  contextePwa?: "secretariat" | "tresorerie";
   children: React.ReactNode;
 }
 
@@ -52,6 +57,7 @@ export function SpaceShell({
   libelleSousDomaine,
   sections,
   actionsSupplementaires,
+  contextePwa,
   children,
 }: SpaceShellProps) {
   const router = useRouter();
@@ -182,6 +188,17 @@ export function SpaceShell({
 
           {/* Pied de sidebar */}
           <div className="px-5 py-4 border-t border-[#C9A227]/15 space-y-1">
+            {/* ⭐ V3.89 — PWA de l'espace : installation comme application
+                (manifest dédié, même logo — ex. « Secrétariat Christ
+                Libère »). toujoursVisible : le clic ouvre les instructions
+                par navigateur quand le dialogue natif n'est pas disponible. */}
+            {contextePwa && (
+              <InstallAppButton
+                contexte={contextePwa}
+                variante="sidebar"
+                toujoursVisible
+              />
+            )}
             <Link
               href={sitePublicUrl}
               target="_blank"

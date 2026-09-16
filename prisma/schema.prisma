@@ -1188,3 +1188,86 @@ model TreasuryTransaction {
   @@index([currency])
   @@index([caisseId])
 }
+
+// ─── V3.89 — MCL Creative Studio (miniatures vidéo & affiches) ───
+
+// ⭐ V3.89 — Nouveau module « Studio Créatif » partagé entre le back-office
+// (super admins) et le secrétariat : génération de visuels professionnels
+// (miniatures YouTube / carré / Story, affiches événementielles) respectant
+// strictement l'identité visuelle du Mouvement Christ Libère.
+
+/// Bibliothèque de fonds (backgrounds) 1920×1080 ou plus, par catégorie.
+model ThumbnailBackground {
+  id        String   @id @default(cuid())
+  name      String
+  imageUrl  String   // URL R2 publique du fond
+  category  String   @default("general") // predication | enseignement | delivrance | priere | evenement | conference | louange | jeunesse | general
+  tags      Json?    // ["feu","or","nuit"...]
+  width     Int?
+  height    Int?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+}
+
+/// Templates de composition (zones, typographies, effets, formats par visuel).
+model ThumbnailTemplate {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  templateType  String   // miniature | affiche
+  styleKey      String   @default("noir-or") // feu-puissance | noir-or | royal | cinematique | lion-feu | aigle-feu | predication | enseignement | live | temoignage
+  layoutConfig  Json     // zones, typographies, effets, formats (moteur de composition)
+  previewUrl    String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([templateType])
+  @@index([isActive])
+}
+
+/// Bibliothèque de photos des intervenants (original + version détourée).
+model SpeakerPhoto {
+  id           String   @id @default(cuid())
+  speakerName  String   // "Pasteur Kongo" | "Pam" | "Kongo & Pam"
+  originalUrl  String   // URL R2 de la photo importée
+  cutoutUrl    String?  // URL R2 de la version détourée (fond supprimé) — la préférée du moteur
+  thumbnailUrl String?  // URL R2 de la miniature légère (galeries)
+  isProcessed  Boolean  @default(false) // détourage effectué
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([speakerName])
+}
+
+/// Chaque génération aboutie (une création = plusieurs formats exportés).
+model GeneratedVisual {
+  id             String   @id @default(cuid())
+  visualType     String   // miniature | affiche
+  videoId        String?  // vidéo associée (miniature créée depuis une vidéo)
+  templateId     String
+  variant        String   @default("A") // variante de composition A-E
+  titleText      String
+  subtitleText   String?
+  speakerPhotoId String?
+  speakerName    String?
+  eventDate      DateTime?
+  eventTime      String?
+  eventLocation  String?
+  bibleVerse     String?
+  status         String   @default("generated") // draft | generated | selected | archived
+  outputUrls     Json     // { youtube: "https://…", square: "…", story: "…" }
+  metadata       Json?    // format, dimensions, r2 keys, durée de génération…
+  createdBy       String? // compte auteur (super admin / secrétaire)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([visualType])
+  @@index([videoId])
+  @@index([status])
+  @@index([createdAt])
+}

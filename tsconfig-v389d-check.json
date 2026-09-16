@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/jsx-runtime": [
+        "./node_modules/@types/react/jsx-runtime"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "files": [
+    "src/components/studio/studio-shell.tsx",
+    "src/app/admin/studio/page.tsx",
+    "src/app/secretariat/studio/page.tsx",
+    "src/components/staff-space/secretariat-layout-client.tsx",
+    "src/components/staff-space/tresorerie-layout-client.tsx",
+    "src/components/admin/admin-shell.tsx",
+    "src/components/admin/videos-tabs-client.tsx",
+    "src/lib/studio/studio-service.ts",
+    "src/lib/studio/studio-routes.ts",
+    "src/lib/studio/roles.ts",
+    "src/lib/visual-generator/composition.ts",
+    "src/lib/visual-generator/renderer.ts"
+  ]
+}

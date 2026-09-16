@@ -12,6 +12,8 @@ import {
   Radio,
   Music,
   MessageSquare,
+  Megaphone,
+  Sparkles,
   UserCog,
   Inbox,
   Heart,
@@ -59,6 +61,10 @@ const NAV_SECTIONS = [
       // l'Éternel) : upload/édition de ses chants → page publique
       // /adoration-louanges.
       { label: "Adoration & Louanges", href: "/admin/adoration", icon: Music },
+      // ⭐ V3.89 — MCL Creative Studio : miniatures vidéo & affiches
+      // professionnelles sans Canva ni Photoshop (module partagé avec le
+      // secrétariat).
+      { label: "Studio Créatif", href: "/admin/studio", icon: Sparkles },
     ],
   },
   {
@@ -67,6 +73,10 @@ const NAV_SECTIONS = [
       { label: "Canaux", href: "/admin/channels", icon: MessageSquare },
       { label: "Membres Live", href: "/admin/live-members", icon: Users },
       { label: "Utilisateurs", href: "/admin/users", icon: UserCog },
+      // ⭐ V3.89 — Annonces du ministère : les super admins rédigent et
+      // gèrent les MÊMES annonces que le secrétariat (composant et table
+      // partagés — /admin/annonces règle aussi le 404 du sous-domaine).
+      { label: "Annonces", href: "/admin/annonces", icon: Megaphone },
     ],
   },
   {

@@ -2056,3 +2056,142 @@ export function ensurePaiementsTable(): Promise<void> {
   }
   return inflightPaiementsTable;
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// ⭐ V3.89 — MCL CREATIVE STUDIO : tables des miniatures & affiches.
+//
+// Quatre tables (cf. prisma/schema.prisma) :
+//   · ThumbnailBackground — bibliothèque de fonds par catégorie ;
+//   · ThumbnailTemplate  — templates de composition (zones, typo, effets) ;
+//   · SpeakerPhoto       — photos des intervenants (original + détourée) ;
+//   · GeneratedVisual    — créations exportées (un enregistrement = une
+//                          génération multi-formats).
+// Partagées entre le back-office (/admin/studio) et le secrétariat
+// (/secretariat/studio) — même garde de session que les espaces.
+// ═══════════════════════════════════════════════════════════════════════
+
+let studioTablesOk = false;
+let inflightStudioTables: Promise<void> | null = null;
+
+export function ensureStudioTables(): Promise<void> {
+  if (studioTablesOk) return Promise.resolve();
+  if (!inflightStudioTables) {
+    inflightStudioTables = (async () => {
+      // ① Fonds (backgrounds).
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "ThumbnailBackground" (
+          "id" TEXT NOT NULL,
+          "name" TEXT NOT NULL,
+          "imageUrl" TEXT NOT NULL,
+          "category" TEXT NOT NULL DEFAULT 'general',
+          "tags" JSONB,
+          "width" INTEGER,
+          "height" INTEGER,
+          "isActive" BOOLEAN NOT NULL DEFAULT true,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "ThumbnailBackground_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "ThumbnailBackground_category_idx" ON "ThumbnailBackground"("category")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "ThumbnailBackground_isActive_idx" ON "ThumbnailBackground"("isActive")'
+      );
+
+      // ② Templates de composition.
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "ThumbnailTemplate" (
+          "id" TEXT NOT NULL,
+          "name" TEXT NOT NULL,
+          "description" TEXT,
+          "templateType" TEXT NOT NULL,
+          "styleKey" TEXT NOT NULL DEFAULT 'noir-or',
+          "layoutConfig" JSONB NOT NULL,
+          "previewUrl" TEXT,
+          "isActive" BOOLEAN NOT NULL DEFAULT true,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "ThumbnailTemplate_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "ThumbnailTemplate_templateType_idx" ON "ThumbnailTemplate"("templateType")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "ThumbnailTemplate_isActive_idx" ON "ThumbnailTemplate"("isActive")'
+      );
+
+      // ③ Photos des intervenants.
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "SpeakerPhoto" (
+          "id" TEXT NOT NULL,
+          "speakerName" TEXT NOT NULL,
+          "originalUrl" TEXT NOT NULL,
+          "cutoutUrl" TEXT,
+          "thumbnailUrl" TEXT,
+          "isProcessed" BOOLEAN NOT NULL DEFAULT false,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "SpeakerPhoto_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "SpeakerPhoto_speakerName_idx" ON "SpeakerPhoto"("speakerName")'
+      );
+
+      // ④ Créations exportées (multi-formats).
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "GeneratedVisual" (
+          "id" TEXT NOT NULL,
+          "visualType" TEXT NOT NULL,
+          "videoId" TEXT,
+          "templateId" TEXT NOT NULL,
+          "variant" TEXT NOT NULL DEFAULT 'A',
+          "titleText" TEXT NOT NULL,
+          "subtitleText" TEXT,
+          "speakerPhotoId" TEXT,
+          "speakerName" TEXT,
+          "eventDate" TIMESTAMPTZ,
+          "eventTime" TEXT,
+          "eventLocation" TEXT,
+          "bibleVerse" TEXT,
+          "status" TEXT NOT NULL DEFAULT 'generated',
+          "outputUrls" JSONB NOT NULL,
+          "metadata" JSONB,
+          "createdBy" TEXT,
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "GeneratedVisual_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "GeneratedVisual_visualType_idx" ON "GeneratedVisual"("visualType")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "GeneratedVisual_videoId_idx" ON "GeneratedVisual"("videoId")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "GeneratedVisual_status_idx" ON "GeneratedVisual"("status")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "GeneratedVisual_createdAt_idx" ON "GeneratedVisual"("createdAt")'
+      );
+    })()
+      .then(() => {
+        studioTablesOk = true;
+        console.log("[ensure-schema] V3.89 : tables du Studio Créatif vérifiées/créées ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] V3.89 : tables du Studio Créatif impossibles :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightStudioTables = null;
+      });
+  }
+  return inflightStudioTables;
+}

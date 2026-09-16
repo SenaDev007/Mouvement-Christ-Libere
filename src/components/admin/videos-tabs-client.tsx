@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Plus, Pencil, Video as VideoIcon, Radio, Eye, Clock, Crown,
   X, Loader2, AlertCircle, Save, Tag, ChevronDown,
-  Download, Trash2, FolderDown, Star,
+  Download, Trash2, FolderDown, Star, Sparkles,
   // ⭐ V3.47 — upload direct de fichiers vidéo dans le modal « Nouvelle vidéo »
   Upload, FileVideo, Link as LinkIcon, Camera,
   // ⭐ V3.48 — champ d'upload de la miniature (remplace le champ « URL miniature »)
@@ -875,6 +875,17 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                       modeSelection ? "pointer-events-none opacity-30" : ""
                     }`}
                   >
+                    {/* ⭐ V3.89 — MCL Creative Studio : « Créer une miniature »
+                        directement depuis la vidéo (spec §6.1) — le studio
+                        s'ouvre PRÉ-REMPLI (vidéo associée + titre). */}
+                    <Link
+                      href={`/admin/studio?video=${v.id}&titre=${encodeURIComponent(v.title)}`}
+                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#FF6A00]/10 text-[#8A8378] hover:text-[#FF6A00] transition-colors"
+                      aria-label="Créer une miniature dans le Studio Créatif"
+                      title="Créer une miniature (Studio Créatif)"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </Link>
                     <Link
                       href={`/admin/videos/${v.id}/edit`}
                       className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"

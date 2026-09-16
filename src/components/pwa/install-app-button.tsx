@@ -5,11 +5,9 @@
  * ⭐ V3.84 — la fenêtre d'instructions vit désormais dans le composant
  * partagé InstructionsInstallation (réutilisée par InstallToast).
  *
- * Le site public et le back-office possèdent chacun leur manifest dédié
- * (public/manifest.webmanifest « Site public Christ Libère » et
- * public/manifest-back-office.webmanifest « Back-office Christ
- * Libère ») : les deux applications s'installent séparément avec le
- * MÊME logo.
+ * Le site public, le back-office et les espaces secrétariat / trésorerie
+ * (V3.89) possèdent chacun leur manifest dédié (public/manifest*.webmanifest) :
+ * les applications s'installent séparément avec le MÊME logo.
  *
  * Ce bouton rend l'installation DÉCOUVRABLE :
  *  · Chrome / Edge / Chromium (desktop + Android) : événement
@@ -51,10 +49,11 @@ interface EvenementInstallDiffere extends Event {
 }
 
 type Variante = "or" | "icone" | "sidebar";
-type Contexte = "public" | "admin";
+type Contexte = "public" | "admin" | "secretariat" | "tresorerie";
 
 interface InstallAppButtonProps {
-  /** Contexte d'affichage — adapte les textes de la fenêtre d'instructions. */
+  /** Contexte d'affichage — adapte les textes de la fenêtre d'instructions
+   *  (site public, back-office, secrétariat, trésorerie — V3.89). */
   contexte?: Contexte;
   /** Style du bouton : pilule dorée « or », icône compacte « icone » (header
    *  desktop), ligne discrète « sidebar » (pied de sidebar back-office). */

@@ -21,9 +21,33 @@ const nextConfig: NextConfig = {
   // résout le paquet plateforme dynamiquement selon l'OS — sans cette
   // clause le traçage nft pouvait l'oublier).
   serverExternalPackages: ["@napi-rs/canvas"],
+  // ⭐ V3.89 — MCL Creative Studio : le moteur de rendu (@napi-rs/canvas) lit
+  // les POLICES (public/fonts/studio/*.ttf) et le LOGO (public/) au runtime
+  // via fs — ces fichiers doivent être embarqués dans les fonctions
+  // serverless des routes de génération/aperçu des DEUX espaces.
   outputFileTracingIncludes: {
     "/api/videos/[id]/render": [
       "./node_modules/@napi-rs/canvas*/**/*",
+    ],
+    "/admin/api/studio/generate": [
+      "./node_modules/@napi-rs/canvas*/**/*",
+      "./public/fonts/studio/**",
+      "./public/logo-christ-libere-v3.png",
+    ],
+    "/admin/api/studio/preview": [
+      "./node_modules/@napi-rs/canvas*/**/*",
+      "./public/fonts/studio/**",
+      "./public/logo-christ-libere-v3.png",
+    ],
+    "/secretariat/api/studio/generate": [
+      "./node_modules/@napi-rs/canvas*/**/*",
+      "./public/fonts/studio/**",
+      "./public/logo-christ-libere-v3.png",
+    ],
+    "/secretariat/api/studio/preview": [
+      "./node_modules/@napi-rs/canvas*/**/*",
+      "./public/fonts/studio/**",
+      "./public/logo-christ-libere-v3.png",
     ],
   },
 
@@ -126,7 +150,9 @@ const nextConfig: NextConfig = {
         // ⭐ V3.80 — manifest-back-office.webmanifest ajouté au groupe cache
         // court (même statut que manifest.webmanifest : remplacé à même URL
         // lors des évolutions du nom/description → 1 h + revalidation).
-        source: "/(favicon.ico|apple-icon.png|apple-touch-icon.png|icon-32.png|icon.png|manifest-192.png|manifest-512.png|manifest.webmanifest|manifest-back-office.webmanifest|og-image.png)",
+        // ⭐ V3.89 — manifests des espaces secrétariat & trésorerie (PWA
+        // installables) ajoutés au même groupe.
+        source: "/(favicon.ico|apple-icon.png|apple-touch-icon.png|icon-32.png|icon.png|manifest-192.png|manifest-512.png|manifest.webmanifest|manifest-back-office.webmanifest|manifest-secretariat.webmanifest|manifest-tresorerie.webmanifest|og-image.png)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=3600, must-revalidate" },
         ],

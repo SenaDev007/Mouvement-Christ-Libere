@@ -1,125 +1,41 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { SpaceShell, type SectionNav } from "@/components/staff-space/space-shell";
-import { ClocheNotifications } from "@/components/staff-space/notifications";
-import { LayoutDashboard, Inbox, Megaphone, FileText, ShieldCheck, Mail } from "lucide-react";
+import type { Metadata } from "next";
+import { SecretariatLayoutClient } from "@/components/staff-space/secretariat-layout-client";
 
 /**
- * ⭐ V3.66/V3.67 — Layout de l'espace Secrétariat.
+ * ⭐ V3.89 — PWA du SECRÉTARIAT : « Secrétariat Christ Libère ».
  *
- * Navigation propre à l'espace (dashboard, demandes de rencontre,
- * annonces du ministère, rapports, journal d'audit).
+ * Même mécanisme que le back-office (V3.80) : le layout historique était
+ * un composant client (« use client ») — il ne pouvait PAS exporter de
+ * metadata Next.js. Il est scindé :
+ *  · CE fichier (serveur) porte les métadonnées PWA de l'espace ;
+ *  · src/components/staff-space/secretariat-layout-client.tsx (client)
+ *    contient la navigation, le badge de demandes et tout le rendu
+ *    (code inchangé).
  *
- * ⭐ V3.67 — NOTIFICATION D'ARRIVÉE (gap du bilan : « pas de notification
- * d'arrivée de demande ») : un badge doré sur « Demandes de rencontre »
- * compte les demandes à examiner (RECUE + urgentes en attente) et se
- * rafraîchit par polling toutes les 60 s — visible sur TOUTES les pages
- * de l'espace, la secrétaire ne peut plus passer à côté d'une demande.
- *
- * ⭐ V3.74 — CLOCHE DE NOTIFICATIONS (sidebar + barre mobile) : quand un
- * serviteur VALIDE une demande transmise (back-office /admin/demandes),
- * la secrétaire est notifiée ici (badge + panneau).
+ * Manifest dédié public/manifest-secretariat.webmanifest :
+ *  · name « Secrétariat Christ Libère », start_url
+ *    /secretariat/dashboard, scope /secretariat/ → l'app installée ouvre
+ *    directement le tableau de bord du secrétariat ; la navigation hors
+ *    de l'espace s'ouvre dans un onglet navigateur classique.
+ *  · Installable sur smartphone ET desktop (bouton « Installer
+ *    l'application » dans le pied de la sidebar — V3.89).
+ *  · iOS : appleWebApp capable → « Ajouter à l'écran d'accueil » ouvre
+ *    l'espace plein écran (standalone).
  */
-
-function useBadgeDemandes(): string | null {
-  const [badge, setBadge] = useState<string | null>(null);
-
-  useEffect(() => {
-    let annule = false;
-
-    const interroger = async () => {
-      try {
-        const res = await fetch("/secretariat/api/stats", { cache: "no-store" });
-        if (!res.ok) return;
-        const json = await res.json();
-        if (annule) return;
-        const aExaminer =
-          (json?.demandes?.recues || 0) +
-          (json?.demandes?.transmises || 0) +
-          (json?.demandes?.validees || 0);
-        setBadge(aExaminer > 0 ? String(aExaminer) : null);
-      } catch {
-        // silencieux : le badge n'est pas critique.
-      }
-    };
-
-    interroger();
-    const minuteur = setInterval(interroger, 60_000);
-    return () => {
-      annule = true;
-      clearInterval(minuteur);
-    };
-  }, []);
-
-  return badge;
-}
+export const metadata: Metadata = {
+  manifest: "/manifest-secretariat.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Secrétariat Christ Libère",
+  },
+  applicationName: "Secrétariat Christ Libère",
+};
 
 export default function SecretariatLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const badge = useBadgeDemandes();
-
-  const SECTIONS: SectionNav[] = [
-    {
-      title: "Vue d'ensemble",
-      items: [
-        {
-          label: "Tableau de bord",
-          href: "/secretariat/dashboard",
-          icon: LayoutDashboard,
-        },
-      ],
-    },
-    {
-      title: "Ministère",
-      items: [
-        {
-          label: "Demandes de rencontre",
-          href: "/secretariat/demandes",
-          icon: Inbox,
-          badge,
-        },
-        {
-          label: "Annonces",
-          href: "/secretariat/annonces",
-          icon: Megaphone,
-        },
-        {
-          label: "Courrier au serviteur",
-          href: "/secretariat/courrier",
-          icon: Mail,
-        },
-      ],
-    },
-    {
-      title: "Documents & gouvernance",
-      items: [
-        {
-          label: "Rapports PDF",
-          href: "/secretariat/rapports",
-          icon: FileText,
-        },
-        {
-          label: "Journal d'audit",
-          href: "/secretariat/audit",
-          icon: ShieldCheck,
-        },
-      ],
-    },
-  ];
-
-  return (
-    <SpaceShell
-      titreEspace="Secrétariat"
-      prefixeEspace="/secretariat"
-      libelleSousDomaine="secretariat"
-      sections={SECTIONS}
-      actionsSupplementaires={<ClocheNotifications prefixeEspace="/secretariat" />}
-    >
-      {children}
-    </SpaceShell>
-  );
+  return <SecretariatLayoutClient>{children}</SecretariatLayoutClient>;
 }

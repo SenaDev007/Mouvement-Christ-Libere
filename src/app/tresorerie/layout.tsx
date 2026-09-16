@@ -1,87 +1,40 @@
-"use client";
-
-import { SpaceShell, type SectionNav } from "@/components/staff-space/space-shell";
-import {
-  LayoutDashboard,
-  BookOpen,
-  Wallet,
-  FileText,
-  ShieldCheck,
-  HeartHandshake,
-} from "lucide-react";
+import type { Metadata } from "next";
+import { TresorerieLayoutClient } from "@/components/staff-space/tresorerie-layout-client";
 
 /**
- * ⭐ V3.66/V3.67/V3.88 — Layout de l'espace Trésorerie.
+ * ⭐ V3.89 — PWA de la TRÉSORERIE : « Trésorerie Christ Libère ».
  *
- * Navigation propre à l'espace (tableau de bord, journal des mouvements,
- * ⭐ V3.88 donateurs — historique pour la prière, situation de caisse
- * multicaisse, rapports financiers, journal d'audit).
- * Coquille partagée avec le secrétariat — cf. space-shell.tsx.
+ * Même mécanisme que le back-office (V3.80) : le layout historique était
+ * un composant client (« use client ») — il ne pouvait PAS exporter de
+ * metadata Next.js. Il est scindé :
+ *  · CE fichier (serveur) porte les métadonnées PWA de l'espace ;
+ *  · src/components/staff-space/tresorerie-layout-client.tsx (client)
+ *    contient la navigation et tout le rendu (code inchangé).
+ *
+ * Manifest dédié public/manifest-tresorerie.webmanifest :
+ *  · name « Trésorerie Christ Libère », start_url /tresorerie/dashboard,
+ *    scope /tresorerie/ → l'app installée ouvre directement le tableau de
+ *    bord de la trésorerie ; la navigation hors de l'espace s'ouvre dans
+ *    un onglet navigateur classique (jamais piégée dans la fenêtre).
+ *  · Installable sur smartphone ET desktop (bouton « Installer
+ *    l'application » dans le pied de la sidebar — V3.89).
+ *  · iOS : appleWebApp capable → « Ajouter à l'écran d'accueil » ouvre
+ *    l'espace plein écran (standalone).
  */
-
-const SECTIONS: SectionNav[] = [
-  {
-    title: "Vue d'ensemble",
-    items: [
-      {
-        label: "Tableau de bord",
-        href: "/tresorerie/dashboard",
-        icon: LayoutDashboard,
-      },
-    ],
+export const metadata: Metadata = {
+  manifest: "/manifest-tresorerie.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Trésorerie Christ Libère",
   },
-  {
-    title: "Comptabilité",
-    items: [
-      {
-        label: "Journal des mouvements",
-        href: "/tresorerie/transactions",
-        icon: BookOpen,
-      },
-      {
-        // ⭐ V3.88 — tous ceux qui ont donné, sur une période, pour que
-        // les serviteurs de Dieu puissent prier pour eux.
-        label: "Donateurs",
-        href: "/tresorerie/donateurs",
-        icon: HeartHandshake,
-      },
-      {
-        label: "Situation de caisse",
-        href: "/tresorerie/caisse",
-        icon: Wallet,
-      },
-    ],
-  },
-  {
-    title: "Documents & gouvernance",
-    items: [
-      {
-        label: "Rapports financiers",
-        href: "/tresorerie/rapports",
-        icon: FileText,
-      },
-      {
-        label: "Journal d'audit",
-        href: "/tresorerie/audit",
-        icon: ShieldCheck,
-      },
-    ],
-  },
-];
+  applicationName: "Trésorerie Christ Libère",
+};
 
 export default function TresorerieLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <SpaceShell
-      titreEspace="Trésorerie"
-      prefixeEspace="/tresorerie"
-      libelleSousDomaine="tresorerie"
-      sections={SECTIONS}
-    >
-      {children}
-    </SpaceShell>
-  );
+  return <TresorerieLayoutClient>{children}</TresorerieLayoutClient>;
 }

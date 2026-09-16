@@ -21,7 +21,23 @@ import Image from "next/image";
 import { X, Share, MoreVertical, Monitor, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Contexte = "public" | "admin";
+type Contexte = "public" | "admin" | "secretariat" | "tresorerie";
+
+/** Libellés de l'application selon le contexte (en-tête de la fenêtre). */
+const LIBELLE_APPLI: Record<Contexte, string> = {
+  public: "Site public Christ Libère",
+  admin: "Back-office Christ Libère",
+  secretariat: "Secrétariat Christ Libère",
+  tresorerie: "Trésorerie Christ Libère",
+};
+
+/** Nom courant dans la phrase « Installez … » (corps de la fenêtre). */
+const LIBELLE_PHRASE: Record<Contexte, string> = {
+  public: "la plateforme",
+  admin: "le back-office",
+  secretariat: "le secrétariat",
+  tresorerie: "la trésorerie",
+};
 
 interface InstructionsInstallationProps {
   /** Contexte d'affichage — adapte les textes de la fenêtre. */
@@ -88,9 +104,7 @@ export function InstructionsInstallation({
               <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
             </p>
             <p className="text-xs text-[#DDBE55]/80 font-medium">
-              {contexte === "admin"
-                ? "Back-office Christ Libère"
-                : "Site public Christ Libère"}
+              {LIBELLE_APPLI[contexte]}
             </p>
           </div>
           <button
@@ -108,7 +122,7 @@ export function InstructionsInstallation({
           <p className="text-sm text-[#1E0F2B]/80 leading-relaxed">
             Installez{" "}
             <strong className="font-semibold text-[#2A0E3D]">
-              {contexte === "admin" ? "le back-office" : "la plateforme"}
+              {LIBELLE_PHRASE[contexte]}
             </strong>{" "}
             sur votre appareil : l&apos;icône du logo s&apos;ajoute à votre
             écran d&apos;accueil et l&apos;application s&apos;ouvre
@@ -183,9 +197,9 @@ export function InstructionsInstallation({
           </ul>
 
           <p className="text-[11px] text-[#8A8378] leading-relaxed pt-1">
-            Même logo, deux applications distinctes : « Site public Christ
-            Libère » pour les croyants, « Back-office Christ Libère » pour
-            la gestion du ministère.
+            Même logo, applications distinctes : « Site public Christ Libère »
+            pour les croyants, « Back-office », « Secrétariat » et « Trésorerie
+            Christ Libère » pour la gestion du ministère.
           </p>
         </div>
       </div>

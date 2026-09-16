@@ -1,0 +1,57 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/jsx-runtime": [
+        "./node_modules/@types/react/jsx-runtime"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "files": [
+    "src/lib/studio/brand-tokens.ts",
+    "src/lib/studio/roles.ts",
+    "src/lib/studio/templates-seed.ts",
+    "src/lib/studio/studio-service.ts",
+    "src/lib/studio/studio-routes.ts",
+    "src/lib/visual-generator/types.ts",
+    "src/lib/visual-generator/fonts.ts",
+    "src/lib/visual-generator/typography.ts",
+    "src/lib/visual-generator/effects.ts",
+    "src/lib/visual-generator/cutout.ts",
+    "src/lib/visual-generator/composition.ts",
+    "src/lib/visual-generator/renderer.ts",
+    "src/app/admin/api/studio/meta/route.ts",
+    "src/app/admin/api/studio/templates/route.ts",
+    "src/app/admin/api/studio/templates/[id]/route.ts",
+    "src/app/admin/api/studio/backgrounds/route.ts",
+    "src/app/admin/api/studio/backgrounds/[id]/route.ts",
+    "src/app/admin/api/studio/speakers/route.ts",
+    "src/app/admin/api/studio/speakers/upload-photo/route.ts",
+    "src/app/admin/api/studio/speakers/[id]/route.ts",
+    "src/app/admin/api/studio/generate/route.ts",
+    "src/app/admin/api/studio/preview/route.ts",
+    "src/app/admin/api/studio/creations/route.ts",
+    "src/app/admin/api/studio/creations/[id]/route.ts"
+  ]
+}
