@@ -1,31 +1,43 @@
 /**
- * ⭐ V3.90 — MCL CREATIVE STUDIO : client NVIDIA NIM (build.nvidia.com).
+ * ⭐ V3.90 → V3.91 — MCL CREATIVE STUDIO : client NVIDIA NIM (build.nvidia.com).
  *
  * Directive du pasteur : « alimenter avec l'IA pour bien peaufiner le
  * travail… des rendus vraiment professionnels, pas des trucs statiques
  * et génériques » — le pasteur possède un compte build.nvidia.com.
  *
- * Modèles recommandés (conseil donné au pasteur) :
- *   · FLUX.1 Kontext [dev]  — ÉDITION d'image guidée par texte : c'est
- *     LE modèle pour « peaufiner » une photo d'intervenant (relight
- *     studio, netteté, fond nettoyé) EN CONSERVANT l'identité et la
- *     pose de la personne ;
- *   · FLUX.1 [dev]          — génération texte→image : fonds exclusifs
- *     (feu, or, cinématique…) à la palette du ministère ;
- *   · (alternatives : Stable Diffusion 3.5, SDXL — moins bonnes sur
- *     les visages sombres et les rendus « premium »).
+ * Modèles utilisés (les DEUX branches de build.nvidia.com) :
+ *   · openai/gpt-oss-20b  — DIRECTEUR IA (texte, raisonnement) : transforme
+ *     une description française complète en spécification de visuel
+ *     (prompt FLUX + palette de couleurs LIBRE + ambiance). C'est le
+ *     « cerveau » façon ChatGPT ; il ne génère PAS d'image (aucun modèle
+ * ChatGPT/GPT-image n'est disponible sur build.nvidia.com) ;
+ *   · FLUX.1 Kontext [dev] — ÉDITION d'image guidée par texte : peaufiner
+ *     une photo d'intervenant (relight studio, netteté, fond nettoyé) EN
+ *     CONSERVANT l'identité et la pose de la personne ;
+ *   · FLUX.1 [dev]       — génération texte→image : fonds exclusifs à la
+ *     palette voulue (libre, pas seulement les palettes du ministère).
+ *
+ * ⭐ V3.91 (correction du bug « Unexpected token '<' ») : les URL et les
+ * paramètres suivaient D'ANCIENS schémas — NVIDIA répondait 4xx/404, la
+ * fonction renvoyait 502, et Cloudflare REMPLAÇAIT le corps par sa page
+ * HTML « Bad gateway » → le client plantait en parsant du HTML comme JSON.
+ * Schémas corrigés d'après les exemples officiels build.nvidia.com :
+ *   · chemins /v1/genai/black-forest-labs/… (et non /v1/bfl ni /v1/generation) ;
+ *   · paramètre cfg_scale (et non cfg) ;
+ *   · Kontext aspect_ratio "match_input_image" (et non "match_input").
  *
  * ⚠️ Le texte et la mise en page restent rendus par NOTRE moteur
  * @napi-rs/canvas : les modèles d'image détruisent le texte net —
- * l'IA peaufine les PHOTOS, le typographe reste le moteur MCL.
+ * l'IA peaufine les PHOTOS et les FONDS, le typographe reste le moteur MCL.
  *
  * Clé : variable d'environnement NVIDIA_API_KEY (à définir dans
- * Vercel → Settings → Environment Variables). Endpoints surchargeables
- * via NVIDIA_KONTEXT_URL / NVIDIA_FLUX_URL si NVIDIA fait évoluer ses
- * chemins. Les réponses sont analysées avec TOLÉRANCE (plusieurs
- * schémas connus : { image }, { artifacts: [{ base64 }] },
- * { data: [{ url | b64_json }] }) — jamais d'erreur technique au
- * client (§38) : le détail part dans les logs serveur.
+ * Vercel → Settings → Environment Variables — la même clé sert les
+ * DEUX branches : integrate.api.nvidia.com ET ai.api.nvidia.com).
+ * Endpoints surchargeables via NVIDIA_KONTEXT_URL / NVIDIA_FLUX_URL /
+ * NVIDIA_DIRECTEUR_URL si NVIDIA fait évoluer ses chemins. Les réponses
+ * sont analysées avec TOLÉRANCE (plusieurs schémas connus : { image },
+ * { artifacts: [{ base64 }] }, { data: [{ url | b64_json }] }) — jamais
+ * d'erreur technique au client (§38) : le détail part dans les logs serveur.
  *
  * ⚠️ SERVEUR UNIQUEMENT.
  */
@@ -38,14 +50,27 @@ export function estIAActive(): boolean {
   );
 }
 
-const URL_KONTEXT =
-  process.env.NVIDIA_KONTEXT_URL ||
-  "https://ai.api.nvidia.com/v1/bfl/flux.1-kontext-dev";
-const URL_FLUX =
-  process.env.NVIDIA_FLUX_URL ||
-  "https://ai.api.nvidia.com/v1/generation/black-forest-labs/flux.1-dev";
+// ⭐ V3.91 — chemins officiels actuels (exemples build.nvidia.com).
+// Anciens chemins conservés en repli : si NVIDIA déplace ses routes,
+// l'escalier ci-dessous essaie la variante historique.
+const URLS_KONTEXT = [
+  process.env.NVIDIA_KONTEXT_URL,
+  "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-kontext-dev",
+  "https://ai.api.nvidia.com/v1/bfl/flux.1-kontext-dev",
+].filter(Boolean) as string[];
+const URLS_FLUX = [
+  process.env.NVIDIA_FLUX_URL,
+  "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev",
+  "https://ai.api.nvidia.com/v1/generation/black-forest-labs/flux.1-dev",
+].filter(Boolean) as string[];
+// ⭐ V3.91 — Directeur IA (gpt-oss-20b, API compatible OpenAI).
+const URL_DIRECTEUR =
+  process.env.NVIDIA_DIRECTEUR_URL ||
+  "https://integrate.api.nvidia.com/v1/chat/completions";
+const MODELE_DIRECTEUR = process.env.NVIDIA_DIRECTEUR_MODELE || "openai/gpt-oss-20b";
 
 const DELAI_TIMEOUT_MS = Number(process.env.NVIDIA_TIMEOUT_MS || 40_000);
+const DELAI_DIRECTEUR_MS = Number(process.env.NVIDIA_DIRECTEUR_TIMEOUT_MS || 30_000);
 
 export class ErreurNvidia extends Error {
   constructor(
@@ -122,52 +147,72 @@ async function versTampon(valeur: string, cleApi: string): Promise<Buffer | null
   return null;
 }
 
-/** POST JSON vers NVIDIA avec auth, timeout et 1 repli minimal. */
+/** POST JSON vers NVIDIA avec auth, timeout et escalier de repli.
+ * ⭐ V3.91 : plusieurs URL candidates (schéma officiel actuel + variante
+ * historique) — si une URL répond 404 (chemin déplacé), la suivante est
+ * essayée ; sur 400/422, un repli minimal (prompt + champs essentiels)
+ * est tenté sur la MÊME url (paramètre optionnel mal accepté). */
 async function appelerNvidia(
-  url: string,
+  urls: string[],
   corps: Record<string, unknown>,
   cleApi: string
 ): Promise<Record<string, unknown>> {
-  const tenter = async (charge: Record<string, unknown>) => {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${cleApi}`,
-        "content-type": "application/json",
-        accept: "application/json",
-      },
-      body: JSON.stringify(charge),
-      signal: AbortSignal.timeout(DELAI_TIMEOUT_MS),
-    });
-    const texte = await res.text();
-    if (!res.ok) {
-      throw new ErreurNvidia(
-        `NVIDIA a répondu ${res.status}.`,
-        res.status,
-        texte.substring(0, 400)
-      );
-    }
-    try {
-      return JSON.parse(texte) as Record<string, unknown>;
-    } catch {
-      throw new ErreurNvidia("Réponse NVIDIA illisible.", res.status, texte.substring(0, 200));
-    }
-  };
+  let derniereErreur: ErreurNvidia | null = null;
 
-  try {
-    return await tenter(corps);
-  } catch (e) {
-    // Un paramètre optionnel mal accepté ? Retentons au strict minimum.
-    if (e instanceof ErreurNvidia && (e.statut === 400 || e.statut === 422)) {
-      const minimal: Record<string, unknown> = {
-        prompt: corps.prompt as string,
-      };
-      if (typeof corps.image === "string") minimal.image = corps.image;
-      if (corps.mode) minimal.mode = corps.mode;
-      return await tenter(minimal);
+  for (const url of urls) {
+    const tenter = async (charge: Record<string, unknown>) => {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${cleApi}`,
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify(charge),
+        signal: AbortSignal.timeout(DELAI_TIMEOUT_MS),
+      });
+      const texte = await res.text();
+      if (!res.ok) {
+        throw new ErreurNvidia(
+          `NVIDIA a répondu ${res.status}.`,
+          res.status,
+          texte.substring(0, 400)
+        );
+      }
+      try {
+        return JSON.parse(texte) as Record<string, unknown>;
+      } catch {
+        throw new ErreurNvidia("Réponse NVIDIA illisible.", res.status, texte.substring(0, 200));
+      }
+    };
+
+    try {
+      return await tenter(corps);
+    } catch (e) {
+      if (e instanceof ErreurNvidia && (e.statut === 400 || e.statut === 422)) {
+        // Un paramètre optionnel mal accepté ? Retentons au strict minimum
+        // (d'après les exemples officiels : prompt + image + ratio + pas).
+        const minimal: Record<string, unknown> = {
+          prompt: corps.prompt as string,
+        };
+        if (typeof corps.image === "string") minimal.image = corps.image;
+        if (corps.aspect_ratio) minimal.aspect_ratio = corps.aspect_ratio;
+        if (corps.steps) minimal.steps = corps.steps;
+        if (corps.seed !== undefined) minimal.seed = corps.seed;
+        try {
+          return await tenter(minimal);
+        } catch {
+          // On continue vers l'URL suivante (404) ou on remonte l'erreur.
+        }
+      }
+      if (e instanceof ErreurNvidia && e.statut !== 404) throw e;
+      derniereErreur = e instanceof ErreurNvidia ? e : null;
     }
-    throw e;
   }
+  throw (
+    derniereErreur ||
+    new ErreurNvidia("NVIDIA n'a pas répondu (chemins essayés sans succès).", 504)
+  );
 }
 
 // ─── Capacités exposées au service studio ─────────────────────────────
@@ -196,15 +241,15 @@ export async function peaufinerPhotoNvidia(
     .join(" ");
 
   const corps = await appelerNvidia(
-    URL_KONTEXT,
+    URLS_KONTEXT,
     {
       prompt: consigne,
-      mode: "edit",
       image: urlPhoto,
-      aspect_ratio: "match_input",
+      // ⭐ V3.91 — schéma officiel build.nvidia.com (exemples du pasteur).
+      aspect_ratio: "match_input_image",
       steps: 30,
-      cfg: 2.5,
-      output_format: "png",
+      cfg_scale: 3.5,
+      seed: 0,
     },
     cleApi
   );
@@ -221,13 +266,15 @@ export async function genererFondNvidia(consigne: string): Promise<Buffer> {
   if (!cleApi) throw new ErreurNvidia("Clé NVIDIA absente (NVIDIA_API_KEY).", 503);
 
   const corps = await appelerNvidia(
-    URL_FLUX,
+    URLS_FLUX,
     {
       prompt: consigne,
       mode: "base",
       aspect_ratio: "16:9",
-      cfg: 3.5,
+      // ⭐ V3.91 — cfg_scale (schéma officiel), seed fixe pour itérer.
+      cfg_scale: 3.5,
       steps: 30,
+      seed: 0,
       output_format: "png",
     },
     cleApi
@@ -235,10 +282,14 @@ export async function genererFondNvidia(consigne: string): Promise<Buffer> {
   return extraireImage(corps, cleApi);
 }
 
-/** Construit la consigne de fond à partir des intentions saisies. */
+/** Construit la consigne de fond à partir des intentions saisies.
+ * ⭐ V3.91 : palette LIBRE — si le Directeur IA (ou l'utilisateur) fournit
+ * des couleurs, elles remplacent le mapping par style : n'importe quelle
+ * palette devient possible. */
 export function consigneFond(
   intention: string,
-  styleKey?: string
+  styleKey?: string,
+  couleursPerso?: { accent?: string; secondary?: string; background?: string }
 ): string {
   const palette: Record<string, string> = {
     "feu-puissance": "dark background with intense orange fire embers and warm glow",
@@ -252,11 +303,175 @@ export function consigneFond(
     live: "concert-like dark background with subtle warm bokeh lights",
     temoignage: "soft dark background with warm golden gradient",
   };
-  const ambiance = (styleKey && palette[styleKey]) || "dark elegant background";
+
+  // Palette LIBRE (Directeur IA ou sélecteurs) : la description parle
+  // d'elle-même — FLUX comprend les hexadécimaux.
+  let ambiance = (styleKey && palette[styleKey]) || "dark elegant background";
+  if (couleursPerso && (couleursPerso.accent || couleursPerso.background)) {
+    ambiance = [
+      `background color exactly ${couleursPerso.background || "deep black"}`,
+      `accents and glow of ${couleursPerso.accent || "gold"}`,
+    ].join(", ");
+  }
   return [
     `Professional church ministry visual background: ${intention.trim()}`,
     `${ambiance}, deep blacks, high contrast, premium quality`,
     "no people, no faces, no text, no logos, no letters, no watermark",
     "photorealistic or abstract gradient art, high detail, 4k",
   ].join(", ");
+}
+
+// ─── ⭐ V3.91 — DIRECTEUR IA (openai/gpt-oss-20b) ─────────────────────
+
+/** Spécification de visuel produite par le Directeur IA. */
+export interface SpecDirecteur {
+  /** Prompt FLUX complet (anglais) pour le fond. */
+  prompt_flux: string;
+  /** Palette LIBRE — n'importe quel hexadécimal, harmonisée à la demande. */
+  palette: { accent: string; secondary: string; background: string };
+  /** Ambiance en français (affichée à l'utilisateur). */
+  ambiance: string;
+  /** Suggestions facultatives (l'utilisateur peut les appliquer). */
+  suggestion_titre?: string;
+  suggestion_accroche?: string;
+}
+
+const SYSTEME_DIRECTEUR = [
+  "Tu es le directeur artistique du Mouvement Christ Libère (église).",
+  "L'utilisateur décrit en français le visuel qu'il veut créer (miniature vidéo ou affiche d'événement).",
+  "Tu transformes sa demande en une spécification de visuel, puis tu réponds UNIQUEMENT avec un objet JSON valide, sans aucun texte autour, au format :",
+  '{"prompt_flux": "...", "palette": {"accent": "#RRGGBB", "secondary": "#RRGGBB", "background": "#RRGGBB"}, "ambiance": "...", "suggestion_titre": "...", "suggestion_accroche": "..."}',
+  "Règles :",
+  "- prompt_flux : description ANGLAISE riche et cinématographique du FOND de l'image (lumières, textures, matières, atmosphère), sans texte, sans personnes, sans logos, finissant par \"no people, no text, no watermark\".",
+  "- palette : 3 couleurs hexadécimales HARMONISÉES à la demande (accent = couleur vive du titre, secondary = texte secondaire clair, background = fond sombre pour que le blanc/doré reste lisible). Libérez-vous des palettes habituelles : si l'utilisateur veut du vert émeraude, du bleu profond, du bordeaux… faites-le.",
+  "- ambiance : une phrase française courte décrivant le rendu.",
+  "- suggestion_titre / suggestion_accroche : suggestions françaises percutantes (MAJUSCULES pour le titre), inspirées de la demande.",
+  "- Si le message est une CORRECTION d'un visuel précédent, intègre la correction à la spécification précédente (nouvelles valeurs complètes).",
+].join("\n");
+
+/** Extrait tolérant du JSON renvoyé par gpt-oss-20b (les modèles de
+ * raisonnement encadrent parfois leur réponse dans du texte ou des
+ * balises de code — on isole le premier objet équilibré {…}). */
+function extraireJsonDirecteur(texte: string): Record<string, unknown> | null {
+  const sansBalises = texte.replace(/```(?:json)?/gi, "");
+  const debut = sansBalises.indexOf("{");
+  if (debut < 0) return null;
+  // Équilibre des accolades (chaînes ignorées) pour trouver la FIN de
+  // l'objet — robuste même si la réponse contient du texte autour.
+  let profondeur = 0;
+  let dansChaine = false;
+  let echappe = false;
+  for (let i = debut; i < sansBalises.length; i++) {
+    const c = sansBalises[i];
+    if (dansChaine) {
+      if (echappe) echappe = false;
+      else if (c === "\\") echappe = true;
+      else if (c === '"') dansChaine = false;
+      continue;
+    }
+    if (c === '"') dansChaine = true;
+    else if (c === "{") profondeur++;
+    else if (c === "}") {
+      profondeur--;
+      if (profondeur === 0) {
+        try {
+          return JSON.parse(sansBalises.substring(debut, i + 1)) as Record<
+            string,
+            unknown
+          >;
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+const COULEUR_HEXA = /^#[0-9a-fA-F]{6}$/;
+
+/** NORMALISE une spécification du Directeur (couleurs validées, champs
+ * coupés) — le rendu ne reçoit JAMAIS de valeurs dangereuses. */
+export function normaliserSpecDirecteur(
+  brut: Record<string, unknown>
+): SpecDirecteur {
+  const paletteBrute = (brut.palette || {}) as Record<string, unknown>;
+  const couleur = (v: unknown, defaut: string): string => {
+    const s = typeof v === "string" ? v.trim() : "";
+    return COULEUR_HEXA.test(s) ? s.toUpperCase() : defaut;
+  };
+  return {
+    prompt_flux: String(brut.prompt_flux || "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .substring(0, 900),
+    palette: {
+      accent: couleur(paletteBrute.accent, "#C9A227"),
+      secondary: couleur(paletteBrute.secondary, "#FAF6EF"),
+      background: couleur(paletteBrute.background, "#141009"),
+    },
+    ambiance: String(brut.ambiance || "").trim().substring(0, 160),
+    suggestion_titre: brut.suggestion_titre
+      ? String(brut.suggestion_titre).trim().substring(0, 120)
+      : undefined,
+    suggestion_accroche: brut.suggestion_accroche
+      ? String(brut.suggestion_accroche).trim().substring(0, 120)
+      : undefined,
+  };
+}
+
+/** Appelle le Directeur IA (gpt-oss-20b) : description française →
+ * spécification de visuel. L'historique (itérations) est renvoyé par
+ * l'appelant pour permettre les corrections successives (« corrige telle
+ * chose… jusqu'au rendu final » — directive du pasteur). */
+export async function directeurIA(
+  messageUtilisateur: string,
+  historique: Array<{ role: "user" | "assistant"; content: string }> = []
+): Promise<{ spec: SpecDirecteur; reponseBrute: string }> {
+  const cleApi = process.env.NVIDIA_API_KEY?.trim();
+  if (!cleApi) throw new ErreurNvidia("Clé NVIDIA absente (NVIDIA_API_KEY).", 503);
+
+  const res = await fetch(URL_DIRECTEUR, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${cleApi}`,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      model: MODELE_DIRECTEUR,
+      messages: [
+        { role: "system", content: SYSTEME_DIRECTEUR },
+        ...historique.slice(-12), // borné : la mémoire d'itération reste légère
+        { role: "user", content: messageUtilisateur.substring(0, 4000) },
+      ],
+      temperature: 0.6,
+      top_p: 0.95,
+      max_tokens: 2048,
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(DELAI_DIRECTEUR_MS),
+  });
+  const texte = await res.text();
+  if (!res.ok) {
+    throw new ErreurNvidia(
+      `Le directeur IA a répondu ${res.status}.`,
+      res.status,
+      texte.substring(0, 400)
+    );
+  }
+
+  let contenu = "";
+  try {
+    const json = JSON.parse(texte) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    contenu = json.choices?.[0]?.message?.content || "";
+  } catch {
+    throw new ErreurNvidia("Réponse du directeur IA illisible.", 502);
+  }
+  if (!contenu.trim()) {
+    throw new ErreurNvidia("Le directeur IA n'a rien renvoyé.", 502);
+  }
+  return { spec: normaliserSpecDirecteur(extraireJsonDirecteur(contenu) || {}), reponseBrute: contenu };
 }

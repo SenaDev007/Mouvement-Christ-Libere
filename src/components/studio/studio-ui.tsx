@@ -1,20 +1,36 @@
 "use client";
 
 /**
- * ⭐ V3.90 — MCL CREATIVE STUDIO : briques UI partagées du studio.
+ * ⭐ V3.90 → V3.91 — MCL CREATIVE STUDIO : briques UI partagées du studio.
  *
  *  · ZoneToasts / afficherToast — retours visuels légers (succès, info,
  *    erreur) en remplacement des alert() bloquants ;
  *  · ModalRogner — ROGNAGE façon Canva (directive : « créer exactement
  *    comme dans Canva… faire un bon montage et faire du rognage ») :
  *    glisser pour recadrer, zoom, rotation 90°, ratios 3:4 / 1:1 / 4:3,
- *    grille des tiers — export PNG à pleine résolution.
+ *    grille des tiers — export PNG à pleine résolution ;
+ *  · ⭐ V3.91 useConfirmation / ModalConfirmation — confirmations
+ *    PERSONNALISÉES (directive : « les modals de confirmation [doivent
+ *    être] personnalisés et non génériques ») : icône, couleurs, titre,
+ *    message et libellé ADAPTÉS à l'action (supprimer une création,
+ *    appliquer une miniature, effacer le brouillon…), jamais le confirm()
+ *    gris du navigateur.
  *
  * Aucune dépendance externe : tout est canvas + pointer events.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckCircle2, Info, AlertCircle, RotateCw, X } from "lucide-react";
+import {
+  CheckCircle2,
+  Info,
+  AlertCircle,
+  RotateCw,
+  X,
+  Trash2,
+  Image as ImageIcon,
+  FilePlus2,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Toasts (singleton par événement — utilisable depuis tout le studio) ──
@@ -410,3 +426,203 @@ export function ModalRogner({ fichier, onValide, onFerme }: ModalRognerProps) {
     </div>
   );
 }
+
+// ─── ⭐ V3.91 — Confirmations PERSONNALISÉES (jamais confirm() générique) ──
+
+/** Variante visuelle — chaque action a sa couleur, son icône, son ton. */
+export type VarianteConfirmation = "suppression" | "application" | "nouveau";
+
+export interface ConfigConfirmation {
+  /** Titre court et CONCRET (ex. « Supprimer ce fond ? »). */
+  titre: string;
+  /** Explication de ce qui se passe VRAIMENT (irréversible ? fichiers ?). */
+  message: string;
+  /** Détail contextuel (nom de l'élément) — affiché en exergue. */
+  detail?: string;
+  /** Libellé du bouton de confirmation (ex. « Supprimer définitivement »). */
+  libelleConfirmer: string;
+  /** Variante visuelle — détermine icône et couleurs par défaut. */
+  variante: VarianteConfirmation;
+  /** Icône personnalisée (sinon celle de la variante). */
+  icone?: LucideIcon;
+}
+
+const STYLES_VARIANTES: Record<
+  VarianteConfirmation,
+  { icone: LucideIcon; fondIcone: string; bouton: string; bord: string; texte: string }
+> = {
+  suppression: {
+    icone: Trash2,
+    fondIcone: "bg-[#7A2A1C] text-[#FAF6EF]",
+    bouton: "bg-[#B3452E] hover:bg-[#9A3A24] text-white",
+    bord: "border-[#B3452E]/30",
+    texte: "text-[#7A2A1C]",
+  },
+  application: {
+    icone: ImageIcon,
+    fondIcone: "bg-[#A3821C] text-[#1E0F2B]",
+    bouton: "bg-[#C9A227] hover:bg-[#A3821C] text-[#1E0F2B]",
+    bord: "border-[#C9A227]/40",
+    texte: "text-[#A3821C]",
+  },
+  nouveau: {
+    icone: FilePlus2,
+    fondIcone: "bg-[#5B7052] text-[#FAF6EF]",
+    bouton: "bg-[#5B7052] hover:bg-[#3F5039] text-white",
+    bord: "border-[#5B7052]/30",
+    texte: "text-[#3F5039]",
+  },
+};
+
+/** La modal de confirmation — Personnalisée par action (V3.91). */
+export function ModalConfirmation({
+  config,
+  onConfirme,
+  onFerme,
+}: {
+  config: ConfigConfirmation;
+  onConfirme: () => void;
+  onFerme: () => void;
+}) {
+  const styles = STYLES_VARIANTES[config.variante];
+  const Icone = config.icone || styles.icone;
+
+  useEffect(() => {
+    const surEchap = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onFerme();
+    };
+    window.addEventListener("keydown", surEchap);
+    return () => window.removeEventListener("keydown", surEchap);
+  }, [onFerme]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[135] bg-[#1A0826]/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onFerme}
+      role="dialog"
+      aria-modal="true"
+      aria-label={config.titre}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl border border-[#8A8378]/15 max-w-md w-full overflow-hidden animate-[fadeIn_.18s_ease-out]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={cn("flex items-start gap-3.5 p-5 border-b", styles.bord)}>
+          <span
+            className={cn(
+              "inline-flex items-center justify-center w-11 h-11 rounded-xl flex-shrink-0",
+              styles.fondIcone
+            )}
+          >
+            <Icone className="w-5 h-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className={cn("text-base font-bold leading-snug", styles.texte)}>
+              {config.titre}
+            </p>
+            {config.detail && (
+              <p className="text-sm font-semibold text-[#1E0F2B] bg-[#FAF6EF] border border-[#8A8378]/15 rounded-lg px-2.5 py-1.5 mt-2 truncate">
+                {config.detail}
+              </p>
+            )}
+            <p className="text-[13px] text-[#8A8378] leading-relaxed mt-2 whitespace-pre-line">
+              {config.message}
+            </p>
+          </div>
+          <button
+            onClick={onFerme}
+            className="p-1.5 rounded-lg text-[#8A8378] hover:bg-[#FAF6EF] flex-shrink-0"
+            aria-label="Annuler"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex gap-2.5 justify-end p-4 bg-[#FAF6EF]/60">
+          <button
+            onClick={onFerme}
+            className="px-4 py-2.5 rounded-xl border border-[#8A8378]/25 text-[#1E0F2B] text-sm font-semibold hover:bg-white"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={onConfirme}
+            autoFocus
+            className={cn(
+              "px-4 py-2.5 rounded-xl text-sm font-bold inline-flex items-center gap-2 transition-colors",
+              styles.bouton
+            )}
+          >
+            <Icone className="w-4 h-4" />
+            {config.libelleConfirmer}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Hook de confirmation ASYNCHRONE — `const ok = await demander({...})`.
+ * Une seule modal à la fois, rendue par le composant retourné. */
+export function useConfirmation(): {
+  demander: (config: ConfigConfirmation) => Promise<boolean>;
+  modal: React.ReactNode;
+} {
+  const [enAttente, setEnAttente] = useState<{
+    config: ConfigConfirmation;
+    resoudre: (ok: boolean) => void;
+  } | null>(null);
+
+  const fermer = useCallback((ok: boolean) => {
+    setEnAttente((actuel) => {
+      actuel?.resoudre(ok);
+      return null;
+    });
+  }, []);
+
+  const demander = useCallback(
+    (config: ConfigConfirmation) =>
+      new Promise<boolean>((resoudre) => {
+        setEnAttente({ config, resoudre });
+      }),
+    []
+  );
+
+  const modal = enAttente ? (
+    <ModalConfirmation
+      config={enAttente.config}
+      onConfirme={() => fermer(true)}
+      onFerme={() => fermer(false)}
+    />
+  ) : null;
+
+  return { demander, modal };
+}
+
+/** ⭐ V3.91 — lecture JSON SÛRE d'une réponse fetch : si le serveur (ou un
+ * intermédiaire réseau type Cloudflare) renvoie du HTML au lieu du JSON,
+ * retourne un objet d'erreur propre — JAMAIS « Unexpected token '<' ». */
+export async function lireJsonSur(res: Response): Promise<Record<string, unknown>> {
+  const type = res.headers.get("content-type") || "";
+  let texte = "";
+  try {
+    texte = await res.text();
+  } catch {
+    return { error: "Le serveur n'a pas répondu — vérifiez la connexion puis réessayez." };
+  }
+  if (texte.trimStart().startsWith("<") || type.includes("text/html")) {
+    // Une page HTML au lieu du JSON (ex. page d'erreur réseau) — message
+    // pastoral, jamais technique (§38).
+    return {
+      error:
+        res.status >= 500
+          ? "Le serveur est momentanément indisponible — réessayez dans un instant."
+          : "Le serveur a répondu de façon inattendue — rechargez la page puis réessayez.",
+    };
+  }
+  try {
+    return JSON.parse(texte) as Record<string, unknown>;
+  } catch {
+    return { error: "Réponse illisible du serveur — réessayez." };
+  }
+}
+

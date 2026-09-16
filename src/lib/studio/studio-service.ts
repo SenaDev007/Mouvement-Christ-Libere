@@ -30,15 +30,20 @@ import {
   peaufinerPhotoNvidia,
   genererFondNvidia,
   consigneFond,
+  directeurIA,
   ErreurNvidia,
 } from "@/lib/studio/nvidia-ai";
 import {
   FORMATS,
   FORMATS_PAR_DEFAUT,
+  ORDRE_CALQUES_DEFAUT,
+  type CleCalque,
   type CleFormat,
   type CleVariante,
   type ConfigLayout,
+  type DecalageCalque,
   type DonneesVisuel,
+  type PalettePerso,
   type TypeVisuel,
 } from "@/lib/visual-generator/types";
 import { rendreVisuel } from "@/lib/visual-generator/renderer";
@@ -594,6 +599,9 @@ function construireDonneesVisuel(
     photosSujet: photosApercu.length ? photosApercu : undefined,
     fondUrl: body.fond_url ? String(body.fond_url) : undefined,
     style: String(body.style || styleParDefaut || "noir-or"),
+    // ⭐ V3.91 — palette LIBRE (sélecteurs ou Directeur IA) + calques.
+    palettePerso: validerPalettePerso(body.palette_perso),
+    calques: validerCalques(body.calques),
     dateEvenement: body.event_date ? String(body.event_date).substring(0, 10) : undefined,
     heureEvenement: body.event_time ? String(body.event_time).substring(0, 20) : undefined,
     lieuEvenement: body.event_location ? String(body.event_location).substring(0, 120) : undefined,
@@ -799,6 +807,9 @@ export async function handlerGenerer(
             accroche: donnees.accroche || null,
             style: donnees.style,
             fondId: typeof body.fond_id === "string" ? body.fond_id : null,
+            // ⭐ V3.91 — palette libre + calques (rejouables en duplication).
+            palettePerso: donnees.palettePerso || null,
+            calques: donnees.calques || null,
             formats,
             dureeMs: Date.now() - debut,
           } as unknown as object,
@@ -1038,6 +1049,148 @@ export async function handlerMetaStudio(
 }
 
 // ─────────────────────────────────────────────────────────────────────
+// ⭐ V3.91 — PALETTE LIBRE & CALQUES : validation serveur stricte
+// (le client ne peut JAMAIS injecter de valeurs dangereuses).
+
+const MOTIF_HEXA = /^#[0-9a-fA-F]{6}$/;
+
+/** Valide une palette personnalisée (#RRGGBB × 3) — sinon undefined. */
+function validerPalettePerso(valeur: unknown): PalettePerso | undefined {
+  if (!valeur || typeof valeur !== "object") return undefined;
+  const p = valeur as Record<string, unknown>;
+  const accent = typeof p.accent === "string" && MOTIF_HEXA.test(p.accent) ? p.accent.toUpperCase() : null;
+  const secondary = typeof p.secondary === "string" && MOTIF_HEXA.test(p.secondary) ? p.secondary.toUpperCase() : null;
+  const background = typeof p.background === "string" && MOTIF_HEXA.test(p.background) ? p.background.toUpperCase() : null;
+  if (!accent && !secondary && !background) return undefined;
+  return {
+    accent: accent || "#C9A227",
+    secondary: secondary || "#FAF6EF",
+    background: background || "#141009",
+  };
+}
+
+const CLES_CALQUES_VALIDES = new Set<string>(ORDRE_CALQUES_DEFAUT);
+
+/** Valide les réglages de calques (ordre/masques/décalages bornés). */
+function validerCalques(valeur: unknown): DonneesVisuel["calques"] {
+  if (!valeur || typeof valeur !== "object") return undefined;
+  const c = valeur as Record<string, unknown>;
+
+  // Ordre : clés valides uniquement, dédupliquées.
+  let ordre: CleCalque[] | undefined;
+  if (Array.isArray(c.ordre)) {
+    const vues = new Set<string>();
+    ordre = [];
+    for (const k of c.ordre) {
+      if (typeof k === "string" && CLES_CALQUES_VALIDES.has(k) && !vues.has(k)) {
+        vues.add(k);
+        ordre.push(k as CleCalque);
+      }
+    }
+    if (ordre.length === 0) ordre = undefined;
+  }
+
+  // Masques : clés valides.
+  let masques: CleCalque[] | undefined;
+  if (Array.isArray(c.masques)) {
+    masques = c.masques.filter(
+      (k): k is CleCalque => typeof k === "string" && CLES_CALQUES_VALIDES.has(k)
+    );
+    if (masques.length === 0) masques = undefined;
+  }
+
+  // Décalages : ±0.3, par calque valide.
+  let decalages: Partial<Record<CleCalque, DecalageCalque>> | undefined;
+  if (c.decalages && typeof c.decalages === "object") {
+    const bruts = c.decalages as Record<string, unknown>;
+    const propres: Partial<Record<CleCalque, DecalageCalque>> = {};
+    for (const [cle, val] of Object.entries(bruts)) {
+      if (!CLES_CALQUES_VALIDES.has(cle) || !val || typeof val !== "object") continue;
+      const d = val as Record<string, unknown>;
+      const x = typeof d.x === "number" && Number.isFinite(d.x) ? Math.max(-0.3, Math.min(0.3, d.x)) : 0;
+      const y = typeof d.y === "number" && Number.isFinite(d.y) ? Math.max(-0.3, Math.min(0.3, d.y)) : 0;
+      if (Math.abs(x) > 0.0001 || Math.abs(y) > 0.0001) {
+        propres[cle as CleCalque] = { x, y };
+      }
+    }
+    if (Object.keys(propres).length) decalages = propres;
+  }
+
+  if (!ordre && !masques && !decalages) return undefined;
+  return { ordre, masques, decalages };
+}
+
+/**
+ * ⭐ V3.91 — DIRECTEUR IA (openai/gpt-oss-20b sur build.nvidia.com) :
+ * le pasteur DÉCRIT le visuel en français (comme dans ChatGPT) — le
+ * directeur retourne prompt FLUX + palette LIBRE + ambiance + suggestions.
+ * L'historique d'itérations est renvoyé pour les corrections successives
+ * (« corrige telle chose… jusqu'au rendu final »).
+ */
+export async function handlerDirecteurIA(
+  request: NextRequest,
+  roles: readonly string[]
+): Promise<NextResponse> {
+  const garde = exigerSession(request, roles);
+  if ("reponse" in garde) return garde.reponse;
+  try {
+    await ensureStudioTables();
+    if (!estIAActive()) {
+      return erreurJson(
+        "L'IA n'est pas configurée — ajoutez la clé NVIDIA_API_KEY (Vercel → Paramètres → Variables d'environnement).",
+        409,
+        "IA_INACTIVE"
+      );
+    }
+
+    const body = await request.json();
+    const description = String(body.description || "").trim().substring(0, 4000);
+    if (description.length < 3) {
+      return erreurJson("Décrivez le visuel souhaité (quelques mots suffisent).");
+    }
+    // Correction d'itération (facultative) : « ajoute des flammes… ».
+    const correction = String(body.correction || "").trim().substring(0, 2000);
+
+    // Historique : [{role, content}] borné à 12 tours (côté client aussi).
+    let historique: Array<{ role: "user" | "assistant"; content: string }> = [];
+    if (Array.isArray(body.historique)) {
+      historique = (body.historique as unknown[])
+        .filter(
+          (m): m is { role: "user" | "assistant"; content: string } =>
+            m !== null &&
+            typeof m === "object" &&
+            (m as { role?: unknown }).role === "assistant" &&
+            typeof (m as { content?: unknown }).content === "string"
+        )
+        .map((m) => ({ role: m.role, content: m.content.substring(0, 4000) }))
+        .slice(-12);
+    }
+
+    const message = correction ? `${description}\n\nCorrection demandée : ${correction}` : description;
+    const { spec, reponseBrute } = await directeurIA(message, historique);
+    if (!spec.prompt_flux) {
+      return erreurJson("Le directeur IA n'a pas compris la demande — reformulez.", 422, "IA_ECHEC");
+    }
+
+    // Historique mis à jour : la réponse brute (JSON) devient le tour
+    // assistant — le modèle corrige SA spécification précédente.
+    const nouvelHistorique = [
+      ...historique,
+      { role: "user" as const, content: message },
+      { role: "assistant" as const, content: reponseBrute.substring(0, 4000) },
+    ].slice(-12);
+
+    return NextResponse.json({
+      spec,
+      historique: nouvelHistorique,
+      iteration: nouvelHistorique.filter((m) => m.role === "user").length,
+    });
+  } catch (e) {
+    console.error("[studio/ai/directeur] :", e);
+    return erreurJson(messageIA(e), 422, "IA_ECHEC");
+  }
+}
+
 // ⭐ V3.90 — IA NVIDIA (build.nvidia.com)
 //   · peaufiner une photo d'intervenant (FLUX.1 Kontext [dev]) : éclairage
 //     studio, netteté, fond nettoyé — identité conservée, puis
@@ -1069,9 +1222,11 @@ export async function handlerPeaufinerPhotoIA(
   try {
     await ensureStudioTables();
     if (!estIAActive()) {
+      // ⭐ V3.91 — 409 (et non 503) : Cloudflare REMPLACE les 5xx par sa
+      // page HTML « Bad gateway » → le client voyait « Unexpected token '<' ».
       return erreurJson(
         "L'IA n'est pas configurée — ajoutez la clé NVIDIA_API_KEY (Vercel → Paramètres → Variables d'environnement).",
-        503,
+        409,
         "IA_INACTIVE"
       );
     }
@@ -1093,10 +1248,10 @@ export async function handlerPeaufinerPhotoIA(
       pngIA = await peaufinerPhotoNvidia(origine.originalUrl, consigne);
     } catch (e) {
       console.error("[studio/ai/peaufiner] NVIDIA :", e);
-      return erreurJson(messageIA(e), 502, "IA_ECHEC");
+      return erreurJson(messageIA(e), 422, "IA_ECHEC");
     }
     if (pngIA.length < 1024) {
-      return erreurJson("L'IA a renvoyé un résultat inexploitable — réessayez.", 502, "IA_ECHEC");
+      return erreurJson("L'IA a renvoyé un résultat inexploitable — réessayez.", 422, "IA_ECHEC");
     }
 
     // ② Post-traitement : bornage 2048 px + PNG sans perte.
@@ -1158,7 +1313,7 @@ export async function handlerPeaufinerPhotoIA(
     );
   } catch (e) {
     console.error("[studio/ai/peaufiner] :", e);
-    return erreurJson("Impossible de peaufiner la photo — réessayez.", 500);
+    return erreurJson("Impossible de peaufiner la photo — réessayez.", 422, "IA_ECHEC");
   }
 }
 
@@ -1171,9 +1326,11 @@ export async function handlerGenererFondIA(
   try {
     await ensureStudioTables();
     if (!estIAActive()) {
+      // ⭐ V3.91 — 409 (et non 503) : Cloudflare REMPLACE les 5xx par sa
+      // page HTML « Bad gateway » → le client voyait « Unexpected token '<' ».
       return erreurJson(
         "L'IA n'est pas configurée — ajoutez la clé NVIDIA_API_KEY (Vercel → Paramètres → Variables d'environnement).",
-        503,
+        409,
         "IA_INACTIVE"
       );
     }
@@ -1191,16 +1348,22 @@ export async function handlerGenererFondIA(
         : "general";
     const nom = String(body.nom || intention).substring(0, 80);
 
-    // ① Génération IA à la palette du ministère.
+    // ⭐ V3.91 — palette LIBRE (Directeur IA ou sélecteurs) : le fond
+    // généré suit les couleurs CHOISIES, pas seulement les styles fixes.
+    const palette = validerPalettePerso(body.palette_perso);
+
+    // ① Génération IA — palette du style, OU palette libre si fournie.
     let pngIA: Buffer;
     try {
-      pngIA = await genererFondNvidia(consigneFond(intention, style));
+      pngIA = await genererFondNvidia(
+        consigneFond(intention, style, palette || undefined)
+      );
     } catch (e) {
       console.error("[studio/ai/fond] NVIDIA :", e);
-      return erreurJson(messageIA(e), 502, "IA_ECHEC");
+      return erreurJson(messageIA(e), 422, "IA_ECHEC");
     }
     if (pngIA.length < 1024) {
-      return erreurJson("L'IA a renvoyé un résultat inexploitable — reformulez et réessayez.", 502, "IA_ECHEC");
+      return erreurJson("L'IA a renvoyé un résultat inexploitable — reformulez et réessayez.", 422, "IA_ECHEC");
     }
 
     // ② Post-traitement : 1920×1080 JPEG Q90 (même format que la
@@ -1232,6 +1395,6 @@ export async function handlerGenererFondIA(
     return NextResponse.json({ item }, { status: 201 });
   } catch (e) {
     console.error("[studio/ai/fond] :", e);
-    return erreurJson("Impossible de générer le fond — reformulez et réessayez.", 500);
+    return erreurJson("Impossible de générer le fond — reformulez et réessayez.", 422, "IA_ECHEC");
   }
 }

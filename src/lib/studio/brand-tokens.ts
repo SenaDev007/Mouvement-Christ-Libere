@@ -142,7 +142,24 @@ export const STYLES_STUDIO: StyleStudio[] = [
   },
 ];
 
-/** Résout un style par sa clé (défaut : Noir & Or). */
-export function styleStudio(key: string): StyleStudio {
-  return STYLES_STUDIO.find((s) => s.key === key) || STYLES_STUDIO[1];
+/** Résout un style par sa clé (défaut : Noir & Or).
+ * ⭐ V3.91 — palette LIBRE : si `perso` est fourni (sélecteurs ou
+ * Directeur IA), ses couleurs REMPLACENT celles du style — n'importe
+ * quelle palette devient possible (« choisir la palette qu'on veut »). */
+export function styleStudio(
+  key: string,
+  perso?: { accent?: string; secondary?: string; background?: string }
+): StyleStudio {
+  const base = STYLES_STUDIO.find((s) => s.key === key) || STYLES_STUDIO[1];
+  if (!perso || (!perso.accent && !perso.secondary && !perso.background)) {
+    return base;
+  }
+  return {
+    key: `perso:${base.key}`,
+    label: "Palette personnalisée",
+    accent: perso.accent || base.accent,
+    secondary: perso.secondary || base.secondary,
+    background: perso.background || base.background,
+    ambiance: "Palette libre (directeur IA ou sélecteurs)",
+  };
 }

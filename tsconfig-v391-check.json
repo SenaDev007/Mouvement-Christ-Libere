@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/lib/studio/**/*",
+    "src/lib/visual-generator/**/*",
+    "src/components/studio/**/*",
+    "src/app/admin/api/studio/**/*",
+    "src/app/secretariat/api/studio/**/*"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

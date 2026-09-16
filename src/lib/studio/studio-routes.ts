@@ -13,6 +13,7 @@ import {
   handlerApercu,
   handlerCreerBackground,
   handlerCreerTemplate,
+  handlerDirecteurIA,
   handlerDupliquerCreation,
   handlerGenerer,
   handlerGenererFondIA,
@@ -69,6 +70,10 @@ export interface RoutesStudio {
   };
   /** ⭐ V3.90 — IA NVIDIA (build.nvidia.com). */
   aiPeaufiner: {
+    POST: (request: NextRequest) => Promise<NextResponse>;
+  };
+  /** ⭐ V3.91 — Directeur IA (gpt-oss-20b) : description → spécification. */
+  aiDirecteur: {
     POST: (request: NextRequest) => Promise<NextResponse>;
   };
   aiFond: {
@@ -128,6 +133,9 @@ export function routesStudio(roles: readonly string[]): RoutesStudio {
     },
     aiPeaufiner: {
       POST: (request) => handlerPeaufinerPhotoIA(request, roles),
+    },
+    aiDirecteur: {
+      POST: (request) => handlerDirecteurIA(request, roles),
     },
     aiFond: {
       POST: (request) => handlerGenererFondIA(request, roles),

@@ -116,6 +116,65 @@ export interface ConfigLayout {
 
 // ─── Données d'une génération ──────────────────────────────────────────
 
+// ─── ⭐ V3.91 — PALETTE LIBRE & CALQUES ────────────────────────────────
+
+/** Palette de couleurs LIBRE (directive du pasteur : « on ne devrait pas
+ * fixer juste une certaine palette de couleurs… choisir la palette qu'on
+ * veut »). Quand elle est présente, elle REMPLACE les couleurs du style
+ * (accent/secondary/background) — les autres jetons (or, feu…) restent
+ * ceux de la marque. Source : sélecteurs manuels OU Directeur IA. */
+export interface PalettePerso {
+  accent: string; // #RRGGBB — couleur vive du titre
+  secondary: string; // #RRGGBB — texte secondaire clair
+  background: string; // #RRGGBB — fond (procedural) sombre
+}
+
+/** Calques superposables (directive : « un système de calques pour les
+ * superpositions pour mieux ajuster les choses »). Chaque élément du
+ * visuel est un calque : l'ORDRE définit la superposition (le premier
+ * est dessiné DESSOUS), un calque peut être MASQUÉ (œil) et NUANCÉ par
+ * un décalage relatif (glissement fin, ±30 % du canvas). */
+export type CleCalque =
+  | "fond" // image de fond / fond procedural du style
+  | "voile" // voile de lisibilité + vignette
+  | "sujet" // photos des intervenants
+  | "titre" // headline (accroche ou titre)
+  | "sousTitre" // noms des intervenants
+  | "evenement" // bloc date/heure/lieu (affiches)
+  | "verset" // référence biblique (affiches)
+  | "logo"; // logo Christ Libère
+
+/** Ordre de superposition PAR DÉFAUT (identique au moteur V3.90 —
+ * rétrocompatible : sans réglages, le rendu ne change JAMAIS). */
+export const ORDRE_CALQUES_DEFAUT: CleCalque[] = [
+  "fond",
+  "voile",
+  "sujet",
+  "titre",
+  "sousTitre",
+  "evenement",
+  "verset",
+  "logo",
+];
+
+export interface DecalageCalque {
+  /** Décalage horizontal relatif (−0.3 à 0.3 × largeur). */
+  x: number;
+  /** Décalage vertical relatif (−0.3 à 0.3 × hauteur). */
+  y: number;
+}
+
+/** Réglages des calques pour UN visuel. */
+export interface ReglagesCalques {
+  /** Ordre de dessin (le premier est DESSOUS). Doit contenir les 8 clés
+   * (les manquantes sont ajoutées à la fin dans l'ordre par défaut). */
+  ordre?: CleCalque[];
+  /** Calques masqués (invisible). */
+  masques?: CleCalque[];
+  /** Décalage fin par calque. */
+  decalages?: Partial<Record<CleCalque, DecalageCalque>>;
+}
+
 export interface DonneesVisuel {
   type: TypeVisuel;
   /** Titre complet (ex. « Comment vaincre les attaques de l'ennemi ? »). */
@@ -146,6 +205,10 @@ export interface DonneesVisuel {
   fondUrl?: string;
   /** Style choisi (clé STYLES_STUDIO). */
   style: string;
+  /** ⭐ V3.91 — palette LIBRE : remplace les couleurs du style. */
+  palettePerso?: PalettePerso;
+  /** ⭐ V3.91 — réglages des calques (ordre, masquage, décalages). */
+  calques?: ReglagesCalques;
   /** Clé du template en base (le moteur y lit l'ADN graphique). */
   templateId?: string;
   /** Champs événementiels (affiches — §16). */

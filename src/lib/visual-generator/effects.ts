@@ -56,9 +56,10 @@ export function dessinerSujetAvecEffets(
   vAlign: "top" | "center" | "bottom",
   effets: EffetsSujet,
   cleStyle: string,
-  mode: "contain" | "cover" = "contain"
+  mode: "contain" | "cover" = "contain",
+  palettePerso?: { accent?: string; secondary?: string; background?: string }
 ): void {
-  const style = styleStudio(cleStyle);
+  const style = styleStudio(cleStyle, palettePerso);
 
   let w: number;
   let h: number;

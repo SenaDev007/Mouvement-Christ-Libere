@@ -21,12 +21,15 @@ import { policeCanvas } from "./fonts";
 import type { ClePolice, JetonCouleur } from "./types";
 import { BRAND, styleStudio } from "../studio/brand-tokens";
 
-/** Résout un jeton de couleur vers sa valeur hex (selon le style actif). */
+/** Résout un jeton de couleur vers sa valeur hex (selon le style actif).
+ * ⭐ V3.91 — palette LIBRE : le 3ᵉ argument (palette personnalisée)
+ * remplace accent/secondary/background du style. */
 export function resoudreCouleur(
   jeton: JetonCouleur,
-  cleStyle: string
+  cleStyle: string,
+  palettePerso?: { accent?: string; secondary?: string; background?: string }
 ): string {
-  const style = styleStudio(cleStyle);
+  const style = styleStudio(cleStyle, palettePerso);
   const b = BRAND.colors;
   switch (jeton) {
     case "accent":

@@ -23,10 +23,12 @@
 import type { SKRSContext2D, Image } from "@napi-rs/canvas";
 import {
   type CleVariante,
+  type CleCalque,
   type ConfigLayout,
   type DonneesVisuel,
   type DefinitionFormat,
   type EffetsSujet,
+  ORDRE_CALQUES_DEFAUT,
 } from "./types";
 import { BRAND, styleStudio } from "../studio/brand-tokens";
 import {
@@ -255,9 +257,10 @@ function dessinerFondStyle(
   ctx: SKRSContext2D,
   W: number,
   H: number,
-  cleStyle: string
+  cleStyle: string,
+  palettePerso?: { accent?: string; secondary?: string; background?: string }
 ): void {
-  const style = styleStudio(cleStyle);
+  const style = styleStudio(cleStyle, palettePerso);
   const b = BRAND.colors;
 
   // Dégradé vertical profond (noir → couleur de fond du style).
@@ -335,7 +338,8 @@ function dessinerGroupeSujets(
       vAlign,
       effets,
       cleStyle,
-      decoupeeDe(0) ? "contain" : "cover"
+      decoupeeDe(0) ? "contain" : "cover",
+      donnees.palettePerso
     );
     return;
   }
@@ -359,7 +363,8 @@ function dessinerGroupeSujets(
       vAlign,
       effets,
       cleStyle,
-      decoupeeDe(i) ? "contain" : "cover"
+      decoupeeDe(i) ? "contain" : "cover",
+      donnees.palettePerso
     );
   }
 }
@@ -411,7 +416,7 @@ export function composer(
   const W = format.largeur;
   const H = format.hauteur;
   const marge = BRAND.safeMargin;
-  const style = styleStudio(donnees.style);
+  const style = styleStudio(donnees.style, donnees.palettePerso);
 
   // Composition selon la famille du format.
   const familles = {
@@ -430,260 +435,313 @@ export function composer(
     ? { ...layout, ...override, sujet: { ...layout.sujet, ...(override.sujet || {}) }, voile: { ...layout.voile, ...(override.voile || {}) } }
     : layout;
 
-  // ① FOND : image de la bibliothèque OU fond procédural du style.
-  if (assets.fond) {
-    // Cover : remplit tout le canvas sans déformation, recentré sur le visage
-    // (centre-haut pour les portraits photografiques).
-    const img = assets.fond;
-    const ratioImg = img.width / img.height;
-    const ratioCanvas = W / H;
-    let dw: number, dh: number, dx: number, dy: number;
-    if (ratioImg > ratioCanvas) {
-      dh = H;
-      dw = dh * ratioImg;
-      dx = (W - dw) / 2;
-      dy = 0;
-    } else {
-      dw = W;
-      dh = dw / ratioImg;
-      dx = 0;
-      dy = (H - dh) * 0.35; // privilégie le haut du fond
-    }
-    ctx.drawImage(img, dx, dy, dw, dh);
-  } else {
-    dessinerFondStyle(ctx, W, H, donnees.style);
-  }
-
-  // ② VOILE de lisibilité (§15) — inversé pour la variante miroir B.
-  if (comp.voileInverse && layoutFinal.voile.type === "cote") {
-    ctx.save();
-    const noir = BRAND.colors.black;
-    const i = Math.min(1, layoutFinal.voile.intensite);
-    const grad = ctx.createLinearGradient(W, 0, 0, 0);
-    grad.addColorStop(0, `${noir}${Math.round(i * 215).toString(16).padStart(2, "0")}`);
-    grad.addColorStop(0.62, `${noir}${Math.round(i * 110).toString(16).padStart(2, "0")}`);
-    grad.addColorStop(1, "rgba(5,5,5,0)");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-    ctx.restore();
-  } else {
-    dessinerVoile(ctx, W, H, layoutFinal.voile);
-  }
-
-  // ③ VIGNETTE discrète (sous le sujet et le texte).
-  dessinerVignette(ctx, W, H, 0.55);
-
-  // ④ SUJETS (photos des intervenants — V3.90 : plusieurs possibles)
-  //    avec leurs effets — mode « cover » pour une photo OPAQUE (rendu
-  //    propre sans détourage), « contain » pour un PNG détouré
-  //    (silhouette). Une seule photo = comportement historique.
-  const imagesSujets = (assets.sujets || []).filter(
-    (img): img is Image => Boolean(img)
-  );
-  if (imagesSujets.length && comp.sujet) {
-    dessinerGroupeSujets(
-      ctx,
-      imagesSujets,
-      {
-        x: comp.sujet.x * W,
-        y: comp.sujet.y * H,
-        w: comp.sujet.w * W,
-        h: comp.sujet.h * H,
-      },
-      comp.sujet.hAlign,
-      comp.sujet.vAlign,
-      layoutFinal.sujet,
-      donnees.style,
-      donnees
-    );
-  }
+  // ⭐ V3.91 — SYSTÈME DE CALQUES : chaque élément est un calque nommé,
+  // dessiné dans l'ORDRE choisi (le premier est DESSOUS), masquable (œil)
+  // et ajustable finement (décalage relatif glissé dans le canvas).
+  // RÉTROCOMPATIBLE : sans `donnees.calques`, l'ordre historique
+  // ① fond → ② voile → ④ sujets → ⑤ textes → ⑥ logo est conservé À
+  // L'IDENTIQUE (directive : jamais de changement de rendu silencieux).
 
   // ⑤ TEXTES (auto-fit obligatoire — §21).
   const echelle = format.famille === "paysage" ? H : W;
   const facteurTaille = layoutFinal.tailleTitre ?? 1;
 
-  // Headline — accroche (miniature) ou titre (affiche).
-  const texteTitre =
-    donnees.type === "miniature"
-      ? donnees.accroche?.trim() || donnees.titre
-      : donnees.titre;
-  if (texteTitre?.trim()) {
-    const zoneH = {
-      x: comp.headline.x * W,
-      y: comp.headline.y * H,
-      w: comp.headline.w * W,
-      h: comp.headline.h * H,
-    };
-    const tailleInitiale =
-      format.famille === "paysage" ? 0.105 * H : format.famille === "carre" ? 0.092 * W : 0.068 * W;
-    const bloc: BlocAjuste = ajusterTexte(
-      ctx,
-      texteTitre,
-      { w: zoneH.w, h: zoneH.h },
-      {
-        police: layoutFinal.policeTitre,
-        taillePx: tailleInitiale * facteurTaille,
-        interligne: 1.06,
-        espacement: layoutFinal.policeTitre === "anton" ? 0.005 : 0.01,
-        couleur: "accent",
-        couleurMotsCles: "accent",
-        majuscules: true,
-      },
-      { maxMotsCles: 2 }
-    );
-    dessinerBloc(
-      ctx,
-      bloc,
-      layoutFinal.policeTitre,
-      zoneH.x,
-      zoneH.y,
-      zoneH.w,
-      comp.headline.align,
-      {
-        interligne: 1.06,
-        couleur: resoudreCouleur("secondary", donnees.style),
-        couleurMotsCles: resoudreCouleur("accent", donnees.style),
-        ombre: { flou: echelle * 0.018, couleur: "rgba(0,0,0,0.85)", dy: echelle * 0.006 },
-        contour: { largeur: echelle * 0.0035, couleur: "rgba(0,0,0,0.9)" },
-        degradeOr: layoutFinal.degradeTitre && estStyleDore(donnees.style),
-      }
-    );
-  }
+  const imagesSujets = (assets.sujets || []).filter(
+    (img): img is Image => Boolean(img)
+  );
 
-  // Sous-titre (intervenant).
-  const texteSousTitre = donnees.sousTitre?.trim() || nomIntervenant(donnees);
-  if (texteSousTitre) {
-    const zoneS = {
-      x: comp.sousTitre.x * W,
-      y: comp.sousTitre.y * H,
-      w: comp.sousTitre.w * W,
-      h: comp.sousTitre.h * H,
-    };
-    const bloc = ajusterTexte(
-      ctx,
-      texteSousTitre,
-      { w: zoneS.w, h: zoneS.h },
-      {
-        police: layoutFinal.policeSousTitre,
-        taillePx: (format.famille === "paysage" ? 0.042 * H : 0.03 * W) * facteurTaille,
-        interligne: 1.15,
-        espacement: 0.045,
-        couleur: "secondary",
-        majuscules: true,
-      },
-      { maxMotsCles: 0 }
-    );
-    dessinerBloc(
-      ctx,
-      bloc,
-      layoutFinal.policeSousTitre,
-      zoneS.x,
-      zoneS.y,
-      zoneS.w,
-      comp.sousTitre.align,
-      {
-        interligne: 1.15,
-        couleur: resoudreCouleur("secondary", donnees.style),
-        // ⭐ Leçon VLM : le nom doit rester lisible sur TOUT fond (même un
-        // mur blanc) — contour sombre net + ombre forte, TOUJOURS.
-        contour: { largeur: echelle * 0.0055, couleur: "rgba(5,5,5,0.92)" },
-        ombre: { flou: echelle * 0.014, couleur: "rgba(0,0,0,0.9)", dy: echelle * 0.005 },
+  /** Les calques, dans leur ordre de dessin historique (défaut). */
+  const calques: Record<CleCalque, () => void> = {
+    fond: () => {
+      if (assets.fond) {
+        // Cover : remplit tout le canvas sans déformation, recentré sur le visage
+        // (centre-haut pour les portraits photografiques).
+        const img = assets.fond;
+        const ratioImg = img.width / img.height;
+        const ratioCanvas = W / H;
+        let dw: number, dh: number, dx: number, dy: number;
+        if (ratioImg > ratioCanvas) {
+          dh = H;
+          dw = dh * ratioImg;
+          dx = (W - dw) / 2;
+          dy = 0;
+        } else {
+          dw = W;
+          dh = dw / ratioImg;
+          dx = 0;
+          dy = (H - dh) * 0.35; // privilégie le haut du fond
+        }
+        ctx.drawImage(img, dx, dy, dw, dh);
+      } else {
+        dessinerFondStyle(ctx, W, H, donnees.style, donnees.palettePerso);
       }
-    );
-  }
+    },
 
-  // Bloc événementiel (affiches — date, heure, lieu).
-  if (donnees.type === "affiche") {
-    const lignesEvenement = construireLignesEvenement(donnees);
-    if (lignesEvenement.length) {
-      const zoneE = {
-        x: comp.evenement.x * W,
-        y: comp.evenement.y * H,
-        w: comp.evenement.w * W,
-        h: comp.evenement.h * H,
-      };
-      const tailleLigne =
-        (format.famille === "paysage" ? 0.032 * H : 0.03 * W) * facteurTaille;
-      ctx.save();
-      ctx.textBaseline = "top";
-      lignesEvenement.forEach((ligne, i) => {
+    voile: () => {
+      // ② VOILE de lisibilité (§15) — inversé pour la variante miroir B.
+      if (comp.voileInverse && layoutFinal.voile.type === "cote") {
+        ctx.save();
+        const noir = BRAND.colors.black;
+        const i = Math.min(1, layoutFinal.voile.intensite);
+        const grad = ctx.createLinearGradient(W, 0, 0, 0);
+        grad.addColorStop(0, `${noir}${Math.round(i * 215).toString(16).padStart(2, "0")}`);
+        grad.addColorStop(0.62, `${noir}${Math.round(i * 110).toString(16).padStart(2, "0")}`);
+        grad.addColorStop(1, "rgba(5,5,5,0)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+      } else {
+        dessinerVoile(ctx, W, H, layoutFinal.voile);
+      }
+      // ③ VIGNETTE discrète (traitement du voile — suit le calque).
+      dessinerVignette(ctx, W, H, 0.55);
+    },
+
+    sujet: () => {
+      // ④ SUJETS (photos des intervenants — V3.90 : plusieurs possibles)
+      //    mode « cover » pour une photo OPAQUE, « contain » pour un PNG
+      //    détouré (silhouette). Une seule photo = comportement historique.
+      if (imagesSujets.length && comp.sujet) {
+        dessinerGroupeSujets(
+          ctx,
+          imagesSujets,
+          {
+            x: comp.sujet.x * W,
+            y: comp.sujet.y * H,
+            w: comp.sujet.w * W,
+            h: comp.sujet.h * H,
+          },
+          comp.sujet.hAlign,
+          comp.sujet.vAlign,
+          layoutFinal.sujet,
+          donnees.style,
+          donnees
+        );
+      }
+    },
+
+    titre: () => {
+      // Headline — accroche (miniature) ou titre (affiche).
+      const texteTitre =
+        donnees.type === "miniature"
+          ? donnees.accroche?.trim() || donnees.titre
+          : donnees.titre;
+      if (texteTitre?.trim()) {
+        const zoneH = {
+          x: comp.headline.x * W,
+          y: comp.headline.y * H,
+          w: comp.headline.w * W,
+          h: comp.headline.h * H,
+        };
+        const tailleInitiale =
+          format.famille === "paysage" ? 0.105 * H : format.famille === "carre" ? 0.092 * W : 0.068 * W;
+        const bloc: BlocAjuste = ajusterTexte(
+          ctx,
+          texteTitre,
+          { w: zoneH.w, h: zoneH.h },
+          {
+            police: layoutFinal.policeTitre,
+            taillePx: tailleInitiale * facteurTaille,
+            interligne: 1.06,
+            espacement: layoutFinal.policeTitre === "anton" ? 0.005 : 0.01,
+            couleur: "accent",
+            couleurMotsCles: "accent",
+            majuscules: true,
+          },
+          { maxMotsCles: 2 }
+        );
+        dessinerBloc(
+          ctx,
+          bloc,
+          layoutFinal.policeTitre,
+          zoneH.x,
+          zoneH.y,
+          zoneH.w,
+          comp.headline.align,
+          {
+            interligne: 1.06,
+            couleur: resoudreCouleur("secondary", donnees.style, donnees.palettePerso),
+            couleurMotsCles: resoudreCouleur("accent", donnees.style, donnees.palettePerso),
+            ombre: { flou: echelle * 0.018, couleur: "rgba(0,0,0,0.85)", dy: echelle * 0.006 },
+            contour: { largeur: echelle * 0.0035, couleur: "rgba(0,0,0,0.9)" },
+            degradeOr: layoutFinal.degradeTitre && estStyleDore(donnees.style),
+          }
+        );
+      }
+    },
+
+    sousTitre: () => {
+      const texteSousTitre = donnees.sousTitre?.trim() || nomIntervenant(donnees);
+      if (texteSousTitre) {
+        const zoneS = {
+          x: comp.sousTitre.x * W,
+          y: comp.sousTitre.y * H,
+          w: comp.sousTitre.w * W,
+          h: comp.sousTitre.h * H,
+        };
         const bloc = ajusterTexte(
           ctx,
-          ligne.texte,
-          { w: zoneE.w, h: tailleLigne * 1.5 },
+          texteSousTitre,
+          { w: zoneS.w, h: zoneS.h },
           {
-            police: i === 0 ? layoutFinal.policeSousTitre : "inter-400",
-            taillePx: tailleLigne * (i === 0 ? 1.18 : 1),
-            interligne: 1.25,
-            espacement: i === 0 ? 0.05 : 0.02,
-            couleur: i === 0 ? "accent" : "white",
-            majuscules: i === 0,
+            police: layoutFinal.policeSousTitre,
+            taillePx: (format.famille === "paysage" ? 0.042 * H : 0.03 * W) * facteurTaille,
+            interligne: 1.15,
+            espacement: 0.045,
+            couleur: "secondary",
+            majuscules: true,
           },
           { maxMotsCles: 0 }
         );
         dessinerBloc(
           ctx,
           bloc,
-          i === 0 ? layoutFinal.policeSousTitre : "inter-400",
-          zoneE.x,
-          zoneE.y + i * tailleLigne * 1.6,
-          zoneE.w,
-          comp.evenement.align,
+          layoutFinal.policeSousTitre,
+          zoneS.x,
+          zoneS.y,
+          zoneS.w,
+          comp.sousTitre.align,
           {
-            interligne: 1.25,
-            couleur:
-              i === 0
-                ? resoudreCouleur("accent", donnees.style)
-                : resoudreCouleur("white", donnees.style),
+            interligne: 1.15,
+            couleur: resoudreCouleur("secondary", donnees.style, donnees.palettePerso),
+            // ⭐ Leçon VLM : le nom doit rester lisible sur TOUT fond (même un
+            // mur blanc) — contour sombre net + ombre forte, TOUJOURS.
+            contour: { largeur: echelle * 0.0055, couleur: "rgba(5,5,5,0.92)" },
+            ombre: { flou: echelle * 0.014, couleur: "rgba(0,0,0,0.9)", dy: echelle * 0.005 },
+          }
+        );
+      }
+    },
+
+    evenement: () => {
+      // Bloc événementiel (affiches — date, heure, lieu).
+      if (donnees.type !== "affiche") return;
+      const lignesEvenement = construireLignesEvenement(donnees);
+      if (lignesEvenement.length) {
+        const zoneE = {
+          x: comp.evenement.x * W,
+          y: comp.evenement.y * H,
+          w: comp.evenement.w * W,
+          h: comp.evenement.h * H,
+        };
+        const tailleLigne =
+          (format.famille === "paysage" ? 0.032 * H : 0.03 * W) * facteurTaille;
+        ctx.save();
+        ctx.textBaseline = "top";
+        lignesEvenement.forEach((ligne, i) => {
+          const bloc = ajusterTexte(
+            ctx,
+            ligne.texte,
+            { w: zoneE.w, h: tailleLigne * 1.5 },
+            {
+              police: i === 0 ? layoutFinal.policeSousTitre : "inter-400",
+              taillePx: tailleLigne * (i === 0 ? 1.18 : 1),
+              interligne: 1.25,
+              espacement: i === 0 ? 0.05 : 0.02,
+              couleur: i === 0 ? "accent" : "white",
+              majuscules: i === 0,
+            },
+            { maxMotsCles: 0 }
+          );
+          dessinerBloc(
+            ctx,
+            bloc,
+            i === 0 ? layoutFinal.policeSousTitre : "inter-400",
+            zoneE.x,
+            zoneE.y + i * tailleLigne * 1.6,
+            zoneE.w,
+            comp.evenement.align,
+            {
+              interligne: 1.25,
+              couleur:
+                i === 0
+                  ? resoudreCouleur("accent", donnees.style, donnees.palettePerso)
+                  : resoudreCouleur("white", donnees.style, donnees.palettePerso),
+              ombre: { flou: echelle * 0.008, couleur: "rgba(0,0,0,0.75)", dy: echelle * 0.003 },
+            }
+          );
+        });
+        ctx.restore();
+      }
+    },
+
+    verset: () => {
+      // Verset biblique (affiches).
+      if (donnees.type !== "affiche") return;
+      if (donnees.verset?.trim()) {
+        const zoneV = {
+          x: comp.verset.x * W,
+          y: comp.verset.y * H,
+          w: comp.verset.w * W,
+          h: comp.verset.h * H,
+        };
+        const bloc = ajusterTexte(
+          ctx,
+          `« ${donnees.verset.trim()} »`,
+          { w: zoneV.w, h: zoneV.h },
+          {
+            police: "inter-400",
+            taillePx: (format.famille === "paysage" ? 0.024 * H : 0.021 * W) * facteurTaille,
+            interligne: 1.3,
+            espacement: 0.03,
+            couleur: "goldLight",
+            majuscules: false,
+          },
+          { maxMotsCles: 0 }
+        );
+        dessinerBloc(
+          ctx,
+          bloc,
+          "inter-400",
+          zoneV.x,
+          zoneV.y,
+          zoneV.w,
+          comp.verset.align,
+          {
+            interligne: 1.3,
+            couleur: resoudreCouleur("goldLight", donnees.style, donnees.palettePerso),
             ombre: { flou: echelle * 0.008, couleur: "rgba(0,0,0,0.75)", dy: echelle * 0.003 },
           }
         );
-      });
+      }
+    },
+
+    logo: () => {
+      // ⑥ LOGO — jamais déformé (§22).
+      if (assets.logo) {
+        dessinerLogo(ctx, assets.logo, comp.logo.coin, W, H, marge, format.famille);
+      }
+    },
+  };
+
+  // Ordre effectif : celui choisi par l'utilisateur, complété par le défaut
+  // (les calques manquants restent dessinés en fin, ordre historique).
+  const reglages = donnees.calques;
+  const ordreEffectif: CleCalque[] = [
+    ...(reglages?.ordre || []),
+    ...ORDRE_CALQUES_DEFAUT.filter((c) => !(reglages?.ordre || []).includes(c)),
+  ];
+  const masques = new Set(reglages?.masques || []);
+
+  for (const cle of ordreEffectif) {
+    if (masques.has(cle)) continue;
+    const decalage = reglages?.decalages?.[cle];
+    const dessiner = calques[cle];
+    if (!dessiner) continue;
+    if (
+      decalage &&
+      (Math.abs(decalage.x) > 0.0001 || Math.abs(decalage.y) > 0.0001)
+    ) {
+      ctx.save();
+      ctx.translate(
+        Math.max(-0.3, Math.min(0.3, decalage.x)) * W,
+        Math.max(-0.3, Math.min(0.3, decalage.y)) * H
+      );
+      dessiner();
       ctx.restore();
+    } else {
+      dessiner();
     }
-
-    // Verset biblique.
-    if (donnees.verset?.trim()) {
-      const zoneV = {
-        x: comp.verset.x * W,
-        y: comp.verset.y * H,
-        w: comp.verset.w * W,
-        h: comp.verset.h * H,
-      };
-      const bloc = ajusterTexte(
-        ctx,
-        `« ${donnees.verset.trim()} »`,
-        { w: zoneV.w, h: zoneV.h },
-        {
-          police: "inter-400",
-          taillePx: (format.famille === "paysage" ? 0.024 * H : 0.021 * W) * facteurTaille,
-          interligne: 1.3,
-          espacement: 0.03,
-          couleur: "goldLight",
-          majuscules: false,
-        },
-        { maxMotsCles: 0 }
-      );
-      dessinerBloc(
-        ctx,
-        bloc,
-        "inter-400",
-        zoneV.x,
-        zoneV.y,
-        zoneV.w,
-        comp.verset.align,
-        {
-          interligne: 1.3,
-          couleur: resoudreCouleur("goldLight", donnees.style),
-          ombre: { flou: echelle * 0.008, couleur: "rgba(0,0,0,0.75)", dy: echelle * 0.003 },
-        }
-      );
-    }
-  }
-
-  // ⑥ LOGO — toujours au-dessus (§15), jamais déformé (§22).
-  if (assets.logo) {
-    dessinerLogo(ctx, assets.logo, comp.logo.coin, W, H, marge, format.famille);
   }
   void style;
 }

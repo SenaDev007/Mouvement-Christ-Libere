@@ -24,6 +24,21 @@
  *   · IA NVIDIA (build.nvidia.com) : « Peaufiner la photo » (FLUX.1
  *     Kontext — éclairage studio, identité conservée) et génération de
  *     fonds (FLUX.1) à la palette du ministère.
+ *
+ * ⭐ V3.91 (directives du pasteur — round 3) :
+ *   · BUG « Unexpected token '<' » CORRIGÉ — tout fetch passe par
+ *     lireJsonSur() : une page HTML (intermédiaire réseau) devient un
+ *     message pastoral, JAMAIS un crash de parsing ;
+ *   · DIRECTEUR IA (gpt-oss-20b) — décrire le visuel en français comme
+ *     dans ChatGPT : spécification (prompt FLUX + palette LIBRE +
+ *     ambiance + suggestions) → fond généré + palette appliquée, avec
+ *     SYSTÈME D'ITÉRATION (« corrige telle chose » jusqu'au rendu final) ;
+ *   · PALETTE DE COULEURS LIBRE — plus de palette figée : 3 sélecteurs
+ *     (accent / texte / fond) + la palette du Directeur IA ;
+ *   · SYSTÈME DE CALQUES — ordre de superposition réglable (↑↓),
+ *     masquage (œil), décalage fin par calque (±) — aperçu en direct ;
+ *   · MODALS DE CONFIRMATION PERSONNALISÉES — icône, couleurs, message
+ *     et libellés propres à chaque action (plus jamais confirm() générique).
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -40,6 +55,7 @@ import {
   Copy,
   Trash2,
   Eye,
+  EyeOff,
   Check,
   Upload,
   Plus,
@@ -49,15 +65,30 @@ import {
   FilePlus2,
   CheckCircle2,
   UserRound,
+  Layers,
+  ArrowDown,
+  ArrowUp,
+  Palette,
+  RotateCcw,
+  MessageSquareText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
+  CleCalque,
   CleFormat,
   CleVariante,
+  DecalageCalque,
+  PalettePerso,
   TypeVisuel,
 } from "@/lib/visual-generator/types";
-import { FORMATS } from "@/lib/visual-generator/types";
-import { ZoneToasts, afficherToast, ModalRogner } from "./studio-ui";
+import { FORMATS, ORDRE_CALQUES_DEFAUT } from "@/lib/visual-generator/types";
+import {
+  ZoneToasts,
+  afficherToast,
+  ModalRogner,
+  lireJsonSur,
+  useConfirmation,
+} from "./studio-ui";
 
 // ─── Types client ──────────────────────────────────────────────────────
 
@@ -127,6 +158,28 @@ interface BrouillonStudio {
   lieuEvenement: string;
   verset: string;
   videoId: string;
+  /** ⭐ V3.91 — palette libre + calques + itération Directeur IA. */
+  palettePerso?: PalettePerso | null;
+  calques?: {
+    ordre?: CleCalque[];
+    masques?: CleCalque[];
+    decalages?: Partial<Record<CleCalque, DecalageCalque>>;
+  } | null;
+}
+
+/** ⭐ V3.91 — spécification renvoyée par le Directeur IA (miroir client). */
+interface SpecDirecteurClient {
+  prompt_flux: string;
+  palette: PalettePerso;
+  ambiance: string;
+  suggestion_titre?: string;
+  suggestion_accroche?: string;
+}
+
+/** Messages du Directeur IA (itération — « corrige telle chose »). */
+interface MessageDirecteur {
+  role: "user" | "assistant";
+  content: string;
 }
 
 type Onglet = "creer" | "creations" | "templates" | "fonds" | "photos";
@@ -152,6 +205,38 @@ const PRESETS_FOND_IA = [
   "nuages dorés au coucher du soleil",
   "texture noir et or abstraite",
 ];
+
+/** ⭐ V3.91 — descriptions d'exemple pour le Directeur IA (le pasteur voit
+ * tout de suite le niveau de détail attendu, comme dans ChatGPT). */
+const EXEMPLES_DIRECTEUR = [
+  "Affiche pour une nuit de prière de feu le 21 septembre à Cotonou : ambiance royale, fond violet profond avec des rayons dorés, croix lumineuse à l'arrière-plan",
+  "Miniature pour un enseignement sur la puissance de la résurrection : bleu profond océanique, lumière percant l'obscurité, ambiance solennelle et puissante",
+  "Affiche de conférence « Femmes de foi » : bordeaux élégant, roses dorées stylisées, lumière douce et chaleureuse",
+];
+
+/** ⭐ V3.91 — libellés des calques (langage du studio, pas technique). */
+const LIBELLES_CALQUES: Record<CleCalque, string> = {
+  fond: "Fond (image ou style)",
+  voile: "Voile de lisibilité",
+  sujet: "Photos des intervenants",
+  titre: "Titre",
+  sousTitre: "Noms des intervenants",
+  evenement: "Date, heure & lieu",
+  verset: "Verset biblique",
+  logo: "Logo Christ Libère",
+};
+
+/** Préréglages de palettes libres (point de départ modifiable). */
+const PRESETS_PALETTE: Array<{ nom: string; palette: PalettePerso }> = [
+  { nom: "Or royal", palette: { accent: "#C9A227", secondary: "#FAF6EF", background: "#141009" } },
+  { nom: "Feu", palette: { accent: "#FF6A00", secondary: "#FFFFFF", background: "#0A0A0C" } },
+  { nom: "Pourpre", palette: { accent: "#8C5FA8", secondary: "#EDE6F2", background: "#1A0826" } },
+  { nom: "Émeraude", palette: { accent: "#2E9E6B", secondary: "#EAF5EE", background: "#08251A" } },
+  { nom: "Océan", palette: { accent: "#2F7FBF", secondary: "#E8F1F8", background: "#0A1B2E" } },
+  { nom: "Bordeaux", palette: { accent: "#A83A50", secondary: "#F8E8EC", background: "#26060D" } },
+];
+
+const MOTIF_COULEUR = /^#[0-9a-fA-F]{6}$/;
 
 // ─── Composant principal ──────────────────────────────────────────────
 
@@ -266,6 +351,87 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
   const [fondIAPrompt, setFondIAPrompt] = useState("");
   const [fondIAOccupe, setFondIAOccupe] = useState(false);
 
+  // ⭐ V3.91 — confirmations PERSONNALISÉES (plus jamais confirm()).
+  const confirmation = useConfirmation();
+
+  // ⭐ V3.91 — palette LIBRE (accent / texte / fond).
+  const [palettePerso, setPalettePerso] = useState<PalettePerso | null>(null);
+
+  // ⭐ V3.91 — DIRECTEUR IA (gpt-oss-20b) : description française →
+  // spécification (prompt FLUX + palette + ambiance), avec ITÉRATIONS.
+  const [directeurDescription, setDirecteurDescription] = useState("");
+  const [directeurOccupe, setDirecteurOccupe] = useState(false);
+  const [directeurSpec, setDirecteurSpec] = useState<SpecDirecteurClient | null>(null);
+  const [directeurHistorique, setDirecteurHistorique] = useState<MessageDirecteur[]>([]);
+  const [directeurCorrection, setDirecteurCorrection] = useState("");
+  const [directeurFondEnCours, setDirecteurFondEnCours] = useState(false);
+  const [promptFluxVisible, setPromptFluxVisible] = useState(false);
+
+  // ⭐ V3.91 — CALQUES : ordre, masques, décalages (aperçu en direct).
+  const [ordreCalques, setOrdreCalques] = useState<CleCalque[]>(ORDRE_CALQUES_DEFAUT);
+  const [calquesMasques, setCalquesMasques] = useState<CleCalque[]>([]);
+  const [decalagesCalques, setDecalagesCalques] = useState<
+    Partial<Record<CleCalque, DecalageCalque>>
+  >({});
+
+  /** Réglages calques sérialisables (aperçu + génération + brouillon). */
+  const reglagesCalques = useMemo(() => {
+    const ordreIdentique =
+      JSON.stringify(ordreCalques) === JSON.stringify(ORDRE_CALQUES_DEFAUT);
+    const quelconque =
+      !ordreIdentique || calquesMasques.length > 0 || Object.keys(decalagesCalques).length > 0;
+    if (!quelconque) return undefined;
+    return {
+      ordre: ordreIdentique ? undefined : ordreCalques,
+      masques: calquesMasques.length ? calquesMasques : undefined,
+      decalages: Object.keys(decalagesCalques).length ? decalagesCalques : undefined,
+    };
+  }, [ordreCalques, calquesMasques, decalagesCalques]);
+
+  /** Déplacer un calque dans la pile (monter / descendre d'un rang). */
+  const deplacerCalque = useCallback((cle: CleCalque, sens: 1 | -1) => {
+    setOrdreCalques((ordre) => {
+      const i = ordre.indexOf(cle);
+      const j = i + sens;
+      if (i < 0 || j < 0 || j >= ordre.length) return ordre;
+      const copie = [...ordre];
+      [copie[i], copie[j]] = [copie[j], copie[i]];
+      return copie;
+    });
+  }, []);
+
+  /** Basculer la visibilité d'un calque (œil). */
+  const basculerCalque = useCallback((cle: CleCalque) => {
+    setCalquesMasques((masques) =>
+      masques.includes(cle) ? masques.filter((c) => c !== cle) : [...masques, cle]
+    );
+  }, []);
+
+  /** Décaler finement un calque (± 2 % par clic — borné ± 30 %). */
+  const decalerCalque = useCallback((cle: CleCalque, dx: number, dy: number) => {
+    setDecalagesCalques((decalages) => {
+      const actuel = decalages[cle] || { x: 0, y: 0 };
+      const borne = (v: number) => Math.max(-0.3, Math.min(0.3, Math.round(v * 100) / 100));
+      const suivant = {
+        x: borne(actuel.x + dx),
+        y: borne(actuel.y + dy),
+      };
+      if (Math.abs(suivant.x) < 0.0001 && Math.abs(suivant.y) < 0.0001) {
+        const copie = { ...decalages };
+        delete copie[cle];
+        return copie;
+      }
+      return { ...decalages, [cle]: suivant };
+    });
+  }, []);
+
+  /** Réinitialiser TOUS les réglages de calques. */
+  const reinitialiserCalques = useCallback(() => {
+    setOrdreCalques(ORDRE_CALQUES_DEFAUT);
+    setCalquesMasques([]);
+    setDecalagesCalques({});
+  }, []);
+
   // ⭐ V3.90 — upload direct + rognage.
   const refFichier = useRef<HTMLInputElement>(null);
   const [uploadPour, setUploadPour] = useState(0);
@@ -341,11 +507,14 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
       lieuEvenement,
       verset,
       videoId,
+      // ⭐ V3.91 — palette libre + calques suivis par le brouillon.
+      palettePerso,
+      calques: reglagesCalques || null,
     }),
     [
       typeVisuel, titre, accroche, intervenants, fondId, style, templateId,
       formatsChoisis, dateEvenement, heureEvenement, lieuEvenement, verset,
-      videoId,
+      videoId, palettePerso, reglagesCalques,
     ]
   );
 
@@ -381,13 +550,17 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
     }
   }, [ecrireBrouillon]);
 
-  /** Efface tout et repart de zéro (brouillon compris). */
-  const repartirDeZero = useCallback(() => {
-    if (
-      !confirm(
-        "Effacer le travail en cours (titre, intervenants, photos sélectionnées) et repartir de zéro ?"
-      )
-    ) {
+  /** Efface tout et repart de zéro (brouillon compris) — modal
+   * PERSONNALISÉE V3.91 (plus jamais le confirm() gris du navigateur). */
+  const repartirDeZero = useCallback(async () => {
+    const confirme = await confirmation.demander({
+      titre: "Repartir de zéro ?",
+      message:
+        "Le travail en cours sera effacé : titre, intervenants, photos sélectionnées, palette et réglages de calques.\nLes photos déjà importées dans la bibliothèque sont conservées.",
+      libelleConfirmer: "Effacer et repartir de zéro",
+      variante: "nouveau",
+    });
+    if (!confirme) {
       return;
     }
     try {
@@ -415,8 +588,16 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
     setDerniereSauvegarde(null);
     setApercuFormat("youtube");
     setApercuVariante("A");
+    // ⭐ V3.91 — reset des nouveautés.
+    setPalettePerso(null);
+    setDirecteurSpec(null);
+    setDirecteurHistorique([]);
+    setDirecteurDescription("");
+    setDirecteurCorrection("");
+    setPromptFluxVisible(false);
+    reinitialiserCalques();
     afficherToast("Nouveau visuel — page réinitialisée.", "info");
-  }, [templates]);
+  }, [templates, confirmation, reinitialiserCalques]);
 
   // ── Chargement initial (+ URL + brouillon) ───────────────────────────
 
@@ -430,23 +611,26 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           fetch(`${apiBase}/speakers`, { cache: "no-store" }),
         ]);
         if (rMeta.ok) {
-          const meta = await rMeta.json();
+          const meta = (await lireJsonSur(rMeta)) as {
+            styles?: StyleStudioClient[];
+            ia?: { active?: boolean };
+          };
           setStyles(meta.styles || []);
           setIaActive(Boolean(meta.ia?.active));
         }
         let listeTemplates: TemplateStudio[] = [];
         if (rTemplates.ok) {
-          listeTemplates = (await rTemplates.json()).items || [];
+          listeTemplates = ((await lireJsonSur(rTemplates)) as { items?: TemplateStudio[] }).items || [];
           setTemplates(listeTemplates);
         }
         let listeFonds: FondStudio[] = [];
         if (rFonds.ok) {
-          listeFonds = (await rFonds.json()).items || [];
+          listeFonds = ((await lireJsonSur(rFonds)) as { items?: FondStudio[] }).items || [];
           setFonds(listeFonds);
         }
         let listePhotos: PhotoIntervenant[] = [];
         if (rPhotos.ok) {
-          listePhotos = (await rPhotos.json()).items || [];
+          listePhotos = ((await lireJsonSur(rPhotos)) as { items?: PhotoIntervenant[] }).items || [];
           setPhotos(listePhotos);
         }
 
@@ -565,6 +749,49 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           setHeureEvenement(brouillon.heureEvenement || "");
           setLieuEvenement(brouillon.lieuEvenement || "");
           setVerset(brouillon.verset || "");
+          // ⭐ V3.91 — palette libre + calques du brouillon.
+          const paletteBrute = brouillon.palettePerso;
+          if (
+            paletteBrute &&
+            MOTIF_COULEUR.test(paletteBrute.accent || "") &&
+            MOTIF_COULEUR.test(paletteBrute.background || "")
+          ) {
+            setPalettePerso(paletteBrute);
+          }
+          const calquesBruts = brouillon.calques;
+          if (calquesBruts?.ordre?.length) {
+            const valides = calquesBruts.ordre.filter((c) =>
+              ORDRE_CALQUES_DEFAUT.includes(c)
+            );
+            if (valides.length) {
+              setOrdreCalques([
+                ...valides,
+                ...ORDRE_CALQUES_DEFAUT.filter((c) => !valides.includes(c)),
+              ]);
+            }
+          }
+          if (calquesBruts?.masques?.length) {
+            setCalquesMasques(
+              calquesBruts.masques.filter((c) => ORDRE_CALQUES_DEFAUT.includes(c))
+            );
+          }
+          if (calquesBruts?.decalages) {
+            const propres: Partial<Record<CleCalque, DecalageCalque>> = {};
+            for (const [cle, dec] of Object.entries(calquesBruts.decalages)) {
+              if (
+                (ORDRE_CALQUES_DEFAUT as string[]).includes(cle) &&
+                dec &&
+                typeof dec.x === "number" &&
+                typeof dec.y === "number"
+              ) {
+                propres[cle as CleCalque] = {
+                  x: Math.max(-0.3, Math.min(0.3, dec.x)),
+                  y: Math.max(-0.3, Math.min(0.3, dec.y)),
+                };
+              }
+            }
+            setDecalagesCalques(propres);
+          }
           if (typeof brouillon.videoId === "string" && brouillon.videoId) {
             setVideoId(brouillon.videoId);
           }
@@ -616,11 +843,17 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           method: "POST",
           body: form,
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Import impossible");
-        setPhotos((anciennes) => [data.item, ...anciennes]);
+        // ⭐ V3.91 — lecture blindée : jamais « Unexpected token '<' ».
+        const data = (await lireJsonSur(res)) as {
+          error?: string;
+          item?: PhotoIntervenant;
+          detourage?: { ok?: boolean; couverture?: number };
+        };
+        if (!res.ok || !data.item) throw new Error(String(data.error || "Import impossible"));
+        const item = data.item;
+        setPhotos((anciennes) => [item, ...anciennes]);
         setIntervenants((liste) =>
-          liste.map((iv, j) => (j === index ? { ...iv, photoId: data.item.id } : iv))
+          liste.map((iv, j) => (j === index ? { ...iv, photoId: item.id } : iv))
         );
         afficherToast(
           data.detourage?.ok
@@ -648,11 +881,16 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ speaker_photo_id: cible.photoId }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Peaufinage impossible");
-        setPhotos((anciennes) => [data.item, ...anciennes]);
+        const data = (await lireJsonSur(res)) as {
+          error?: string;
+          item?: PhotoIntervenant;
+          detourage?: { ok?: boolean; couverture?: number };
+        };
+        if (!res.ok || !data.item) throw new Error(String(data.error || "Peaufinage impossible"));
+        const item = data.item;
+        setPhotos((anciennes) => [item, ...anciennes]);
         setIntervenants((liste) =>
-          liste.map((iv, j) => (j === index ? { ...iv, photoId: data.item.id } : iv))
+          liste.map((iv, j) => (j === index ? { ...iv, photoId: item.id } : iv))
         );
         afficherToast(
           data.detourage?.ok
@@ -684,19 +922,124 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           style,
           categorie: "general",
           nom: `IA — ${intention.substring(0, 44)}`,
+          // ⭐ V3.91 — palette libre : le fond suit les couleurs choisies.
+          palette_perso: palettePerso || undefined,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Génération impossible");
-      setFonds((anciens) => [data.item, ...anciens]);
-      setFondId(data.item.id);
+      const data = (await lireJsonSur(res)) as { error?: string; item?: FondStudio };
+      if (!res.ok || !data.item) throw new Error(String(data.error || "Génération impossible"));
+      const item = data.item;
+      setFonds((anciens) => [item, ...anciens]);
+      setFondId(item.id || "");
       afficherToast("Fond généré par l'IA et sélectionné.", "succes");
     } catch (e) {
       afficherToast(e instanceof Error ? e.message : "Génération impossible", "erreur");
     } finally {
       setFondIAOccupe(false);
     }
-  }, [apiBase, fondIAPrompt, fondIAOccupe, style]);
+  }, [apiBase, fondIAPrompt, fondIAOccupe, style, palettePerso]);
+
+  // ── ⭐ V3.91 — DIRECTEUR IA (gpt-oss-20b) ────────────────────────────
+  // Description française complète → spécification (prompt FLUX + palette
+  // + ambiance + suggestions). Puis fond généré + palette APPLIQUÉE.
+  // ITÉRATION : chaque correction repart de la spécification précédente.
+
+  const appliquerSpecDirecteur = useCallback(
+    async (spec: SpecDirecteurClient, historique: MessageDirecteur[]) => {
+      // ① Palette appliquée immédiatement (l'aperçu change de couleurs).
+      setPalettePerso(spec.palette);
+      // ② Fond généré avec le prompt du directeur + sa palette.
+      setDirecteurFondEnCours(true);
+      try {
+        const res = await fetch(`${apiBase}/ai/fond`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: spec.prompt_flux.substring(0, 300) || "fond premium sombre élégant",
+            style,
+            categorie: "general",
+            nom: `Directeur IA — ${spec.ambiance?.substring(0, 40) || "visuel"}`,
+            palette_perso: spec.palette,
+          }),
+        });
+        const data = (await lireJsonSur(res)) as { error?: string; item?: FondStudio };
+        if (!res.ok) throw new Error(String(data.error || "Génération du fond impossible"));
+        if (data.item?.id) {
+          const item = data.item;
+          setFonds((anciens) => [item, ...anciens]);
+          setFondId(item.id);
+        }
+      } catch (e) {
+        afficherToast(
+          e instanceof Error
+            ? `${e.message} (la palette reste appliquée)`
+            : "Génération du fond impossible (la palette reste appliquée)",
+          "erreur"
+        );
+      } finally {
+        setDirecteurFondEnCours(false);
+      }
+      void historique;
+    },
+    [apiBase, style]
+  );
+
+  /** Lance le Directeur IA (1re fois) ou une ITÉRATION (correction). */
+  const lancerDirecteur = useCallback(
+    async (correction?: string) => {
+      const description = directeurDescription.trim();
+      if (directeurOccupe || directeurFondEnCours) return;
+      if (!correction && description.length < 5) {
+        afficherToast("Décrivez d'abord le visuel souhaité (une phrase suffit).", "info");
+        return;
+      }
+      if (correction && !correction.trim()) {
+        afficherToast("Écrivez la correction à apporter (ex. « assombrit le haut »).", "info");
+        return;
+      }
+      setDirecteurOccupe(true);
+      try {
+        const res = await fetch(`${apiBase}/ai/directeur`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            description: description || "visuel selon la correction précédente",
+            correction: correction || undefined,
+            historique: directeurHistorique,
+          }),
+        });
+        const data = await lireJsonSur(res); // ⭐ V3.91 — blindé
+        if (!res.ok) throw new Error(String(data.error || "Le directeur IA n'a pas répondu"));
+        const spec = data.spec as SpecDirecteurClient | undefined;
+        const historique = (data.historique || []) as MessageDirecteur[];
+        if (!spec?.prompt_flux) throw new Error("Le directeur IA n'a rien proposé — reformulez.");
+        setDirecteurSpec(spec);
+        setDirecteurHistorique(historique);
+        setDirecteurCorrection("");
+        // Applique palette + fond immédiatement (le pasteur VOIT le résultat).
+        await appliquerSpecDirecteur(spec, historique);
+        const iteration = (data.iteration as number) || 1;
+        afficherToast(
+          iteration > 1
+            ? `Itération ${iteration} appliquée — continuez à corriger jusqu'au rendu final.`
+            : "Spécification appliquée — palette et fond générés. Affinez avec une correction.",
+          "succes"
+        );
+      } catch (e) {
+        afficherToast(e instanceof Error ? e.message : "Directeur IA indisponible", "erreur");
+      } finally {
+        setDirecteurOccupe(false);
+      }
+    },
+    [
+      apiBase,
+      directeurDescription,
+      directeurHistorique,
+      directeurOccupe,
+      directeurFondEnCours,
+      appliquerSpecDirecteur,
+    ]
+  );
 
   // ⭐ Aperçu live (debounce 700 ms — le MÊME moteur que la génération).
   const numeroApercu = useRef(0);
@@ -725,6 +1068,9 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
             })),
             fond_url: fondSelectionne?.imageUrl,
             style,
+            // ⭐ V3.91 — palette libre + calques dans l'aperçu live.
+            palette_perso: palettePerso || undefined,
+            calques: reglagesCalques,
             template_id: templateId,
             variant: apercuVariante,
             format: apercuFormat,
@@ -735,7 +1081,7 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           }),
         });
         if (!res.ok) return;
-        const data = await res.json();
+        const data = (await lireJsonSur(res)) as { dataUrl?: string };
         if (numero === numeroApercu.current && data.dataUrl) {
           setApercuUrl(data.dataUrl);
         }
@@ -750,6 +1096,7 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
     apiBase, typeVisuel, titre, accroche, intervenants, photosChoisies,
     fondSelectionne, style, templateId, apercuVariante, apercuFormat,
     dateEvenement, heureEvenement, lieuEvenement, verset,
+    palettePerso, reglagesCalques,
   ]);
 
   // Génération.
@@ -774,6 +1121,9 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           speaker_photo_id: photosChoisies[0]?.id || null,
           fond_id: fondId || null,
           style,
+          // ⭐ V3.91 — palette libre + calques dans la GÉNÉRATION finale.
+          palette_perso: palettePerso || undefined,
+          calques: reglagesCalques,
           formats: formatsChoisis,
           variants: variantesCiblees,
           event_date: dateEvenement || undefined,
@@ -782,8 +1132,8 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           bible_verse: verset || undefined,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Génération impossible");
+      const data = (await lireJsonSur(res)) as { error?: string; creations?: CreationStudio[] };
+      if (!res.ok) throw new Error(String(data.error || "Génération impossible"));
       setResultats(data.creations || []);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Génération impossible");
@@ -1028,8 +1378,172 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           </div>
         </Section>
 
-        {/* Étape 3 — Style */}
-        <Section label="3. Style">
+        {/* ⭐ V3.91 — Étape 2bis : DIRECTEUR IA (décrire le visuel comme
+            dans ChatGPT — gpt-oss-20b structure, FLUX.1 génère). */}
+        {iaActive && (
+          <Section label="2bis. Décrire le visuel (IA)">
+            <div className="rounded-xl border border-[#8C5FA8]/30 bg-[#8C5FA8]/[0.06] p-3 space-y-2.5">
+              <p className="text-[11px] font-bold text-[#6B4480] flex items-center gap-1.5">
+                <MessageSquareText className="w-3.5 h-3.5" />
+                Directeur IA — décrivez, il crée
+              </p>
+              <p className="text-[10px] text-[#8A8378] leading-relaxed">
+                Comme dans ChatGPT : donnez TOUTE la description (ambiance,
+                couleurs, lumière, sujet). Le directeur structure votre demande,
+                choisit la palette, génère le fond — puis corrigez jusqu&apos;au
+                rendu final.
+              </p>
+              <textarea
+                value={directeurDescription}
+                onChange={(e) => setDirecteurDescription(e.target.value)}
+                placeholder={EXEMPLES_DIRECTEUR[0]}
+                rows={4}
+                maxLength={4000}
+                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-white text-xs leading-relaxed resize-y"
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {EXEMPLES_DIRECTEUR.slice(0, 2).map((ex) => (
+                  <button
+                    key={ex}
+                    onClick={() => setDirecteurDescription(ex)}
+                    className="px-2 py-1 rounded-full text-[9px] font-semibold border border-[#8C5FA8]/25 text-[#6B4480] hover:bg-[#8C5FA8]/10 max-w-full truncate"
+                    title={ex}
+                  >
+                    {ex.substring(0, 52)}…
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => lancerDirecteur()}
+                disabled={directeurOccupe || directeurFondEnCours || directeurDescription.trim().length < 5}
+                className="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-lg bg-[#8C5FA8] text-white text-xs font-bold hover:bg-[#7A4E97] disabled:opacity-40 disabled:pointer-events-none"
+              >
+                {directeurOccupe ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                {directeurOccupe
+                  ? "Le directeur réfléchit…"
+                  : directeurSpec
+                    ? "Recréer depuis la description"
+                    : "Créer le visuel avec l'IA"}
+              </button>
+
+              {/* Résultat du directeur + ITÉRATION. */}
+              {directeurSpec && (
+                <div className="rounded-lg border border-[#8C5FA8]/25 bg-white p-2.5 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-bold text-[#6B4480] flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-[#5B7052]" />
+                      {directeurSpec.ambiance || "Spécification prête"}
+                    </p>
+                    <span className="text-[9px] text-[#8A8378] font-semibold">
+                      itération {directeurHistorique.filter((m) => m.role === "user").length}
+                    </span>
+                  </div>
+
+                  {/* Palette proposée. */}
+                  <div className="flex items-center gap-2">
+                    {(
+                      [
+                        ["accent", directeurSpec.palette.accent],
+                        ["texte", directeurSpec.palette.secondary],
+                        ["fond", directeurSpec.palette.background],
+                      ] as const
+                    ).map(([libelle, couleur]) => (
+                      <span
+                        key={libelle}
+                        className="flex items-center gap-1 text-[9px] font-semibold text-[#8A8378]"
+                      >
+                        <span
+                          className="w-4 h-4 rounded border border-[#8A8378]/30"
+                          style={{ backgroundColor: couleur }}
+                        />
+                        {libelle}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Suggestions de textes (cliquer = appliquer). */}
+                  {(directeurSpec.suggestion_titre || directeurSpec.suggestion_accroche) && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {directeurSpec.suggestion_titre && (
+                        <button
+                          onClick={() => setTitre(directeurSpec.suggestion_titre || "")}
+                          className="px-2 py-1 rounded-full text-[9px] font-semibold border border-[#C9A227]/40 text-[#A3821C] hover:bg-[#C9A227]/10"
+                          title="Cliquer pour utiliser comme titre"
+                        >
+                          Titre : {directeurSpec.suggestion_titre}
+                        </button>
+                      )}
+                      {directeurSpec.suggestion_accroche && (
+                        <button
+                          onClick={() => setAccroche(directeurSpec.suggestion_accroche || "")}
+                          className="px-2 py-1 rounded-full text-[9px] font-semibold border border-[#C9A227]/40 text-[#A3821C] hover:bg-[#C9A227]/10"
+                          title="Cliquer pour utiliser comme accroche"
+                        >
+                          Accroche : {directeurSpec.suggestion_accroche}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Prompt FLUX (technique — dépliable). */}
+                  <button
+                    onClick={() => setPromptFluxVisible((v) => !v)}
+                    className="text-[9px] font-semibold text-[#8A8378] underline underline-offset-2"
+                  >
+                    {promptFluxVisible ? "Masquer" : "Voir"} le prompt image (anglais)
+                  </button>
+                  {promptFluxVisible && (
+                    <p className="text-[9px] text-[#8A8378] bg-[#FAF6EF] border border-[#8A8378]/15 rounded px-2 py-1.5 leading-relaxed break-words">
+                      {directeurSpec.prompt_flux}
+                    </p>
+                  )}
+
+                  {/* ITÉRATION : « corrige telle chose ». */}
+                  <div className="flex gap-1.5 pt-0.5">
+                    <input
+                      value={directeurCorrection}
+                      onChange={(e) => setDirecteurCorrection(e.target.value)}
+                      placeholder="Correction… ex. « plus de flammes en bas »"
+                      maxLength={2000}
+                      className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-[11px]"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          lancerDirecteur(directeurCorrection);
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => lancerDirecteur(directeurCorrection)}
+                      disabled={directeurOccupe || directeurFondEnCours || !directeurCorrection.trim()}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-[10px] font-bold hover:bg-[#3D1A54] disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap"
+                    >
+                      {directeurFondEnCours ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <RotateCcw className="w-3 h-3" />
+                      )}
+                      Corriger
+                    </button>
+                  </div>
+                  {directeurFondEnCours && (
+                    <p className="text-[10px] text-[#8C5FA8] font-semibold flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Régénération du fond (10 à 30 s)…
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </Section>
+        )}
+
+        {/* Étape 3 — Style + PALETTE LIBRE (V3.91). */}
+        <Section label="3. Style & palette">
           <div className="grid grid-cols-2 gap-1.5">
             {styles.map((s) => (
               <button
@@ -1038,7 +1552,7 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
                 title={s.ambiance}
                 className={cn(
                   "px-2.5 py-2 rounded-lg border text-[11px] font-semibold transition-all text-left",
-                  style === s.key
+                  style === s.key && !palettePerso
                     ? "border-[#C9A227] bg-[#C9A227]/5 text-[#A3821C]"
                     : "border-[#8A8378]/15 text-[#8A8378] hover:border-[#C9A227]/40"
                 )}
@@ -1046,6 +1560,82 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
                 {s.label}
               </button>
             ))}
+          </div>
+
+          {/* ⭐ Palette LIBRE : n'importe quelles couleurs — sélecteurs. */}
+          <div className="mt-3 rounded-xl border border-[#8A8378]/15 bg-[#FAF6EF]/40 p-2.5 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] font-bold text-[#1E0F2B] flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-[#A3821C]" />
+                Palette personnalisée
+                {palettePerso && (
+                  <span className="text-[9px] font-semibold text-[#5B7052]">
+                    active
+                  </span>
+                )}
+              </p>
+              {palettePerso && (
+                <button
+                  onClick={() => setPalettePerso(null)}
+                  className="text-[9px] font-semibold text-[#B3452E] hover:underline"
+                >
+                  Revenir aux styles du studio
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] text-[#8A8378] leading-relaxed">
+              Choisissez les couleurs que VOUS voulez (le pasteur peut varier
+              de palette) — ou prenez celle proposée par le directeur IA.
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  ["Couleur du titre", "accent"],
+                  ["Couleur des textes", "secondary"],
+                  ["Couleur du fond", "background"],
+                ] as const
+              ).map(([libelle, cle]) => (
+                <label key={cle} className="space-y-1">
+                  <span className="block text-[9px] font-semibold text-[#8A8378] leading-tight">
+                    {libelle}
+                  </span>
+                  <input
+                    type="color"
+                    value={(palettePerso?.[cle] as string) || ""}
+                    onChange={(e) =>
+                      setPalettePerso((actuelle) => ({
+                        accent: actuelle?.accent || "#C9A227",
+                        secondary: actuelle?.secondary || "#FAF6EF",
+                        background: actuelle?.background || "#141009",
+                        [cle]: e.target.value.toUpperCase(),
+                      }))
+                    }
+                    className="w-full h-8 rounded-lg border border-[#8A8378]/25 bg-white cursor-pointer p-0.5"
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {PRESETS_PALETTE.map((p) => (
+                <button
+                  key={p.nom}
+                  onClick={() => setPalettePerso(p.palette)}
+                  className="flex items-center gap-1 px-2 py-1 rounded-full border border-[#8A8378]/20 text-[9px] font-semibold text-[#8A8378] hover:border-[#C9A227]/50"
+                  title={`${p.palette.accent} / ${p.palette.secondary} / ${p.palette.background}`}
+                >
+                  <span className="flex">
+                    {[p.palette.accent, p.palette.secondary, p.palette.background].map((c) => (
+                      <span
+                        key={c}
+                        className="w-2.5 h-2.5 rounded-full border border-white"
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </span>
+                  {p.nom}
+                </button>
+              ))}
+            </div>
           </div>
         </Section>
 
@@ -1175,9 +1765,130 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           </Section>
         )}
 
+        {/* ⭐ V3.91 — CALQUES : superpositions réglables. */}
+        <Section label={typeVisuel === "miniature" ? "6. Calques (superpositions)" : "7. Calques (superpositions)"}>
+          <div className="rounded-xl border border-[#8A8378]/15 bg-[#FAF6EF]/40 p-2.5 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] font-bold text-[#1E0F2B] flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[#A3821C]" />
+                Ordre des calques
+              </p>
+              <button
+                onClick={reinitialiserCalques}
+                className="text-[9px] font-semibold text-[#8A8378] hover:text-[#B3452E] inline-flex items-center gap-1"
+                title="Restaurer l'ordre et les réglages d'origine"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Réinitialiser
+              </button>
+            </div>
+            <p className="text-[10px] text-[#8A8378] leading-relaxed">
+              Le HAUT de la liste est dessiné DEVANT (comme une pile de papiers).
+              Œil : masquer un calque. Flèches ± : l&apos;ajuster finement —
+              l&apos;aperçu suit en direct.
+            </p>
+            <div className="space-y-1.5">
+              {[...ordreCalques].reverse().map((cle) => {
+                const masque = calquesMasques.includes(cle);
+                const decalage = decalagesCalques[cle];
+                return (
+                  <div
+                    key={cle}
+                    className={cn(
+                      "rounded-lg border px-2 py-1.5 space-y-1.5",
+                      masque
+                        ? "border-[#8A8378]/10 bg-[#8A8378]/5 opacity-60"
+                        : "border-[#8A8378]/15 bg-white"
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => basculerCalque(cle)}
+                        title={masque ? "Afficher ce calque" : "Masquer ce calque"}
+                        className={cn(
+                          "p-1 rounded",
+                          masque
+                            ? "text-[#8A8378] hover:bg-[#8A8378]/10"
+                            : "text-[#A3821C] hover:bg-[#C9A227]/10"
+                        )}
+                      >
+                        {masque ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <span className={cn("flex-1 text-[11px] font-semibold truncate", masque ? "text-[#8A8378]" : "text-[#1E0F2B]")}>
+                        {LIBELLES_CALQUES[cle]}
+                      </span>
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          onClick={() => deplacerCalque(cle, 1)}
+                          title="Monter (devant)"
+                          className="p-1 rounded text-[#8A8378] hover:bg-[#C9A227]/10 hover:text-[#A3821C]"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deplacerCalque(cle, -1)}
+                          title="Descendre (derrière)"
+                          className="p-1 rounded text-[#8A8378] hover:bg-[#C9A227]/10 hover:text-[#A3821C]"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Décalage fin du calque (±). */}
+                    <div className="flex items-center gap-1.5 pl-6">
+                      <span className="text-[9px] text-[#8A8378] font-semibold">Ajuster</span>
+                      <div className="flex items-center rounded-md border border-[#8A8378]/20 overflow-hidden">
+                        <button
+                          onClick={() => decalerCalque(cle, -0.02, 0)}
+                          title="Décaler à gauche"
+                          className="px-1.5 py-0.5 text-[#8A8378] hover:bg-[#FAF6EF] text-[11px] font-bold"
+                        >
+                          ←
+                        </button>
+                        <button
+                          onClick={() => decalerCalque(cle, 0.02, 0)}
+                          title="Décaler à droite"
+                          className="px-1.5 py-0.5 text-[#8A8378] hover:bg-[#FAF6EF] text-[11px] font-bold border-l border-r border-[#8A8378]/20"
+                        >
+                          →
+                        </button>
+                      </div>
+                      <div className="flex items-center rounded-md border border-[#8A8378]/20 overflow-hidden">
+                        <button
+                          onClick={() => decalerCalque(cle, 0, -0.02)}
+                          title="Monter le calque"
+                          className="px-1.5 py-0.5 text-[#8A8378] hover:bg-[#FAF6EF] text-[11px] font-bold"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          onClick={() => decalerCalque(cle, 0, 0.02)}
+                          title="Descendre le calque"
+                          className="px-1.5 py-0.5 text-[#8A8378] hover:bg-[#FAF6EF] text-[11px] font-bold border-l border-[#8A8378]/20"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                      {decalage && (Math.abs(decalage.x) > 0.0001 || Math.abs(decalage.y) > 0.0001) && (
+                        <button
+                          onClick={() => decalerCalque(cle, -decalage.x, -decalage.y)}
+                          className="text-[9px] font-semibold text-[#B3452E] hover:underline"
+                          title="Remettre ce calque en position d'origine"
+                        >
+                          recentrer
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Section>
+
         {/* Formats */}
         <Section
-          label={typeVisuel === "miniature" ? "6. Formats d'export" : "7. Formats d'export"}
+          label={typeVisuel === "miniature" ? "7. Formats d'export" : "8. Formats d'export"}
         >
           <div className="flex flex-wrap gap-1.5">
             {formatsDisponibles.map((f) => {
@@ -1343,6 +2054,8 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           }}
         />
       )}
+      {/* ⭐ V3.91 — modal de confirmation PERSONNALISÉE (OngletCréer). */}
+      {confirmation.modal}
       {espace === "jamais" && <span className="hidden" />}
     </div>
   );
@@ -1361,7 +2074,9 @@ function OngletCreations({ apiBase }: { apiBase: string }) {
       const params = new URLSearchParams();
       if (filtre) params.set("type", filtre);
       const res = await fetch(`${apiBase}/creations?${params}`, { cache: "no-store" });
-      if (res.ok) setItems((await res.json()).items || []);
+      if (res.ok) {
+        setItems(((await lireJsonSur(res)) as { items?: CreationStudio[] }).items || []);
+      }
     } finally {
       setChargement(false);
     }
@@ -1438,6 +2153,8 @@ function CarteCreation({
 
   const [applique, setApplique] = useState(false);
   const [occupe, setOccupe] = useState(false);
+  // ⭐ V3.91 — confirmations PERSONNALISÉES (jamais confirm() générique).
+  const confirmation = useConfirmation();
 
   const dupliquer = async () => {
     setOccupe(true);
@@ -1447,17 +2164,29 @@ function CarteCreation({
     onSupprime?.();
   };
   const supprimer = async () => {
-    if (!confirm("Supprimer définitivement cette création (fichiers cloud inclus) ?")) return;
+    const confirme = await confirmation.demander({
+      titre: "Supprimer cette création ?",
+      message:
+        "La création et ses fichiers exportés (tous formats) seront définitivement effacés du stockage cloud. Cette action est irréversible.",
+      detail: creation.titleText,
+      libelleConfirmer: "Supprimer définitivement",
+      variante: "suppression",
+    });
+    if (!confirme) return;
     setOccupe(true);
     await fetch(`${apiBase}/creations/${creation.id}`, { method: "DELETE" });
     setOccupe(false);
     onSupprime?.();
   };
   const appliquerVideo = async () => {
-    if (
-      !confirm("Utiliser ce visuel comme miniature de la vidéo associée (remplace l'actuelle) ?")
-    )
-      return;
+    const confirme = await confirmation.demander({
+      titre: "Appliquer comme miniature ?",
+      message:
+        "Ce visuel remplacera la miniature actuelle de la vidéo associée — les croyants verront cette image sur la page Vidéos.",
+      libelleConfirmer: "Appliquer la miniature",
+      variante: "application",
+    });
+    if (!confirme) return;
     setOccupe(true);
     const res = await fetch(`${apiBase}/creations/${creation.id}`, {
       method: "PATCH",
@@ -1538,6 +2267,8 @@ function CarteCreation({
           </button>
         </div>
       </div>
+      {/* ⭐ V3.91 — confirmation personnalisée de CETTE création. */}
+      {confirmation.modal}
     </div>
   );
 }
@@ -1552,7 +2283,9 @@ function OngletTemplates({ apiBase }: { apiBase: string }) {
     setChargement(true);
     try {
       const res = await fetch(`${apiBase}/templates?tous=1`, { cache: "no-store" });
-      if (res.ok) setItems((await res.json()).items || []);
+      if (res.ok) {
+        setItems(((await lireJsonSur(res)) as { items?: TemplateStudio[] }).items || []);
+      }
     } finally {
       setChargement(false);
     }
@@ -1631,11 +2364,16 @@ function OngletFonds({ apiBase }: { apiBase: string }) {
   const [upload, setUpload] = useState(false);
   const [fichier, setFichier] = useState<File | null>(null);
 
+  // ⭐ V3.91 — confirmations PERSONNALISÉES pour chaque action sensible.
+  const confirmation = useConfirmation();
+
   const charger = useCallback(async () => {
     setChargement(true);
     try {
       const res = await fetch(`${apiBase}/backgrounds?tous=1`, { cache: "no-store" });
-      if (res.ok) setItems((await res.json()).items || []);
+      if (res.ok) {
+        setItems(((await lireJsonSur(res)) as { items?: FondStudio[] }).items || []);
+      }
     } finally {
       setChargement(false);
     }
@@ -1654,8 +2392,8 @@ function OngletFonds({ apiBase }: { apiBase: string }) {
       form.append("name", nom.trim());
       form.append("category", categorie);
       const res = await fetch(`${apiBase}/backgrounds`, { method: "POST", body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Ajout impossible");
+      const data = (await lireJsonSur(res)) as { error?: string };
+      if (!res.ok) throw new Error(String(data.error || "Ajout impossible"));
       setNom("");
       setFichier(null);
       afficherToast("Fond ajouté à la bibliothèque.", "succes");
@@ -1752,7 +2490,15 @@ function OngletFonds({ apiBase }: { apiBase: string }) {
                   </button>
                   <button
                     onClick={async () => {
-                      if (!confirm(`Supprimer le fond « ${f.name} » ?`)) return;
+                      const confirme = await confirmation.demander({
+                        titre: "Supprimer ce fond ?",
+                        message:
+                          "Le fond sera retiré de la bibliothèque. Les créations déjà générées avec ce fond sont conservées.",
+                        detail: f.name,
+                        libelleConfirmer: "Supprimer le fond",
+                        variante: "suppression",
+                      });
+                      if (!confirme) return;
                       await fetch(`${apiBase}/backgrounds/${f.id}`, { method: "DELETE" });
                       charger();
                     }}
@@ -1766,6 +2512,8 @@ function OngletFonds({ apiBase }: { apiBase: string }) {
           ))}
         </div>
       )}
+      {/* ⭐ V3.91 — confirmation personnalisée (suppression d'un fond). */}
+      {confirmation.modal}
     </div>
   );
 }
@@ -1777,12 +2525,16 @@ function OngletPhotos({ apiBase }: { apiBase: string }) {
   const [chargement, setChargement] = useState(true);
   const [intervenant, setIntervenant] = useState("Pasteur Kongo");
   const [rogner, setRogner] = useState<File | null>(null);
+  // ⭐ V3.91 — confirmation personnalisée pour la suppression d'une photo.
+  const confirmation = useConfirmation();
 
   const charger = useCallback(async () => {
     setChargement(true);
     try {
       const res = await fetch(`${apiBase}/speakers`, { cache: "no-store" });
-      if (res.ok) setItems((await res.json()).items || []);
+      if (res.ok) {
+        setItems(((await lireJsonSur(res)) as { items?: PhotoIntervenant[] }).items || []);
+      }
     } finally {
       setChargement(false);
     }
@@ -1802,8 +2554,11 @@ function OngletPhotos({ apiBase }: { apiBase: string }) {
         method: "POST",
         body: form,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Ajout impossible");
+      const data = (await lireJsonSur(res)) as {
+        error?: string;
+        detourage?: { ok?: boolean; couverture?: number };
+      };
+      if (!res.ok) throw new Error(String(data.error || "Ajout impossible"));
       afficherToast(
         data.detourage?.ok
           ? `Photo de ${nom} enregistrée — détourage réussi (${data.detourage.couverture} % du fond supprimé).`
@@ -1816,7 +2571,7 @@ function OngletPhotos({ apiBase }: { apiBase: string }) {
     }
   };
 
-  const parIntervenant = useMemo(() => {
+  const parIntervenant = useMemo<Record<string, PhotoIntervenant[]>>(() => {
     const groupes: Record<string, PhotoIntervenant[]> = {};
     for (const p of items) {
       groupes[p.speakerName] = groupes[p.speakerName] || [];
@@ -1908,7 +2663,15 @@ function OngletPhotos({ apiBase }: { apiBase: string }) {
                   )}
                   <button
                     onClick={async () => {
-                      if (!confirm("Supprimer cette photo ?")) return;
+                      const confirme = await confirmation.demander({
+                        titre: "Supprimer cette photo ?",
+                        message:
+                          "La photo sera retirée de la bibliothèque de l'intervenant. Les visuels déjà générés restent intacts.",
+                        detail: p.speakerName,
+                        libelleConfirmer: "Supprimer la photo",
+                        variante: "suppression",
+                      });
+                      if (!confirme) return;
                       await fetch(`${apiBase}/speakers/${p.id}`, { method: "DELETE" });
                       charger();
                     }}
@@ -1934,6 +2697,8 @@ function OngletPhotos({ apiBase }: { apiBase: string }) {
           }}
         />
       )}
+      {/* ⭐ V3.91 — confirmation personnalisée (suppression d'une photo). */}
+      {confirmation.modal}
     </div>
   );
 }
