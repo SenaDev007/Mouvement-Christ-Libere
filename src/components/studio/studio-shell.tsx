@@ -980,7 +980,7 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: spec.prompt_flux.substring(0, 300) || "fond premium sombre élégant",
+            prompt: spec.prompt_flux.substring(0, 900) || "fond premium sombre élégant",
             style,
             categorie: "general",
             nom: `Directeur IA — ${spec.ambiance?.substring(0, 40) || "visuel"}`,
@@ -1044,11 +1044,20 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
         // Applique palette + fond immédiatement (le pasteur VOIT le résultat).
         await appliquerSpecDirecteur(spec, historique);
         const iteration = (data.iteration as number) || 1;
+        // ⭐ V3.93 — repli : le directeur IA était saturé, le fond a été
+        // généré directement depuis la description (info ambrée, pas
+        // d'erreur — le visuel EST là).
+        const repli = Boolean(data.repli);
         afficherToast(
-          iteration > 1
-            ? `Itération ${iteration} appliquée — continuez à corriger jusqu'au rendu final.`
-            : "Spécification appliquée — palette et fond générés. Affinez avec une correction.",
-          "succes"
+          repli
+            ? String(
+                data.info ||
+                  "Le directeur IA était saturé — le fond a été généré directement depuis votre description."
+              )
+            : iteration > 1
+              ? `Itération ${iteration} appliquée — continuez à corriger jusqu'au rendu final.`
+              : "Spécification appliquée — palette et fond générés. Affinez avec une correction.",
+          repli ? "info" : "succes"
         );
       } catch (e) {
         afficherToast(e instanceof Error ? e.message : "Directeur IA indisponible", "erreur");

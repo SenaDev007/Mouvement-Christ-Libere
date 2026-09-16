@@ -31,7 +31,9 @@ import {
   genererFondNvidia,
   consigneFond,
   directeurIA,
+  specDeRepli,
   ErreurNvidia,
+  type SpecDirecteur,
 } from "@/lib/studio/nvidia-ai";
 import {
   FORMATS,
@@ -1171,13 +1173,34 @@ export async function handlerDirecteurIA(
     }
 
     const message = correction ? `${description}\n\nCorrection demandée : ${correction}` : description;
-    const { spec, reponseBrute } = await directeurIA(message, historique);
-    if (!spec.prompt_flux) {
-      return erreurJson("Le directeur IA n'a pas compris la demande — reformulez.", 422, "IA_ECHEC");
+
+    // ⭐ V3.93 — PLUS D'IMPASSE : si le directeur IA échoue (file
+    // d'attente NVIDIA saturée — timeout 55 s « aborted due to timeout »
+    // observé le 17/09 avec la description exacte du pasteur), une
+    // spécification de REPLI est construite localement : la description
+    // part directement chez FLUX.1 et le pasteur obtient SON visuel.
+    // Le drapeau `repli` informe l'UI (toast info) ; relancer retente
+    // le directeur — le fond FLUX.1 lui, répond en ~7 s (prouvé).
+    let spec: SpecDirecteur | null = null;
+    let reponseBrute = "";
+    let repli = false;
+    try {
+      const sortie = await directeurIA(message, historique);
+      spec = sortie.spec;
+      reponseBrute = sortie.reponseBrute;
+    } catch (e) {
+      console.error("[studio/ai/directeur] NVIDIA (repli direct activé) :", e);
+      repli = true;
+    }
+    if (!spec?.prompt_flux) {
+      repli = true;
+      spec = specDeRepli(description, correction);
+      reponseBrute = JSON.stringify(spec);
     }
 
     // Historique mis à jour : la réponse brute (JSON) devient le tour
-    // assistant — le modèle corrige SA spécification précédente.
+    // assistant — le modèle corrige SA spécification précédente (ou la
+    // spec de repli : la correction s'applique dessus de la même façon).
     const nouvelHistorique = [
       ...historique,
       { role: "user" as const, content: message },
@@ -1188,6 +1211,12 @@ export async function handlerDirecteurIA(
       spec,
       historique: nouvelHistorique,
       iteration: nouvelHistorique.filter((m) => m.role === "user").length,
+      ...(repli
+        ? {
+            repli: true,
+            info: "Le directeur IA était saturé — le fond sera généré directement depuis votre description. Relancez plus tard pour retenter le directeur.",
+          }
+        : {}),
     });
   } catch (e) {
     console.error("[studio/ai/directeur] :", e);
@@ -1359,7 +1388,10 @@ export async function handlerGenererFondIA(
     }
 
     const body = await request.json();
-    const intention = String(body.prompt || "").substring(0, 300).trim();
+    // ⭐ V3.93 — 900 car (était 300) : le prompt enrichi du Directeur IA
+    // était AMPUTÉ de ses clauses finales (« no people, no text… ») —
+    // FLUX.1 pouvait alors générer du texte ou des visages.
+    const intention = String(body.prompt || "").substring(0, 900).trim();
     if (!intention) return erreurJson("Décrivez le fond souhaité (quelques mots suffisent).");
     const style = typeof body.style === "string" ? body.style : undefined;
     const categorie =

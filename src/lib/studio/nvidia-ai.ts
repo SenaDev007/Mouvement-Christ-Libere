@@ -460,19 +460,35 @@ export async function directeurIA(
       { role: "user", content: messageUtilisateur.substring(0, 4000) },
     ],
     // Réglages de l'exemple officiel build.nvidia.com (gpt-oss : temp 1).
+    // ⭐ V3.93 — max_tokens 1200 (la spécification JSON tient en ~300 jetons :
+    // moins à générer = réponse plus rapide).
     temperature: 1,
     top_p: 1,
-    max_tokens: 1600,
+    max_tokens: 1200,
     stream: false,
   };
 
-  let { res, texte } = await appeler({ ...base, reasoning_effort: "low" });
-  if (res.status === 400 || res.status === 422) {
-    // Le endpoint n'accepte pas reasoning_effort ? Repli sans le paramètre.
-    const second = await appeler(base);
-    res = second.res;
-    texte = second.texte;
+  // ⭐ V3.93 — ESCALIER de charge utile pour l'effort de raisonnement.
+  // gpt-oss-20b sur NIM accepte « low » selon le déploiement : soit à la
+  // OpenAI (reasoning_effort), soit via chat_template_kwargs (vLLM),
+  // soit PAS DU TOUT. L'ANCIEN repli « sans paramètre » laissait le
+  // modèle raisonner à l'effort PAR DÉFAUT (médian/élevé) — la cause des
+  // 55 s d'attente puis « aborted due to timeout » observées le 17/09.
+  // Chaque variante rejetée (400/422) échoue en ~1 s : on peut toutes les
+  // essayer avant de tomber sur le prompt brut.
+  const variantes: Record<string, unknown>[] = [
+    { ...base, reasoning_effort: "low" },
+    { ...base, chat_template_kwargs: { reasoning_effort: "low" } },
+    base,
+  ];
+  let essai = await appeler(variantes[0]);
+  if (essai.res.status === 400 || essai.res.status === 422) {
+    essai = await appeler(variantes[1]);
+    if (essai.res.status === 400 || essai.res.status === 422) {
+      essai = await appeler(variantes[2]);
+    }
   }
+  const { res, texte } = essai;
   if (!res.ok) {
     throw new ErreurNvidia(
       `Le directeur IA a répondu ${res.status}.`,
@@ -494,4 +510,44 @@ export async function directeurIA(
     throw new ErreurNvidia("Le directeur IA n'a rien renvoyé.", 502);
   }
   return { spec: normaliserSpecDirecteur(extraireJsonDirecteur(contenu) || {}), reponseBrute: contenu };
+}
+
+// ─── ⭐ V3.93 — SPÉCIFICATION DE REPLI (directeur saturé) ─────────────
+
+/** Palettes harmonisées prêtes à l'emploi — le repli reste BEAU même
+ * quand le directeur IA ne répond pas (choix DÉTERMINISTE par hachage :
+ * la même description redonne la même ambiance, deux descriptions
+ * différentes explorent des familles différentes). */
+const PALETTES_REPLI: SpecDirecteur["palette"][] = [
+  { accent: "#C9A227", secondary: "#FAF6EF", background: "#141009" }, // or / noir ministère
+  { accent: "#E0A458", secondary: "#FFF3E0", background: "#1C1008" }, // ambre chaud
+  { accent: "#D8B24A", secondary: "#EEF4FF", background: "#0B1220" }, // bleu nuit & or
+  { accent: "#E5D5A8", secondary: "#FFFDF5", background: "#0E0E12" }, // ivoire sacré
+  { accent: "#C9A227", secondary: "#F7F0FA", background: "#170E1D" }, // pourpre royal
+];
+
+/** ⭐ V3.93 — Spécification construite LOCALEMENT quand le directeur IA
+ * ne répond pas à temps (file d'attente NVIDIA saturée) : la description
+ * française part DIRECTEMENT chez FLUX.1 (qui la comprend), habillée du
+ * même échafaudage professionnel que consigneFond(). Le pasteur obtient
+ * TOUJOURS son visuel — jamais d'impasse « réessayez dans un instant ». */
+export function specDeRepli(description: string, correction?: string): SpecDirecteur {
+  const intention = [
+    description.trim(),
+    correction?.trim() ? `Ajustement demandé : ${correction.trim()}` : "",
+  ]
+    .filter(Boolean)
+    .join(". ")
+    .substring(0, 800);
+
+  let h = 0;
+  for (let i = 0; i < intention.length; i++) h = (h * 31 + intention.charCodeAt(i)) >>> 0;
+  const palette = PALETTES_REPLI[h % PALETTES_REPLI.length];
+
+  return {
+    prompt_flux: consigneFond(intention, undefined, palette).substring(0, 900),
+    palette,
+    ambiance:
+      "Fond généré directement depuis votre description (le directeur IA était saturé — relancez pour le retenter).",
+  };
 }
