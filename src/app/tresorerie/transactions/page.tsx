@@ -24,7 +24,10 @@
  *    rattachée/recorrigée) ;
  *  · suppression avec MOTIF obligatoire (gouvernance V3.67 — trace complète
  *    dans le journal d'audit) ;
- *  · ⭐ V3.67 — pagination, export CSV (filtres actifs).
+ *  · ⭐ V3.67 — pagination et REÇU DE DON PDF sur chaque recette ;
+ *  · ⭐ V3.81 — EXPORT EXCEL (.xlsx) : classeur designé avec les TROIS
+ *    tableaux (Recettes / Dépenses / Transferts) + feuille Synthèse,
+ *    respectant les filtres actifs (remplace l'export CSV).
  *
  * Données : /tresorerie/api/transactions · /tresorerie/api/caisses.
  */
@@ -43,7 +46,7 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   ArrowLeftRight,
-  Download,
+  FileSpreadsheet,
   FileText,
   UserRound,
   Mail,
@@ -403,7 +406,9 @@ function TransactionsContenu() {
     }
   };
 
-  const exporterCsv = () => {
+  /** ⭐ V3.81 — Export EXCEL : classeur .xlsx designé (Synthèse + Recettes
+   * + Dépenses + Transferts) — télécharge la SÉLECTION (filtres actifs). */
+  const exporterExcel = () => {
     const params = new URLSearchParams();
     if (type) params.set("type", type);
     if (categorie) params.set("categorie", categorie);
@@ -412,7 +417,10 @@ function TransactionsContenu() {
     if (du) params.set("du", du);
     if (au) params.set("au", au);
     if (recherche.trim()) params.set("q", recherche.trim());
-    params.set("format", "csv");
+    params.set("format", "xlsx");
+    // ⭐ V3.88 — la devise d'affichage (défaut XOF) accompagne l'export :
+    // la Synthèse du classeur montre le total consolidé converti.
+    params.set("afficher", deviseAffichage);
     window.location.href = `/tresorerie/api/transactions?${params}`;
   };
 
@@ -472,12 +480,12 @@ function TransactionsContenu() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={exporterCsv}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#8A8378]/25 text-sm font-medium text-[#1E0F2B] hover:bg-white transition-colors"
-            title="Exporter la sélection en CSV (Excel)"
+            onClick={exporterExcel}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors shadow-sm"
+            title="Export Excel (.xlsx) — classeur designé : Synthèse, Recettes, Dépenses et Transferts (selon les filtres actifs)"
           >
-            <Download className="w-4 h-4 text-[#C9A227]" />
-            <span className="hidden sm:inline">Export CSV</span>
+            <FileSpreadsheet className="w-4 h-4 text-[#DDBE55]" />
+            <span className="hidden sm:inline">Export Excel</span>
           </button>
           <button
             onClick={ouvrirTransfert}

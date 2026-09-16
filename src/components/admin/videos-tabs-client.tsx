@@ -12,6 +12,9 @@ import {
   Upload, FileVideo, Link as LinkIcon, Camera,
   // ⭐ V3.48 — champ d'upload de la miniature (remplace le champ « URL miniature »)
   Image as ImageIcon,
+  // ⭐ V3.81 — suppression multiple : mode sélection avec cases à cocher,
+  // barre d'actions flottante et confirmation groupée.
+  ListChecks, Check, CheckCircle2,
 } from "lucide-react";
 // ⭐ V3.46 — Rubriques signatures (partagées site public ↔ back-office) :
 // « Saint-Esprit réponds-moi » (Afrika), « Rhema du matin »/« Rhema du soir »
@@ -152,6 +155,107 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       annule = true;
     };
   }, []);
+
+  // ─── ⭐ V3.81 — SUPPRESSION MULTIPLE (mode sélection) ───
+  // Le pasteur coche plusieurs vidéos puis les supprime d'un coup (lots
+  // séquentiels de 50 → /admin/api/videos/bulk-delete, purge R2 incluse).
+  const [modeSelection, setModeSelection] = useState(false);
+  const [idsSelection, setIdsSelection] = useState<Set<string>>(new Set());
+  const [confirmationMultipleOuverte, setConfirmationMultipleOuverte] =
+    useState(false);
+  const [suppressionEnCours, setSuppressionEnCours] = useState(false);
+  const [progressionSuppression, setProgressionSuppression] = useState({
+    fait: 0,
+    total: 0,
+  });
+  const [retourSuppressionMultiple, setRetourSuppressionMultiple] = useState<
+    string | null
+  >(null);
+
+  const basculerSelection = (id: string) => {
+    setIdsSelection((prev) => {
+      const suite = new Set(prev);
+      if (suite.has(id)) suite.delete(id);
+      else suite.add(id);
+      return suite;
+    });
+  };
+
+  const quitterModeSelection = () => {
+    setModeSelection(false);
+    setIdsSelection(new Set());
+  };
+
+  // Coche / décoche TOUT ce qui est visible (onglet + filtre catégorie actifs).
+  const toutSelectionner = () => {
+    const idsVisibles = filteredVideos.map((v) => v.id);
+    const toutEstCoche =
+      idsVisibles.length > 0 &&
+      idsVisibles.every((id) => idsSelection.has(id));
+    if (toutEstCoche) {
+      setIdsSelection((prev) => {
+        const suite = new Set(prev);
+        for (const id of idsVisibles) suite.delete(id);
+        return suite;
+      });
+    } else {
+      setIdsSelection((prev) => {
+        const suite = new Set(prev);
+        for (const id of idsVisibles) suite.add(id);
+        return suite;
+      });
+    }
+  };
+
+  // Confirmation → lots séquentiels de 50 vers l'API de suppression
+  // multiple, avec progression affichée, puis retour visuel + refresh.
+  const confirmerSuppressionMultiple = async () => {
+    const ids = [...idsSelection];
+    if (ids.length === 0 || suppressionEnCours) return;
+    setSuppressionEnCours(true);
+    setProgressionSuppression({ fait: 0, total: ids.length });
+
+    const TAILLE_LOT = 50;
+    let supprimees = 0;
+    let introuvables = 0;
+    for (let depart = 0; depart < ids.length; depart += TAILLE_LOT) {
+      const lot = ids.slice(depart, depart + TAILLE_LOT);
+      try {
+        const res = await fetch("/admin/api/videos/bulk-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: lot }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || "Erreur de suppression");
+        supprimees += data.supprimees || 0;
+        introuvables += (data.introuvables || []).length;
+      } catch (err) {
+        console.error("[videos] Suppression multiple impossible :", err);
+        introuvables += lot.length;
+      }
+      setProgressionSuppression({
+        fait: Math.min(depart + TAILLE_LOT, ids.length),
+        total: ids.length,
+      });
+    }
+
+    setSuppressionEnCours(false);
+    setConfirmationMultipleOuverte(false);
+    setIdsSelection(new Set());
+    setModeSelection(false);
+    setRetourSuppressionMultiple(
+      `${supprimees} vidéo${supprimees > 1 ? "s" : ""} supprimée${
+        supprimees > 1 ? "s" : ""
+      } — fichiers et miniatures purgés du stockage cloud.` +
+        (introuvables > 0
+          ? ` ${introuvables} introuvable${introuvables > 1 ? "s" : ""} (déjà supprimée${
+              introuvables > 1 ? "s" : ""
+            }).`
+          : "")
+    );
+    router.refresh();
+  };
 
   // Filtrer par serviteur
   const videosByServant = useMemo(() => {
@@ -458,6 +562,27 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
         </div>
         <button
           type="button"
+          onClick={() =>
+            modeSelection ? quitterModeSelection() : setModeSelection(true)
+          }
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md ${
+            modeSelection
+              ? "bg-[#2A0E3D] text-[#DDBE55]"
+              : "bg-[#2A0E3D]/5 text-[#2A0E3D] hover:bg-[#2A0E3D]/10"
+          }`}
+          title={
+            modeSelection
+              ? "Quitter le mode sélection"
+              : "Suppression multiple — cocher plusieurs vidéos et les supprimer d'un coup"
+          }
+        >
+          <ListChecks className="w-4 h-4" />
+          <span className="hidden sm:inline">
+            {modeSelection ? "Quitter la sélection" : "Sélection"}
+          </span>
+        </button>
+        <button
+          type="button"
           onClick={openNewVideoModal}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
         >
@@ -469,6 +594,24 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
               : "Nouvelle vidéo · Pasteur Kongo"}
         </button>
       </div>
+
+      {/* ⭐ V3.81 — Retour de la suppression multiple */}
+      {retourSuppressionMultiple && (
+        <div className="flex items-start gap-3 rounded-xl border border-[#5B7052]/40 bg-[#5B7052]/10 px-4 py-3">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-[#5B7052] mt-0.5" />
+          <p className="text-sm font-bold text-[#3F5039] min-w-0 flex-1">
+            {retourSuppressionMultiple}
+          </p>
+          <button
+            type="button"
+            onClick={() => setRetourSuppressionMultiple(null)}
+            className="shrink-0 text-[#3F5039]/60 hover:text-[#3F5039] transition-colors"
+            aria-label="Fermer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Onglets serviteurs */}
       <div className="flex items-center gap-2 border-b border-[#8A8378]/15 overflow-x-auto">
@@ -577,13 +720,44 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
             return (
               <div
                 key={v.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 overflow-hidden hover:shadow-lg transition-all group"
+                onClick={
+                  modeSelection ? () => basculerSelection(v.id) : undefined
+                }
+                className={`bg-white rounded-xl border overflow-hidden hover:shadow-lg transition-all group ${
+                  modeSelection ? "cursor-pointer" : ""
+                } ${
+                  modeSelection && idsSelection.has(v.id)
+                    ? "border-transparent ring-2 ring-[#C9A227] shadow-md"
+                    : "border-[#8A8378]/15"
+                }`}
               >
                 {/* Thumbnail — ⭐ V3.64 : les vidéos TikTok montrent leur
                     VRAIE miniature (R2 permanente) + badge TikTok, comme
                     YouTube montre img.youtube.com ; repli de marque si la
                     miniature est absente (backfill non encore passé). */}
                 <div className="relative aspect-video bg-[#1A0826] overflow-hidden">
+                  {/* ⭐ V3.81 — Case à cocher de la suppression multiple */}
+                  {modeSelection && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        basculerSelection(v.id);
+                      }}
+                      aria-label={
+                        idsSelection.has(v.id)
+                          ? "Retirer de la sélection"
+                          : "Ajouter à la sélection"
+                      }
+                      className={`absolute top-2 left-2 z-10 w-9 h-9 rounded-lg flex items-center justify-center border-2 transition-all shadow-md ${
+                        idsSelection.has(v.id)
+                          ? "bg-[#C9A227] border-[#C9A227] text-[#1E0F2B] scale-105"
+                          : "bg-black/50 border-white/90 text-transparent backdrop-blur-sm hover:bg-black/70"
+                      }`}
+                    >
+                      <Check className="w-5 h-5" strokeWidth={3} />
+                    </button>
+                  )}
                   {estUrlTiktok(v.videoUrl) ? (
                     v.thumbnailUrl ? (
                       <>
@@ -614,8 +788,13 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                     </div>
                   )}
 
-                  {/* Badge catégorie */}
-                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                  {/* Badge catégorie — décalé à droite quand la case à
+                      cocher de sélection occupe le coin haut-gauche. */}
+                  <div
+                    className={`absolute top-2 ${
+                      modeSelection ? "left-12" : "left-2"
+                    } flex flex-col gap-1 max-w-[calc(100%-3.5rem)]`}
+                  >
                     <span
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold backdrop-blur-sm"
                       style={{ backgroundColor: `${accentColor}DD`, color: "#FFFFFF" }}
@@ -668,8 +847,13 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                       un seul clic pour ranger la vidéo dans « Saint-Esprit
                       réponds-moi », « Rhema du matin », « Rhema du soir »…
                       Enregistrement immédiat (PATCH), badge doré si rubrique
-                      signature. */}
-                  <div className="mt-2">
+                      signature. En mode sélection (⭐ V3.81) la rubrique est
+                      neutralisée — un clic sur la carte COCHE au lieu d'éditer. */}
+                  <div
+                    className={`mt-2 ${
+                      modeSelection ? "pointer-events-none opacity-30" : ""
+                    }`}
+                  >
                     <RubricSelect video={v} onChange={changerRubrique} />
                   </div>
 
@@ -686,7 +870,11 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                     )}
                   </div>
 
-                  <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-[#8A8378]/10 ">
+                  <div
+                    className={`flex items-center justify-end gap-1 mt-3 pt-3 border-t border-[#8A8378]/10 ${
+                      modeSelection ? "pointer-events-none opacity-30" : ""
+                    }`}
+                  >
                     <Link
                       href={`/admin/videos/${v.id}/edit`}
                       className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
@@ -702,6 +890,118 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           })}
         </div>
       )}
+
+      {/* ⭐ V3.81 — Barre d'actions flottante de la suppression multiple */}
+      {modeSelection && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] w-[calc(100%-2rem)] max-w-2xl px-1">
+          <div className="bg-[#2A0E3D] text-[#FAF6EF] rounded-2xl shadow-2xl border border-[#C9A227]/30 px-4 py-3 flex items-center gap-2 flex-wrap justify-center">
+            <span className="text-sm font-bold whitespace-nowrap">
+              {idsSelection.size} vidéo{idsSelection.size > 1 ? "s" : ""}{" "}
+              sélectionnée{idsSelection.size > 1 ? "s" : ""}
+            </span>
+            <span className="w-px h-5 bg-white/20 hidden sm:block" />
+            <button
+              type="button"
+              onClick={toutSelectionner}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-[#C9A227]/40 text-[#DDBE55] hover:bg-[#C9A227]/10 transition-colors whitespace-nowrap"
+            >
+              <ListChecks className="w-3.5 h-3.5" />
+              {filteredVideos.length > 0 &&
+              filteredVideos.every((x) => idsSelection.has(x.id))
+                ? "Tout désélectionner"
+                : `Tout sélectionner (${filteredVideos.length})`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmationMultipleOuverte(true)}
+              disabled={idsSelection.size === 0 || suppressionEnCours}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-state-danger text-ivory hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Supprimer ({idsSelection.size})
+            </button>
+            <button
+              type="button"
+              onClick={quitterModeSelection}
+              disabled={suppressionEnCours}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[#FAF6EF]/60 hover:text-[#FAF6EF] hover:bg-white/10 transition-colors disabled:opacity-40"
+              aria-label="Quitter le mode sélection"
+              title="Quitter le mode sélection"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ⭐ V3.81 — Modal de confirmation de la suppression multiple */}
+      <AdminModal
+        open={confirmationMultipleOuverte}
+        onClose={() => {
+          if (!suppressionEnCours) setConfirmationMultipleOuverte(false);
+        }}
+        title="Supprimer la sélection ?"
+        subtitle={`${idsSelection.size} vidéo${idsSelection.size > 1 ? "s" : ""} — action définitive`}
+        accentColor="#B3452E"
+        size="sm"
+      >
+        {suppressionEnCours ? (
+          <div className="py-6 flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-[#B3452E]" />
+            <p className="text-sm font-bold text-[#1E0F2B]">
+              Suppression en cours… {progressionSuppression.fait}/
+              {progressionSuppression.total}
+            </p>
+            <div className="w-full h-2 rounded-full bg-[#8A8378]/15 overflow-hidden">
+              <div
+                className="h-full bg-[#B3452E] transition-all duration-300"
+                style={{
+                  width: `${
+                    (progressionSuppression.fait /
+                      Math.max(progressionSuppression.total, 1)) *
+                    100
+                  }%`,
+                }}
+              />
+            </div>
+            <p className="text-xs text-[#8A8378]">
+              Les fichiers et miniatures sont purgés du stockage cloud en
+              même temps.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 rounded-xl border border-[#B3452E]/30 bg-[#B3452E]/5 p-3">
+              <AlertCircle className="w-5 h-5 text-[#B3452E] shrink-0 mt-0.5" />
+              <p className="text-sm text-[#1E0F2B]/80 leading-relaxed">
+                Cette action est <b>définitive</b> : {idsSelection.size} vidéo
+                {idsSelection.size > 1 ? "s" : ""} sera
+                {idsSelection.size > 1 ? "nt" : ""} supprimée
+                {idsSelection.size > 1 ? "s" : ""} du back-office <b>et du site
+                public</b>, avec les fichiers et miniatures hébergés sur le
+                stockage cloud (purge incluse). Elle ne peut pas être annulée.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmationMultipleOuverte(false)}
+                className="px-4 py-2 rounded-xl border border-[#8A8378]/30 text-sm font-semibold text-[#1E0F2B] hover:bg-[#8A8378]/10 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={confirmerSuppressionMultiple}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-state-danger text-ivory text-sm font-bold hover:opacity-90 transition-opacity"
+              >
+                <Trash2 className="w-4 h-4" />
+                Supprimer définitivement
+              </button>
+            </div>
+          </div>
+        )}
+      </AdminModal>
 
       {/* Modal Nouvelle vidéo */}
       <NewVideoModal

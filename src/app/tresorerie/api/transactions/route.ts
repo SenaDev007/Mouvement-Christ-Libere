@@ -17,6 +17,9 @@ import {
   convertirMontant,
   deviseAdmise,
 } from "@/lib/staff-space/devises";
+// ⭐ V3.81 — Export EXCEL (.xlsx) : classeur designé (Synthèse + Recettes +
+// Dépenses + Transferts) respectant les filtres actifs du journal.
+import { genererJournalExcel } from "@/lib/staff-space/excel";
 
 /**
  * ⭐ V3.66/V3.67/V3.88 — Trésorerie : journal des recettes et dépenses.
@@ -33,7 +36,10 @@ import {
  *           (nom, email, message, passerelle, statut) depuis la table
  *           Donation — tout ce que voit le back-office est visible ici ;
  *         — &format=csv : export CSV complet des écritures FILTRÉES
- *           (insécables français, BOM UTF-8 pour Excel — V3.67).
+ *           (insécables français, BOM UTF-8 pour Excel — V3.67) ;
+ *         — ⭐ V3.81 &format=xlsx : export EXCEL complet des écritures
+ *           FILTRÉES — classeur .xlsx designé : feuilles Synthèse, Recettes,
+ *           Dépenses et Transferts (totaux par devise en formules vives) ;
  *   POST  /tresorerie/api/transactions — création (défaut devise : XOF) :
  *         · RECETTE / DEPENSE { type, category, amount, currency, method?,
  *           label, date?, reference?, donorName?, isAnonymous?, note?, caisseId? }
@@ -46,6 +52,7 @@ import {
  */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 export async function GET(request: NextRequest) {
   const garde = exigerSession(request, ROLES_TRESORERIE);
@@ -103,7 +110,7 @@ export async function GET(request: NextRequest) {
     // de devises différentes) : groupés nativement puis convertis vers la
     // devise d'affichage — plus aucun « 0 € » quand le journal est en XOF.
     const [items, total, parTypeDevise, caisses] = await Promise.all([
-      format === "csv"
+      format === "csv" || format === "xlsx"
         ? db.treasuryTransaction.findMany({ where, orderBy: { date: "desc" } })
         : db.treasuryTransaction.findMany({
             where,
@@ -188,6 +195,36 @@ export async function GET(request: NextRequest) {
         montantConverti: convertirMontant(t.amount, t.currency, deviseAffichage),
       };
     });
+
+    // ── ⭐ V3.81 — Export EXCEL (.xlsx) : classeur structuré et designé
+    // (Synthèse + Recettes + Dépenses + Transferts), filtres actifs
+    // respectés, toutes les lignes (pas de pagination). ──
+    if (format === "xlsx") {
+      const nomCaisseFiltree = caisse
+        ? nomsCaisses.get(caisse) || caisse
+        : null;
+      const tampon = await genererJournalExcel(enrichies, {
+        du,
+        au,
+        devise,
+        type,
+        categorie,
+        caisse: nomCaisseFiltree,
+        recherche,
+        afficher: deviseAffichage,
+      });
+      return new NextResponse(tampon, {
+        status: 200,
+        headers: {
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="journal-tresorerie-${new Date()
+            .toISOString()
+            .substring(0, 10)}.xlsx"`,
+          "Cache-Control": "no-store",
+        },
+      });
+    }
 
     // ── Export CSV (filtres actifs, toutes les lignes — pas de pagination). ──
     if (format === "csv") {
