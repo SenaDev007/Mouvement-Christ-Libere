@@ -60,6 +60,17 @@ async function chargerImage(url: string): Promise<Image | null> {
   }
 }
 
+/** ⭐ V3.90 — URLs des photos de sujets à charger (photosSujet prioritaire,
+ *  repli sur la photo unique du mode rapide). 4 maximum côté moteur. */
+function urlsSujets(donnees: DonneesVisuel): string[] {
+  const urls = (donnees.photosSujet || [])
+    .map((p) => p?.url)
+    .filter((u): u is string => typeof u === "string" && u.length > 0)
+    .slice(0, 4);
+  if (urls.length) return urls;
+  return donnees.photoUrl ? [donnees.photoUrl] : [];
+}
+
 /** Logo officiel — fichier local public/ (embarqué par file tracing). */
 let cacheLogo: Image | null = null;
 async function chargerLogo(): Promise<Image | null> {
@@ -124,12 +135,18 @@ export async function rendreVisuel(
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext("2d");
 
-  // Chargement parallèle des assets.
-  const [fond, sujet, logo] = await Promise.all([
+  // Chargement parallèle des assets (V3.90 : une image PAR intervenant,
+  // les silhouettes sont dessinées côte à côte par le moteur).
+  const urlsDesSujets = urlsSujets(params.donnees);
+  const [fond, ...imagesSujets] = await Promise.all([
     params.donnees.fondUrl ? chargerImage(params.donnees.fondUrl) : null,
-    params.donnees.photoUrl ? chargerImage(params.donnees.photoUrl) : null,
+    ...urlsDesSujets.map((u) => chargerImage(u)),
     chargerLogo(),
   ]);
+  // ⚠️ Promise.all conserve l'ordre SAUF le logo (dernier) : le décompose
+  // proprement — imagesSujets contient N images, logo = N-ième résultat.
+  const sujets = imagesSujets.slice(0, urlsDesSujets.length);
+  const logo = imagesSujets[urlsDesSujets.length] ?? null;
 
   // ⚠️ Le moteur compose en COORDONNÉES RÉELLES du format complet : pour
   // l'aperçu réduit, on met à l'échelle le contexte UNE FOIS — toutes les
@@ -144,7 +161,7 @@ export async function rendreVisuel(
     params.layout,
     definition,
     params.variante,
-    { fond, sujet, logo }
+    { fond, sujets, logo }
   );
 
   const png = await canvas.encode("png");

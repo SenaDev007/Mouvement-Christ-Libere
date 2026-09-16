@@ -26,6 +26,7 @@ import {
   type ConfigLayout,
   type DonneesVisuel,
   type DefinitionFormat,
+  type EffetsSujet,
 } from "./types";
 import { BRAND, styleStudio } from "../studio/brand-tokens";
 import {
@@ -297,6 +298,72 @@ function dessinerFondStyle(
   ctx.restore();
 }
 
+/** ⭐ V3.90 — Dessine le GROUPE de sujets (une photo par intervenant).
+ *
+ * Une photo : comportement historique (zone entière, mode selon le
+ * détourage). Plusieurs photos : colonnes chevauchantes — la première
+ * démarre au bord de la zone, la dernière la termine exactement, les
+ * silhouettes se touchent légèrement comme sur un vrai montage de
+ * groupe (Canva-like). Chaque photo garde SES effets et SON mode
+ * (silhouette détourée → contain, photo opaque → cover).
+ */
+function dessinerGroupeSujets(
+  ctx: SKRSContext2D,
+  images: Image[],
+  zone: { x: number; y: number; w: number; h: number },
+  hAlign: "left" | "center" | "right",
+  vAlign: "top" | "center" | "bottom",
+  effets: EffetsSujet,
+  cleStyle: string,
+  donnees: DonneesVisuel
+): void {
+  if (!images.length) return;
+
+  const decoupeeDe = (i: number): boolean => {
+    const explicite = donnees.photosSujet?.[i]?.decoupee;
+    if (typeof explicite === "boolean") return explicite;
+    return Boolean(donnees.photoDecoupee);
+  };
+
+  // Une seule photo : rendu historique plein zone.
+  if (images.length === 1) {
+    dessinerSujetAvecEffets(
+      ctx,
+      images[0],
+      zone,
+      hAlign,
+      vAlign,
+      effets,
+      cleStyle,
+      decoupeeDe(0) ? "contain" : "cover"
+    );
+    return;
+  }
+
+  // Groupe : colonnes chevauchantes (14 % de la colonne).
+  const n = images.length;
+  const colonne = zone.w / n;
+  const largeur = colonne * 1.14;
+  const pas = (zone.w - largeur) / (n - 1);
+  for (let i = 0; i < n; i++) {
+    dessinerSujetAvecEffets(
+      ctx,
+      images[i],
+      {
+        x: zone.x + i * pas,
+        y: zone.y,
+        w: largeur,
+        h: zone.h,
+      },
+      "center",
+      vAlign,
+      effets,
+      cleStyle,
+      decoupeeDe(i) ? "contain" : "cover"
+    );
+  }
+}
+
 /** Dessine le logo dans son coin (jamais déformé, marge de sécurité §22). */
 function dessinerLogo(
   ctx: SKRSContext2D,
@@ -326,7 +393,9 @@ function dessinerLogo(
 
 export interface AssetsComposition {
   fond?: Image | null;
-  sujet?: Image | null;
+  /** ⭐ V3.90 — une image PAR intervenant (2-4) : dessinées côte à côte
+   *  dans la zone sujet ; un tableau vide = aucun sujet. */
+  sujets?: Array<Image | null>;
   logo: Image | null;
 }
 
@@ -404,13 +473,17 @@ export function composer(
   // ③ VIGNETTE discrète (sous le sujet et le texte).
   dessinerVignette(ctx, W, H, 0.55);
 
-  // ④ SUJET (photo de l'intervenant) avec ses effets — mode « cover »
-  // pour une photo OPAQUE (rendu propre sans détourage), « contain »
-  // pour un PNG détouré (silhouette).
-  if (assets.sujet && comp.sujet) {
-    dessinerSujetAvecEffets(
+  // ④ SUJETS (photos des intervenants — V3.90 : plusieurs possibles)
+  //    avec leurs effets — mode « cover » pour une photo OPAQUE (rendu
+  //    propre sans détourage), « contain » pour un PNG détouré
+  //    (silhouette). Une seule photo = comportement historique.
+  const imagesSujets = (assets.sujets || []).filter(
+    (img): img is Image => Boolean(img)
+  );
+  if (imagesSujets.length && comp.sujet) {
+    dessinerGroupeSujets(
       ctx,
-      assets.sujet,
+      imagesSujets,
       {
         x: comp.sujet.x * W,
         y: comp.sujet.y * H,
@@ -421,7 +494,7 @@ export function composer(
       comp.sujet.vAlign,
       layoutFinal.sujet,
       donnees.style,
-      donnees.photoDecoupee ? "contain" : "cover"
+      donnees
     );
   }
 
@@ -624,6 +697,15 @@ function estStyleDore(cleStyle: string): boolean {
 
 /** Nom d'affichage de l'intervenant. */
 function nomIntervenant(donnees: DonneesVisuel): string {
+  // ⭐ V3.90 — noms libres : priorité aux noms saisis (éditables,
+  // illimités) sur l'ancienne énumeration figée.
+  if (donnees.speakerNames?.length) {
+    const noms = donnees.speakerNames
+      .map((n) => n.trim())
+      .filter(Boolean)
+      .slice(0, 6);
+    if (noms.length) return noms.join(" & ");
+  }
   switch (donnees.intervenant) {
     case "kongo":
       return "Pasteur Kongo";

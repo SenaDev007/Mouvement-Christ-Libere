@@ -26,6 +26,13 @@ import { exigerSession } from "@/lib/staff-space/session";
 import { uploadToR2, isR2Configured, deleteFromR2, extraireCleR2 } from "@/lib/r2";
 import { ensureSeedStudio } from "@/lib/studio/templates-seed";
 import {
+  estIAActive,
+  peaufinerPhotoNvidia,
+  genererFondNvidia,
+  consigneFond,
+  ErreurNvidia,
+} from "@/lib/studio/nvidia-ai";
+import {
   FORMATS,
   FORMATS_PAR_DEFAUT,
   type CleFormat,
@@ -389,9 +396,11 @@ export async function handlerUploaderPhoto(
     if (!MIMES_IMAGES.includes(fichier.type)) {
       return erreurJson("Format non supporté (JPEG, PNG ou WEBP uniquement).");
     }
-    const intervenantsValides = new Set(["Pasteur Kongo", "Pam", "Kongo & Pam"]);
-    if (!intervenant || !intervenantsValides.has(intervenant)) {
-      return erreurJson("Intervenant invalide (Pasteur Kongo, Pam ou Kongo & Pam).");
+    // ⭐ V3.90 — noms LIBRES (directive : « éditer les noms, ajouter autant
+    // de noms qu'on veut ») : n'importe quel nom lisible de 1 à 80 caractères.
+    const nomIntervenant = (intervenant || "").replace(/\s+/g, " ").trim();
+    if (!nomIntervenant || nomIntervenant.length > 80) {
+      return erreurJson("Nom d'intervenant invalide (1 à 80 caractères).");
     }
 
     const tampon = Buffer.from(await fichier.arrayBuffer());
@@ -430,7 +439,7 @@ export async function handlerUploaderPhoto(
 
     const item = await db.speakerPhoto.create({
       data: {
-        speakerName: intervenant,
+        speakerName: nomIntervenant,
         originalUrl: urlOriginale,
         cutoutUrl: urlDetouree,
         thumbnailUrl: urlMiniature,
@@ -537,18 +546,52 @@ function construireDonneesVisuel(
   body: Record<string, unknown>,
   styleParDefaut: string
 ): DonneesVisuel {
-  return {
+  // ⭐ V3.90 — noms libres : speaker_names (génération, ids de photos) ou
+  // speakerNames (aperçu, déjà résolus côté client).
+  const nomsBruts = Array.isArray(body.speaker_names)
+    ? body.speaker_names
+    : Array.isArray(body.speakerNames)
+      ? body.speakerNames
+      : [];
+  const speakerNames = (nomsBruts as unknown[])
+    .filter((n): n is string => typeof n === "string")
+    .map((n) => n.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, 6);
+
+  // ⭐ V3.90 — photos multiples pour l'APERÇU : [{ url, decoupee }] déjà
+  // résolues par le client (aucune base dans ce chemin).
+  const photosApercu = Array.isArray(body.photos_sujet)
+    ? (body.photos_sujet as Array<Record<string, unknown>>)
+        .filter(
+          (p) =>
+            p &&
+            typeof p === "object" &&
+            typeof p.url === "string" &&
+            (/^https?:\/\//i.test(p.url) || p.url.startsWith("data:"))
+        )
+        .slice(0, 4)
+        .map((p) => ({
+          url: String(p.url),
+          decoupee: p.decoupee === true,
+        }))
+    : [];
+
+  const donnees: DonneesVisuel = {
     type: body.type === "affiche" || body.visual_type === "affiche" ? "affiche" : "miniature",
     titre: String(body.titre || body.title_text || "").substring(0, 300),
     accroche: body.accroche ? String(body.accroche).substring(0, 300) : undefined,
-    sousTitre: body.sous_titre || body.subtitle_text
-      ? String(body.sous_titre || body.subtitle_text).substring(0, 160)
-      : undefined,
+    sousTitre:
+      body.sous_titre || body.subtitle_text
+        ? String(body.sous_titre || body.subtitle_text).substring(0, 160)
+        : undefined,
+    speakerNames: speakerNames.length ? speakerNames : undefined,
     intervenant: (["kongo", "pam", "kongo-pam", "aucun"].includes(String(body.intervenant))
       ? body.intervenant
       : "aucun") as DonneesVisuel["intervenant"],
     photoUrl: body.photo_url ? String(body.photo_url) : undefined,
     photoDecoupee: body.photo_decoupee === true || body.photoDecoupee === true,
+    photosSujet: photosApercu.length ? photosApercu : undefined,
     fondUrl: body.fond_url ? String(body.fond_url) : undefined,
     style: String(body.style || styleParDefaut || "noir-or"),
     dateEvenement: body.event_date ? String(body.event_date).substring(0, 10) : undefined,
@@ -556,6 +599,9 @@ function construireDonneesVisuel(
     lieuEvenement: body.event_location ? String(body.event_location).substring(0, 120) : undefined,
     verset: body.bible_verse ? String(body.bible_verse).substring(0, 120) : undefined,
   };
+  // Sous-titre affiché : noms libres > sous-titre explicite > ancien champ.
+  if (speakerNames.length) donnees.sousTitre = speakerNames.join(" & ").substring(0, 160);
+  return donnees;
 }
 
 /** Résout la photo effective d'un intervenant (dernière importée). */
@@ -590,6 +636,45 @@ async function photoEffective(
     };
   }
   return null;
+}
+
+/**
+ * ⭐ V3.90 — Résout TOUTES les photos d'une génération : les ids choisis
+ * (speaker_photo_ids, une photo par intervenant, 4 max) ; à défaut, repli
+ * sur le chemin historique (intervenant énuméré + id unique + mode rapide).
+ */
+async function photosEffectives(
+  donnees: DonneesVisuel,
+  body: Record<string, unknown>
+): Promise<Array<{ url: string; decoupee: boolean; nom: string }>> {
+  const idsBruts = Array.isArray(body.speaker_photo_ids) ? body.speaker_photo_ids : [];
+  const ids = (idsBruts as unknown[])
+    .filter((v): v is string => typeof v === "string" && v.length > 0)
+    .slice(0, 4);
+
+  const resolutions: Array<{ url: string; decoupee: boolean; nom: string } | null> =
+    await Promise.all(
+      ids.map(async (id) => {
+        const photo = await db.speakerPhoto.findUnique({ where: { id } });
+        if (!photo) return null;
+        return {
+          url: photo.cutoutUrl || photo.originalUrl,
+          decoupee: Boolean(photo.cutoutUrl),
+          nom: photo.speakerName,
+        };
+      })
+    );
+  const trouves = resolutions.filter(
+    (r): r is { url: string; decoupee: boolean; nom: string } => r !== null
+  );
+  if (trouves.length) return trouves;
+
+  // Repli historique (mode rapide §44 / anciens appels).
+  const unique = await photoEffective(
+    donnees.intervenant,
+    typeof body.speaker_photo_id === "string" ? body.speaker_photo_id : undefined
+  );
+  return unique ? [unique] : [];
 }
 
 export async function handlerGenerer(
@@ -658,15 +743,14 @@ export async function handlerGenerer(
       : (["A"] as CleVariante[]);
     if (!variantes.length) variantes.push("A");
 
-    // Photo de l'intervenant.
-    const photo = await photoEffective(
-      donnees.intervenant,
-      typeof body.speaker_photo_id === "string" ? body.speaker_photo_id : undefined
-    );
-    if (photo) {
-      donnees.photoUrl = photo.url;
-      donnees.photoDecoupee = photo.decoupee;
-      if (!donnees.sousTitre) donnees.sousTitre = photo.nom;
+    // Photos des intervenants (V3.90 : une par personne — ids multiples,
+    // repli historique pour le mode rapide).
+    const photos = await photosEffectives(donnees, body);
+    if (photos.length) {
+      donnees.photosSujet = photos.map((p) => ({ url: p.url, decoupee: p.decoupee }));
+      donnees.photoUrl = photos[0].url;
+      donnees.photoDecoupee = photos[0].decoupee;
+      if (!donnees.sousTitre) donnees.sousTitre = photos.map((p) => p.nom).join(" & ");
     }
 
     // Fond sélectionné.
@@ -699,7 +783,12 @@ export async function handlerGenerer(
           subtitleText: donnees.sousTitre || null,
           speakerPhotoId:
             typeof body.speaker_photo_id === "string" ? body.speaker_photo_id : null,
-          speakerName: photo?.nom || null,
+          speakerName:
+            donnees.speakerNames?.length
+              ? donnees.speakerNames.join(" & ")
+              : photos.length
+                ? photos.map((p) => p.nom).join(" & ")
+                : null,
           eventDate: donnees.dateEvenement ? new Date(`${donnees.dateEvenement}T12:00:00Z`) : null,
           eventTime: donnees.heureEvenement || null,
           eventLocation: donnees.lieuEvenement || null,
@@ -942,5 +1031,207 @@ export async function handlerMetaStudio(
     formatsParDefaut: FORMATS_PAR_DEFAUT,
     variantes: CLES_VARIANTES,
     polices: [...POLICES_VALIDES],
+    // ⭐ V3.90 — l'IA NVIDIA est-elle configurée ? (la clé n'est JAMAIS
+    // exposée — seulement son état, pour afficher ou non les boutons IA).
+    ia: { active: estIAActive() },
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V3.90 — IA NVIDIA (build.nvidia.com)
+//   · peaufiner une photo d'intervenant (FLUX.1 Kontext [dev]) : éclairage
+//     studio, netteté, fond nettoyé — identité conservée, puis
+//     DÉTOURAGE AUTOMATIQUE par notre moteur (cutout.ts) ;
+//   · générer un fond (FLUX.1 [dev]) à la palette du ministère.
+// ─────────────────────────────────────────────────────────────────────
+
+/** Traduit une erreur NVIDIA en message pastoral (jamais technique). */
+function messageIA(e: unknown): string {
+  if (e instanceof ErreurNvidia) {
+    if (e.statut === 503) return "L'IA n'est pas encore configurée — ajoutez la clé NVIDIA (NVIDIA_API_KEY).";
+    if (e.statut === 401 || e.statut === 403)
+      return "Clé NVIDIA refusée — vérifiez qu'elle est active sur build.nvidia.com.";
+    if (e.statut === 429)
+      return "L'IA est très sollicitée pour le moment — patientez un instant puis réessayez.";
+    if (e.statut >= 500)
+      return "Le service IA est momentanément indisponible — réessayez dans quelques instants.";
+    return "L'IA n'a pas pu traiter cette demande — ajustez la photo ou la consigne puis réessayez.";
+  }
+  return "L'IA n'a pas abouti — réessayez dans un instant.";
+}
+
+export async function handlerPeaufinerPhotoIA(
+  request: NextRequest,
+  roles: readonly string[]
+): Promise<NextResponse> {
+  const garde = exigerSession(request, roles);
+  if ("reponse" in garde) return garde.reponse;
+  try {
+    await ensureStudioTables();
+    if (!estIAActive()) {
+      return erreurJson(
+        "L'IA n'est pas configurée — ajoutez la clé NVIDIA_API_KEY (Vercel → Paramètres → Variables d'environnement).",
+        503,
+        "IA_INACTIVE"
+      );
+    }
+    if (!isR2Configured()) {
+      return erreurJson("Le stockage cloud n'est pas configuré — contactez l'administrateur.", 503);
+    }
+
+    const body = await request.json();
+    const idPhoto = String(body.speaker_photo_id || "");
+    const consigne =
+      typeof body.consigne === "string" ? body.consigne.substring(0, 400) : undefined;
+    const origine = await db.speakerPhoto.findUnique({ where: { id: idPhoto } });
+    if (!origine) return erreurJson("Photo introuvable.", 404);
+
+    // ① Peaufinage IA — la photo ORIGINALE (opaque) est envoyée : le
+    //    modèle conserve la personne, la pose et les vêtements.
+    let pngIA: Buffer;
+    try {
+      pngIA = await peaufinerPhotoNvidia(origine.originalUrl, consigne);
+    } catch (e) {
+      console.error("[studio/ai/peaufiner] NVIDIA :", e);
+      return erreurJson(messageIA(e), 502, "IA_ECHEC");
+    }
+    if (pngIA.length < 1024) {
+      return erreurJson("L'IA a renvoyé un résultat inexploitable — réessayez.", 502, "IA_ECHEC");
+    }
+
+    // ② Post-traitement : bornage 2048 px + PNG sans perte.
+    const travaille = await sharp(pngIA)
+      .rotate()
+      .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+
+    // ③ DÉTOURAGE AUTOMATIQUE du résultat IA (best-effort — silhouettes
+    //    propres dans le moteur de composition).
+    const detourage = await detourerPhoto(travaille);
+
+    // ④ Enregistrement : NOUVELLE photo (l'originale reste intacte dans
+    //    la bibliothèque — on ne détruit jamais le travail).
+    const id = crypto.randomUUID();
+    const urlOriginale = await uploadToR2(
+      `studio/speakers/${id}-orig.png`,
+      travaille,
+      "image/png"
+    );
+    let urlDetouree: string | null = null;
+    if (detourage.ok && detourage.tamponPng) {
+      urlDetouree = await uploadToR2(
+        `studio/speakers/${id}-cut.png`,
+        detourage.tamponPng,
+        "image/png"
+      );
+    }
+    const miniature = await sharp(travaille)
+      .resize({ width: 256, withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+    const urlMiniature = await uploadToR2(
+      `studio/speakers/${id}-thumb.webp`,
+      miniature,
+      "image/webp"
+    );
+
+    const item = await db.speakerPhoto.create({
+      data: {
+        speakerName: origine.speakerName,
+        originalUrl: urlOriginale,
+        cutoutUrl: urlDetouree,
+        thumbnailUrl: urlMiniature,
+        isProcessed: Boolean(urlDetouree),
+      },
+    });
+
+    return NextResponse.json(
+      {
+        item,
+        source: { id: origine.id },
+        detourage: detourage.ok
+          ? { ok: true, couverture: Math.round(detourage.couverture * 100) }
+          : { ok: false, raison: "fond trop complexe — photo IA conservée opaque" },
+      },
+      { status: 201 }
+    );
+  } catch (e) {
+    console.error("[studio/ai/peaufiner] :", e);
+    return erreurJson("Impossible de peaufiner la photo — réessayez.", 500);
+  }
+}
+
+export async function handlerGenererFondIA(
+  request: NextRequest,
+  roles: readonly string[]
+): Promise<NextResponse> {
+  const garde = exigerSession(request, roles);
+  if ("reponse" in garde) return garde.reponse;
+  try {
+    await ensureStudioTables();
+    if (!estIAActive()) {
+      return erreurJson(
+        "L'IA n'est pas configurée — ajoutez la clé NVIDIA_API_KEY (Vercel → Paramètres → Variables d'environnement).",
+        503,
+        "IA_INACTIVE"
+      );
+    }
+    if (!isR2Configured()) {
+      return erreurJson("Le stockage cloud n'est pas configuré — contactez l'administrateur.", 503);
+    }
+
+    const body = await request.json();
+    const intention = String(body.prompt || "").substring(0, 300).trim();
+    if (!intention) return erreurJson("Décrivez le fond souhaité (quelques mots suffisent).");
+    const style = typeof body.style === "string" ? body.style : undefined;
+    const categorie =
+      typeof body.categorie === "string" && body.categorie.length <= 30
+        ? body.categorie
+        : "general";
+    const nom = String(body.nom || intention).substring(0, 80);
+
+    // ① Génération IA à la palette du ministère.
+    let pngIA: Buffer;
+    try {
+      pngIA = await genererFondNvidia(consigneFond(intention, style));
+    } catch (e) {
+      console.error("[studio/ai/fond] NVIDIA :", e);
+      return erreurJson(messageIA(e), 502, "IA_ECHEC");
+    }
+    if (pngIA.length < 1024) {
+      return erreurJson("L'IA a renvoyé un résultat inexploitable — reformulez et réessayez.", 502, "IA_ECHEC");
+    }
+
+    // ② Post-traitement : 1920×1080 JPEG Q90 (même format que la
+    //    bibliothèque de fonds).
+    const fond = await sharp(pngIA)
+      .rotate()
+      .resize(1920, 1080, { fit: "cover", position: "attention" })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+    const meta = await sharp(fond).metadata();
+    const url = await uploadToR2(
+      `studio/backgrounds/${crypto.randomUUID()}.jpg`,
+      fond,
+      "image/jpeg"
+    );
+
+    const item = await db.thumbnailBackground.create({
+      data: {
+        name: nom,
+        imageUrl: url,
+        category: categorie,
+        tags: { ia: true, intention } as unknown as object,
+        width: meta.width || 1920,
+        height: meta.height || 1080,
+        isActive: true,
+      },
+    });
+
+    return NextResponse.json({ item }, { status: 201 });
+  } catch (e) {
+    console.error("[studio/ai/fond] :", e);
+    return erreurJson("Impossible de générer le fond — reformulez et réessayez.", 500);
+  }
 }

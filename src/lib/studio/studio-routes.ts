@@ -15,6 +15,7 @@ import {
   handlerCreerTemplate,
   handlerDupliquerCreation,
   handlerGenerer,
+  handlerGenererFondIA,
   handlerListerBackgrounds,
   handlerListerCreations,
   handlerListerPhotos,
@@ -23,6 +24,7 @@ import {
   handlerModifierBackground,
   handlerModifierCreation,
   handlerModifierTemplate,
+  handlerPeaufinerPhotoIA,
   handlerSupprimerBackground,
   handlerSupprimerCreation,
   handlerSupprimerPhoto,
@@ -63,6 +65,13 @@ export interface RoutesStudio {
     POST: (request: NextRequest) => Promise<NextResponse>;
   };
   preview: {
+    POST: (request: NextRequest) => Promise<NextResponse>;
+  };
+  /** ⭐ V3.90 — IA NVIDIA (build.nvidia.com). */
+  aiPeaufiner: {
+    POST: (request: NextRequest) => Promise<NextResponse>;
+  };
+  aiFond: {
     POST: (request: NextRequest) => Promise<NextResponse>;
   };
   creations: {
@@ -116,6 +125,12 @@ export function routesStudio(roles: readonly string[]): RoutesStudio {
     },
     preview: {
       POST: (request) => handlerApercu(request, roles),
+    },
+    aiPeaufiner: {
+      POST: (request) => handlerPeaufinerPhotoIA(request, roles),
+    },
+    aiFond: {
+      POST: (request) => handlerGenererFondIA(request, roles),
     },
     creations: {
       GET: (request) => handlerListerCreations(request, roles),

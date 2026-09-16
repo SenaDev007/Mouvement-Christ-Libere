@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * ⭐ V3.89 — MCL CREATIVE STUDIO : coquille UI partagée.
+ * ⭐ V3.89 → V3.90 — MCL CREATIVE STUDIO : coquille UI partagée.
  *
  * Le MÊME composant sert le back-office (super admins) et le secrétariat
  * (directive : « le back-office, le super admin ainsi que le secrétariat
@@ -12,6 +12,18 @@
  *
  * Onglets (spec §4) : Créer · Mes créations · Templates · Fonds · Photos.
  * Desktop : paramètres à gauche + aperçu à droite ; mobile : vertical (§42).
+ *
+ * ⭐ V3.90 (directives du pasteur) :
+ *   · BROUILLON AUTO-SAUVEGARDÉ + bouton « Sauvegarder » — le travail en
+ *     cours survit à un rafraîchissement, une fermeture d'onglet, une
+ *     coupure de courant (localStorage, débounced 800 ms) ;
+ *   · INTERVENANTS LIBRES — noms éditables (pas de noms figés), autant
+ *     de noms que voulu, une photo par personne ;
+ *   · UPLOAD DIRECT avec ROGNAGE façon Canva (glisser, zoom, rotation,
+ *     ratios 3:4 / 1:1 / 4:3) + DÉTOURAGE automatique à l'import ;
+ *   · IA NVIDIA (build.nvidia.com) : « Peaufiner la photo » (FLUX.1
+ *     Kontext — éclairage studio, identité conservée) et génération de
+ *     fonds (FLUX.1) à la palette du ministère.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -33,6 +45,10 @@ import {
   Plus,
   Film,
   X,
+  Save,
+  FilePlus2,
+  CheckCircle2,
+  UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
@@ -41,6 +57,7 @@ import type {
   TypeVisuel,
 } from "@/lib/visual-generator/types";
 import { FORMATS } from "@/lib/visual-generator/types";
+import { ZoneToasts, afficherToast, ModalRogner } from "./studio-ui";
 
 // ─── Types client ──────────────────────────────────────────────────────
 
@@ -88,6 +105,30 @@ interface CreationStudio {
   createdAt: string;
 }
 
+/** ⭐ V3.90 — un intervenant SAISI LIBREMENT : nom éditable + sa photo. */
+interface IntervenantSaisi {
+  nom: string;
+  photoId: string;
+}
+
+/** ⭐ V3.90 — brouillon auto-sauvegardé (localStorage). */
+interface BrouillonStudio {
+  sauveA: string;
+  typeVisuel: TypeVisuel;
+  titre: string;
+  accroche: string;
+  intervenants: IntervenantSaisi[];
+  fondId: string;
+  style: string;
+  templateId: string;
+  formatsChoisis: CleFormat[];
+  dateEvenement: string;
+  heureEvenement: string;
+  lieuEvenement: string;
+  verset: string;
+  videoId: string;
+}
+
 type Onglet = "creer" | "creations" | "templates" | "fonds" | "photos";
 
 export interface StudioShellProps {
@@ -98,6 +139,19 @@ export interface StudioShellProps {
 }
 
 const VARIANTES: CleVariante[] = ["A", "B", "C", "D"];
+
+/** Clé localStorage du brouillon (commune aux deux espaces — même base). */
+const CLE_BROUILLON = "mcl-studio-brouillon-v3";
+
+/** Suggestions de consignes pour les fonds générés par l'IA. */
+const PRESETS_FOND_IA = [
+  "flammes dans la nuit",
+  "lumière dorée traversant la poussière",
+  "ciel orageux percé de lumière",
+  "croix lumineuse dans l'obscurité",
+  "nuages dorés au coucher du soleil",
+  "texture noir et or abstraite",
+];
 
 // ─── Composant principal ──────────────────────────────────────────────
 
@@ -159,11 +213,14 @@ export function StudioShell({ apiBase, espace }: StudioShellProps) {
       {onglet === "templates" && <OngletTemplates apiBase={apiBase} />}
       {onglet === "fonds" && <OngletFonds apiBase={apiBase} />}
       {onglet === "photos" && <OngletPhotos apiBase={apiBase} />}
+
+      {/* Toasts (montés UNE fois). */}
+      <ZoneToasts />
     </div>
   );
 }
 
-// ─── Onglet CRÉER (formulaire + aperçu live + génération) ────────────
+// ─── Onglet CRÉER (formulaire + brouillon + aperçu live + génération) ──
 
 function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
   // Données de référence.
@@ -171,18 +228,21 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
   const [templates, setTemplates] = useState<TemplateStudio[]>([]);
   const [fonds, setFonds] = useState<FondStudio[]>([]);
   const [photos, setPhotos] = useState<PhotoIntervenant[]>([]);
+  const [iaActive, setIaActive] = useState(false);
 
   // Paramètres de la création (§6).
   const [typeVisuel, setTypeVisuel] = useState<TypeVisuel>("miniature");
   const [titre, setTitre] = useState("");
   const [accroche, setAccroche] = useState("");
-  const [intervenant, setIntervenant] = useState<"kongo" | "pam" | "kongo-pam" | "aucun">("kongo");
-  const [photoId, setPhotoId] = useState<string>("");
-  const [fondId, setFondId] = useState<string>("");
+  // ⭐ V3.90 — intervenants LIBRES : noms éditables, illimités, une photo
+  // par personne (le moteur les dessine côte à côte).
+  const [intervenants, setIntervenants] = useState<IntervenantSaisi[]>([
+    { nom: "Pasteur Kongo", photoId: "" },
+  ]);
+  const [fondId, setFondId] = useState("");
   const [style, setStyle] = useState("noir-or");
   const [templateId, setTemplateId] = useState("");
   const [formatsChoisis, setFormatsChoisis] = useState<CleFormat[]>(["youtube", "square", "reels"]);
-  const [variantes, setVariantes] = useState<CleVariante[]>(["A"]);
   // Affiche.
   const [dateEvenement, setDateEvenement] = useState("");
   const [heureEvenement, setHeureEvenement] = useState("");
@@ -201,6 +261,21 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
   const [resultats, setResultats] = useState<CreationStudio[]>([]);
   const [erreur, setErreur] = useState("");
 
+  // ⭐ V3.90 — IA NVIDIA.
+  const [iaPhotoOccupee, setIaPhotoOccupee] = useState("");
+  const [fondIAPrompt, setFondIAPrompt] = useState("");
+  const [fondIAOccupe, setFondIAOccupe] = useState(false);
+
+  // ⭐ V3.90 — upload direct + rognage.
+  const refFichier = useRef<HTMLInputElement>(null);
+  const [uploadPour, setUploadPour] = useState(0);
+  const [rogner, setRogner] = useState<{ fichier: File; index: number } | null>(null);
+
+  // ⭐ V3.90 — brouillon.
+  const [pret, setPret] = useState(false);
+  const [brouillonRestaure, setBrouillonRestaure] = useState<Date | null>(null);
+  const [derniereSauvegarde, setDerniereSauvegarde] = useState<Date | null>(null);
+
   const templatesDuType = useMemo(
     () => templates.filter((t) => t.templateType === typeVisuel && t.isActive),
     [templates, typeVisuel]
@@ -211,7 +286,18 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
     [typeVisuel]
   );
 
-  const photoSelectionnee = photos.find((p) => p.id === photoId);
+  // Photos réellement sélectionnées (dédupliquées — 2 noms peuvent
+  // pointer la même photo), dans l'ordre des intervenants.
+  const photosChoisies = useMemo(() => {
+    const uniques: PhotoIntervenant[] = [];
+    for (const iv of intervenants) {
+      if (!iv.photoId) continue;
+      const trouvee = photos.find((p) => p.id === iv.photoId);
+      if (trouvee && !uniques.some((u) => u.id === trouvee.id)) uniques.push(trouvee);
+    }
+    return uniques;
+  }, [intervenants, photos]);
+
   const fondSelectionne = fonds.find((f) => f.id === fondId);
 
   /** Change le type de visuel en réinitialisant template + formats. */
@@ -230,7 +316,6 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           .filter((f) => f.types.includes(nouveau))
           .map((f) => f.cle)
       );
-      setVariantes(["A"]);
       setResultats([]);
       setApercuFormat(
         Object.values(FORMATS).find((f) => f.types.includes(nouveau))?.cle || "youtube"
@@ -239,7 +324,102 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
     []
   );
 
-  // Chargement initial (+ paramètres d'URL ?video=…&titre=…).
+  // ── Brouillon : instantané + écriture debouncée ──────────────────────
+
+  const donneesBrouillon = useMemo(
+    () => ({
+      typeVisuel,
+      titre,
+      accroche,
+      intervenants,
+      fondId,
+      style,
+      templateId,
+      formatsChoisis,
+      dateEvenement,
+      heureEvenement,
+      lieuEvenement,
+      verset,
+      videoId,
+    }),
+    [
+      typeVisuel, titre, accroche, intervenants, fondId, style, templateId,
+      formatsChoisis, dateEvenement, heureEvenement, lieuEvenement, verset,
+      videoId,
+    ]
+  );
+
+  const ecrireBrouillon = useCallback((): boolean => {
+    try {
+      localStorage.setItem(
+        CLE_BROUILLON,
+        JSON.stringify({
+          sauveA: new Date().toISOString(),
+          ...donneesBrouillon,
+        } satisfies BrouillonStudio)
+      );
+      setDerniereSauvegarde(new Date());
+      return true;
+    } catch {
+      return false;
+    }
+  }, [donneesBrouillon]);
+
+  // Sauvegarde AUTOMATIQUE (800 ms après la dernière modification).
+  useEffect(() => {
+    if (!pret) return;
+    const minuteur = setTimeout(ecrireBrouillon, 800);
+    return () => clearTimeout(minuteur);
+  }, [pret, donneesBrouillon, ecrireBrouillon]);
+
+  /** Bouton « Sauvegarder » — écriture immédiate + retour visible. */
+  const sauvegarderMaintenant = useCallback(() => {
+    if (ecrireBrouillon()) {
+      afficherToast("Brouillon sauvegardé — votre travail est protégé.", "succes");
+    } else {
+      afficherToast("Sauvegarde impossible (stockage du navigateur).", "erreur");
+    }
+  }, [ecrireBrouillon]);
+
+  /** Efface tout et repart de zéro (brouillon compris). */
+  const repartirDeZero = useCallback(() => {
+    if (
+      !confirm(
+        "Effacer le travail en cours (titre, intervenants, photos sélectionnées) et repartir de zéro ?"
+      )
+    ) {
+      return;
+    }
+    try {
+      localStorage.removeItem(CLE_BROUILLON);
+    } catch {
+      /* silencieux */
+    }
+    setTypeVisuel("miniature");
+    setTitre("");
+    setAccroche("");
+    setIntervenants([{ nom: "Pasteur Kongo", photoId: "" }]);
+    setFondId("");
+    setStyle("noir-or");
+    const premiers = templates.filter((t) => t.templateType === "miniature");
+    setTemplateId(premiers[0]?.id || "");
+    if (premiers[0]) setStyle(premiers[0].styleKey);
+    setFormatsChoisis(["youtube", "square", "reels"]);
+    setDateEvenement("");
+    setHeureEvenement("");
+    setLieuEvenement("");
+    setVerset("");
+    setVideoId("");
+    setResultats([]);
+    setBrouillonRestaure(null);
+    setDerniereSauvegarde(null);
+    setApercuFormat("youtube");
+    setApercuVariante("A");
+    afficherToast("Nouveau visuel — page réinitialisée.", "info");
+  }, [templates]);
+
+  // ── Chargement initial (+ URL + brouillon) ───────────────────────────
+
   useEffect(() => {
     (async () => {
       try {
@@ -252,43 +432,271 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
         if (rMeta.ok) {
           const meta = await rMeta.json();
           setStyles(meta.styles || []);
+          setIaActive(Boolean(meta.ia?.active));
         }
         let listeTemplates: TemplateStudio[] = [];
         if (rTemplates.ok) {
           listeTemplates = (await rTemplates.json()).items || [];
           setTemplates(listeTemplates);
         }
-        if (rFonds.ok) setFonds((await rFonds.json()).items || []);
+        let listeFonds: FondStudio[] = [];
+        if (rFonds.ok) {
+          listeFonds = (await rFonds.json()).items || [];
+          setFonds(listeFonds);
+        }
+        let listePhotos: PhotoIntervenant[] = [];
         if (rPhotos.ok) {
-          const listePhotos: PhotoIntervenant[] = (await rPhotos.json()).items || [];
+          listePhotos = (await rPhotos.json()).items || [];
           setPhotos(listePhotos);
-          const derniereKongo = listePhotos.find((p) => p.speakerName === "Pasteur Kongo");
-          if (derniereKongo) setPhotoId(derniereKongo.id);
         }
 
-        // Pré-remplissage depuis une vidéo (§6.1 — parcours « Vidéos →
-        // Créer une miniature »).
+        // ① Pré-remplissage explicite depuis une vidéo (§6.1) — prioritaire
+        //    sur le brouillon (intention explicite).
         const params = new URLSearchParams(window.location.search);
         const v = params.get("video");
         const t = params.get("titre");
+        const type = params.get("type");
+        const depuisVideo = Boolean(v || t || type === "affiche");
         if (v) setVideoId(v);
         if (t) setTitre(t);
-        const type = params.get("type");
         if (type === "affiche") {
           changerType("affiche", listeTemplates);
-        } else if (listeTemplates.length) {
+          setPret(true);
+          return;
+        }
+
+        // Dernière photo de Pasteur Kongo par défaut (comportement V3.89).
+        const derniereKongo = listePhotos.find((p) => p.speakerName === "Pasteur Kongo");
+        const defauts = () => {
           const premiers = listeTemplates.filter((tm) => tm.templateType === "miniature");
           if (premiers.length) {
             setTemplateId(premiers[0].id);
             setStyle(premiers[0].styleKey);
           }
+          if (derniereKongo) {
+            setIntervenants((liste) =>
+              liste.map((iv) =>
+                iv.nom === "Pasteur Kongo" ? { ...iv, photoId: derniereKongo.id } : iv
+              )
+            );
+          }
+        };
+
+        if (depuisVideo) {
+          defauts();
+          setPret(true);
+          return;
+        }
+
+        // ② ⭐ V3.90 — BROUILLON restauré (travail en cours préservé).
+        let brouillon: BrouillonStudio | null = null;
+        try {
+          const brut = localStorage.getItem(CLE_BROUILLON);
+          if (brut) brouillon = JSON.parse(brut) as BrouillonStudio;
+        } catch {
+          brouillon = null;
+        }
+        const significatif =
+          brouillon &&
+          (brouillon.titre?.trim() ||
+            brouillon.accroche?.trim() ||
+            (brouillon.intervenants || []).some((i) => i?.photoId) ||
+            brouillon.lieuEvenement?.trim() ||
+            brouillon.dateEvenement?.trim() ||
+            brouillon.verset?.trim());
+
+        if (brouillon && significatif) {
+          const typeBrouillon: TypeVisuel =
+            brouillon.typeVisuel === "affiche" ? "affiche" : "miniature";
+          setTypeVisuel(typeBrouillon);
+          setTitre(brouillon.titre || "");
+          setAccroche(brouillon.accroche || "");
+
+          // Intervenants : noms conservés, photos validées contre la base.
+          const ivs = (brouillon.intervenants || [])
+            .filter((x) => x && typeof x.nom === "string")
+            .slice(0, 6)
+            .map((x) => ({
+              nom: x.nom.substring(0, 80),
+              photoId: listePhotos.some((p) => p.id === x.photoId) ? x.photoId : "",
+            }));
+          setIntervenants(
+            ivs.length
+              ? ivs
+              : [{ nom: "Pasteur Kongo", photoId: derniereKongo?.id || "" }]
+          );
+
+          // Fond : conservé s'il existe toujours.
+          if (brouillon.fondId && listeFonds.some((f) => f.id === brouillon.fondId)) {
+            setFondId(brouillon.fondId);
+          }
+
+          // Style + template : le template doit exister ET matcher le type.
+          const templateBrouillon = listeTemplates.find(
+            (tm) => tm.id === brouillon!.templateId && tm.templateType === typeBrouillon
+          );
+          if (templateBrouillon) {
+            setTemplateId(templateBrouillon.id);
+            setStyle(brouillon.style || templateBrouillon.styleKey);
+          } else {
+            const premiers = listeTemplates.filter((tm) => tm.templateType === typeBrouillon);
+            setTemplateId(premiers[0]?.id || "");
+            setStyle(brouillon.style || premiers[0]?.styleKey || "noir-or");
+          }
+
+          // Formats : filtrés selon le type du brouillon.
+          const formatsValides = (brouillon.formatsChoisis || []).filter((f) =>
+            FORMATS[f]?.types.includes(typeBrouillon)
+          ) as CleFormat[];
+          setFormatsChoisis(
+            formatsValides.length
+              ? formatsValides
+              : Object.values(FORMATS)
+                  .filter((f) => f.types.includes(typeBrouillon))
+                  .map((f) => f.cle)
+          );
+          setApercuFormat(
+            (formatsValides[0] as CleFormat) ||
+              Object.values(FORMATS).find((f) => f.types.includes(typeBrouillon))?.cle ||
+              "youtube"
+          );
+
+          setDateEvenement(brouillon.dateEvenement || "");
+          setHeureEvenement(brouillon.heureEvenement || "");
+          setLieuEvenement(brouillon.lieuEvenement || "");
+          setVerset(brouillon.verset || "");
+          if (typeof brouillon.videoId === "string" && brouillon.videoId) {
+            setVideoId(brouillon.videoId);
+          }
+          const dateBrouillon = new Date(brouillon.sauveA);
+          setBrouillonRestaure(dateBrouillon);
+          setDerniereSauvegarde(dateBrouillon);
+        } else {
+          defauts();
         }
       } catch {
         setErreur("Impossible de charger le studio — réessayez.");
+      } finally {
+        setPret(true);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiBase]);
+
+  // ── Édition des intervenants ─────────────────────────────────────────
+
+  const modifierIntervenant = useCallback((index: number, champ: Partial<IntervenantSaisi>) => {
+    setIntervenants((liste) =>
+      liste.map((iv, j) => (j === index ? { ...iv, ...champ } : iv))
+    );
+  }, []);
+
+  const ajouterIntervenant = useCallback(() => {
+    setIntervenants((liste) => [...liste, { nom: "", photoId: "" }]);
+  }, []);
+
+  const supprimerIntervenant = useCallback((index: number) => {
+    setIntervenants((liste) => liste.filter((_, j) => j !== index));
+  }, []);
+
+  // ── Upload direct avec ROGNAGE (façon Canva) ─────────────────────────
+
+  const televerserPhotoRognee = useCallback(
+    async (index: number, blob: Blob) => {
+      const nom =
+        intervenants[index]?.nom.replace(/\s+/g, " ").trim() || "Intervenant";
+      try {
+        const form = new FormData();
+        form.append(
+          "file",
+          new File([blob], "photo-rognee.png", { type: "image/png" })
+        );
+        form.append("speaker_name", nom);
+        const res = await fetch(`${apiBase}/speakers/upload-photo`, {
+          method: "POST",
+          body: form,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Import impossible");
+        setPhotos((anciennes) => [data.item, ...anciennes]);
+        setIntervenants((liste) =>
+          liste.map((iv, j) => (j === index ? { ...iv, photoId: data.item.id } : iv))
+        );
+        afficherToast(
+          data.detourage?.ok
+            ? `Photo de ${nom} enregistrée — détourage automatique réussi (${data.detourage.couverture} % du fond supprimé).`
+            : `Photo de ${nom} enregistrée — fond trop complexe pour le détourage, la photo originale sera utilisée.`,
+          data.detourage?.ok ? "succes" : "info"
+        );
+      } catch (e) {
+        afficherToast(e instanceof Error ? e.message : "Import impossible", "erreur");
+      }
+    },
+    [apiBase, intervenants]
+  );
+
+  // ── IA : peaufiner la photo d'un intervenant ─────────────────────────
+
+  const peaufinerPhoto = useCallback(
+    async (index: number) => {
+      const cible = intervenants[index];
+      if (!cible?.photoId || iaPhotoOccupee) return;
+      setIaPhotoOccupee(cible.photoId);
+      try {
+        const res = await fetch(`${apiBase}/ai/peaufiner`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ speaker_photo_id: cible.photoId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Peaufinage impossible");
+        setPhotos((anciennes) => [data.item, ...anciennes]);
+        setIntervenants((liste) =>
+          liste.map((iv, j) => (j === index ? { ...iv, photoId: data.item.id } : iv))
+        );
+        afficherToast(
+          data.detourage?.ok
+            ? `Photo peaufinée par l'IA — détourage réussi (${data.detourage.couverture} % du fond supprimé).`
+            : "Photo peaufinée par l'IA — fond complexe, version opaque conservée.",
+          "succes"
+        );
+      } catch (e) {
+        afficherToast(e instanceof Error ? e.message : "Peaufinage impossible", "erreur");
+      } finally {
+        setIaPhotoOccupee("");
+      }
+    },
+    [apiBase, intervenants, iaPhotoOccupee]
+  );
+
+  // ── IA : générer un fond ─────────────────────────────────────────────
+
+  const genererFondIA = useCallback(async () => {
+    const intention = fondIAPrompt.trim();
+    if (!intention || fondIAOccupe) return;
+    setFondIAOccupe(true);
+    try {
+      const res = await fetch(`${apiBase}/ai/fond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: intention,
+          style,
+          categorie: "general",
+          nom: `IA — ${intention.substring(0, 44)}`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Génération impossible");
+      setFonds((anciens) => [data.item, ...anciens]);
+      setFondId(data.item.id);
+      afficherToast("Fond généré par l'IA et sélectionné.", "succes");
+    } catch (e) {
+      afficherToast(e instanceof Error ? e.message : "Génération impossible", "erreur");
+    } finally {
+      setFondIAOccupe(false);
+    }
+  }, [apiBase, fondIAPrompt, fondIAOccupe, style]);
 
   // ⭐ Aperçu live (debounce 700 ms — le MÊME moteur que la génération).
   const numeroApercu = useRef(0);
@@ -301,7 +709,6 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
     const minuteur = setTimeout(async () => {
       try {
         setApercuCharge(true);
-        const photo = photos.find((p) => p.id === photoId);
         const res = await fetch(`${apiBase}/preview`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -309,9 +716,13 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
             type: typeVisuel,
             titre,
             accroche: accroche || undefined,
-            intervenant,
-            photo_url: photo ? photo.cutoutUrl || photo.originalUrl : undefined,
-            photo_decoupee: photo ? Boolean(photo.cutoutUrl) : undefined,
+            speaker_names: intervenants
+              .map((iv) => iv.nom.replace(/\s+/g, " ").trim())
+              .filter(Boolean),
+            photos_sujet: photosChoisies.slice(0, 4).map((p) => ({
+              url: p.cutoutUrl || p.originalUrl,
+              decoupee: Boolean(p.cutoutUrl),
+            })),
             fond_url: fondSelectionne?.imageUrl,
             style,
             template_id: templateId,
@@ -336,7 +747,7 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
     }, 700);
     return () => clearTimeout(minuteur);
   }, [
-    apiBase, typeVisuel, titre, accroche, intervenant, photoId, photos,
+    apiBase, typeVisuel, titre, accroche, intervenants, photosChoisies,
     fondSelectionne, style, templateId, apercuVariante, apercuFormat,
     dateEvenement, heureEvenement, lieuEvenement, verset,
   ]);
@@ -347,7 +758,6 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
     setGeneration(true);
     setErreur("");
     try {
-      const photo = photos.find((p) => p.id === photoId);
       const res = await fetch(`${apiBase}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -357,8 +767,11 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           template_id: templateId,
           title_text: titre,
           accroche: accroche || undefined,
-          intervenant,
-          speaker_photo_id: photoId || null,
+          speaker_names: intervenants
+            .map((iv) => iv.nom.replace(/\s+/g, " ").trim())
+            .filter(Boolean),
+          speaker_photo_ids: photosChoisies.slice(0, 4).map((p) => p.id),
+          speaker_photo_id: photosChoisies[0]?.id || null,
           fond_id: fondId || null,
           style,
           formats: formatsChoisis,
@@ -379,10 +792,74 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
     }
   };
 
+  // Noms saisis, propres, pour l'affichage.
+  const nomsIntervenants = intervenants
+    .map((iv) => iv.nom.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  void nomsIntervenants;
+
   return (
-    <div className="grid lg:grid-cols-[420px_1fr] gap-6 items-start">
+    <div className="space-y-4">
+      {/* ⭐ Bandeau de restauration du brouillon. */}
+      {brouillonRestaure && (
+        <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 rounded-xl bg-[#5B7052]/10 border border-[#5B7052]/30 text-xs text-[#3F5039]">
+          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <span className="flex-1 min-w-[220px]">
+            Brouillon restauré (
+            {brouillonRestaure.toLocaleString("fr-FR", {
+              dateStyle: "short",
+              timeStyle: "short",
+            })}
+            ) — votre travail en cours est préservé.
+          </span>
+          <button
+            onClick={repartirDeZero}
+            className="font-bold underline underline-offset-2 whitespace-nowrap"
+          >
+            Repartir de zéro
+          </button>
+          <button
+            onClick={() => setBrouillonRestaure(null)}
+            className="p-1 rounded hover:bg-[#5B7052]/10"
+            aria-label="Masquer le message"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-[420px_1fr] gap-6 items-start">
       {/* ── Panneau des paramètres (§24) ── */}
       <div className="space-y-5 bg-white rounded-2xl border border-[#8A8378]/15 p-5">
+        {/* ⭐ Brouillon : sauvegarde automatique + bouton. */}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#FAF6EF] border border-[#8A8378]/10 px-3 py-2">
+          <span className="text-[10px] text-[#8A8378] flex items-center gap-1.5 min-w-0">
+            <Save className="w-3.5 h-3.5 text-[#5B7052] flex-shrink-0" />
+            {derniereSauvegarde
+              ? `Brouillon sauvegardé à ${derniereSauvegarde.toLocaleTimeString("fr-FR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}`
+              : "Sauvegarde automatique du brouillon"}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <button
+              onClick={sauvegarderMaintenant}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#5B7052] text-white text-[10px] font-bold hover:bg-[#3F5039]"
+            >
+              <Save className="w-3 h-3" />
+              Sauvegarder
+            </button>
+            <button
+              onClick={repartirDeZero}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#8A8378]/25 text-[#8A8378] text-[10px] font-semibold hover:bg-white"
+            >
+              <FilePlus2 className="w-3 h-3" />
+              Nouveau
+            </button>
+          </span>
+        </div>
+
         {/* Type de visuel */}
         <div className="grid grid-cols-2 gap-2">
           {(["miniature", "affiche"] as TypeVisuel[]).map((t) => (
@@ -435,68 +912,120 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           )}
         </Section>
 
-        {/* Étape 2 — Intervenant */}
-        <Section label="2. Intervenant">
-          <div className="grid grid-cols-2 gap-2">
-            {(
-              [
-                { v: "kongo", l: "Pasteur Kongo" },
-                { v: "pam", l: "Pam" },
-                { v: "kongo-pam", l: "Kongo & Pam" },
-                { v: "aucun", l: "Aucun" },
-              ] as const
-            ).map((i) => (
-              <button
-                key={i.v}
-                onClick={() => setIntervenant(i.v)}
-                className={cn(
-                  "px-3 py-2 rounded-lg border-2 text-xs font-semibold transition-all",
-                  intervenant === i.v
-                    ? "border-[#C9A227] bg-[#C9A227]/5 text-[#A3821C]"
-                    : "border-[#8A8378]/15 text-[#8A8378] hover:border-[#C9A227]/40"
-                )}
-              >
-                {i.l}
-              </button>
-            ))}
-          </div>
-          {intervenant !== "aucun" && (
-            <div className="mt-3">
-              <p className="text-[11px] font-semibold text-[#8A8378] mb-1.5">
-                Photo de l&apos;intervenant
-              </p>
-              <div className="flex gap-2 overflow-x-auto scrollbar-discrete pb-1">
-                {photos
-                  .filter((p) => p.speakerName === nomAttendu(intervenant))
-                  .map((p) => (
+        {/* Étape 2 — Intervenants (noms LIBRES — V3.90) */}
+        <Section label="2. Intervenants">
+          <p className="text-[10px] text-[#8A8378] -mt-0.5">
+            Modifiez les noms librement (il peut s&apos;agir d&apos;autres
+            personnes) — ajoutez autant d&apos;intervenants que vous voulez,
+            chacun avec sa photo.
+          </p>
+          <div className="space-y-2.5">
+            {intervenants.map((iv, i) => {
+              const photosDuNom = photos.filter(
+                (p) => p.speakerName === iv.nom.replace(/\s+/g, " ").trim()
+              );
+              const iaEnCours = iaPhotoOccupee && iaPhotoOccupee === iv.photoId;
+              return (
+                <div
+                  key={i}
+                  className="rounded-xl border border-[#8A8378]/15 bg-[#FAF6EF]/40 p-2.5 space-y-2"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <UserRound className="w-4 h-4 text-[#A3821C] flex-shrink-0" />
+                    <input
+                      value={iv.nom}
+                      onChange={(e) => modifierIntervenant(i, { nom: e.target.value })}
+                      placeholder="Nom de l'intervenant (modifiable)"
+                      maxLength={80}
+                      className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-[#8A8378]/25 bg-white text-sm"
+                    />
+                    {iaActive && iv.photoId && (
+                      <button
+                        onClick={() => peaufinerPhoto(i)}
+                        disabled={Boolean(iaPhotoOccupee)}
+                        title="Peaufiner la photo avec l'IA — éclairage studio, netteté (10 à 30 s)"
+                        className={cn(
+                          "p-1.5 rounded-lg border flex-shrink-0 disabled:opacity-40",
+                          iaEnCours
+                            ? "border-[#8C5FA8] text-[#8C5FA8]"
+                            : "border-[#8C5FA8]/40 text-[#8C5FA8] hover:bg-[#8C5FA8]/10"
+                        )}
+                      >
+                        {iaEnCours ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    )}
                     <button
-                      key={p.id}
-                      onClick={() => setPhotoId(p.id)}
-                      className={cn(
-                        "relative w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all",
-                        photoId === p.id
-                          ? "border-[#C9A227] ring-2 ring-[#C9A227]/30"
-                          : "border-transparent opacity-70 hover:opacity-100"
-                      )}
-                      title={`${p.speakerName}${p.isProcessed ? " (détourée)" : ""}`}
+                      onClick={() => supprimerIntervenant(i)}
+                      title="Retirer cet intervenant"
+                      className="p-1.5 rounded-lg text-[#B3452E]/70 hover:bg-[#B3452E]/10 flex-shrink-0"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={p.thumbnailUrl || p.cutoutUrl || p.originalUrl}
-                        alt={p.speakerName}
-                        className="w-full h-full object-cover bg-[#2A0E3D]"
-                      />
+                      <X className="w-3.5 h-3.5" />
                     </button>
-                  ))}
-                {photos.filter((p) => p.speakerName === nomAttendu(intervenant)).length === 0 && (
-                  <p className="text-xs text-[#8A8378] py-2">
-                    Aucune photo — ajoutez-en dans l&apos;onglet « Photos des
-                    intervenants ».
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
+                  </div>
+
+                  {/* Photos de CET intervenant + import direct (rognage). */}
+                  <div className="flex gap-2 overflow-x-auto scrollbar-discrete pb-1">
+                    {photosDuNom.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => modifierIntervenant(i, { photoId: p.id })}
+                        className={cn(
+                          "relative w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all",
+                          iv.photoId === p.id
+                            ? "border-[#C9A227] ring-2 ring-[#C9A227]/30"
+                            : "border-transparent opacity-70 hover:opacity-100"
+                        )}
+                        title={`${p.speakerName}${p.isProcessed ? " (détourée)" : ""}`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={p.thumbnailUrl || p.cutoutUrl || p.originalUrl}
+                          alt={p.speakerName}
+                          className="w-full h-full object-cover bg-[#2A0E3D]"
+                        />
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => {
+                        setUploadPour(i);
+                        refFichier.current?.click();
+                      }}
+                      title="Importer une photo pour cet intervenant — rognage façon Canva + détourage automatique"
+                      className="w-16 h-16 rounded-lg border-2 border-dashed border-[#C9A227]/60 text-[#A3821C] hover:bg-[#C9A227]/5 flex flex-col items-center justify-center gap-0.5 flex-shrink-0"
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span className="text-[8px] font-bold leading-none">Photo</span>
+                    </button>
+                  </div>
+
+                  {photosDuNom.length === 0 && (
+                    <p className="text-[10px] text-[#8A8378]">
+                      Aucune photo pour «&nbsp;{iv.nom.trim() || "…"}&nbsp;» —
+                      «&nbsp;+&nbsp;Photo&nbsp;» importe une image (rognage,
+                      puis détourage automatique).
+                    </p>
+                  )}
+                  {iaEnCours && (
+                    <p className="text-[10px] text-[#8C5FA8] font-semibold flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Peaufinage IA en cours (10 à 30 s)…
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+            <button
+              onClick={ajouterIntervenant}
+              className="w-full px-3 py-2 rounded-xl border-2 border-dashed border-[#C9A227]/50 text-xs font-semibold text-[#A3821C] hover:bg-[#C9A227]/5 inline-flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Ajouter un intervenant
+            </button>
+          </div>
         </Section>
 
         {/* Étape 3 — Style */}
@@ -552,7 +1081,7 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           )}
         </Section>
 
-        {/* Étape 5 — Fond (facultatif) */}
+        {/* Étape 5 — Fond (facultatif) + IA */}
         <Section label="5. Fond (facultatif)">
           <div className="flex gap-2 overflow-x-auto scrollbar-discrete pb-1">
             <button
@@ -583,6 +1112,55 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
               </button>
             ))}
           </div>
+
+          {iaActive ? (
+            <div className="mt-3 rounded-xl border border-[#8C5FA8]/30 bg-[#8C5FA8]/[0.06] p-3 space-y-2">
+              <p className="text-[11px] font-bold text-[#6B4480] flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                Générer un fond avec l&apos;IA
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {PRESETS_FOND_IA.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setFondIAPrompt(s)}
+                    className="px-2 py-1 rounded-full text-[10px] font-semibold border border-[#8C5FA8]/30 text-[#6B4480] hover:bg-[#8C5FA8]/10"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={fondIAPrompt}
+                  onChange={(e) => setFondIAPrompt(e.target.value)}
+                  placeholder="Décrivez le fond… ex. flammes dans la nuit"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-white text-xs"
+                />
+                <button
+                  onClick={genererFondIA}
+                  disabled={fondIAOccupe || !fondIAPrompt.trim()}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#8C5FA8] text-white text-xs font-bold hover:bg-[#7A4E97] disabled:opacity-40 whitespace-nowrap"
+                >
+                  {fondIAOccupe ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  )}
+                  Générer
+                </button>
+              </div>
+              <p className="text-[10px] text-[#8A8378]">
+                10 à 30 s — le fond rejoint la bibliothèque et est sélectionné.
+              </p>
+            </div>
+          ) : (
+            <p className="text-[10px] text-[#8A8378] mt-2 flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-[#C9A227] flex-shrink-0" />
+              Fonds par IA : ajoutez la clé NVIDIA_API_KEY (build.nvidia.com)
+              pour l&apos;activer.
+            </p>
+          )}
         </Section>
 
         {/* Événement (affiches) */}
@@ -740,9 +1318,32 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
           </div>
         )}
       </div>
+      </div>
+
+      {/* Input fichier caché + modal de rognage (upload direct V3.90). */}
+      <input
+        ref={refFichier}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) setRogner({ fichier: f, index: uploadPour });
+          e.target.value = "";
+        }}
+      />
+      {rogner && (
+        <ModalRogner
+          fichier={rogner.fichier}
+          onFerme={() => setRogner(null)}
+          onValide={(blob) => {
+            const cible = rogner;
+            setRogner(null);
+            televerserPhotoRognee(cible.index, blob);
+          }}
+        />
+      )}
       {espace === "jamais" && <span className="hidden" />}
-      {photoSelectionnee === undefined && <span className="hidden" />}
-      {variantes.length === 0 && <span className="hidden" />}
     </div>
   );
 }
@@ -842,6 +1443,8 @@ function CarteCreation({
     setOccupe(true);
     await fetch(`${apiBase}/creations/${creation.id}`, { method: "POST" });
     setOccupe(false);
+    afficherToast("Création dupliquée — la copie est modifiable depuis « Créer ».");
+    onSupprime?.();
   };
   const supprimer = async () => {
     if (!confirm("Supprimer définitivement cette création (fichiers cloud inclus) ?")) return;
@@ -862,7 +1465,10 @@ function CarteCreation({
       body: JSON.stringify({ appliquer_video: true }),
     });
     setOccupe(false);
-    if (res.ok) setApplique(true);
+    if (res.ok) {
+      setApplique(true);
+      afficherToast("Miniature appliquée à la vidéo.", "succes");
+    }
   };
 
   return (
@@ -1052,9 +1658,10 @@ function OngletFonds({ apiBase }: { apiBase: string }) {
       if (!res.ok) throw new Error(data.error || "Ajout impossible");
       setNom("");
       setFichier(null);
+      afficherToast("Fond ajouté à la bibliothèque.", "succes");
       charger();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Ajout impossible");
+      afficherToast(e instanceof Error ? e.message : "Ajout impossible", "erreur");
     } finally {
       setUpload(false);
     }
@@ -1163,14 +1770,13 @@ function OngletFonds({ apiBase }: { apiBase: string }) {
   );
 }
 
-// ─── Onglet PHOTOS DES INTERVENANTS (§11/§12) ─────────────────────────
+// ─── Onglet PHOTOS DES INTERVENANTS (§11/§12 — V3.90 : noms libres) ────
 
 function OngletPhotos({ apiBase }: { apiBase: string }) {
   const [items, setItems] = useState<PhotoIntervenant[]>([]);
   const [chargement, setChargement] = useState(true);
   const [intervenant, setIntervenant] = useState("Pasteur Kongo");
-  const [fichier, setFichier] = useState<File | null>(null);
-  const [upload, setUpload] = useState(false);
+  const [rogner, setRogner] = useState<File | null>(null);
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -1186,34 +1792,27 @@ function OngletPhotos({ apiBase }: { apiBase: string }) {
     charger();
   }, [charger]);
 
-  const ajouter = async () => {
-    if (!fichier) return;
-    setUpload(true);
+  const ajouter = async (blob: Blob) => {
+    const nom = intervenant.replace(/\s+/g, " ").trim() || "Intervenant";
     try {
       const form = new FormData();
-      form.append("file", fichier);
-      form.append("speaker_name", intervenant);
+      form.append("file", new File([blob], "photo-rognee.png", { type: "image/png" }));
+      form.append("speaker_name", nom);
       const res = await fetch(`${apiBase}/speakers/upload-photo`, {
         method: "POST",
         body: form,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Ajout impossible");
-      if (data.detourage?.ok) {
-        alert(
-          `Photo enregistrée — détourage automatique réussi (${data.detourage.couverture} % du fond supprimé).`
-        );
-      } else {
-        alert(
-          "Photo enregistrée — fond trop complexe pour le détourage automatique : la photo originale sera utilisée (le rendu reste propre)."
-        );
-      }
-      setFichier(null);
+      afficherToast(
+        data.detourage?.ok
+          ? `Photo de ${nom} enregistrée — détourage réussi (${data.detourage.couverture} % du fond supprimé).`
+          : `Photo de ${nom} enregistrée — fond complexe, photo originale conservée.`,
+        data.detourage?.ok ? "succes" : "info"
+      );
       charger();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Ajout impossible");
-    } finally {
-      setUpload(false);
+      afficherToast(e instanceof Error ? e.message : "Ajout impossible", "erreur");
     }
   };
 
@@ -1226,21 +1825,36 @@ function OngletPhotos({ apiBase }: { apiBase: string }) {
     return groupes;
   }, [items]);
 
+  const nomsExistants = useMemo(
+    () => Object.keys(parIntervenant).sort((a, b) => a.localeCompare(b, "fr")),
+    [parIntervenant]
+  );
+
   return (
     <div className="space-y-5">
-      {/* Upload */}
+      {/* Ajout — nom LIBRE + rognage façon Canva */}
       <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 grid sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
         <div>
-          <label className="block text-[11px] font-semibold text-[#1E0F2B] mb-1.5">Intervenant</label>
-          <select
+          <label className="block text-[11px] font-semibold text-[#1E0F2B] mb-1.5">
+            Intervenant (nom libre)
+          </label>
+          <input
             value={intervenant}
             onChange={(e) => setIntervenant(e.target.value)}
+            list="noms-intervenants-studio"
+            maxLength={80}
+            placeholder="Ex. Pasteur Kongo, chanteur Jean…"
             className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
-          >
-            <option>Pasteur Kongo</option>
-            <option>Pam</option>
-            <option>Kongo &amp; Pam</option>
-          </select>
+          />
+          <datalist id="noms-intervenants-studio">
+            {nomsExistants.map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
+          <p className="text-[10px] text-[#8A8378] mt-1">
+            Tapez n&apos;importe quel nom — les photos sont rangées par
+            intervenant.
+          </p>
         </div>
         <div>
           <label className="block text-[11px] font-semibold text-[#1E0F2B] mb-1.5">
@@ -1249,21 +1863,20 @@ function OngletPhotos({ apiBase }: { apiBase: string }) {
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            onChange={(e) => setFichier(e.target.files?.[0] || null)}
+            onChange={(e) => {
+              const f = e.target.files?.[0] || null;
+              if (f) setRogner(f);
+              e.target.value = "";
+            }}
             className="text-xs text-[#8A8378] file:mr-2 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-[#2A0E3D] file:text-[#FAF6EF] file:text-xs file:font-semibold"
           />
           <p className="text-[10px] text-[#8A8378] mt-1">
-            Le détourage est automatique (une seule fois, à l&apos;ajout).
+            Rognage à l&apos;import, puis détourage automatique (une seule fois).
           </p>
         </div>
-        <button
-          onClick={ajouter}
-          disabled={upload || !fichier}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] disabled:opacity-40"
-        >
-          {upload ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-          Ajouter la photo
-        </button>
+        <p className="text-[10px] text-[#8A8378] sm:hidden">
+          Choisissez d&apos;abord un fichier — rognez puis validez.
+        </p>
       </div>
 
       {chargement ? (
@@ -1309,6 +1922,18 @@ function OngletPhotos({ apiBase }: { apiBase: string }) {
           </div>
         ))
       )}
+
+      {/* Modal de rognage partagée avec l'onglet Créer. */}
+      {rogner && (
+        <ModalRogner
+          fichier={rogner}
+          onFerme={() => setRogner(null)}
+          onValide={(blob) => {
+            setRogner(null);
+            ajouter(blob);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -1353,18 +1978,4 @@ function Champ({
       />
     </div>
   );
-}
-
-/** Nom de groupe attendu pour un intervenant. */
-function nomAttendu(intervenant: string): string {
-  switch (intervenant) {
-    case "kongo":
-      return "Pasteur Kongo";
-    case "pam":
-      return "Pam";
-    case "kongo-pam":
-      return "Kongo & Pam";
-    default:
-      return "";
-  }
 }

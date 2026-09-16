@@ -1,5 +1,5 @@
 /**
- * ⭐ V3.89 — MCL CREATIVE STUDIO : types partagés du moteur de composition.
+ * ⭐ V3.89 → V3.90 — MCL CREATIVE STUDIO : types partagés du moteur de composition.
  *
  * ⚠️ Ce fichier est importé CÔTÉ CLIENT (aperçu, formulaires) et côté
  * serveur (rendu) : AUCUN import serveur (canvas, fs, prisma…).
@@ -11,6 +11,14 @@
  *    (paysage / portrait / carré ne partagent pas les mêmes zones — §18) ;
  *  · les couleurs passent par des JETONS (accent, secondary…) résolus
  *    par le style choisi (§41 brand tokens).
+ *
+ * V3.90 — les intervenants sont LIBRES (directive du pasteur : noms
+ * éditables, « il peut s'agir d'autres personnes », autant que voulu) :
+ *  · `speakerNames` : noms saisis librement → sous-titre affiché ;
+ *  · `photosSujet` : une photo par intervenant — le moteur les dessine
+ *    côte à côte dans la zone sujet (2-4 utiles) ;
+ *  · `photoUrl`/`photoDecoupee`/`intervenant` restent pour la
+ *    compatibilité (mode rapide §44 et appels historiques).
  */
 
 // ─── Types de visuels & formats ────────────────────────────────────────
@@ -117,14 +125,23 @@ export interface DonneesVisuel {
   accroche?: string;
   /** Sous-titre (intervenant, ex. « Pasteur Kongo »). */
   sousTitre?: string;
-  /** Nom de l'intervenant affiché (Kongo & Pam → deux photos). */
+  /** V3.90 — noms des intervenants SAISIS LIBREMENT (éditables, autant
+   *  que voulu). Le sous-titre affiché = join(" & ") de ces noms. */
+  speakerNames?: string[];
+  /** Ancienne clé d'intervenant (kongo | pam | kongo-pam | aucun) —
+   *  conservée pour le MODE RAPIDE et les appels historiques. */
   intervenant?: "kongo" | "pam" | "kongo-pam" | "aucun";
-  /** URL de la photo détourée (préférée) ou originale. */
+  /** URL de la photo détourée (préférée) ou originale — photo UNIQUE
+   *  (compatibilité mode rapide). */
   photoUrl?: string;
   /** ⭐ La photo est-elle un PNG DÉTOURÉ (transparent) ? true → la photo
    *  est contenue dans sa zone (silhouette) ; false (photo opaque) →
    *  couverture pleine de la zone (crop), rendu propre sans bandes. */
   photoDecoupee?: boolean;
+  /** V3.90 — photos de PLUSIEURS intervenants : le moteur dessine les
+   *  silhouettes côte à côte dans la zone sujet (2-4, le reste est
+   *  ignoré). Prioritaire sur photoUrl. */
+  photosSujet?: Array<{ url: string; decoupee?: boolean }>;
   /** URL du fond de la bibliothèque (vide = fond généré par le style). */
   fondUrl?: string;
   /** Style choisi (clé STYLES_STUDIO). */
