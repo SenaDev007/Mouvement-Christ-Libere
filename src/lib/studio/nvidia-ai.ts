@@ -70,7 +70,9 @@ const URL_DIRECTEUR =
 const MODELE_DIRECTEUR = process.env.NVIDIA_DIRECTEUR_MODELE || "openai/gpt-oss-20b";
 
 const DELAI_TIMEOUT_MS = Number(process.env.NVIDIA_TIMEOUT_MS || 40_000);
-const DELAI_DIRECTEUR_MS = Number(process.env.NVIDIA_DIRECTEUR_TIMEOUT_MS || 45_000);
+// 55 s : latence OBSERVÉE de gpt-oss-20b sur build.nvidia.com = 15 à 45 s
+  // (tier partagé — files d'attente variables) ; route maxDuration = 60 s.
+const DELAI_DIRECTEUR_MS = Number(process.env.NVIDIA_DIRECTEUR_TIMEOUT_MS || 55_000);
 
 export class ErreurNvidia extends Error {
   constructor(

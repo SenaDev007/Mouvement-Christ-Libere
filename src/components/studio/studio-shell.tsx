@@ -1424,7 +1424,7 @@ function OngletCreer({ apiBase, espace }: { apiBase: string; espace: string }) {
                   <Sparkles className="w-3.5 h-3.5" />
                 )}
                 {directeurOccupe
-                  ? "Le directeur réfléchit…"
+                  ? "Le directeur réfléchit (15 à 50 s)…"
                   : directeurSpec
                     ? "Recréer depuis la description"
                     : "Créer le visuel avec l'IA"}
