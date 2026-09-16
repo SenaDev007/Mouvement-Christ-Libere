@@ -29,6 +29,7 @@ import {
   Trash2,
   Image as ImageIcon,
   FilePlus2,
+  Check,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -420,6 +421,100 @@ export function ModalRogner({ fichier, onValide, onFerme }: ModalRognerProps) {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6A00] to-[#B3261E] text-white text-sm font-bold hover:opacity-95 disabled:opacity-40"
           >
             {exporte ? "Préparation…" : "Utiliser cette photo"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ⭐ V3.92 — MODAL DE SECTION (façon Photoshop) ──────────────────────
+
+/**
+ * Panneau de réglage OUVERT PAR BOUTON (directive : « lorsque l'on clique
+ * sur une section, que ça s'affiche comme un modal pour faire le réglage,
+ * puis qu'on puisse fermer, comme dans Photoshop »).
+ *
+ * En-tête (icône + titre + sous-titre + ✕), corps DÉFILABLE (les réglages
+ * s'appliquent en direct — l'aperçu suit), pied avec « Terminer ».
+ * Fermeture : ✕, Échap, clic extérieur ou bouton Terminer.
+ */
+export function ModalSection({
+  titre,
+  sousTitre,
+  icone: Icone,
+  large = false,
+  onFerme,
+  children,
+}: {
+  titre: string;
+  sousTitre?: string;
+  icone: LucideIcon;
+  /** Modal plus large (calques, templates…). */
+  large?: boolean;
+  onFerme: () => void;
+  children: React.ReactNode;
+}) {
+  // Échap pour fermer.
+  useEffect(() => {
+    const surEchap = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onFerme();
+    };
+    window.addEventListener("keydown", surEchap);
+    return () => window.removeEventListener("keydown", surEchap);
+  }, [onFerme]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[125] bg-[#1A0826]/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6"
+      onClick={onFerme}
+      role="dialog"
+      aria-modal="true"
+      aria-label={titre}
+    >
+      <div
+        className={cn(
+          "bg-white rounded-2xl shadow-2xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-[fadeIn_.18s_ease-out]",
+          large ? "max-w-2xl" : "max-w-lg"
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Barre de titre façon Photoshop. */}
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[#8A8378]/10 bg-[#FAF6EF]/60 flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-[#2A0E3D] text-[#DDBE55] flex-shrink-0">
+              <Icone className="w-5 h-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-[#1E0F2B] leading-tight">{titre}</p>
+              {sousTitre && (
+                <p className="text-[11px] text-[#8A8378] mt-0.5 leading-snug">{sousTitre}</p>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={onFerme}
+            className="p-2 rounded-lg hover:bg-[#8A8378]/10 text-[#8A8378] flex-shrink-0"
+            aria-label="Fermer ce réglage"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Corps défilable — réglages appliqués en direct. */}
+        <div className="overflow-y-auto px-5 py-4">{children}</div>
+
+        {/* Pied — bouton Terminer. */}
+        <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-t border-[#8A8378]/10 bg-[#FAF6EF]/60 flex-shrink-0">
+          <p className="text-[10px] text-[#8A8378] hidden sm:block">
+            Les réglages s&apos;appliquent en direct — l&apos;aperçu suit.
+          </p>
+          <button
+            onClick={onFerme}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6A00] to-[#B3261E] text-white text-sm font-bold hover:opacity-95 active:scale-[0.98] transition-all"
+          >
+            <Check className="w-4 h-4" />
+            Terminer
           </button>
         </div>
       </div>
