@@ -1152,6 +1152,9 @@ export async function handlerDirecteurIA(
     const correction = String(body.correction || "").trim().substring(0, 2000);
 
     // Historique : [{role, content}] borné à 12 tours (côté client aussi).
+    // ⚠ V3.91 — les DEUX rôles sont conservés (user ET assistant) : le
+    // modèle doit voir la conversation complète pour CORRIGER sa
+    // spécification précédente (« corrige telle chose » — itération).
     let historique: Array<{ role: "user" | "assistant"; content: string }> = [];
     if (Array.isArray(body.historique)) {
       historique = (body.historique as unknown[])
@@ -1159,7 +1162,8 @@ export async function handlerDirecteurIA(
           (m): m is { role: "user" | "assistant"; content: string } =>
             m !== null &&
             typeof m === "object" &&
-            (m as { role?: unknown }).role === "assistant" &&
+            ((m as { role?: unknown }).role === "user" ||
+              (m as { role?: unknown }).role === "assistant") &&
             typeof (m as { content?: unknown }).content === "string"
         )
         .map((m) => ({ role: m.role, content: m.content.substring(0, 4000) }))
