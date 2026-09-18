@@ -13,6 +13,7 @@ export const metadata = {
   title: "Chaîne d'intercession | Christ Libère",
   description:
     "Déposez vos demandes de prière — elles arrivent en toute confidentialité entre les mains de l'équipe pastorale.",
+  alternates: { canonical: "/intercession" },
 };
 
 export default async function IntercessionPage() {

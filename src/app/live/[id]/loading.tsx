@@ -9,7 +9,11 @@
  *
  * Sans ce fichier, l'ancien PageLoader (5 s plein écran) + l'absence de
  * streaming = écran figé jusqu'à la fin de la SSR.
+ * ⭐ V3.93 — anneau unifié ChargementInline (compact, sans logo : le logo
+ * officiel est sombre et se perdrait sur le fond violet profond du player).
  */
+import { ChargementInline } from "@/components/site/chargement-inline";
+
 export default function LiveLoading() {
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -19,7 +23,12 @@ export default function LiveLoading() {
           <div className="space-y-3">
             <div className="relative aspect-video bg-[#1A0826] rounded-xl overflow-hidden shadow-2xl animate-pulse">
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full border-4 border-[#C9A227]/30 border-t-[#C9A227] animate-spin" />
+                <ChargementInline
+                  variante="compact"
+                  libelle=""
+                  avecLogo={false}
+                  remplir={false}
+                />
               </div>
               <div className="absolute top-4 left-1/2 -translate-x-1/2">
                 <div className="h-5 w-24 bg-[#C9A227]/30 rounded-md" />

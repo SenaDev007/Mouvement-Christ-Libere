@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   title: "Demander un rendez-vous | Christ Libère",
   description:
     "Vous souhaitez rencontrer la sœur Afrika ou le pasteur Kongo ? Déposez votre demande auprès du secrétariat du Mouvement Christ Libère — elle sera transmise au serviteur de Dieu concerné.",
+  alternates: { canonical: "/rendez-vous" },
 };
 
 export default async function RendezVousPage() {

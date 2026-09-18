@@ -23,6 +23,9 @@ import { TresorerieLayoutClient } from "@/components/staff-space/tresorerie-layo
  */
 export const metadata: Metadata = {
   manifest: "/manifest-tresorerie.webmanifest",
+  // ⭐ V3.93 — Spéc SEO : NOINDEX (meta) en plus de l'en-tête X-Robots-Tag
+  // (next.config.ts) — journal financier hautement confidentiel.
+  robots: { index: false, follow: false },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

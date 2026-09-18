@@ -25,6 +25,11 @@ import { AdminShell } from "@/components/admin/admin-shell";
  */
 export const metadata: Metadata = {
   manifest: "/manifest-back-office.webmanifest",
+  // ⭐ V3.93 — Spéc SEO : NOINDEX en plus de l'en-tête X-Robots-Tag
+  // (next.config.ts). La balise meta protège même si un lien externe
+  // pointe directement vers www.mouvementchristlibere.com/admin/*
+  // (le header host-conditionnel ne s'applique qu'au sous-domaine admin).
+  robots: { index: false, follow: false },
   appleWebApp: {
     // iOS « Ajouter à l'écran d'accueil » → ouverture plein écran (standalone)
     // avec le titre « Back-office Christ Libère ».

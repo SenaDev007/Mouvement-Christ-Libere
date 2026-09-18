@@ -9,6 +9,14 @@ import { AutoRefresh } from "@/components/site/auto-refresh";
 
 export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
+// ⭐ V3.93 — Spéc SEO : métadonnées + canonique (la page n'en avait aucune).
+export const metadata = {
+  title: "Témoignages | Christ Libère",
+  description:
+    "Témoignages puissants d'Afrika Alkebulane Pamela Dali et du Pasteur Kongo — visite au ciel, chofar, retours de Yeshoua et œuvres de Dieu.",
+  alternates: { canonical: "/temoignages" },
+};
+
 interface PageProps {
   searchParams: Promise<{ theme?: string; servant?: string }>;
 }

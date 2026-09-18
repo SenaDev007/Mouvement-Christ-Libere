@@ -1,3 +1,5 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -6,11 +8,42 @@ import { ChevronRight, Clock, BookOpen, GraduationCap, Calendar, User } from "lu
 import { MarkdownText } from "@/components/site/markdown-text";
 import { ShareButtons } from "@/components/site/share-buttons";
 import { IsololeText } from "@/lib/isolole";
+import { JsonLd } from "@/components/site/json-ld";
 
 export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+// ⭐ V3.93 — requête mise en cache React : partagée entre generateMetadata
+// et le rendu de la page (un seul aller-retour base par requête).
+const chargerEnseignement = cache((id: string) =>
+  db.teaching.findUnique({
+    where: { id },
+    include: { servant: true },
+  })
+);
+
+// ⭐ V3.93 — Spéc SEO : métadonnées UNIQUES par enseignement (titre,
+// description, URL canonique, image de partage) — avant, la page n'avait
+// AUCUNE meta : les résultats Google affichaient un titre générique.
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const teaching = await chargerEnseignement(id).catch(() => null);
+  if (!teaching) return {};
+  return {
+    title: `${teaching.title} | Christ Libère`,
+    description: teaching.excerpt.slice(0, 158),
+    alternates: { canonical: `/enseignements/${teaching.id}` },
+    openGraph: {
+      title: teaching.title,
+      description: teaching.excerpt.slice(0, 158),
+      type: "article",
+      publishedTime: (teaching.publishedAt ?? teaching.createdAt).toISOString(),
+      authors: [teaching.servant.shortName],
+    },
+  };
 }
 
 // Images d'illustration selon le thème de l'enseignement
@@ -41,10 +74,7 @@ function getImageForTheme(theme: string): string {
 export default async function TeachingDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  const teaching = await db.teaching.findUnique({
-    where: { id },
-    include: { servant: true },
-  });
+  const teaching = await chargerEnseignement(id);
 
   if (!teaching) notFound();
 
@@ -53,6 +83,40 @@ export default async function TeachingDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
+      {/* ⭐ V3.93 — Spéc SEO : Article (schema.org) — auteur, date de
+          publication, catégorie (thème) — comme demandé dans le brief. */}
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: teaching.title,
+          description: teaching.excerpt,
+          image: heroImage,
+          datePublished: (
+            teaching.publishedAt ?? teaching.createdAt
+          ).toISOString(),
+          dateModified: teaching.updatedAt.toISOString(),
+          author: {
+            "@type": "Person",
+            name: teaching.servant.shortName,
+            url: `https://www.mouvementchristlibere.com/${
+              teaching.servant.code === "kongo" ? "pasteur-kongo" : "afrika"
+            }`,
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "Mouvement Christ Libère",
+            logo: {
+              "@type": "ImageObject",
+              url: "https://www.mouvementchristlibere.com/logo-christ-libere-v3.png",
+            },
+          },
+          mainEntityOfPage:
+            `https://www.mouvementchristlibere.com/enseignements/${teaching.id}`,
+          articleSection: teaching.theme,
+          inLanguage: "fr",
+        }}
+      />
       {/* ═══ HERO avec image appropriée au thème ═══ */}
       <section className="relative min-h-[60vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-[#FAF6EF]">
         <div className="absolute inset-0 z-0">

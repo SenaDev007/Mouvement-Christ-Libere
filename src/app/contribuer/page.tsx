@@ -13,6 +13,7 @@ export const metadata = {
   title: "Contribuer | Christ Libère",
   description:
     "Vos dons soutiennent le fonctionnement de la plateforme et la diffusion des enseignements — usage publié chaque année.",
+  alternates: { canonical: "/contribuer" },
 };
 
 export default async function ContribuerPage() {

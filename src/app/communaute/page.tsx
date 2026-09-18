@@ -9,6 +9,14 @@ import { ChevronRight, MessageSquare, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
+// ⭐ V3.93 — Spéc SEO : métadonnées + canonique (la page n'en avait aucune).
+export const metadata = {
+  title: "Communauté | Christ Libère",
+  description:
+    "Rejoignez la communauté du Mouvement Christ Libère — chaîne officielle, Yeshua Connect, calendrier biblique et vie d'église.",
+  alternates: { canonical: "/communaute" },
+};
+
 export default async function CommunautePage() {
   // ⭐ V3.20 — Auto-réparation colonne isDirect (findMany sans select).
   await ensureChannelIsDirectColumn();

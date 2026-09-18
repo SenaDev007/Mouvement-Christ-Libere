@@ -32,6 +32,7 @@ export const metadata: Metadata = {
   title: "Annonces du ministère | Christ Libère",
   description:
     "Lives programmés, événements et communiqués officiels du Mouvement Christ Libère — publiés par le secrétariat.",
+  alternates: { canonical: "/annonces" },
 };
 
 const PAR_PAGE = 10;

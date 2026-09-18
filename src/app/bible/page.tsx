@@ -25,6 +25,7 @@ export const metadata = {
   title: "Bible du Royaume | Christ Libère",
   description:
     "6 versions de la Bible, concordance de Strong, hébreu originel et Peshitta — explorez les Écritures en profondeur.",
+  alternates: { canonical: "/bible" },
 };
 
 export default async function BiblePage() {

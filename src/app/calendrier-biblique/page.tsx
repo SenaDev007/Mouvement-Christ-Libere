@@ -12,6 +12,14 @@ import { ParticleField } from "@/components/magic/particle-field";
 
 export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
+// ⭐ V3.93 — Spéc SEO : métadonnées + canonique (la page n'en avait aucune).
+export const metadata = {
+  title: "Calendrier biblique | Christ Libère",
+  description:
+    "Calendrier biblique généré — fêtes de l'Éternel, Shabbat, équivalences grégoriennes et années bibliques.",
+  alternates: { canonical: "/calendrier-biblique" },
+};
+
 export default async function CalendrierBibliquePage() {
   const now = new Date();
   const anneeBibliqueCourante = determinerAnneeBibliqueEnCours(now);

@@ -1,3 +1,5 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -6,11 +8,41 @@ import { ChevronRight, Clock, BookOpen, Quote, Calendar, User } from "lucide-rea
 import { MarkdownText } from "@/components/site/markdown-text";
 import { ShareButtons } from "@/components/site/share-buttons";
 import { IsololeText } from "@/lib/isolole";
+import { JsonLd } from "@/components/site/json-ld";
 
 export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+// ⭐ V3.93 — requête mise en cache React : partagée entre generateMetadata
+// et le rendu de la page (un seul aller-retour base par requête).
+const chargerTemoignage = cache((id: string) =>
+  db.testimony.findUnique({
+    where: { id },
+    include: { servant: true },
+  })
+);
+
+// ⭐ V3.93 — Spéc SEO : métadonnées UNIQUES par témoignage (avant, la
+// page n'avait aucune meta — titre générique dans les résultats Google).
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const testimony = await chargerTemoignage(id).catch(() => null);
+  if (!testimony) return {};
+  return {
+    title: `${testimony.title} | Christ Libère`,
+    description: testimony.short.slice(0, 158),
+    alternates: { canonical: `/temoignages/${testimony.id}` },
+    openGraph: {
+      title: testimony.title,
+      description: testimony.short.slice(0, 158),
+      type: "article",
+      publishedTime: (testimony.publishedAt ?? testimony.createdAt).toISOString(),
+      authors: [testimony.servant.shortName],
+    },
+  };
 }
 
 // Images d'illustration selon le thème du témoignage
@@ -41,10 +73,7 @@ function getImageForThemes(themes: string[]): string {
 export default async function TestimonyDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  const testimony = await db.testimony.findUnique({
-    where: { id },
-    include: { servant: true },
-  });
+  const testimony = await chargerTemoignage(id);
 
   if (!testimony) notFound();
 
@@ -53,6 +82,41 @@ export default async function TestimonyDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
+      {/* ⭐ V3.93 — Spéc SEO : Article (schema.org) pour chaque témoignage
+          (auteur, date, thèmes) — cible les recherches « témoignage visite
+          au ciel », « chofar »… listées dans la stratégie de mots-clés. */}
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: testimony.title,
+          description: testimony.short,
+          image: heroImage,
+          datePublished: (
+            testimony.publishedAt ?? testimony.createdAt
+          ).toISOString(),
+          dateModified: testimony.updatedAt.toISOString(),
+          author: {
+            "@type": "Person",
+            name: testimony.servant.shortName,
+            url: `https://www.mouvementchristlibere.com/${
+              testimony.servant.code === "kongo" ? "pasteur-kongo" : "afrika"
+            }`,
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "Mouvement Christ Libère",
+            logo: {
+              "@type": "ImageObject",
+              url: "https://www.mouvementchristlibere.com/logo-christ-libere-v3.png",
+            },
+          },
+          mainEntityOfPage:
+            `https://www.mouvementchristlibere.com/temoignages/${testimony.id}`,
+          articleSection: testimony.themes.join(", "),
+          inLanguage: "fr",
+        }}
+      />
       {/* ═══ HERO avec image appropriée au témoignage ═══ */}
       <section className="relative min-h-[60vh] flex items-center justify-center pt-24 pb-16 overflow-hidden bg-[#2A0E3D] text-[#FAF6EF]">
         <div className="absolute inset-0 z-0">

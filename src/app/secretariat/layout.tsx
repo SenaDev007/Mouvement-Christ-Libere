@@ -24,6 +24,9 @@ import { SecretariatLayoutClient } from "@/components/staff-space/secretariat-la
  */
 export const metadata: Metadata = {
   manifest: "/manifest-secretariat.webmanifest",
+  // ⭐ V3.93 — Spéc SEO : NOINDEX (meta) en plus de l'en-tête X-Robots-Tag
+  // (next.config.ts) — jamais indexable, même via www.…/secretariat/*.
+  robots: { index: false, follow: false },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

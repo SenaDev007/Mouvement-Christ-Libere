@@ -9,6 +9,14 @@ import { AutoRefresh } from "@/components/site/auto-refresh";
 
 export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-render au build (pas de DB au build)
 
+// ⭐ V3.93 — Spéc SEO : métadonnées + canonique (la page n'en avait aucune).
+export const metadata = {
+  title: "Enseignements bibliques | Christ Libère",
+  description:
+    "Enseignements bibliques d'Afrika et du Pasteur Kongo — doctrine, fêtes, Shabbat, combat spirituel, prophétie — par thème et par niveau.",
+  alternates: { canonical: "/enseignements" },
+};
+
 interface PageProps {
   searchParams: Promise<{ q?: string; level?: string; servant?: string }>;
 }

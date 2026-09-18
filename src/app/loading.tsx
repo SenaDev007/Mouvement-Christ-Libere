@@ -1,18 +1,14 @@
 /**
  * Loading UI — affiché pendant le streaming server components.
- * Conforme au copywriting : "Un instant..."
+ *
+ * ⭐ V3.93 — Utilise ChargementInline (composant unifié V3.93) :
+ * un seul anneau parfaitement centré + logo officiel, plus aucun risque
+ * de cercle « doublé et décalé » (l'ancien admin/loading.tsx empilait
+ * deux cercles décalés de 12 px — retour pasteur).
+ * Copywriting conservé : « Un instant... »
  */
+import { ChargementInline } from "@/components/site/chargement-inline";
+
 export default function Loading() {
-  return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
-      <div className="relative">
-        {/* Anneau or pulsant */}
-        <div className="w-16 h-16 rounded-full border-2 border-[#C9A227]/20" />
-        <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-2 border-transparent border-t-gold animate-spin" />
-      </div>
-      <p className="mt-6 text-sm text-[#8A8378] italic font-serif">
-        Un instant...
-      </p>
-    </div>
-  );
+  return <ChargementInline libelle="Un instant…" />;
 }

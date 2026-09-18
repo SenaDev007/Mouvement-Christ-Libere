@@ -413,10 +413,15 @@ export function LandingIntro() {
                 />
               </motion.div>
 
-              {/* ⭐ V3.14 — « Christ Libère » (même style, même couleur) */}
-              <h1 className="font-serif text-3xl md:text-4xl font-bold text-[#FAF6EF] mt-7 drop-shadow-lg">
+              {/* ⭐ V3.14 — « Christ Libère » (même style, même couleur).
+                  ⭐ V3.93 — Spéc SEO : ce titre décoratif de l'écran
+                  d'introduction n'est PLUS un <h1> — il disparaît au bout
+                  de 5 s et laissait la page d'accueil avec DEUX h1 (celui-ci
+                  + le vrai titre du hero du landing). Un seul <h1> par page :
+                  celui du hero. */}
+              <div className="font-serif text-3xl md:text-4xl font-bold text-[#FAF6EF] mt-7 drop-shadow-lg">
                 Christ Libère
-              </h1>
+              </div>
               <p className="font-serif italic text-[#C9A227] text-lg md:text-xl mt-3">
                 Le shofar retentit…
               </p>

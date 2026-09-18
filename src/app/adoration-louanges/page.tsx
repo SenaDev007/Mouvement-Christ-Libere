@@ -28,6 +28,7 @@ export const metadata = {
   title: "Adoration & Louanges | Christ Libère",
   description:
     "Les chants, clips, adorations et louanges d'Afrika, chantre de l'Éternel — jouables directement sur la plateforme.",
+  alternates: { canonical: "/adoration-louanges" },
 };
 
 export default async function AdorationPage() {

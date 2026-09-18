@@ -91,17 +91,26 @@ function estPagePublique(pathname: string): boolean {
   );
 }
 
-/** URL du site public pour un hôte d'espace (admin.x → x, localhost en dev).
- * Protocole : x-forwarded-proto (Cloudflare/Vercel) sinon http (dev local). */
+/** URL du site public pour un hôte d'espace (admin.x → www.x, localhost en dev).
+ * Protocole : x-forwarded-proto (Cloudflare/Vercel) sinon http (dev local).
+ * ⭐ V3.93 — Spéc SEO : l'URL canonique est TOUJOURS www.… — avant, les
+ * redirections d'une page publique consultée sur un sous-domaine d'espace
+ * pointaient vers l'apex (mouvementchristlibere.com), qui redirigeait
+ * ensuite en 308 vers www : une requête de PLUS (double saut) et un signal
+ * d'URL dupliquée pour Google. Désormais : un seul saut vers www. */
 function urlSitePublic(request: NextRequest): string {
   const host = request.headers.get("host") || "";
   const hostname = host.split(":")[0].toLowerCase();
   const port = host.includes(":") ? host.split(":")[1] : "";
   const proto = request.headers.get("x-forwarded-proto")?.split(",")[0] || "http";
-  // admin.mouvementchristlibere.com → mouvementchristlibere.com
-  // secretariat.localhost:3000 (dev) → localhost:3000
-  const sansSousDomaine = hostname.split(".").slice(1).join(".") || hostname;
-  return `${proto}://${sansSousDomaine}${port ? `:${port}` : ""}`;
+  const sansSousDomaine =
+    hostname.split(".").slice(1).join(".") || hostname;
+  // admin.mouvementchristlibere.com → www.mouvementchristlibere.com
+  // secretariat.localhost:3000 (dev) → localhost:3000 (inchangé en dev)
+  const cible = hostname.endsWith(".localhost")
+    ? sansSousDomaine
+    : `www.${sansSousDomaine}`;
+  return `${proto}://${cible}${port ? `:${port}` : ""}`;
 }
 
 // Fichiers servis depuis /public (logo du back-office, manifest, sons…) et

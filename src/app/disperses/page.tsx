@@ -13,6 +13,7 @@ export const metadata = {
   title: "Carte des dispersés | Christ Libère",
   description:
     "La carte du rassemblement des dispersés — inscrivez-vous pour rejoindre la communauté.",
+  alternates: { canonical: "/disperses" },
 };
 
 export default async function DispersesPage() {

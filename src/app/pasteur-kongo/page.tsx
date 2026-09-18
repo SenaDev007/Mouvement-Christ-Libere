@@ -4,6 +4,7 @@ import { photosServiteurs } from "@/lib/servant-photos";
 import { PasteurKongoView } from "@/components/site/pasteur-kongo-view";
 // ⭐ V3.47 — colonne Biography.photoUrl sélectionnée ci-dessous.
 import { ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
+import { JsonLd } from "@/components/site/json-ld";
 
 /**
  * ⭐ V3.45 — PAGE SERVEUR /pasteur-kongo.
@@ -22,6 +23,7 @@ export const metadata = {
   title: "Pasteur Kongo | Christ Libère",
   description:
     "La Voix de la Réforme Prophétique de la 11e Heure — biographie, frise chronologique, enseignements et ministère du Pasteur Kongo.",
+  alternates: { canonical: "/pasteur-kongo" },
 };
 
 export default async function PasteurKongoPage() {
@@ -67,5 +69,33 @@ export default async function PasteurKongoPage() {
     console.warn("[pasteur-kongo] Frise chronologique indisponible :", e instanceof Error ? e.message : e);
   }
 
-  return <PasteurKongoView hero={hero} milestones={milestones} />;
+  return (
+    <>
+      {/* ⭐ V3.93 — Spéc SEO : entité Person (schema.org) — renforce
+          la reconnaissance du « Pasteur Kongo » par Google. */}
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Person",
+          name: "Pasteur Kongo",
+          url: "https://www.mouvementchristlibere.com/pasteur-kongo",
+          image: "https://www.mouvementchristlibere.com/pasteur-kongo.jpeg",
+          jobTitle: "Pasteur",
+          description:
+            "Voix de la Réforme Prophétique de la 11e Heure — enseignements, prophéties et marche avec le Saint-Esprit.",
+          worksFor: {
+            "@type": "Organization",
+            name: "Mouvement Christ Libère",
+          },
+          knowsAbout: [
+            "Yeshoua",
+            "Réforme prophétique",
+            "retour de Yeshoua",
+            "Saint-Esprit",
+          ],
+        }}
+      />
+      <PasteurKongoView hero={hero} milestones={milestones} />
+    </>
+  );
 }

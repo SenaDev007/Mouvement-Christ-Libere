@@ -7,9 +7,11 @@ import { LoginView } from "@/components/staff-space/login-view";
  *
  * Rôles : TREASURER (trésorier accrédité) + SUPER_ADMIN (Afrika, Pasteur
  * Kongo). Journal financier du ministère — accès hautement restreint.
+ *
+ * ⭐ V3.93 — Spéc GTmetrix : page STATIQUE (force-dynamic retiré — aucun
+ * accès base ici). TTFB de l'écran de connexion réduit (mesuré avant :
+ * 675 ms sur l'URL publique, dépassant le seuil cible de 600 ms).
  */
-export const dynamic = "force-dynamic";
-
 export default function TresorerieLoginPage() {
   return (
     <Suspense>
