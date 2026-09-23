@@ -11,9 +11,9 @@ export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-rend
 
 // ⭐ V3.93 — Spéc SEO : métadonnées + canonique (la page n'en avait aucune).
 export const metadata = {
-  title: "Témoignages | Christ Libère",
+  title: "Témoignages chrétiens en français | Christ Libère",
   description:
-    "Témoignages puissants d'Afrika Alkebulane Pamela Dali et du Pasteur Kongo — visite au ciel, chofar, retours de Yeshoua et œuvres de Dieu.",
+    "Témoignages puissants en français : visite au ciel, sonnerie du chofar, retours de Yeshoua, délivrance et guérison — par Afrika et le Pasteur Kongo.",
   alternates: { canonical: "/temoignages" },
 };
 

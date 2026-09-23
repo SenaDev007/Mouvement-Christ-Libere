@@ -22,9 +22,9 @@ import { BibleWorkspace } from "@/components/bible/BibleWorkspace";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Bible du Royaume | Christ Libère",
+  title: "Bible en ligne gratuite avec Strong | Bible du Royaume",
   description:
-    "6 versions de la Bible, concordance de Strong, hébreu originel et Peshitta — explorez les Écritures en profondeur.",
+    "Lisez la Bible en ligne gratuitement : 6 versions, concordance de Strong, hébreu originel et Peshitta — explorez les Écritures en profondeur.",
   alternates: { canonical: "/bible" },
 };
 

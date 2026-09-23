@@ -10,9 +10,9 @@ import { IntercessionView } from "@/components/site/intercession-view";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Chaîne d'intercession | Christ Libère",
+  title: "Demande de prière & intercession | Christ Libère",
   description:
-    "Déposez vos demandes de prière — elles arrivent en toute confidentialité entre les mains de l'équipe pastorale.",
+    "Déposez votre demande de prière en toute confidentialité : l'équipe pastorale du Mouvement Christ Libère intercède pour vous. La prière des saints agit.",
   alternates: { canonical: "/intercession" },
 };
 

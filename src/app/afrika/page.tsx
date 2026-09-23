@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Afrika Alkebulane Pamela Dali | Christ Libère",
   description:
-    "Servante de Dieu marquée dès le sein maternel — biographie, frise chronologique, témoignages et enseignements d'Afrika.",
+    "Afrika Alkebulane Pamela Dali, chantre de l'Éternel du Mouvement Christ Libère — biographie, témoignages, enseignements et chants « Saint-Esprit réponds-moi ».",
   alternates: { canonical: "/afrika" },
 };
 

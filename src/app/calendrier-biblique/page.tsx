@@ -14,9 +14,9 @@ export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-rend
 
 // ⭐ V3.93 — Spéc SEO : métadonnées + canonique (la page n'en avait aucune).
 export const metadata = {
-  title: "Calendrier biblique | Christ Libère",
+  title: "Calendrier biblique : fêtes & Shabbat | Christ Libère",
   description:
-    "Calendrier biblique généré — fêtes de l'Éternel, Shabbat, équivalences grégoriennes et années bibliques.",
+    "Calendrier biblique : fêtes de l'Éternel (Trompettes, Expiations, Tabernacles), Shabbat, années bibliques et équivalences grégoriennes — PDF à télécharger.",
   alternates: { canonical: "/calendrier-biblique" },
 };
 

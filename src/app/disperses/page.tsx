@@ -10,9 +10,9 @@ import { DispersesView } from "@/components/site/disperses-view";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Carte des dispersés | Christ Libère",
+  title: "Carte des dispersés — diaspora chrétienne | Christ Libère",
   description:
-    "La carte du rassemblement des dispersés — inscrivez-vous pour rejoindre la communauté.",
+    "La carte du rassemblement des dispersés d'Israël : chrétiens d'Afrique et de la diaspora s'inscrivent au Mouvement Christ Libère. Inscrivez-vous sur la carte.",
   alternates: { canonical: "/disperses" },
 };
 

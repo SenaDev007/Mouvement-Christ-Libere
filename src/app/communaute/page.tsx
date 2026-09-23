@@ -11,9 +11,9 @@ export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-rend
 
 // ⭐ V3.93 — Spéc SEO : métadonnées + canonique (la page n'en avait aucune).
 export const metadata = {
-  title: "Communauté | Christ Libère",
+  title: "Communauté chrétienne en ligne | Christ Libère",
   description:
-    "Rejoignez la communauté du Mouvement Christ Libère — chaîne officielle, Yeshua Connect, calendrier biblique et vie d'église.",
+    "Rejoignez la communauté chrétienne du Mouvement Christ Libère : Yeshua Connect, intercession, calendrier biblique et vie de foi partagée — où que vous soyez.",
   alternates: { canonical: "/communaute" },
 };
 

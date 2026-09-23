@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/app/layout.tsx",
+    "src/app/page.tsx",
+    "src/app/afrika/page.tsx",
+    "src/app/pasteur-kongo/page.tsx",
+    "src/app/videos/page.tsx",
+    "src/app/enseignements/page.tsx",
+    "src/app/enseignements/[id]/page.tsx",
+    "src/app/temoignages/page.tsx",
+    "src/app/temoignages/[id]/page.tsx",
+    "src/app/contribuer/page.tsx",
+    "src/app/adoration-louanges/page.tsx",
+    "src/app/intercession/page.tsx",
+    "src/app/disperses/page.tsx",
+    "src/app/bible/page.tsx",
+    "src/app/rendez-vous/page.tsx",
+    "src/app/annonces/page.tsx",
+    "src/app/communaute/page.tsx",
+    "src/app/calendrier-biblique/page.tsx",
+    "src/app/robots.ts",
+    "src/app/sitemap.ts",
+    "src/proxy.ts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

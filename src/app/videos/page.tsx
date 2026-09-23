@@ -20,9 +20,9 @@ import { JsonLd } from "@/components/site/json-ld";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Vidéos & Lives | Christ Libère",
+  title: "Vidéos & lives chrétiens en français | Christ Libère",
   description:
-    "Enseignements vidéo et directs d'Afrika et du Pasteur Kongo, conservés intégralement.",
+    "Regardez les lives et replays du Mouvement Christ Libère : enseignements, prédications et témoignages d'Afrika et du Pasteur Kongo, en vidéo et en français.",
   alternates: { canonical: "/videos" },
 };
 

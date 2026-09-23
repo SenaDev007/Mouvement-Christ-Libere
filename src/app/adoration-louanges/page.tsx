@@ -25,9 +25,9 @@ import { AdorationView } from "@/components/adoration/adoration-view";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Adoration & Louanges | Christ Libère",
+  title: "Adoration & louanges en français | Christ Libère",
   description:
-    "Les chants, clips, adorations et louanges d'Afrika, chantre de l'Éternel — jouables directement sur la plateforme.",
+    "Chants d'adoration et de louange en français par Afrika Alkebulane, chantre de l'Éternel — écoutez-les directement sur la plateforme.",
   alternates: { canonical: "/adoration-louanges" },
 };
 

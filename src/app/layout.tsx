@@ -33,16 +33,19 @@ export const metadata: Metadata = {
   // ⭐ V3.50 — Domaine canonique pour résoudre les URLs relatives des
   // métadonnées (og:image, twitter:image) en URLs absolues.
   metadataBase: new URL("https://www.mouvementchristlibere.com"),
-  title: "Afrika Alkebulane Pamela Dali & Pasteur Kongo — Témoignages, enseignements",
+  title: "Mouvement Christ Libère | Enseignements, lives & communauté",
   description:
-    "Biographies, témoignages, enseignements et communauté de foi autour du ministère d'Afrika et du Pasteur Kongo.",
+    "Mouvement Christ Libère : enseignements bibliques, lives et témoignages avec Afrika et le Pasteur Kongo. Marchez avec Yeshoua, où que vous soyez.",
   keywords: [
-    "Afrika",
-    "Pasteur Kongo",
+    "Mouvement Christ Libère",
+    "Christ Libère",
     "Afrika Alkebulane Pamela Dali",
+    "Pasteur Kongo",
     "Yeshoua",
-    "témoignages",
     "enseignements bibliques",
+    "témoignages chrétiens",
+    "chofar",
+    "rassemblement des dispersés d'Israël",
     "communauté de foi",
   ],
   authors: [{ name: "Mouvement Christ Libère" }],
@@ -80,9 +83,9 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "Afrika & Pasteur Kongo — Au son du chofar",
+    title: "Mouvement Christ Libère — Au son du chofar",
     description:
-      "Enseignements, témoignages et vie de communauté. Un espace de foi centralisé.",
+      "Enseignements bibliques, lives et témoignages d'Afrika Alkebulane et du Pasteur Kongo — au service du rassemblement des dispersés d'Israël.",
     type: "website",
     locale: "fr_FR",
     siteName: "Mouvement Christ Libère",
@@ -99,9 +102,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Afrika & Pasteur Kongo — Au son du chofar",
+    title: "Mouvement Christ Libère — Au son du chofar",
     description:
-      "Enseignements, témoignages et vie de communauté. Un espace de foi centralisé.",
+      "Enseignements bibliques, lives et témoignages d'Afrika Alkebulane et du Pasteur Kongo — au service du rassemblement des dispersés d'Israël.",
     images: ["/og-image.png?v=2026-09-13"],
   },
 };

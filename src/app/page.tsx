@@ -21,6 +21,12 @@ export const dynamic = "force-dynamic";
 // ⭐ V3.93 — Spéc SEO : URL canonique de la page d'accueil (une seule
 // version indexée — l'apex redirige déjà en 308 vers www).
 export const metadata: Metadata = {
+  // ⭐ V3.95 — La MARQUE en tête du title (le pasteur tape « Christ Libère »
+  // dans Google : l'ancien title de 76 car. commençait par les noms et
+  // tronquait avant la marque — la requête de marque ne trouvait rien).
+  title: "Mouvement Christ Libère | Enseignements, lives & communauté",
+  description:
+    "Mouvement Christ Libère : enseignements bibliques, lives et témoignages avec Afrika et le Pasteur Kongo. Marchez avec Yeshoua, où que vous soyez.",
   alternates: { canonical: "/" },
 };
 

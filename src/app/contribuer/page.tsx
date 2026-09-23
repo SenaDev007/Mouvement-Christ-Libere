@@ -10,9 +10,9 @@ import { ContribuerView } from "@/components/site/contribuer-view";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Contribuer | Christ Libère",
+  title: "Faire un don en ligne | Mouvement Christ Libère",
   description:
-    "Vos dons soutiennent le fonctionnement de la plateforme et la diffusion des enseignements — usage publié chaque année.",
+    "Soutenez le Mouvement Christ Libère : dons sécurisés par carte bancaire ou Mobile Money (MTN, Moov). Votre offrande finance la mission.",
   alternates: { canonical: "/contribuer" },
 };
 

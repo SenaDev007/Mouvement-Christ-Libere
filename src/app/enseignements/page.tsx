@@ -11,9 +11,9 @@ export const dynamic = "force-dynamic"; // Force dynamic — évite le pré-rend
 
 // ⭐ V3.93 — Spéc SEO : métadonnées + canonique (la page n'en avait aucune).
 export const metadata = {
-  title: "Enseignements bibliques | Christ Libère",
+  title: "Enseignements bibliques en français | Christ Libère",
   description:
-    "Enseignements bibliques d'Afrika et du Pasteur Kongo — doctrine, fêtes, Shabbat, combat spirituel, prophétie — par thème et par niveau.",
+    "Enseignements bibliques en français par le Pasteur Kongo et Afrika : doctrine, fêtes de l'Éternel, Shabbat, combat spirituel et marche avec le Saint-Esprit.",
   alternates: { canonical: "/enseignements" },
 };
 

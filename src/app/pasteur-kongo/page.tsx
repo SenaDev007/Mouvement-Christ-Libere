@@ -20,9 +20,9 @@ import { JsonLd } from "@/components/site/json-ld";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Pasteur Kongo | Christ Libère",
+  title: "Pasteur Kongo — enseignements & prédications | Christ Libère",
   description:
-    "La Voix de la Réforme Prophétique de la 11e Heure — biographie, frise chronologique, enseignements et ministère du Pasteur Kongo.",
+    "Pasteur Kongo, Voix de la Réforme Prophétique de la 11e Heure : enseignements bibliques, prédications et lives en français. Découvrez son ministère.",
   alternates: { canonical: "/pasteur-kongo" },
 };
 
