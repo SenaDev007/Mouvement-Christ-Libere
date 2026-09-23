@@ -7,7 +7,7 @@
  * et l'arc rotatif, signalé par le pasteur comme « superposé mais décalé,
  * pas professionnel ». Désormais le composant unifié ChargementInline place
  * l'anneau rotatif en `absolute inset-0` — alignement au pixel près,
- * identique au site public.
+ * identique au site public. V3.96 : logo « Z » du gabarit retiré.
  */
 import { ChargementInline } from "@/components/site/chargement-inline";
 

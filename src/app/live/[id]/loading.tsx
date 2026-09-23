@@ -9,8 +9,9 @@
  *
  * Sans ce fichier, l'ancien PageLoader (5 s plein écran) + l'absence de
  * streaming = écran figé jusqu'à la fin de la SSR.
- * ⭐ V3.93 — anneau unifié ChargementInline (compact, sans logo : le logo
- * officiel est sombre et se perdrait sur le fond violet profond du player).
+ * ⭐ V3.93 — anneau unifié ChargementInline (compact) sur le fond violet
+ * profond du player. V3.96 : le paramètre logo n'existe plus (logo « Z »
+ * du gabarit retiré partout à la demande du pasteur).
  */
 import { ChargementInline } from "@/components/site/chargement-inline";
 
@@ -26,7 +27,6 @@ export default function LiveLoading() {
                 <ChargementInline
                   variante="compact"
                   libelle=""
-                  avecLogo={false}
                   remplir={false}
                 />
               </div>
