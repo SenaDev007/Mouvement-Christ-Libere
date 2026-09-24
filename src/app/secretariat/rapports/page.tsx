@@ -82,52 +82,52 @@ export default function SecretariatRapportsPage() {
     <div className="space-y-6">
       {/* En-tête */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]">
+        <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
           Rapports PDF
         </h1>
-        <p className="text-sm text-[#8A8378] mt-1">
+        <p className="text-sm text-[#BDB4C9] mt-1">
           Documents officiels du secrétariat — en-tête du ministère, période
           couverte, date de génération et pagination.
         </p>
       </div>
 
       {/* Période commune */}
-      <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 md:p-5 space-y-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#1E0F2B]">
+      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 md:p-5 space-y-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-[#FAF6EF]">
           <CalendarRange className="w-4 h-4 text-[#C9A227]" />
           Période couverte
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div>
-            <label className="block text-[11px] text-[#8A8378] mb-1 font-semibold">
+            <label className="block text-[11px] text-[#BDB4C9] mb-1 font-semibold">
               Du
             </label>
             <input
               type="date"
               value={du}
               onChange={(e) => setDu(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+              className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
             />
           </div>
           <div>
-            <label className="block text-[11px] text-[#8A8378] mb-1 font-semibold">
+            <label className="block text-[11px] text-[#BDB4C9] mb-1 font-semibold">
               Au
             </label>
             <input
               type="date"
               value={au}
               onChange={(e) => setAu(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+              className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
             />
           </div>
           <div>
-            <label className="block text-[11px] text-[#8A8378] mb-1 font-semibold">
+            <label className="block text-[11px] text-[#BDB4C9] mb-1 font-semibold">
               Statut (demandes)
             </label>
             <select
               value={statut}
               onChange={(e) => setStatut(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+              className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
             >
               <option value="">Tous les statuts</option>
               {Object.entries(DEMANDE_STATUTS).map(([v, s]) => (
@@ -141,7 +141,7 @@ export default function SecretariatRapportsPage() {
       </div>
 
       {erreur && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#B3452E] text-xs border border-[#B3452E]/30">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#E08B6D] text-xs border border-[#B3452E]/30">
           {erreur}
         </div>
       )}
@@ -151,21 +151,21 @@ export default function SecretariatRapportsPage() {
         {rapports.map((r) => (
           <div
             key={r.type}
-            className="bg-white rounded-xl border border-[#8A8378]/15 p-5 flex flex-col"
+            className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-5 flex flex-col"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-11 h-11 rounded-xl bg-[#2A0E3D] flex items-center justify-center">
+              <div className="w-11 h-11 rounded-xl bg-[#3D1A54] flex items-center justify-center">
                 <FileText className="w-5 h-5 text-[#C9A227]" />
               </div>
-              <h2 className="text-sm font-bold text-[#1E0F2B]">{r.titre}</h2>
+              <h2 className="text-sm font-bold font-serif text-[#FAF6EF]">{r.titre}</h2>
             </div>
-            <p className="text-xs text-[#8A8378] leading-relaxed flex-1">
+            <p className="text-xs text-[#BDB4C9] leading-relaxed flex-1">
               {r.description}
             </p>
             <button
               onClick={() => generer(r.type)}
               disabled={generation !== null}
-              className="mt-4 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+              className="mt-4 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
             >
               {generation === r.type ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -179,9 +179,9 @@ export default function SecretariatRapportsPage() {
       </div>
 
       {/* Note */}
-      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#FAF6EF] border border-[#8A8378]/15">
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/15">
         <Info className="w-4 h-4 text-[#C9A227] flex-shrink-0 mt-0.5" />
-        <p className="text-[11px] text-[#8A8378] leading-relaxed">
+        <p className="text-[11px] text-[#BDB4C9] leading-relaxed">
           Les registres sont générés en temps réel depuis les données du
           secrétariat — ils reflètent toujours l&apos;état exact du registre au
           moment de la génération. Format A4, en-tête officielle du Mouvement

@@ -335,7 +335,7 @@ export default function R2TestPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] text-[#1E0F2B] p-6" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-[#C9A227]/10 text-[#FAF6EF] p-6">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -344,67 +344,67 @@ export default function R2TestPage() {
               <Cloud className="w-5 h-5 text-[#C9A227]" />
               Test Cloudflare R2
             </h1>
-            <p className="text-xs text-[#8A8378] mt-1">
+            <p className="text-xs text-[#BDB4C9] mt-1">
               Vérification du stockage des vidéos replays et miniatures
             </p>
           </div>
-          <Link href="/admin" className="text-xs text-[#8A8378] hover:text-[#C9A227]">
+          <Link href="/admin" className="text-xs text-[#BDB4C9] hover:text-[#C9A227]">
             ← Retour admin
           </Link>
         </div>
 
         {/* Status config */}
-        <div className="bg-white rounded-xl p-5 border border-[#8A8378]/15 mb-4">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-5 border border-[#C9A227]/15 mb-4">
           <h2 className="text-sm font-bold mb-3 flex items-center gap-2">
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin text-[#C9A227]" />
             ) : status?.configured ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             ) : (
-              <XCircle className="w-4 h-4 text-red-500" />
+              <XCircle className="w-4 h-4 text-red-400" />
             )}
             Configuration
           </h2>
 
           {loading ? (
-            <p className="text-xs text-[#8A8378]">Vérification...</p>
+            <p className="text-xs text-[#BDB4C9]">Vérification...</p>
           ) : status ? (
             <div className="space-y-2">
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Fournisseur</span>
-                <span className="text-xs font-bold text-[#1E0F2B]">{status.provider}</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#C9A227]/10">
+                <span className="text-xs text-[#BDB4C9]">Fournisseur</span>
+                <span className="text-xs font-bold font-serif text-[#FAF6EF]">{status.provider}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Statut</span>
-                <span className={`text-xs font-bold ${status.configured ? "text-emerald-600" : "text-red-600"}`}>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#C9A227]/10">
+                <span className="text-xs text-[#BDB4C9]">Statut</span>
+                <span className={`text-xs font-bold ${status.configured ? "text-emerald-300" : "text-red-400"}`}>
                   {status.configured ? "✓ Configuré" : "✗ Non configuré"}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Account ID</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.accountId}</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#C9A227]/10">
+                <span className="text-xs text-[#BDB4C9]">Account ID</span>
+                <span className="text-xs font-mono text-[#FAF6EF]">{status.accountId}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Bucket</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.bucket}</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#C9A227]/10">
+                <span className="text-xs text-[#BDB4C9]">Bucket</span>
+                <span className="text-xs font-mono text-[#FAF6EF]">{status.bucket}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">URL publique</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.publicUrl}</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#C9A227]/10">
+                <span className="text-xs text-[#BDB4C9]">URL publique</span>
+                <span className="text-xs font-mono text-[#FAF6EF]">{status.publicUrl}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#8A8378]/10">
-                <span className="text-xs text-[#8A8378]">Access Key ID</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.accessKeyId}</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-[#C9A227]/10">
+                <span className="text-xs text-[#BDB4C9]">Access Key ID</span>
+                <span className="text-xs font-mono text-[#FAF6EF]">{status.accessKeyId}</span>
               </div>
               <div className="flex items-center justify-between py-1.5">
-                <span className="text-xs text-[#8A8378]">Secret Access Key</span>
-                <span className="text-xs font-mono text-[#1E0F2B]">{status.secretAccessKey}</span>
+                <span className="text-xs text-[#BDB4C9]">Secret Access Key</span>
+                <span className="text-xs font-mono text-[#FAF6EF]">{status.secretAccessKey}</span>
               </div>
 
               {/* Vérification des variables d'environnement */}
               {status.envCheck && (
-                <div className="mt-3 pt-3 border-t border-[#8A8378]/10">
-                  <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-2">
+                <div className="mt-3 pt-3 border-t border-[#C9A227]/10">
+                  <p className="text-[10px] font-bold text-[#BDB4C9] uppercase tracking-wider mb-2">
                     Variables d'environnement Vercel
                   </p>
                   <div className="grid grid-cols-2 gap-1.5">
@@ -413,9 +413,9 @@ export default function R2TestPage() {
                         {present ? (
                           <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
                         ) : (
-                          <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                          <XCircle className="w-3 h-3 text-red-400 flex-shrink-0" />
                         )}
-                        <span className={`font-mono ${present ? "text-[#1E0F2B]" : "text-red-600"}`}>{key}</span>
+                        <span className={`font-mono ${present ? "text-[#FAF6EF]" : "text-red-400"}`}>{key}</span>
                       </div>
                     ))}
                   </div>
@@ -426,12 +426,12 @@ export default function R2TestPage() {
         </div>
 
         {/* Test upload */}
-        <div className="bg-white rounded-xl p-5 border border-[#8A8378]/15 mb-4">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-5 border border-[#C9A227]/15 mb-4">
           <h2 className="text-sm font-bold mb-3 flex items-center gap-2">
             <TestTube className="w-4 h-4 text-[#C9A227]" />
             Test d'upload serveur
           </h2>
-          <p className="text-xs text-[#8A8378] mb-3">
+          <p className="text-xs text-[#BDB4C9] mb-3">
             Diagnostic complet côté serveur (⭐ V3.52) : sonde de <b>lecture</b> (le token
             peut-il lire le bucket ?), test d&apos;<b>écriture</b> (même mécanisme que les notes
             vocales d&apos;intercession) et sonde <b>multipart</b> (exactement l&apos;opération
@@ -441,15 +441,15 @@ export default function R2TestPage() {
           <button
             onClick={runTest}
             disabled={!status?.configured || testing}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#FAF6EF] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
             {testing ? "Test en cours..." : "Lancer le test serveur"}
           </button>
 
           {testResult && (
-            <div className={`mt-4 p-4 rounded-lg border ${testResult.success ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}>
-              <p className={`text-sm font-bold mb-3 flex items-center gap-2 ${testResult.success ? "text-emerald-700" : "text-red-700"}`}>
+            <div className={`mt-4 p-4 rounded-lg border ${testResult.success ? "bg-emerald-400/10 border-emerald-400/25" : "bg-red-400/10 border-red-400/25"}`}>
+              <p className={`text-sm font-bold mb-3 flex items-center gap-2 ${testResult.success ? "text-emerald-300" : "text-red-400"}`}>
                 {testResult.success ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                 {testResult.message}
               </p>
@@ -458,75 +458,75 @@ export default function R2TestPage() {
               <div className="space-y-1.5 text-xs">
                 {testResult.credentialsValid !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Credentials :</span>
+                    <span className="text-[#BDB4C9] w-40">Credentials :</span>
                     {testResult.credentialsValid ? (
-                      <span className="text-emerald-600 font-bold">✓ Valides</span>
+                      <span className="text-emerald-300 font-bold">✓ Valides</span>
                     ) : (
-                      <span className="text-red-600 font-bold">✗ Invalides</span>
+                      <span className="text-red-400 font-bold">✗ Invalides</span>
                     )}
                   </div>
                 )}
                 {testResult.bucketsAccessible && testResult.bucketsAccessible.length > 0 && (
                   <div className="flex items-start gap-2">
-                    <span className="text-[#8A8378] w-40">Buckets accessibles :</span>
-                    <span className="text-[#1E0F2B] font-mono">{testResult.bucketsAccessible.join(", ")}</span>
+                    <span className="text-[#BDB4C9] w-40">Buckets accessibles :</span>
+                    <span className="text-[#FAF6EF] font-mono">{testResult.bucketsAccessible.join(", ")}</span>
                   </div>
                 )}
                 {testResult.bucketExists !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Bucket configuré :</span>
+                    <span className="text-[#BDB4C9] w-40">Bucket configuré :</span>
                     {testResult.bucketExists ? (
-                      <span className="text-emerald-600 font-bold">✓ Existe</span>
+                      <span className="text-emerald-300 font-bold">✓ Existe</span>
                     ) : (
-                      <span className="text-red-600 font-bold">✗ Introuvable</span>
+                      <span className="text-red-400 font-bold">✗ Introuvable</span>
                     )}
                   </div>
                 )}
                 {testResult.canRead !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Permission lecture :</span>
+                    <span className="text-[#BDB4C9] w-40">Permission lecture :</span>
                     {testResult.canRead ? (
-                      <span className="text-emerald-600 font-bold">✓ OK</span>
+                      <span className="text-emerald-300 font-bold">✓ OK</span>
                     ) : (
-                      <span className="text-red-600 font-bold">✗ Refusée{testResult.readErrorCode ? ` (${testResult.readErrorCode})` : ""}</span>
+                      <span className="text-red-400 font-bold">✗ Refusée{testResult.readErrorCode ? ` (${testResult.readErrorCode})` : ""}</span>
                     )}
                   </div>
                 )}
                 {testResult.canWrite !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Permission écriture :</span>
+                    <span className="text-[#BDB4C9] w-40">Permission écriture :</span>
                     {testResult.canWrite ? (
-                      <span className="text-emerald-600 font-bold">✓ OK</span>
+                      <span className="text-emerald-300 font-bold">✓ OK</span>
                     ) : (
-                      <span className="text-red-600 font-bold">✗ Refusée</span>
+                      <span className="text-red-400 font-bold">✗ Refusée</span>
                     )}
                   </div>
                 )}
                 {testResult.canMultipart !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Upload vidéo (multipart) :</span>
+                    <span className="text-[#BDB4C9] w-40">Upload vidéo (multipart) :</span>
                     {testResult.canMultipart ? (
-                      <span className="text-emerald-600 font-bold">✓ OK</span>
+                      <span className="text-emerald-300 font-bold">✓ OK</span>
                     ) : (
-                      <span className="text-red-600 font-bold">✗ Refusé</span>
+                      <span className="text-red-400 font-bold">✗ Refusé</span>
                     )}
                   </div>
                 )}
                 {testResult.errorCode && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Code d'erreur :</span>
-                    <span className="text-red-600 font-mono font-bold">{testResult.errorCode}</span>
+                    <span className="text-[#BDB4C9] w-40">Code d'erreur :</span>
+                    <span className="text-red-400 font-mono font-bold">{testResult.errorCode}</span>
                   </div>
                 )}
               </div>
 
               {/* Détails techniques */}
               {testResult.details && testResult.details.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-[#8A8378]/20">
-                  <p className="text-[10px] font-bold text-[#8A8378] uppercase tracking-wider mb-2">Détails du diagnostic</p>
+                <div className="mt-3 pt-3 border-t border-[#C9A227]/20">
+                  <p className="text-[10px] font-bold text-[#BDB4C9] uppercase tracking-wider mb-2">Détails du diagnostic</p>
                   <ul className="space-y-1">
                     {testResult.details.map((d, i) => (
-                      <li key={i} className={`text-[10px] font-mono ${d.startsWith("✗") ? "text-red-600" : d.startsWith("✓") ? "text-emerald-600" : "text-[#8A8378]"}`}>
+                      <li key={i} className={`text-[10px] font-mono ${d.startsWith("✗") ? "text-red-400" : d.startsWith("✓") ? "text-emerald-300" : "text-[#BDB4C9]"}`}>
                         {d}
                       </li>
                     ))}
@@ -536,27 +536,27 @@ export default function R2TestPage() {
 
               {/* ⭐ V3.52 — PANNEAU DE RÉPARATION GUIDÉE : écriture refusée */}
               {testResult.canWrite === false && testResult.errorCode === "AccessDenied" && (
-                <div className="mt-4 pt-3 border-t border-[#8A8378]/20">
-                  <div className="bg-red-50 border border-red-300 rounded-lg p-4">
-                    <h3 className="text-sm font-bold text-red-800 mb-2 flex items-center gap-2">
+                <div className="mt-4 pt-3 border-t border-[#C9A227]/20">
+                  <div className="bg-red-400/10 border border-red-400/30 rounded-lg p-4">
+                    <h3 className="text-sm font-bold text-red-300 mb-2 flex items-center gap-2">
                       <KeyRound className="w-4 h-4" />
                       Réparation requise dans le Cloudflare Dashboard (2 min)
                     </h3>
-                    <p className="text-xs text-red-700 mb-3">
+                    <p className="text-xs text-red-400 mb-3">
                       Le token R2 de ce site n&apos;a pas (ou plus) la permission d&apos;écrire dans le bucket
                       « {status?.bucket} ». La signature est valide (les clés sont correctes) — c&apos;est
                       uniquement la <b>permission du token</b> qui manque. Tant que ce n&apos;est pas réparé,
                       l&apos;upload des vidéos, des replays de live et des notes d&apos;intercession échouera.
                     </p>
                     {testResult.canRead === false ? (
-                      <p className="text-xs text-red-800 bg-red-100/60 rounded p-2 mb-3">
+                      <p className="text-xs text-red-300 bg-red-400/15 rounded p-2 mb-3">
                         <b>Votre cas :</b> le token ne peut même pas <b>lire</b> le bucket → il est
                         probablement <b>expiré, révoqué ou scoped à un autre bucket</b> → suivez la
                         <b> procédure A (recréer le token)</b> ci-dessous, puis mettez à jour les
                         variables sur Vercel.
                       </p>
                     ) : (
-                      <p className="text-xs text-red-800 bg-red-100/60 rounded p-2 mb-3">
+                      <p className="text-xs text-red-300 bg-red-400/15 rounded p-2 mb-3">
                         <b>Votre cas :</b> le token peut <b>lire</b> mais pas <b>écrire</b> → sa
                         permission est probablement <b>« Object Read only »</b> → suivez la
                         <b> procédure B (changer la permission)</b> ci-dessous — aucune mise à jour
@@ -565,10 +565,10 @@ export default function R2TestPage() {
                     )}
                     <div className="space-y-3">
                       <div>
-                        <p className="text-[10px] font-bold text-red-900 uppercase tracking-wider mb-1">
+                        <p className="text-[10px] font-bold text-red-300 uppercase tracking-wider mb-1">
                           Procédure A — Recréer le token (si expiré/scoped à un autre bucket)
                         </p>
-                        <ol className="text-[11px] text-red-800 list-decimal list-inside space-y-1">
+                        <ol className="text-[11px] text-red-300 list-decimal list-inside space-y-1">
                           <li>Dashboard Cloudflare → <b>R2</b> → <b>Manage R2 API Tokens</b> (bouton en haut à droite de la page R2)</li>
                           <li><b>Créez un nouveau token</b> : nom « christ-libere-site », <b>Object Read &amp; Write</b>, appliqué <b>uniquement au bucket « {status?.bucket} »</b></li>
                           <li>Copiez l&apos;<b>Access Key ID</b> et le <b>Secret Access Key</b> affichés (une seule fois !)</li>
@@ -578,17 +578,17 @@ export default function R2TestPage() {
                         </ol>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-red-900 uppercase tracking-wider mb-1">
+                        <p className="text-[10px] font-bold text-red-300 uppercase tracking-wider mb-1">
                           Procédure B — Changer la permission (si « Object Read only »)
                         </p>
-                        <ol className="text-[11px] text-red-800 list-decimal list-inside space-y-1">
+                        <ol className="text-[11px] text-red-300 list-decimal list-inside space-y-1">
                           <li>Dashboard Cloudflare → <b>R2</b> → <b>Manage R2 API Tokens</b></li>
                           <li>Éditez le token correspondant à l&apos;Access Key ID <b>{status?.accessKeyId}</b></li>
                           <li>Permission : <b>Object Read &amp; Write</b> — appliqué au bucket <b>« {status?.bucket} »</b> (vérifiez aussi qu&apos;il n&apos;est pas expiré)</li>
                           <li>Enregistrez, puis revenez ici et relancez le test — « Permission écriture » doit passer au ✓ vert</li>
                         </ol>
                       </div>
-                      <p className="text-[10px] text-red-700 bg-red-100/40 rounded p-2">
+                      <p className="text-[10px] text-red-400 bg-red-400/15/40 rounded p-2">
                         Si la permission semble déjà correcte mais que l&apos;accès reste refusé : vérifiez
                         dans le Dashboard Cloudflare → <b>Billing</b> qu&apos;aucune alerte de paiement ne
                         bloque le compte (le palier gratuit de R2 est de 10 Go de stockage — au-delà
@@ -603,12 +603,12 @@ export default function R2TestPage() {
         </div>
 
         {/* ⭐ V3.35 — Test d'upload NAVIGATEUR (le vrai chemin du replay de live) */}
-        <div className="bg-white rounded-xl p-5 border border-[#C9A227]/40 mb-4">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-5 border border-[#C9A227]/40 mb-4">
           <h2 className="text-sm font-bold mb-3 flex items-center gap-2">
             <Globe className="w-4 h-4 text-[#C9A227]" />
             Test d&apos;upload navigateur — le chemin exact du replay
           </h2>
-          <p className="text-xs text-[#8A8378] mb-3">
+          <p className="text-xs text-[#BDB4C9] mb-3">
             C&apos;est LE test décisif pour les replays de live : votre navigateur uploade un petit
             fichier DIRECTEMENT vers R2 via une URL pré-signée, exactement comme le replay après un
             direct (preflight CORS inclus). Le test serveur peut réussir alors que celui-ci échoue —
@@ -617,46 +617,46 @@ export default function R2TestPage() {
           <button
             onClick={runBrowserTest}
             disabled={!status?.configured || browserTesting}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#C9A227] font-bold text-sm hover:bg-[#3A1E4D] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3D1A54] text-[#C9A227] font-bold text-sm hover:bg-[#3A1E4D] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {browserTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
             {browserTesting ? "Test navigateur en cours..." : "Lancer le test navigateur"}
           </button>
 
           {browserResult && (
-            <div className={`mt-4 p-4 rounded-lg border ${browserResult.ok ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}>
-              <p className={`text-sm font-bold mb-2 flex items-start gap-2 ${browserResult.ok ? "text-emerald-700" : "text-red-700"}`}>
+            <div className={`mt-4 p-4 rounded-lg border ${browserResult.ok ? "bg-emerald-400/10 border-emerald-400/25" : "bg-red-400/10 border-red-400/25"}`}>
+              <p className={`text-sm font-bold mb-2 flex items-start gap-2 ${browserResult.ok ? "text-emerald-300" : "text-red-400"}`}>
                 {browserResult.ok ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <XCircle className="w-4 h-4 shrink-0 mt-0.5" />}
                 {browserResult.message}
               </p>
               <div className="space-y-1.5 text-xs">
                 {browserResult.status !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Statut HTTP :</span>
-                    <span className={`font-mono font-bold ${browserResult.ok ? "text-emerald-600" : "text-red-600"}`}>
+                    <span className="text-[#BDB4C9] w-40">Statut HTTP :</span>
+                    <span className={`font-mono font-bold ${browserResult.ok ? "text-emerald-300" : "text-red-400"}`}>
                       {browserResult.status} {browserResult.ok ? "(accepté)" : "(refusé)"}
                     </span>
                   </div>
                 )}
                 {browserResult.xmlCode && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Code d&apos;erreur R2 :</span>
-                    <span className="text-red-600 font-mono font-bold">{browserResult.xmlCode}</span>
+                    <span className="text-[#BDB4C9] w-40">Code d&apos;erreur R2 :</span>
+                    <span className="text-red-400 font-mono font-bold">{browserResult.xmlCode}</span>
                   </div>
                 )}
                 {browserResult.durationMs !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">Durée :</span>
-                    <span className="text-[#1E0F2B] font-mono">{browserResult.durationMs} ms</span>
+                    <span className="text-[#BDB4C9] w-40">Durée :</span>
+                    <span className="text-[#FAF6EF] font-mono">{browserResult.durationMs} ms</span>
                   </div>
                 )}
                 {browserResult.urlClean !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-[#8A8378] w-40">URL pré-signée :</span>
+                    <span className="text-[#BDB4C9] w-40">URL pré-signée :</span>
                     {browserResult.urlClean ? (
-                      <span className="text-emerald-600 font-bold">✓ sans paramètres checksum</span>
+                      <span className="text-emerald-300 font-bold">✓ sans paramètres checksum</span>
                     ) : (
-                      <span className="text-red-600 font-bold">✗ polluée par checksum : {(browserResult.checksumParams || []).join(", ")}</span>
+                      <span className="text-red-400 font-bold">✗ polluée par checksum : {(browserResult.checksumParams || []).join(", ")}</span>
                     )}
                   </div>
                 )}
@@ -667,7 +667,7 @@ export default function R2TestPage() {
 
         {/* ⭐ V3.55 — CORS du bucket : verdict automatique + réparation guidée */}
         {status?.configured && (
-          <div className="bg-white rounded-xl p-5 border border-[#C9A227]/40 mb-4">
+          <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-5 border border-[#C9A227]/40 mb-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4 text-[#C9A227]" />
@@ -676,13 +676,13 @@ export default function R2TestPage() {
               <button
                 onClick={() => sonderCors()}
                 disabled={corsProbing}
-                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#8A8378] hover:text-[#C9A227] disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#BDB4C9] hover:text-[#C9A227] disabled:opacity-40"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${corsProbing ? "animate-spin" : ""}`} />
                 Re-tester
               </button>
             </div>
-            <p className="text-xs text-[#8A8378] mb-3">
+            <p className="text-xs text-[#BDB4C9] mb-3">
               Test automatique à l&apos;ouverture de la page : votre navigateur envoie RÉELLEMENT un
               micro-fichier vers R2 par une URL pré-signée — le chemin EXACT des uploads de vidéos
               par morceaux. Sans règle CORS, Cloudflare R2 refuse TOUT envoi direct du navigateur
@@ -695,17 +695,17 @@ export default function R2TestPage() {
             <div
               className={`p-4 rounded-lg border ${
                 corsProbing
-                  ? "bg-[#2A0E3D]/5 border-[#8A8378]/20"
+                  ? "bg-[#C9A227]/10 border-[#C9A227]/20"
                   : corsVerdict === "ok"
-                    ? "bg-emerald-50 border-emerald-200"
+                    ? "bg-emerald-400/10 border-emerald-400/25"
                     : corsVerdict === "bloque"
-                      ? "bg-red-50 border-red-200"
-                      : "bg-[#2A0E3D]/5 border-[#8A8378]/20"
+                      ? "bg-red-400/10 border-red-400/25"
+                      : "bg-[#C9A227]/10 border-[#C9A227]/20"
               }`}
             >
               <p
                 className={`text-sm font-bold mb-2 flex items-start gap-2 ${
-                  corsVerdict === "ok" ? "text-emerald-700" : corsVerdict === "bloque" ? "text-red-700" : "text-[#1E0F2B]"
+                  corsVerdict === "ok" ? "text-emerald-300" : corsVerdict === "bloque" ? "text-red-400" : "text-[#FAF6EF]"
                 }`}
               >
                 {corsProbing ? (
@@ -729,10 +729,10 @@ export default function R2TestPage() {
                 <p
                   className={`text-[11px] rounded p-2 ${
                     corsServeur.preflight === "ok"
-                      ? "text-emerald-700 bg-emerald-100/60"
+                      ? "text-emerald-300 bg-emerald-400/15/60"
                       : corsServeur.preflight === "absent"
-                        ? "text-red-600 bg-red-100/60"
-                        : "text-[#8A8378] bg-[#2A0E3D]/5"
+                        ? "text-red-400 bg-red-400/15"
+                        : "text-[#BDB4C9] bg-[#C9A227]/10"
                   }`}
                 >
                   {corsServeur.preflight === "ok"
@@ -749,12 +749,12 @@ export default function R2TestPage() {
 
             {/* ⭐ V3.57 — Panneau RÉSEAU (règle correcte MAIS navigateur bloqué) */}
             {corsVerdict === "bloque" && corsServeur?.preflight === "ok" && (
-              <div className="mt-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
-                <h3 className="text-sm font-bold text-amber-800 mb-2 flex items-center gap-2">
+              <div className="mt-4 bg-amber-400/10 border border-amber-400/30 rounded-lg p-4">
+                <h3 className="text-sm font-bold text-amber-300 mb-2 flex items-center gap-2">
                   <ShieldAlert className="w-4 h-4" />
                   La règle du bucket est CORRECTE — le blocage vient de ce navigateur ou de ce réseau
                 </h3>
-                <ul className="text-[11px] text-amber-800 list-disc list-inside space-y-1">
+                <ul className="text-[11px] text-amber-300 list-disc list-inside space-y-1">
                   <li>Essayez un <b>autre navigateur</b> (Chrome, Edge, Firefox) — une extension peut bloquer le domaine du stockage.</li>
                   <li>Désactivez temporairement l&apos;<b>antivirus</b> ou son filtrage HTTPS, et tout filtre DNS/réseau.</li>
                   <li>Essayez le <b>partage de connexion mobile</b> — si l&apos;envoi passe, le filtre est sur le réseau actuel.</li>
@@ -766,12 +766,12 @@ export default function R2TestPage() {
             {/* Panneau de réparation (si refusé pour cause de règle) */}
             {corsVerdict === "bloque" && corsServeur?.preflight !== "ok" && (
               <div className="mt-4 space-y-4">
-                <div className="bg-red-50 border border-red-300 rounded-lg p-4">
-                  <h3 className="text-sm font-bold text-red-800 mb-2 flex items-center gap-2">
+                <div className="bg-red-400/10 border border-red-400/30 rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-red-300 mb-2 flex items-center gap-2">
                     <KeyRound className="w-4 h-4" />
                     Réparation (2 minutes, UNE SEULE FOIS) — au choix
                   </h3>
-                  <p className="text-xs text-red-700 mb-4">
+                  <p className="text-xs text-red-400 mb-4">
                     Le bucket « {status.bucket} » doit porter une règle CORS qui autorise ce site à
                     lui envoyer des fichiers directement. Le token actuel du site (Object Read &amp;
                     Write) n&apos;a pas le droit de modifier cette règle — d&apos;où les deux options
@@ -779,39 +779,39 @@ export default function R2TestPage() {
                   </p>
 
                   {/* Option A — coller dans le Dashboard */}
-                  <div className="bg-white/70 border border-red-200 rounded-lg p-3 mb-3">
-                    <p className="text-[10px] font-bold text-red-900 uppercase tracking-wider mb-2">
+                  <div className="bg-[#1A0826]/80 border border-red-400/25 rounded-lg p-3 mb-3">
+                    <p className="text-[10px] font-bold text-red-300 uppercase tracking-wider mb-2">
                       Option A — Coller la règle dans le Dashboard Cloudflare (recommandée)
                     </p>
-                    <ol className="text-[11px] text-red-800 list-decimal list-inside space-y-1 mb-3">
+                    <ol className="text-[11px] text-red-300 list-decimal list-inside space-y-1 mb-3">
                       <li>Ouvrez le <b>Dashboard Cloudflare</b> → <b>R2</b> → bucket « {status.bucket} » → <b>Settings</b></li>
                       <li>Section <b>CORS Policy</b> → <b>Add CORS policy</b> (ou <b>Edit</b>) → onglet <b>JSON</b></li>
                       <li>Sélectionnez TOUT le contenu de la zone, collez la règle ci-dessous (bouton Copier — du <b>JSON</b>, le Dashboard refuse le XML), puis <b>Enregistrer</b></li>
                       <li>Revenez ici → le verdict doit passer au ✓ vert (bouton « Re-tester »)</li>
                     </ol>
                     <div className="relative">
-                      <pre className="text-[10px] bg-[#1E0F2B] text-[#C9A227] p-3 pr-24 rounded-lg overflow-x-auto whitespace-pre">
+                      <pre className="text-[10px] bg-[#3D1A54] text-[#C9A227] p-3 pr-24 rounded-lg overflow-x-auto whitespace-pre">
 {REGLE_CORS_JSON}
                       </pre>
                       <button
                         onClick={copierRegle}
-                        className="absolute top-2 right-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold hover:bg-[#DDBE55] transition-colors"
+                        className="absolute top-2 right-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A227] text-[#FAF6EF] text-[10px] font-bold hover:bg-[#DDBE55] transition-colors"
                       >
                         <Copy className="w-3 h-3" />
                         {copieJson ? "Copié !" : "Copier"}
                       </button>
                     </div>
-                    <p className="text-[10px] text-red-700 mt-2">
+                    <p className="text-[10px] text-red-400 mt-2">
                       Astuce : si le Dashboard refuse encore l&apos;enregistrement, utilisez l&apos;option B ci-dessous — elle applique exactement la même règle.
                     </p>
                   </div>
 
                   {/* Option B — token temporaire */}
-                  <div className="bg-white/70 border border-red-200 rounded-lg p-3">
-                    <p className="text-[10px] font-bold text-red-900 uppercase tracking-wider mb-2">
+                  <div className="bg-[#1A0826]/80 border border-red-400/25 rounded-lg p-3">
+                    <p className="text-[10px] font-bold text-red-300 uppercase tracking-wider mb-2">
                       Option B — Laisser le site appliquer la règle (token temporaire)
                     </p>
-                    <ol className="text-[11px] text-red-800 list-decimal list-inside space-y-1 mb-3">
+                    <ol className="text-[11px] text-red-300 list-decimal list-inside space-y-1 mb-3">
                       <li>Dashboard Cloudflare → <b>R2</b> → <b>Manage R2 API Tokens</b> → <b>Créer un token</b></li>
                       <li>Nom : <b>temp-cors-repair</b> — permission : <b>Admin Read &amp; Write</b> (compte, ou scoped au bucket « {status.bucket} »)</li>
                       <li>Copiez l&apos;<b>Access Key ID</b> et le <b>Secret Access Key</b> affichés, collez-les ci-dessous</li>
@@ -825,7 +825,7 @@ export default function R2TestPage() {
                         placeholder="Access Key ID du token temporaire"
                         autoComplete="off"
                         spellCheck={false}
-                        className="px-3 py-2 rounded-lg border border-[#8A8378]/30 text-xs font-mono text-[#1E0F2B] bg-white focus:outline-none focus:border-[#C9A227]"
+                        className="px-3 py-2 rounded-lg border border-[#C9A227]/30 text-xs font-mono text-[#FAF6EF] bg-[#1A0826]/70 focus:outline-none focus:border-[#C9A227]"
                       />
                       <input
                         type="password"
@@ -833,18 +833,18 @@ export default function R2TestPage() {
                         onChange={(e) => setTempSecret(e.target.value)}
                         placeholder="Secret Access Key du token temporaire"
                         autoComplete="off"
-                        className="px-3 py-2 rounded-lg border border-[#8A8378]/30 text-xs font-mono text-[#1E0F2B] bg-white focus:outline-none focus:border-[#C9A227]"
+                        className="px-3 py-2 rounded-lg border border-[#C9A227]/30 text-xs font-mono text-[#FAF6EF] bg-[#1A0826]/70 focus:outline-none focus:border-[#C9A227]"
                       />
                     </div>
                     <button
                       onClick={appliquerCors}
                       disabled={appliquant}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#FAF6EF] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {appliquant ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
                       {appliquant ? "Application en cours..." : "Appliquer la règle et vérifier"}
                     </button>
-                    <p className="text-[10px] text-red-700 mt-2">
+                    <p className="text-[10px] text-red-400 mt-2">
                       Sécurité : ces identifiants servent UNE fois, en mémoire, uniquement pour
                       écrire la règle — ils ne sont jamais enregistrés ni journalisés, et le
                       formulaire les efface dès la réussite. Le token temporaire est ensuite à
@@ -855,8 +855,8 @@ export default function R2TestPage() {
                       <div
                         className={`mt-3 p-3 rounded-lg border text-xs ${
                           appliResultat.success
-                            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                            : "bg-red-100 border-red-300 text-red-800"
+                            ? "bg-emerald-400/10 border-emerald-400/25 text-emerald-300"
+                            : "bg-red-400/15 border-red-400/30 text-red-300"
                         }`}
                       >
                         <p className="font-bold mb-1 flex items-center gap-2">
@@ -878,7 +878,7 @@ export default function R2TestPage() {
                   </div>
                 </div>
 
-                <p className="text-[11px] text-[#8A8378] bg-[#2A0E3D]/5 rounded-lg p-3">
+                <p className="text-[11px] text-[#BDB4C9] bg-[#C9A227]/10 rounded-lg p-3">
                   Après réparation : revenez au module Vidéos → « Nouvelle vidéo » → l&apos;envoi
                   reprendra et fonctionnera. La progression affiche « Envoi du fichier… X% ·
                   partie N/M » morceau par morceau, chaque morceau étant réessayé individuellement
@@ -892,8 +892,8 @@ export default function R2TestPage() {
 
         {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-            <p className="text-sm text-red-700 flex items-center gap-2">
+          <div className="bg-red-400/10 border border-red-400/25 rounded-xl p-4">
+            <p className="text-sm text-red-400 flex items-center gap-2">
               <XCircle className="w-4 h-4" />
               {error}
             </p>
@@ -902,14 +902,14 @@ export default function R2TestPage() {
 
         {/* Instructions */}
         {!status?.configured && !loading && (
-          <div className="bg-[#2A0E3D]/5 border border-[#C9A227]/20 rounded-xl p-4">
-            <h3 className="text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-2">
+          <div className="bg-[#C9A227]/10 border border-[#C9A227]/20 rounded-xl p-4">
+            <h3 className="text-xs font-bold font-serif text-[#FAF6EF] uppercase tracking-wider mb-2">
               Configuration requise
             </h3>
-            <p className="text-xs text-[#8A8378] mb-3">
+            <p className="text-xs text-[#BDB4C9] mb-3">
               Ajoutez ces variables d'environnement sur Vercel :
             </p>
-            <pre className="text-[10px] bg-[#1E0F2B] text-[#C9A227] p-3 rounded-lg overflow-x-auto">
+            <pre className="text-[10px] bg-[#3D1A54] text-[#C9A227] p-3 rounded-lg overflow-x-auto">
 {`R2_ACCOUNT_ID=votre_account_id
 R2_ACCESS_KEY_ID=votre_access_key
 R2_SECRET_ACCESS_KEY=votre_secret
@@ -919,7 +919,7 @@ R2_PUBLIC_URL=https://cdn.mouvementchristlibere.org
 # ou (bucket → Settings → Public Development URL) :
 R2_PUBLIC_DEV_URL=https://pub-<hash-du-bucket>.r2.dev`}
             </pre>
-            <p className="text-[10px] text-[#8A8378] mt-3">
+            <p className="text-[10px] text-[#BDB4C9] mt-3">
               Docs : <a href="https://developers.cloudflare.com/r2/api/s3/api/" target="_blank" rel="noopener noreferrer" className="text-[#C9A227] hover:underline">R2 S3 API</a>
             </p>
           </div>

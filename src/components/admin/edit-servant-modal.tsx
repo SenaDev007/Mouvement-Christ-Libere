@@ -38,7 +38,7 @@ interface EditServantModalProps {
 }
 
 const inputClass =
-  "w-full px-4 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/15 transition-all placeholder:text-[#8A8378]/50";
+  "w-full px-4 py-2.5 rounded-xl border-2 border-[#C9A227]/20 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/15 transition-all placeholder:text-[#FAF6EF]/35";
 
 export function EditServantModal({ servant, open, onClose }: EditServantModalProps) {
   const router = useRouter();
@@ -140,7 +140,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
         {/* ─── Photo de profil ─────────────────────────────────────────── */}
         <div className="flex items-center gap-5">
           <div className="relative group flex-shrink-0">
-            <div className="w-24 h-24 rounded-2xl border-4 border-[#C9A227]/30 overflow-hidden bg-[#2A0E3D] flex items-center justify-center shadow-lg">
+            <div className="w-24 h-24 rounded-2xl border-4 border-[#C9A227]/30 overflow-hidden bg-[#3D1A54] flex items-center justify-center shadow-lg">
               {photoUrl ? (
                 <img src={photoUrl} alt={form.fullName} className="w-full h-full object-cover" />
               ) : (
@@ -154,7 +154,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
             </div>
             {/* Badge caméra */}
             <label
-              className="absolute -bottom-1.5 -right-1.5 w-9 h-9 rounded-full bg-[#C9A227] text-[#1E0F2B] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
+              className="absolute -bottom-1.5 -right-1.5 w-9 h-9 rounded-full bg-[#C9A227] text-[#FAF6EF] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
               title="Changer la photo"
             >
               {photoProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
@@ -168,17 +168,17 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
             </label>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-[#1E0F2B] truncate">{form.fullName || "Serviteur"}</p>
-            <p className="text-xs text-[#8A8378] mt-0.5">{form.role || "Rôle"}</p>
+            <p className="text-sm font-bold font-serif text-[#FAF6EF] truncate">{form.fullName || "Serviteur"}</p>
+            <p className="text-xs text-[#BDB4C9] mt-0.5">{form.role || "Rôle"}</p>
             {(form.pays || form.ville) && (
-              <p className="text-xs text-[#1E0F2B]/70 mt-1 inline-flex items-center gap-1">
+              <p className="text-xs text-[#FAF6EF]/70 mt-1 inline-flex items-center gap-1">
                 <MapPin className="w-3 h-3 text-[#C9A227]" />
                 {flagFromCountryCode(form.pays)}{" "}
                 {COUNTRIES.find((c) => c.code === form.pays)?.name || form.pays}
                 {form.ville ? ` · ${form.ville}` : ""}
               </p>
             )}
-            <p className="text-[10px] text-[#8A8378]/80 mt-2 leading-relaxed">
+            <p className="text-[10px] text-[#FAF6EF]/60 mt-2 leading-relaxed">
               Photo affichée sur le site public ET synchronisée vers Yeshua Connect
               (canaux vocaux, chat) — compressée ≤ 60 Ko.
             </p>
@@ -186,7 +186,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
               <button
                 type="button"
                 onClick={() => setPhotoUrl(null)}
-                className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
+                className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-red-400 hover:bg-red-400/10 px-2 py-1 rounded-lg transition-colors"
               >
                 <Trash2 className="w-3 h-3" /> Retirer la photo
               </button>
@@ -239,7 +239,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
           >
             <div className="relative">
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]/60 pointer-events-none z-10" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FAF6EF]/40 pointer-events-none z-10" />
                 <input
                   type="text"
                   value={
@@ -257,7 +257,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
                   className={`${inputClass} pl-10 pr-10`}
                   autoComplete="off"
                 />
-                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8378]/60 pointer-events-none" />
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FAF6EF]/40 pointer-events-none" />
               </div>
               {showCountryList && (
                 <>
@@ -265,9 +265,9 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
                     className="fixed inset-0 z-20"
                     onClick={() => setShowCountryList(false)}
                   />
-                  <div className="absolute z-30 mt-1.5 w-full max-h-52 overflow-y-auto bg-white rounded-xl shadow-2xl border-2 border-[#8A8378]/15 py-1.5">
+                  <div className="absolute z-30 mt-1.5 w-full max-h-52 overflow-y-auto bg-[#1A0826]/70 rounded-2xl shadow-lg shadow-2xl border-2 border-[#C9A227]/15 py-1.5">
                     {filteredCountries.length === 0 && (
-                      <p className="px-4 py-2 text-xs text-[#8A8378] italic">
+                      <p className="px-4 py-2 text-xs text-[#BDB4C9] italic">
                         Aucun pays trouvé
                       </p>
                     )}
@@ -280,11 +280,11 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
                           setCountrySearch("");
                           setShowCountryList(false);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm text-[#1E0F2B] hover:bg-[#FAF6EF] transition-colors flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-sm text-[#FAF6EF] hover:bg-[#C9A227]/10 transition-colors flex items-center gap-2"
                       >
                         <span>{flagFromCountryCode(country.code)}</span>
                         <span className="flex-1">{country.name}</span>
-                        <span className="text-[10px] text-[#8A8378] font-semibold">{country.code}</span>
+                        <span className="text-[10px] text-[#BDB4C9] font-semibold">{country.code}</span>
                       </button>
                     ))}
                   </div>
@@ -298,7 +298,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
                   setForm((f) => ({ ...f, pays: "" }));
                   setCountrySearch("");
                 }}
-                className="mt-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
+                className="mt-1.5 text-[11px] font-semibold text-red-400 hover:bg-red-400/10 px-2 py-1 rounded-lg transition-colors"
               >
                 Retirer le pays (n'apparaît plus sur la carte)
               </button>
@@ -321,14 +321,14 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
             />
           </ModalField>
           <ModalField label="Serviteur actif" help="Afficher ce serviteur sur le site public" fullWidth>
-            <label className="flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer w-fit transition-colors hover:border-[#C9A227]/50">
+            <label className="flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 border-[#C9A227]/20 bg-[#C9A227]/10 cursor-pointer w-fit transition-colors hover:border-[#C9A227]/50">
               <input
                 type="checkbox"
                 checked={form.isActive}
                 onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
                 className="w-4 h-4 accent-[#C9A227]"
               />
-              <span className="text-sm font-medium text-[#1E0F2B]">
+              <span className="text-sm font-medium text-[#FAF6EF]">
                 {form.isActive ? "Visible sur le site" : "Masqué du site public"}
               </span>
             </label>
@@ -336,12 +336,12 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
         </div>
 
         {/* ─── Actions ──────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-end gap-2.5 pt-1 border-t border-[#8A8378]/10">
+        <div className="flex items-center justify-end gap-2.5 pt-1 border-t border-[#C9A227]/10">
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#8A8378] hover:bg-[#8A8378]/10 transition-colors disabled:opacity-40"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#BDB4C9] hover:bg-[#FAF6EF]/10 transition-colors disabled:opacity-40"
           >
             Annuler
           </button>
@@ -349,7 +349,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
             type="button"
             onClick={handleSave}
             disabled={saving || photoProcessing}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? (
               <>

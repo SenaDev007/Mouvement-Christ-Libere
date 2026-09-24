@@ -122,12 +122,12 @@ export function ClocheNotifications({
       <button
         ref={boutonRef}
         onClick={ouvrirPanneau}
-        className="relative w-10 h-10 flex items-center justify-center rounded-lg text-[#FAF6EF]/70 hover:text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
+        className="relative w-10 h-10 flex items-center justify-center rounded-lg text-[#FAF6EF]/70 hover:text-[#FAF6EF] hover:bg-[#C9A227]/10 transition-colors"
         aria-label={`Notifications${nonLues > 0 ? ` (${nonLues} non lues)` : ""}`}
       >
         <Bell className="w-5 h-5" />
         {nonLues > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-[#C9A227] text-[#2A0E3D] text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-[#C9A227] text-[#DDBE55] text-[10px] font-bold flex items-center justify-center">
             {nonLues > 99 ? "99+" : nonLues}
           </span>
         )}
@@ -136,17 +136,17 @@ export function ClocheNotifications({
       {ouvert && (
         <div
           ref={panneauRef}
-          className="absolute left-0 top-12 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl bg-white border border-[#8A8378]/20 shadow-xl overflow-hidden"
+          className="absolute left-0 top-12 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl bg-[#1A0826]/70 border border-[#C9A227]/20 shadow-xl overflow-hidden"
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#8A8378]/10 bg-[#FAF6EF]">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#1E0F2B]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#C9A227]/10 bg-[#C9A227]/10">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#FAF6EF]">
               Notifications
             </p>
             {nonLues > 0 && (
               <button
                 onClick={marquerToutLu}
                 disabled={marquageEnCours}
-                className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#A3821C] hover:text-[#1E0F2B] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#DDBE55] hover:text-[#FAF6EF] transition-colors disabled:opacity-50"
               >
                 {marquageEnCours ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -160,19 +160,19 @@ export function ClocheNotifications({
 
           <div className="max-h-80 overflow-y-auto">
             {chargement ? (
-              <div className="flex items-center justify-center py-8 text-[#8A8378]">
+              <div className="flex items-center justify-center py-8 text-[#BDB4C9]">
                 <Loader2 className="w-5 h-5 animate-spin" />
               </div>
             ) : visibles.length === 0 ? (
-              <p className="px-4 py-8 text-xs text-[#8A8378] text-center">
+              <p className="px-4 py-8 text-xs text-[#BDB4C9] text-center">
                 Aucune notification — vous serez prévenue dès qu&apos;un
                 serviteur valide une demande.
               </p>
             ) : (
-              <ul className="divide-y divide-[#8A8378]/10">
+              <ul className="divide-y divide-[#C9A227]/10">
                 {visibles.map((n) => {
                   const contenu = (
-                    <div className="px-4 py-3 hover:bg-[#FAF6EF]/60 transition-colors">
+                    <div className="px-4 py-3 hover:bg-[#C9A227]/15 transition-colors">
                       <div className="flex items-start gap-2">
                         {!n.readAt && (
                           <span className="w-2 h-2 rounded-full bg-[#C9A227] flex-shrink-0 mt-1.5" />
@@ -180,17 +180,17 @@ export function ClocheNotifications({
                         <div className="min-w-0 flex-1">
                           <p
                             className={`text-xs font-semibold leading-tight ${
-                              n.readAt ? "text-[#8A8378]" : "text-[#1E0F2B]"
+                              n.readAt ? "text-[#BDB4C9]" : "text-[#FAF6EF]"
                             }`}
                           >
                             {n.titre}
                           </p>
                           {n.message && (
-                            <p className="text-[11px] text-[#8A8378] leading-relaxed mt-0.5">
+                            <p className="text-[11px] text-[#BDB4C9] leading-relaxed mt-0.5">
                               {n.message}
                             </p>
                           )}
-                          <p className="text-[10px] text-[#8A8378]/60 mt-1">
+                          <p className="text-[10px] text-[#FAF6EF]/40 mt-1">
                             {dateRelative(n.createdAt)}
                           </p>
                         </div>

@@ -215,17 +215,17 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
       {/* En-tête */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]">
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
             Annonces du ministère
           </h1>
-          <p className="text-sm text-[#8A8378] mt-1">
+          <p className="text-sm text-[#BDB4C9] mt-1">
             {sousTitre ??
               "Lives programmés, événements, communiqués — la voix officielle du Mouvement Christ Libère."}
           </p>
         </div>
         <button
           onClick={ouvrirCreation}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
         >
           <Plus className="w-4 h-4" />
           Rédiger une annonce
@@ -250,8 +250,8 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
             }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               filtreStatut === f.v
-                ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                : "bg-white border border-[#8A8378]/15 text-[#8A8378] hover:bg-[#FAF6EF]"
+                ? "bg-[#3D1A54] text-[#FAF6EF]"
+                : "bg-[#1A0826]/70 border border-[#C9A227]/15 text-[#BDB4C9] hover:bg-[#C9A227]/10"
             }`}
           >
             {f.l}
@@ -260,7 +260,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
       </div>
 
       {erreur && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#B3452E] text-xs border border-[#B3452E]/30">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#E08B6D] text-xs border border-[#B3452E]/30">
           <AlertCircle className="w-4 h-4" />
           {erreur}
         </div>
@@ -268,13 +268,13 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
 
       {/* Liste */}
       {chargement ? (
-        <div className="flex items-center justify-center py-16 text-[#8A8378]">
+        <div className="flex items-center justify-center py-16 text-[#BDB4C9]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 px-6 py-14 text-center">
-          <Megaphone className="w-8 h-8 text-[#8A8378]/40 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378]">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 px-6 py-14 text-center">
+          <Megaphone className="w-8 h-8 text-[#FAF6EF]/25 mx-auto mb-3" />
+          <p className="text-sm text-[#BDB4C9]">
             Aucune annonce — rédigez la première pour le ministère.
           </p>
         </div>
@@ -288,7 +288,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
             return (
               <div
                 key={annonce.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 md:p-5"
+                className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 md:p-5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -305,7 +305,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                         {categorie?.libelle ?? annonce.category}
                       </span>
                       {annonce.isPublished ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#5B7052]/10 text-[#3F5039] border border-[#5B7052]/30">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#5B7052]/10 text-[#A3C9B0] border border-[#5B7052]/30">
                           Publiée
                           {annonce.publishedAt &&
                             ` le ${new Date(annonce.publishedAt).toLocaleDateString("fr-FR", {
@@ -315,7 +315,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                             })}`}
                         </span>
                       ) : annonce.publishAt ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8C5FA8]/10 text-[#6B4480] border border-[#8C5FA8]/30">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8C5FA8]/10 text-[#C9AEE3] border border-[#8C5FA8]/30">
                           <Clock className="w-3 h-3" />
                           Programmée
                           {" "}
@@ -327,38 +327,38 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                           })}
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#8A8378]/10 text-[#6B6459] border border-[#8A8378]/30">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FAF6EF]/10 text-[#6B6459] border border-[#C9A227]/30">
                           Brouillon
                         </span>
                       )}
                       {annonce.relayedToYeshua && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#C9A227]/10 text-[#A3821C] border border-[#C9A227]/30">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#C9A227]/10 text-[#DDBE55] border border-[#C9A227]/30">
                           <Check className="w-3 h-3" />
                           Relayée Yeshua Connect
                         </span>
                       )}
                     </div>
-                    <h2 className="text-sm font-bold text-[#1E0F2B]">
+                    <h2 className="text-sm font-bold font-serif text-[#FAF6EF]">
                       {annonce.title}
                     </h2>
-                    <p className="text-xs text-[#8A8378] whitespace-pre-wrap leading-relaxed mt-1.5 line-clamp-4">
+                    <p className="text-xs text-[#BDB4C9] whitespace-pre-wrap leading-relaxed mt-1.5 line-clamp-4">
                       {annonce.content}
                     </p>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-[#8A8378]/10">
+                <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-[#C9A227]/10">
                   <button
                     onClick={() => ouvrirEdition(annonce)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#C9A227]/40 text-[#A3821C] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#C9A227]/40 text-[#DDBE55] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     Modifier
                   </button>
                   <button
                     onClick={() => basculerPublication(annonce)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#8A8378]/25 text-[#8A8378] text-xs font-semibold hover:bg-[#FAF6EF] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#C9A227]/25 text-[#BDB4C9] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors"
                   >
                     {annonce.isPublished ? (
                       <>
@@ -390,7 +390,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                   )}
                   <button
                     onClick={() => supprimer(annonce)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#B3452E]/30 text-[#B3452E] text-xs font-semibold hover:bg-[#B3452E]/10 transition-colors ml-auto"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#B3452E]/30 text-[#E08B6D] text-xs font-semibold hover:bg-[#B3452E]/10 transition-colors ml-auto"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Supprimer
@@ -417,16 +417,16 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 overflow-y-auto">
           <form
             onSubmit={enregistrer}
-            className="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 my-8"
+            className="bg-[#1A0826]/70 rounded-2xl shadow-xl max-w-xl w-full p-6 space-y-4 my-8"
           >
             <div className="flex items-start justify-between">
-              <h2 className="text-lg font-bold text-[#1E0F2B]">
+              <h2 className="text-lg font-bold font-serif text-[#FAF6EF]">
                 {editionId ? "Modifier l'annonce" : "Nouvelle annonce"}
               </h2>
               <button
                 type="button"
                 onClick={() => setEditeurOuvert(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:bg-[#FAF6EF]"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:bg-[#C9A227]/10"
                 aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
@@ -434,7 +434,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1.5">
+              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1.5">
                 Titre *
               </label>
               <input
@@ -443,12 +443,12 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 placeholder="Ex. Live spécial délivrance — vendredi 20 h"
-                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1.5">
+              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1.5">
                 Catégorie
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -462,8 +462,8 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                       onClick={() => setForm({ ...form, category: v })}
                       className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-lg border-2 text-[11px] font-semibold transition-all ${
                         actif
-                          ? "border-[#C9A227] bg-[#C9A227]/5 text-[#A3821C]"
-                          : "border-[#8A8378]/15 text-[#8A8378] hover:border-[#C9A227]/40"
+                          ? "border-[#C9A227] bg-[#C9A227]/5 text-[#DDBE55]"
+                          : "border-[#C9A227]/15 text-[#BDB4C9] hover:border-[#C9A227]/40"
                       }`}
                     >
                       {Icone && <Icone className="w-4 h-4" />}
@@ -475,7 +475,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1E0F2B] mb-1.5">
+              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1.5">
                 Contenu *
               </label>
               <textarea
@@ -484,7 +484,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
                 placeholder="Rédigez l'annonce complète — elle sera visible par le serviteur concerné et, si publiée, dans le registre du ministère…"
-                className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm resize-none"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm resize-none"
               />
             </div>
 
@@ -503,9 +503,9 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                   }
                   className="w-4 h-4 accent-[#C9A227]"
                 />
-                <span className="text-xs font-semibold text-[#1E0F2B]">
+                <span className="text-xs font-semibold text-[#FAF6EF]">
                   Publier immédiatement
-                  <span className="text-[#8A8378] font-normal">
+                  <span className="text-[#BDB4C9] font-normal">
                     {" "}
                     (sinon : enregistrer comme brouillon)
                   </span>
@@ -515,7 +515,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
               {/* ⭐ V3.67 — Programmation de la publication */}
               {!form.isPublished && (
                 <div className="px-3 py-2.5 rounded-lg border border-[#8C5FA8]/25 bg-[#8C5FA8]/5">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-[#6B4480] mb-1.5">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-[#C9AEE3] mb-1.5">
                     <Clock className="w-3.5 h-3.5" />
                     Programmer la publication (facultatif)
                   </label>
@@ -525,9 +525,9 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                     onChange={(e) =>
                       setForm({ ...form, publishAt: e.target.value })
                     }
-                    className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#8C5FA8]"
+                    className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#8C5FA8]"
                   />
-                  <p className="text-[10px] text-[#8A8378] mt-1">
+                  <p className="text-[10px] text-[#BDB4C9] mt-1">
                     À l&apos;heure indiquée, l&apos;annonce passera automatiquement
                     en « Publiée » (visible sur la page publique /annonces) —
                     sans action de votre part.
@@ -542,9 +542,9 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                   onChange={(e) => setForm({ ...form, relayYeshua: e.target.checked })}
                   className="w-4 h-4 accent-[#8C5FA8]"
                 />
-                <span className="text-xs font-semibold text-[#1E0F2B]">
+                <span className="text-xs font-semibold text-[#FAF6EF]">
                   Relayer dans Yeshua Connect
-                  <span className="text-[#8A8378] font-normal">
+                  <span className="text-[#BDB4C9] font-normal">
                     {" "}
                     (canal d&apos;annonces — toute la communauté)
                   </span>
@@ -552,20 +552,20 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
               </label>
             </div>
 
-            {erreurForm && <p className="text-xs text-[#B3452E]">{erreurForm}</p>}
+            {erreurForm && <p className="text-xs text-[#E08B6D]">{erreurForm}</p>}
 
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setEditeurOuvert(false)}
-                className="px-4 py-2 rounded-lg text-sm text-[#8A8378] hover:text-[#1E0F2B]"
+                className="px-4 py-2 rounded-lg text-sm text-[#BDB4C9] hover:text-[#FAF6EF]"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={enregistrement}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
               >
                 {enregistrement && <Loader2 className="w-4 h-4 animate-spin" />}
                 {editionId ? "Enregistrer" : "Créer l'annonce"}

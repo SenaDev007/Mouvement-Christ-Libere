@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/app/admin",
+    "src/app/secretariat",
+    "src/app/tresorerie",
+    "src/components/admin",
+    "src/components/staff-space",
+    "src/components/site/layout-shell.tsx"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

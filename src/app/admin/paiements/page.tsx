@@ -29,14 +29,14 @@ export default async function AdminPaiementsPage() {
 
   if (!session || session.role !== "SUPER_ADMIN") {
     return (
-      <div className="max-w-xl mx-auto mt-8 bg-white rounded-2xl border border-[#8A8378]/15 p-8 text-center">
+      <div className="max-w-xl mx-auto mt-8 bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/15 p-8 text-center">
         <div className="w-12 h-12 rounded-full bg-[#C9A227]/10 flex items-center justify-center mx-auto mb-4">
-          <Lock className="w-6 h-6 text-[#A3821C]" />
+          <Lock className="w-6 h-6 text-[#DDBE55]" />
         </div>
-        <h1 className="text-xl font-bold text-[#1E0F2B] mb-2">
+        <h1 className="text-xl font-bold font-serif text-[#FAF6EF] mb-2">
           Configuration réservée aux serviteurs de Dieu
         </h1>
-        <p className="text-sm text-[#8A8378] leading-relaxed">
+        <p className="text-sm text-[#BDB4C9] leading-relaxed">
           Seuls les comptes super administrateurs (Pasteur Kongo et Sœur
           Afrika) peuvent configurer les clés des passerelles de paiement.
         </p>

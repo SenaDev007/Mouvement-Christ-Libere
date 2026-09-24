@@ -100,16 +100,16 @@ export function PaiementsClient({ etats, webhooks }: Props) {
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* En-tête */}
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-1">
           Contributions financières
         </p>
         <h1
-          className="text-2xl md:text-3xl font-bold text-[#1E0F2B]"
-          style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}
+          className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]"
+         
         >
           Passerelles de paiement
         </h1>
-        <p className="text-sm text-[#8A8378] mt-1 leading-relaxed">
+        <p className="text-sm text-[#BDB4C9] mt-1 leading-relaxed">
           Configuration des moyens de paiement de la page « Contribuer » —
           FedaPay (Afrique de l&apos;Ouest) et Paystack (international) :
           clés API, secrets de webhook, activation et test de connexion.
@@ -117,15 +117,15 @@ export function PaiementsClient({ etats, webhooks }: Props) {
       </div>
 
       {/* Note sécurité */}
-      <div className="bg-white rounded-xl border border-[#C9A227]/30 p-4 flex items-start gap-3">
+      <div className="bg-[#1A0826]/70 rounded-2xl border border-[#C9A227]/40 shadow-lg p-4 flex items-start gap-3">
         <div className="w-9 h-9 rounded-lg bg-[#C9A227]/10 flex items-center justify-center flex-shrink-0">
           <ShieldCheck className="w-4 h-4 text-[#C9A227]" />
         </div>
         <div className="text-sm leading-relaxed">
-          <p className="font-semibold text-[#1E0F2B] mb-0.5">
+          <p className="font-semibold text-[#FAF6EF] mb-0.5">
             Clés chiffrées, accès restreint, actions tracées
           </p>
-          <p className="text-[#8A8378]">
+          <p className="text-[#BDB4C9]">
             Les clés secrètes sont chiffrées (AES-256-GCM) avant stockage et
             ne sont jamais réaffichées — seuls leurs 4 derniers caractères
             servent de rappel. Chaque modification est consignée dans le
@@ -150,9 +150,9 @@ export function PaiementsClient({ etats, webhooks }: Props) {
       ))}
 
       {/* Note de déploiement */}
-      <div className="bg-[#2A0E3D]/5 border border-[#2A0E3D]/10 rounded-xl p-4 text-xs text-[#8A8378] leading-relaxed">
-        <p className="flex items-center gap-1.5 font-semibold text-[#1E0F2B] mb-1">
-          <Lock className="w-3.5 h-3.5 text-[#A3821C]" />
+      <div className="bg-[#C9A227]/10 border border-[#C9A227]/10 rounded-xl p-4 text-xs text-[#BDB4C9] leading-relaxed">
+        <p className="flex items-center gap-1.5 font-semibold text-[#FAF6EF] mb-1">
+          <Lock className="w-3.5 h-3.5 text-[#DDBE55]" />
           Bon à savoir
         </p>
         Les variables d&apos;environnement (Vercel) restent valables en
@@ -208,7 +208,7 @@ function CartePasserelle({
   const badge = !etat.effective.prete
     ? {
         libelle: "Non configurée",
-        classe: "bg-[#B3452E]/10 text-[#B3452E] border-[#B3452E]/30",
+        classe: "bg-[#B3452E]/10 text-[#E08B6D] border-[#B3452E]/30",
       }
     : etat.effective.source === "back-office"
       ? {
@@ -218,7 +218,7 @@ function CartePasserelle({
         }
       : {
           libelle: "Active — variable serveur",
-          classe: "bg-amber-100 text-amber-800 border-amber-300",
+          classe: "bg-amber-400/15 text-amber-300 border-amber-400/30",
         };
 
   const copierWebhook = async () => {
@@ -340,7 +340,7 @@ function CartePasserelle({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
+    <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/15 overflow-hidden">
       {/* Bandeau d'en-tête */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#2A0E3D] via-[#3D1A54] to-[#2A0E3D] p-5 md:p-6 text-white">
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#C9A227]/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
@@ -352,7 +352,7 @@ function CartePasserelle({
             <div>
               <h2
                 className="text-lg md:text-xl font-bold"
-                style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}
+               
               >
                 {meta.titre}
               </h2>
@@ -377,19 +377,19 @@ function CartePasserelle({
 
       <div className="p-5 md:p-6 space-y-5">
         {/* État enregistré */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#8A8378]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#BDB4C9]">
           {etat.backOffice?.cleMasquee ? (
             <>
               <span className="inline-flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-[#A3821C]" />
+                <KeyRound className="w-3.5 h-3.5 text-[#DDBE55]" />
                 Clé enregistrée :
-                <span className="font-mono text-[#1E0F2B]">
+                <span className="font-mono text-[#FAF6EF]">
                   {etat.backOffice.cleMasquee}
                 </span>
                 {/* ⭐ V3.84 — preuve visible du chiffrement au repos : la
                     matière stockée en base est le texte chiffré AES-256-GCM
                     « v1:<sel>:<iv>:<tag>:<données> », jamais la clé brute. */}
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#A3821C] font-bold">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#DDBE55] font-bold">
                   <Lock className="w-3 h-3" aria-hidden="true" />
                   chiffrée AES-256
                 </span>
@@ -403,9 +403,9 @@ function CartePasserelle({
             </>
           ) : (
             <span className="inline-flex items-center gap-1.5 italic">
-              <KeyRound className="w-3.5 h-3.5 text-[#8A8378]/60" />
+              <KeyRound className="w-3.5 h-3.5 text-[#FAF6EF]/40" />
               Aucune clé enregistrée depuis le back-office
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#A3821C] font-bold not-italic">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#DDBE55] font-bold not-italic">
                 <Lock className="w-3 h-3" aria-hidden="true" />
                 stockage chiffré AES-256-GCM
               </span>
@@ -413,7 +413,7 @@ function CartePasserelle({
           )}
         </div>
         {etat.environnement.clePresente && !etat.effective.prete && (
-          <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
+          <p className="text-[11px] text-amber-300 bg-amber-400/10 border border-amber-400/25 rounded-lg px-3 py-2 leading-relaxed">
             La variable serveur {etat.environnement.nomVariableCle} est
             détectée mais la passerelle doit d&apos;abord être{" "}
             <strong>activée ici</strong> avec une clé enregistrée pour que
@@ -422,7 +422,7 @@ function CartePasserelle({
           </p>
         )}
         {etat.environnement.clePresente && etat.effective.source === "environnement" && (
-          <p className="text-[11px] text-[#8A8378] bg-[#FAF6EF] border border-[#8A8378]/15 rounded-lg px-3 py-2 leading-relaxed">
+          <p className="text-[11px] text-[#BDB4C9] bg-[#C9A227]/10 border border-[#C9A227]/15 rounded-lg px-3 py-2 leading-relaxed">
             La variable serveur {etat.environnement.nomVariableCle} est
             détectée — elle est utilisée tant qu&apos;aucune configuration
             n&apos;est activée ici.
@@ -430,19 +430,19 @@ function CartePasserelle({
         )}
 
         {/* URL de webhook */}
-        <div className="rounded-xl border border-[#8A8378]/20 bg-[#FAF6EF] p-4">
-          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#8A8378] mb-2 flex items-center gap-1.5">
-            <Webhook className="w-3.5 h-3.5 text-[#A3821C]" />
+        <div className="rounded-xl border border-[#C9A227]/20 bg-[#C9A227]/10 p-4">
+          <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#BDB4C9] mb-2 flex items-center gap-1.5">
+            <Webhook className="w-3.5 h-3.5 text-[#DDBE55]" />
             URL de webhook à déclarer chez {meta.titre}
           </p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 min-w-0 text-xs text-[#1E0F2B] bg-white border border-[#8A8378]/15 rounded-lg px-3 py-2.5 font-mono truncate">
+            <code className="flex-1 min-w-0 text-xs text-[#FAF6EF] bg-[#1A0826]/70 border border-[#C9A227]/15 rounded-lg px-3 py-2.5 font-mono truncate">
               {webhookUrl}
             </code>
             <button
               type="button"
               onClick={copierWebhook}
-              className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-xs font-semibold hover:bg-[#3D1A54] transition-colors"
+              className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-xs font-semibold hover:bg-[#3D1A54] transition-colors"
             >
               {copie ? (
                 <Check className="w-3.5 h-3.5 text-[#C9A227]" />
@@ -452,7 +452,7 @@ function CartePasserelle({
               {copie ? "Copié" : "Copier"}
             </button>
           </div>
-          <p className="text-[11px] text-[#8A8378] mt-2 leading-relaxed">
+          <p className="text-[11px] text-[#BDB4C9] mt-2 leading-relaxed">
             {meta.aideWebhook}
           </p>
         </div>
@@ -462,7 +462,7 @@ function CartePasserelle({
           {/* Environnement (FedaPay) */}
           {provider === "fedapay" && (
             <div>
-              <p className="text-xs font-semibold text-[#2A0E3D] mb-1.5">
+              <p className="text-xs font-semibold text-[#DDBE55] mb-1.5">
                 Environnement
               </p>
               <div className="grid grid-cols-2 gap-2 max-w-md">
@@ -489,19 +489,19 @@ function CartePasserelle({
                       "px-3 py-2.5 rounded-xl border text-left transition-all",
                       environment === env.valeur
                         ? "border-[#C9A227] bg-[#C9A227]/10 shadow-[0_0_15px_rgba(201,162,39,0.15)]"
-                        : "border-[#8A8378]/25 hover:border-[#C9A227]/50"
+                        : "border-[#C9A227]/25 hover:border-[#C9A227]/50"
                     )}
                   >
-                    <span className="block text-xs font-bold text-[#1E0F2B]">
+                    <span className="block text-xs font-bold font-serif text-[#FAF6EF]">
                       {env.libelle}
                     </span>
-                    <span className="block text-[10px] text-[#8A8378] font-mono mt-0.5">
+                    <span className="block text-[10px] text-[#BDB4C9] font-mono mt-0.5">
                       {env.aide}
                     </span>
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-[#8A8378] mt-1.5 leading-relaxed">
+              <p className="text-[11px] text-[#BDB4C9] mt-1.5 leading-relaxed">
                 Testez d&apos;abord en sandbox, puis basculez en production
                 avec votre clé sk_live_ — la cohérence clé/environnement est
                 vérifiée à l&apos;enregistrement.
@@ -513,11 +513,11 @@ function CartePasserelle({
           <div>
             <label
               htmlFor={`cle-${provider}`}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[#2A0E3D] mb-1.5"
+              className="flex items-center gap-1.5 text-xs font-semibold text-[#DDBE55] mb-1.5"
             >
               <KeyRound className="w-3.5 h-3.5 text-[#C9A227]" />
               Clé secrète API{" "}
-              <span className="text-[#8A8378] font-normal">
+              <span className="text-[#BDB4C9] font-normal">
                 (laisser vide pour conserver
                 {etat.backOffice?.cleMasquee
                   ? ` ${etat.backOffice.cleMasquee}`
@@ -534,7 +534,7 @@ function CartePasserelle({
                 placeholder={meta.placeholderCle}
                 autoComplete="off"
                 spellCheck={false}
-                className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/30 bg-white text-[#1E0F2B] font-mono text-sm placeholder:text-[#8A8378]/50 placeholder:font-sans focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all pr-11"
+                className="w-full px-4 py-3 rounded-xl border border-[#C9A227]/30 bg-[#1A0826]/70 text-[#FAF6EF] font-mono text-sm placeholder:text-[#FAF6EF]/35 placeholder:font-sans focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all pr-11"
               />
               <button
                 type="button"
@@ -542,7 +542,7 @@ function CartePasserelle({
                 aria-label={
                   afficherCle ? "Masquer la clé" : "Afficher la clé"
                 }
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#1E0F2B] hover:bg-[#8A8378]/10 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
               >
                 {afficherCle ? (
                   <EyeOff className="w-4 h-4" />
@@ -558,11 +558,11 @@ function CartePasserelle({
             <div>
               <label
                 htmlFor={`cle-publique-${provider}`}
-                className="flex items-center gap-1.5 text-xs font-semibold text-[#2A0E3D] mb-1.5"
+                className="flex items-center gap-1.5 text-xs font-semibold text-[#DDBE55] mb-1.5"
               >
                 <Globe className="w-3.5 h-3.5 text-[#C9A227]" />
                 Clé publique (paiement sur la page)
-                <span className="text-[#8A8378] font-normal">(recommandée)</span>
+                <span className="text-[#BDB4C9] font-normal">(recommandée)</span>
               </label>
               <div className="relative">
                 <input
@@ -576,7 +576,7 @@ function CartePasserelle({
                   placeholder="pk_live_… ou pk_sandbox_…"
                   autoComplete="off"
                   spellCheck={false}
-                  className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/30 bg-white text-[#1E0F2B] font-mono text-sm placeholder:text-[#8A8378]/50 placeholder:font-sans focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all pr-11"
+                  className="w-full px-4 py-3 rounded-xl border border-[#C9A227]/30 bg-[#1A0826]/70 text-[#FAF6EF] font-mono text-sm placeholder:text-[#FAF6EF]/35 placeholder:font-sans focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all pr-11"
                 />
                 <button
                   type="button"
@@ -586,7 +586,7 @@ function CartePasserelle({
                       ? "Masquer la clé publique"
                       : "Afficher la clé publique"
                   }
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#1E0F2B] hover:bg-[#8A8378]/10 transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
                 >
                   {afficherClePublique ? (
                     <EyeOff className="w-4 h-4" />
@@ -596,9 +596,9 @@ function CartePasserelle({
                 </button>
               </div>
               {etat.backOffice?.clePubliqueMasquee ? (
-                <p className="text-[11px] text-[#8A8378] mt-1.5">
+                <p className="text-[11px] text-[#BDB4C9] mt-1.5">
                   Clé publique enregistrée :{" "}
-                  <span className="font-mono text-[#1E0F2B]">
+                  <span className="font-mono text-[#FAF6EF]">
                     {etat.backOffice.clePubliqueMasquee}
                   </span>{" "}
                   — le paiement s'ouvre directement sur la page Contribuer.
@@ -606,7 +606,7 @@ function CartePasserelle({
                   vers FedaPay.
                 </p>
               ) : (
-                <p className="text-[11px] text-[#8A8378] mt-1.5 leading-relaxed">
+                <p className="text-[11px] text-[#BDB4C9] mt-1.5 leading-relaxed">
                   Avec cette clé (dashboard FedaPay → Paramètres → API → clé
                   publique), le paiement s'ouvre dans une fenêtre directement
                   sur la page Contribuer — sans quitter le site. Sans elle, le
@@ -621,11 +621,11 @@ function CartePasserelle({
           <div>
             <label
               htmlFor={`webhook-${provider}`}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[#2A0E3D] mb-1.5"
+              className="flex items-center gap-1.5 text-xs font-semibold text-[#DDBE55] mb-1.5"
             >
               <Webhook className="w-3.5 h-3.5 text-[#C9A227]" />
               Secret de webhook{" "}
-              <span className="text-[#8A8378] font-normal">(optionnel)</span>
+              <span className="text-[#BDB4C9] font-normal">(optionnel)</span>
             </label>
             <div className="relative">
               <input
@@ -643,7 +643,7 @@ function CartePasserelle({
                 }
                 autoComplete="off"
                 spellCheck={false}
-                className="w-full px-4 py-3 rounded-xl border border-[#8A8378]/30 bg-white text-[#1E0F2B] font-mono text-sm placeholder:text-[#8A8378]/50 placeholder:font-sans focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all pr-11"
+                className="w-full px-4 py-3 rounded-xl border border-[#C9A227]/30 bg-[#1A0826]/70 text-[#FAF6EF] font-mono text-sm placeholder:text-[#FAF6EF]/35 placeholder:font-sans focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all pr-11"
               />
               <button
                 type="button"
@@ -653,7 +653,7 @@ function CartePasserelle({
                     ? "Masquer le secret"
                     : "Afficher le secret"
                 }
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-[#8A8378] hover:text-[#1E0F2B] hover:bg-[#8A8378]/10 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
               >
                 {afficherWebhook ? (
                   <EyeOff className="w-4 h-4" />
@@ -663,9 +663,9 @@ function CartePasserelle({
               </button>
             </div>
             {etat.backOffice?.webhookMasque && (
-              <p className="text-[11px] text-[#8A8378] mt-1.5">
+              <p className="text-[11px] text-[#BDB4C9] mt-1.5">
                 Secret enregistré :{" "}
-                <span className="font-mono text-[#1E0F2B]">
+                <span className="font-mono text-[#FAF6EF]">
                   {etat.backOffice.webhookMasque}
                 </span>{" "}
                 — laisser vide pour le conserver.
@@ -682,14 +682,14 @@ function CartePasserelle({
               "w-full flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border-2 transition-all text-left",
               activee
                 ? "border-state-success/60 bg-state-success/5"
-                : "border-[#8A8378]/25 hover:border-[#C9A227]/50"
+                : "border-[#C9A227]/25 hover:border-[#C9A227]/50"
             )}
           >
             <span className="min-w-0">
-              <span className="block text-sm font-bold text-[#1E0F2B]">
+              <span className="block text-sm font-bold font-serif text-[#FAF6EF]">
                 Activer cette passerelle
               </span>
-              <span className="block text-[11px] text-[#8A8378] mt-0.5 leading-relaxed">
+              <span className="block text-[11px] text-[#BDB4C9] mt-0.5 leading-relaxed">
                 Une fois activée, la clé enregistrée ici est utilisée par la
                 page « Contribuer » (elle prime sur la variable serveur).
               </span>
@@ -698,12 +698,12 @@ function CartePasserelle({
             <span
               className={cn(
                 "relative flex-shrink-0 w-12 h-7 rounded-full transition-colors",
-                activee ? "bg-state-success" : "bg-[#8A8378]/30"
+                activee ? "bg-state-success" : "bg-[#FAF6EF]/30"
               )}
             >
               <span
                 className={cn(
-                  "absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform",
+                  "absolute top-1 left-1 w-5 h-5 rounded-full bg-[#1A0826]/70 shadow transition-transform",
                   activee && "translate-x-5"
                 )}
               />
@@ -717,14 +717,14 @@ function CartePasserelle({
               className={cn(
                 "flex items-start gap-2.5 px-4 py-3 rounded-xl border text-sm leading-relaxed",
                 message.type === "ok"
-                  ? "bg-state-success/10 border-state-success/40 text-[#3F5039]"
-                  : "bg-red-50 border-red-300 text-red-800"
+                  ? "bg-state-success/10 border-state-success/40 text-[#A3C9B0]"
+                  : "bg-red-400/10 border-red-400/30 text-red-300"
               )}
             >
               {message.type === "ok" ? (
                 <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-state-success" />
               ) : (
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-600" />
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-400" />
               )}
               {message.texte}
             </div>
@@ -736,7 +736,7 @@ function CartePasserelle({
               type="button"
               onClick={enregistrer}
               disabled={enregistrement || test}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {enregistrement ? (
                 <Loader2 className="w-4 h-4 animate-spin text-[#C9A227]" />
@@ -749,7 +749,7 @@ function CartePasserelle({
               type="button"
               onClick={tester}
               disabled={enregistrement || test}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-[#C9A227] text-[#A3821C] text-sm font-semibold hover:bg-[#C9A227]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-[#C9A227] text-[#DDBE55] text-sm font-semibold hover:bg-[#C9A227]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {test ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -758,7 +758,7 @@ function CartePasserelle({
               )}
               {test ? "Test en cours…" : "Tester la connexion"}
             </button>
-            <p className="text-[11px] text-[#8A8378] italic">
+            <p className="text-[11px] text-[#BDB4C9] italic">
               Le test interroge le fournisseur en lecture seule — aucun
               paiement n&apos;est créé.
             </p>

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "skipLibCheck": true },
+  "include": [
+    "src/components/site/afrika-view.tsx",
+    "src/components/site/pasteur-kongo-view.tsx",
+    "src/components/site/disperses-view.tsx",
+    "src/components/adoration/adoration-view.tsx",
+    "src/components/videos/videos-view.tsx",
+    "src/components/site/layout-shell.tsx"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

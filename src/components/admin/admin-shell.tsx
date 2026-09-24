@@ -158,11 +158,17 @@ export function AdminShell({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] flex">
+    // ⭐ V3.98 — Thème Win Agro du back-office : fond violet nuit profond
+    // (équivalent CL du noir-vert Win Agro #07130A) + grain clair discret
+    // + halo doré d'ambiance — la palette Christ Libère est conservée.
+    <div className="bo-winagro relative min-h-screen bg-[#150920] flex">
+      {/* Halo d'ambiance doré (fixe, derrière le contenu) */}
+      <div className="pointer-events-none fixed top-0 right-0 w-[32rem] h-[32rem] rounded-full bg-[#C9A227]/[0.05] blur-3xl" aria-hidden />
+      <div className="pointer-events-none fixed bottom-0 left-1/3 w-[26rem] h-[26rem] rounded-full bg-[#8C5FA8]/[0.06] blur-3xl" aria-hidden />
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-[#2A0E3D] text-[#FAF6EF] flex-shrink-0 transition-transform duration-300",
+          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-[#3D1A54] text-[#FAF6EF] flex-shrink-0 transition-transform duration-300",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
@@ -193,7 +199,7 @@ export function AdminShell({
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden -mr-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#FAF6EF]/70 hover:text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
+                className="lg:hidden -mr-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#FAF6EF]/70 hover:text-[#FAF6EF] hover:bg-[#C9A227]/10 transition-colors"
                 aria-label="Fermer le menu"
               >
                 <X className="w-5 h-5" />
@@ -275,10 +281,10 @@ export function AdminShell({
       {/* Contenu principal */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar mobile avec logo */}
-        <header className="lg:hidden sticky top-0 z-20 bg-[#2A0E3D] text-[#FAF6EF] px-4 py-3 flex items-center justify-between">
+        <header className="lg:hidden sticky top-0 z-20 bg-[#3D1A54] text-[#FAF6EF] px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="-ml-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
+            className="-ml-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#FAF6EF] hover:bg-[#C9A227]/10 transition-colors"
             aria-label="Ouvrir le menu"
           >
             <Menu className="w-5 h-5" />
@@ -291,10 +297,7 @@ export function AdminShell({
               height={24}
               className="w-6 h-6 object-contain"
             />
-            <span
-              className="text-sm font-bold"
-              style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
-            >
+            <span className="text-sm font-bold font-serif">
               <span style={{ color: "#C9A227" }}>Christ</span>
               <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
             </span>
@@ -304,7 +307,7 @@ export function AdminShell({
 
         {/* Contenu — plus d'overflow-x-auto global (échappatoire qui masquait
             les débordements) : chaque tableau gère son propre conteneur scrollable */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
+        <main className="relative flex-1 p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>

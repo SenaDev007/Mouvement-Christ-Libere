@@ -216,7 +216,7 @@ export function AdminForm({
                       type="button"
                       onClick={() => photoFileRef.current[field.name]?.click()}
                       disabled={photoProcessing === field.name}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-xs font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#3D1A54] text-[#FAF6EF] text-xs font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
                     >
                       <Camera className="w-3.5 h-3.5" />
                       {photoValues[field.name] ? "Changer la photo" : "Ajouter une photo"}
@@ -225,7 +225,7 @@ export function AdminForm({
                       <button
                         type="button"
                         onClick={() => setPhotoValues((prev) => ({ ...prev, [field.name]: null }))}
-                        className="block px-3 py-1.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                        className="block px-3 py-1.5 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-400/10 transition-colors"
                       >
                         Retirer la photo
                       </button>

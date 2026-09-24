@@ -78,10 +78,10 @@ export function ChannelsAdminClient({ channels, communities }: ChannelsAdminClie
     <div className="space-y-6">
       {/* Toast de confirmation (⭐ V2.5) */}
       {toast && (
-        <div className="fixed top-6 right-6 z-[200] flex items-center gap-2.5 px-5 py-3.5 rounded-2xl bg-[#1E0F2B] text-[#FAF6EF] shadow-2xl border border-[#C9A227]/40 max-w-sm animate-[toastIn_.25s_ease-out]">
+        <div className="fixed top-6 right-6 z-[200] flex items-center gap-2.5 px-5 py-3.5 rounded-2xl bg-[#3D1A54] text-[#FAF6EF] shadow-2xl border border-[#C9A227]/40 max-w-sm animate-[toastIn_.25s_ease-out]">
           <CheckCircle2 className="w-5 h-5 text-[#C9A227] flex-shrink-0" />
           <p className="text-sm font-semibold">{toast}</p>
-          <button onClick={() => setToast("")} className="p-1 hover:bg-white/10 rounded-lg ml-1" aria-label="Fermer">
+          <button onClick={() => setToast("")} className="p-1 hover:bg-[#1A0826]/10 rounded-lg ml-1" aria-label="Fermer">
             <X className="w-3.5 h-3.5 text-[#FAF6EF]/60" />
           </button>
           <style jsx>{`
@@ -96,19 +96,19 @@ export function ChannelsAdminClient({ channels, communities }: ChannelsAdminClie
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-1">
             Espaces de communauté
           </p>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
             Canaux
           </h1>
-          <p className="text-sm text-[#8A8378] mt-1">
+          <p className="text-sm text-[#BDB4C9] mt-1">
             Synchronisés en direct avec Yeshua Connect — canaux, groupes et salons vocaux.
           </p>
         </div>
         <button
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#FAF6EF] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
         >
           <Plus className="w-4 h-4" />
           Nouveau canal
@@ -117,32 +117,32 @@ export function ChannelsAdminClient({ channels, communities }: ChannelsAdminClie
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-          <div className="text-2xl font-bold text-[#1E0F2B]">{stats.total}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5">Canaux</div>
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
+          <div className="text-2xl font-bold font-serif text-[#FAF6EF]">{stats.total}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-semibold mt-0.5">Canaux</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#C9A227]/30 p-4">
-          <div className="text-2xl font-bold text-[#A3821C]">{stats.encrypted}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#A3821C] font-semibold mt-0.5">Chiffrés E2E</div>
+        <div className="bg-[#1A0826]/70 rounded-2xl border border-[#C9A227]/40 shadow-lg p-4">
+          <div className="text-2xl font-bold text-[#DDBE55]">{stats.encrypted}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#DDBE55] font-semibold mt-0.5">Chiffrés E2E</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8C5FA8]/30 p-4">
-          <div className="text-2xl font-bold text-[#8C5FA8]">{stats.members}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8C5FA8] font-semibold mt-0.5">Membres</div>
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#8C5FA8]/30 p-4">
+          <div className="text-2xl font-bold text-[#C9AEE3]">{stats.members}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#C9AEE3] font-semibold mt-0.5">Membres</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#5B7052]/30 p-4">
-          <div className="text-2xl font-bold text-[#5B7052]">{stats.messages}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#5B7052] font-semibold mt-0.5">Messages</div>
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#5B7052]/30 p-4">
+          <div className="text-2xl font-bold text-[#A3C9B0]">{stats.messages}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#A3C9B0] font-semibold mt-0.5">Messages</div>
         </div>
       </div>
 
       {/* Canaux par communauté */}
       {channels.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-[#8A8378]/30 p-12 text-center">
-          <MessageSquare className="w-10 h-10 text-[#8A8378]/30 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378] italic">Aucun canal créé pour l&apos;instant.</p>
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-dashed border-[#C9A227]/30 p-12 text-center">
+          <MessageSquare className="w-10 h-10 text-[#FAF6EF]/20 mx-auto mb-3" />
+          <p className="text-sm text-[#BDB4C9] italic">Aucun canal créé pour l&apos;instant.</p>
           <button
             onClick={() => setCreateOpen(true)}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227] text-[#FAF6EF] text-sm font-bold hover:bg-[#DDBE55] transition-colors"
           >
             <Plus className="w-4 h-4" /> Créer le premier canal
           </button>
@@ -150,24 +150,24 @@ export function ChannelsAdminClient({ channels, communities }: ChannelsAdminClie
       ) : (
         <div className="space-y-5">
           {Object.entries(byCommunity).map(([communityName, items]) => (
-            <div key={communityName} className="bg-white rounded-2xl border border-[#8A8378]/15 overflow-hidden">
+            <div key={communityName} className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/15 overflow-hidden">
               {/* En-tête communauté */}
-              <div className="px-5 py-3 bg-gradient-to-r from-[#2A0E3D]/5 to-transparent border-b border-[#8A8378]/10 flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#2A0E3D]" />
-                <h2 className="font-bold text-sm text-[#1E0F2B]">{communityName}</h2>
-                <span className="text-xs text-[#8A8378]">· {items.length} canal(aux)</span>
+              <div className="px-5 py-3 bg-gradient-to-r from-[#2A0E3D]/5 to-transparent border-b border-[#C9A227]/10 flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#DDBE55]" />
+                <h2 className="font-bold text-sm text-[#FAF6EF]">{communityName}</h2>
+                <span className="text-xs text-[#BDB4C9]">· {items.length} canal(aux)</span>
               </div>
 
               {/* Liste canaux */}
-              <div className="divide-y divide-[#8A8378]/10">
+              <div className="divide-y divide-[#C9A227]/10">
                 {items.map((c) => {
                   const config = CHANNEL_CONFIG[c.type as keyof typeof CHANNEL_CONFIG] || CHANNEL_CONFIG.TEXT;
                   const Icon = config.icon;
 
                   return (
-                    <div key={c.id} className="flex items-center gap-4 px-5 py-3 hover:bg-[#FAF6EF] transition-colors group">
+                    <div key={c.id} className="flex items-center gap-4 px-5 py-3 hover:bg-[#C9A227]/10 transition-colors group">
                       {/* Avatar (photo du canal ⭐ V2.5) */}
-                      <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 bg-[#2A0E3D] text-white font-bold text-sm">
+                      <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 bg-[#3D1A54] text-white font-bold text-sm">
                         {c.avatarUrl ? (
                           <img src={c.avatarUrl} alt={c.name} className="w-full h-full object-cover" />
                         ) : (
@@ -178,15 +178,15 @@ export function ChannelsAdminClient({ channels, communities }: ChannelsAdminClie
                       {/* Contenu */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-sm text-[#1E0F2B]">{c.name}</h3>
+                          <h3 className="font-semibold text-sm text-[#FAF6EF]">{c.name}</h3>
                           {c.isEncrypted && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#C9A227]/15 text-[#A3821C] border border-[#C9A227]/30">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#C9A227]/15 text-[#DDBE55] border border-[#C9A227]/30">
                               E2E
                             </span>
                           )}
                         </div>
                         {c.description && (
-                          <p className="text-xs text-[#8A8378] line-clamp-1 mt-0.5">{c.description}</p>
+                          <p className="text-xs text-[#BDB4C9] line-clamp-1 mt-0.5">{c.description}</p>
                         )}
                       </div>
 
@@ -199,7 +199,7 @@ export function ChannelsAdminClient({ channels, communities }: ChannelsAdminClie
                       </span>
 
                       {/* Stats */}
-                      <div className="flex items-center gap-3 text-[11px] text-[#8A8378] flex-shrink-0">
+                      <div className="flex items-center gap-3 text-[11px] text-[#BDB4C9] flex-shrink-0">
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
                           {c.memberCount}
@@ -226,7 +226,7 @@ export function ChannelsAdminClient({ channels, communities }: ChannelsAdminClie
                               avatarUrl: c.avatarUrl,
                             })
                           }
-                          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
+                          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#BDB4C9] hover:text-[#C9A227] transition-colors"
                           aria-label={`Modifier ${c.name}`}
                           title="Modifier (photo, nom, type…)"
                         >

@@ -179,7 +179,7 @@ export function CreateEntityModal({
     if (field.type === "checkbox") {
       return (
         <div key={field.name} className={colSpan}>
-          <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
+          <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#C9A227]/20 bg-[#C9A227]/10 cursor-pointer hover:border-[#C9A227] transition-colors">
             <input
               type="checkbox"
               checked={Boolean(value)}
@@ -187,8 +187,8 @@ export function CreateEntityModal({
               className="w-4 h-4 accent-[#C9A227]"
             />
             <div>
-              <div className="text-sm font-semibold text-[#1E0F2B]">{field.label}</div>
-              {field.help && <div className="text-xs text-[#8A8378] mt-0.5">{field.help}</div>}
+              <div className="text-sm font-semibold text-[#FAF6EF]">{field.label}</div>
+              {field.help && <div className="text-xs text-[#BDB4C9] mt-0.5">{field.help}</div>}
             </div>
           </label>
         </div>
@@ -211,7 +211,7 @@ export function CreateEntityModal({
               </option>
             ))}
           </select>
-          {field.help && <p className="text-[10px] text-[#8A8378] mt-1">{field.help}</p>}
+          {field.help && <p className="text-[10px] text-[#BDB4C9] mt-1">{field.help}</p>}
         </ModalField>
       );
     }
@@ -227,7 +227,7 @@ export function CreateEntityModal({
             placeholder={field.placeholder}
             className={`${modalInputClass()} resize-none`}
           />
-          {field.help && <p className="text-[10px] text-[#8A8378] mt-1">{field.help}</p>}
+          {field.help && <p className="text-[10px] text-[#BDB4C9] mt-1">{field.help}</p>}
         </ModalField>
       );
     }
@@ -238,18 +238,18 @@ export function CreateEntityModal({
 
       return (
         <ModalField key={field.name} label={field.label} required={field.required} fullWidth={field.fullWidth}>
-          <div className="rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] p-2 focus-within:border-[#C9A227] transition-colors">
+          <div className="rounded-xl border-2 border-[#C9A227]/20 bg-[#C9A227]/10 p-2 focus-within:border-[#C9A227] transition-colors">
             <div className="flex flex-wrap gap-1.5 mb-2">
               {tagsArray.map((tag, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#C9A227]/15 text-[#A3821C] text-xs font-semibold"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#C9A227]/15 text-[#DDBE55] text-xs font-semibold"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => removeTag(field.name, tag)}
-                    className="hover:text-red-600 transition-colors"
+                    className="hover:text-red-400 transition-colors"
                   >
                     ×
                   </button>
@@ -262,10 +262,10 @@ export function CreateEntityModal({
               onChange={(e) => setTagsInput((t) => ({ ...t, [field.name]: e.target.value }))}
               onKeyDown={(e) => handleTagsKey(field.name, e)}
               placeholder={field.placeholder || "Tapez un mot + Entrée"}
-              className="w-full bg-transparent text-sm text-[#1E0F2B] outline-none placeholder:text-[#8A8378]/50"
+              className="w-full bg-transparent text-sm text-[#FAF6EF] outline-none placeholder:text-[#FAF6EF]/35"
             />
           </div>
-          {field.help && <p className="text-[10px] text-[#8A8378] mt-1">{field.help}</p>}
+          {field.help && <p className="text-[10px] text-[#BDB4C9] mt-1">{field.help}</p>}
         </ModalField>
       );
     }
@@ -296,7 +296,7 @@ export function CreateEntityModal({
           placeholder={field.placeholder}
           className={modalInputClass()}
         />
-        {field.help && <p className="text-[10px] text-[#8A8378] mt-1">{field.help}</p>}
+        {field.help && <p className="text-[10px] text-[#BDB4C9] mt-1">{field.help}</p>}
       </ModalField>
     );
   };
@@ -325,11 +325,11 @@ export function CreateEntityModal({
 
         <ModalError error={error} />
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A8378]/10">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#C9A227]/10">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8A8378] hover:text-[#1E0F2B] transition-colors"
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#BDB4C9] hover:text-[#FAF6EF] transition-colors"
           >
             Annuler
           </button>

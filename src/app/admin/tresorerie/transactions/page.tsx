@@ -89,14 +89,14 @@ export default async function AdminJournalTransactionsPage({
 
   if (!session || session.role !== "SUPER_ADMIN") {
     return (
-      <div className="max-w-xl mx-auto mt-8 bg-white rounded-2xl border border-[#8A8378]/15 p-8 text-center">
+      <div className="max-w-xl mx-auto mt-8 bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/15 p-8 text-center">
         <div className="w-12 h-12 rounded-full bg-[#C9A227]/10 flex items-center justify-center mx-auto mb-4">
-          <Lock className="w-6 h-6 text-[#A3821C]" />
+          <Lock className="w-6 h-6 text-[#DDBE55]" />
         </div>
-        <h1 className="text-xl font-bold text-[#1E0F2B] mb-2">
+        <h1 className="text-xl font-bold font-serif text-[#FAF6EF] mb-2">
           Journal réservé aux serviteurs de Dieu
         </h1>
-        <p className="text-sm text-[#8A8378] leading-relaxed">
+        <p className="text-sm text-[#BDB4C9] leading-relaxed">
           Le journal des mouvements n&apos;est visible que par les comptes
           super administrateurs (Pasteur Kongo et Sœur Afrika). Le
           trésorier gère les écritures depuis l&apos;espace Trésorerie dédié.
@@ -237,18 +237,15 @@ export default async function AdminJournalTransactionsPage({
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2A0E3D] via-[#3D1A54] to-[#2A0E3D] p-6 md:p-8 text-white">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2A0E3D] via-[#3D1A54] to-[#2A0E3D] bg-grain-dark p-6 md:p-8 text-white shadow-xl border border-[#C9A227]/15">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none animate-pulse-slow" />
         <div className="relative z-10 flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-[#DDBE55]/80 font-semibold mb-2 flex items-center gap-2">
               <Eye className="w-3.5 h-3.5" />
               Consultation — lecture seule
             </p>
-            <h1
-              className="text-2xl md:text-3xl font-bold mb-1 flex items-center gap-3"
-              style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}
-            >
+            <h1 className="text-2xl md:text-3xl font-bold font-serif mb-1 flex items-center gap-3">
               <BookOpen className="w-6 h-6 text-[#C9A227]" />
               Journal des transactions
             </h1>
@@ -261,7 +258,7 @@ export default async function AdminJournalTransactionsPage({
           </div>
           <Link
             href="/admin/tresorerie"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-xs font-semibold hover:bg-white/15 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1A0826]/10 backdrop-blur-sm border border-white/10 text-xs font-semibold hover:bg-[#1A0826]/15 transition-colors"
           >
             ← Situation de trésorerie
           </Link>
@@ -269,8 +266,8 @@ export default async function AdminJournalTransactionsPage({
       </div>
 
       {/* Bandeau lecture seule */}
-      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30 text-sm text-[#1E0F2B]/80">
-        <ShieldCheck className="w-4 h-4 text-[#A3821C] flex-shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30 text-sm text-[#FAF6EF]/80">
+        <ShieldCheck className="w-4 h-4 text-[#DDBE55] flex-shrink-0 mt-0.5" />
         <p className="leading-relaxed">
           Vous consultez le journal en simple coup d&apos;œil. La saisie, la
           correction et la suppression des écritures (avec leurs traces
@@ -283,12 +280,12 @@ export default async function AdminJournalTransactionsPage({
       {/* Filtres */}
       <form
         method="GET"
-        className="bg-white rounded-xl border border-[#8A8378]/15 p-4 grid grid-cols-2 md:grid-cols-4 gap-3 items-end"
+        className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 grid grid-cols-2 md:grid-cols-4 gap-3 items-end"
       >
         <div>
           <label
             htmlFor="f-type"
-            className="block text-[10px] uppercase tracking-wider font-bold text-[#8A8378] mb-1"
+            className="block text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] mb-1"
           >
             Type
           </label>
@@ -296,7 +293,7 @@ export default async function AdminJournalTransactionsPage({
             id="f-type"
             name="type"
             defaultValue={type}
-            className="w-full px-3 py-2.5 rounded-lg border border-[#8A8378]/30 bg-white text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/30 bg-[#1A0826]/70 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
           >
             <option value="">Tous</option>
             <option value="RECETTE">Recettes</option>
@@ -307,7 +304,7 @@ export default async function AdminJournalTransactionsPage({
         <div>
           <label
             htmlFor="f-categorie"
-            className="block text-[10px] uppercase tracking-wider font-bold text-[#8A8378] mb-1"
+            className="block text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] mb-1"
           >
             Catégorie
           </label>
@@ -315,7 +312,7 @@ export default async function AdminJournalTransactionsPage({
             id="f-categorie"
             name="categorie"
             defaultValue={categorie}
-            className="w-full px-3 py-2.5 rounded-lg border border-[#8A8378]/30 bg-white text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/30 bg-[#1A0826]/70 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
           >
             <option value="">Toutes</option>
             <optgroup label="Recettes">
@@ -337,7 +334,7 @@ export default async function AdminJournalTransactionsPage({
         <div>
           <label
             htmlFor="f-devise"
-            className="block text-[10px] uppercase tracking-wider font-bold text-[#8A8378] mb-1"
+            className="block text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] mb-1"
           >
             Devise
           </label>
@@ -345,7 +342,7 @@ export default async function AdminJournalTransactionsPage({
             id="f-devise"
             name="devise"
             defaultValue={devise}
-            className="w-full px-3 py-2.5 rounded-lg border border-[#8A8378]/30 bg-white text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/30 bg-[#1A0826]/70 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
           >
             <option value="">Toutes</option>
             {DEVISE_CODES.map((code) => (
@@ -358,7 +355,7 @@ export default async function AdminJournalTransactionsPage({
         <div>
           <label
             htmlFor="f-caisse"
-            className="block text-[10px] uppercase tracking-wider font-bold text-[#8A8378] mb-1"
+            className="block text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] mb-1"
           >
             Caisse
           </label>
@@ -366,7 +363,7 @@ export default async function AdminJournalTransactionsPage({
             id="f-caisse"
             name="caisse"
             defaultValue={caisse}
-            className="w-full px-3 py-2.5 rounded-lg border border-[#8A8378]/30 bg-white text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/30 bg-[#1A0826]/70 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
           >
             <option value="">Toutes</option>
             {caisses.map((c) => (
@@ -379,7 +376,7 @@ export default async function AdminJournalTransactionsPage({
         <div className="col-span-2">
           <label
             htmlFor="f-q"
-            className="block text-[10px] uppercase tracking-wider font-bold text-[#8A8378] mb-1"
+            className="block text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] mb-1"
           >
             Recherche
           </label>
@@ -390,13 +387,13 @@ export default async function AdminJournalTransactionsPage({
             defaultValue={recherche}
             maxLength={80}
             placeholder="Libellé, référence, donateur…"
-            className="w-full px-3 py-2.5 rounded-lg border border-[#8A8378]/30 bg-white text-sm text-[#1E0F2B] placeholder:text-[#8A8378]/50 focus:outline-none focus:border-[#C9A227]"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/30 bg-[#1A0826]/70 text-sm text-[#FAF6EF] placeholder:text-[#FAF6EF]/35 focus:outline-none focus:border-[#C9A227]"
           />
         </div>
         <div>
           <label
             htmlFor="f-du"
-            className="block text-[10px] uppercase tracking-wider font-bold text-[#8A8378] mb-1"
+            className="block text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] mb-1"
           >
             Du
           </label>
@@ -405,13 +402,13 @@ export default async function AdminJournalTransactionsPage({
             name="du"
             type="date"
             defaultValue={du}
-            className="w-full px-3 py-2.5 rounded-lg border border-[#8A8378]/30 bg-white text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/30 bg-[#1A0826]/70 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
           />
         </div>
         <div>
           <label
             htmlFor="f-au"
-            className="block text-[10px] uppercase tracking-wider font-bold text-[#8A8378] mb-1"
+            className="block text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] mb-1"
           >
             Au
           </label>
@@ -420,20 +417,20 @@ export default async function AdminJournalTransactionsPage({
             name="au"
             type="date"
             defaultValue={au}
-            className="w-full px-3 py-2.5 rounded-lg border border-[#8A8378]/30 bg-white text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/30 bg-[#1A0826]/70 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
           />
         </div>
         <div className="col-span-2 md:col-span-4 flex items-center gap-3">
           <button
             type="submit"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#2A0E3D] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
           >
             <Search className="w-4 h-4 text-[#C9A227]" />
             Filtrer
           </button>
           <Link
             href="/admin/tresorerie/transactions"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#8A8378]/30 text-[#8A8378] text-sm font-semibold hover:border-[#C9A227]/60 hover:text-[#A3821C] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#C9A227]/30 text-[#BDB4C9] text-sm font-semibold hover:border-[#C9A227]/60 hover:text-[#DDBE55] transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
             Réinitialiser
@@ -444,31 +441,31 @@ export default async function AdminJournalTransactionsPage({
       {/* Totaux de la sélection */}
       {(recettesParDevise.size > 0 || depensesParDevise.size > 0) && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <div className="bg-white rounded-xl border border-[#5B7052]/30 p-4">
-            <p className="text-[10px] uppercase tracking-wider text-[#5B7052] font-bold mb-1">
+          <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#5B7052]/30 p-4">
+            <p className="text-[10px] uppercase tracking-wider text-[#A3C9B0] font-bold mb-1">
               Recettes de la sélection
             </p>
-            <p className="text-lg font-bold text-[#3F5039] leading-tight">
+            <p className="text-lg font-bold text-[#A3C9B0] leading-tight">
               {[...recettesParDevise.entries()]
                 .map(([d, m]) => formaterMontant(m, d))
                 .join(" + ") || "—"}
             </p>
           </div>
-          <div className="bg-white rounded-xl border border-[#B3452E]/25 p-4">
-            <p className="text-[10px] uppercase tracking-wider text-[#B3452E] font-bold mb-1">
+          <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#B3452E]/25 p-4">
+            <p className="text-[10px] uppercase tracking-wider text-[#E08B6D] font-bold mb-1">
               Dépenses de la sélection
             </p>
-            <p className="text-lg font-bold text-[#B3452E] leading-tight">
+            <p className="text-lg font-bold text-[#E08B6D] leading-tight">
               {[...depensesParDevise.entries()]
                 .map(([d, m]) => formaterMontant(m, d))
                 .join(" + ") || "—"}
             </p>
           </div>
-          <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 col-span-2 md:col-span-1">
-            <p className="text-[10px] uppercase tracking-wider text-[#8A8378] font-bold mb-1">
+          <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 col-span-2 md:col-span-1">
+            <p className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-bold mb-1">
               Solde (par devise)
             </p>
-            <p className="text-lg font-bold text-[#1E0F2B] leading-tight">
+            <p className="text-lg font-bold font-serif text-[#FAF6EF] leading-tight">
               {[
                 ...new Set([
                   ...recettesParDevise.keys(),
@@ -484,7 +481,7 @@ export default async function AdminJournalTransactionsPage({
                 )
                 .join(" + ") || "—"}
             </p>
-            <p className="text-[10px] text-[#8A8378] mt-0.5">
+            <p className="text-[10px] text-[#BDB4C9] mt-0.5">
               transferts internes exclus
             </p>
           </div>
@@ -492,34 +489,34 @@ export default async function AdminJournalTransactionsPage({
       )}
 
       {/* Journal */}
-      <div className="bg-white rounded-xl border border-[#8A8378]/15 overflow-hidden">
+      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 overflow-hidden">
         {transactions.length === 0 ? (
-          <p className="text-sm text-[#8A8378] italic p-10 text-center">
+          <p className="text-sm text-[#BDB4C9] italic p-10 text-center">
             Aucune écriture ne correspond à ces filtres.
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[760px]">
               <thead>
-                <tr className="bg-[#2A0E3D]/[0.03] border-b border-[#8A8378]/15 text-left">
-                  <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-[#8A8378]">
+                <tr className="bg-[#3D1A54]/[0.03] border-b border-[#C9A227]/15 text-left">
+                  <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9]">
                     Date
                   </th>
-                  <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-[#8A8378]">
+                  <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9]">
                     Mouvement
                   </th>
-                  <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-[#8A8378]">
+                  <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9]">
                     Catégorie
                   </th>
-                  <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-[#8A8378]">
+                  <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9]">
                     Caisse
                   </th>
-                  <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-[#8A8378] text-right">
+                  <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] text-right">
                     Montant
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#8A8378]/10">
+              <tbody className="divide-y divide-[#C9A227]/10">
                 {transactions.map((t) => {
                   const meta = MOUVEMENT_TYPES[
                     t.type as keyof typeof MOUVEMENT_TYPES
@@ -533,9 +530,9 @@ export default async function AdminJournalTransactionsPage({
                   return (
                     <tr
                       key={t.id}
-                      className="hover:bg-[#FAF6EF]/60 transition-colors"
+                      className="hover:bg-[#C9A227]/15 transition-colors"
                     >
-                      <td className="px-4 py-3 whitespace-nowrap text-xs text-[#8A8378] align-top">
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-[#BDB4C9] align-top">
                         {new Date(t.date).toLocaleDateString("fr-FR", {
                           day: "2-digit",
                           month: "short",
@@ -568,10 +565,10 @@ export default async function AdminJournalTransactionsPage({
                             )}
                           </span>
                           <div className="min-w-0">
-                            <p className="font-medium text-[#1E0F2B] leading-snug">
+                            <p className="font-medium text-[#FAF6EF] leading-snug">
                               {t.label}
                             </p>
-                            <p className="text-[11px] text-[#8A8378] mt-0.5">
+                            <p className="text-[11px] text-[#BDB4C9] mt-0.5">
                               {meta?.libelle ?? t.type} ·{" "}
                               {libelleMethode(t.method)}
                               {t.reference ? ` · réf. ${t.reference}` : ""}
@@ -594,7 +591,7 @@ export default async function AdminJournalTransactionsPage({
                           {libelleCategorie(t.category, t.type)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 align-top text-xs text-[#8A8378]">
+                      <td className="px-4 py-3 align-top text-xs text-[#BDB4C9]">
                         {t.type === "TRANSFERT" && caisseSource && caisseDestination ? (
                           <span className="leading-snug">
                             {caisseSource.name} → {caisseDestination.name}
@@ -629,15 +626,15 @@ export default async function AdminJournalTransactionsPage({
 
         {/* Pagination */}
         {pages > 1 && (
-          <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-[#8A8378]/15 bg-[#2A0E3D]/[0.02] flex-wrap">
-            <p className="text-[11px] text-[#8A8378]">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-[#C9A227]/15 bg-[#3D1A54]/[0.02] flex-wrap">
+            <p className="text-[11px] text-[#BDB4C9]">
               Page {pageSure} sur {pages} — {total} écritures
             </p>
             <div className="flex items-center gap-1.5">
               {pageSure > 1 && (
                 <Link
                   href={construireQuery(filtresCourants, pageSure - 1)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#8A8378]/25 text-[#8A8378] hover:border-[#C9A227]/60 hover:text-[#A3821C] transition-colors"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#C9A227]/25 text-[#BDB4C9] hover:border-[#C9A227]/60 hover:text-[#DDBE55] transition-colors"
                   aria-label="Page précédente"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -657,7 +654,7 @@ export default async function AdminJournalTransactionsPage({
                   return (
                     <span key={n} className="flex items-center gap-1.5">
                       {trou && (
-                        <span className="text-[#8A8378]/60 text-xs px-0.5">
+                        <span className="text-[#FAF6EF]/40 text-xs px-0.5">
                           …
                         </span>
                       )}
@@ -666,8 +663,8 @@ export default async function AdminJournalTransactionsPage({
                         className={cn(
                           "w-9 h-9 flex items-center justify-center rounded-lg text-xs font-semibold border transition-colors",
                           n === pageSure
-                            ? "bg-[#C9A227] text-[#1E0F2B] border-[#C9A227]"
-                            : "border-[#8A8378]/25 text-[#8A8378] hover:border-[#C9A227]/60 hover:text-[#A3821C]"
+                            ? "bg-[#C9A227] text-[#FAF6EF] border-[#C9A227]"
+                            : "border-[#C9A227]/25 text-[#BDB4C9] hover:border-[#C9A227]/60 hover:text-[#DDBE55]"
                         )}
                       >
                         {n}
@@ -678,7 +675,7 @@ export default async function AdminJournalTransactionsPage({
               {pageSure < pages && (
                 <Link
                   href={construireQuery(filtresCourants, pageSure + 1)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#8A8378]/25 text-[#8A8378] hover:border-[#C9A227]/60 hover:text-[#A3821C] transition-colors"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#C9A227]/25 text-[#BDB4C9] hover:border-[#C9A227]/60 hover:text-[#DDBE55] transition-colors"
                   aria-label="Page suivante"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -693,7 +690,7 @@ export default async function AdminJournalTransactionsPage({
       <div className="text-center">
         <Link
           href="/admin/tresorerie"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-[#8A8378] hover:text-[#A3821C] transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-[#BDB4C9] hover:text-[#DDBE55] transition-colors"
         >
           ← Situation de trésorerie
         </Link>

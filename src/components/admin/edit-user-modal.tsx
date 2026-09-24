@@ -113,7 +113,7 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
         type="button"
         onClick={() => setOpen(true)}
         disabled={!canEditRole}
-        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#BDB4C9] hover:text-[#C9A227] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         aria-label="Modifier"
         title={canEditRole ? "Modifier l'utilisateur (rôle, photo…)" : "Impossible de modifier un super admin"}
       >
@@ -124,13 +124,13 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#1A0826]/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
-          <div className="relative bg-white rounded-2xl shadow-2xl border border-[#8A8378]/15 max-w-md w-full overflow-hidden max-h-[92vh] overflow-y-auto">
+          <div className="relative bg-[#1A0826]/70 rounded-2xl shadow-xl shadow-2xl border border-[#C9A227]/15 max-w-md w-full overflow-hidden max-h-[92vh] overflow-y-auto">
             <div className="h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
 
             {/* Header */}
-            <div className="px-6 py-4 border-b border-[#8A8378]/10 flex items-center justify-between sticky top-0 bg-white z-10">
-              <h2 className="text-lg font-bold text-[#1E0F2B]">Modifier l&apos;utilisateur</h2>
-              <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-[#8A8378]/10 text-[#8A8378]">
+            <div className="px-6 py-4 border-b border-[#C9A227]/10 flex items-center justify-between sticky top-0 bg-[#1A0826]/70 z-10">
+              <h2 className="text-lg font-bold font-serif text-[#FAF6EF]">Modifier l&apos;utilisateur</h2>
+              <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-[#FAF6EF]/10 text-[#BDB4C9]">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -138,7 +138,7 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
             <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
               {/* ⭐ V2.7 — Photo de profil */}
               <div>
-                <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold font-serif text-[#FAF6EF] uppercase tracking-wider mb-2">
                   Photo de profil
                 </label>
                 <div className="flex items-center gap-4">
@@ -167,7 +167,7 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={avatarProcessing}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] text-xs font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#3D1A54] text-[#FAF6EF] text-xs font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
                     >
                       <Camera className="w-3.5 h-3.5" />
                       {avatarUrl ? "Changer la photo" : "Ajouter une photo"}
@@ -177,13 +177,13 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
                         type="button"
                         onClick={() => setAvatarUrl(null)}
                         disabled={avatarProcessing}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-400/10 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         Retirer
                       </button>
                     )}
-                    <p className="text-[10px] text-[#8A8378]">
+                    <p className="text-[10px] text-[#BDB4C9]">
                       JPG/PNG · recadrée en carré · compressée ≤ 60 KB
                     </p>
                   </div>
@@ -192,7 +192,7 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
 
               {/* Rôle */}
               <div>
-                <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold font-serif text-[#FAF6EF] uppercase tracking-wider mb-2">
                   Rôle
                 </label>
                 <div className="space-y-2">
@@ -204,7 +204,7 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
                         className={`flex items-start gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all ${
                           role === r.value
                             ? "border-[#C9A227] bg-[#C9A227]/5"
-                            : "border-[#8A8378]/20 hover:border-[#8A8378]/40"
+                            : "border-[#C9A227]/20 hover:border-[#C9A227]/40"
                         }`}
                       >
                         <input
@@ -218,8 +218,8 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
                         <div className="flex items-start gap-2">
                           <Icon className="w-4 h-4 mt-0.5" style={{ color: r.color }} />
                           <div>
-                            <div className="text-sm font-semibold text-[#1E0F2B]">{r.label}</div>
-                            <div className="text-xs text-[#8A8378]">{r.desc}</div>
+                            <div className="text-sm font-semibold text-[#FAF6EF]">{r.label}</div>
+                            <div className="text-xs text-[#BDB4C9]">{r.desc}</div>
                           </div>
                         </div>
                       </label>
@@ -229,7 +229,7 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
               </div>
 
               {/* Vérification */}
-              <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] cursor-pointer hover:border-[#C9A227] transition-colors">
+              <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#C9A227]/20 bg-[#C9A227]/10 cursor-pointer hover:border-[#C9A227] transition-colors">
                 <input
                   type="checkbox"
                   checked={verified}
@@ -237,26 +237,26 @@ export function EditUserModal({ userId, userName, currentRole, isVerified, curre
                   className="w-4 h-4 accent-[#C9A227]"
                 />
                 <div>
-                  <div className="text-sm font-semibold text-[#1E0F2B]">Compte vérifié</div>
-                  <div className="text-xs text-[#8A8378]">L&apos;utilisateur peut se connecter et accéder à la communauté</div>
+                  <div className="text-sm font-semibold text-[#FAF6EF]">Compte vérifié</div>
+                  <div className="text-xs text-[#BDB4C9]">L&apos;utilisateur peut se connecter et accéder à la communauté</div>
                 </div>
               </label>
 
               {error && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
+                <p className="text-sm text-red-400 flex items-center gap-1">
                   <AlertCircle className="w-4 h-4" />
                   {error}
                 </p>
               )}
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#8A8378]/10">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#C9A227]/10">
                 <button type="button" onClick={() => setOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8A8378] hover:text-[#1E0F2B] transition-colors">
+                  className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#BDB4C9] hover:text-[#FAF6EF] transition-colors">
                   Annuler
                 </button>
                 <button type="submit" disabled={loading}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40">
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {loading ? "Enregistrement..." : "Enregistrer"}
                 </button>

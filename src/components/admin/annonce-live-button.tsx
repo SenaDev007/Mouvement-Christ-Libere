@@ -79,13 +79,13 @@ export function AnnonceLiveButton({ liveId, status }: AnnonceLiveButtonProps) {
         type="button"
         onClick={handleAnnoncer}
         disabled={loading}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#A3821C] bg-[#C9A227]/10 hover:bg-[#C9A227]/20 disabled:opacity-50 transition-colors"
+        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#DDBE55] bg-[#C9A227]/10 hover:bg-[#C9A227]/20 disabled:opacity-50 transition-colors"
         title="Envoyer l'annonce de ce live dans le canal « Annonces officielles » de Yeshua Connect (filet de sécurité si l'envoi automatique échoue)"
       >
         {loading ? (
           <Loader2 className="w-3 h-3 animate-spin" />
         ) : envoye ? (
-          <CheckCircle2 className="w-3 h-3 text-[#5B7052]" />
+          <CheckCircle2 className="w-3 h-3 text-[#A3C9B0]" />
         ) : (
           <Megaphone className="w-3 h-3" />
         )}
@@ -93,7 +93,7 @@ export function AnnonceLiveButton({ liveId, status }: AnnonceLiveButtonProps) {
       </button>
 
       {erreur && (
-        <div className="max-w-xs text-[11px] leading-snug bg-red-50 border border-red-200/60 text-red-700 rounded-lg px-2 py-1.5">
+        <div className="max-w-xs text-[11px] leading-snug bg-red-400/10 border border-red-400/25/60 text-red-400 rounded-lg px-2 py-1.5">
           <span className="inline-flex items-center gap-1 font-bold">
             <AlertCircle className="w-3 h-3 flex-shrink-0" />
             {erreur}

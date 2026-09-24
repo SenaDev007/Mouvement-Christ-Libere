@@ -51,9 +51,9 @@ const LIBELLES_STATUT: Record<string, string> = {
 };
 
 const COULEURS_STATUT: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 border-amber-300",
+  pending: "bg-amber-400/15 text-amber-300 border-amber-400/30",
   approved: "bg-state-success/15 text-state-success border-state-success/40",
-  failed: "bg-red-100 text-red-700 border-red-300",
+  failed: "bg-red-400/15 text-red-400 border-red-400/30",
 };
 
 const LIBELLES_TYPE: Record<string, string> = {
@@ -63,9 +63,9 @@ const LIBELLES_TYPE: Record<string, string> = {
 };
 
 const COULEURS_TYPE: Record<string, string> = {
-  offrande: "bg-[#C9A227]/15 text-[#A3821C] border-[#C9A227]/40",
-  dime: "bg-[#8C5FA8]/15 text-[#6B4480] border-[#8C5FA8]/40",
-  don: "bg-[#5B7052]/15 text-[#3F5039] border-[#5B7052]/40",
+  offrande: "bg-[#C9A227]/15 text-[#DDBE55] border-[#C9A227]/40",
+  dime: "bg-[#8C5FA8]/15 text-[#C9AEE3] border-[#8C5FA8]/40",
+  don: "bg-[#5B7052]/15 text-[#A3C9B0] border-[#5B7052]/40",
 };
 
 const LIBELLES_PROVIDER: Record<string, string> = {
@@ -149,31 +149,31 @@ export default async function AdminDonationsPage({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-1">
           Contributions financières
         </p>
         <h1
-          className="text-2xl md:text-3xl font-bold text-[#1E0F2B]"
-          style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}
+          className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]"
+         
         >
           Dons
         </h1>
-        <p className="text-sm text-[#8A8378] mt-1">
+        <p className="text-sm text-[#BDB4C9] mt-1">
           Dons reçus via la page publique « Contribuer » — offrandes, dîmes et
           dons, catégorisés dès le paiement.
         </p>
       </div>
 
       {/* Note trésorerie */}
-      <div className="bg-white rounded-xl border border-[#C9A227]/30 p-4 flex items-start gap-3">
+      <div className="bg-[#1A0826]/70 rounded-2xl border border-[#C9A227]/40 shadow-lg p-4 flex items-start gap-3">
         <div className="w-9 h-9 rounded-lg bg-[#C9A227]/10 flex items-center justify-center flex-shrink-0">
           <ShieldCheck className="w-4 h-4 text-[#C9A227]" />
         </div>
         <div className="text-sm leading-relaxed">
-          <p className="font-semibold text-[#1E0F2B] mb-0.5">
+          <p className="font-semibold text-[#FAF6EF] mb-0.5">
             Passerelles réelles : FedaPay (Afrique de l&apos;Ouest) et Paystack (international)
           </p>
-          <p className="text-[#8A8378]">
+          <p className="text-[#BDB4C9]">
             Chaque paiement confirmé (statut « Confirmé ») est automatiquement
             enregistré dans la trésorerie : recette catégorisée (offrande, dîme
             ou don) dans la caisse « Dons en ligne (FedaPay / Paystack) », et le
@@ -184,7 +184,7 @@ export default async function AdminDonationsPage({
                 seule, super admins) vit désormais à cette adresse. */}
             <Link
               href="/admin/tresorerie/transactions"
-              className="font-semibold text-[#A3821C] hover:underline"
+              className="font-semibold text-[#DDBE55] hover:underline"
             >
               Voir le journal de la trésorerie
             </Link>
@@ -194,41 +194,41 @@ export default async function AdminDonationsPage({
 
       {/* Stats cards premium */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 relative overflow-hidden">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
           <CheckCircle2 className="w-4 h-4 text-[#C9A227] mb-2" />
-          <div className="text-2xl font-bold text-[#1E0F2B]">{nbConfirmes}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5">
+          <div className="text-2xl font-bold font-serif text-[#FAF6EF]">{nbConfirmes}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-semibold mt-0.5">
             Dons confirmés{nbEnAttente > 0 ? ` · ${nbEnAttente} en attente` : ""}
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 relative overflow-hidden">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C]" />
           <Coins className="w-4 h-4 text-[#C9A227] mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-[#1E0F2B] leading-tight">
+          <div className="text-lg md:text-2xl font-bold font-serif text-[#FAF6EF] leading-tight">
             {resumeDevise || "—"}
           </div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5">
+          <div className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-semibold mt-0.5">
             Total accumulé (confirmé)
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8C5FA8]/30 p-4 relative overflow-hidden">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#8C5FA8]/30 p-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#8C5FA8] to-[#6B4480]" />
-          <Calendar className="w-4 h-4 text-[#8C5FA8] mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-[#8C5FA8] leading-tight">
+          <Calendar className="w-4 h-4 text-[#C9AEE3] mb-2" />
+          <div className="text-lg md:text-2xl font-bold text-[#C9AEE3] leading-tight">
             {resumeMois || "—"}
           </div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8C5FA8] font-semibold mt-0.5">
+          <div className="text-[10px] uppercase tracking-wider text-[#C9AEE3] font-semibold mt-0.5">
             Ce mois-ci (confirmé)
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-[#5B7052]/30 p-4 relative overflow-hidden">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#5B7052]/30 p-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#5B7052] to-[#3F5039]" />
-          <TrendingUp className="w-4 h-4 text-[#5B7052] mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-[#5B7052] leading-tight">
+          <TrendingUp className="w-4 h-4 text-[#A3C9B0] mb-2" />
+          <div className="text-lg md:text-2xl font-bold text-[#A3C9B0] leading-tight">
             {nbEchoues > 0 ? `${nbEchoues} échoué${nbEchoues > 1 ? "s" : ""}` : "Aucun échec"}
           </div>
-          <div className="text-[10px] uppercase tracking-wider text-[#5B7052] font-semibold mt-0.5">
+          <div className="text-[10px] uppercase tracking-wider text-[#A3C9B0] font-semibold mt-0.5">
             Paiements non aboutis
           </div>
         </div>
@@ -237,8 +237,8 @@ export default async function AdminDonationsPage({
       {/* Répartition par catégorie + passerelle */}
       {(parType.size > 0 || parProvider.size > 0) && (
         <div className="grid md:grid-cols-3 gap-3">
-          <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 md:col-span-2">
-            <h2 className="font-bold text-sm text-[#1E0F2B] flex items-center gap-2 mb-3">
+          <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 md:col-span-2">
+            <h2 className="font-bold text-sm text-[#FAF6EF] flex items-center gap-2 mb-3">
               <ArrowLeftRight className="w-4 h-4 text-[#C9A227]" />
               Répartition par catégorie (confirmés)
             </h2>
@@ -250,20 +250,20 @@ export default async function AdminDonationsPage({
                 return (
                   <div key={type}>
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="font-semibold text-[#1E0F2B]">
+                      <span className="font-semibold text-[#FAF6EF]">
                         {LIBELLES_TYPE[type]}
                         {v ? (
-                          <span className="text-[#8A8378] font-normal">
+                          <span className="text-[#BDB4C9] font-normal">
                             {" "}
                             · {v.nb} don{v.nb > 1 ? "s" : ""}
                           </span>
                         ) : null}
                       </span>
-                      <span className="font-bold text-[#A3821C]">
+                      <span className="font-bold text-[#DDBE55]">
                         {v ? formaterMontant(v.total, "XOF") : "—"}
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-[#8A8378]/10 overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-[#FAF6EF]/10 overflow-hidden">
                       <div
                         className={cn(
                           "h-full rounded-full",
@@ -279,8 +279,8 @@ export default async function AdminDonationsPage({
               })}
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-            <h2 className="font-bold text-sm text-[#1E0F2B] flex items-center gap-2 mb-3">
+          <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
+            <h2 className="font-bold text-sm text-[#FAF6EF] flex items-center gap-2 mb-3">
               <Wallet className="w-4 h-4 text-[#C9A227]" />
               Passerelles (confirmés)
             </h2>
@@ -290,15 +290,15 @@ export default async function AdminDonationsPage({
                   key={provider}
                   className="flex items-center justify-between text-xs"
                 >
-                  <span className="font-semibold text-[#1E0F2B]">
+                  <span className="font-semibold text-[#FAF6EF]">
                     {LIBELLES_PROVIDER[provider]}
                   </span>
-                  <span className="font-bold text-[#A3821C]">
+                  <span className="font-bold text-[#DDBE55]">
                     {parProvider.get(provider) || 0}
                   </span>
                 </div>
               ))}
-              <p className="text-[11px] text-[#8A8378] leading-relaxed pt-1">
+              <p className="text-[11px] text-[#BDB4C9] leading-relaxed pt-1">
                 Les dons sans passerelle indiquée proviennent de saisies
                 antérieures à V3.82.
               </p>
@@ -321,8 +321,8 @@ export default async function AdminDonationsPage({
             className={cn(
               "px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors",
               filtre === f.valeur
-                ? "bg-[#C9A227] text-[#1E0F2B] border-[#C9A227]"
-                : "bg-white text-[#8A8378] border-[#8A8378]/25 hover:border-[#C9A227]/60"
+                ? "bg-[#C9A227] text-[#FAF6EF] border-[#C9A227]"
+                : "bg-[#1A0826]/70 text-[#BDB4C9] border-[#C9A227]/25 hover:border-[#C9A227]/60"
             )}
           >
             {f.libelle}
@@ -333,9 +333,9 @@ export default async function AdminDonationsPage({
       {/* Liste complète */}
       <div className="space-y-3">
         {dons.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-dashed border-[#8A8378]/30 p-12 text-center">
-            <Heart className="w-10 h-10 text-[#8A8378]/30 mx-auto mb-3" />
-            <p className="text-sm text-[#8A8378] italic">
+          <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-dashed border-[#C9A227]/30 p-12 text-center">
+            <Heart className="w-10 h-10 text-[#FAF6EF]/20 mx-auto mb-3" />
+            <p className="text-sm text-[#BDB4C9] italic">
               Aucun don pour l&apos;instant.
             </p>
           </div>
@@ -343,7 +343,7 @@ export default async function AdminDonationsPage({
           dons.map((d) => (
             <div
               key={d.id}
-              className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:shadow-md transition-shadow group"
+              className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 hover:shadow-md transition-shadow group"
             >
               <div className="flex items-start gap-3">
                 {/* Icône don */}
@@ -355,13 +355,13 @@ export default async function AdminDonationsPage({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3 mb-1.5 flex-wrap">
                     <div className="min-w-0">
-                      <h3 className="font-bold text-sm text-[#1E0F2B]">
+                      <h3 className="font-bold text-sm text-[#FAF6EF]">
                         {d.isAnonymous ? "Don anonyme" : d.donorName || d.donorEmail || "Donateur"}
                       </h3>
                       {!d.isAnonymous && d.donorEmail && (
                         <a
                           href={`mailto:${d.donorEmail}`}
-                          className="inline-flex items-center gap-1 text-xs text-[#8C5FA8] hover:underline mt-0.5"
+                          className="inline-flex items-center gap-1 text-xs text-[#C9AEE3] hover:underline mt-0.5"
                         >
                           <Mail className="w-3 h-3" />
                           {d.donorEmail}
@@ -369,7 +369,7 @@ export default async function AdminDonationsPage({
                       )}
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <div className="text-lg font-bold text-[#A3821C]">
+                      <div className="text-lg font-bold text-[#DDBE55]">
                         {formaterMontant(d.amount, d.currency)}
                       </div>
                     </div>
@@ -380,7 +380,7 @@ export default async function AdminDonationsPage({
                     <span
                       className={cn(
                         "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border",
-                        COULEURS_STATUT[d.statut] || "bg-[#8A8378]/10 text-[#8A8378] border-[#8A8378]/25"
+                        COULEURS_STATUT[d.statut] || "bg-[#FAF6EF]/10 text-[#BDB4C9] border-[#C9A227]/25"
                       )}
                     >
                       {d.statut === "pending" && (
@@ -396,24 +396,24 @@ export default async function AdminDonationsPage({
                       <span
                         className={cn(
                           "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border",
-                          COULEURS_TYPE[d.typeDon] || "bg-[#8A8378]/10 text-[#8A8378] border-[#8A8378]/25"
+                          COULEURS_TYPE[d.typeDon] || "bg-[#FAF6EF]/10 text-[#BDB4C9] border-[#C9A227]/25"
                         )}
                       >
                         {LIBELLES_TYPE[d.typeDon] || d.typeDon}
                       </span>
                     )}
                     {d.provider && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#2A0E3D] text-[#C9A227]">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#3D1A54] text-[#C9A227]">
                         {LIBELLES_PROVIDER[d.provider] || d.provider}
                       </span>
                     )}
                     {d.reference && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono text-[#8A8378] bg-[#8A8378]/10">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono text-[#BDB4C9] bg-[#FAF6EF]/10">
                         {d.reference}
                       </span>
                     )}
                     {d.recurrent && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#8C5FA8]/15 text-[#6B4480] border border-[#8C5FA8]/30">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#8C5FA8]/15 text-[#C9AEE3] border border-[#8C5FA8]/30">
                         Récurrent
                       </span>
                     )}
@@ -421,16 +421,16 @@ export default async function AdminDonationsPage({
 
                   {/* Message */}
                   {d.message && (
-                    <div className="mt-2 px-3 py-2 rounded-lg bg-[#FAF6EF] border border-[#8A8378]/10 flex items-start gap-2">
-                      <MessageSquare className="w-3 h-3 text-[#8A8378] flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-[#1E0F2B]/70 italic line-clamp-2">
+                    <div className="mt-2 px-3 py-2 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/10 flex items-start gap-2">
+                      <MessageSquare className="w-3 h-3 text-[#BDB4C9] flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-[#FAF6EF]/70 italic line-clamp-2">
                         {d.message}
                       </p>
                     </div>
                   )}
 
                   {/* Date + confirmation */}
-                  <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#8A8378] mt-2">
+                  <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#BDB4C9] mt-2">
                     <span className="inline-flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {new Date(d.createdAt).toLocaleDateString("fr-FR", {
@@ -455,7 +455,7 @@ export default async function AdminDonationsPage({
               </div>
 
               {/* Suppression en pied de carte, pleine largeur */}
-              <div className="mt-2 pt-2 border-t border-[#8A8378]/10 flex items-center justify-end">
+              <div className="mt-2 pt-2 border-t border-[#C9A227]/10 flex items-center justify-end">
                 <DeleteButton entity="donations" id={d.id} />
               </div>
             </div>

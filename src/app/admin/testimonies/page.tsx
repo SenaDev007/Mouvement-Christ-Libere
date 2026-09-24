@@ -7,9 +7,9 @@ import { NewTestimonyButton } from "@/components/admin/create-buttons";
 export const dynamic = "force-dynamic";
 
 const STATUS_CONFIG = {
-  CONFIRMED: { label: "Confirmé", icon: Eye, color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  TO_DISCERN: { label: "À discerner", icon: Sparkles, color: "bg-[#C9A227]/15 text-[#A3821C] border-[#C9A227]/30" },
-  ARCHIVED: { label: "Archivé", icon: Archive, color: "bg-gray-100 text-gray-500 border-gray-200" },
+  CONFIRMED: { label: "Confirmé", icon: Eye, color: "bg-emerald-400/15 text-emerald-300 border-emerald-400/25" },
+  TO_DISCERN: { label: "À discerner", icon: Sparkles, color: "bg-[#C9A227]/15 text-[#DDBE55] border-[#C9A227]/30" },
+  ARCHIVED: { label: "Archivé", icon: Archive, color: "bg-[#1A0826]/60 text-[#BDB4C9] border-gray-200" },
 };
 
 export default async function AdminTestimoniesPage() {
@@ -38,13 +38,13 @@ export default async function AdminTestimoniesPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-1">
             Récits & expériences spirituelles
           </p>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
             Témoignages
           </h1>
-          <p className="text-sm text-[#8A8378] mt-1">
+          <p className="text-sm text-[#BDB4C9] mt-1">
             Gestion et modération des témoignages.
           </p>
         </div>
@@ -53,29 +53,29 @@ export default async function AdminTestimoniesPage() {
 
       {/* Stats rapides */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-          <div className="text-2xl font-bold text-[#1E0F2B]">{stats.total}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5">Total</div>
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
+          <div className="text-2xl font-bold font-serif text-[#FAF6EF]">{stats.total}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-semibold mt-0.5">Total</div>
         </div>
-        <div className="bg-white rounded-xl border border-emerald-200/50 p-4">
-          <div className="text-2xl font-bold text-emerald-700">{stats.confirmed}</div>
-          <div className="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold mt-0.5">Confirmés</div>
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-emerald-400/20 p-4">
+          <div className="text-2xl font-bold text-emerald-300">{stats.confirmed}</div>
+          <div className="text-[10px] uppercase tracking-wider text-emerald-300 font-semibold mt-0.5">Confirmés</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#C9A227]/30 p-4">
-          <div className="text-2xl font-bold text-[#A3821C]">{stats.toDiscern}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#A3821C] font-semibold mt-0.5">À discerner</div>
+        <div className="bg-[#1A0826]/70 rounded-2xl border border-[#C9A227]/40 shadow-lg p-4">
+          <div className="text-2xl font-bold text-[#DDBE55]">{stats.toDiscern}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#DDBE55] font-semibold mt-0.5">À discerner</div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-          <div className="text-2xl font-bold text-gray-500">{stats.archived}</div>
-          <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mt-0.5">Archivés</div>
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
+          <div className="text-2xl font-bold text-[#BDB4C9]">{stats.archived}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-semibold mt-0.5">Archivés</div>
         </div>
       </div>
 
       {/* Liste des témoignages */}
       {testimonies.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-[#8A8378]/30 p-12 text-center">
-          <FileText className="w-10 h-10 text-[#8A8378]/30 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378] italic">Aucun témoignage enregistré pour l&apos;instant.</p>
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-dashed border-[#C9A227]/30 p-12 text-center">
+          <FileText className="w-10 h-10 text-[#FAF6EF]/20 mx-auto mb-3" />
+          <p className="text-sm text-[#BDB4C9] italic">Aucun témoignage enregistré pour l&apos;instant.</p>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -88,7 +88,7 @@ export default async function AdminTestimoniesPage() {
             return (
               <div
                 key={t.id}
-                className="bg-white rounded-xl border border-[#8A8378]/15 p-4 hover:border-[#C9A227]/30 hover:shadow-md transition-all group min-w-0"
+                className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 hover:border-[#C9A227]/30 hover:shadow-md transition-all group min-w-0"
               >
                 <div className="flex items-start gap-4">
                   {/* Icon serviteur */}
@@ -103,9 +103,9 @@ export default async function AdminTestimoniesPage() {
                   <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
                     <div className="flex items-start justify-between gap-3 mb-1 flex-wrap">
                       <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
-                        <h3 className="font-bold text-sm text-[#1E0F2B] truncate">{t.title}</h3>
+                        <h3 className="font-bold text-sm text-[#FAF6EF] truncate">{t.title}</h3>
                         {t.short && (
-                          <p className="text-xs text-[#8A8378] line-clamp-1 mt-0.5">{t.short}</p>
+                          <p className="text-xs text-[#BDB4C9] line-clamp-1 mt-0.5">{t.short}</p>
                         )}
                       </div>
                       {/* Status badge */}
@@ -116,7 +116,7 @@ export default async function AdminTestimoniesPage() {
                     </div>
 
                     {/* Meta */}
-                    <div className="flex items-center gap-3 text-[11px] text-[#8A8378] mt-2 flex-wrap">
+                    <div className="flex items-center gap-3 text-[11px] text-[#BDB4C9] mt-2 flex-wrap">
                       <span
                         className="font-bold uppercase tracking-wider"
                         style={{ color: accentColor }}
@@ -125,7 +125,7 @@ export default async function AdminTestimoniesPage() {
                       </span>
                       {t.publishedAt && (
                         <>
-                          <span className="text-[#8A8378]/40">·</span>
+                          <span className="text-[#FAF6EF]/25">·</span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {new Date(t.publishedAt).toLocaleDateString("fr-FR")}
@@ -139,7 +139,7 @@ export default async function AdminTestimoniesPage() {
                   <div className="flex items-center gap-1 ">
                     <Link
                       href={`/admin/testimonies/${t.id}/edit`}
-                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8A8378] hover:text-[#C9A227] transition-colors"
+                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#BDB4C9] hover:text-[#C9A227] transition-colors"
                       aria-label="Modifier"
                     >
                       <Pencil className="w-3.5 h-3.5" />

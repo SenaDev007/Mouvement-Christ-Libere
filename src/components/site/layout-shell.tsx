@@ -10,7 +10,11 @@ import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 // ⭐ V3.66 — Espaces secrétariat & trésorerie : MASQUÉS intégralement (ils
 // possèdent leur propre coquille de navigation — sidebar violet/or — et leur
 // propre page de connexion plein écran, comme le back-office).
-const HIDDEN_ROUTES = ["/login", "/register", "/admin/login", "/secretariat", "/tresorerie"];
+// ⭐ V3.98 — Retour pasteur : la navbar du site public ne doit PAS apparaître
+// dans le back-office. « /admin » remplace « /admin/login » : TOUTES les
+// pages /admin/* (dashboard, serviteurs, enseignements…) sont masquées,
+// plus seulement la page de connexion.
+const HIDDEN_ROUTES = ["/login", "/register", "/admin", "/secretariat", "/tresorerie"];
 
 // Routes où le footer est masqué mais la navbar reste visible
 const NO_FOOTER_ROUTES = ["/live/", "/yeshua-connect"];

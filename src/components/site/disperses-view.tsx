@@ -65,18 +65,30 @@ export function DispersesView({ hero }: { hero: HeroConfig }) {
             className="object-cover opacity-15"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/90 to-[#1A0826]" />
+          <div className="absolute -top-40 -right-20 w-96 h-96 bg-[#C9A227]/10 rounded-full blur-[100px] animate-float" />
+          <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-[#8C5FA8]/10 rounded-full blur-[120px] animate-float" style={{ animationDelay: "1.5s" }} />
+          <div className="absolute inset-0 bg-grain opacity-[0.08] mix-blend-overlay" />
         </div>
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <Globe className="w-5 h-5 text-[#C9A227]" />
-            <span className="text-xs uppercase tracking-[0.25em] font-semibold text-[#C9A227]">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#C9A227]/15 border border-[#C9A227]/40 mb-8 animate-pulse-slow">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#DDBE55] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C9A227]" />
+            </span>
+            <Globe className="w-4 h-4 text-[#DDBE55]" />
+            <span className="text-xs uppercase tracking-[0.25em] font-semibold text-[#DDBE55]">
               <IsololeText>{hero.kicker}</IsololeText>
             </span>
           </div>
           <h1 className="font-serif text-3xl md:text-5xl font-bold text-[#FAF6EF] mb-4 drop-shadow-lg">
             <IsololeText>{hero.title}</IsololeText>{" "}
-            <span className="text-[#C9A227]">
+<span className="relative inline-block text-[#C9A227]">
               <IsololeText>{hero.titleAccent}</IsololeText>
+              <motion.span
+                animate={{ scaleX: [0, 1, 1, 0], transformOrigin: ["0% 50%", "0% 50%", "100% 50%", "100% 50%"] }}
+                transition={{ duration: 3, repeat: Infinity, times: [0, 0.15, 0.85, 1], ease: "easeInOut" }}
+                className="absolute bottom-1 left-0 w-full h-[4px] bg-[#DDBE55] rounded-full"
+              />
             </span>
             {hero.titleSuffix ? <> <IsololeText>{hero.titleSuffix}</IsololeText></> : null}
           </h1>

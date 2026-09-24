@@ -28,10 +28,10 @@ export const dynamic = "force-dynamic";
  */
 
 const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
-  ouvert: { label: "Ouvert", color: "bg-[#8A8378]/15 text-[#8A8378] border-[#8A8378]/25" },
-  en_priere: { label: "En prière", color: "bg-[#C9A227]/15 text-[#A3821C] border-[#C9A227]/30" },
-  exauce: { label: "Exaucé", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  archive: { label: "Archivé", color: "bg-gray-100 text-gray-500 border-gray-200" },
+  ouvert: { label: "Ouvert", color: "bg-[#FAF6EF]/15 text-[#BDB4C9] border-[#C9A227]/25" },
+  en_priere: { label: "En prière", color: "bg-[#C9A227]/15 text-[#DDBE55] border-[#C9A227]/30" },
+  exauce: { label: "Exaucé", color: "bg-emerald-400/15 text-emerald-300 border-emerald-400/25" },
+  archive: { label: "Archivé", color: "bg-[#1A0826]/60 text-[#BDB4C9] border-gray-200" },
 };
 
 const CATEGORIE_LABELS: Record<string, string> = {
@@ -91,17 +91,17 @@ export default async function AdminIntercessionPage({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-[#8A8378] font-bold mb-1 flex items-center gap-1.5">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-1 flex items-center gap-1.5">
           <Lock className="w-3.5 h-3.5 text-[#C9A227]" />
           Espace confidentiel
         </p>
         <h1
-          className="text-2xl md:text-3xl font-bold text-[#1E0F2B]"
-          style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}
+          className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]"
+         
         >
           Demandes d&apos;intercession
         </h1>
-        <p className="text-sm text-[#8A8378] mt-1">
+        <p className="text-sm text-[#BDB4C9] mt-1">
           Toutes les demandes de prière déposées depuis le site arrivent ici — elles ne sont
           visibles que par l&apos;administration et l&apos;équipe pastorale.
         </p>
@@ -109,27 +109,27 @@ export default async function AdminIntercessionPage({
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-          <div className="text-2xl font-bold text-[#1E0F2B]">{stats.total}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#8A8378] font-semibold mt-0.5 flex items-center gap-1">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
+          <div className="text-2xl font-bold font-serif text-[#FAF6EF]">{stats.total}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-semibold mt-0.5 flex items-center gap-1">
             <Heart className="w-3 h-3" /> Total reçues
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-[#C9A227]/30 p-4">
-          <div className="text-2xl font-bold text-[#A3821C]">{stats.enPriere}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#A3821C] font-semibold mt-0.5 flex items-center gap-1">
+        <div className="bg-[#1A0826]/70 rounded-2xl border border-[#C9A227]/40 shadow-lg p-4">
+          <div className="text-2xl font-bold text-[#DDBE55]">{stats.enPriere}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#DDBE55] font-semibold mt-0.5 flex items-center gap-1">
             <HandHeart className="w-3 h-3" /> En prière
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-emerald-200/50 p-4">
-          <div className="text-2xl font-bold text-emerald-700">{stats.exauces}</div>
-          <div className="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold mt-0.5 flex items-center gap-1">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-emerald-400/20 p-4">
+          <div className="text-2xl font-bold text-emerald-300">{stats.exauces}</div>
+          <div className="text-[10px] uppercase tracking-wider text-emerald-300 font-semibold mt-0.5 flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" /> Exaucées
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-          <div className="text-2xl font-bold text-gray-500">{stats.archives}</div>
-          <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mt-0.5 flex items-center gap-1">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
+          <div className="text-2xl font-bold text-[#BDB4C9]">{stats.archives}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-semibold mt-0.5 flex items-center gap-1">
             <Archive className="w-3 h-3" /> Archivées
           </div>
         </div>
@@ -144,8 +144,8 @@ export default async function AdminIntercessionPage({
             href={`/admin/intercession?statut=${f.id}`}
             className={`flex-shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               statutFilter === f.id
-                ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                : "border border-[#2A0E3D]/25 text-[#2A0E3D] hover:bg-[#2A0E3D]/5"
+                ? "bg-[#3D1A54] text-[#FAF6EF]"
+                : "border border-[#C9A227]/25 text-[#DDBE55] hover:bg-[#3D1A54]/5"
             }`}
           >
             {f.label}
@@ -155,9 +155,9 @@ export default async function AdminIntercessionPage({
 
       {/* Liste */}
       {demandes.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-[#8A8378]/30 p-12 text-center">
-          <Heart className="w-10 h-10 text-[#8A8378]/30 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378] italic">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-dashed border-[#C9A227]/30 p-12 text-center">
+          <Heart className="w-10 h-10 text-[#FAF6EF]/20 mx-auto mb-3" />
+          <p className="text-sm text-[#BDB4C9] italic">
             Aucune demande {statutFilter !== "tous" ? "dans ce statut " : ""}pour l&apos;instant.
           </p>
         </div>
@@ -170,8 +170,8 @@ export default async function AdminIntercessionPage({
             return (
               <div
                 key={d.id}
-                className={`bg-white rounded-xl border p-4 hover:shadow-md transition-shadow ${
-                  d.isUrgent ? "border-state-danger/40" : "border-[#8A8378]/15"
+                className={`bg-[#1A0826]/70 rounded-2xl shadow-lg border p-4 hover:shadow-md transition-shadow ${
+                  d.isUrgent ? "border-state-danger/40" : "border-[#C9A227]/15"
                 }`}
               >
                 {/* En-tête : avatar + titre + statut — le contenu garde toute
@@ -192,7 +192,7 @@ export default async function AdminIntercessionPage({
                   {/* Contenu */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-bold text-sm text-[#1E0F2B] min-w-0 break-words flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-sm text-[#FAF6EF] min-w-0 break-words flex items-center gap-2 flex-wrap">
                         {d.sujet}
                         {d.isUrgent && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-state-danger text-white flex-shrink-0">
@@ -207,9 +207,9 @@ export default async function AdminIntercessionPage({
                       </span>
                     </div>
 
-                    <p className="text-xs text-[#8A8378] mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                    <p className="text-xs text-[#BDB4C9] mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                       <span>
-                        par <span className="font-semibold text-[#1E0F2B]">{d.auteur}</span>
+                        par <span className="font-semibold text-[#FAF6EF]">{d.auteur}</span>
                       </span>
                       <span aria-hidden>·</span>
                       <span>{CATEGORIE_LABELS[d.categorie] || d.categorie}</span>
@@ -226,9 +226,9 @@ export default async function AdminIntercessionPage({
 
                     {/* ⭐ V3.32 — Localisation : d'où vient la demande */}
                     {localisation && (
-                      <p className="text-xs text-[#8A8378] mt-1 flex items-center gap-1.5">
+                      <p className="text-xs text-[#BDB4C9] mt-1 flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
-                        <span className="font-semibold text-[#1E0F2B]/80">{localisation}</span>
+                        <span className="font-semibold text-[#FAF6EF]/80">{localisation}</span>
                       </p>
                     )}
 
@@ -238,7 +238,7 @@ export default async function AdminIntercessionPage({
                         {d.telephone && (
                           <a
                             href={`tel:${d.telephone}`}
-                            className="inline-flex items-center gap-1 text-[#8C5FA8] hover:underline"
+                            className="inline-flex items-center gap-1 text-[#C9AEE3] hover:underline"
                           >
                             <Phone className="w-3 h-3" />
                             {d.telephone}
@@ -247,7 +247,7 @@ export default async function AdminIntercessionPage({
                         {d.email && (
                           <a
                             href={`mailto:${d.email}`}
-                            className="inline-flex items-center gap-1 text-[#8C5FA8] hover:underline break-all"
+                            className="inline-flex items-center gap-1 text-[#C9AEE3] hover:underline break-all"
                           >
                             <Mail className="w-3 h-3 flex-shrink-0" />
                             {d.email}
@@ -256,14 +256,14 @@ export default async function AdminIntercessionPage({
                       </p>
                     )}
 
-                    <p className="text-sm text-[#1E0F2B]/80 leading-relaxed mt-2 whitespace-pre-wrap">
+                    <p className="text-sm text-[#FAF6EF]/80 leading-relaxed mt-2 whitespace-pre-wrap">
                       {d.description}
                     </p>
 
                     {/* ⭐ V3.30 — Note vocale : lecteur direct dans le back-office */}
                     {d.audioUrl && (
                       <div className="mt-3 p-3 bg-[#C9A227]/5 border border-[#C9A227]/25 rounded-xl">
-                        <p className="text-[11px] font-bold text-[#A3821C] mb-1.5 flex items-center gap-1.5">
+                        <p className="text-[11px] font-bold text-[#DDBE55] mb-1.5 flex items-center gap-1.5">
                           <AudioLines className="w-3.5 h-3.5" />
                           Note vocale
                           {d.audioDuration
@@ -282,7 +282,7 @@ export default async function AdminIntercessionPage({
                         <p className="text-[11px] font-bold text-state-success mb-0.5">
                           Témoignage d&apos;exaucement
                         </p>
-                        <p className="text-xs text-[#1E0F2B]/70 italic">
+                        <p className="text-xs text-[#FAF6EF]/70 italic">
                           « {d.temoignageExaucement} »
                         </p>
                       </div>
@@ -294,7 +294,7 @@ export default async function AdminIntercessionPage({
                     sur mobile, la rangée de 5 boutons écrasait le texte).
                     Ligne dédiée pleine largeur, bordure haute, jamais de
                     collision avec le contenu. */}
-                <div className="mt-2 pt-2 border-t border-[#8A8378]/10">
+                <div className="mt-2 pt-2 border-t border-[#C9A227]/10">
                   <IntercessionActions
                     id={d.id}
                     statut={d.statut}
@@ -308,7 +308,7 @@ export default async function AdminIntercessionPage({
       )}
 
       {demandes.length > 0 && (
-        <p className="text-[11px] text-[#8A8378]">
+        <p className="text-[11px] text-[#BDB4C9]">
           {demandes.length} demande{demandes.length > 1 ? "s" : ""} affichée
           {demandes.length > 1 ? "s" : ""} — les demandes ne sont JAMAIS visibles publiquement.
         </p>

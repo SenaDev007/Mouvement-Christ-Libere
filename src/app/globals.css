@@ -414,6 +414,15 @@
   background-position: 0 0, 12px 12px;
 }
 
+/* ⭐ V3.98 — Grain CLAIR pour les fonds sombres du back-office Win Agro
+   (le .bg-grain ci-dessus utilise des points violets, invisibles sur le
+   violet nuit #150920 des modules admin/secrétariat/trésorerie). */
+.bg-grain-dark {
+  background-image: radial-gradient(rgba(250, 246, 239, 0.045) 1px, transparent 0), radial-gradient(rgba(250, 246, 239, 0.045) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+
 /* Verre dépoli premium */
 .glass-panel {
   background: rgba(255, 255, 255, 0.85);
@@ -452,6 +461,43 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #A3821C;
+}
+
+/* ============================================================
+   ⭐ V3.98 — THÈME WIN AGRO DU BACK-OFFICE (scope .bo-winagro)
+   Design Win Agro appliqué aux modules admin / secrétariat /
+   trésorerie : les tokens sémantiques (ink · stone · ivory) sont
+   inversés pour le fond violet nuit #150920 — la PALETTE Christ
+   Libère est conservée (or sacré · ivoire · violet impérial).
+   La classe est posée par admin-shell.tsx et space-shell.tsx.
+   ============================================================ */
+.bo-winagro {
+  /* text-ink → ivoire (titres & valeurs sur fond sombre) */
+  --color-ink: #FAF6EF;
+  /* text-stone → gris lilas clair (textes secondaires) */
+  --color-stone: #BDB4C9;
+  /* bg-ivory → violet profond (champs de formulaire) */
+  --color-ivory: #221032;
+}
+
+/* Les panneaux « card-gold-top » (formulaires admin-form) passent
+   en verre violet nuit bordé or — comme les panneaux Win Agro. */
+.bo-winagro .card-gold-top {
+  background-color: rgba(26, 8, 38, 0.7);
+  border-color: rgba(201, 162, 39, 0.18);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* Scrollbar : piste sombre dans le back-office (la piste ivoire
+   globale éblouirait sur le violet nuit). */
+.bo-winagro ::-webkit-scrollbar-track {
+  background: #0f0518;
+}
+
+/* Sélection de texte dorée sur violet — clin d'œil Win Agro */
+.bo-winagro ::selection {
+  background: rgba(201, 162, 39, 0.35);
+  color: #FAF6EF;
 }
 
 /* ============================================================

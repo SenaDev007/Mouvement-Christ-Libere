@@ -169,14 +169,14 @@ export default function AdminDemandesPage() {
 
   if (accesRefuse) {
     return (
-      <div className="max-w-xl mx-auto mt-8 bg-white rounded-2xl border border-[#8A8378]/15 p-8 text-center">
+      <div className="max-w-xl mx-auto mt-8 bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/15 p-8 text-center">
         <div className="w-12 h-12 rounded-full bg-[#C9A227]/10 flex items-center justify-center mx-auto mb-4">
-          <Inbox className="w-6 h-6 text-[#A3821C]" />
+          <Inbox className="w-6 h-6 text-[#DDBE55]" />
         </div>
-        <h1 className="text-xl font-bold text-[#1E0F2B] mb-2">
+        <h1 className="text-xl font-bold font-serif text-[#FAF6EF] mb-2">
           Module réservé aux serviteurs de Dieu
         </h1>
-        <p className="text-sm text-[#8A8378] leading-relaxed">
+        <p className="text-sm text-[#BDB4C9] leading-relaxed">
           Les demandes transmises par le secrétariat ne sont consultables que
           par les comptes super administrateurs (Pasteur Kongo et Sœur Afrika).
         </p>
@@ -195,7 +195,7 @@ export default function AdminDemandesPage() {
           </p>
           <h1
             className="text-2xl md:text-3xl font-bold mb-1"
-            style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}
+           
           >
             Demandes transmises
           </h1>
@@ -211,21 +211,21 @@ export default function AdminDemandesPage() {
 
       {/* Compteurs + filtre */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-[#C9A227]/40">
-          <Inbox className="w-4 h-4 text-[#A3821C]" />
-          <span className="text-sm font-bold text-[#1E0F2B]">
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1A0826]/70 border border-[#C9A227]/40">
+          <Inbox className="w-4 h-4 text-[#DDBE55]" />
+          <span className="text-sm font-bold font-serif text-[#FAF6EF]">
             {compteur.enAttente}
           </span>
-          <span className="text-xs text-[#8A8378]">
+          <span className="text-xs text-[#BDB4C9]">
             à réceptionner
           </span>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-[#5B7052]/30">
-          <BadgeCheck className="w-4 h-4 text-[#5B7052]" />
-          <span className="text-sm font-bold text-[#1E0F2B]">
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1A0826]/70 border border-[#5B7052]/30">
+          <BadgeCheck className="w-4 h-4 text-[#A3C9B0]" />
+          <span className="text-sm font-bold font-serif text-[#FAF6EF]">
             {compteur.validees}
           </span>
-          <span className="text-xs text-[#8A8378]">
+          <span className="text-xs text-[#BDB4C9]">
             validée{compteur.validees > 1 ? "s" : ""} (à clôturer)
           </span>
         </div>
@@ -234,8 +234,8 @@ export default function AdminDemandesPage() {
             onClick={() => setFiltre("mien")}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               filtre === "mien"
-                ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                : "bg-white text-[#8A8378] border border-[#8A8378]/25 hover:bg-[#FAF6EF]"
+                ? "bg-[#3D1A54] text-[#FAF6EF]"
+                : "bg-[#1A0826]/70 text-[#BDB4C9] border border-[#C9A227]/25 hover:bg-[#C9A227]/10"
             }`}
           >
             {monServiteur
@@ -246,8 +246,8 @@ export default function AdminDemandesPage() {
             onClick={() => setFiltre("tous")}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               filtre === "tous"
-                ? "bg-[#2A0E3D] text-[#FAF6EF]"
-                : "bg-white text-[#8A8378] border border-[#8A8378]/25 hover:bg-[#FAF6EF]"
+                ? "bg-[#3D1A54] text-[#FAF6EF]"
+                : "bg-[#1A0826]/70 text-[#BDB4C9] border border-[#C9A227]/25 hover:bg-[#C9A227]/10"
             }`}
           >
             Tous les serviteurs
@@ -259,10 +259,10 @@ export default function AdminDemandesPage() {
         <div
           className={`flex items-start gap-2 px-4 py-3 rounded-xl border text-sm ${
             confirmation.type === "succes"
-              ? "bg-[#5B7052]/10 border-[#5B7052]/30 text-[#3F5039]"
+              ? "bg-[#5B7052]/10 border-[#5B7052]/30 text-[#A3C9B0]"
               : confirmation.type === "avertissement"
-                ? "bg-[#C9A227]/10 border-[#C9A227]/40 text-[#A3821C]"
-                : "bg-[#B3452E]/10 border-[#B3452E]/30 text-[#B3452E]"
+                ? "bg-[#C9A227]/10 border-[#C9A227]/40 text-[#DDBE55]"
+                : "bg-[#B3452E]/10 border-[#B3452E]/30 text-[#E08B6D]"
           }`}
         >
           {confirmation.type === "succes" ? (
@@ -275,7 +275,7 @@ export default function AdminDemandesPage() {
       )}
 
       {erreur && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#B3452E] text-xs border border-[#B3452E]/30">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#E08B6D] text-xs border border-[#B3452E]/30">
           <AlertCircle className="w-4 h-4" />
           {erreur}
         </div>
@@ -283,13 +283,13 @@ export default function AdminDemandesPage() {
 
       {/* Liste */}
       {chargement ? (
-        <div className="flex items-center justify-center py-16 text-[#8A8378]">
+        <div className="flex items-center justify-center py-16 text-[#BDB4C9]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-white rounded-xl border border-dashed border-[#8A8378]/30 px-6 py-14 text-center">
-          <Inbox className="w-8 h-8 text-[#8A8378]/40 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378]">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-dashed border-[#C9A227]/30 px-6 py-14 text-center">
+          <Inbox className="w-8 h-8 text-[#FAF6EF]/25 mx-auto mb-3" />
+          <p className="text-sm text-[#BDB4C9]">
             Aucune demande transmise pour l&apos;instant — la secrétaire vous
             préviendra dès qu&apos;une demande arrive.
           </p>
@@ -299,7 +299,7 @@ export default function AdminDemandesPage() {
           {/* À réceptionner */}
           {enAttente.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-xs uppercase tracking-[0.2em] text-[#A3821C] font-bold px-1 flex items-center gap-2">
+              <h2 className="text-xs uppercase tracking-[0.2em] text-[#DDBE55] font-bold px-1 flex items-center gap-2">
                 <Send className="w-3.5 h-3.5" />
                 À réceptionner ({enAttente.length})
               </h2>
@@ -324,7 +324,7 @@ export default function AdminDemandesPage() {
           {/* Validées */}
           {validees.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-xs uppercase tracking-[0.2em] text-[#5B7052] font-bold px-1 flex items-center gap-2">
+              <h2 className="text-xs uppercase tracking-[0.2em] text-[#A3C9B0] font-bold px-1 flex items-center gap-2">
                 <BadgeCheck className="w-3.5 h-3.5" />
                 Validées — à clôturer ({validees.length})
               </h2>
@@ -349,9 +349,9 @@ export default function AdminDemandesPage() {
       )}
 
       {/* Lien public — expliquer le suivi au demandeur */}
-      <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 flex items-start gap-3">
-        <ExternalLink className="w-4 h-4 text-[#A3821C] flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-[#8A8378] leading-relaxed">
+      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 flex items-start gap-3">
+        <ExternalLink className="w-4 h-4 text-[#DDBE55] flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-[#BDB4C9] leading-relaxed">
           Chaque demandeur reçoit un <strong>code de suivi</strong> (ex.
           MCL-XXXXXX) au dépôt : quand vous validez, il voit l&apos;étape
           « Validée par le serviteur de Dieu » sur la page publique
@@ -390,59 +390,59 @@ function CarteDemande({
 
   return (
     <div
-      className={`bg-white rounded-xl border overflow-hidden ${
+      className={`bg-[#1A0826]/70 rounded-2xl shadow-lg border overflow-hidden ${
         demande.status === "VALIDEE"
           ? "border-[#5B7052]/40"
-          : "border-[#8A8378]/15"
+          : "border-[#C9A227]/15"
       }`}
     >
       {/* Ligne principale */}
       <button
         onClick={onToggle}
-        className="w-full text-left px-4 md:px-5 py-4 hover:bg-[#FAF6EF]/60 transition-colors"
+        className="w-full text-left px-4 md:px-5 py-4 hover:bg-[#C9A227]/15 transition-colors"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="text-sm font-semibold text-[#1E0F2B]">
+              <span className="text-sm font-semibold text-[#FAF6EF]">
                 {demande.requesterName}
               </span>
               {demande.status === "VALIDEE" ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-[#5B7052]/15 text-[#3F5039] border-[#5B7052]/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-[#5B7052]/15 text-[#A3C9B0] border-[#5B7052]/30">
                   Validée
                 </span>
               ) : (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-[#C9A227]/15 text-[#A3821C] border-[#C9A227]/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-[#C9A227]/15 text-[#DDBE55] border-[#C9A227]/30">
                   À réceptionner
                 </span>
               )}
               <span
                 className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
                   demande.source === "SITE"
-                    ? "bg-[#5B7052]/10 text-[#3F5039] border-[#5B7052]/30"
-                    : "bg-[#8A8378]/10 text-[#6B6459] border-[#8A8378]/30"
+                    ? "bg-[#5B7052]/10 text-[#A3C9B0] border-[#5B7052]/30"
+                    : "bg-[#FAF6EF]/10 text-[#6B6459] border-[#C9A227]/30"
                 }`}
               >
                 {demande.source === "SITE" ? "Site public" : "Présentiel"}
               </span>
               {demande.urgency === "urgente" && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#B3452E]/10 text-[#B3452E]">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#B3452E]/10 text-[#E08B6D]">
                   URGENTE
                 </span>
               )}
               {demande.urgency === "elevee" && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#C9A227]/10 text-[#A3821C]">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#C9A227]/10 text-[#DDBE55]">
                   ÉLEVÉE
                 </span>
               )}
             </div>
-            <p className="text-sm text-[#1E0F2B]/80 font-medium truncate">
+            <p className="text-sm text-[#FAF6EF]/80 font-medium truncate">
               {demande.subject}
             </p>
-            <div className="flex items-center gap-3 mt-1 text-[11px] text-[#8A8378] flex-wrap">
+            <div className="flex items-center gap-3 mt-1 text-[11px] text-[#BDB4C9] flex-wrap">
               <span
                 className={
-                  urgenceInfo?.couleur ?? "text-[#8A8378]"
+                  urgenceInfo?.couleur ?? "text-[#BDB4C9]"
                 }
               >
                 Urgence {urgenceInfo?.libelle ?? demande.urgency}
@@ -459,25 +459,25 @@ function CarteDemande({
                   : "—"}
               </span>
               {demande.trackingCode && (
-                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#FAF6EF] text-[#A3821C]">
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#C9A227]/10 text-[#DDBE55]">
                   {demande.trackingCode}
                 </span>
               )}
             </div>
           </div>
           <ChevronDown
-            className={`w-4 h-4 text-[#8A8378] flex-shrink-0 transition-transform ${ouvert ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-[#BDB4C9] flex-shrink-0 transition-transform ${ouvert ? "rotate-180" : ""}`}
           />
         </div>
       </button>
 
       {/* Détail */}
       {ouvert && (
-        <div className="px-4 md:px-5 pb-5 border-t border-[#8A8378]/10 pt-4 space-y-4">
+        <div className="px-4 md:px-5 pb-5 border-t border-[#C9A227]/10 pt-4 space-y-4">
           <div className="grid sm:grid-cols-2 gap-3 text-xs">
             <a
               href={isEmail ? `mailto:${demande.contact}` : `tel:${demande.contact}`}
-              className="flex items-center gap-2 text-[#8A8378] hover:text-[#A3821C] hover:underline"
+              className="flex items-center gap-2 text-[#BDB4C9] hover:text-[#DDBE55] hover:underline"
             >
               {isEmail ? (
                 <Mail className="w-3.5 h-3.5 text-[#C9A227]" />
@@ -487,12 +487,12 @@ function CarteDemande({
               {demande.contact}
             </a>
             {(demande.city || demande.country) && (
-              <div className="flex items-center gap-2 text-[#8A8378]">
+              <div className="flex items-center gap-2 text-[#BDB4C9]">
                 <MapPin className="w-3.5 h-3.5 text-[#C9A227]" />
                 {[demande.city, demande.country].filter(Boolean).join(", ")}
               </div>
             )}
-            <div className="flex items-center gap-2 text-[#8A8378]">
+            <div className="flex items-center gap-2 text-[#BDB4C9]">
               <Send className="w-3.5 h-3.5 text-[#C9A227]" />
               Transmise par le secrétariat{" "}
               {demande.transmittedAt
@@ -504,28 +504,28 @@ function CarteDemande({
                   })
                 : ""}
             </div>
-            <div className="flex items-center gap-2 text-[#8A8378]">
+            <div className="flex items-center gap-2 text-[#BDB4C9]">
               <CheckCheck className="w-3.5 h-3.5 text-[#C9A227]" />
               Destinée à {serviteur?.libelle ?? demande.servantCode}
             </div>
           </div>
 
-          <div className="px-4 py-3 rounded-lg bg-[#FAF6EF] border border-[#8A8378]/10">
-            <p className="text-[10px] uppercase font-bold text-[#A3821C] mb-1 flex items-center gap-1.5">
+          <div className="px-4 py-3 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/10">
+            <p className="text-[10px] uppercase font-bold text-[#DDBE55] mb-1 flex items-center gap-1.5">
               <MessageSquareQuote className="w-3 h-3" />
               Message du demandeur
             </p>
-            <p className="text-xs whitespace-pre-wrap leading-relaxed text-[#1E0F2B]/90">
+            <p className="text-xs whitespace-pre-wrap leading-relaxed text-[#FAF6EF]/90">
               {demande.message}
             </p>
           </div>
 
           {demande.transmissionNote && (
             <div className="px-4 py-3 rounded-lg bg-[#C9A227]/5 border border-[#C9A227]/25">
-              <p className="text-[10px] uppercase font-bold text-[#A3821C] mb-1">
+              <p className="text-[10px] uppercase font-bold text-[#DDBE55] mb-1">
                 Note de la secrétaire
               </p>
-              <p className="text-xs whitespace-pre-wrap text-[#1E0F2B]/80">
+              <p className="text-xs whitespace-pre-wrap text-[#FAF6EF]/80">
                 {demande.transmissionNote}
               </p>
             </div>
@@ -550,7 +550,7 @@ function CarteDemande({
             <button
               onClick={onTraiter}
               disabled={actionEnCours === `traiter:${demande.id}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#8A8378]/30 text-[#8A8378] text-xs font-semibold hover:bg-[#FAF6EF] transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#C9A227]/30 text-[#BDB4C9] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors disabled:opacity-50"
             >
               {actionEnCours === `traiter:${demande.id}` ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -562,8 +562,8 @@ function CarteDemande({
           </div>
 
           {demande.status === "TRANSMISE" && (
-            <p className="text-[10px] text-[#8A8378] flex items-center gap-1.5">
-              <BadgeCheck className="w-3 h-3 text-[#A3821C]" />
+            <p className="text-[10px] text-[#BDB4C9] flex items-center gap-1.5">
+              <BadgeCheck className="w-3 h-3 text-[#DDBE55]" />
               En validant, vous confirmez avoir pris connaissance de la
               demande : la secrétaire est immédiatement notifiée, et le
               demandeur voit l&apos;étape « Validée » dans son suivi.

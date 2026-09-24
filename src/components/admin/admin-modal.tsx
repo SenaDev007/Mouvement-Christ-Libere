@@ -75,12 +75,12 @@ export function AdminModal({
 
       {/* Modal */}
       <div
-        className={`relative ${SIZES[size]} w-full bg-white rounded-2xl shadow-2xl border border-[#8A8378]/15 max-h-[90vh] flex flex-col overflow-hidden`}
+        className={`relative ${SIZES[size]} w-full bg-[#1A0826]/70 rounded-2xl shadow-xl shadow-2xl border border-[#C9A227]/15 max-h-[90vh] flex flex-col overflow-hidden`}
         style={{ animation: "modalIn 200ms ease-out" }}
       >
         {/* Header avec accent */}
         <div
-          className="px-6 py-4 border-b border-[#8A8378]/10 relative overflow-hidden flex-shrink-0"
+          className="px-6 py-4 border-b border-[#C9A227]/10 relative overflow-hidden flex-shrink-0"
           style={{
             background: `linear-gradient(90deg, ${accentColor}10 0%, transparent 100%)`,
           }}
@@ -91,14 +91,14 @@ export function AdminModal({
           />
           <div className="flex items-start justify-between gap-4 relative z-10">
             <div>
-              <h2 className="text-lg font-bold text-[#1E0F2B]">{title}</h2>
+              <h2 className="text-lg font-bold font-serif text-[#FAF6EF]">{title}</h2>
               {subtitle && (
-                <p className="text-xs text-[#8A8378] mt-0.5">{subtitle}</p>
+                <p className="text-xs text-[#BDB4C9] mt-0.5">{subtitle}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-[#8A8378]/10 text-[#8A8378] hover:text-[#1E0F2B] transition-colors flex-shrink-0"
+              className="p-1.5 rounded-lg hover:bg-[#FAF6EF]/10 text-[#BDB4C9] hover:text-[#FAF6EF] transition-colors flex-shrink-0"
               aria-label="Fermer"
             >
               <X className="w-4 h-4" />
@@ -149,19 +149,19 @@ interface ModalFieldProps {
 export function ModalField({ label, required, fullWidth, children, help }: ModalFieldProps) {
   return (
     <div className={fullWidth ? "col-span-2" : ""}>
-      <label className="block text-xs font-bold text-[#1E0F2B] uppercase tracking-wider mb-1.5">
+      <label className="block text-xs font-bold font-serif text-[#FAF6EF] uppercase tracking-wider mb-1.5">
         {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
+        {required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       {children}
-      {help && <p className="text-[10px] text-[#8A8378] mt-1">{help}</p>}
+      {help && <p className="text-[10px] text-[#BDB4C9] mt-1">{help}</p>}
     </div>
   );
 }
 
 // Wrapper pour les inputs/selects avec border-radius élégant
 export function modalInputClass() {
-  return "w-full px-4 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/15 transition-all placeholder:text-[#8A8378]/50";
+  return "w-full px-4 py-2.5 rounded-xl border-2 border-[#C9A227]/20 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/15 transition-all placeholder:text-[#FAF6EF]/35";
 }
 
 // Bouton de soumission du modal
@@ -177,7 +177,7 @@ export function ModalSubmit({ loading, disabled, label, loadingLabel = "Enregist
     <button
       type="submit"
       disabled={loading || disabled}
-      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {loading ? (
         <>
@@ -195,7 +195,7 @@ export function ModalSubmit({ loading, disabled, label, loadingLabel = "Enregist
 export function ModalError({ error }: { error: string }) {
   if (!error) return null;
   return (
-    <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm col-span-2">
+    <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-400/10 border border-red-400/25 text-red-400 text-sm col-span-2">
       <AlertCircle className="w-4 h-4 flex-shrink-0" />
       <span>{error}</span>
     </div>

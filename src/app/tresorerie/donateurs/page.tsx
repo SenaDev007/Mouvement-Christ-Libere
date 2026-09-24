@@ -90,9 +90,9 @@ const LIBELLES_TYPES: Record<string, string> = {
 };
 
 const COULEURS_TYPES: Record<string, string> = {
-  don: "bg-[#5B7052]/15 text-[#3F5039] border-[#5B7052]/30",
-  offrande: "bg-[#C9A227]/15 text-[#A3821C] border-[#C9A227]/30",
-  dime: "bg-[#8C5FA8]/15 text-[#6B4480] border-[#8C5FA8]/30",
+  don: "bg-[#5B7052]/15 text-[#A3C9B0] border-[#5B7052]/30",
+  offrande: "bg-[#C9A227]/15 text-[#DDBE55] border-[#C9A227]/30",
+  dime: "bg-[#8C5FA8]/15 text-[#C9AEE3] border-[#8C5FA8]/30",
 };
 
 export default function TresorerieDonateursPage() {
@@ -137,10 +137,10 @@ export default function TresorerieDonateursPage() {
       {/* En-tête */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#1E0F2B]">
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
             Donateurs
           </h1>
-          <p className="text-sm text-[#8A8378] mt-1 flex items-center gap-1.5">
+          <p className="text-sm text-[#BDB4C9] mt-1 flex items-center gap-1.5">
             <HeartHandshake className="w-4 h-4 text-[#C9A227]" />
             Tous ceux qui ont donné — pour les porter dans la prière et
             bénir leur geste.
@@ -149,22 +149,22 @@ export default function TresorerieDonateursPage() {
       </div>
 
       {/* Période */}
-      <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4 space-y-3">
+      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <CalendarDays className="w-4 h-4 text-[#8A8378]" />
+          <CalendarDays className="w-4 h-4 text-[#BDB4C9]" />
           <input
             type="date"
             value={du}
             onChange={(e) => setDu(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
             aria-label="Début de la période"
           />
-          <span className="text-xs text-[#8A8378]">→</span>
+          <span className="text-xs text-[#BDB4C9]">→</span>
           <input
             type="date"
             value={au}
             onChange={(e) => setAu(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-[#FAF6EF] text-sm"
+            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
             aria-label="Fin de la période"
           />
         </div>
@@ -193,7 +193,7 @@ export default function TresorerieDonateursPage() {
             <button
               key={r.libelle}
               onClick={r.valeur}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#FAF6EF] text-[#8A8378] hover:bg-[#C9A227]/10 transition-colors"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#C9A227]/10 text-[#BDB4C9] hover:bg-[#C9A227]/10 transition-colors"
             >
               {r.libelle}
             </button>
@@ -202,7 +202,7 @@ export default function TresorerieDonateursPage() {
       </div>
 
       {erreur && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#B3452E] text-xs border border-[#B3452E]/30">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#E08B6D] text-xs border border-[#B3452E]/30">
           <AlertCircle className="w-4 h-4" />
           {erreur}
         </div>
@@ -210,50 +210,50 @@ export default function TresorerieDonateursPage() {
 
       {/* Totaux */}
       {chargement ? (
-        <div className="flex items-center justify-center py-16 text-[#8A8378]">
+        <div className="flex items-center justify-center py-16 text-[#BDB4C9]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       ) : !donnees || donnees.donateurs.length === 0 ? (
-        <div className="bg-white rounded-xl border border-[#8A8378]/15 px-6 py-14 text-center">
-          <HeartHandshake className="w-8 h-8 text-[#8A8378]/40 mx-auto mb-3" />
-          <p className="text-sm text-[#8A8378]">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 px-6 py-14 text-center">
+          <HeartHandshake className="w-8 h-8 text-[#FAF6EF]/25 mx-auto mb-3" />
+          <p className="text-sm text-[#BDB4C9]">
             Aucun donateur identifié sur cette période.
           </p>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-              <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
+            <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
+              <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
                 Donateurs
               </p>
-              <p className="text-2xl font-bold text-[#1E0F2B] mt-1">
+              <p className="text-2xl font-bold font-serif text-[#FAF6EF] mt-1">
                 {donnees.totaux.nbDonateurs}
               </p>
             </div>
-            <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-              <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
+            <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
+              <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
                 Dons reçus
               </p>
-              <p className="text-2xl font-bold text-[#1E0F2B] mt-1">
+              <p className="text-2xl font-bold font-serif text-[#FAF6EF] mt-1">
                 {donnees.totaux.nbDons}
               </p>
             </div>
-            <div className="bg-white rounded-xl border border-[#C9A227]/25 p-4">
-              <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
+            <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/25 p-4">
+              <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
                 Total de la période
               </p>
-              <p className="text-lg md:text-xl font-bold text-[#A3821C] mt-1">
+              <p className="text-lg md:text-xl font-bold text-[#DDBE55] mt-1">
                 {formaterMontant(donnees.totaux.totalXof, "XOF")}
               </p>
             </div>
-            <div className="bg-white rounded-xl border border-[#8A8378]/15 p-4">
-              <p className="text-[10px] uppercase font-bold text-[#8A8378] tracking-wider">
+            <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
+              <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
                 Dons anonymes
               </p>
-              <p className="text-2xl font-bold text-[#1E0F2B] mt-1">
+              <p className="text-2xl font-bold font-serif text-[#FAF6EF] mt-1">
                 {donnees.anonymes.nb}
-                <span className="text-xs font-medium text-[#8A8378]">
+                <span className="text-xs font-medium text-[#BDB4C9]">
                   {" "}
                   · {formaterMontant(donnees.anonymes.totalXof, "XOF")}
                 </span>
@@ -268,11 +268,11 @@ export default function TresorerieDonateursPage() {
               return (
                 <div
                   key={donateur.identite + index}
-                  className="bg-white rounded-xl border border-[#8A8378]/15 overflow-hidden"
+                  className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 overflow-hidden"
                 >
                   <button
                     onClick={() => setDeplie(ouvert ? null : donateur.identite + index)}
-                    className="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-[#FAF6EF]/60 transition-colors"
+                    className="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-[#C9A227]/15 transition-colors"
                   >
                     <div
                       className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${
@@ -282,7 +282,7 @@ export default function TresorerieDonateursPage() {
                             ? "bg-[#8C5FA8]"
                             : index === 2
                               ? "bg-[#5B7052]"
-                              : "bg-[#8A8378]"
+                              : "bg-[#FAF6EF]/10"
                       }`}
                     >
                       {donateur.identite
@@ -293,10 +293,10 @@ export default function TresorerieDonateursPage() {
                         .toUpperCase() || "?"}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-[#1E0F2B] truncate">
+                      <p className="text-sm font-bold font-serif text-[#FAF6EF] truncate">
                         {donateur.identite}
                       </p>
-                      <p className="text-[11px] text-[#8A8378] truncate flex items-center gap-2 flex-wrap">
+                      <p className="text-[11px] text-[#BDB4C9] truncate flex items-center gap-2 flex-wrap">
                         <span>
                           {donateur.nbDons} don{donateur.nbDons > 1 ? "s" : ""}
                         </span>
@@ -316,7 +316,7 @@ export default function TresorerieDonateursPage() {
                           })}
                         </span>
                         {donateur.email && (
-                          <span className="inline-flex items-center gap-1 text-[#8C5FA8]">
+                          <span className="inline-flex items-center gap-1 text-[#C9AEE3]">
                             <Mail className="w-3 h-3" />
                             {donateur.email}
                           </span>
@@ -324,7 +324,7 @@ export default function TresorerieDonateursPage() {
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-bold text-[#A3821C]">
+                      <p className="text-sm font-bold text-[#DDBE55]">
                         {formaterMontant(donateur.totalXof, "XOF")}
                       </p>
                       <div className="flex gap-1 justify-end mt-1">
@@ -337,7 +337,7 @@ export default function TresorerieDonateursPage() {
                               className={cn(
                                 "px-1.5 py-0.5 rounded-full text-[9px] font-bold border",
                                 COULEURS_TYPES[type] ||
-                                  "bg-[#8A8378]/10 text-[#8A8378] border-[#8A8378]/25"
+                                  "bg-[#FAF6EF]/10 text-[#BDB4C9] border-[#C9A227]/25"
                               )}
                             >
                               {LIBELLES_TYPES[type] || type} ×{nb}
@@ -346,21 +346,21 @@ export default function TresorerieDonateursPage() {
                       </div>
                     </div>
                     {ouvert ? (
-                      <ChevronUp className="w-4 h-4 text-[#8A8378] flex-shrink-0" />
+                      <ChevronUp className="w-4 h-4 text-[#BDB4C9] flex-shrink-0" />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-[#8A8378] flex-shrink-0" />
+                      <ChevronDown className="w-4 h-4 text-[#BDB4C9] flex-shrink-0" />
                     )}
                   </button>
 
                   {ouvert && (
-                    <div className="border-t border-[#8A8378]/10 px-5 py-4 space-y-3 bg-[#FAF6EF]/40">
+                    <div className="border-t border-[#C9A227]/10 px-5 py-4 space-y-3 bg-[#C9A227]/15">
                       {donateur.dons.map((don, i) => (
                         <div
                           key={`${don.reference || "don"}-${i}`}
-                          className="bg-white rounded-lg border border-[#8A8378]/15 p-3 space-y-1.5"
+                          className="bg-[#1A0826]/70 rounded-lg shadow border border-[#C9A227]/15 p-3 space-y-1.5"
                         >
                           <div className="flex items-center justify-between gap-3 flex-wrap">
-                            <p className="text-xs font-semibold text-[#1E0F2B]">
+                            <p className="text-xs font-semibold text-[#FAF6EF]">
                               {new Date(don.date).toLocaleDateString("fr-FR", {
                                 weekday: "long",
                                 day: "numeric",
@@ -368,18 +368,18 @@ export default function TresorerieDonateursPage() {
                                 year: "numeric",
                               })}
                               {" · "}
-                              <span className="text-[#8A8378]">
+                              <span className="text-[#BDB4C9]">
                                 {LIBELLES_TYPES[don.categorie] ||
                                   libelleCategorie(don.categorie, "RECETTE")}
                               </span>
                             </p>
-                            <p className="text-sm font-bold text-[#3F5039]">
+                            <p className="text-sm font-bold text-[#A3C9B0]">
                               {formaterMontant(don.montant, don.devise)}
                             </p>
                           </div>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[#8A8378]">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[#BDB4C9]">
                             {don.enLigne && (
-                              <span className="inline-flex items-center gap-1 text-[#6B4480]">
+                              <span className="inline-flex items-center gap-1 text-[#C9AEE3]">
                                 <Globe className="w-3 h-3" />
                                 {don.provider === "fedapay"
                                   ? "FedaPay"
@@ -391,9 +391,9 @@ export default function TresorerieDonateursPage() {
                             {don.reference && <span>réf. {don.reference}</span>}
                           </div>
                           {don.message && (
-                            <div className="px-3 py-2 rounded-md bg-[#FAF6EF] border border-[#C9A227]/20 flex items-start gap-2">
+                            <div className="px-3 py-2 rounded-md bg-[#C9A227]/10 border border-[#C9A227]/20 flex items-start gap-2">
                               <MessageSquare className="w-3 h-3 text-[#C9A227] flex-shrink-0 mt-0.5" />
-                              <p className="text-xs text-[#1E0F2B]/75 italic">
+                              <p className="text-xs text-[#FAF6EF]/75 italic">
                                 {don.message}
                               </p>
                             </div>
@@ -427,7 +427,7 @@ export default function TresorerieDonateursPage() {
             </p>
           </div>
 
-          <p className="text-[10px] text-[#8A8378]/70 italic flex items-center gap-1.5">
+          <p className="text-[10px] text-[#FAF6EF]/50 italic flex items-center gap-1.5">
             <ShieldCheck className="w-3 h-3" />
             Totaux convertis en francs CFA (taux de référence) · usage interne
             de la trésorerie — prière et action de grâce.

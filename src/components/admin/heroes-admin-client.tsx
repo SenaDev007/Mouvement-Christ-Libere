@@ -119,7 +119,7 @@ function rowToConfig(row: HeroRow): HeroConfig {
 }
 
 const inputClass =
-  "w-full px-4 py-2.5 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/15 transition-all placeholder:text-[#8A8378]/50";
+  "w-full px-4 py-2.5 rounded-xl border-2 border-[#C9A227]/20 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/15 transition-all placeholder:text-[#FAF6EF]/35";
 
 // ─────────────────────────────────────────────────────────────
 // Composant principal
@@ -325,16 +325,16 @@ export function HeroesAdminClient() {
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={cancelEdit}
-              className="w-10 h-10 flex-shrink-0 rounded-xl border-2 border-[#8A8378]/20 text-[#8A8378] hover:border-[#C9A227] hover:text-[#C9A227] transition-colors flex items-center justify-center"
+              className="w-10 h-10 flex-shrink-0 rounded-xl border-2 border-[#C9A227]/20 text-[#BDB4C9] hover:border-[#C9A227] hover:text-[#C9A227] transition-colors flex items-center justify-center"
               aria-label="Retour à la liste"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="min-w-0">
-              <h1 className="text-xl md:text-2xl font-bold text-[#1E0F2B] truncate">
+              <h1 className="text-xl md:text-2xl font-bold font-serif text-[#FAF6EF] truncate">
                 Section hero — {meta?.label || editingPage}
               </h1>
-              <p className="text-xs text-[#8A8378] truncate">
+              <p className="text-xs text-[#BDB4C9] truncate">
                 {meta?.description}
               </p>
             </div>
@@ -343,7 +343,7 @@ export function HeroesAdminClient() {
             <button
               onClick={handleReset}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-[#8A8378] hover:bg-[#8A8378]/10 transition-colors disabled:opacity-40"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-[#BDB4C9] hover:bg-[#FAF6EF]/10 transition-colors disabled:opacity-40"
               title="Remettre les valeurs par défaut"
             >
               <RotateCcw className="w-3.5 h-3.5" /> Par défaut
@@ -360,8 +360,8 @@ export function HeroesAdminClient() {
         </div>
 
         {/* Aperçu du hero */}
-        <div className="mb-6 rounded-2xl overflow-hidden border-2 border-[#8A8378]/15 shadow-sm">
-          <div className="relative h-40 md:h-48 bg-[#2A0E3D] flex items-center justify-center overflow-hidden">
+        <div className="mb-6 rounded-2xl overflow-hidden border-2 border-[#C9A227]/15 shadow-sm">
+          <div className="relative h-40 md:h-48 bg-[#3D1A54] flex items-center justify-center overflow-hidden">
             {form.backgroundImage && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -399,26 +399,26 @@ export function HeroesAdminClient() {
               )}
             </div>
           </div>
-          <div className="bg-[#FAF6EF] px-4 py-2 text-[10px] text-[#8A8378] italic border-t border-[#8A8378]/10">
+          <div className="bg-[#C9A227]/10 px-4 py-2 text-[10px] text-[#BDB4C9] italic border-t border-[#C9A227]/10">
             Aperçu simplifié — le rendu réel reprend la mise en page de la page concernée.
           </div>
         </div>
 
         {/* Messages */}
         {saveError && (
-          <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
+          <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-400/10 border border-red-400/25 text-sm text-red-400">
             <AlertCircle className="w-4 h-4 flex-shrink-0" /> {saveError}
           </div>
         )}
         {justSaved && (
-          <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700">
+          <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-400/10 border border-emerald-400/25 text-sm text-emerald-300">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             Enregistré — les modifications sont visibles immédiatement sur le site public.
           </div>
         )}
 
         {/* Formulaire — généré depuis le schéma de champs */}
-        <div className="bg-white rounded-2xl border border-[#8A8378]/15 shadow-sm p-5 md:p-6">
+        <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/15 shadow-sm p-5 md:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {fields.map((f) => (
               <FieldRenderer
@@ -445,7 +445,7 @@ export function HeroesAdminClient() {
             type="button"
             onClick={cancelEdit}
             disabled={saving}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#8A8378] hover:bg-[#8A8378]/10 transition-colors disabled:opacity-40"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#BDB4C9] hover:bg-[#FAF6EF]/10 transition-colors disabled:opacity-40"
           >
             Annuler
           </button>
@@ -453,7 +453,7 @@ export function HeroesAdminClient() {
             type="button"
             onClick={handleSave}
             disabled={saving || !!busyImage}
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#2A0E3D] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? (
               <>
@@ -477,11 +477,11 @@ export function HeroesAdminClient() {
     <div>
       {/* En-tête */}
       <div className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-[#1E0F2B] flex items-center gap-2.5">
+        <h1 className="text-xl md:text-2xl font-bold font-serif text-[#FAF6EF] flex items-center gap-2.5">
           <ImageIcon className="w-6 h-6 text-[#C9A227]" />
           Sections Hero du site
         </h1>
-        <p className="text-sm text-[#8A8378] mt-1 max-w-2xl leading-relaxed">
+        <p className="text-sm text-[#BDB4C9] mt-1 max-w-2xl leading-relaxed">
           Modifiez la photo d&apos;arrière-plan, les titres et les textes de la
           grande bannière de chaque page — ainsi que les photos d'Afrika et du
           Pasteur Kongo et les biographies. Les changements sont visibles
@@ -490,7 +490,7 @@ export function HeroesAdminClient() {
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
+        <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-400/10 border border-red-400/25 text-sm text-red-400">
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
         </div>
       )}
@@ -513,10 +513,10 @@ export function HeroesAdminClient() {
               <button
                 key={meta.page}
                 onClick={() => startEdit(meta.page)}
-                className="group text-left bg-white rounded-2xl border border-[#8A8378]/15 shadow-sm hover:shadow-xl hover:border-[#C9A227]/50 transition-all duration-300 overflow-hidden flex flex-col"
+                className="group text-left bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/15 shadow-sm hover:shadow-xl hover:border-[#C9A227]/50 transition-all duration-300 overflow-hidden flex flex-col"
               >
                 {/* Aperçu miniature */}
-                <div className="relative h-28 bg-[#2A0E3D] overflow-hidden flex items-center justify-center">
+                <div className="relative h-28 bg-[#3D1A54] overflow-hidden flex items-center justify-center">
                   {cfg.backgroundImage && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -536,19 +536,19 @@ export function HeroesAdminClient() {
                     </span>
                   </div>
                   {/* Badge caméra */}
-                  <span className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-[#C9A227] text-[#1E0F2B] flex items-center justify-center shadow-lg opacity-90">
+                  <span className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-[#C9A227] text-[#FAF6EF] flex items-center justify-center shadow-lg opacity-90">
                     <Camera className="w-4 h-4" />
                   </span>
                 </div>
 
                 {/* Corps */}
                 <div className="p-4 flex-1 flex flex-col">
-                  <p className="text-sm font-bold text-[#1E0F2B]">{meta.label}</p>
-                  <p className="text-xs text-[#8A8378] leading-relaxed mt-1 flex-1">
+                  <p className="text-sm font-bold font-serif text-[#FAF6EF]">{meta.label}</p>
+                  <p className="text-xs text-[#BDB4C9] leading-relaxed mt-1 flex-1">
                     {meta.description}
                   </p>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-[10px] text-[#8A8378]/70">
+                    <span className="text-[10px] text-[#FAF6EF]/50">
                       {modifie ? `Modifié le ${modifie}` : "Valeurs par défaut"}
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-[#C9A227] group-hover:gap-2 transition-all">
@@ -591,11 +591,11 @@ function FieldRenderer({
 
   return (
     <div className={cn(fullWidth || field.type === "image" || field.type === "markdown" ? "md:col-span-2" : "")}>
-      <label className="block text-xs font-bold text-[#1E0F2B] mb-1.5">
+      <label className="block text-xs font-bold font-serif text-[#FAF6EF] mb-1.5">
         {field.label}
       </label>
       {field.help && (
-        <p className="text-[11px] text-[#8A8378]/90 leading-relaxed mb-2 -mt-1">
+        <p className="text-[11px] text-[#FAF6EF]/65 leading-relaxed mb-2 -mt-1">
           {field.help}
         </p>
       )}
@@ -622,7 +622,7 @@ function FieldRenderer({
       {field.type === "image" && (
         <div className="flex items-center gap-4">
           <div className="relative flex-shrink-0">
-            <div className="w-28 h-20 rounded-xl border-2 border-[#C9A227]/30 overflow-hidden bg-[#2A0E3D] flex items-center justify-center shadow">
+            <div className="w-28 h-20 rounded-xl border-2 border-[#C9A227]/30 overflow-hidden bg-[#3D1A54] flex items-center justify-center shadow">
               {preview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={preview} alt={field.label} className="w-full h-full object-cover" />
@@ -638,7 +638,7 @@ function FieldRenderer({
           </div>
           <div className="flex-1 min-w-0 space-y-2">
             <label
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-xs hover:bg-[#DDBE55] transition-colors cursor-pointer shadow"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227] text-[#FAF6EF] font-bold text-xs hover:bg-[#DDBE55] transition-colors cursor-pointer shadow"
             >
               {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
               Choisir une image
@@ -654,7 +654,7 @@ function FieldRenderer({
                 }}
               />
             </label>
-            <p className="text-[10px] text-[#8A8378]/80 leading-relaxed">
+            <p className="text-[10px] text-[#FAF6EF]/60 leading-relaxed">
               {isData
                 ? "Image personnalisée — compressée automatiquement (≤ 150 Ko)."
                 : preview
@@ -665,7 +665,7 @@ function FieldRenderer({
               <button
                 type="button"
                 onClick={() => onChange("")}
-                className="text-[11px] font-semibold text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
+                className="text-[11px] font-semibold text-red-400 hover:bg-red-400/10 px-2 py-1 rounded-lg transition-colors"
               >
                 Retirer l&apos;image personnalisée
               </button>

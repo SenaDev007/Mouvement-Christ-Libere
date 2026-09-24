@@ -244,17 +244,24 @@ export function VideosView({ hero, photos }: { hero: HeroConfig; photos: PhotosS
             className="object-cover opacity-25"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2A0E3D]/80 via-[#2A0E3D]/85 to-[#2A0E3D]" />
+          <div className="absolute -top-40 -right-20 w-96 h-96 bg-[#C9A227]/10 rounded-full blur-[100px] animate-float" />
+          <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-[#8C5FA8]/10 rounded-full blur-[120px] animate-float" style={{ animationDelay: "1.5s" }} />
+          <div className="absolute inset-0 bg-grain opacity-[0.08] mix-blend-overlay" />
         </div>
         {/* Miniature live flottante */}
         <UpcomingLiveFloat />
         <div className="relative z-10 max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-2 mb-2">
-            <VideoIcon className="w-4 h-4 text-[#C9A227]" />
-            <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#C9A227]">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#DDBE55] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C9A227]" />
+            </span>
+            <VideoIcon className="w-4 h-4 text-[#DDBE55]" />
+            <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#DDBE55]">
               <IsololeText>{hero.kicker}</IsololeText>
             </span>
           </div>
-          <h1 className="font-bold text-xl md:text-2xl text-[#FAF6EF]">
+          <h1 className="font-serif font-bold text-xl md:text-2xl text-[#FAF6EF]">
             <IsololeText>{hero.title}</IsololeText>
           </h1>
           {hero.subtitle && (
