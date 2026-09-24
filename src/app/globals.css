@@ -10,8 +10,10 @@
 
 @theme inline {
   /* === Polices === */
-  --font-sans: var(--font-inter);
-  --font-serif: 'Segoe UI', 'Segoe UI Variable', var(--font-inter), sans-serif;
+  /* ⭐ V3.97 — Typographie du design Win Agro : DM Sans (corps) +
+     Playfair Display (titres serif). Palette de couleurs inchangée. */
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, Cambria, "Times New Roman", Times, serif;
 
   /* === Palette de couleurs custom (Concept D) === */
   --color-imperial: #2A0E3D;
@@ -65,6 +67,72 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ============================================================
+     ⭐ V3.97 — TOKENS DESIGN WIN AGRO (PALETTE CHRIST LIBÈRE)
+     Portage du design system Win Agro : MÊMES noms de tokens,
+     VALEURS de la palette Christ Libère (violet impérial · or
+     sacré · ivoire). Les composants portés de Win Agro gardent
+     leurs classes (bg-primary-deep, text-accent-yellow…) mais
+     affichent les couleurs du Mouvement.
+     ============================================================ */
+  --color-primary-deep: #2A0E3D;   /* pourpre impérial (était vert #076B37) */
+  --color-primary-green: #C9A227;   /* or sacré — boutons & actions (était #098947) */
+  --color-primary-pale: #F3ECF8;   /* pourpre très pâle — badges (était #E6F4EC) */
+  --color-accent-yellow: #C9A227;  /* or — surlignages & textes sur fond sombre */
+  --color-accent-dark: #A3821C;    /* or sombre (était #C8A800) */
+  --color-accent-pale: #FAF3DC;   /* doré pâle — halos (était #FFFBE0) */
+  --color-cream: #FAF6EF;          /* ivoire Christ Libère (était #FAFAF3) */
+  --color-noir-vert: #1A0826;     /* violet nuit — footer & fonds sombres */
+  --color-gray-text: #8A8378;      /* pierre chaude CL (était #4A4A4A) */
+
+  /* === ⭐ V3.97 — Animations du design Win Agro === */
+  --animate-pulse-slow: pulse-slow 2s infinite ease-in-out;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-subtle-spin: subtle-spin 20s linear infinite;
+  --animate-marquee: marquee 180s linear infinite;
+  --animate-marquee-left: marquee-left 65s linear infinite;
+  --animate-marquee-right: marquee-right 65s linear infinite;
+  --animate-marquee-badge: marquee 16s linear infinite;
+
+  @keyframes pulse-slow {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.5);
+    }
+    50% {
+      transform: scale(1.08);
+      box-shadow: 0 0 0 12px rgba(201, 162, 39, 0);
+    }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes subtle-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-150%) skewX(-20deg); }
+    100% { transform: translateX(200%) skewX(-20deg); }
+  }
+  @keyframes rotate-conic-light {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes marquee {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-50%); }
+  }
+  @keyframes marquee-left {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-33.3333%); }
+  }
+  @keyframes marquee-right {
+    0% { transform: translateX(-33.3333%); }
+    100% { transform: translateX(0); }
+  }
 }
 
 :root {
@@ -254,6 +322,136 @@
 .focus-mode {
   background: #1A0826;
   transition: background 400ms ease;
+}
+
+/* ============================================================
+   ⭐ V3.97 — UTILITIES DU DESIGN WIN AGRO (palette Christ Libère)
+   Portées de Win Agro : halo conique rotatif autour du logo,
+   reflet brillant des boutons & cartes, verre dépoli, surligneur
+   or, texture grain de fond, scrollbar dorée.
+   ============================================================ */
+
+/* Halo lumineux conique rotatif autour du logo (Navbar/Footer) */
+.logo-light-beam {
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  clip-path: circle(50%);
+}
+.logo-light-beam::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 120deg,
+    #C9A227 180deg,
+    #8C5FA8 240deg,
+    transparent 300deg,
+    transparent 360deg
+  );
+  animation: rotate-conic-light 3s linear infinite;
+  z-index: 1;
+}
+.logo-light-beam::after {
+  content: '';
+  position: absolute;
+  inset: 2.5px;
+  background: #1A0826;
+  border-radius: 50%;
+  z-index: 2;
+}
+.logo-light-beam > * {
+  position: relative;
+  z-index: 3;
+}
+
+/* Reflet brillant qui traverse les boutons (shine infini) */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: translateX(-150%) skewX(-20deg);
+  animation: shimmer 2.5s infinite linear;
+  pointer-events: none;
+}
+
+/* Reflet brillant au survol des cartes */
+.card-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.card-shimmer:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: translateX(-150%) skewX(-20deg);
+  animation: shimmer 1.5s infinite linear;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Texture de points discrets en arrière-plan */
+.bg-grain {
+  background-image: radial-gradient(rgba(42, 14, 61, 0.03) 1px, transparent 0), radial-gradient(rgba(42, 14, 61, 0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+
+/* Verre dépoli premium */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 162, 39, 0.25);
+}
+
+/* Surligneur or derrière un mot clé (titres) */
+.underline-accent {
+  position: relative;
+}
+.underline-accent::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background-color: #C9A227;
+  z-index: -1;
+  transform: skewX(-12deg);
+  opacity: 0.35;
+}
+
+/* Scrollbar dorée façon Win Agro */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF6EF;
+}
+::-webkit-scrollbar-thumb {
+  background: #C9A227;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A3821C;
 }
 
 /* ============================================================

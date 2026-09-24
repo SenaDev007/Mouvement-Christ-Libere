@@ -130,6 +130,15 @@ export function ContextualNav() {
     avatarUrl?: string | null;
   } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  // ⭐ V3.97 — Design Win Agro : navbar transparente-crème au repos,
+  // verre blanc + ombre + bordure or au scroll (comme Win Agro Navbar).
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const loadFreshProfile = useCallback(() => {
     if (status !== "authenticated") return;
@@ -236,7 +245,10 @@ export function ContextualNav() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 border-b border-[#C9A227]/20 bg-[#2A0E3D]/95 backdrop-blur-lg"
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        isScrolled
+          ? "bg-white/95 backdrop-blur-md shadow-md border-b border-primary-green py-2"
+          : "bg-cream/95 backdrop-blur-md border-b border-transparent"
       )}
     >
       <div className="flex h-16 md:h-20 items-center justify-between gap-4 px-4 md:px-6 max-w-7xl mx-auto">
@@ -252,17 +264,17 @@ export function ContextualNav() {
                 size="icon"
                 aria-label="Ouvrir le menu de navigation"
               >
-                <Menu className="w-5 h-5 text-[#FAF6EF]" />
+                <Menu className="w-5 h-5 text-[#1E0F2B]" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-72 max-w-[calc(100vw-1.5rem)] p-1 md:hidden bg-[#2A0E3D] border-[#C9A227]/30">
+            <PopoverContent align="start" className="w-72 max-w-[calc(100vw-1.5rem)] p-1 md:hidden bg-white border-[#C9A227]/30 shadow-2xl">
               <NavigationMenu className="max-w-none *:w-full">
                 <NavigationMenuList className="flex-col items-start gap-0 md:gap-2">
                   {navigationLinks.map((link, index) => (
                     <NavigationMenuItem key={index} className="w-full">
                       {link.submenu ? (
                         <>
-                          <div className="text-[#C9A227] px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">
+                          <div className="text-accent-dark px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">
                             <IsololeText>{link.label}</IsololeText>
                           </div>
                           <ul>
@@ -270,7 +282,7 @@ export function ContextualNav() {
                               <li key={itemIndex}>
                                 <NavigationMenuLink
                                   href={item.href}
-                                  className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                                  className="py-3 text-[#1E0F2B]/70 hover:text-accent-dark"
                                   onClick={() => setMobileOpen(false)}
                                 >
                                   <IsololeText>{item.label}</IsololeText>
@@ -282,7 +294,7 @@ export function ContextualNav() {
                       ) : (
                         <NavigationMenuLink
                           href={(link as { href?: string }).href}
-                          className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                          className="py-3 text-[#1E0F2B]/70 hover:text-accent-dark"
                           onClick={() => setMobileOpen(false)}
                         >
                           <IsololeText>{link.label}</IsololeText>
@@ -297,7 +309,7 @@ export function ContextualNav() {
                           <div
                             role="separator"
                             aria-orientation="horizontal"
-                            className="bg-[#C9A227]/20 -mx-1 my-1 h-px w-full"
+                            className="bg-primary-pale -mx-1 my-1 h-px w-full"
                           />
                         )}
                     </NavigationMenuItem>
@@ -310,16 +322,16 @@ export function ContextualNav() {
                       <div
                         role="separator"
                         aria-orientation="horizontal"
-                        className="bg-[#C9A227]/20 -mx-1 my-1 h-px w-full"
+                        className="bg-primary-pale -mx-1 my-1 h-px w-full"
                       />
-                      <div className="text-[#C9A227] px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">
+                      <div className="text-accent-dark px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">
                         Mon compte
                       </div>
                       <ul>
                         <li>
                           <NavigationMenuLink
                             href="/login"
-                            className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                            className="py-3 text-[#1E0F2B]/70 hover:text-accent-dark"
                             onClick={() => setMobileOpen(false)}
                           >
                             Se connecter
@@ -328,7 +340,7 @@ export function ContextualNav() {
                         <li>
                           <NavigationMenuLink
                             href="/register"
-                            className="py-3 text-[#FAF6EF]/70 hover:text-[#C9A227]"
+                            className="py-3 text-[#1E0F2B]/70 hover:text-accent-dark"
                             onClick={() => setMobileOpen(false)}
                           >
                             Créer un compte
@@ -343,24 +355,25 @@ export function ContextualNav() {
             </PopoverContent>
           </Popover>
 
-          {/* Logo Christ Libère — ⭐ V3.28 : 40px sous sm pour que burger +
-              logo + wordmark + icône connexion tiennent sur iPhone SE (320px) */}
-          <Link href="/" className="flex items-center gap-1 group/logo">
-            <Image
-              src="/logo-christ-libere-v3.png"
-              alt="Christ Libère"
-              width={56}
-              height={56}
-              sizes="(max-width: 639px) 40px, (max-width: 767px) 48px, 56px"
-              className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain"
-              priority
-            />
+          {/* Logo Christ Libère — ⭐ V3.97 design Win Agro : halo conique
+              rotatif (logo-light-beam) autour du logo officiel */}
+          <Link href="/" className="flex items-center gap-2 group/logo">
+            <div className="relative w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full overflow-hidden border border-primary-green/30 bg-noir-vert logo-light-beam shadow-md flex items-center justify-center p-1">
+              <Image
+                src="/logo-christ-libere-v3.png"
+                alt="Christ Libère"
+                width={56}
+                height={56}
+                sizes="(max-width: 639px) 40px, (max-width: 767px) 44px, 52px"
+                className="object-contain w-full h-full"
+                priority
+              />
+            </div>
             <span
-              className="text-lg sm:text-xl md:text-2xl font-bold whitespace-nowrap"
-              style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
+              className="text-lg sm:text-xl md:text-2xl font-bold whitespace-nowrap font-serif"
             >
-              <span style={{ color: "#C9A227" }}>Christ</span>
-              <span style={{ color: "#FAF6EF" }} className="ml-0.5">Libère</span>
+              <span style={{ color: "#A3821C" }}>Christ</span>
+              <span style={{ color: "#1E0F2B" }} className="ml-0.5">Libère</span>
             </span>
           </Link>
 
@@ -393,8 +406,8 @@ export function ContextualNav() {
                     className={cn(
                       "flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-[#C9A227]/40",
                       openMenu === link.label
-                        ? "text-[#C9A227] bg-[#C9A227]/10"
-                        : "text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#C9A227]/10"
+                        ? "text-accent-dark bg-primary-pale"
+                        : "text-[#1E0F2B]/70 hover:text-accent-dark hover:bg-primary-pale"
                     )}
                   >
                     <IsololeText>{link.label}</IsololeText>
@@ -425,7 +438,7 @@ export function ContextualNav() {
                     >
                       <ul
                         className={cn(
-                          "bg-[#2A0E3D]/95 backdrop-blur-md border border-[#C9A227]/30 rounded-xl shadow-2xl shadow-black/50 py-1.5",
+                          "bg-white/95 backdrop-blur-md border border-[#C9A227]/30 rounded-xl shadow-2xl shadow-black/10 py-1.5",
                           link.type === "description" ? "w-[380px]" : "min-w-[220px]"
                         )}
                       >
@@ -435,7 +448,7 @@ export function ContextualNav() {
                               href={item.href}
                               role="menuitem"
                               onClick={() => setOpenMenu(null)}
-                              className="flex items-start gap-2.5 mx-1 px-3 py-2 rounded-lg text-[#FAF6EF]/85 hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors outline-none focus-visible:bg-[#C9A227]/10 focus-visible:text-[#C9A227] whitespace-nowrap"
+                              className="flex items-start gap-2.5 mx-1 px-3 py-2 rounded-lg text-[#1E0F2B]/85 hover:text-accent-dark hover:bg-primary-pale transition-colors outline-none focus-visible:bg-primary-pale focus-visible:text-accent-dark whitespace-nowrap"
                             >
                               {/* Icône (type icon) */}
                               {link.type === "icon" && "icon" in item &&
@@ -458,7 +471,7 @@ export function ContextualNav() {
                                     secondaire, peut se plier sur 2 lignes */}
                                 {link.type === "description" &&
                                   "description" in item && (
-                                    <span className="block text-xs leading-snug text-[#FAF6EF]/50 mt-0.5 whitespace-normal line-clamp-2">
+                                    <span className="block text-xs leading-snug text-[#8A8378] mt-0.5 whitespace-normal line-clamp-2">
                                       <IsololeText>{item.description}</IsololeText>
                                     </span>
                                   )}
@@ -474,7 +487,7 @@ export function ContextualNav() {
                 <Link
                   key={link.label}
                   href={(link as { href?: string }).href!}
-                  className="px-2 py-1.5 rounded-md text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors whitespace-nowrap"
+                  className="px-2 py-1.5 rounded-md text-sm font-medium text-[#1E0F2B]/70 hover:text-accent-dark hover:bg-primary-pale transition-colors whitespace-nowrap"
                 >
                   <IsololeText>{link.label}</IsololeText>
                 </Link>
@@ -483,8 +496,16 @@ export function ContextualNav() {
           </nav>
         </div>
 
-        {/* Right side — Auth + CTA */}
+        {/* Right side — CTA Win Agro + Auth */}
         <div className="flex items-center gap-2">
+          {/* ⭐ V3.97 — CTA doré shimmer façon Win Agro (desktop) : porte
+              d'entrée du secrétariat, page /rendez-vous. */}
+          <Link
+            href="/rendez-vous"
+            className="hidden lg:inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-primary-green hover:bg-primary-green/90 text-[#1E0F2B] font-sans font-bold text-sm shadow-md hover:shadow-lg transition-all duration-300 btn-shimmer"
+          >
+            Rendez-vous →
+          </Link>
           {/* ⭐ V3.84 — l'icône « Installer » est retirée de la barre : la
               proposition d'installation passe désormais par le toast
               InstallToast (bouton Installer + « Ne plus afficher ») ; le
@@ -499,7 +520,7 @@ export function ContextualNav() {
                     l'avatar — entrée « Mon profil & paramètres ». */}
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 min-h-11 p-1.5 pr-2.5 rounded-full hover:bg-[#FAF6EF]/10 transition-colors"
+                  className="flex items-center gap-2 min-h-11 p-1.5 pr-2.5 rounded-full hover:bg-primary-pale transition-colors"
                   aria-haspopup="menu"
                   aria-expanded={userMenuOpen}
                 >
@@ -517,7 +538,7 @@ export function ContextualNav() {
                     </div>
                   )}
                   {!isMobile && (
-                    <span className="hidden sm:inline text-sm font-medium text-[#FAF6EF] max-w-[100px] truncate">
+                    <span className="hidden sm:inline text-sm font-medium text-[#1E0F2B] max-w-[100px] truncate">
                       {displayName}
                     </span>
                   )}
@@ -594,7 +615,7 @@ export function ContextualNav() {
               {/* Mobile: icône seule */}
               <Link
                 href="/login"
-                className="sm:hidden inline-flex items-center justify-center size-11 rounded-lg text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors"
+                className="sm:hidden inline-flex items-center justify-center size-11 rounded-lg text-[#1E0F2B]/70 hover:text-accent-dark transition-colors"
                 aria-label="Se connecter"
               >
                 <LogIn className="w-5 h-5" />
@@ -602,7 +623,7 @@ export function ContextualNav() {
               {/* Desktop: texte */}
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center text-sm font-medium text-[#FAF6EF]/70 hover:text-[#C9A227] transition-colors px-3 py-2.5"
+                className="hidden sm:inline-flex items-center text-sm font-medium text-[#1E0F2B]/70 hover:text-accent-dark transition-colors px-3 py-2.5"
               >
                 Se connecter
               </Link>
@@ -611,13 +632,13 @@ export function ContextualNav() {
                   déborder sur iPhone SE ; visible de 400px à sm. */}
               <Link
                 href="/register"
-                className="sm:hidden hidden min-[400px]:inline-flex items-center justify-center size-11 rounded-lg text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 transition-colors"
+                className="sm:hidden hidden min-[400px]:inline-flex items-center justify-center size-11 rounded-lg text-[#1E0F2B] hover:text-accent-dark hover:bg-primary-pale transition-colors"
                 aria-label="Créer un compte"
               >
                 <UserPlus className="w-5 h-5" />
               </Link>
               {/* Desktop: texte */}
-              <Button asChild size="sm" variant="ghost" className="hidden sm:flex text-[#FAF6EF] hover:text-[#C9A227] hover:bg-[#FAF6EF]/5 text-sm">
+              <Button asChild size="sm" variant="ghost" className="hidden sm:flex text-[#1E0F2B] hover:text-accent-dark hover:bg-primary-pale text-sm">
                 <Link href="/register">
                   Créer un compte
                 </Link>

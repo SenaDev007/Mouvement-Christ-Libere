@@ -98,24 +98,31 @@ export function LoginView({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-[#1A0826]">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-20 bg-noir-vert overflow-hidden">
+      {/* ⭐ V3.97 — Design Win Agro : halos flottants + grain de fond */}
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary-green/20 rounded-full blur-[100px] animate-float pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-accent-yellow/5 rounded-full blur-[150px] animate-float pointer-events-none" style={{ animationDelay: "2s" }} />
+      <div className="absolute inset-0 bg-grain opacity-[0.06] pointer-events-none" />
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md relative z-10"
       >
-        {/* En-tête : logo Christ Libère + nom de l'espace */}
+        {/* En-tête : logo Christ Libère (halo conique rotatif) + nom de l'espace */}
         <div className="flex flex-col items-center mb-8">
-          <Image
-            src="/logo-christ-libere-v3.png"
-            alt="Christ Libère"
-            width={80}
-            height={80}
-            className="relative w-16 h-16 md:w-20 md:h-20 object-contain mb-4"
-            priority
-          />
-          <h1 className="text-2xl md:text-3xl font-bold text-[#FAF6EF] text-center">
+          <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border border-primary-green/30 bg-noir-vert logo-light-beam shadow-lg flex items-center justify-center p-1.5 mb-4">
+            <Image
+              src="/logo-christ-libere-v3.png"
+              alt="Christ Libère"
+              width={80}
+              height={80}
+              className="object-contain w-full h-full"
+              priority
+            />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#FAF6EF] text-center font-serif">
             <span className={accentTexte}>{titreEspace}</span>
           </h1>
           <p className="text-sm text-[#FAF6EF]/60 text-center mt-1.5 max-w-xs leading-relaxed">
@@ -127,7 +134,7 @@ export function LoginView({
         </div>
 
         {/* Carte de connexion */}
-        <div className="relative bg-[#2A0E3D]/60 backdrop-blur-sm rounded-2xl border border-[#C9A227]/15 p-6 md:p-8 shadow-2xl">
+        <div className="relative bg-primary-deep/60 backdrop-blur-sm rounded-2xl border border-[#C9A227]/15 p-6 md:p-8 shadow-2xl card-shimmer">
           <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-[#C9A227]/50 to-transparent" />
 
           <div className="flex items-center gap-3 mb-6">
@@ -199,7 +206,7 @@ export function LoginView({
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#C9A227] text-[#1A0826] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#C9A227] text-[#1A0826] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-50 disabled:cursor-not-allowed btn-shimmer"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

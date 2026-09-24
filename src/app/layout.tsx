@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Playfair_Display, DM_Sans, Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
@@ -14,6 +14,25 @@ import { PageLoader } from "@/components/site/page-loader";
 // /register, si l'application est déjà installée, ou après « Ne plus
 // afficher » (mémoire locale) / fermeture (mémoire de session).
 import { InstallToast } from "@/components/pwa/install-toast";
+
+// ⭐ V3.97 — POLICES DU DESIGN WIN AGRO : Playfair Display (titres serif)
+// + DM Sans (corps) — la typographie du design Win Agro, appliquée à la
+// palette Christ Libère. Cormorant et Inter restent chargées pour les
+// rares usages directs (var(--font-cormorant) du motion-footer).
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+});
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -135,7 +154,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="dark" suppressHydrationWarning>
       <body
-        className={`${cormorant.variable} ${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
+        className={`${playfair.variable} ${dmSans.variable} ${cormorant.variable} ${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
         <ScrollProgress />
         <PageLoader />

@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/app/layout.tsx",
+    "src/app/page.tsx",
+    "src/app/admin/login/page.tsx",
+    "src/components/site/landing-view.tsx",
+    "src/components/site/page-hero.tsx",
+    "src/components/site/client-page-hero.tsx",
+    "src/components/ui/navigation-menu-4.tsx",
+    "src/components/ui/modem-animated-footer.tsx",
+    "src/components/staff-space/login-view.tsx",
+    "src/components/staff-space/space-shell.tsx",
+    "src/components/admin/admin-shell.tsx",
+    "src/app/admin/layout.tsx",
+    "src/app/secretariat/layout.tsx",
+    "src/app/tresorerie/layout.tsx"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

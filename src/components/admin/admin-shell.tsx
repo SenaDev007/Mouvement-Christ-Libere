@@ -167,23 +167,22 @@ export function AdminShell({
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Header avec logo Christ Libère */}
+          {/* Header avec logo Christ Libère — ⭐ V3.97 halo conique Win Agro */}
           <div className="px-5 py-5 border-b border-[#C9A227]/15">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Image
-                  src="/logo-christ-libere-v3.png"
-                  alt="Christ Libère"
-                  width={40}
-                  height={40}
-                  className="relative w-10 h-10 object-contain"
-                  priority
-                />
+                <div className="relative w-11 h-11 rounded-full overflow-hidden border border-[#C9A227]/30 bg-[#1A0826] logo-light-beam shadow-md flex items-center justify-center p-0.5">
+                  <Image
+                    src="/logo-christ-libere-v3.png"
+                    alt="Christ Libère"
+                    width={40}
+                    height={40}
+                    className="object-contain w-full h-full"
+                    priority
+                  />
+                </div>
                 <div>
-                  <div
-                    className="text-lg font-bold leading-tight"
-                    style={{ fontFamily: "'Segoe UI', 'Segoe UI Variable', system-ui, sans-serif" }}
-                  >
+                  <div className="text-lg font-bold leading-tight font-serif">
                     <span style={{ color: "#C9A227" }}>Christ</span>
                     <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
                   </div>
