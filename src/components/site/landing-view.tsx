@@ -26,7 +26,7 @@ import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 import { LandingIntro } from "@/components/site/landing-intro";
 import {
   Sparkles, BookOpen, FileText, Video, Users, ArrowRight,
-  Music, Globe2, ScrollText, HeartHandshake, Infinity as InfinityIcon,
+  Music, Globe2, ScrollText, Heart, Infinity as InfinityIcon,
 } from "lucide-react";
 
 /* ============================================================
@@ -544,148 +544,139 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
       </section>
 
       {/* ══════════════════════════════════════════════════════════
-          DEUX SERVITEURS — design About de Win Agro
+          DEUX SERVITEURS — ⭐ V3.99 : retour à la disposition d'origine
+          demandée par le pasteur (les deux serviteurs CÔTE À CÔTE,
+          séparés par le cœur doré central comme avant V3.97), le tout
+          au style Win Agro : badge ping, titre serif, card-shimmer.
+          Textes paramétrables dans /admin/heroes.
           ══════════════════════════════════════════════════════════ */}
       <section className="py-24 bg-white relative overflow-hidden">
         <div className="absolute top-1/2 left-0 w-72 h-72 bg-primary-pale rounded-full blur-3xl opacity-40 -z-10" />
+        <div className="absolute bottom-0 right-0 w-64 h-64 bg-accent-pale/40 rounded-full blur-3xl -z-10" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          {/* En-tête — badge ping + titre serif + soulignement animé */}
+          <div className="text-center mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-pale text-primary-deep text-xs font-sans font-bold uppercase tracking-wider mb-3"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-yellow opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-yellow" />
+              </span>
+              <IsololeText>{d.servantsKicker}</IsololeText>
+            </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-primary-deep leading-tight"
+            >
+              <IsololeText>{d.servantsTitle}</IsololeText>
+            </motion.h2>
+            <motion.div
+              animate={{ scaleX: [0, 1, 1, 0], transformOrigin: ["0% 50%", "0% 50%", "100% 50%", "100% 50%"] }}
+              transition={{ duration: 3, repeat: Infinity, times: [0, 0.15, 0.85, 1], ease: "easeInOut" }}
+              className="h-1 w-24 bg-accent-yellow rounded-full mx-auto mt-4"
+            />
+          </div>
 
-            {/* 1. Récit (60%) */}
-            <div className="w-full lg:w-3/5 space-y-6">
-              <div className="inline-block px-3 py-1 rounded-full bg-primary-pale text-primary-deep text-xs font-sans font-bold uppercase tracking-wider mb-2">
-                Deux serviteurs, un même appel
-              </div>
+          {/* Grille d'origine : carte Afrika · cœur doré · carte Pasteur Kongo */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 items-stretch">
 
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="font-serif text-2xl sm:text-3xl md:text-4xl font-extrabold text-primary-deep leading-snug"
+            {/* 1. Carte Afrika — tuile Win Agro */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <Link
+                href="/afrika"
+                className="group relative h-full flex flex-col bg-cream rounded-2xl shadow-md hover:shadow-xl border border-primary-green/20 border-t-4 border-t-accent-yellow p-8 transition-all duration-500 card-shimmer overflow-hidden"
               >
-                « Deux appels qui se rejoignent, deux ministères distincts qui s&apos;articulent pour un même Dieu. »
-              </motion.h2>
-
-              <motion.div
-                animate={{ scaleX: [0, 1, 1, 0], transformOrigin: ["0% 50%", "0% 50%", "100% 50%", "100% 50%"] }}
-                transition={{ duration: 3, repeat: Infinity, times: [0, 0.15, 0.85, 1], ease: "easeInOut" }}
-                className="h-1 w-16 bg-accent-yellow rounded-full"
-              />
-
-              <div className="space-y-4 text-sm sm:text-base text-gray-text font-sans leading-relaxed">
-                <p>
-                  <strong className="text-primary-deep">Afrika Alkebulane Pamela Dali</strong>, servante de l&apos;Éternel marquée dès le sein maternel, et{" "}
-                  <strong className="text-primary-deep">Pasteur Kongo</strong>, époux et ministre pastoral.{" "}
-                  <span className="relative inline-block font-bold text-accent-dark">
-                    Deux voix, une même vision.
-                    <motion.span
-                      animate={{ scaleX: [0, 1, 1, 0], transformOrigin: ["0% 50%", "0% 50%", "100% 50%", "100% 50%"] }}
-                      transition={{ duration: 3, repeat: Infinity, times: [0, 0.15, 0.85, 1], ease: "easeInOut" }}
-                      className="absolute bottom-0 left-0 w-full h-[2px] bg-accent-yellow rounded-full"
-                    />
-                  </span>{" "}
-                  L&apos;un porte le témoignage et le chant, l&apos;autre la parole pastorale et l&apos;enseignement.
-                </p>
-                <p>
-                  Témoignages d&apos;enlèvements au ciel, instructions reçues du Seigneur <IsololeText>Yeshoua</IsololeText>, conformité à la Parole : leur ministère s&apos;articule autour du réveil des derniers temps, au son du chofar, et du rassemblement des dispersés d&apos;<IsololeText>Israël</IsololeText>.
-                </p>
-              </div>
-
-              {/* Bloc vision */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="p-6 bg-primary-pale rounded-3xl border border-primary-green/20 my-6 relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-accent-yellow/10 rounded-full blur-xl" />
-                <h3 className="font-serif text-lg font-extrabold text-primary-deep mb-2 flex items-center gap-1.5">
-                  <Music className="w-5 h-5 text-accent-dark shrink-0" /> Au son du chofar
+                <div className="relative flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-primary-deep mb-6 ring-2 ring-accent-yellow/30 group-hover:ring-accent-yellow transition-all">
+                  <HeroBackgroundImage
+                    src={d.pamPhoto}
+                    alt={d.pamName}
+                    priority={false}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+                <h3 className="font-serif text-2xl font-extrabold text-primary-deep mb-3">
+                  <IsololeText>{d.pamName}</IsololeText>
                 </h3>
-                <p className="font-sans text-sm sm:text-base text-primary-deep font-semibold leading-relaxed">
-                  « Le Seigneur lui-même descendra du ciel avec un cri de commandement, avec la voix d&apos;un archange et avec la trompette de Dieu… » —{" "}
-                  <span className="text-accent-dark font-black font-serif text-base sm:text-lg block mt-1">
-                    1 Thessaloniciens 4:16 — le chofar va retentir.
-                  </span>
+                <p className="text-xs uppercase tracking-wider text-accent-dark font-bold mb-3">
+                  <IsololeText>{d.pamRole}</IsololeText>
                 </p>
-              </motion.div>
+                <p className="text-sm text-gray-text leading-relaxed mb-6 flex-1">
+                  <IsololeText>{d.pamDesc}</IsololeText>
+                </p>
+                <span className="inline-flex items-center gap-1.5 text-sm font-bold text-accent-dark group-hover:gap-3 transition-all duration-300">
+                  Lire la biographie
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </Link>
+            </motion.div>
 
-              {/* Signature */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pt-4">
-                <div>
-                  <p className="font-serif text-xl font-extrabold text-primary-deep italic flex items-center gap-1">
-                    Marchez avec nous. <HeartHandshake className="w-5 h-5 text-accent-dark shrink-0" />
-                  </p>
-                  <p className="font-sans text-xs text-gray-text font-bold uppercase tracking-wider mt-1">
-                    Mouvement Christ Libère · Afrika &amp; Pasteur Kongo
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    href="/afrika"
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary-green hover:bg-primary-green/90 text-[#1E0F2B] font-sans font-bold text-sm shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
-                  >
-                    Biographie d&apos;Afrika →
-                  </Link>
-                  <Link
-                    href="/pasteur-kongo"
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary-green hover:bg-primary-green/90 text-[#1E0F2B] font-sans font-bold text-sm shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
-                  >
-                    Pasteur Kongo →
-                  </Link>
-                </div>
+            {/* 2. Centre : le cœur doré qui unit les deux serviteurs */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="flex flex-col items-center justify-center self-center p-6"
+            >
+              <div className="w-px h-12 bg-accent-yellow/30 mb-4 hidden lg:block" />
+              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-accent-yellow/10 mb-4 animate-pulse-slow">
+                <Heart className="w-8 h-8 text-accent-yellow" fill="currentColor" />
               </div>
-            </div>
+              <p className="font-serif text-lg italic text-gray-text text-center max-w-xs leading-relaxed">
+                « Deux appels qui se rejoignent, deux ministères distincts qui s&apos;articulent
+                sans se confondre. »
+              </p>
+              <div className="w-px h-12 bg-accent-yellow/30 mt-4 hidden lg:block" />
+            </motion.div>
 
-            {/* 2. Photos des serviteurs (40%) — tuiles premium animées */}
-            <div className="w-full lg:w-2/5 flex flex-col justify-center gap-8">
-              {[
-                {
-                  href: "/afrika",
-                  photo: d.pamPhoto,
-                  nom: "Afrika Alkebulane Pamela Dali",
-                  role: "Servante de l'Éternel · Chantre",
-                },
-                {
-                  href: "/pasteur-kongo",
-                  photo: d.kongoPhoto,
-                  nom: "Pasteur Kongo",
-                  role: "Époux · Ministre pastoral",
-                },
-              ].map((s, idx) => (
-                <motion.div
-                  key={s.href}
-                  initial={{ opacity: 0, x: 30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: idx * 0.15 }}
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  className="group relative"
-                >
-                  <Link href={s.href} className="block relative rounded-3xl overflow-hidden border-2 border-primary-green/20 shadow-2xl card-shimmer">
-                    <div className="relative aspect-[4/3] bg-primary-deep">
-                      {s.photo ? (
-                        <Image
-                          src={s.photo}
-                          alt={s.nom}
-                          fill
-                          sizes="(max-width: 1024px) 100vw, 40vw"
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : null}
-                      <div className="absolute inset-0 bg-gradient-to-t from-primary-deep/90 via-transparent to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-6">
-                        <h3 className="font-serif text-xl font-extrabold text-white leading-tight">{s.nom}</h3>
-                        <p className="font-sans text-xs font-bold uppercase tracking-wider text-accent-yellow mt-1">{s.role}</p>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
+            {/* 3. Carte Pasteur Kongo — tuile Win Agro */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <Link
+                href="/pasteur-kongo"
+                className="group relative h-full flex flex-col bg-cream rounded-2xl shadow-md hover:shadow-xl border border-primary-green/20 border-t-4 border-t-accent-yellow p-8 transition-all duration-500 card-shimmer overflow-hidden"
+              >
+                <div className="relative flex items-center justify-center w-20 h-20 rounded-full overflow-hidden bg-primary-deep mb-6 ring-2 ring-accent-yellow/30 group-hover:ring-accent-yellow transition-all">
+                  <HeroBackgroundImage
+                    src={d.kongoPhoto}
+                    alt={d.kongoName}
+                    priority={false}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+                <h3 className="font-serif text-2xl font-extrabold text-primary-deep mb-3">
+                  <IsololeText>{d.kongoName}</IsololeText>
+                </h3>
+                <p className="text-xs uppercase tracking-wider text-accent-dark font-bold mb-3">
+                  <IsololeText>{d.kongoRole}</IsololeText>
+                </p>
+                <p className="text-sm text-gray-text leading-relaxed mb-6 flex-1">
+                  <IsololeText>{d.kongoDesc}</IsololeText>
+                </p>
+                <span className="inline-flex items-center gap-1.5 text-sm font-bold text-accent-dark group-hover:gap-3 transition-all duration-300">
+                  Lire la biographie
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </Link>
+            </motion.div>
           </div>
         </div>
       </section>

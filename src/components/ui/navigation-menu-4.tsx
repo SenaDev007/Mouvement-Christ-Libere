@@ -355,25 +355,24 @@ export function ContextualNav() {
             </PopoverContent>
           </Popover>
 
-          {/* Logo Christ Libère — ⭐ V3.97 design Win Agro : halo conique
-              rotatif (logo-light-beam) autour du logo officiel */}
+          {/* Logo Christ Libère — ⭐ V3.99 retour pasteur : PLUS de halo
+              rotatif ni de fond sombre, le logo se détache seul sur le
+              fond clair (ivoire/verre) de la barre de navigation. */}
           <Link href="/" className="flex items-center gap-2 group/logo">
-            <div className="relative w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full overflow-hidden border border-primary-green/30 bg-noir-vert logo-light-beam shadow-md flex items-center justify-center p-1">
-              <Image
-                src="/logo-christ-libere-v3.png"
-                alt="Christ Libère"
-                width={56}
-                height={56}
-                sizes="(max-width: 639px) 40px, (max-width: 767px) 44px, 52px"
-                className="object-contain w-full h-full"
-                priority
-              />
-            </div>
+            <Image
+              src="/logo-christ-libere-v3.png"
+              alt="Christ Libère"
+              width={56}
+              height={56}
+              sizes="(max-width: 639px) 44px, (max-width: 767px) 48px, 56px"
+              className="relative w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain"
+              priority
+            />
             <span
               className="text-lg sm:text-xl md:text-2xl font-bold whitespace-nowrap font-serif"
             >
               <span style={{ color: "#A3821C" }}>Christ</span>
-              <span style={{ color: "#1E0F2B" }} className="ml-0.5">Libère</span>
+              <span style={{ color: "#1E0F2B" }} className="ml-2">Libère</span>
             </span>
           </Link>
 

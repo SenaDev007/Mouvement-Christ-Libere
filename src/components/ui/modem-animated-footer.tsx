@@ -5,8 +5,8 @@
  *
  * Portage du footer Win Agro : fond violet nuit + texture grain, bordure
  * or 4px, 4 colonnes (marque / Parole / Médias / Communauté & contact),
- * titres serif soulignés or, liens hover or, logo avec halo conique
- * rotatif (logo-light-beam), pastilles sociales rondes, CTA doré.
+ * titres serif soulignés or, liens hover or, logo seul (⭐ V3.99 : plus
+ * de halo rotatif — retour pasteur), pastilles sociales rondes, CTA doré.
  * Palette de couleurs Christ Libère conservée (violet/or/ivoire).
  */
 
@@ -94,14 +94,14 @@ export const Footer = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
 
-            {/* ═══ Colonne marque — logo halo rotatif + description + CTA ═══ */}
+            {/* ═══ Colonne marque — logo (sans halo, V3.99) + description + CTA ═══ */}
             <div className="space-y-6">
               <Link
                 href="/"
                 className="inline-flex items-center gap-3 focus:outline-none"
                 aria-label="Mouvement Christ Libère — Retour à l'accueil"
               >
-                <div className="relative w-16 h-16 overflow-hidden rounded-full border border-primary-green/30 bg-noir-vert flex items-center justify-center p-1 shadow-md logo-light-beam">
+                <div className="relative w-16 h-16 overflow-hidden rounded-full border border-primary-green/30 bg-noir-vert flex items-center justify-center p-1 shadow-md">
                   <Image
                     src="/logo-christ-libere-v3.png"
                     alt="Mouvement Christ Libère"
