@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/app/api/temoignages-croyants",
+    "src/app/vie-transformee",
+    "src/app/admin/vie-transformee",
+    "src/components/site/soumission-temoignage.tsx",
+    "src/components/site/landing-view.tsx",
+    "src/components/admin/vie-transformee-actions.tsx",
+    "src/components/admin/admin-shell.tsx",
+    "src/lib/ensure-schema.ts",
+    "src/lib/hero-defaults.ts",
+    "src/app/sitemap.ts",
+    "src/components/ui/modem-animated-footer.tsx",
+    "src/app/admin/api/[entity]/[id]/route.ts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

@@ -24,6 +24,7 @@ import { IsololeText } from "@/lib/isolole";
 import type { HeroConfig } from "@/lib/hero-defaults";
 import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 import { LandingIntro } from "@/components/site/landing-intro";
+import { SoumissionTemoignage } from "@/components/site/soumission-temoignage";
 import {
   Sparkles, BookOpen, FileText, Video, Users, ArrowRight,
   Music, Globe2, ScrollText, Heart, Infinity as InfinityIcon,
@@ -212,7 +213,11 @@ const DIFFERENTIATIONS = [
 ];
 
 /* ============================================================
-   TÉMOIGNAGES — carrousel marquee façon Win Agro
+   TÉMOIGNAGES DES CROYANTS — carrousel marquee façon Win Agro
+   ⭐ V3.100 — Distinction demandée par le pasteur : cette section
+   « Vies transformées » n'affiche QUE les témoignages des CROYANTS
+   (soumis puis validés par un super admin) — les témoignages des
+   serviteurs (Afrika & Pasteur Kongo) restent sur /temoignages.
    ============================================================ */
 
 interface CarteTemoignage {
@@ -222,42 +227,65 @@ interface CarteTemoignage {
   href?: string;
 }
 
+/** Libellés des catégories (mêmes clés que l'API). */
+const LABEL_CATEGORIE: Record<string, string> = {
+  vie_transformee: "Vie transformée",
+  guerison: "Guérison",
+  delivrance: "Délivrance",
+  restauration: "Foyer restauré",
+  providence: "Providence",
+  appel: "Appel & consécration",
+  action_graces: "Action de grâces",
+};
+
+/** Tronque proprement un récit pour les cartes du marquee. */
+function tronquer(texte: string, max = 165): string {
+  if (texte.length <= max) return texte;
+  const coupe = texte.slice(0, max);
+  const dernierEspace = coupe.lastIndexOf(" ");
+  return (dernierEspace > 100 ? coupe.slice(0, dernierEspace) : coupe) + " […]";
+}
+
+/* Fallback d'INVITATION (aucun témoignage validé pour l'instant) :
+   des cartes génériques qui parlent de ce que Dieu fait — et qui
+   renvoient vers /vie-transformee. AUCUN témoignage des serviteurs
+   ici (distinction demandée par le pasteur). */
 const CARTES_FALLBACK: CarteTemoignage[] = [
   {
-    text: "Témoignages de visites au ciel accordées à la sœur Afrika — instructions reçues du Seigneur Yeshoua, conformité à la Parole.",
-    name: "Visites au ciel",
-    role: "Témoignages d'Afrika",
-    href: "/temoignages",
+    text: "Votre vie a été transformée par Yeshoua ? Partagez ce que Dieu a fait — votre récit peut relever la foi d'un frère ou d'une sœur.",
+    name: "Partagez le vôtre",
+    role: "Témoignage des croyants",
+    href: "/vie-transformee",
   },
   {
-    text: "La sonnerie du chofar et le retour de Yeshoua : ce que les Écritures annoncent et ce que le Mouvement proclame.",
-    name: "Le chofar",
-    role: "Réveil & espérance",
-    href: "/temoignages",
-  },
-  {
-    text: "Des vies délivrées, des corps guéris, des foyers restaurés — les œuvres de Dieu au milieu de son peuple.",
-    name: "Délivrances",
+    text: "Des vies délivrées, des corps guéris, des foyers restaurés — les œuvres de Dieu au milieu de son peuple, racontées par ceux qui les ont vécues.",
+    name: "Guérisons & délivrances",
     role: "Œuvres de Dieu",
-    href: "/temoignages",
+    href: "/vie-transformee",
   },
   {
-    text: "Le rassemblement des dispersés d'Israël : de l'Afrique à la diaspora, une même espérance unit les croyants.",
+    text: "La providence de Dieu pourvoit aux besoins de ses enfants au quotidien — venez lire comment il a pourvu, et rendez grâce avec nous.",
+    name: "La providence",
+    role: "Fidélité de Dieu",
+    href: "/vie-transformee",
+  },
+  {
+    text: "Le rassemblement des dispersés d'Israël : d'Afrique à la diaspora, des témoins se lèvent et racontent ce que le Seigneur fait dans leur vie.",
     name: "Les dispersés",
     role: "Rassemblement",
-    href: "/disperses",
+    href: "/vie-transformee",
   },
   {
-    text: "Marcher avec le Saint-Esprit au quotidien — l'enseignement qui façonne une vie de consécration.",
+    text: "Marcher avec le Saint-Esprit au quotidien — des récits simples et vrais de la fidélité de Dieu, du matin au soir.",
     name: "Marcher avec Dieu",
-    role: "Enseignements",
-    href: "/enseignements",
+    role: "Vie quotidienne",
+    href: "/vie-transformee",
   },
   {
-    text: "« Et Hénoch marcha avec Dieu » — la biographie d'une servante marquée dès le sein maternel.",
-    name: "Biographies",
-    role: "Parcours de foi",
-    href: "/afrika",
+    text: "Des appels entendus, des vies consacrées : chacun raconte sa rencontre avec Yeshoua et ce qui a changé depuis.",
+    name: "Rencontres",
+    role: "Appel & consécration",
+    href: "/vie-transformee",
   },
 ];
 
@@ -317,17 +345,30 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
       .catch(() => setStatsData({ testimonies: 0, videos: 0, biographies: 0, responseTime: 24 }));
   }, []);
 
+  // ⭐ V3.100 — Les cartes de la section « Vies transformées » sont
+  // alimentées UNIQUEMENT par les témoignages des CROYANTS validés
+  // (statut « publie » — validés par un super admin depuis
+  // /admin/vie-transformee). Plus aucun témoignage de serviteur ici.
   useEffect(() => {
-    fetch("/api/home")
+    fetch("/api/temoignages-croyants?limit=12")
       .then(r => (r.ok ? r.json() : null))
       .then(data => {
-        if (data && Array.isArray(data.testimonies) && data.testimonies.length > 0) {
+        if (data && Array.isArray(data.temoignages) && data.temoignages.length > 0) {
           setTemoignages(
-            data.testimonies.map((t: { title?: string; excerpt?: string; servant?: { shortName?: string } }) => ({
-              text: t.excerpt || t.title || "Témoignage du Mouvement Christ Libère.",
-              name: t.servant?.shortName || "Témoignage",
-              role: "Témoignage édifiant",
-              href: "/temoignages",
+            data.temoignages.map((t: {
+              nom: string;
+              categorie: string;
+              contenu: string;
+              ville?: string | null;
+              pays?: string | null;
+            }) => ({
+              text: tronquer(t.contenu),
+              name: t.nom,
+              role: [
+                LABEL_CATEGORIE[t.categorie] || "Vie transformée",
+                t.ville || t.pays,
+              ].filter(Boolean).join(" · "),
+              href: "/vie-transformee",
             }))
           );
         }
@@ -734,7 +775,13 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                     }}
                     className="relative rounded-3xl bg-primary-deep text-white border-2 border-accent-yellow shadow-2xl p-8 flex flex-col justify-between transition-all duration-300 card-shimmer"
                   >
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-4 py-1 rounded-full bg-accent-yellow text-primary-deep font-sans font-black text-xs uppercase tracking-wider shadow-md flex items-center gap-1">
+                    {/* ⭐ V3.100 — Badge « Cœur du Mouvement » : AVANT en
+                        absolute -top-4 il était ROGNÉ par l'overflow hidden
+                        de card-shimmer (retour pasteur : « je ne vois pas
+                        tout le texte, il y a mouvement sur ça »). Il vit
+                        désormais DANS la carte, en haut du contenu —
+                        entièrement lisible, statique. */}
+                    <div className="inline-flex items-center gap-1.5 self-start px-4 py-1.5 rounded-full bg-accent-yellow text-primary-deep font-sans font-black text-xs uppercase tracking-wider shadow-md mb-5">
                       <Sparkles className="w-3.5 h-3.5 shrink-0" /> Cœur du Mouvement
                     </div>
                     <div>
@@ -941,13 +988,17 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
               transition={{ duration: 3, repeat: Infinity, times: [0, 0.15, 0.85, 1], ease: "easeInOut" }}
               className="h-1 w-16 bg-accent-yellow mx-auto mt-6 rounded-full"
             />
-            <div className="mt-8">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              {/* ⭐ V3.100 — Distinction : la section « Vies transformées »
+                  renvoie vers la page des CROYANTS (plus /temoignages,
+                  réservé aux récits d'Afrika & du Pasteur Kongo). */}
               <Link
-                href="/temoignages"
+                href="/vie-transformee"
                 className="px-6 py-3 rounded-full bg-primary-green text-[#1E0F2B] font-bold text-xs hover:bg-primary-green/90 transition-all shadow-md hover:shadow-lg cursor-pointer transform hover:-translate-y-0.5 inline-flex items-center gap-2"
               >
                 ⭐ Lire tous les témoignages
               </Link>
+              <SoumissionTemoignage variante="or" libelle="Partager votre témoignage" />
             </div>
           </div>
         </div>

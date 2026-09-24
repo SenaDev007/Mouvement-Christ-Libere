@@ -42,6 +42,8 @@ const PAGES: EntreeSitemap[] = [
   { chemin: "/pasteur-kongo", priorite: 0.9, frequence: "weekly" },
   // Contenus (les listes mènent aux pages détaillées dynamiques)
   { chemin: "/temoignages", priorite: 0.8, frequence: "weekly" },
+  // ⭐ V3.100 — Témoignages des croyants (distinct de /temoignages)
+  { chemin: "/vie-transformee", priorite: 0.7, frequence: "weekly" },
   { chemin: "/enseignements", priorite: 0.8, frequence: "weekly" },
   { chemin: "/adoration-louanges", priorite: 0.7, frequence: "weekly" },
   { chemin: "/annonces", priorite: 0.7, frequence: "daily" },

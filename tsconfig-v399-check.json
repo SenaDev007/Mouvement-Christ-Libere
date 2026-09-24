@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/app/loading.tsx",
+    "src/components/site/landing-view.tsx",
+    "src/components/ui/navigation-menu-4.tsx",
+    "src/components/ui/modem-animated-footer.tsx"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

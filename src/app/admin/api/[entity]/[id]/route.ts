@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { isR2Configured, purgerArtefactsR2 } from "@/lib/r2";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn, ensureCroyantTestimoniesTable } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme, annoncerLiveAnnule } from "@/lib/live-announcement-relay";
 // ⭐ V3.85 — Miniature TikTok automatique à la modification d'une vidéo.
 import { estUrlTiktok } from "@/lib/tiktok";
@@ -34,6 +34,10 @@ const ENTITY_MAP = {
   calendar: "liturgicalEvent",
   // ⭐ V3.45 — Sections hero paramétrables (/admin/heroes)
   heroes: "heroSection",
+  // ⭐ V3.100 — Témoignages des croyants « Vies transformées » :
+  // validation / rejet / suppression depuis /admin/vie-transformee
+  // (statut en_attente → publie, noteAdmin, publishedAt).
+  croyantstemoignages: "croyantTestimony",
 } as const;
 
 type EntityName = keyof typeof ENTITY_MAP;
@@ -192,6 +196,10 @@ export async function PATCH(
     if (entity === "lives") await ensureLiveCategoryColumn();
     // ⭐ V3.47 — colonne photo des jalons biographiques (même pattern).
     if (entity === "biographies") await ensureBiographyPhotoColumn();
+    // ⭐ V3.100 — table des témoignages des croyants (le client Prisma la
+    // sélectionne dans l'update : sans cette garde, le premier PATCH après
+    // un déploiement pourrait tomber en P2021/P2022 sur une base fraîche).
+    if (entity === "croyantstemoignages") await ensureCroyantTestimoniesTable();
 
     // ⭐ V2.7 — SYNCHRO PHOTO serviteur ↔ compte utilisateur : on capture
     // les infos de correspondance AVANT l'écriture (le code/nom/email peut

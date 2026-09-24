@@ -42,6 +42,8 @@ const COLONNES: { titre: string; liens: FooterLink[] }[] = [
     titre: "La Parole",
     liens: [
       { label: "Témoignages", href: "/temoignages" },
+      // ⭐ V3.100 — Témoignages des CROYANTS (page distincte)
+      { label: "Vies transformées", href: "/vie-transformee" },
       { label: "Enseignements", href: "/enseignements" },
       { label: "Bible du Royaume", href: "/bible" },
       { label: "Calendrier biblique", href: "/calendrier-biblique" },

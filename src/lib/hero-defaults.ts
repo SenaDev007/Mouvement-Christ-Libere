@@ -64,6 +64,9 @@ export const HERO_PAGES: HeroPageMeta[] = [
   { page: "afrika", label: "Afrika — Servante", href: "/afrika", description: "Hero, photo et biographie d'Afrika" },
   { page: "pasteur-kongo", label: "Pasteur Kongo", href: "/pasteur-kongo", description: "Hero, photo et biographie du Pasteur Kongo" },
   { page: "temoignages", label: "Témoignages", href: "/temoignages", description: "Hero de la page des témoignages" },
+  // ⭐ V3.100 — Témoignages des CROYANTS (« Vies transformées ») : page
+  // distincte de /temoignages (récits des serviteurs).
+  { page: "vie-transformee", label: "Vies transformées (croyants)", href: "/vie-transformee", description: "Hero de la page des témoignages des croyants" },
   { page: "enseignements", label: "Enseignements", href: "/enseignements", description: "Hero de la page des enseignements" },
   { page: "bible", label: "Bible", href: "/bible", description: "Hero de la Bible du Royaume" },
   { page: "calendrier-biblique", label: "Calendrier biblique", href: "/calendrier-biblique", description: "Hero du calendrier de l'Éternel" },
@@ -184,6 +187,25 @@ export const DEFAULT_HEROES: Record<string, HeroConfig> = {
     backgroundImage: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1920&auto=format&fit=crop",
     ctaLabel: "Voir les enseignements",
     ctaHref: "/enseignements",
+    cta2Label: "",
+    cta2Href: "",
+    data: {},
+  },
+
+  // ⭐ V3.100 — Vies transformées : témoignages des CROYANTS (soumis
+  // depuis le site, relus et validés par un super admin). Distinction
+  // demandée par le pasteur avec les témoignages des serviteurs.
+  "vie-transformee": {
+    page: "vie-transformee",
+    kicker: "Ce que Dieu a fait",
+    title: "Vies",
+    titleAccent: "transformées",
+    titleSuffix: "",
+    subtitle:
+      "Des croyants racontent ce que Yeshoua a fait dans leur vie : guérisons, délivrances, foyers restaurés, providence. Chaque récit est relu et validé par l'équipe pastorale avant publication.",
+    backgroundImage: "https://images.unsplash.com/photo-1507692049790-de58290a4334?q=80&w=1920&auto=format&fit=crop",
+    ctaLabel: "",
+    ctaHref: "",
     cta2Label: "",
     cta2Href: "",
     data: {},

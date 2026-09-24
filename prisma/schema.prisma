@@ -1271,3 +1271,47 @@ model GeneratedVisual {
   @@index([status])
   @@index([createdAt])
 }
+
+// --- ⭐ V3.100 — Témoignages des croyants (« Vies transformées ») ---
+//
+// Distinction demandée par le pasteur : les témoignages du Mouvement
+// (model Testimony — récits d'Afrika et du Pasteur Kongo, page
+// /temoignages) sont désormais SÉPARÉS des témoignages des CROYANTS
+// dont la vie a été transformée (ce modèle — page /vie-transformee et
+// section « Vies transformées » de la landing).
+//
+// Parcours : soumission publique en deux modales (personnel →
+// professionnel) depuis la landing ou /vie-transformee → statut
+// en_attente → validation par un super admin (/admin/vie-transformee)
+// → statut publie + publishedAt → affichage public (landing + page).
+
+model CroyantTestimony {
+  id        String   @id @default(cuid())
+
+  // ── Modale 1 — Informations personnelles ──
+  nom       String   // nom complet du témoin
+  email     String?  // pour être recontacté (jamais publié)
+  telephone String?  // pour être recontacté (jamais publié)
+  pays      String?  // ex. Bénin
+  ville     String?  // ex. Cotonou
+
+  // ── Modale 2 — Témoignage (volet « professionnel ») ──
+  profession String?  // activité / ministère du témoin
+  eglise     String?  // église locale de rattachement
+  categorie  String   @default("vie_transformee") // vie_transformee, guerison, delivrance, restauration, providence, appel, action_graces
+  titre      String   // accroche courte du témoignage
+  contenu    String   @db.Text // récit complet
+  consentement Boolean @default(true) // accepte la publication après relecture pastorale
+
+  // ── Modération (back-office super admin) ──
+  statut      String    @default("en_attente") // en_attente | publie | rejete
+  noteAdmin   String?   @db.Text // note interne (motif du rejet, remarque)
+  publishedAt DateTime? // date de publication (validée par un super admin)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([statut])
+  @@index([publishedAt])
+  @@index([createdAt])
+}

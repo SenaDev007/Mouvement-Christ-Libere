@@ -2195,3 +2195,81 @@ export function ensureStudioTables(): Promise<void> {
   }
   return inflightStudioTables;
 }
+
+// ─────────────────────────────────────────────────────────────
+// ⭐ V3.100 — TÉMOIGNAGES DES CROYANTS (« Vies transformées »)
+// ─────────────────────────────────────────────────────────────
+
+let croyantTestimoniesOk = false;
+let inflightCroyantTestimonies: Promise<void> | null = null;
+
+/**
+ * ⭐ V3.100 — S'assure que la table `CroyantTestimony` existe.
+ *
+ * Distinction demandée par le pasteur : les témoignages des SERVITEURS
+ * (Testimony — page /temoignages : récits d'Afrika et du Pasteur Kongo)
+ * sont séparés des témoignages des CROYANTS dont la vie a été
+ * transformée (cette table).
+ *
+ * Parcours : soumission publique en 2 modales (personnel →
+ * professionnel, composant SoumissionTemoignage) → statut en_attente →
+ * validation par un super admin (/admin/vie-transformee) → statut
+ * publie + publishedAt → affichage sur la landing (section « Vies
+ * transformées ») et la page /vie-transformee.
+ *
+ * Mêmes garanties que les autres helpers : idempotent (CREATE TABLE
+ * IF NOT EXISTS), mémoïsé, concurrentiel (un seul DDL en vol), échec
+ * purement loggué (la table sera créée au prochain appel/instance).
+ */
+export function ensureCroyantTestimoniesTable(): Promise<void> {
+  if (croyantTestimoniesOk) return Promise.resolve();
+  if (!inflightCroyantTestimonies) {
+    inflightCroyantTestimonies = (async () => {
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "CroyantTestimony" (
+            "id" TEXT NOT NULL,
+            "nom" TEXT NOT NULL,
+            "email" TEXT,
+            "telephone" TEXT,
+            "pays" TEXT,
+            "ville" TEXT,
+            "profession" TEXT,
+            "eglise" TEXT,
+            "categorie" TEXT NOT NULL DEFAULT 'vie_transformee',
+            "titre" TEXT NOT NULL,
+            "contenu" TEXT NOT NULL,
+            "consentement" BOOLEAN NOT NULL DEFAULT true,
+            "statut" TEXT NOT NULL DEFAULT 'en_attente',
+            "noteAdmin" TEXT,
+            "publishedAt" TIMESTAMPTZ,
+            "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+            "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+            CONSTRAINT "CroyantTestimony_pkey" PRIMARY KEY ("id")
+        )
+      `);
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "CroyantTestimony_statut_idx" ON "CroyantTestimony"("statut")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "CroyantTestimony_publishedAt_idx" ON "CroyantTestimony"("publishedAt")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "CroyantTestimony_createdAt_idx" ON "CroyantTestimony"("createdAt")'
+      );
+    })()
+      .then(() => {
+        croyantTestimoniesOk = true;
+        console.log("[ensure-schema] V3.100 : table CroyantTestimony vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] V3.100 : CREATE TABLE CroyantTestimony impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightCroyantTestimonies = null;
+      });
+  }
+  return inflightCroyantTestimonies;
+}

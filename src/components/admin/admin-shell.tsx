@@ -28,6 +28,7 @@ import {
   Building2,
   Wallet,
   CreditCard,
+  HeartHandshake,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -46,6 +47,10 @@ const NAV_SECTIONS = [
       { label: "Serviteurs", href: "/admin/servants", icon: Users },
       { label: "Biographies", href: "/admin/biographies", icon: BookOpen },
       { label: "Témoignages", href: "/admin/testimonies", icon: FileText },
+      // ⭐ V3.100 — Témoignages des CROYANTS (« Vies transformées ») :
+      // soumissions du site public à valider/rejeter (distinct des
+      // témoignages des serviteurs Afrika & Pasteur Kongo ci-dessus).
+      { label: "Vies transformées", href: "/admin/vie-transformee", icon: HeartHandshake },
       { label: "Enseignements", href: "/admin/teachings", icon: BookOpen },
       // ⭐ V3.45 — Sections hero paramétrables (photos + textes de
       // toutes les bannières du site public)
