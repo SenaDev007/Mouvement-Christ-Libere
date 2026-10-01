@@ -8,7 +8,7 @@ import Image from "next/image";
 import {
   Play, Eye, ChevronRight, ChevronDown, ChevronLeft,
   Calendar, Video as VideoIcon, Heart, Share2, Search,
-  X, Clock, Star, Wind, Sunrise, MoonStar, Sparkles,
+  X, Star, Wind, Sunrise, MoonStar, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ShareModal } from "@/components/videos/share-modal";
@@ -201,19 +201,15 @@ export function VideosView({ hero, photos }: { hero: HeroConfig; photos: PhotosS
     // rubriquesServant = référence stable du module (par code serviteur).
   }, [rubriquesServant, currentVideos]);
 
-  // Vidéos récentes (8 plus récentes du serviteur actuel)
-  const recentVideos = useMemo(() => {
-    return [...currentVideos]
-      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-      .slice(0, 8);
-  }, [currentVideos]);
-
-  // Auto-sélection première catégorie
-  useEffect(() => {
-    if (!activeCategory && categories.length > 0) {
-      setActiveCategory(categories[0].id);
-    }
-  }, [categories, activeCategory]);
+  // ⭐ V4.01 — FILTRAGE PAR CATÉGORIE (retour pasteur) :
+  // - activeCategory === null → « Tout » : la grille principale liste
+  //   TOUTES les vidéos du serviteur actif (toutes catégories confondues,
+  //   tri courant — « Plus récentes » par défaut) ;
+  // - catégorie cliquée → la page est FILTRÉE : seules les vidéos de cette
+  //   catégorie s'affichent, en premier plan (rubriques, chips, sidebar) ;
+  // - l'ancienne section « Vidéos récentes » est retirée : redondante avec
+  //   la grille « Tout » triée par date et avec les cartes de rubriques qui
+  //   affichent déjà le dernier épisode publié.
 
   // Si une vidéo est sélectionnée
   if (currentVideo) {
@@ -228,7 +224,8 @@ export function VideosView({ hero, photos }: { hero: HeroConfig; photos: PhotosS
     );
   }
 
-  const activeCat = categories.find(c => c.id === activeCategory) || categories[0];
+  // ⭐ V4.01 — null = « Tout » : aucune catégorie filtrée.
+  const activeCat = categories.find(c => c.id === activeCategory) || null;
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -387,10 +384,35 @@ export function VideosView({ hero, photos }: { hero: HeroConfig; photos: PhotosS
             {/* Chips de catégories scrollables horizontalement (mobile) */}
             <div className="lg:hidden mb-4 overflow-x-auto scrollbar-thin">
               <div className="flex items-center gap-2 pb-2 whitespace-nowrap">
+                {/* ⭐ V4.01 — « Tout » : retire le filtre — TOUTES les vidéos
+                    du serviteur actif, toutes catégories confondues. */}
+                <button
+                  onClick={() => {
+                    setActiveCategory(null);
+                    requestAnimationFrame(() => {
+                      document.getElementById("categorie-active")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    });
+                  }}
+                  className={cn(
+                    "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0",
+                    !activeCategory
+                      ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                      : "bg-white text-[#1E0F2B] border border-[#8A8378]/20"
+                  )}
+                >
+                  Tout
+                  <span className={cn("text-[10px]", !activeCategory ? "text-[#C9A227]" : "text-[#8A8378]")}>{currentVideos.length}</span>
+                </button>
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
+                    onClick={() => {
+                      setActiveCategory(cat.id);
+                      // ⭐ V4.01 — défiler vers les vidéos filtrées (premier plan)
+                      requestAnimationFrame(() => {
+                        document.getElementById("categorie-active")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      });
+                    }}
                     className={cn(
                       "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0",
                       activeCategory === cat.id
@@ -411,25 +433,21 @@ export function VideosView({ hero, photos }: { hero: HeroConfig; photos: PhotosS
             <div className="grid lg:grid-cols-[1fr_240px] gap-6">
               {/* Colonne principale : vidéos récentes + catégorie active */}
               <div className="min-w-0">
-                {/* Section Vidéos récentes */}
-                {!searchQuery && recentVideos.length > 0 && (
-                  <div className="mb-8">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Clock className="w-5 h-5 text-[#C9A227]" />
-                      <h2 className="font-bold text-base md:text-lg text-[#1E0F2B]">Vidéos récentes</h2>
-                      <span className="text-xs text-[#8A8378]">{recentVideos.length} vidéos</span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                      {recentVideos.map((video) => (
-                        <YouTubeStyleCard key={`recent-${video.id}`} video={video} photos={photos} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Vidéos de la catégorie active */}
-                {activeCat && (
-                  <div id="categorie-active" className="scroll-mt-32">
+                {/* ⭐ V4.01 — GRILLE PRINCIPALE FILTRÉE : un clic sur une
+                    catégorie FILTRE la page et met SES vidéos en premier
+                    plan ; « Tout » liste toutes les vidéos du serviteur.
+                    Ancienne section « Vidéos récentes » retirée (redondante
+                    avec la grille triée par date). */}
+                <motion.div
+                  key={activeCat ? `cat-${activeCat.id}` : "tout"}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  id="categorie-active"
+                  className="scroll-mt-32"
+                >
+                  {activeCat ? (
+                    <>
                     <div className="flex items-center gap-2 mb-4 flex-wrap">
                       {estRubrique(activeCat.name) && (
                         <span className="w-7 h-7 rounded-lg bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
@@ -464,13 +482,57 @@ export function VideosView({ hero, photos }: { hero: HeroConfig; photos: PhotosS
                         ))}
                       </div>
                     )}
-                  </div>
-                )}
+                    </>
+                  ) : (
+                    /* « Tout » : toutes les vidéos du serviteur actif */
+                    <div>
+                      <div className="flex items-center gap-2 mb-4 flex-wrap">
+                        <h2 className="font-bold text-base md:text-lg text-[#1E0F2B]">Toutes les vidéos</h2>
+                        {currentVideos.length > 0 && (
+                          <span className="text-xs text-[#8A8378]">{currentVideos.length} vidéo{currentVideos.length > 1 ? "s" : ""}</span>
+                        )}
+                      </div>
+                      {currentVideos.length === 0 ? (
+                        <div className="rounded-2xl border-2 border-dashed border-[#C9A227]/40 bg-[#C9A227]/5 p-8 md:p-10 text-center max-w-xl mx-auto">
+                          <div className="w-12 h-12 rounded-full bg-[#C9A227]/15 flex items-center justify-center mx-auto mb-3">
+                            <VideoIcon className="w-6 h-6 text-[#C9A227]" />
+                          </div>
+                          <p className="font-bold text-[#1E0F2B] text-sm md:text-base">Les vidéos arrivent bientôt</p>
+                          <p className="text-xs md:text-sm text-[#8A8378] mt-1.5 leading-relaxed">
+                            Restez connectés — chaque nouvel enseignement, témoignage et direct sera publié ici.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                          {currentVideos.map((video) => (
+                            <YouTubeStyleCard key={video.id} video={video} photos={photos} onClick={() => { setCurrentVideo(video); router.push(`/videos?v=${video.id}`); window.scrollTo(0, 0); }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
               </div>
 
               {/* Sidebar droite : liste des catégories (desktop uniquement) */}
               <div className="hidden lg:block space-y-1.5">
                 <h3 className="font-bold text-xs text-[#1E0F2B] uppercase tracking-wider mb-3">Catégories</h3>
+                {/* ⭐ V4.01 — « Tout » en tête : retire le filtre de catégorie. */}
+                <button
+                  onClick={() => setActiveCategory(null)}
+                  className={cn(
+                    "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
+                    !activeCategory
+                      ? "bg-[#2A0E3D] text-[#FAF6EF]"
+                      : "text-[#1E0F2B] hover:bg-[#2A0E3D]/5"
+                  )}
+                >
+                  <span className="truncate flex items-center gap-1.5">Tout</span>
+                  <span className={cn(
+                    "text-xs flex-shrink-0",
+                    !activeCategory ? "text-[#C9A227]" : "text-[#8A8378]"
+                  )}>{currentVideos.length}</span>
+                </button>
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
