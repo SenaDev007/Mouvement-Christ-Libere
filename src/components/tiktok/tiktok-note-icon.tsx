@@ -4,8 +4,21 @@
  * Glyphe du logo TikTok (note de musique) avec le double décalage de
  * marque cyan #25F4EE / rose #FE2C55. Dessiné en SVG inline : zéro
  * requête réseau, net à toutes les tailles.
+ *
+ * ⭐ V4.00 — prop optionnelle `duoClassName` : classe posée sur les DEUX
+ * calques colorés (cyan + rose) pour permettre au footer de les masquer
+ * au repos et de ne révéler le duo officiel qu'au survol. Si elle n'est
+ * pas fournie, le rendu est strictement identique à avant.
  */
-export function TiktokNoteIcon({ size = 24, className }: { size?: number; className?: string }) {
+export function TiktokNoteIcon({
+  size = 24,
+  className,
+  duoClassName,
+}: {
+  size?: number;
+  className?: string;
+  duoClassName?: string;
+}) {
   const k = size / 48;
   return (
     <svg
@@ -20,11 +33,13 @@ export function TiktokNoteIcon({ size = 24, className }: { size?: number; classN
         <path
           d="M22 6h7c.5 5.5 4.3 9.5 9.8 10v7c-3.7.1-7.1-1-9.9-3.1v13.6c0 6.3-4.7 10.5-10.6 10.5-5.5 0-9.6-3.9-9.6-9 0-5 4-8.8 9.3-8.8 1 0 2 .1 3 .4v7.4c-.8-.3-1.7-.5-2.6-.5-2.3 0-4 1.5-4 3.5s1.8 3.6 4.1 3.6c2.6 0 4.5-1.9 4.5-4.7V6z"
           fill="#25F4EE"
+          className={duoClassName}
         />
         <path
           d="M22 6h7c.5 5.5 4.3 9.5 9.8 10v7c-3.7.1-7.1-1-9.9-3.1v13.6c0 6.3-4.7 10.5-10.6 10.5-5.5 0-9.6-3.9-9.6-9 0-5 4-8.8 9.3-8.8 1 0 2 .1 3 .4v7.4c-.8-.3-1.7-.5-2.6-.5-2.3 0-4 1.5-4 3.5s1.8 3.6 4.1 3.6c2.6 0 4.5-1.9 4.5-4.7V6z"
           fill="#FE2C55"
           transform="translate(-6 -6)"
+          className={duoClassName}
         />
         <path
           d="M22 6h7c.5 5.5 4.3 9.5 9.8 10v7c-3.7.1-7.1-1-9.9-3.1v13.6c0 6.3-4.7 10.5-10.6 10.5-5.5 0-9.6-3.9-9.6-9 0-5 4-8.8 9.3-8.8 1 0 2 .1 3 .4v7.4c-.8-.3-1.7-.5-2.6-.5-2.3 0-4 1.5-4 3.5s1.8 3.6 4.1 3.6c2.6 0 4.5-1.9 4.5-4.7V6z"

@@ -13,12 +13,6 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Mail,
-  Youtube,
-  Facebook,
-  Instagram,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 // ⭐ V3.80 — PWA : bouton « Installer l'application » — rend l'installation
 // du site public (« Site public Christ Libère », icône = logo) découvrable
@@ -34,6 +28,10 @@ interface SocialLink {
   icon: React.ReactNode;
   href: string;
   label: string;
+  /** ⭐ V4.00 — classe de marque (ex. social-youtube) : au survol,
+   * l'icône prend la VRAIE couleur officielle de la plateforme
+   * (voir bloc « Réseaux sociaux officiels » dans globals.css). */
+  hoverClassName?: string;
 }
 
 /** Colonnes de navigation façon Win Agro (contenu Christ Libère). */
@@ -194,7 +192,11 @@ export const Footer = ({
                         <Link
                           key={index}
                           href={link.href}
-                          className="w-10 h-10 rounded-full bg-primary-green/20 hover:bg-primary-green text-white hover:text-white flex items-center justify-center transition-all duration-300 hover:scale-110"
+                          title={link.label}
+                          className={cn(
+                            "w-10 h-10 rounded-full bg-primary-green/20 hover:bg-primary-green text-white hover:text-white flex items-center justify-center transition-all duration-300 hover:scale-110",
+                            link.hoverClassName
+                          )}
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label={link.label}

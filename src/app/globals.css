@@ -687,3 +687,47 @@
     animation: none;
   }
 }
+
+/* ============================================================
+   ⭐ V4.00 — Réseaux sociaux officiels du Mouvement Christ Libère
+   (pastilles « Suivez le Mouvement » du footer)
+
+   Au repos : icônes neutres blanches sur pastille or 20 % (comme avant).
+   Au survol : chaque plateforme révèle sa VRAIE couleur officielle —
+   YouTube rouge #FF0000, Facebook bleu #1877F2, Instagram DÉGRADÉ de
+   marque (linearGradient #ig-gradient-footer dans
+   conditional-footer.tsx), TikTok duo cyan #25F4EE / rose #FE2C55
+   (TiktokNoteIcon duoClassName="tk-duo"), Gmail rouge #EA4335.
+   Le fond vert/or plein cède la place à un voile subtil de la teinte
+   de marque pour laisser la couleur officielle s'exprimer.
+   ============================================================ */
+a.social-youtube:hover {
+  color: #ff0000 !important; /* rouge officiel YouTube */
+  background-color: rgba(255, 0, 0, 0.12) !important;
+}
+a.social-facebook:hover {
+  color: #1877f2 !important; /* bleu officiel Facebook */
+  background-color: rgba(24, 119, 242, 0.12) !important;
+}
+a.social-instagram:hover {
+  color: #faf6ef !important; /* le trait devient le dégradé officiel ↓ */
+  background-color: rgba(214, 41, 118, 0.12) !important;
+}
+a.social-instagram:hover .ig-stroke {
+  stroke: url(#ig-gradient-footer);
+}
+a.social-tiktok:hover {
+  color: #ffffff !important; /* glyphe blanc + duo officiel ↓ */
+  background-color: rgba(37, 244, 238, 0.1) !important;
+}
+a.social-tiktok .tk-duo {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+a.social-tiktok:hover .tk-duo {
+  opacity: 1;
+}
+a.social-mail:hover {
+  color: #ea4335 !important; /* rouge officiel Gmail */
+  background-color: rgba(234, 67, 53, 0.12) !important;
+}
