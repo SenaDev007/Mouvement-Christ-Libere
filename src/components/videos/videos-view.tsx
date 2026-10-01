@@ -536,7 +536,14 @@ export function VideosView({ hero, photos }: { hero: HeroConfig; photos: PhotosS
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
+                    onClick={() => {
+                      setActiveCategory(cat.id);
+                      // ⭐ V4.01 — défiler vers les vidéos filtrées (premier
+                      // plan) — cohérent avec les chips et cartes rubriques.
+                      requestAnimationFrame(() => {
+                        document.getElementById("categorie-active")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      });
+                    }}
                     className={cn(
                       "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
                       activeCategory === cat.id
