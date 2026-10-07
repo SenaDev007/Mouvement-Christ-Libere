@@ -27,7 +27,7 @@ import {
   TOUTES_RUBRIQUES, categoryOrder,
 } from "@/lib/video-rubrics";
 import { DeleteButton } from "@/components/admin/delete-button";
-import { AdminModal, ModalField, ModalError, modalInputClass } from "@/components/admin/admin-modal";
+import { AdminModal, ModalField, ModalError, ModalSubmit, modalInputClass } from "@/components/admin/admin-modal";
 // ⭐ V3.64 — Miniatures TikTok dans la grille back-office : vraie image
 // (R2, backfill) + badge, repli de marque si absente.
 import { estUrlTiktok } from "@/lib/tiktok";

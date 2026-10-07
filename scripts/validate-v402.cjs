@@ -49,6 +49,7 @@ check("Titre vide refusé (validation client)", src.includes('setError("Le titre
 check("ModalError affichée en cas d'échec", /<ModalError error=\{error\} \/>/.test(src));
 check("ModalSubmit « Enregistrer »", /<ModalSubmit loading=\{loading\} label="Enregistrer" \/>/.test(src));
 check("Annuler présent", />Annuler<\/button>|\>\s*Annuler\s*<\/button>/.test(src));
+check("ModalSubmit BIEN IMPORTÉ (erreur runtime trouvée en prod)", /import \{[^}]*ModalSubmit[^}]*\} from "@\/components\/admin\/admin-modal"/.test(src));
 
 console.log(`\n${ok}/${ok + ko} vérifications ${ko === 0 ? "✔ V4.02 OK" : "✘ ÉCHEC"}`);
 if (ko !== 0) process.exit(1);
