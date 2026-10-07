@@ -28,6 +28,7 @@ export default async function VideoEditPage({
       videoId={video.id}
       title={video.title}
       servantName={video.servant?.shortName || "Serviteur"}
+      description={video.description}
     />
   );
 }

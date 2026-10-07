@@ -26,6 +26,8 @@ import {
   Smile, Sparkles, Cloud, Users, Keyboard, Sticker as StickerIcon,
   Wind, Shield, Eraser, CheckCircle2, Youtube, Square,
   Library as LibraryIcon,
+  // ⭐ V4.02 — édition titre/description depuis la post-production
+  Pencil, X,
 } from "lucide-react";
 import type {
   Overlay, TextOverlay, ImageOverlay, Segment, RenderProject,
@@ -62,6 +64,8 @@ interface PostProductionProps {
   videoUrl?: string | null;
   title: string;
   servantName: string;
+  /** ⭐ V4.02 — description actuelle (affichée/éditable dans l'en-tête). */
+  description?: string | null;
 }
 
 type TabType = "trim" | "text" | "image" | "stickers" | "subtitles" | "transitions" | "color" | "speed" | "transform" | "filters" | "advanced" | "audio" | "sfx" | "library" | "export";
@@ -137,9 +141,51 @@ interface PostProductionState {
   thumbnailUrl: string | null;
 }
 
-export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, servantName }: PostProductionProps) {
+export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, servantName, description: descriptionInitiale }: PostProductionProps) {
   // ⭐ V3.17 — navigation retour vers la page Vidéos du back-office
   const router = useRouter();
+
+  // ─── ⭐ V4.02 — ÉDITION TITRE + DESCRIPTION (en-tête) ───
+  // Retour pasteur : « même sur la page post-production, pas de
+  // possibilité de modifier le titre et la description » — ce panneau
+  // corrige cela sans quitter le montage.
+  const [titreAffiche, setTitreAffiche] = useState(title);
+  const [showEditMeta, setShowEditMeta] = useState(false);
+  const [metaTitre, setMetaTitre] = useState(title);
+  const [metaDescription, setMetaDescription] = useState(descriptionInitiale || "");
+  const [metaSaving, setMetaSaving] = useState(false);
+  const [metaError, setMetaError] = useState("");
+
+  const handleSaveMeta = async () => {
+    const t = metaTitre.trim();
+    if (!t) {
+      setMetaError("Le titre est obligatoire.");
+      return;
+    }
+    setMetaSaving(true);
+    setMetaError("");
+    try {
+      const res = await apiFetch(`/admin/api/videos/${videoId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: t,
+          description: metaDescription.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Échec (${res.status})`);
+      }
+      setTitreAffiche(t);
+      setShowEditMeta(false);
+      router.refresh();
+    } catch (e) {
+      setMetaError(e instanceof Error ? e.message : "Enregistrement impossible.");
+    } finally {
+      setMetaSaving(false);
+    }
+  };
 
   // ─── États principaux ───
   const [currentTime, setCurrentTime] = useState(0);
@@ -1554,7 +1600,23 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             <h1 className="text-xl font-bold flex items-center gap-2 text-[#1E0F2B] min-w-0">
               <Film className="w-5 h-5 text-[#C9A227] flex-shrink-0" /><span className="truncate">Post-production</span>
             </h1>
-            <span className="text-xs text-[#8A8378] min-w-0 break-words">{title} — {servantName}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-xs text-[#8A8378] min-w-0 break-words">{titreAffiche} — {servantName}</span>
+              {/* ⭐ V4.02 — modifier le titre / la description SANS quitter
+                  le montage (retour pasteur). */}
+              <button
+                onClick={() => {
+                  setMetaTitre(titreAffiche);
+                  setMetaError("");
+                  setShowEditMeta(!showEditMeta);
+                }}
+                className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${showEditMeta ? "bg-[#C9A227]/20 text-[#A3821C]" : "hover:bg-[#2A0E3D]/5 text-[#8A8378] hover:text-[#1E0F2B]"}`}
+                title="Modifier le titre et la description"
+                aria-label="Modifier le titre et la description"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Undo/Redo */}
@@ -1613,6 +1675,75 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </button>
           </div>
         </div>
+
+        {/* ⭐ V4.02 — Panneau d'édition titre/description (sous l'en-tête) */}
+        {showEditMeta && (
+          <div className="mt-3 rounded-xl border border-[#C9A227]/30 bg-[#C9A227]/5 p-3 sm:p-4">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <p className="text-xs font-bold text-[#1E0F2B] uppercase tracking-wider">
+                Titre & description
+              </p>
+              <button
+                onClick={() => setShowEditMeta(false)}
+                className="p-1.5 rounded-lg hover:bg-[#2A0E3D]/5 text-[#8A8378] hover:text-[#1E0F2B]"
+                aria-label="Fermer l'édition du titre et de la description"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[#8A8378] mb-1">
+                  Titre <span className="text-[#C9A227]">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={metaTitre}
+                  onChange={(e) => setMetaTitre(e.target.value)}
+                  maxLength={300}
+                  placeholder="Titre de la vidéo"
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-white text-sm text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/20"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[#8A8378] mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  rows={3}
+                  maxLength={5000}
+                  placeholder="Description de la vidéo…"
+                  className="w-full px-3 py-2 rounded-lg border border-[#8A8378]/25 bg-white text-sm text-[#1E0F2B] placeholder:text-[#8A8378]/60 focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/20 resize-none"
+                />
+                <p className="text-[10px] text-[#8A8378] mt-1">
+                  Affichée sur la page publique /videos et utilisée par Google.
+                </p>
+              </div>
+              {metaError && (
+                <p className="text-xs text-red-600" role="alert">{metaError}</p>
+              )}
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setShowEditMeta(false)}
+                  disabled={metaSaving}
+                  className="px-4 py-2 rounded-lg text-sm font-bold text-[#8A8378] hover:text-[#1E0F2B] transition-colors disabled:opacity-40"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSaveMeta}
+                  disabled={metaSaving || !metaTitre.trim()}
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {metaSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {metaSaving ? "Enregistrement…" : "Enregistrer"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Keyboard shortcuts dropdown */}
         {showShortcuts && (

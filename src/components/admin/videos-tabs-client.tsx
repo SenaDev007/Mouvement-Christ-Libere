@@ -8,6 +8,8 @@ import {
   Plus, Pencil, Video as VideoIcon, Radio, Eye, Clock, Crown,
   X, Loader2, AlertCircle, Save, Tag, ChevronDown,
   Download, Trash2, FolderDown, Star, Sparkles,
+  // ⭐ V4.02 — édition rapide titre/description (modal) + accès montage
+  Scissors,
   // ⭐ V3.47 — upload direct de fichiers vidéo dans le modal « Nouvelle vidéo »
   Upload, FileVideo, Link as LinkIcon, Camera,
   // ⭐ V3.48 — champ d'upload de la miniature (remplace le champ « URL miniature »)
@@ -85,6 +87,12 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
   const [activeTab, setActiveTab] = useState<string>(initialServant);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [modalOpen, setModalOpen] = useState(false);
+  // ⭐ V4.02 — modal « Modifier » : édition du TITRE et de la DESCRIPTION
+  // d'une vidéo directement depuis la carte (le crayon y menait avant à
+  // la post-production — un studio de MONTAGE sans aucun champ titre /
+  // description, d'où le retour du pasteur). Le montage reste accessible
+  // via le nouveau bouton ciseaux « Post-production ».
+  const [editVideo, setEditVideo] = useState<VideoWithServant | null>(null);
 
   // ⭐ V3.46 — Copie locale des vidéos : le sélecteur de rubrique en ligne
   // PATCH l'API puis met à jour CET état (retour visuel instantané) ;
@@ -886,12 +894,27 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                     </Link>
-                    <Link
-                      href={`/admin/videos/${v.id}/edit`}
+                    {/* ⭐ V4.02 — « Modifier » : édition RAPIDE du titre et
+                        de la description (modal + PATCH immédiat). Avant, ce
+                        crayon ouvrait la post-production, où ces champs
+                        n'existent pas. */}
+                    <button
+                      type="button"
+                      onClick={() => setEditVideo(v)}
                       className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#BDB4C9] hover:text-[#C9A227] transition-colors"
-                      aria-label="Modifier"
+                      aria-label="Modifier le titre et la description"
+                      title="Modifier le titre et la description"
                     >
                       <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    {/* Montage vidéo (découpage, texte, sous-titres…) */}
+                    <Link
+                      href={`/admin/videos/${v.id}/edit`}
+                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#8C5FA8]/10 text-[#BDB4C9] hover:text-[#8C5FA8] transition-colors"
+                      aria-label="Post-production (montage)"
+                      title="Post-production (montage)"
+                    >
+                      <Scissors className="w-3.5 h-3.5" />
                     </Link>
                     <DeleteButton entity="videos" id={v.id} />
                   </div>
@@ -1021,6 +1044,18 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
         servants={servants}
         preselectedServantCode={activeTab === "all" ? null : activeTab}
       />
+
+      {/* ⭐ V4.02 — Modal Modifier : titre + description */}
+      <EditVideoModal
+        video={editVideo}
+        onClose={() => setEditVideo(null)}
+        onSaved={(id, title, description) => {
+          setVideosLocal((prev) =>
+            prev.map((v) => (v.id === id ? { ...v, title, description } : v))
+          );
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
@@ -1087,6 +1122,125 @@ function RubricSelect({ video, onChange }: RubricSelectProps) {
         <Loader2 className="w-3 h-3 animate-spin text-[#C9A227] absolute right-2 bottom-2 pointer-events-none" />
       )}
     </div>
+  );
+}
+
+// ============ ⭐ V4.02 — Modal Modifier (titre + description) ============
+interface EditVideoModalProps {
+  /** Vidéo à éditer — null = fermé. */
+  video: VideoWithServant | null;
+  onClose: () => void;
+  /** Appelé après l'enregistrement réussi (mise à jour locale + refresh). */
+  onSaved: (id: string, title: string, description: string) => void;
+}
+
+function EditVideoModal({ video, onClose, onSaved }: EditVideoModalProps) {
+  const router = useRouter();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Ouvrir le modal → pré-remplir avec les valeurs ACTUELLES de la vidéo
+  // (resynchronisation à chaque ouverture, même si la carte a été
+  // rafraîchie entre-temps).
+  useEffect(() => {
+    if (video) {
+      setTitle(video.title || "");
+      setDescription(video.description || "");
+      setError("");
+    }
+  }, [video]);
+
+  if (!video) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const titrePropre = title.trim();
+    if (!titrePropre) {
+      setError("Le titre est obligatoire.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/admin/api/videos/${video.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: titrePropre,
+          description: description.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Échec (${res.status})`);
+      }
+      onSaved(video.id, titrePropre, description.trim());
+      onClose();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Enregistrement impossible : ${err.message}`
+          : "Enregistrement impossible."
+      );
+    } finally {
+      setLoading(false);
+      router.refresh();
+    }
+  };
+
+  return (
+    <AdminModal
+      open
+      onClose={onClose}
+      title="Modifier la vidéo"
+      subtitle={`${video.servant?.shortName || "Serviteur"} — titre et description visibles sur la page publique /videos`}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <ModalField label="Titre" required fullWidth>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            maxLength={300}
+            placeholder="Titre de la vidéo"
+            className={modalInputClass()}
+            autoFocus
+          />
+        </ModalField>
+
+        <ModalField
+          label="Description"
+          help="Affichée sous le lecteur et utilisée par Google (résumé de la vidéo)."
+          fullWidth
+        >
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={5}
+            maxLength={5000}
+            placeholder="Description de la vidéo…"
+            className={`${modalInputClass()} resize-none`}
+          />
+        </ModalField>
+
+        <ModalError error={error} />
+
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#BDB4C9] hover:text-[#FAF6EF] transition-colors disabled:opacity-40"
+          >
+            Annuler
+          </button>
+          <ModalSubmit loading={loading} label="Enregistrer" />
+        </div>
+      </form>
+    </AdminModal>
   );
 }
 
