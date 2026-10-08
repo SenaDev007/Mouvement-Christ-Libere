@@ -32,6 +32,22 @@
  *    proxy oEmbed indisponible (502 → dimensionnement V3.64 prouvé).
  *  - Poster (vraie miniature R2) + preconnect + fondu enchaîné V3.64.
  *
+ * ⭐ V4.03 — RÉSILIENCE « overload-protect triggered » : retours de
+ * spectateurs — certaines vidéos TikTok refusent de démarrer dans le
+ * lecteur avec l'écran d'erreur « overload-protect triggered », alors
+ * qu'elles se lisent normalement sur tiktok.com / YouTube. C'est la
+ * protection anti-surcharge du CDN ByteDance/TikTok (concentration
+ * d'accès, transitoire) : elle se déclenche CÔTÉ TIKTOK, sur la
+ * requête embed — impossible à prévenir ou détecter depuis la page
+ * (iframe cross-origin). Parade :
+ *  - « Réessayer » (mode page) : recharge COMPLET de l'iframe avec
+ *    cache-buster (?retry=N → nouvelle requête CDN, pas de cache
+ *    navigateur) + retour du poster « Rechargement du lecteur… » ;
+ *  - « Ouvrir sur TikTok » : échappatoire permanente (la vidéo y est
+ *    toujours lisible) + micro-aide explicite sous le lecteur ;
+ *  - mode boîte (post-production) : bouton discret en superposition
+ *    (coin haut-droit) qui relance le même mécanisme.
+ *
  * Deux modes :
  *  - page (public /videos) : vidéo ≤ 486 px de large, ≤ min(vh−140, 960)
  *    de haut, lien « Ouvrir sur TikTok » ;
@@ -41,7 +57,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { ExternalLink, Loader2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { urlEmbedTiktok } from "@/lib/tiktok";
 import { TiktokNoteIcon } from "@/components/tiktok/tiktok-note-icon";
@@ -94,6 +110,24 @@ export function LecteurTikTok({
   const zoneRef = useRef<HTMLDivElement>(null);
   const [zone, setZone] = useState<{ l: number; h: number } | null>(null);
   const [hauteurFenetre, setHauteurFenetre] = useState(800);
+
+  // ⭐ V4.03 — Rechargement du lecteur : chaque clic remonte l'iframe
+  // (key) avec un cache-buster différent (?retry=N) → nouvelle requête
+  // au CDN TikTok, qui refuse parfois la 1ʳᵉ tentative avec l'écran
+  // « overload-protect triggered » (protection anti-surcharge,
+  // transitoire). On repart aussi du poster (retour chargement).
+  const [tentative, setTentative] = useState(0);
+  const relancerLecteur = () => {
+    setPrete(false);
+    setTentative((t) => t + 1);
+  };
+
+  // Changement de vidéo (le composant n'est PAS remonté par le parent) :
+  // on repart d'une tentative vierge — pas de ?retry= qui traîne sur
+  // l'URL de la nouvelle vidéo.
+  useEffect(() => {
+    setTentative(0);
+  }, [tiktokId]);
 
   // ① Hauteur exacte + poster de repli depuis le proxy oEmbed (le fetch
   // sortant vers TikTok tourne SUR VERCEL — cf. /api/tiktok/oembed).
@@ -214,7 +248,12 @@ export function LecteurTikTok({
               boîte clippe SOUS la zone vidéo : la légende est rendue mais
               invisible — jamais coupée au milieu, jamais scrollable. */}
           <iframe
-            src={urlEmbedTiktok(tiktokId)}
+            key={`embed-tt-${tentative}`}
+            src={
+              tentative > 0
+                ? `${urlEmbedTiktok(tiktokId)}?retry=${tentative}`
+                : urlEmbedTiktok(tiktokId)
+            }
             title={titre}
             width={LARGEUR_LOGIQUE}
             height={hauteur}
@@ -263,29 +302,78 @@ export function LecteurTikTok({
               <div className="flex items-center gap-1.5">
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-white/85" />
                 <span className="text-[11px] font-semibold text-white/85">
-                  Chargement du lecteur TikTok…
+                  {tentative > 0
+                    ? `Rechargement du lecteur… (tentative ${tentative + 1})`
+                    : "Chargement du lecteur TikTok…"}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
+        {/* ⭐ V4.03 — Mode boîte (post-production) : bouton discret en
+            superposition pour relancer le lecteur (utile si TikTok
+            répond « overload-protect » dans la zone d'aperçu). */}
+        {boite && (
+          <button
+            type="button"
+            onClick={relancerLecteur}
+            title="Recharger le lecteur TikTok (si erreur overload-protect)"
+            aria-label="Recharger le lecteur TikTok"
+            className="absolute right-2 top-2 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/70"
+          >
+            <RotateCcw
+              className={cn(
+                "h-4 w-4",
+                !prete && tentative > 0 && "animate-spin"
+              )}
+            />
+          </button>
+        )}
+
         {/* Lien externe (mode page) : si l'embed est indisponible dans un
             pays, la vidéo reste atteignable en un clic. ⭐ V3.65 : en
             video-first la légende de l'embed est clippée — le lien donne
-            aussi l'accès direct à la publication complète. */}
+            aussi l'accès direct à la publication complète.
+            ⭐ V4.03 : « Réessayer » à côté du lien — parade au refus
+            « overload-protect triggered » du CDN TikTok (transitoire :
+            une nouvelle requête passe presque toujours). */}
         {!boite && afficherLien && (
-          <a
-            href={
-              videoUrl || `https://www.tiktok.com/@pamela.dali7/video/${tiktokId}`
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 text-[#1E0F2B] text-xs font-semibold transition-colors"
-          >
-            <ExternalLink className="h-3.5 w-3.5" style={{ color: accent }} />
-            Ouvrir sur TikTok
-          </a>
+          <div className="mt-3 flex flex-col items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={relancerLecteur}
+                title="Recharger le lecteur TikTok (en cas d'erreur ou de blocage)"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 text-[#1E0F2B] text-xs font-semibold transition-colors"
+              >
+                <RotateCcw
+                  className={cn(
+                    "h-3.5 w-3.5",
+                    !prete && tentative > 0 && "animate-spin"
+                  )}
+                  style={{ color: accent }}
+                />
+                Réessayer
+              </button>
+              <a
+                href={
+                  videoUrl || `https://www.tiktok.com/@pamela.dali7/video/${tiktokId}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#2A0E3D]/5 hover:bg-[#2A0E3D]/10 text-[#1E0F2B] text-xs font-semibold transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5" style={{ color: accent }} />
+                Ouvrir sur TikTok
+              </a>
+            </div>
+            <p className="max-w-xs text-center text-[10px] leading-relaxed text-[#8A8378]">
+              Message « overload-protect » ? C’est une saturation passagère
+              de TikTok — patientez quelques secondes, réessayez, ou ouvrez
+              la vidéo sur TikTok.
+            </p>
+          </div>
         )}
       </div>
     </>
