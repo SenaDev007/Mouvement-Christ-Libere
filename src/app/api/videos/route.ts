@@ -1,7 +1,7 @@
 /** GET /api/videos — Liste des vidéos depuis la DB */
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ensureVideoLikesColumn, ensureVideoCategoryColumn } from "@/lib/ensure-schema";
+import { ensureVideoLikesColumn, ensureVideoCategoryColumn, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 import { recupererReplaysManquants } from "@/lib/live-replay-recovery";
 import { categorizeVideo, estRubrique } from "@/lib/video-rubrics";
 // ⭐ V3.64 — Identifiant TikTok : helper partagé (lib/tiktok.ts) — la
@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
     // ⭐ V3.46 — colonne Video.category (rubrique signature) : le client
     // Prisma généré la sélectionne → P2022 sur base froide sans cette garde.
     await ensureVideoCategoryColumn();
+    // ⭐ V4.04 — colonne Video.tiktokMp4Url (copie R2 de lecture) : même
+    // garde — le findMany ci-dessous (include, sans select) l'expose.
+    await ensureTiktokMp4UrlColumn();
 
     // ⭐ V3.34 — récupération opportuniste des replays YouTube manquants
     // (≤ 3 s pour ne pas ralentir la page publique) : chaque visite aide à
@@ -74,6 +77,11 @@ export async function GET(request: NextRequest) {
         youtubeId,
         tiktokId,
         videoUrl: safeVideoUrl,
+        // ⭐ V4.04 — copie R2 du MP4 TikTok (backfill back-office) : le
+        // lecteur public joue NOTRE fichier — immunisé contre l'erreur
+        // « overload-protect triggered » du CDN TikTok. null = pas encore
+        // sauvegardée → lecteur embed TikTok classique.
+        tiktokMp4Url: (v as unknown as { tiktokMp4Url?: string | null }).tiktokMp4Url ?? null,
         hlsUrl: v.hlsUrl,
         title: v.title,
         description: v.description,

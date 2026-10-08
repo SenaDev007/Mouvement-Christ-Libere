@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ensureRubriquesColumns } from "@/lib/ensure-schema";
+import { ensureRubriquesColumns, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 // ⭐ V3.86 — Suppression définitive : un replay supprimé du back-office
 // n'est jamais recréé par le webhook LiveKit.
 import { estVideoSupprimee } from "@/lib/suppression-video";
@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
     // ⭐ V3.46 — colonnes rubrique (Video/LiveStream.category) : le client
     // Prisma les sélectionne désormais → garde avant la lecture.
     await ensureRubriquesColumns().catch(() => {});
+    // ⭐ V4.04 — colonne Video.tiktokMp4Url.
+    await ensureTiktokMp4UrlColumn().catch(() => {});
 
     // Trouver le live correspondant
     const live = await db.liveStream.findFirst({

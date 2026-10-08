@@ -3,12 +3,14 @@ import { VideosTabsClient } from "@/components/admin/videos-tabs-client";
 import { recupererReplaysManquants, statutRecuperationReplays } from "@/lib/live-replay-recovery";
 // ⭐ V3.46 — colonnes rubrique (Video/LiveStream.category) : le findMany
 // ci-dessous sélectionne toutes les colonnes → garde avant lecture.
-import { ensureRubriquesColumns } from "@/lib/ensure-schema";
+import { ensureRubriquesColumns, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminVideosPage() {
   await ensureRubriquesColumns().catch(() => {});
+  // ⭐ V4.04 — colonne Video.tiktokMp4Url (copie R2 de lecture).
+  await ensureTiktokMp4UrlColumn().catch(() => {});
   // ┌───────────────────────────────────────────────────────────────────────────┐
   // │ ⭐ V3.34 — RÉCUPÉRATION DES REPLAYS YOUTUBE AVANT LE CHARGEMENT (≤ 8 s)  │
   // ├───────────────────────────────────────────────────────────────────────────┤

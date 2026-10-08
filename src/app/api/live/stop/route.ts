@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { getLiveKitConfig } from "@/lib/livekit-config";
-import { ensureLiveYoutubeIngestColumn, ensureRubriquesColumns } from "@/lib/ensure-schema";
+import { ensureLiveYoutubeIngestColumn, ensureRubriquesColumns, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 // ⭐ V3.86 — Suppression définitive : un replay supprimé du back-office
 // n'est jamais recréé à l'arrêt du live.
 import { estVideoSupprimee } from "@/lib/suppression-video";
@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
     // Prisma les sélectionne désormais → garde avant la lecture du live,
     // et avant l'archivage du replay (qui hérite de la rubrique du live).
     await ensureRubriquesColumns();
+    // ⭐ V4.04 — colonne Video.tiktokMp4Url.
+    await ensureTiktokMp4UrlColumn().catch(() => {});
 
     // ⭐ V3.36 — `let` : l'URL YouTube peut être réconciliée plus bas
     // (broadcast zombie → vraie vidéo) AVANT l'archivage du replay.

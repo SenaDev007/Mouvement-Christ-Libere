@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isR2Configured, purgerArtefactsR2 } from "@/lib/r2";
-import { ensureVideoCategoryColumn } from "@/lib/ensure-schema";
+import { ensureVideoCategoryColumn, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 
 /**
  * ⭐ V3.81 — SUPPRESSION MULTIPLE de vidéos (back-office, module Vidéos).
@@ -54,6 +54,8 @@ export async function POST(request: NextRequest) {
     // Garde froide : colonne rubrique Video.category (même pattern que la
     // route générique /admin/api/[entity]/[id]).
     await ensureVideoCategoryColumn();
+    // ⭐ V4.04 — colonne Video.tiktokMp4Url.
+    await ensureTiktokMp4UrlColumn().catch(() => {});
 
     // ── ① Capture des artefacts R2 AVANT suppression (la ligne doit
     // exister pour être lue) — une seule lecture groupée.

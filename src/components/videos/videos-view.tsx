@@ -42,6 +42,9 @@ interface VideoItem {
   // ⭐ V3.63 — id TikTok (extrait de videoUrl par /api/videos, même
   // schéma que YouTube) : la vidéo TikTok se lit via l'embed officiel.
   tiktokId: string;
+  // ⭐ V4.04 — copie R2 du MP4 TikTok (backfill) : lecture auto-hébergée
+  // immunisée contre « overload-protect triggered ».
+  tiktokMp4Url?: string | null;
   videoUrl?: string | null;
   hlsUrl?: string | null;
   title: string;
@@ -694,6 +697,7 @@ function VideoPlayerView({ video, allVideos, photos, onBack, onSelectVideo }: {
               <LecteurTikTok
                 tiktokId={video.tiktokId}
                 videoUrl={video.videoUrl || null}
+                mp4Url={video.tiktokMp4Url || null}
                 titre={video.title}
                 miniature={video.thumbnailUrl || null}
               />

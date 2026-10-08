@@ -48,7 +48,7 @@
  * YouTube sont importées dynamiquement à l'usage.
  */
 import { db } from "@/lib/db";
-import { ensureRubriquesColumns } from "@/lib/ensure-schema";
+import { ensureRubriquesColumns, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 // ⭐ V3.86 — Suppression définitive : un replay supprimé du back-office ne
 // doit JAMAIS être recréé par la récupération différée.
 import { estVideoSupprimee } from "@/lib/suppression-video";
@@ -132,6 +132,8 @@ export async function appliquerUrlReplaySurLiveEtVideo(
   // ⭐ V3.46 — garde : la création du replay ci-dessous écrit Video.category
   // (rubrique héritée du live) → colonne requise.
   await ensureRubriquesColumns().catch(() => {});
+  // ⭐ V4.04 — colonne Video.tiktokMp4Url (le client Prisma l'expose partout).
+  await ensureTiktokMp4UrlColumn().catch(() => {});
 
   const live = await db.liveStream.findUnique({
     where: { id: liveId },

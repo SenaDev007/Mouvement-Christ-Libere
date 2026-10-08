@@ -288,6 +288,9 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
 
   // ─── Récupérer l'URL de la vidéo ───
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(initialVideoUrl || null);
+  // ⭐ V4.04 — copie R2 du MP4 TikTok (lecture auto-hébergée, immunisée
+  // contre « overload-protect triggered » — chargée avec la source).
+  const [currentMp4Url, setCurrentMp4Url] = useState<string | null>(null);
   const [loadingVideo, setLoadingVideo] = useState(!initialVideoUrl);
 
   useEffect(() => {
@@ -302,6 +305,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
       .then((r) => r.json())
       .then((data) => {
         if (!cancelled && data.videoUrl) setCurrentVideoUrl(data.videoUrl);
+        if (!cancelled) setCurrentMp4Url(data.tiktokMp4Url || null);
       })
       .catch((err) => console.error("[post-production] Failed to fetch video source:", err))
       .finally(() => { if (!cancelled) setLoadingVideo(false); });
@@ -1883,6 +1887,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                     boite
                     tiktokId={extraireTiktokId(currentVideoUrl)}
                     videoUrl={currentVideoUrl}
+                    mp4Url={currentMp4Url}
                     titre={title || "Vidéo TikTok"}
                     afficherLien={false}
                   />

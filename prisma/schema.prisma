@@ -227,6 +227,12 @@ model Video {
   // Vidéos : sélecteur en ligne + formulaires) ou HÉRITÉE du live
   // (LiveStream.category) quand le replay est archivé.
   category    String?
+  // ⭐ V4.04 — Repli lecture TikTok AUTO-HÉBERGÉ : copie mp4 de la vidéo
+  // TikTok répliquée sur R2 (backfill back-office /api/tiktok/backfill-videos).
+  // Le lecteur public joue CE fichier (immunisé contre l'erreur CDN TikTok
+  // « overload-protect triggered » — saturation persistante de l'embed).
+  // NULL = pas encore sauvegardée → lecteur embed TikTok classique.
+  tiktokMp4Url String?
   // ─── Post-production cloud sync ───
   // Stocke l'état complet du projet (timeline, overlays, filtres, etc.)
   // en JSON pour permettre la sauvegarde/chargement et le partage.

@@ -17,6 +17,8 @@ import {
   // ⭐ V3.81 — suppression multiple : mode sélection avec cases à cocher,
   // barre d'actions flottante et confirmation groupée.
   ListChecks, Check, CheckCircle2,
+  // ⭐ V4.04 — sauvegarde des MP4 TikTok sur notre stockage R2.
+  HardDriveDownload,
 } from "lucide-react";
 // ⭐ V3.46 — Rubriques signatures (partagées site public ↔ back-office) :
 // « Saint-Esprit réponds-moi » (Afrika), « Rhema du matin »/« Rhema du soir »
@@ -163,6 +165,75 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       annule = true;
     };
   }, []);
+
+  // ─── ⭐ V4.04 — SAUVEGARDE DES MP4 TIKTOK SUR R2 (bouton manuel) ───
+  // L'embed TikTok sature parfois durablement (« overload-protect
+  // triggered ») : on réplique chaque MP4 sur NOTRE stockage R2 (l'église
+  // est propriétaire de ses vidéos) et le site joue notre copie. Boucle
+  // de lots populaires-d'abord — idempotente, reprise à tout moment.
+  const [sauvegardeMp4, setSauvegardeMp4] = useState<{
+    enCours: boolean;
+    sauvegardees: number;
+    restantes: number;
+    message?: string;
+  }>({ enCours: false, sauvegardees: 0, restantes: 0 });
+  const arreterSauvegardeMp4 = useRef(false);
+  const lancerSauvegardeMp4 = async () => {
+    if (sauvegardeMp4.enCours) {
+      arreterSauvegardeMp4.current = true; // 2ᵉ clic = arrêter proprement
+      return;
+    }
+    arreterSauvegardeMp4.current = false;
+    setSauvegardeMp4({ enCours: true, sauvegardees: 0, restantes: 0 });
+    const exclus = new Set<string>();
+    let sauvegardeesTotales = 0;
+    try {
+      // Boucle de lots (limite 6/appel, téléchargements plus lourds que
+      // les images) — garde de sécurité 200 tours ≈ 1200 vidéos.
+      for (let tour = 0; tour < 200; tour++) {
+        if (arreterSauvegardeMp4.current) break;
+        const res = await fetch("/api/tiktok/backfill-videos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ limite: 6, exclure: [...exclus] }),
+        });
+        if (!res.ok) {
+          const detail = await res.text().catch(() => "");
+          setSauvegardeMp4((s) => ({
+            ...s,
+            message: `Arrêt (erreur ${res.status}) ${detail.slice(0, 120)}`,
+          }));
+          break;
+        }
+        const corps = (await res.json()) as {
+          sauvegardées?: number;
+          restantes?: number;
+          idsEchecs?: string[];
+        };
+        const realisées = corps.sauvegardées || 0;
+        sauvegardeesTotales += realisées;
+        (corps.idsEchecs || []).forEach((id) => exclus.add(id));
+        setSauvegardeMp4({
+          enCours: true,
+          sauvegardees: sauvegardeesTotales,
+          restantes: corps.restantes || 0,
+        });
+        if ((corps.restantes || 0) <= 0) break; // terminé
+        if (realisées === 0) break; // plus aucun progrès (vidéos privées…)
+      }
+    } catch {
+      setSauvegardeMp4((s) => ({ ...s, message: "Réseau instable — reprendre plus tard." }));
+    } finally {
+      setSauvegardeMp4((s) => ({
+        ...s,
+        enCours: false,
+        restantes: s.restantes,
+      }));
+      // Des vidéos ont été sauvegardées → rafraîchir pour que le lecteur
+      // du site public les joue depuis notre stockage.
+      if (sauvegardeesTotales > 0) router.refresh();
+    }
+  };
 
   // ─── ⭐ V3.81 — SUPPRESSION MULTIPLE (mode sélection) ───
   // Le pasteur coche plusieurs vidéos puis les supprime d'un coup (lots
@@ -552,6 +623,39 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           </div>
         </div>
       )}
+      {/* ⭐ V4.04 — bandeau de sauvegarde des MP4 TikTok : progression de
+          la réplication R2 (bouton ci-dessous, boucle de lots). */}
+      {(sauvegardeMp4.enCours || sauvegardeMp4.sauvegardees > 0) && (
+        <div
+          className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${
+            sauvegardeMp4.enCours
+              ? "border-[#C9A227]/40 bg-[#C9A227]/10"
+              : "border-emerald-500/40 bg-emerald-500/10"
+          }`}
+        >
+          {sauvegardeMp4.enCours ? (
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#C9A227] mt-0.5" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+              {sauvegardeMp4.enCours
+                ? `Sauvegarde des vidéos TikTok en cours — ${sauvegardeMp4.sauvegardees} sauvegardée${sauvegardeMp4.sauvegardees > 1 ? "s" : ""}${
+                    sauvegardeMp4.restantes > 0
+                      ? `, ${sauvegardeMp4.restantes} restante${sauvegardeMp4.restantes > 1 ? "s" : ""}`
+                      : " — c'est terminé"
+                  }`
+                : `${sauvegardeMp4.sauvegardees} vidéo${sauvegardeMp4.sauvegardees > 1 ? "s" : ""} TikTok sauvegardée${sauvegardeMp4.sauvegardees > 1 ? "s" : ""} sur notre stockage — lecture garantie même quand TikTok sature.`}
+            </p>
+            <p className="text-xs text-[#FAF6EF]/60 mt-0.5">
+              {sauvegardeMp4.message
+                ? sauvegardeMp4.message
+                : "Chaque vidéo est copiée depuis TikTok vers notre stockage : le site la joue ensuite directement, sans dépendre de leurs serveurs. Vous pouvez quitter et reprendre à tout moment."}
+            </p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -568,6 +672,30 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
             Vidéos archivées et lives enregistrés — {videos.length} au total.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={lancerSauvegardeMp4}
+          disabled={false}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md ${
+            sauvegardeMp4.enCours
+              ? "bg-[#3D1A54] text-[#DDBE55]"
+              : "bg-[#C9A227]/10 text-[#DDBE55] hover:bg-[#3D1A54]/10"
+          }`}
+          title={
+            sauvegardeMp4.enCours
+              ? "Arrêter la sauvegarde en cours"
+              : "Copier les vidéos TikTok sur notre stockage — lecture garantie même quand TikTok sature (overload-protect)"
+          }
+        >
+          {sauvegardeMp4.enCours ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <HardDriveDownload className="w-4 h-4" />
+          )}
+          <span className="hidden sm:inline">
+            {sauvegardeMp4.enCours ? "Arrêter la sauvegarde" : "Sauvegarder TikTok"}
+          </span>
+        </button>
         <button
           type="button"
           onClick={() =>

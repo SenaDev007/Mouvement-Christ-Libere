@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+// ⭐ V4.04 — colonne Video.tiktokMp4Url : le findUnique ci-dessous l'expose.
+import { ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 import { notFound } from "next/navigation";
 import { PostProduction } from "@/components/post-production/post-production";
 
@@ -10,6 +12,9 @@ export default async function VideoEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // ⭐ V4.04 — colonne Video.tiktokMp4Url garantie avant findUnique (P2022 sinon).
+  await ensureTiktokMp4UrlColumn().catch(() => {});
 
   const video = await db.video.findUnique({
     where: { id },

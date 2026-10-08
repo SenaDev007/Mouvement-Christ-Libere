@@ -57,6 +57,9 @@ interface MediaAdoration {
   // id TikTok (extrait de videoUrl par /api/videos) : le média se lit
   // via l'embed officiel TikTok — directement sur la plateforme.
   tiktokId: string;
+  // ⭐ V4.04 — copie R2 du MP4 TikTok (backfill) : lecture auto-hébergée
+  // immunisée contre « overload-protect triggered ».
+  tiktokMp4Url?: string | null;
   videoUrl?: string | null;
   hlsUrl?: string | null;
   title: string;
@@ -634,6 +637,7 @@ function LecteurAdoration({ video, allMedias, photos, onBack, onSelectVideo }: {
               <LecteurTikTok
                 tiktokId={video.tiktokId}
                 videoUrl={video.videoUrl || null}
+                mp4Url={video.tiktokMp4Url || null}
                 titre={video.title}
                 miniature={video.thumbnailUrl || null}
               />

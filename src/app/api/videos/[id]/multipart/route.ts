@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+// ⭐ V4.04 — colonne Video.tiktokMp4Url : le client Prisma l'expose partout.
+import { ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
+
 import { traiterRequeteMultipart } from "@/lib/multipart-shared";
 
 /**
@@ -24,6 +27,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // ⭐ V4.04 — garantir la colonne avant tout accès Video (P2022 sinon).
+    await ensureTiktokMp4UrlColumn().catch(() => {});
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
     if (!sessionToken || !verifySessionToken(sessionToken)) {

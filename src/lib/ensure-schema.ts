@@ -2273,3 +2273,44 @@ export function ensureCroyantTestimoniesTable(): Promise<void> {
   }
   return inflightCroyantTestimonies;
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V4.04 — Video.tiktokMp4Url (repli lecture TikTok auto-hébergé)
+// ─────────────────────────────────────────────────────────────────────
+
+let tiktokMp4UrlOk = false;
+let inflightTiktokMp4Url: Promise<void> | null = null;
+
+/**
+ * S'assure que la colonne `Video.tiktokMp4Url` (TEXT, nullable) existe.
+ *
+ * Contexte V4.04 : l'embed TikTok affiche parfois « overload-protect
+ * triggered » (saturation CDN persistante) — la parade est de répliquer
+ * les mp4 des vidéos TikTok sur R2 (backfill) et de les lire depuis NOTRE
+ * stockage. Le client Prisma généré sélectionne désormais cette colonne
+ * (findMany / findUnique / create / update) → P2022 sur une base froide
+ * sans cette garde (même pattern que Video.category, V3.46).
+ */
+export function ensureTiktokMp4UrlColumn(): Promise<void> {
+  if (tiktokMp4UrlOk) return Promise.resolve();
+  if (!inflightTiktokMp4Url) {
+    inflightTiktokMp4Url = db
+      .$executeRawUnsafe(
+        'ALTER TABLE "Video" ADD COLUMN IF NOT EXISTS "tiktokMp4Url" TEXT'
+      )
+      .then(() => {
+        tiktokMp4UrlOk = true;
+        console.log("[ensure-schema] V4.04 : colonne Video.tiktokMp4Url vérifiée/créée ✓");
+      })
+      .catch((e: unknown) => {
+        console.error(
+          "[ensure-schema] ALTER TABLE Video.tiktokMp4Url impossible :",
+          e instanceof Error ? e.message : e
+        );
+      })
+      .finally(() => {
+        inflightTiktokMp4Url = null;
+      });
+  }
+  return inflightTiktokMp4Url;
+}

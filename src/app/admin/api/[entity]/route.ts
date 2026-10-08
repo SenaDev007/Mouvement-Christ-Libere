@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme } from "@/lib/live-announcement-relay";
 // ⭐ V3.85 — Miniature TikTok automatique à la création d'une vidéo.
 import { estUrlTiktok } from "@/lib/tiktok";
@@ -74,6 +74,8 @@ export async function GET(
     // ⭐ V3.46 — colonnes rubrique (Video/LiveStream.category) : le client
     // Prisma les sélectionne désormais → garde avant TOUTE lecture/écriture.
     if (entity === "videos") await ensureVideoCategoryColumn();
+    // ⭐ V4.04 — colonne Video.tiktokMp4Url.
+    if (entity === "videos") await ensureTiktokMp4UrlColumn().catch(() => {});
     if (entity === "lives") await ensureLiveCategoryColumn();
     // ⭐ V3.47 — colonne photo des jalons biographiques (même pattern).
     if (entity === "biographies") await ensureBiographyPhotoColumn();
@@ -132,6 +134,8 @@ export async function POST(
     // ⭐ V3.46 — colonnes rubrique : le create() peut recevoir Video.category
     // / LiveStream.category depuis les formulaires du back-office.
     if (entity === "videos") await ensureVideoCategoryColumn();
+    // ⭐ V4.04 — colonne Video.tiktokMp4Url.
+    if (entity === "videos") await ensureTiktokMp4UrlColumn().catch(() => {});
     if (entity === "lives") await ensureLiveCategoryColumn();
     // ⭐ V3.47 — colonne photo des jalons biographiques (même pattern).
     if (entity === "biographies") await ensureBiographyPhotoColumn();

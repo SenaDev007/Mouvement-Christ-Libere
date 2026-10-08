@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { AdorationTabsClient } from "@/components/admin/adoration-tabs-client";
 // ⭐ V3.46/V3.79 — colonne rubrique (Video.category) : le findMany
 // ci-dessous sélectionne toutes les colonnes → garde avant lecture.
-import { ensureVideoCategoryColumn } from "@/lib/ensure-schema";
+import { ensureVideoCategoryColumn, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 // ⭐ V3.79 — Catégories de la page Adoration & Louanges (seul point de
 // vérité, partagé avec la page publique /adoration-louanges).
 import { CATEGORIES_ADORATION } from "@/lib/video-rubrics";
@@ -24,6 +24,8 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminAdorationPage() {
   await ensureVideoCategoryColumn().catch(() => {});
+  // ⭐ V4.04 — colonne Video.tiktokMp4Url.
+  await ensureTiktokMp4UrlColumn().catch(() => {});
 
   // Médias des catégories Adoration / Louanges (tous serviteurs — en
   // pratique Afrika : le module est le sien, la création pré-sélectionne

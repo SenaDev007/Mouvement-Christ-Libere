@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { isR2Configured, purgerArtefactsR2 } from "@/lib/r2";
-import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn, ensureCroyantTestimoniesTable } from "@/lib/ensure-schema";
+import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn, ensureCroyantTestimoniesTable, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme, annoncerLiveAnnule } from "@/lib/live-announcement-relay";
 // ⭐ V3.85 — Miniature TikTok automatique à la modification d'une vidéo.
 import { estUrlTiktok } from "@/lib/tiktok";
@@ -140,6 +140,8 @@ export async function GET(
     // Prisma les sélectionne (GET) et le PATCH peut les écrire (sélecteur
     // de rubrique en ligne du module Vidéos) → garde systématique.
     if (entity === "videos") await ensureVideoCategoryColumn();
+    // ⭐ V4.04 — colonne Video.tiktokMp4Url.
+    if (entity === "videos") await ensureTiktokMp4UrlColumn().catch(() => {});
     if (entity === "lives") await ensureLiveCategoryColumn();
     // ⭐ V3.47 — colonne photo des jalons biographiques (GET/PATCH/DELETE
     // retournent l'objet complet → P2022 sur base froide sinon).
@@ -193,6 +195,8 @@ export async function PATCH(
     // Prisma les sélectionne (GET) et le PATCH peut les écrire (sélecteur
     // de rubrique en ligne du module Vidéos) → garde systématique.
     if (entity === "videos") await ensureVideoCategoryColumn();
+    // ⭐ V4.04 — colonne Video.tiktokMp4Url.
+    if (entity === "videos") await ensureTiktokMp4UrlColumn().catch(() => {});
     if (entity === "lives") await ensureLiveCategoryColumn();
     // ⭐ V3.47 — colonne photo des jalons biographiques (même pattern).
     if (entity === "biographies") await ensureBiographyPhotoColumn();
@@ -452,6 +456,8 @@ export async function DELETE(
     // Prisma les sélectionne (GET) et le PATCH peut les écrire (sélecteur
     // de rubrique en ligne du module Vidéos) → garde systématique.
     if (entity === "videos") await ensureVideoCategoryColumn();
+    // ⭐ V4.04 — colonne Video.tiktokMp4Url.
+    if (entity === "videos") await ensureTiktokMp4UrlColumn().catch(() => {});
     if (entity === "lives") await ensureLiveCategoryColumn();
     // ⭐ V3.47 — colonne photo des jalons biographiques (le delete retourne
     // l'objet supprimé complet → P2022 sinon).

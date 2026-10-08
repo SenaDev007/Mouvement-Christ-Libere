@@ -48,6 +48,14 @@
  *  - mode boîte (post-production) : bouton discret en superposition
  *    (coin haut-droit) qui relance le même mécanisme.
  *
+ * ⭐ V4.04 — LECTURE AUTO-HÉBERGÉE (mp4Url) : quand une copie R2 de la
+ *    vidéo TikTok existe (backfill back-office), on joue NOTRE fichier
+ *    via <video> natif — immunisé contre l'erreur « overload-protect
+ *    triggered » du CDN TikTok (saturation PERSISTANTE sur les vidéos
+ *    populaires, la parade « Réessayer » V4.03 ne suffit pas).
+ *    L'embed iframe (avec sa barre d'aide V4.03) reste le repli pour
+ *    les vidéos pas encore sauvegardées et les diaporamas /photo/.
+ *
  * Deux modes :
  *  - page (public /videos) : vidéo ≤ 486 px de large, ≤ min(vh−140, 960)
  *    de haut, lien « Ouvrir sur TikTok » ;
@@ -66,6 +74,8 @@ interface PropsLecteurTikTok {
   tiktokId: string;
   /** URL TikTok complète (pour l'oEmbed + le lien externe). */
   videoUrl?: string | null;
+  /** ⭐ V4.04 — copie R2 du MP4 (backfill) : lecture auto-hébergée. */
+  mp4Url?: string | null;
   titre: string;
   /** Miniature PERMANENTE (R2, via /api/tiktok/backfill) si présente. */
   miniature?: string | null;
@@ -90,6 +100,7 @@ const LARGEUR_MAX_PAGE = 486;
 export function LecteurTikTok({
   tiktokId,
   videoUrl,
+  mp4Url,
   titre,
   miniature,
   boite = false,
@@ -247,6 +258,22 @@ export function LecteurTikTok({
               et AUCUN scrollbar interne (garde V3.64). En video-first, la
               boîte clippe SOUS la zone vidéo : la légende est rendue mais
               invisible — jamais coupée au milieu, jamais scrollable. */}
+          {/* ⭐ V4.04 — COPIE R2 : <video> natif — lecture 100 % locale,
+              aucune requête au CDN TikTok (zéro overload-protect).
+              Poster = miniature R2, contrôles natifs, autoplay muet
+              (l'utilisateur active le son d'un clic, pattern TikTok). */}
+          {mp4Url ? (
+            <video
+              src={mp4Url}
+              controls
+              autoPlay
+              muted
+              playsInline
+              preload="metadata"
+              poster={posterSrc || undefined}
+              className="absolute inset-0 h-full w-full bg-black object-contain"
+            />
+          ) : (
           <iframe
             key={`embed-tt-${tentative}`}
             src={
@@ -272,10 +299,13 @@ export function LecteurTikTok({
               transformOrigin: "top left",
             }}
           />
+          )}
 
-          {/* Poster pendant le chargement de l'iframe : vraie miniature
-              (R2) — repli image signée oEmbed — repli marque TikTok.
-              Fondu enchaîné vers le lecteur (aucun écran noir vide). */}
+          {/* Poster pendant le chargement de l'IFRAME uniquement (la
+              vidéo native a son attribut poster) : vraie miniature (R2)
+              — repli image signée oEmbed — repli marque TikTok. Fondu
+              enchaîné vers le lecteur (aucun écran noir vide). */}
+          {!mp4Url && (
           <div
             aria-hidden={prete}
             className={cn(
@@ -309,12 +339,13 @@ export function LecteurTikTok({
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* ⭐ V4.03 — Mode boîte (post-production) : bouton discret en
-            superposition pour relancer le lecteur (utile si TikTok
-            répond « overload-protect » dans la zone d'aperçu). */}
-        {boite && (
+            superposition pour relancer le lecteur IFRAME (inutile en
+            vidéo native — les contrôles <video> suffisent). */}
+        {boite && !mp4Url && (
           <button
             type="button"
             onClick={relancerLecteur}
@@ -331,16 +362,13 @@ export function LecteurTikTok({
           </button>
         )}
 
-        {/* Lien externe (mode page) : si l'embed est indisponible dans un
-            pays, la vidéo reste atteignable en un clic. ⭐ V3.65 : en
-            video-first la légende de l'embed est clippée — le lien donne
-            aussi l'accès direct à la publication complète.
-            ⭐ V4.03 : « Réessayer » à côté du lien — parade au refus
-            « overload-protect triggered » du CDN TikTok (transitoire :
-            une nouvelle requête passe presque toujours). */}
+        {/* Lien externe (mode page). ⭐ V4.04 — en lecture auto-hébergée :
+            plus de « Réessayer » ni d'aide overload (aucune requête
+            TikTok n'est faite) — juste le lien source. */}
         {!boite && afficherLien && (
           <div className="mt-3 flex flex-col items-center gap-2">
             <div className="flex flex-wrap items-center justify-center gap-2">
+              {!mp4Url && (
               <button
                 type="button"
                 onClick={relancerLecteur}
@@ -356,6 +384,7 @@ export function LecteurTikTok({
                 />
                 Réessayer
               </button>
+              )}
               <a
                 href={
                   videoUrl || `https://www.tiktok.com/@pamela.dali7/video/${tiktokId}`
@@ -368,11 +397,18 @@ export function LecteurTikTok({
                 Ouvrir sur TikTok
               </a>
             </div>
-            <p className="max-w-xs text-center text-[10px] leading-relaxed text-[#8A8378]">
-              Message « overload-protect » ? C’est une saturation passagère
-              de TikTok — patientez quelques secondes, réessayez, ou ouvrez
-              la vidéo sur TikTok.
-            </p>
+            {mp4Url ? (
+              <p className="max-w-xs text-center text-[10px] leading-relaxed text-[#8A8378]">
+                Lecture directe depuis le stockage du Mouvement Christ
+                Libère — fiable même quand TikTok sature.
+              </p>
+            ) : (
+              <p className="max-w-xs text-center text-[10px] leading-relaxed text-[#8A8378]">
+                Message « overload-protect » ? C’est une saturation passagère
+                de TikTok — patientez quelques secondes, réessayez, ou ouvrez
+                la vidéo sur TikTok.
+              </p>
+            )}
           </div>
         )}
       </div>
