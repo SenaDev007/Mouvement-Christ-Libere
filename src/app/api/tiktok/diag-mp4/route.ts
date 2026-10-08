@@ -1,14 +1,16 @@
 /**
  * TEMPORAIRE (V4.04 diag) — GET /api/tiktok/diag-mp4?url=<tiktok-url>
  *
- * Diagnostic de la résolution playAddr depuis la production Vercel :
- * teste les 2 méthodes et retourne status/contenu de chaque étape.
+ * Diagnostic de la résolution playAddr + du téléchargement depuis la
+ * production Vercel, en réutilisant les VRAIES fonctions de la lib
+ * (resoudreMp4Tiktok) puis en testant le GET du MP4 trouvé.
  * ⚠️ À retirer après diagnostic (commit suivant).
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { resoudreMp4Tiktok } from "@/lib/tiktok-video";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,67 +28,70 @@ export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get("url");
   if (!url) return NextResponse.json({ error: "?url= requis" }, { status: 400 });
 
-  const id = url.match(/(?:video|photo)\/(\d{5,25})/)?.[1] || "";
-  const rapport: Record<string, unknown> = { url, id, region: "vercel" };
+  const rapport: Record<string, unknown> = { url, region: "vercel" };
 
-  // ── ① API mobile tiktokv ──
+  // ── ① VRAIE résolution (fonction de production) ──
   try {
-    const res = await fetch(
-      `https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/feed/?aweme_id=${id}&version_code=262&app_name=musical_lyrics&channel=App&device_id=0&os_version=17.4&app_version=26.2.3&device_platform=iphone&device_type=iPhone9,3`,
-      {
-        headers: {
-          "user-agent":
-            "TikTok 26.2.3 rv:262303 (iPhone; iOS 17.4; fr_FR) Cronet",
-          accept: "application/json",
+    const source = await resoudreMp4Tiktok("", url);
+    rapport.resolution = source
+      ? { ok: true, methode: source.methode, url: source.url.slice(0, 160) + "…" }
+      : { ok: false };
+
+    // ── ② Test de téléchargement (Range 64 Ko, SANS stocker) ──
+    if (source) {
+      const essais: Array<{ nom: string; init: RequestInit }> = [
+        {
+          nom: "avec referer",
+          init: {
+            headers: {
+              "user-agent": UA_NAV,
+              referer: "https://www.tiktok.com/",
+              range: "bytes=0-65535",
+            },
+          },
         },
-        signal: AbortSignal.timeout(12_000),
-        cache: "no-store",
+        {
+          nom: "sans referer",
+          init: { headers: { "user-agent": UA_NAV, range: "bytes=0-65535" } },
+        },
+      ];
+      const telech: Record<string, unknown>[] = [];
+      for (const e of essais) {
+        try {
+          const res = await fetch(source.url, {
+            ...e.init,
+            signal: AbortSignal.timeout(20_000),
+            cache: "no-store",
+            redirect: "follow",
+          });
+          const morceau = await res.arrayBuffer();
+          const octets = new Uint8Array(morceau.slice(0, 16));
+          telech.push({
+            essai: e.nom,
+            status: res.status,
+            contentType: res.headers.get("content-type"),
+            contentLength: res.headers.get("content-length"),
+            urlFinale: res.url.slice(0, 140),
+            octetsRecus: morceau.byteLength,
+            signature: Array.from(octets)
+              .map((b) => b.toString(16).padStart(2, "0"))
+              .join(" ")
+              .slice(0, 47),
+          });
+        } catch (err) {
+          telech.push({
+            essai: e.nom,
+            erreur: err instanceof Error ? err.message.slice(0, 200) : String(err),
+          });
+        }
       }
-    );
-    const texte = await res.text();
-    rapport.apiMobile = {
-      status: res.status,
-      contentType: res.headers.get("content-type"),
-      longueur: texte.length,
-      extrait: texte.slice(0, 400),
-      contientAwemeList: texte.includes("aweme_list"),
-      contientPlayAddr: texte.includes("play_addr"),
-    };
+      rapport.telechargement = telech;
+    }
   } catch (e) {
-    rapport.apiMobile = { erreur: e instanceof Error ? e.message : String(e) };
-  }
-
-  // ── ② Page vidéo HTML ──
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "user-agent": UA_NAV,
-        accept: "text/html,application/xhtml+xml,*/*;q=0.8",
-        "accept-language": "fr-FR,fr;q=0.9,en;q=0.8",
-      },
-      redirect: "follow",
-      signal: AbortSignal.timeout(15_000),
-      cache: "no-store",
-    });
-    const html = await res.text();
-    const idx = html.indexOf("playAddr");
-    const idxUniversal = html.indexOf("__UNIVERSAL_DATA_FOR_REHYDRATION__");
-    const idxSigi = html.indexOf("SIGI_STATE");
-    rapport.pageHtml = {
-      status: res.status,
-      urlFinale: res.url,
-      contentType: res.headers.get("content-type"),
-      longueur: html.length,
-      contientPlayAddr: idx !== -1,
-      positionPlayAddr: idx,
-      contientUniversalData: idxUniversal !== -1,
-      contientSigiState: idxSigi !== -1,
-      extraitPlayAddr:
-        idx !== -1 ? html.slice(Math.max(0, idx - 60), idx + 300) : null,
-      titre: html.match(/<title[^>]*>(.*?)<\/title>/)?.[1]?.slice(0, 120) || null,
+    rapport.resolution = {
+      ok: false,
+      erreur: e instanceof Error ? e.message.slice(0, 200) : String(e),
     };
-  } catch (e) {
-    rapport.pageHtml = { erreur: e instanceof Error ? e.message : String(e) };
   }
 
   return NextResponse.json(rapport);
