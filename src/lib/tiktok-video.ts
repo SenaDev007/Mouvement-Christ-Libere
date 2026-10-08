@@ -93,8 +93,10 @@ async function playAddrViaApiMobile(id: string): Promise<string | null> {
 }
 
 /**
- * Méthode B — HTML de la page vidéo publique : le state embarqué contient
- * "playAddr":"https://v16-webapp…mp4?…". Repli après l'API mobile.
+ * Méthode A — PAGE VIDÉO HTML (prouvée en production Vercel — 200 +
+ * playAddr dans __UNIVERSAL_DATA_FOR_REHYDRATION__). Le JSON embarqué
+ * est PARSÉ réellement (le playAddr y est doublement échappé : la regex
+ * naïve de la 1ʳᵉ version ne le voyait pas — diagnostic V4.04 diag-mp4).
  */
 async function playAddrViaPage(videoUrl: string): Promise<string | null> {
   try {
@@ -113,11 +115,49 @@ async function playAddrViaPage(videoUrl: string): Promise<string | null> {
     const html = await res.text();
     if (!html || html.length < 10_000) return null;
 
-    // playAddr (vidéo) ; downloadAddr en repli (même fichier, plus lent).
+    // ① Script __UNIVERSAL_DATA_FOR_REHYDRATION__ (web 2024+) : JSON pur.
+    const mUniversal = html.match(
+      /<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>(.*?)<\/script>/s
+    );
+    if (mUniversal) {
+      try {
+        const data = JSON.parse(mUniversal[1]) as unknown;
+        const url = chercherPlayAddr(data);
+        if (url) return url;
+      } catch {
+        // JSON invalide — essayer SIGI_STATE ci-dessous.
+      }
+    }
+
+    // ② Script SIGI_STATE (pages legacy) : objet JS contenant du JSON pur.
+    const mSigi = html.match(
+      /<script id="SIGI_STATE"[^>]*>(.*?)<\/script>/s
+    );
+    if (mSigi) {
+      try {
+        const data = JSON.parse(mSigi[1]) as unknown;
+        const url = chercherPlayAddr(data);
+        if (url) return url;
+      } catch {
+        // JSON invalide — repli regex ci-dessous.
+      }
+    }
+
+    // ③ Repli regex tolérant sur le HTML brut (simple PUIS double
+    // échappement — SIGI_STATE comme objet JS a des clés non échappées,
+    // les valeurs imbriquées de bitrateInfo sont doublement échappées).
     for (const champ of ["playAddr", "downloadAddr"]) {
-      const m = html.match(new RegExp(`"${champ}":"(.*?)"`, "m"));
-      if (m?.[1]) {
-        const url = decoderValeurJson(m[1]);
+      const simple = html.match(new RegExp(`"${champ}":"((?:[^"\\\\]|\\\\.)*)"`));
+      if (simple?.[1]) {
+        const url = decoderValeurJson(simple[1]);
+        if (url.startsWith("http")) return url;
+      }
+      const double = html.match(
+        new RegExp(`\\\\"${champ}\\\\":\\\\"((?:[^\\"\\\\]|\\\\\\\\.)*)\\\\"`)
+      );
+      if (double?.[1]) {
+        // Double échappement : deux passes de décodage JSON.
+        const url = decoderValeurJson(decoderValeurJson(double[1]));
         if (url.startsWith("http")) return url;
       }
     }
@@ -127,18 +167,53 @@ async function playAddrViaPage(videoUrl: string): Promise<string | null> {
   }
 }
 
+/** Recherche récursive d'une URL de lecture dans l'arbre JSON TikTok. */
+function chercherPlayAddr(o: unknown, profondeur = 0): string | null {
+  if (profondeur > 14 || o == null) return null;
+  if (typeof o === "string") return null;
+  if (Array.isArray(o)) {
+    for (const e of o) {
+      const r = chercherPlayAddr(e, profondeur + 1);
+      if (r) return r;
+    }
+    return null;
+  }
+  if (typeof o === "object") {
+    for (const [k, v] of Object.entries(o as Record<string, unknown>)) {
+      // playAddr / PlayAddr directs.
+      if (
+        (k === "playAddr" || k === "PlayAddr") &&
+        typeof v === "string" &&
+        v.startsWith("http")
+      ) {
+        return v;
+      }
+      // PlayAddr: { UrlList: [...] } (bitrateInfo).
+      if (k === "UrlList" && Array.isArray(v)) {
+        for (const u of v) {
+          if (typeof u === "string" && u.startsWith("http")) return u;
+        }
+      }
+      const r = chercherPlayAddr(v, profondeur + 1);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
 /** Résout l'URL de lecture directe du MP4 d'une vidéo TikTok. */
 export async function resoudreMp4Tiktok(
   id: string,
   videoUrl: string
 ): Promise<{ url: string; methode: "api-mobile" | "page" } | null> {
-  // ① API mobile (JSON léger).
-  const viaApi = await playAddrViaApiMobile(id);
-  if (viaApi) return { url: viaApi, methode: "api-mobile" };
-
-  // ② HTML de la page vidéo.
+  // ① Page vidéo (prouvée en production Vercel — l'API mobile est
+  // « ratelimit triggered » depuis les IP datacenter, diag V4.04).
   const viaPage = await playAddrViaPage(videoUrl);
   if (viaPage) return { url: viaPage, methode: "page" };
+
+  // ② API mobile en repli (peut se libérer, 429 = rate limit).
+  const viaApi = await playAddrViaApiMobile(id);
+  if (viaApi) return { url: viaApi, methode: "api-mobile" };
 
   return null;
 }
