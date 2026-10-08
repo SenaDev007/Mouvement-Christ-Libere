@@ -15,12 +15,19 @@
  *   ③ stocker l'URL publique permanente dans Video.tiktokMp4Url ;
  *   ④ le lecteur public joue NOTRE copie (immunisée contre l'overload).
  *
- * RÉSOLUTION DU playAddr — deux méthodes en cascade (la PRODUCTION
+ * RÉSOLUTION DU playAddr — trois méthodes en cascade (la PRODUCTION
  * Vercel/Paris joint TikTok normalement ; le poste de développement est
  * une région bloquée — 302 /hk/about — d'où le repli) :
- *   A. API mobile tiktokv (JSON léger) : aweme/v1/feed?aweme_id=<id> ;
- *   B. HTML de la page vidéo : regex "playAddr" dans le state embarqué
- *      (__UNIVERSAL_DATA_FOR_REHYDRATION__ / SIGI_STATE).
+ *   A. tikwm.com (service public de résolution) — SEULE méthode qui
+ *      télécharge en production (matrice de tests diag V4.04 : playAddr
+ *      direct = 403 Akamai quels que soient UA/domaine/query ; tikwm
+ *      renvoie une URL qui répond 206 video/mp4). Rate limit ~1 req/s →
+ *      backfill SÉQUENTIEL ;
+ *   B. playAddr du HTML de la page vidéo (JSON __UNIVERSAL_DATA parsé
+ *      réellement — double échappement) : résolution OK en production
+ *      mais téléchargement 403 — conservé en repli (peut se libérer) ;
+ *   C. API mobile tiktokv (JSON léger) : 429 « ratelimit triggered »
+ *      depuis les IP datacenter Vercel.
  *
  * Aucune exception ne sort de ce fichier : null/[] = échec silencieux.
  */
@@ -93,7 +100,44 @@ async function playAddrViaApiMobile(id: string): Promise<string | null> {
 }
 
 /**
- * Méthode A — PAGE VIDÉO HTML (prouvée en production Vercel — 200 +
+ * Méthode A — tikwm.com (PILOTE en production, diag V4.04) : résout une
+ * URL de lecture directement téléchargeable (répond 206 video/mp4).
+ * Gratuité : ~1 requête/s — d'où le traitement backfill SÉQUENTIEL.
+ * `data.play` est parfois relatif (/video/…) — on normalise.
+ */
+async function playAddrViaTikwm(videoUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://www.tikwm.com/api/?url=${encodeURIComponent(videoUrl)}`,
+      {
+        headers: {
+          "user-agent": UA_NAVIGATEUR,
+          accept: "application/json",
+        },
+        signal: AbortSignal.timeout(15_000),
+        cache: "no-store",
+      }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      code?: number;
+      msg?: string;
+      data?: { play?: string; hdplay?: string; wmplay?: string };
+    };
+    if (data.code !== 0 || !data.data) return null;
+    const brut = data.data.play || data.data.hdplay || "";
+    if (!brut) return null;
+    const url = brut.startsWith("http")
+      ? brut
+      : `https://www.tikwm.com${brut.startsWith("/") ? "" : "/"}${brut}`;
+    return url.startsWith("http") ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Méthode B — PAGE VIDÉO HTML (prouvée en production Vercel — 200 +
  * playAddr dans __UNIVERSAL_DATA_FOR_REHYDRATION__). Le JSON embarqué
  * est PARSÉ réellement (le playAddr y est doublement échappé : la regex
  * naïve de la 1ʳᵉ version ne le voyait pas — diagnostic V4.04 diag-mp4).
@@ -205,13 +249,18 @@ function chercherPlayAddr(o: unknown, profondeur = 0): string | null {
 export async function resoudreMp4Tiktok(
   id: string,
   videoUrl: string
-): Promise<{ url: string; methode: "api-mobile" | "page" } | null> {
-  // ① Page vidéo (prouvée en production Vercel — l'API mobile est
-  // « ratelimit triggered » depuis les IP datacenter, diag V4.04).
+): Promise<{ url: string; methode: "tikwm" | "page" | "api-mobile" } | null> {
+  // ① tikwm (seule méthode dont l'URL télécharge en production, diag
+  //    V4.04 — le playAddr direct est 403 Akamai).
+  const viaTikwm = await playAddrViaTikwm(videoUrl);
+  if (viaTikwm) return { url: viaTikwm, methode: "tikwm" };
+
+  // ② Page vidéo (résolution OK mais téléchargement 403 en production —
+  //    conservée : tikwm peut être momentanément indisponible).
   const viaPage = await playAddrViaPage(videoUrl);
   if (viaPage) return { url: viaPage, methode: "page" };
 
-  // ② API mobile en repli (peut se libérer, 429 = rate limit).
+  // ③ API mobile en dernier repli (429 = rate limit datacenter).
   const viaApi = await playAddrViaApiMobile(id);
   if (viaApi) return { url: viaApi, methode: "api-mobile" };
 
@@ -274,7 +323,11 @@ export async function sauvegarderMp4Tiktok(
       data: { tiktokMp4Url: urlPublique },
     });
 
-    return { url: urlPublique, octets: octets.length, methode: source.methode };
+    return {
+      url: urlPublique,
+      octets: octets.length,
+      methode: source.methode,
+    };
   } catch {
     return null;
   }
@@ -310,7 +363,7 @@ export async function backfillMp4Tiktok(params?: {
   budgetMs?: number;
 }): Promise<ResultatBackfillMp4Tiktok> {
   const limite = Math.min(Math.max(params?.limite ?? 6, 1), 20);
-  const budgetMs = Math.min(Math.max(params?.budgetMs ?? 45_000, 10_000), 240_000);
+  const budgetMs = Math.min(Math.max(params?.budgetMs ?? 90_000, 10_000), 240_000);
   const exclure = new Set(params?.exclure ?? []);
 
   const debut = Date.now();
@@ -336,33 +389,28 @@ export async function backfillMp4Tiktok(params?: {
   let octetsTotaux = 0;
   const idsEchec: string[] = [];
 
-  // ②-④ Paquets de 3 (les téléchargements sont plus lourds que les images).
-  const TAILLE_PAQUET = 3;
-  for (let i = 0; i < candidates.length; i += TAILLE_PAQUET) {
+  // ②-④ Traitement SÉQUENTIEL — tikwm (résolution pilote) est limité à
+  // ~1 requête/s en gratuité : le parallélisme ne ferait que déclencher
+  // son rate limit (429) et échouer tout le lot. Une garde de 1,2 s
+  // entre vidéos le respecte ; chaque téléchargement (5-40 Mo) prend
+  // de toute façon plusieurs secondes.
+  for (const v of candidates) {
     if (traites >= limite || Date.now() - debut > budgetMs) break;
-    const paquet = candidates.slice(i, i + TAILLE_PAQUET);
-    traites += paquet.length;
-
-    const resultats = await Promise.allSettled(
-      paquet.map((v) =>
-        sauvegarderMp4Tiktok(v.id, v.videoUrl as string)
-      )
-    );
-    resultats.forEach((res, j) => {
-      if (res.status === "fulfilled" && res.value) {
+    traites++;
+    try {
+      const res = await sauvegarderMp4Tiktok(v.id, v.videoUrl as string);
+      if (res) {
         sauvegardees++;
-        octetsTotaux += res.value.octets;
+        octetsTotaux += res.octets;
       } else {
-        idsEchec.push(paquet[j].id);
-        if (res.status === "rejected") {
-          erreurs.push(
-            `${paquet[j].id}: ${
-              res.reason instanceof Error ? res.reason.message : String(res.reason)
-            }`
-          );
-        }
+        idsEchec.push(v.id);
       }
-    });
+    } catch {
+      idsEchec.push(v.id);
+    }
+    if (traites < limite && Date.now() - debut <= budgetMs) {
+      await new Promise((r) => setTimeout(r, 1_200));
+    }
   }
 
   return {
