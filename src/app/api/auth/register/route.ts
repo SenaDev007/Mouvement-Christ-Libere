@@ -17,12 +17,19 @@ import { COUNTRIES } from "@/lib/data/countries";
  *
  * ⭐ V3.11 — CARTOGRAPHIE AUTOMATIQUE : dès la création du compte, le
  * nouveau membre apparaît sur la carte des dispersés (/disperses). Le
- * formulaire d'inscription collectait déjà pseudonyme (« Nom sur la
- * carte des dispersés »), pays, ville, langue, niveau et message — ces
- * champs sont désormais persistés en position cartographique (arrondie
- * à 0.1° comme le reste de la carte, anonymat préservé). L'ancienne
- * inscription anonyme (« Ajouter ma position ») a été retirée : seul un
- * compte de membre crée un point sur la carte.
+ * formulaire d'inscription collecte pseudonyme (« Nom sur la carte des
+ * dispersés »), pays, ville et langue — ces champs sont persistés en
+ * position cartographique (arrondie à 0.1° comme le reste de la carte,
+ * anonymat préservé). L'ancienne inscription anonyme (« Ajouter ma
+ * position ») a été retirée : seul un compte de membre crée un point sur
+ * la carte.
+ *
+ * ⭐ V4.08 — INSCRIPTION ALLÉGÉE (directive) : les champs « canal de
+ * communauté », « niveau spirituel » et « message optionnel » ont été
+ * retirés du formulaire — le membre est automatiquement classé parmi
+ * les membres de la communauté (rôle MEMBER + abonnement automatique
+ * aux canaux publics ci-dessous). Le niveau de l'épingle carte prend
+ * la valeur par défaut « chercheur ».
  *
  * ⭐ V3.13 — ANNONCE D'ARRIVÉE DANS LA COMMUNAUTÉ : à l'inscription, une
  * petite pastille système « Baruch haba ! [nom] a rejoint la communauté »
@@ -209,7 +216,6 @@ export async function POST(req: NextRequest) {
           (typeof raw.pseudonyme === "string" && raw.pseudonyme.trim()) ||
           name ||
           email.split("@")[0];
-        const NIVEAUX_VALIDES = ["chercheur", "croyant", "disciple", "pasteur"];
         await db.disperseMember.create({
           data: {
             pseudonyme: pseudonymeCarte.toString().trim().substring(0, 100),
@@ -219,14 +225,8 @@ export async function POST(req: NextRequest) {
             latitude: Math.round(cible.lat * 10) / 10,
             longitude: Math.round(cible.lng * 10) / 10,
             langue: (raw.langue || "FR").toString().toUpperCase().substring(0, 5),
-            niveau:
-              typeof raw.niveau === "string" && NIVEAUX_VALIDES.includes(raw.niveau)
-                ? raw.niveau
-                : "chercheur",
-            message:
-              typeof raw.message === "string" && raw.message.trim()
-                ? raw.message.trim().substring(0, 1000)
-                : null,
+            // ⭐ V4.08 — niveau/message ne sont plus collectés à l'inscription :
+            // défauts du schéma (niveau « chercheur », message null).
             isPublic: true,
           },
         });

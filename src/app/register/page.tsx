@@ -7,22 +7,6 @@ import { User, Mail, Lock, Loader2, AlertCircle, ShieldCheck, MapPin, Users, Sea
 import { COUNTRIES } from "@/lib/data/countries";
 import { toast } from "sonner";
 
-const NIVEAUX = [
-  { code: "chercheur", label: "Chercheur — en quête spirituelle", desc: "Vous découvrez la foi et souhaitez en savoir plus" },
-  { code: "croyant", label: "Croyant — engagé dans la foi", desc: "Vous marchez avec Yeshua et voulez grandir" },
-  { code: "disciple", label: "Disciple — engagé dans le ministère", desc: "Vous servez activement dans le Royaume" },
-  { code: "pasteur", label: "Pasteur — ministre accrédité", desc: "Vous avez un ministère pastoral reconnu" },
-];
-
-const CANAUX = [
-  { id: "priere", label: "Chaîne d'intercession", desc: "Prière fervente et combat spirituel" },
-  { id: "enseignement", label: "Études bibliques", desc: "Approfondissement de la Parole" },
-  { id: "jeunes", label: "Jeunes disciples", desc: "Communauté des jeunes croyants" },
-  { id: "femmes", label: "Femmes de foi", desc: "Sororité spirituelle" },
-  { id: "hommes", label: "Hommes du Royaume", desc: "Fraternité et responsabilité" },
-  { id: "louange", label: "Louange & Chofar", desc: "Adoration et musique céleste" },
-];
-
 const LANGUES = [
   { code: "FR", label: "Français" },
   { code: "EN", label: "English" },
@@ -45,9 +29,6 @@ export default function RegisterPage() {
     pays: "",
     ville: "",
     langue: "FR",
-    niveau: "chercheur",
-    canal: "priere",
-    message: "",
   });
 
   const filteredCountries = COUNTRIES.filter(c =>
@@ -154,7 +135,7 @@ export default function RegisterPage() {
           <div className="p-6 md:p-8">
             <div className="flex items-center justify-center gap-2 mb-6">
               <Users className="w-4 h-4 text-[#5B7052]" />
-              <span className="text-xs font-semibold text-[#8A8378]">Inscription — Votre compte sera validé par un administrateur</span>
+              <span className="text-xs font-semibold text-[#8A8378]">Inscription — vous rejoignez immédiatement la communauté des dispersés</span>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -234,44 +215,13 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Langue + Niveau */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Langue</label>
-                  <select value={form.langue} onChange={e => setForm({ ...form, langue: e.target.value })}
-                    className="w-full px-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]">
-                    {LANGUES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Niveau spirituel</label>
-                  <select value={form.niveau} onChange={e => setForm({ ...form, niveau: e.target.value })}
-                    className="w-full px-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]">
-                    {NIVEAUX.map(n => <option key={n.code} value={n.code}>{n.label}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {/* Choix du canal */}
+              {/* Langue */}
               <div>
-                <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-2 block">Canal de communauté</label>
-                <p className="text-xs text-[#8A8378] mb-3">Choisissez le canal que vous souhaitez rejoindre. Un administrateur validera votre affectation.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {CANAUX.map(canal => (
-                    <button key={canal.id} type="button" onClick={() => setForm({ ...form, canal: canal.id })}
-                      className={`text-left p-3 rounded-xl border-2 transition-all ${form.canal === canal.id ? "border-[#C9A227] bg-[#C9A227]/5" : "border-[#8A8378]/15 hover:border-[#C9A227]/40"}`}>
-                      <p className="text-sm font-bold text-[#1E0F2B]">{canal.label}</p>
-                      <p className="text-xs text-[#8A8378]">{canal.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Message */}
-              <div>
-                <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Message (optionnel)</label>
-                <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} rows={2} placeholder="Quelques mots sur votre parcours..."
-                  className="w-full px-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227] resize-none" />
+                <label className="text-xs uppercase tracking-[0.15em] text-[#8A8378] font-bold mb-1.5 block">Langue</label>
+                <select value={form.langue} onChange={e => setForm({ ...form, langue: e.target.value })}
+                  className="w-full px-3 py-3 rounded-xl border-2 border-[#8A8378]/20 bg-[#FAF6EF] text-sm text-[#1E0F2B] focus:outline-none focus:border-[#C9A227]">
+                  {LANGUES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                </select>
               </div>
 
               {/* Erreur */}
@@ -293,7 +243,7 @@ export default function RegisterPage() {
               </button>
 
               <p className="text-center text-xs text-[#8A8378]">
-                Votre compte sera examiné par un administrateur qui validera votre canal de communauté.
+                En créant votre compte, vous rejoignez immédiatement la communauté et apparaissez sur la carte des dispersés.
               </p>
             </form>
           </div>
