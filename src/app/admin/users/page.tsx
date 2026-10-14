@@ -379,7 +379,11 @@ export default async function AdminUsersPage({
                     isSuperAdmin={isSuperAdmin}
                   />
                   {u.role !== "SUPER_ADMIN" && (
-                    <DeleteButton entity="users" id={u.id} />
+                    <DeleteButton
+                      entity="users"
+                      id={u.id}
+                      label={u.name || u.email}
+                    />
                   )}
                 </div>
               </div>
