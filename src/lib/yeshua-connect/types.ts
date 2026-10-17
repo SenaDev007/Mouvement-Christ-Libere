@@ -91,6 +91,11 @@ export interface ChatMessage {
   editedAt?: string;
   /** ⭐ V2.8 — Message épinglé (persisté en base, hydraté au chargement) */
   isPinned?: boolean;
+  /** ⭐ V4.10 — Message EN FILE D'ENVOI LOCALE (rédigé hors ligne, façon
+   * WhatsApp) : la bulle s'affiche avec l'horloge ⏱ et est remplacée par
+   * le vrai message du serveur dès que la connexion est rétablie. Champ
+   * PUREMENT client — jamais persisté ni transporté par l'API. */
+  isPendingOutbox?: boolean;
   pinnedAt?: string;
   pinnedBy?: string;
 }

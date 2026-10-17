@@ -2,6 +2,8 @@
 
 /**
  * ⭐ V4.09 — SHELL DE L'APPLICATION MOBILE « CHRIST LIBÈRE » (/app/*).
+ * ⭐ V4.10 — MODE HORS LIGNE : moteur local (IndexedDB) + synchro temps
+ *    réel + indicateur de connexion (cf. src/lib/offline/).
  *
  * L'application mobile étend Yeshua Connect (le canal de communication)
  * pour offrir la MÊME STRUCTURE que le site public : une page principale
@@ -12,6 +14,8 @@
  * — exactement la hauteur que soustrait MessagingView (Yeshua Connect) :
  *   h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)]
  * → NE PAS modifier ces hauteurs sans mettre à jour MessagingView.tsx.
+ * L'indicateur hors ligne respecte ce gabarit (pastille size-11, aucune
+ * barre supplémentaire).
  *
  * MENU HAMBURGER : tiroir latéral qui S'OUVRE, SE DÉPLIE et SE REPLIE
  * (demande explicite du pasteur) — backdrop cliquable, fermeture par ✕,
@@ -19,20 +23,24 @@
  *
  * CONNEXION BACK-OFFICE : les pages rendues ici sont les MÊMES composants
  * que le site public (force-dynamic) + la barre d'annonces des lives
- * (LiveAnnouncementBar, rafraîchie toutes les 60 s) → tout ce qui est
- * publié depuis le back-office se met à jour automatiquement, exactement
- * comme sur le site public.
+ * (LiveAnnouncementBar, rafraîchie toutes les 60 s) + ⭐ V4.10 le moteur
+ * hors ligne qui détecte les changements de contenu (hash /api/app/content)
+ * et appelle router.refresh() → tout ce qui est publié depuis le
+ * back-office se met à jour automatiquement, images comprises.
  */
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api-client";
 import { IsololeText } from "@/lib/isolole";
 import { LiveAnnouncementBar } from "@/components/site/live-announcement-bar";
+import { initOfflineEngine, syncContent } from "@/lib/offline/engine";
+import { wipePersonalLocalData } from "@/lib/offline/db";
+import { useOfflineStatus, OfflineChip, DrawerSyncStatus } from "@/components/app/offline-status";
 import {
   Menu,
   X,
@@ -111,8 +119,14 @@ const MENU_GROUPS: { label: string; items: DrawerItem[] }[] = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
+  // ⭐ V4.10 — ÉTAT DE CONNEXION (moteur hors ligne : base locale + file
+  // d'envoi + synchro de contenu). L'indicateur remplace le bouton
+  // Rendez-vous dans l'en-tête quand la connexion est coupée — même
+  // gabarit size-11, aucune variation de hauteur (calibre MessagingView).
+  const { online } = useOfflineStatus();
   // ⭐ Profil FRAIS (photo + nom) — même mécanique que la navbar du site
   // (la session NextAuth fige l'image à la connexion ; on recharge ici).
   const [freshProfile, setFreshProfile] = useState<{
@@ -123,6 +137,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Le chat calcule sa hauteur sur la hauteur EXACTE du header : aucune
   // barre supplémentaire au-dessus (comme sur le site — NO_LIVE_BAR_ROUTES).
   const isChatRoute = pathname === "/app/yeshua-connect";
+
+  /* ⭐ V4.10 — MOTEUR HORS LIGNE : démarré une seule fois par onglet
+     (garde-fou interne). Écoute online/offline, vide la file d'envoi
+     des messages à la reconnexion (comportement WhatsApp), et surveille
+     le contenu back-office (poll du hash toutes les 60 s en ligne). */
+  useEffect(() => {
+    initOfflineEngine();
+  }, []);
+
+  /* ⭐ V4.10 — SYNCHRO TEMPS RÉEL : quand le hash de contenu change
+     (image remplacée, vidéo publiée, annonce…), on re-rend la page
+     courante avec les données fraîches — SANS recharger l'app. */
+  useEffect(() => {
+    const onContentUpdated = () => {
+      router.refresh();
+    };
+    window.addEventListener("ycl:content-updated", onContentUpdated);
+    return () => {
+      window.removeEventListener("ycl:content-updated", onContentUpdated);
+    };
+  }, [router]);
+
+  /* ⭐ V4.10 — Au retour au premier plan de l'app (visibilité) : resynchro
+     immédiate du contenu (détection rapide des publications). */
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void syncContent();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
   /* Fermeture du tiroir à chaque navigation */
   useEffect(() => {
@@ -181,6 +228,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     href === "/app" ? pathname === "/app" : pathname.startsWith(href);
 
   const handleLogout = () => {
+    // ⭐ V4.10 — Hygiène hors ligne : effacer la base locale PERSONNELLE
+    // (file d'envoi + caches de conversations) pour qu'aucun message en
+    // attente d'un compte ne parte sous un autre compte.
+    void wipePersonalLocalData();
     signOut({ callbackUrl: "/app" });
   };
 
@@ -221,14 +272,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          {/* Accès rapide Rendez-vous (porte d'entrée du secrétariat) */}
-          <Link
-            href="/app/rendez-vous"
-            aria-label="Demander un rendez-vous"
-            className="flex items-center justify-center size-11 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] active:scale-95 transition-all"
-          >
-            <CalendarCheck className="w-5 h-5" />
-          </Link>
+          {/* Accès rapide Rendez-vous (porte d'entrée du secrétariat) —
+              ⭐ V4.10 : remplacé par la pastille hors ligne quand la
+              connexion est coupée (même gabarit size-11 : aucune
+              variation de hauteur ; Rendez-vous reste dans le menu). */}
+          {online ? (
+            <Link
+              href="/app/rendez-vous"
+              aria-label="Demander un rendez-vous"
+              className="flex items-center justify-center size-11 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] active:scale-95 transition-all"
+            >
+              <CalendarCheck className="w-5 h-5" />
+            </Link>
+          ) : (
+            <OfflineChip />
+          )}
         </div>
       </header>
 
@@ -315,6 +373,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Bloc compte + lien vers le site complet */}
         <div className="border-t border-[#C9A227]/15 p-3 space-y-2 shrink-0">
+          {/* ⭐ V4.10 — État de connexion + file d'envoi locale */}
+          <DrawerSyncStatus />
           {isAuthenticated ? (
             <>
               <Link

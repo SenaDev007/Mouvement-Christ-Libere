@@ -8,7 +8,9 @@ import { api } from "@/lib/api-client";
  * usePushSubscription — Hook pour gérer l'abonnement aux notifications push.
  *
  * - Récupère la clé publique VAPID depuis /api/push/vapid
- * - Enregistre le service worker /sw-push.js
+ * - Enregistre le service worker /sw-app.js ⭐ V4.10 (qui remplace
+ *   sw-push.js : il reprend ses handlers push ET ajoute le mode hors
+ *   ligne — un seul service worker à la fois sur le scope /)
  * - Subscribe l'utilisateur via PushManager
  * - Envoie la subscription au backend via /api/push/subscribe
  * - Fournit des méthodes subscribe() / unsubscribe()
@@ -27,7 +29,7 @@ export function usePushSubscription() {
     if (!session?.user?.id || typeof window === "undefined") return;
 
     try {
-      const reg = await navigator.serviceWorker.getRegistration("/sw-push.js");
+      const reg = await navigator.serviceWorker.getRegistration("/sw-app.js");
       if (!reg) return;
 
       const sub = await reg.pushManager.getSubscription();
@@ -52,8 +54,8 @@ export function usePushSubscription() {
       const { publicKey } = await vapidRes.json();
       if (!publicKey) throw new Error("Clé VAPID non disponible");
 
-      // 2. Register service worker
-      const reg = await navigator.serviceWorker.register("/sw-push.js", {
+      // 2. Register service worker (⭐ V4.10 : sw-app.js — push + hors ligne)
+      const reg = await navigator.serviceWorker.register("/sw-app.js", {
         scope: "/",
       });
 
@@ -82,7 +84,7 @@ export function usePushSubscription() {
   const unsubscribe = useCallback(async () => {
     setLoading(true);
     try {
-      const reg = await navigator.serviceWorker.getRegistration("/sw-push.js");
+      const reg = await navigator.serviceWorker.getRegistration("/sw-app.js");
       if (reg) {
         const sub = await reg.pushManager.getSubscription();
         if (sub) await sub.unsubscribe();

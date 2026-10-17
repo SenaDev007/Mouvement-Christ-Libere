@@ -57,7 +57,7 @@ import {
   MessageCircle, AtSign, ChevronUp, ChevronRight, Copy, UploadCloud,
   PhoneOff, MicOff, VolumeX, Download, Film, VideoOff, EyeOff,
   Radio, Camera, PanelLeftOpen, PanelLeftClose, Shield, Crown, LifeBuoy,
-  Ban, MapPin, UserX, UserCheck,
+  Ban, MapPin, UserX, UserCheck, Clock, WifiOff,
 } from "lucide-react";
 import { Room, RoomEvent, Track, RemoteAudioTrack } from "livekit-client";
 import { cn } from "@/lib/utils";
@@ -88,6 +88,15 @@ import {
 } from "@/lib/yeshua-connect/media-adapters";
 import { emitSocket, onSocket, offSocket } from "@/lib/chat/socket-client";
 import { SlashCommands, executeCommand, type SendMessagePayload } from "./SlashCommands";
+// ⭐ V4.10 — MODE HORS LIGNE (comportement WhatsApp) : file d'envoi locale
+// IndexedDB + caches de lecture hors ligne + moteur de reconnexion.
+import {
+  queueOutboxMessage,
+  getOutboxMessages,
+  flushOutbox,
+  type QueuedMessage,
+} from "@/lib/offline/engine";
+import { offlineDb } from "@/lib/offline/db";
 import { MessageThreads, type ThreadMessage } from "./MessageThreads";
 import { LinkEmbed, extractUrls } from "./LinkEmbed";
 import {
@@ -540,6 +549,50 @@ export function MessagingView() {
   }, []);
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // ─── ⭐ V4.10 — MODE HORS LIGNE (comportement WhatsApp) ────────────────
+  // Exigence pasteur : « même on peut envoyer les messages et quand la
+  // connexion sera rétablie, les messages vont charger et être envoyés ».
+  //  • offlineMode : l'UI affiche l'état (bandeau du composer) et sert les
+  //    caches locaux (conversations + messages) en lecture ;
+  //  • La file d'envoi vit dans IndexedDB (src/lib/offline/) : le moteur
+  //    la vide automatiquement dès le retour de la connexion.
+  const [offlineMode, setOfflineMode] = useState(false);
+  useEffect(() => {
+    const goOnline = () => setOfflineMode(false);
+    const goOffline = () => setOfflineMode(true);
+    setOfflineMode(typeof navigator !== "undefined" && !navigator.onLine);
+    window.addEventListener("ycl:online", goOnline);
+    window.addEventListener("ycl:offline", goOffline);
+    return () => {
+      window.removeEventListener("ycl:online", goOnline);
+      window.removeEventListener("ycl:offline", goOffline);
+    };
+  }, []);
+
+  /** Message en file locale → bulle ChatMessage « en attente » (⏱). */
+  const queuedToChatMessage = useCallback((q: QueuedMessage): ChatMessage => ({
+    id: q.localId,
+    conversationId: q.conversationId,
+    senderId: q.userId,
+    senderName: currentUserName,
+    senderRole: "MEMBER",
+    type: (q.type || "TEXT") as ChatMessage["type"],
+    content: q.content,
+    verseRef: q.verseRef,
+    verseText: q.verseText,
+    replyToId: q.replyToId,
+    reactions: [],
+    createdAt: q.createdAt,
+    isPendingOutbox: true,
+  }), [currentUserName]);
+
+  /** Écrit le cache local d'une conversation (lecture hors ligne). */
+  const cacheMessagesLocally = useCallback((convId: string, msgs: ChatMessage[]) => {
+    const db = offlineDb();
+    if (!db || !currentUserId || currentUserId === "current") return;
+    void db.msgCache.put({ conversationId: convId, messages: msgs, cachedAt: new Date().toISOString() }).catch(() => {});
+  }, [currentUserId]);
+
   // ─── State: voice recording ──────────────────────────────────────────
   const [recordingState, setRecordingState] = useState<"idle" | "recording" | "preview">("idle");
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -811,6 +864,13 @@ export function MessagingView() {
       setConvError(null);
       const data: ChatConversation[] = await res.json();
       setConversations(data);
+      // ⭐ V4.10 — Cache local (lecture hors ligne de la liste des canaux).
+      const db = offlineDb();
+      if (db && currentUserId && currentUserId !== "current") {
+        void db.convCache
+          .put({ userId: currentUserId, conversations: data, cachedAt: new Date().toISOString() })
+          .catch(() => {});
+      }
       if (data.length > 0 && !activeConvId) {
         // ⭐ V3.0 — Auto-sélection sur TOUS les écrans (mobile inclus) :
         // sur mobile la sidebar est un rail d'icônes — sans sélection, le
@@ -820,15 +880,51 @@ export function MessagingView() {
       }
     } catch (e) {
       console.error("loadConversations:", e);
+      // ⭐ V4.10 — HORS LIGNE : repli sur la copie locale de la liste des
+      // conversations (lecture seule — l'utilisateur retrouve ses canaux
+      // et leurs derniers messages mis en cache).
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        const db = offlineDb();
+        if (db && currentUserId && currentUserId !== "current") {
+          try {
+            const cached = await db.convCache.get(currentUserId);
+            if (cached?.conversations) {
+              setConversations(cached.conversations as ChatConversation[]);
+            }
+          } catch { /* cache illisible → rien */ }
+        }
+      }
     } finally {
       setLoadingConvs(false);
     }
-  }, [activeConvId]);
+  }, [activeConvId, currentUserId]);
 
   useEffect(() => { loadConversations(); }, [loadConversations]);
   // ⭐ V2.8 — Réf « live » vers loadConversations (utilisé par le refresh
   // au focus fenêtre, cf. effet ci-dessus).
   useEffect(() => { loadConversationsRef.current = loadConversations; }, [loadConversations]);
+
+  /** ⭐ V4.10 — Ré-injecte les messages EN FILE LOCALE (bulles ⏱) de la
+      conversation donnée, après un chargement serveur ou un repli cache —
+      pour que l'utilisateur VOIE ses messages non envoyés, même après
+      réouverture de l'app (comme WhatsApp). */
+  const appendPendingOutbox = useCallback((convId: string) => {
+    if (!convId) return;
+    void (async () => {
+      const queued = (await getOutboxMessages()).filter(q => q.conversationId === convId);
+      if (queued.length === 0) return;
+      setMessages(prev => {
+        const list = prev[convId] || [];
+        // Éviter les doublons (déjà ré-injectés) :
+        const existing = new Set(list.map(m => m.id));
+        const toAdd = queued
+          .filter(q => !existing.has(q.localId))
+          .map(queuedToChatMessage);
+        if (toAdd.length === 0) return prev;
+        return { ...prev, [convId]: [...list, ...toAdd] };
+      });
+    })();
+  }, [queuedToChatMessage]);
 
   const loadMessages = useCallback(async (convId: string) => {
     setLoadingMsgs(true);
@@ -843,20 +939,93 @@ export function MessagingView() {
       // ⭐ V2.8 — Filtrer les messages « supprimés pour moi » (localStorage).
       const visible = data.filter(m => !hiddenForMeRef.current.has(m.id));
       setMessages(prev => ({ ...prev, [convId]: visible }));
+      // ⭐ V4.10 — Cache local (lecture hors ligne) PUIS ré-injection de la
+      // file d'envoi locale (messages rédigés hors ligne non encore partis).
+      cacheMessagesLocally(convId, visible);
+      appendPendingOutbox(convId);
       // Si on a reçu exactement `limit` messages, il y en a probablement
       // d'autres plus anciens à charger via "Load more".
       setHasMoreMessages(data.length >= 50);
     } catch (e) {
       console.error("loadMessages:", e);
+      // ⭐ V4.10 — HORS LIGNE : repli sur la copie locale de cette
+      // conversation (historique consultable sans connexion) + file
+      // d'envoi locale (bulles ⏱ en attente de connexion).
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        const db = offlineDb();
+        if (db) {
+          try {
+            const cached = await db.msgCache.get(convId);
+            if (cached?.messages) {
+              const cachedMsgs = (cached.messages as ChatMessage[])
+                .filter(m => !hiddenForMeRef.current.has(m.id));
+              setMessages(prev => ({ ...prev, [convId]: cachedMsgs }));
+            }
+          } catch { /* cache illisible → rien */ }
+        }
+        appendPendingOutbox(convId);
+      }
     } finally {
       setLoadingMsgs(false);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cacheMessagesLocally]);
 
   // Charger les messages quand la conversation active change
   useEffect(() => {
     if (activeConvId) loadMessages(activeConvId);
   }, [activeConvId, loadMessages]);
+
+  // ⭐ V4.10 — AU RETOUR DE LA CONNEXION (comportement WhatsApp) : les
+  // messages chargent et sont envoyés. Le moteur (src/lib/offline) vide
+  // la file et émet `ycl:outbox-sent` au fur et à mesure ; ici on
+  // ① déclenche l'envoi, ② recharge conversations + messages de la
+  // conversation ouverte, ③ écoutons les confirmations d'envoi.
+  // (Positionné APRÈS la définition de loadMessages — sinon TDZ.)
+  useEffect(() => {
+    const onBackOnline = () => {
+      void flushOutbox();
+      loadConversationsRef.current?.();
+      const convId = activeConvIdRef.current;
+      if (convId) void loadMessages(convId);
+    };
+    // Message parti ✓ → remplacer la bulle ⏱ par le vrai message serveur.
+    const onOutboxSent = (e: Event) => {
+      const { localId, message } = ((e as CustomEvent).detail || {}) as { localId?: string; message?: ChatMessage };
+      if (!localId || !message) return;
+      setMessages(prev => {
+        const next: Record<string, ChatMessage[]> = {};
+        for (const [convId, list] of Object.entries(prev)) {
+          next[convId] = list.some(m => m.id === localId)
+            ? list.map(m => (m.id === localId ? message : m))
+            : list;
+        }
+        return next;
+      });
+    };
+    // Message abandonné (échecs répétés) → retirer la bulle + avertir.
+    const onOutboxDropped = (e: Event) => {
+      const { localId } = ((e as CustomEvent).detail || {}) as { localId?: string };
+      if (!localId) return;
+      setMessages(prev => {
+        const next: Record<string, ChatMessage[]> = {};
+        for (const [convId, list] of Object.entries(prev)) {
+          next[convId] = list.filter(m => m.id !== localId);
+        }
+        return next;
+      });
+      showToast("Un message n'a pas pu être envoyé", "error");
+    };
+    window.addEventListener("ycl:online", onBackOnline);
+    window.addEventListener("ycl:outbox-sent", onOutboxSent);
+    window.addEventListener("ycl:outbox-dropped", onOutboxDropped);
+    return () => {
+      window.removeEventListener("ycl:online", onBackOnline);
+      window.removeEventListener("ycl:outbox-sent", onOutboxSent);
+      window.removeEventListener("ycl:outbox-dropped", onOutboxDropped);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadMessages, showToast]);
 
   // ═════════════════════════════════════════════════════════════════════
   //  ⭐ V2.9 — TEMPS RÉEL SANS SOCKET.IO : POLLING DE SECOURS
@@ -905,7 +1074,11 @@ export function MessagingView() {
         // (chargés via pagination), (b) on remplace/joint les versions
         // fraîches. Un message absent de la fenêtre alors qu'il devrait y
         // être (plus récent que le plus ancien pollé) = supprimé → retiré.
+        // ⭐ V4.10 — Les bulles EN FILE LOCALE (hors ligne, ⏱) sont
+        // TOUJOURS préservées : elles ne sont pas encore sur le serveur,
+        // c'est le moteur de reconnexion qui les remplacera à l'envoi.
         const kept = old.filter(m => {
+          if (m.isPendingOutbox) return true;
           if (freshIds.has(m.id)) return false; // remplacé par la version fraîche
           return new Date(m.createdAt).getTime() < oldestFreshAt;
         });
@@ -1233,10 +1406,32 @@ export function MessagingView() {
   // Helper interne : poste un message sur l'API et l'ajoute localement.
   // Utilisé à la fois par handleSend (message texte normal) et par
   // handleSlashCommand (versets bibliques, annonces, etc.).
+  // ⭐ V4.10 — HORS LIGNE (comportement WhatsApp) : si la connexion est
+  // coupée (ou que l'envoi échoue pour une raison RÉSEAU), le message
+  // est mis en FILE LOCALE (IndexedDB) avec une bulle « en attente » ⏱
+  // au lieu d'être perdu — il partira automatiquement à la reconnexion.
   const postMessage = useCallback(async (payload: SendMessagePayload & { replyToId?: string }) => {
     if (!activeConvId) return;
     setSending(true);
     try {
+      // ⭐ V4.10 — Déconnecté ? → file locale, bulle ⏱, AUCUNE erreur.
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        const queued = await queueOutboxMessage({
+          conversationId: activeConvId,
+          userId: currentUserId,
+          content: payload.content,
+          type: payload.type,
+          replyToId: payload.replyToId,
+          verseRef: payload.verseRef,
+          verseText: payload.verseText,
+        });
+        setMessages(prev => ({
+          ...prev,
+          [activeConvId]: [...(prev[activeConvId] || []), queuedToChatMessage(queued)],
+        }));
+        showToast("Hors ligne — envoi dès le retour de la connexion");
+        return;
+      }
       const res = await fetch(api.url(`/api/yeshua-connect/conversations/${activeConvId}/messages`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1258,12 +1453,32 @@ export function MessagingView() {
       // Diffusion temps réel via Socket.io
       socketSendMessage(activeConvId, payload.content, payload.replyToId);
     } catch (e) {
+      // ⭐ V4.10 — Erreur RÉSEAU (pas une réponse serveur) → file locale.
+      // TypeError = fetch n'a pas pu joindre le serveur (hors ligne,
+      // DNS, coupure en cours d'envoi) : on met en file au lieu de jeter.
+      if (e instanceof TypeError) {
+        const queued = await queueOutboxMessage({
+          conversationId: activeConvId,
+          userId: currentUserId,
+          content: payload.content,
+          type: payload.type,
+          replyToId: payload.replyToId,
+          verseRef: payload.verseRef,
+          verseText: payload.verseText,
+        });
+        setMessages(prev => ({
+          ...prev,
+          [activeConvId]: [...(prev[activeConvId] || []), queuedToChatMessage(queued)],
+        }));
+        showToast("Connexion perdue — envoi dès le retour");
+        return;
+      }
       console.error("postMessage:", e);
       throw e;
     } finally {
       setSending(false);
     }
-  }, [activeConvId, currentUserId, socketSendMessage]);
+  }, [activeConvId, currentUserId, socketSendMessage, queuedToChatMessage, showToast]);
 
   // ⭐ V2.6 — Partager un verset depuis la Bible intégrée : l'envoie
   // comme message VERSE (rendu spécial bulle dorée) dans la conversation
@@ -1378,8 +1593,14 @@ export function MessagingView() {
 
     // ⭐ V2.8 — Pièces jointes en attente : le bouton Envoyer envoie les
     // fichiers + le texte du champ comme légende (comportement WhatsApp).
+    // ⭐ V4.10 — HORS LIGNE : l'upload exige la connexion — on n'essaie
+    // même pas (sinon échec brut) ; on explique et on garde la saisie.
     if (pendingFiles.length > 0 && !editingMsg) {
       if (!activeConvId) return;
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        showToast("Les pièces jointes nécessitent une connexion internet — le texte seul peut partir en attente", "error");
+        return;
+      }
       setSending(true);
       try {
         await sendPendingFiles(content);
@@ -4624,6 +4845,14 @@ export function MessagingView() {
                             "flex items-center gap-1 mt-0.5 justify-end",
                             usePurpleBubble ? "text-[#FAF6EF]/70" : "text-[#1E0F2B]/60"
                           )}>
+                            {msg.isPendingOutbox && (
+                              // ⭐ V4.10 — Message EN FILE LOCALE (hors ligne,
+                              // façon WhatsApp) : horloge pulsante en attendant
+                              // la reconnexion pour l'envoi réel.
+                              <span title="En attente de connexion — envoi automatique au retour du réseau">
+                                <Clock className="w-3 h-3 animate-pulse" />
+                              </span>
+                            )}
                             {msg.editedAt && <span className="text-[9px] italic">modifié</span>}
                             {pinnedMessages.has(msg.id) && <Pin className="w-2.5 h-2.5" />}
                             <span className="text-[10px]">{formatTime(msg.createdAt)}</span>
@@ -4791,6 +5020,19 @@ export function MessagingView() {
             utile à la zone de saisie ; desktop inchangé (p-3). */}
         {activeConv && activeConv.type !== "VOICE" && (
           <div className="p-2 md:p-3 border-t border-[#C9A227]/15 bg-white min-w-0">
+            {/* ⭐ V4.10 — BANDEAU HORS LIGNE (façon WhatsApp « connexion
+                perdue — les messages seront envoyés à la reconnexion ») :
+                bande INTERNE du composer → la hauteur EXTERNE contractuelle
+                (100dvh − header) est inchangée, seule la zone de saisie se
+                resserre. */}
+            {offlineMode && (
+              <div className="mb-2 -mt-0.5 flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+                <WifiOff className="w-3.5 h-3.5 shrink-0" />
+                <span className="text-[11px] font-semibold text-center">
+                  Hors ligne — vos messages partiront automatiquement à la reconnexion
+                </span>
+              </div>
+            )}
             {/* ⭐ V2.8 — COMPOSER DE PIÈCES JOINTES (façon WhatsApp) :
                 aperçu des fichiers EN ATTENTE (collage Ctrl+V, « Joindre »,
                 drag & drop) avec suppression individuelle + envoi explicite.

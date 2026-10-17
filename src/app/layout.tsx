@@ -14,6 +14,7 @@ import { PageLoader } from "@/components/site/page-loader";
 // /register, si l'application est déjà installée, ou après « Ne plus
 // afficher » (mémoire locale) / fermeture (mémoire de session).
 import { InstallToast } from "@/components/pwa/install-toast";
+import { ServiceWorkerRegister } from "@/components/offline/sw-register";
 
 // ⭐ V3.97 — POLICES DU DESIGN WIN AGRO : Playfair Display (titres serif)
 // + DM Sans (corps) — la typographie du design Win Agro, appliquée à la
@@ -181,6 +182,10 @@ export default function RootLayout({
             toast avec « Installer » + « Ne plus afficher » (voir
             install-toast.tsx pour les conditions d'affichage). */}
         <InstallToast />
+        {/* ⭐ V4.10 — SERVICE WORKER « CHRIST LIBÈRE » (scope /) : mode
+            hors ligne de l'application (toutes les pages + images) et
+            notifications push. Rendu nul, aucun impact visuel. */}
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

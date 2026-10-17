@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<title>Hors ligne — Christ Libère</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    background: linear-gradient(180deg, #2A0E3D 0%, #1A0826 100%);
+    color: #FAF6EF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+  }
+  .card { max-width: 420px; width: 100%; }
+  .logo {
+    width: 84px; height: 84px; object-fit: contain;
+    margin: 0 auto 20px; display: block;
+    filter: drop-shadow(0 4px 16px rgba(201, 162, 39, 0.35));
+  }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 10px; }
+  h1 .gold { color: #C9A227; }
+  p { font-size: 15px; line-height: 1.65; color: rgba(250, 246, 239, 0.9); }
+  p + p { margin-top: 8px; }
+  .wifi {
+    width: 64px; height: 64px; margin: 0 auto 16px; display: block;
+    border-radius: 50%;
+    background: rgba(201, 162, 39, 0.12);
+    border: 1px solid rgba(201, 162, 39, 0.4);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wifi svg { width: 30px; height: 30px; stroke: #C9A227; }
+  .hint {
+    margin-top: 18px;
+    padding: 14px 16px;
+    background: rgba(201, 162, 39, 0.08);
+    border: 1px solid rgba(201, 162, 39, 0.25);
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: rgba(250, 246, 239, 0.85);
+  }
+  button {
+    margin-top: 22px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1E0F2B;
+    background: #C9A227;
+    border: none;
+    border-radius: 12px;
+    padding: 13px 30px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="/logo-christ-libere-v3.png" alt="Christ Libère" />
+    <div class="wifi">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="1" y1="1" x2="23" y2="23"/>
+        <path d="M16.72 11.78A4 4 0 0 1 19 18"/>
+        <path d="M5 12.85a4 4 0 0 1 7.83-1.17"/>
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"/>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+        <line x1="12" y1="20" x2="12.01" y2="20"/>
+      </svg>
+    </div>
+    <h1><span class="gold">Christ</span> Libère — hors ligne</h1>
+    <p>Cette page n'a pas encore été consultée avec une connexion internet.</p>
+    <div class="hint">
+      Les pages de l'application déjà visitées restent disponibles hors ligne
+      (menu en haut à gauche), de même que vos conversations Yeshua Connect —
+      vos messages seront envoyés dès le retour de la connexion.
+    </div>
+    <button onclick="location.reload()">Réessayer</button>
+  </div>
+</body>
+</html>
