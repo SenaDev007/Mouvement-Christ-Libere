@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.christlibere.app",
+    "sha256_cert_fingerprints": ["4A:C6:12:8D:67:74:8E:99:8E:7B:1E:93:93:44:FA:9E:02:0B:9D:B3:C3:23:D3:CA:B6:73:14:F9:39:F1:80:62"]
+  }
+}]
