@@ -25,7 +25,9 @@ type Contexte = "public" | "admin" | "secretariat" | "tresorerie";
 
 /** Libellés de l'application selon le contexte (en-tête de la fenêtre). */
 const LIBELLE_APPLI: Record<Contexte, string> = {
-  public: "Site public Christ Libère",
+  // ⭐ V4.09 — l'app installée depuis le site s'appelle « Christ Libère »
+  // et s'ouvre sur sa page principale (/app).
+  public: "Christ Libère",
   admin: "Back-office Christ Libère",
   secretariat: "Secrétariat Christ Libère",
   tresorerie: "Trésorerie Christ Libère",
@@ -197,8 +199,9 @@ export function InstructionsInstallation({
           </ul>
 
           <p className="text-[11px] text-[#8A8378] leading-relaxed pt-1">
-            Même logo, applications distinctes : « Site public Christ Libère »
-            pour les croyants, « Back-office », « Secrétariat » et « Trésorerie
+            Même logo, applications distinctes : « Christ Libère » (l'app
+            mobile complète pour les croyants — chat, enseignements, vidéos,
+            intercession…), « Back-office », « Secrétariat » et « Trésorerie
             Christ Libère » pour la gestion du ministère.
           </p>
         </div>

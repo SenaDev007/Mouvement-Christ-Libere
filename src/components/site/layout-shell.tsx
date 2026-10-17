@@ -16,6 +16,15 @@ import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 // plus seulement la page de connexion.
 const HIDDEN_ROUTES = ["/login", "/register", "/admin", "/secretariat", "/tresorerie"];
 
+// ⭐ V4.09 — APPLICATION MOBILE (/app/*) : la coquille du site (navbar,
+// footer, barre live) est MASQUÉE — l'application possède SA PROPRE
+// coquille (src/components/app/app-shell.tsx : en-tête + menu hamburger
+// tiroir + barre d'annonces des lives).
+// ⚠ MATCH PRÉCIS obligatoire : un simple startsWith("/app") cacherait
+// AUSSI la page /appels (appels audio/vidéo) qui doit garder la navbar !
+const isAppRoute = (pathname: string | null | undefined) =>
+  !!pathname && (pathname === "/app" || pathname.startsWith("/app/"));
+
 // Routes où le footer est masqué mais la navbar reste visible
 const NO_FOOTER_ROUTES = ["/live/", "/yeshua-connect"];
 
@@ -26,7 +35,9 @@ const NO_LIVE_BAR_ROUTES = ["/admin", "/yeshua-connect", "/live/", "/secretariat
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHiddenRoute = HIDDEN_ROUTES.some((route) => pathname?.startsWith(route));
+  const isHiddenRoute =
+    isAppRoute(pathname) ||
+    HIDDEN_ROUTES.some((route) => pathname?.startsWith(route));
   const showFooter = !NO_FOOTER_ROUTES.some((route) => pathname?.startsWith(route));
   const showLiveBar = !NO_LIVE_BAR_ROUTES.some((route) => pathname?.startsWith(route));
 

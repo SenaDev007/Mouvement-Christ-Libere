@@ -1,7 +1,7 @@
 {
-  "name": "Site public Christ Libère",
+  "name": "Christ Libère",
   "short_name": "Christ Libère",
-  "description": "Site public du Mouvement Christ Libère — Afrika & Pasteur Kongo : adorations, louanges, témoignages, enseignements et communauté de foi.",
+  "description": "Application du Mouvement Christ Libère — Afrika & Pasteur Kongo : Yeshua Connect (chat), enseignements, témoignages, vidéos & lives, adoration et louanges, intercession, dispersés d'Isolélé (Israël), contributions, annonces du ministère et rendez-vous.",
   "id": "/",
   "icons": [
     {
@@ -32,7 +32,7 @@
   "theme_color": "#2A0E3D",
   "background_color": "#FAF6EF",
   "display": "standalone",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "lang": "fr"
 }

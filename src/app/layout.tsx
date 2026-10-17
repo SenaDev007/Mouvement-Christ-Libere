@@ -68,23 +68,24 @@ export const metadata: Metadata = {
     "communauté de foi",
   ],
   authors: [{ name: "Mouvement Christ Libère" }],
-  // ⭐ V3.80 — PWA : identité « Site public Christ Libère ».
-  //  · manifest.webmanifest renommé (name) → l'app installée depuis le site
-  //    public s'appelle « Site public Christ Libère » (l'icône reste le logo
-  //    du site) ; le back-office possède SON manifest dédié (lié par
-  //    src/app/admin/layout.tsx → « Back-office Christ Libère ») → deux
-  //    applications distinctes, même logo, sur mobile comme sur desktop.
+  // ⭐ V4.09 — PWA : l'application installée s'appelle désormais
+  //  « Christ Libère » (fini « Site public Christ Libère ») et s'OUVRE
+  //  SUR LA PAGE PRINCIPALE DE L'APPLICATION (/app) — page principale avec
+  //  boutons + menu hamburger, exactement comme la landing du site public.
+  //  NB : l'id du manifest reste "/" → les installations existantes
+  //  conservent leur identité et récupèrent le nouveau start_url au
+  //  rafraîchissement du manifest (cache court 1 h) ; iOS fige le libellé
+  //  au moment de l'installation → réinstaller pour le nouveau titre.
+  //  · Le back-office garde SON manifest dédié (« Back-office Christ
+  //    Libère », start_url /admin/dashboard) → deux apps distinctes.
   //  · appleWebApp : iOS « Ajouter à l'écran d'accueil » → ouverture PLEIN
-  //    ÉCRAN (standalone) avec le titre « Site public Christ Libère » (iOS
-  //    n'émet jamais beforeinstallprompt : le bouton « Installer
-  //    l'application » du site ouvre les instructions Partager → « Sur
-  //    l'écran d'accueil »). Nécessaire aussi pour les notifications push
+  //    ÉCRAN (standalone) ; nécessaire aussi pour les notifications push
   //    iOS (≥ 16.4) qui n'existent que dans la PWA installée.
-  applicationName: "Site public Christ Libère",
+  applicationName: "Christ Libère",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Site public Christ Libère",
+    title: "Christ Libère",
   },
   // ⭐ V3.76 — LOGO « AriseAfrika » MIS À JOUR (2026-09-13) : favicon + icônes
   // LIÉS. Le suffixe ?v=2026-09-13 force le re-téléchargement par les navigateurs

@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/app/app",
+    "src/components/app",
+    "src/components/site/layout-shell.tsx",
+    "src/components/site/live-announcement-bar.tsx",
+    "src/components/site/page-hero.tsx",
+    "src/components/live/upcoming-live-float.tsx",
+    "src/components/pwa/instructions-installation.tsx",
+    "src/components/pwa/install-toast.tsx",
+    "src/app/layout.tsx"
+  ],
+  "exclude": ["node_modules", ".next", "backend"]
+}
