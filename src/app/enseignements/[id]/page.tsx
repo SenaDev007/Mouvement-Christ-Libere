@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Clock, BookOpen, GraduationCap, Calendar, User } from "lucide-react";
 import { MarkdownText } from "@/components/site/markdown-text";
+import { MarkdownInline } from "@/components/site/markdown-inline";
 import { ShareButtons } from "@/components/site/share-buttons";
 import { IsololeText } from "@/lib/isolole";
 import { JsonLd } from "@/components/site/json-ld";
@@ -149,7 +150,7 @@ export default async function TeachingDetailPage({ params }: PageProps) {
 
           {/* Résumé */}
           <p className="text-base md:text-lg text-[#FAF6EF]/70 leading-relaxed max-w-2xl mx-auto mb-8 drop-shadow">
-            <IsololeText>{teaching.excerpt}</IsololeText>
+            <MarkdownInline>{teaching.excerpt}</MarkdownInline>
           </p>
 
           {/* Métadonnées */}
@@ -210,7 +211,7 @@ export default async function TeachingDetailPage({ params }: PageProps) {
               {teaching.excerpt && (
                 <div className="mb-8 pb-6 border-b border-[#8A8378]/12">
                   <p className="font-serif text-lg md:text-xl italic text-[#2A0E3D] leading-relaxed">
-                    « <IsololeText>{teaching.excerpt}</IsololeText> »
+                    « <MarkdownInline>{teaching.excerpt}</MarkdownInline> »
                   </p>
                 </div>
               )}

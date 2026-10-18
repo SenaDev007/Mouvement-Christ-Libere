@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/lib/markdown-normal.ts",
+    "src/lib/isolole.tsx",
+    "src/components/site/markdown-text.tsx",
+    "src/components/site/markdown-inline.tsx",
+    "src/app/enseignements",
+    "src/app/temoignages",
+    "src/components/premium/teaching-card.tsx",
+    "src/components/premium/testimony-card.tsx",
+    "src/components/site/afrika-view.tsx",
+    "src/components/site/pasteur-kongo-view.tsx",
+    "src/components/premium/vertical-timeline.tsx"
+  ],
+  "exclude": ["node_modules", ".next", "backend"]
+}

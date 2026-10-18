@@ -3,6 +3,7 @@
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { isololeMarkdown } from "@/lib/isolole";
+import { normaliserMarkdown } from "@/lib/markdown-normal";
 
 /**
  * MarkdownText — rendu Markdown propre pour les contenus de Christ Libère.
@@ -16,6 +17,11 @@ import { isololeMarkdown } from "@/lib/isolole";
  * « Israël » s'affiche « **Isolélé** (Israël) » (Isolélé en gras).
  * Couvre TOUS les contenus de la base affichés via ce composant :
  * biographies, enseignements, témoignages, pages serviteurs…
+ *
+ * ⭐ V4.13 — NORMALISATION ANTI-ASTÉRISQUES : les emphases mal espacées
+ * rédigées dans le back-office (« ** ainsi ** », « __gras__ », « #Titre »)
+ * sont réparées AVANT le rendu — CommonMark les ignorait et affichait
+ * les astérisques bruts. Ordre : normaliser → Isolélé → react-markdown.
  */
 
 interface MarkdownTextProps {
@@ -72,7 +78,7 @@ export function MarkdownText({ children, className, variant = "light" }: Markdow
         className,
       )}
     >
-      <ReactMarkdown>{isololeMarkdown(children)}</ReactMarkdown>
+      <ReactMarkdown>{isololeMarkdown(normaliserMarkdown(children))}</ReactMarkdown>
     </div>
   );
 }

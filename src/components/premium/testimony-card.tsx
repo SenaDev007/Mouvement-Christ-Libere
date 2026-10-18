@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Clock, BookOpen, Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IsololeText } from "@/lib/isolole";
+import { MarkdownInline } from "@/components/site/markdown-inline";
 
 interface TestimonyCardProps {
   title: string;
@@ -66,7 +67,7 @@ export function TestimonyCard({ title, short, themes, bookRef, servantName, read
 
           {/* Résumé */}
           <p className="text-sm text-[#1E0F2B]/70 leading-relaxed mb-5 line-clamp-3 flex-1">
-            <IsololeText>{short}</IsololeText>
+            <MarkdownInline>{short}</MarkdownInline>
           </p>
 
           {/* Référence biblique */}
