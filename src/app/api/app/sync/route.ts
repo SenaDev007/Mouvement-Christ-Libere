@@ -122,7 +122,22 @@ export async function GET() {
       }).catch(() => null),
       db.disperseMember.findMany({
         where: { isPublic: true },
-        select: { pays: true, langue: true, niveau: true },
+        orderBy: { createdAt: "desc" },
+        // ⭐ V4.14 — positions précises par membre pour la carte mobile
+        // (zoom + courbes + épingles exactes comme le web). Pas de photo
+        // (avatars base64 lourds) : la fiche mobile affiche les initiales.
+        select: {
+          id: true,
+          pseudonyme: true,
+          pays: true,
+          ville: true,
+          latitude: true,
+          longitude: true,
+          langue: true,
+          niveau: true,
+          message: true,
+        },
+        take: 300,
       }).catch(() => []),
     ]);
 
@@ -153,10 +168,23 @@ export async function GET() {
       })
     );
 
-    // ── Statistiques dispersés (aucune donnée personnelle — que des comptes) ──
+    // ── Statistiques dispersés — compteurs EXACTS (indépendants du take) ──
+    const [totalDisperses, parPaysComptes] = await Promise.all([
+      db.disperseMember
+        .count({ where: { isPublic: true } })
+        .catch(() => disperses.length),
+      db.disperseMember
+        .groupBy({ by: ["pays"], where: { isPublic: true }, _count: { _all: true } })
+        .catch((): Array<{ pays: string; _count: { _all: number } }> => []),
+    ]);
     const statsPays = new Map<string, number>();
-    for (const d of disperses) {
-      statsPays.set(d.pays, (statsPays.get(d.pays) || 0) + 1);
+    for (const g of parPaysComptes) {
+      statsPays.set(g.pays, g._count._all);
+    }
+    if (statsPays.size === 0) {
+      for (const d of disperses) {
+        statsPays.set(d.pays, (statsPays.get(d.pays) || 0) + 1);
+      }
     }
 
     return NextResponse.json(
@@ -263,8 +291,22 @@ export async function GET() {
           })),
         },
         disperses: {
-          total: disperses.length,
+          total: totalDisperses,
           parPays: Object.fromEntries(statsPays),
+          // ⭐ V4.14 — membres positionnés (positions arrondies à 0.1° côté
+          // serveur — même anonymat que la carte web). Ordre = plus récent
+          // d'abord, comme l'API /api/disperses.
+          membres: disperses.map((d) => ({
+            id: d.id,
+            pseudonyme: d.pseudonyme,
+            pays: d.pays,
+            ville: d.ville || "",
+            latitude: d.latitude,
+            longitude: d.longitude,
+            langue: d.langue,
+            niveau: d.niveau,
+            message: d.message || "",
+          })),
         },
       },
       { headers: { "Cache-Control": "no-store" } }
