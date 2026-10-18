@@ -13,6 +13,7 @@ import {
 import { categorizeVideo, estRubrique } from "@/lib/video-rubrics";
 import { extraireTiktokId } from "@/lib/tiktok";
 import { publierAnnoncesEchues, listerAnnoncesPubliees } from "@/lib/staff-space/annonces";
+import { COUNTRIES } from "@/lib/data/countries";
 
 /**
  * ⭐ V4.09 — GET /api/app/sync — SYNCHRONISATION UNIFIÉE DE L'APP MOBILE.
@@ -168,24 +169,8 @@ export async function GET() {
       })
     );
 
-    // ── Statistiques dispersés — compteurs EXACTS (indépendants du take) ──
-    const [totalDisperses, parPaysComptes] = await Promise.all([
-      db.disperseMember
-        .count({ where: { isPublic: true } })
-        .catch(() => disperses.length),
-      db.disperseMember
-        .groupBy({ by: ["pays"], where: { isPublic: true }, _count: { _all: true } })
-        .catch((): Array<{ pays: string; _count: { _all: number } }> => []),
-    ]);
-    const statsPays = new Map<string, number>();
-    for (const g of parPaysComptes) {
-      statsPays.set(g.pays, g._count._all);
-    }
-    if (statsPays.size === 0) {
-      for (const d of disperses) {
-        statsPays.set(d.pays, (statsPays.get(d.pays) || 0) + 1);
-      }
-    }
+    // ── Statistiques dispersés (reprises depuis la liste combinée dans la
+    // réponse : membres + serviteurs localisés, parité /api/disperses) ──
 
     return NextResponse.json(
       {
@@ -290,13 +275,24 @@ export async function GET() {
             thumbnailUrl: l.thumbnailUrl || "",
           })),
         },
-        disperses: {
-          total: totalDisperses,
-          parPays: Object.fromEntries(statsPays),
+        disperses: (() => {
           // ⭐ V4.14 — membres positionnés (positions arrondies à 0.1° côté
-          // serveur — même anonymat que la carte web). Ordre = plus récent
-          // d'abord, comme l'API /api/disperses.
-          membres: disperses.map((d) => ({
+          // serveur — même anonymat que la carte web) + SERVITEURS localisés
+          // (niveau « pasteur », position du pays — parité /api/disperses).
+          const pseudosConnus = new Set(
+            disperses.map((d) => d.pseudonyme.trim().toLowerCase())
+          );
+          const membres: Array<{
+            id: string;
+            pseudonyme: string;
+            pays: string;
+            ville: string;
+            latitude: number;
+            longitude: number;
+            langue: string;
+            niveau: string;
+            message: string;
+          }> = disperses.map((d) => ({
             id: d.id,
             pseudonyme: d.pseudonyme,
             pays: d.pays,
@@ -306,8 +302,37 @@ export async function GET() {
             langue: d.langue,
             niveau: d.niveau,
             message: d.message || "",
-          })),
-        },
+          }));
+          for (const s of servants) {
+            const code = (s.pays || "").trim().toUpperCase();
+            if (!code) continue;
+            const country = COUNTRIES.find((c) => c.code === code);
+            if (!country) continue;
+            const pseudo = s.shortName || s.fullName;
+            if (pseudosConnus.has(pseudo.trim().toLowerCase())) continue;
+            pseudosConnus.add(pseudo.trim().toLowerCase());
+            membres.push({
+              id: `servant-${s.id}`,
+              pseudonyme: pseudo,
+              pays: code,
+              ville: s.ville || "",
+              latitude: country.lat,
+              longitude: country.lng,
+              langue: "FR",
+              niveau: "pasteur",
+              message: s.role || "",
+            });
+          }
+          const statsCombines = new Map<string, number>();
+          for (const m of membres) {
+            statsCombines.set(m.pays, (statsCombines.get(m.pays) || 0) + 1);
+          }
+          return {
+            total: membres.length,
+            parPays: Object.fromEntries(statsCombines),
+            membres,
+          };
+        })(),
       },
       { headers: { "Cache-Control": "no-store" } }
     );
