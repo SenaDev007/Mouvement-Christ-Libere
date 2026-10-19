@@ -38,6 +38,8 @@ export interface ResultatStatsYouTube {
   traitées: number;
   misesAJour: number;
   restantes: number;
+  /** ⭐ V4.17b — première erreur API rencontrée (diagnostic back-office). */
+  erreur?: string | null;
 }
 
 /** Extrait l'ID YouTube d'une videoUrl (mêmes regex que /api/videos). */
@@ -79,10 +81,14 @@ export async function synchroniserStatsYouTube(params?: {
 
   let traitees = 0;
   let misesAJour = 0;
+  let erreurAPI: string | null = null;
   for (let i = 0; i < candidates.length && traitees < limite; i += 50) {
     const lot = candidates.slice(i, i + 50);
-    const statsParId = await fetchYouTubeStatsLot(lot.map((v) => v.youtubeId));
-    if (statsParId.size === 0) continue; // OAuth indisponible / erreur → lot suivant
+    const { stats: statsParId, erreur } = await fetchYouTubeStatsLot(
+      lot.map((v) => v.youtubeId)
+    );
+    if (erreur && !erreurAPI) erreurAPI = erreur;
+    if (statsParId.size === 0) continue; // erreur API → lot suivant
     for (const v of lot) {
       const stats = v.youtubeId ? statsParId.get(v.youtubeId) : undefined;
       if (!stats) continue; // vidéo supprimée/privée sur YouTube
@@ -101,6 +107,7 @@ export async function synchroniserStatsYouTube(params?: {
     traitées: traitees,
     misesAJour,
     restantes: Math.max(0, candidates.length - traitees),
+    erreur: erreurAPI,
   };
 }
 

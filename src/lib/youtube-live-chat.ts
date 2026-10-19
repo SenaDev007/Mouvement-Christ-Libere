@@ -146,34 +146,58 @@ export async function fetchYouTubeStats(videoId: string): Promise<{
  * coup — la synchronisation des compteurs des 759 vidéos YouTube du
  * ministère ne coûte que ~16 unités au total.
  *
+ * ⭐ V4.17b — DIAGNOSTIC + REPLI : si l'OAuth échoue (token expiré,
+ * quota…), l'API key publique YOUTUBE_API_KEY est tentée (videos.list
+ * sur des vidéos publiques ne nécessite AUCUNE autorisation particulière)
+ * ; la première erreur rencontrée est renvoyée pour affichage — plus
+ * jamais d'échec silencieux.
+ *
  * @param videoIds IDs YouTube (11 caractères chacun, ≤ 50)
- * @returns Map videoId → { viewCount, likeCount } (seulement les ID connus de YouTube)
+ * @returns { stats: Map videoId → compteurs, erreur: string | null }
  */
 export async function fetchYouTubeStatsLot(
   videoIds: string[]
-): Promise<Map<string, { viewCount: number; likeCount: number }>> {
-  const resultat = new Map<string, { viewCount: number; likeCount: number }>();
-  if (videoIds.length === 0) return resultat;
-  if (!isYouTubeOAuthConfigured()) return resultat;
+): Promise<{
+  stats: Map<string, { viewCount: number; likeCount: number }>;
+  erreur: string | null;
+}> {
+  const stats = new Map<string, { viewCount: number; likeCount: number }>();
+  if (videoIds.length === 0) return { stats, erreur: null };
   try {
-    const youtube = getYouTubeClient();
+    let youtube: ReturnType<typeof google.youtube>;
+    if (isYouTubeOAuthConfigured()) {
+      youtube = getYouTubeClient();
+    } else if (process.env.YOUTUBE_API_KEY) {
+      youtube = google.youtube({
+        version: "v3",
+        auth: process.env.YOUTUBE_API_KEY,
+      });
+    } else {
+      return {
+        stats,
+        erreur:
+          "YouTube : OAuth et API key absents de l'environnement — impossible de récupérer les compteurs",
+      };
+    }
     const response = await youtube.videos.list({
       part: ["statistics"],
       id: videoIds.slice(0, 50),
     });
     for (const item of response.data.items || []) {
       if (!item.id) continue;
-      const stats = item.statistics;
-      if (!stats) continue;
-      resultat.set(item.id, {
-        viewCount: parseInt(stats.viewCount || "0"),
-        likeCount: parseInt(stats.likeCount || "0"),
+      const s = item.statistics;
+      if (!s) continue;
+      stats.set(item.id, {
+        viewCount: parseInt(s.viewCount || "0"),
+        likeCount: parseInt(s.likeCount || "0"),
       });
     }
+    return { stats, erreur: null };
   } catch (error) {
-    console.error("[youtube-live-chat] fetchStatsLot error:", error);
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error("[youtube-live-chat] fetchStatsLot error:", detail);
+    return { stats, erreur: detail.slice(0, 200) };
   }
-  return resultat;
 }
 
 /**
