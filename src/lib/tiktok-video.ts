@@ -34,7 +34,33 @@
 
 import { db } from "@/lib/db";
 import { estUrlTiktok, extraireTiktokId } from "@/lib/tiktok";
-import { uploadToR2, isR2Configured } from "@/lib/r2";
+import { uploadToR2, isR2Configured, usagePrefixeR2 } from "@/lib/r2";
+
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V4.18 — PLAFOND DU STOCKAGE GRATUIT CLOUDFLARE R2
+//
+// Retour pasteur : le ministère reste sur le PLAN GRATUIT de Cloudflare
+// (10 Go de stockage/mois — pas de consensus pour la version payante).
+// Les copies MP4 TikTok sont une OPTIMISATION de lecture (le repli iframe
+// reste disponible pour les vidéos sans copie) : elles plafonnent à 9 Go
+// pour laisser 1 Go de marge au reste du bucket (miniatures, replays de
+// live, rendus, notes vocales…).
+// ─────────────────────────────────────────────────────────────────────
+
+export const PREFIXE_MP4_TIKTOK = "videos/tiktok-";
+export const PLAFOND_MP4_TIKTOK_OCTETS = 9 * 1024 * 1024 * 1024; // 9 Go
+
+/**
+ * ⭐ V4.18 — Le plafond de copies MP4 TikTok est-il atteint ?
+ * (En cas de doute — erreur de listing — on considère qu'il l'est :
+ * ne jamais risquer de basculer le bucket en payant.)
+ */
+export async function plafondMp4TiktokAtteint(): Promise<boolean> {
+  if (!isR2Configured()) return true;
+  const usage = await usagePrefixeR2(PREFIXE_MP4_TIKTOK).catch(() => null);
+  if (!usage) return true;
+  return usage.octets >= PLAFOND_MP4_TIKTOK_OCTETS;
+}
 
 const UA_NAVIGATEUR =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
@@ -326,6 +352,14 @@ export async function sauvegarderMp4Tiktok(
   videoUrl: string
 ): Promise<{ url: string; octets: number; methode: string } | null> {
   if (!isR2Configured()) return null;
+  // ⭐ V4.18 — PLAFOND DU GRATUIT : plus une seule copie au-delà de 9 Go
+  // de MP4 TikTok (repli iframe automatique pour ces vidéos).
+  const usageAvant = await usagePrefixeR2(PREFIXE_MP4_TIKTOK).catch(
+    () => null
+  );
+  if (!usageAvant || usageAvant.octets >= PLAFOND_MP4_TIKTOK_OCTETS) {
+    return null;
+  }
   try {
     const idTiktok = extraireTiktokId(videoUrl) || id;
     const source = await resoudreMp4Tiktok(idTiktok, videoUrl);
@@ -367,6 +401,12 @@ export async function sauvegarderMp4Tiktok(
     if (octets.length < OCTETS_MIN || octets.length > OCTETS_MAX) return null;
     // Signature MP4 légère (ftyp) — évite de stocker du HTML en .mp4.
     if (!(octets[4] === 0x66 && octets[5] === 0x74 && octets[6] === 0x79)) {
+      return null;
+    }
+
+    // ⭐ V4.18 — PLAFOND : cette copie ferait dépasser 9 Go → on n'uploade pas
+    // (le téléchargement est jeté, la vidéo gardera son repli iframe).
+    if (usageAvant.octets + octets.length > PLAFOND_MP4_TIKTOK_OCTETS) {
       return null;
     }
 
@@ -413,6 +453,8 @@ export interface ResultatBackfillMp4Tiktok {
   idsEchecs: string[];
   erreurs: string[];
   octetsTotaux: number;
+  /** ⭐ V4.18 — arrêt anticipé : plafond du stockage gratuit atteint. */
+  plafondAtteint?: boolean;
 }
 
 /**
@@ -456,6 +498,7 @@ export async function backfillMp4Tiktok(params?: {
   let traites = 0;
   let sauvegardees = 0;
   let octetsTotaux = 0;
+  let plafondAtteint = false;
   const idsEchec: string[] = [];
 
   // ②-④ Traitement SÉQUENTIEL — tikwm (résolution pilote) est limité à
@@ -465,6 +508,12 @@ export async function backfillMp4Tiktok(params?: {
   // de toute façon plusieurs secondes.
   for (const v of candidates) {
     if (traites >= limite || Date.now() - debut > budgetMs) break;
+    // ⭐ V4.18 — plafond du stockage gratuit : on s'arrête net (les
+    // vidéos restantes gardent leur repli iframe).
+    if (await plafondMp4TiktokAtteint()) {
+      plafondAtteint = true;
+      break;
+    }
     traites++;
     try {
       const res = await sauvegarderMp4Tiktok(v.id, v.videoUrl as string);
@@ -489,6 +538,7 @@ export async function backfillMp4Tiktok(params?: {
     idsEchecs: idsEchec,
     erreurs: erreurs.slice(0, 10),
     octetsTotaux: octetsTotaux,
+    plafondAtteint,
   };
 }
 

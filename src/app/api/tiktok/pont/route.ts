@@ -25,10 +25,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { isR2Configured, getPresignedUploadUrl, getPublicUrl } from "@/lib/r2";
+import { isR2Configured, getPresignedUploadUrl, getPublicUrl, usagePrefixeR2 } from "@/lib/r2";
 import { ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 import { db } from "@/lib/db";
 import { extraireTiktokId } from "@/lib/tiktok";
+import {
+  PREFIXE_MP4_TIKTOK,
+  PLAFOND_MP4_TIKTOK_OCTETS,
+} from "@/lib/tiktok-video";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +81,18 @@ export async function POST(request: NextRequest) {
 
   // ─── Mode ① : presign ───
   if (body.mode === "presign") {
+    // ⭐ V4.18 — PLAFOND DU STOCKAGE GRATUIT (10 Go Cloudflare, marge 1 Go)
+    // plus de presign au-delà de 9 Go de MP4 TikTok.
+    const usage = await usagePrefixeR2(PREFIXE_MP4_TIKTOK).catch(() => null);
+    if (!usage || usage.octets >= PLAFOND_MP4_TIKTOK_OCTETS) {
+      return NextResponse.json(
+        {
+          error:
+            "Plafond du stockage gratuit Cloudflare atteint — plus de copie TikTok possible (le repli iframe reste disponible)",
+        },
+        { status: 503 }
+      );
+    }
     const tiktokId =
       (typeof body.tiktokId === "string" && body.tiktokId) ||
       extraireTiktokId(video.videoUrl) ||

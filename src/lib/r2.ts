@@ -536,6 +536,82 @@ export async function listerClesPrefixeR2(prefixe: string): Promise<string[]> {
   return cles;
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V4.18 — OCCUPATION DU STOCKAGE (plafond du gratuit Cloudflare)
+// ─────────────────────────────────────────────────────────────────────
+
+export interface UsagePrefixeR2 {
+  octets: number;
+  objets: number;
+}
+
+export interface EntreeObjetR2 {
+  cle: string;
+  octets: number;
+}
+
+/**
+ * ⭐ V4.18 — Occupation cumulée d'un préfixe (octets + nombre d'objets).
+ * Sert au plafond du stockage GRATUIT Cloudflare R2 (10 Go/mois — cf.
+ * PLAFOND_MP4_TIKTOK_OCTETS dans tiktok-video.ts) : les copies MP4
+ * TikTok sont une OPTIMISATION de lecture, pas une nécessité.
+ */
+export async function usagePrefixeR2(
+  prefixe: string
+): Promise<UsagePrefixeR2> {
+  const client = getClient();
+  const cfg = getConfig();
+  let octets = 0;
+  let objets = 0;
+  let suite: string | undefined;
+  do {
+    const res = await client.send(
+      new ListObjectsV2Command({
+        Bucket: cfg.bucket,
+        Prefix: prefixe,
+        ContinuationToken: suite,
+      })
+    );
+    for (const objet of res.Contents ?? []) {
+      if (objet.Key) {
+        objets++;
+        octets += objet.Size ?? 0;
+      }
+    }
+    suite = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (suite);
+  return { octets, objets };
+}
+
+/**
+ * ⭐ V4.18 — Liste TOUS les objets sous un préfixe avec leur taille
+ * (rapport d'occupation du back-office). Préfixe vide = bucket entier.
+ */
+export async function listerObjetsR2(
+  prefixe = ""
+): Promise<EntreeObjetR2[]> {
+  const client = getClient();
+  const cfg = getConfig();
+  const entrees: EntreeObjetR2[] = [];
+  let suite: string | undefined;
+  do {
+    const res = await client.send(
+      new ListObjectsV2Command({
+        Bucket: cfg.bucket,
+        Prefix: prefixe,
+        ContinuationToken: suite,
+      })
+    );
+    for (const objet of res.Contents ?? []) {
+      if (objet.Key) {
+        entrees.push({ cle: objet.Key, octets: objet.Size ?? 0 });
+      }
+    }
+    suite = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (suite);
+  return entrees;
+}
+
 /**
  * ⭐ V3.58 — PURGE R2 d'un enregistrement supprimé du back-office.
  *
