@@ -163,22 +163,11 @@ export async function fetchYouTubeStatsLot(
 }> {
   const stats = new Map<string, { viewCount: number; likeCount: number }>();
   if (videoIds.length === 0) return { stats, erreur: null };
-  try {
-    let youtube: ReturnType<typeof google.youtube>;
-    if (isYouTubeOAuthConfigured()) {
-      youtube = getYouTubeClient();
-    } else if (process.env.YOUTUBE_API_KEY) {
-      youtube = google.youtube({
-        version: "v3",
-        auth: process.env.YOUTUBE_API_KEY,
-      });
-    } else {
-      return {
-        stats,
-        erreur:
-          "YouTube : OAuth et API key absents de l'environnement — impossible de récupérer les compteurs",
-      };
-    }
+
+  /** Appel videos.list avec un client donné (OAuth ou API key). */
+  const appeler = async (
+    youtube: ReturnType<typeof google.youtube>
+  ): Promise<boolean> => {
     const response = await youtube.videos.list({
       part: ["statistics"],
       id: videoIds.slice(0, 50),
@@ -192,12 +181,47 @@ export async function fetchYouTubeStatsLot(
         likeCount: parseInt(s.likeCount || "0"),
       });
     }
-    return { stats, erreur: null };
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    console.error("[youtube-live-chat] fetchStatsLot error:", detail);
-    return { stats, erreur: detail.slice(0, 200) };
+    return true;
+  };
+
+  // ① OAuth (contexte live) — ⭐ V4.17c : en cas d'échec (invalid_grant,
+  //    token expiré/révoqué, quota…) on ne s'arrête PAS : l'API key
+  //    publique suffit pour les statistiques de vidéos PUBLIQUES.
+  if (isYouTubeOAuthConfigured()) {
+    try {
+      await appeler(getYouTubeClient());
+      return { stats, erreur: null };
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error(
+        "[youtube-live-chat] fetchStatsLot OAuth échec (repli API key) :",
+        detail
+      );
+      if (!process.env.YOUTUBE_API_KEY) {
+        return { stats, erreur: `OAuth : ${detail.slice(0, 150)}` };
+      }
+    }
   }
+
+  // ② API key publique — videos.list des statistiques publiques.
+  if (process.env.YOUTUBE_API_KEY) {
+    try {
+      await appeler(
+        google.youtube({ version: "v3", auth: process.env.YOUTUBE_API_KEY })
+      );
+      return { stats, erreur: null };
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error("[youtube-live-chat] fetchStatsLot API key échec:", detail);
+      return { stats, erreur: `API key : ${detail.slice(0, 150)}` };
+    }
+  }
+
+  return {
+    stats,
+    erreur:
+      "YouTube : OAuth et API key absents de l'environnement — impossible de récupérer les compteurs",
+  };
 }
 
 /**
