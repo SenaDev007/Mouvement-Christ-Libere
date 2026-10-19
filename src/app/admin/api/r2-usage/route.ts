@@ -8,7 +8,10 @@ import {
   extractKeyFromUrl,
 } from "@/lib/r2";
 import { db } from "@/lib/db";
-import { PREFIXE_MP4_TIKTOK, PLAFOND_MP4_TIKTOK_OCTETS } from "@/lib/tiktok-video";
+import {
+  PREFIXE_MP4_TIKTOK,
+  PLAFOND_MP4_TIKTOK_OCTETS,
+} from "@/lib/tiktok-video";
 
 /**
  * ⭐ V4.18 — OCCUPATION DU STOCKAGE R2 (back-office).
@@ -121,9 +124,57 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 });
   }
 
-  if (body.mode !== "retirer-mp4") {
+  // ─── Mode : purger les MP4 TikTok ORPHELINS ───
+  // Objets `videos/tiktok-*.mp4` présents dans R2 mais plus référencés
+  // par AUCUNE ligne Video (lots interrompus entre upload et commit,
+  // vidéos supprimées du back-office…). ⭐ V4.18 — chasse au gaspillage
+  // du stockage gratuit.
+  if (body.mode === "purger-orphelins-mp4") {
+    const objets = await listerObjetsR2(PREFIXE_MP4_TIKTOK).catch(() => null);
+    if (!objets) {
+      return NextResponse.json(
+        { error: "Listing R2 impossible" },
+        { status: 502 }
+      );
+    }
+    const videos = await db.video.findMany({
+      where: { tiktokMp4Url: { not: null } },
+      select: { tiktokMp4Url: true },
+    });
+    const clesReferees = new Set(
+      videos
+        .map((v) => v.tiktokMp4Url)
+        .map((u) => (u ? extractKeyFromUrl(u) : null))
+    );
+    const orphelins = objets.filter(
+      (o) => o.cle.startsWith(PREFIXE_MP4_TIKTOK) && !clesReferees.has(o.cle)
+    );
+    let purges = 0;
+    let octetsLiberes = 0;
+    for (const o of orphelins) {
+      try {
+        await deleteFromR2(o.cle);
+        purges++;
+        octetsLiberes += o.octets;
+      } catch {
+        // objet suivant
+      }
+    }
+    console.log(
+      `[r2-usage] Purge orphelins : ${purges}/${orphelins.length} ` +
+        `(${Math.round(octetsLiberes / 1e6)} Mo libérés)`
+    );
+    return NextResponse.json({
+      success: true,
+      purges,
+      octetsLiberes,
+      orphelinsDetectes: orphelins.length,
+    });
+  }
+
+  if (body.mode !== "retirer-mp4" && body.mode !== "purger-orphelins-mp4") {
     return NextResponse.json(
-      { error: "mode inconnu (retirer-mp4)" },
+      { error: "mode inconnu (retirer-mp4 | purger-orphelins-mp4)" },
       { status: 400 }
     );
   }
