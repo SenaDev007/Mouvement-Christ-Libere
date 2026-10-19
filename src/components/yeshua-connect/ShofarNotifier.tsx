@@ -28,7 +28,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sunset, X, CalendarDays, Volume2, VolumeX } from "lucide-react";
 import type { EvenementShofar, JalonNotification } from "@/lib/calendrier/evenements-shofar";
-import { armerAudioShofar, jouerAnnonceShofar } from "@/lib/shofar/shofar-audio";
+import { armerAudioShofar, jouerAnnonceShofar, arreterShofar } from "@/lib/shofar/shofar-audio";
+import { lireSonnerieMuette, basculerSonnerieMuette } from "@/lib/sonnerie-muette";
 
 // ─── Préférences partagées (workspace calendrier ↔ notifier) ─────────────
 
@@ -141,6 +142,11 @@ interface ShofarNotifierProps {
 export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
   const [banniere, setBanniere] = useState<BanniereShofar | null>(null);
   const [audioDisponible, setAudioDisponible] = useState(true);
+  // ⭐ V4.16 — MODE MUET GLOBAL (demande pasteur) : coupe le shofar
+  // automatique AUSSI — bouton visible directement dans la bannière quand
+  // la sonnerie retentit (choix persisté, partagé avec l'intro et les
+  // sonneries d'appel de Yeshua Connect).
+  const [sonnerieMuette, setSonnerieMuette] = useState(false);
   // Préférences en STATE pour le rendu (le ref reste pour les callbacks)
   const [prefs, setPrefs] = useState<PrefsShofar>({ sound: true, notif: true });
 
@@ -158,8 +164,9 @@ export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
       const prefs = prefsRef.current;
 
       // Son du shofar — uniquement pour une ENTRÉE (Shabbat / fête)
+      // ⭐ V4.16 — ET seulement si le mode muet global n'est pas actif.
       let sonEmis = false;
-      if (type === "sonnerie" && prefs.sound) {
+      if (type === "sonnerie" && prefs.sound && !lireSonnerieMuette()) {
         sonEmis = jouerAnnonceShofar();
         setAudioDisponible(sonEmis);
       }
@@ -250,6 +257,9 @@ export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
     prefsRef.current = prefsInitiales;
     setPrefs(prefsInitiales);
     firedRef.current = lireFired();
+
+    // ⭐ V4.16 — mode muet global : état initial + réaction en direct.
+    setSonnerieMuette(lireSonnerieMuette());
 
     // Préférences modifiées depuis le workspace → relecture en direct
     const onPrefsChange = () => {
@@ -403,13 +413,20 @@ export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
                   {/* Indicateur son */}
                   {banniere.type === "sonnerie" && (
                     <p className="flex items-center gap-1.5 text-[10px] mt-2 font-semibold">
-                      {prefs?.sound && audioDisponible ? (
+                      {/* ⭐ V4.16 — l'indicateur tient compte du mode muet
+                          global (bouton ci-dessous), pas seulement des
+                          préférences du calendrier. */}
+                      {!sonnerieMuette && prefs?.sound && audioDisponible ? (
                         <span className="inline-flex items-center gap-1 text-[#C9A227]">
                           <Volume2 className="w-3 h-3" /> Shofar sonné
                         </span>
-                      ) : prefs?.sound && !audioDisponible ? (
+                      ) : !sonnerieMuette && prefs?.sound && !audioDisponible ? (
                         <span className="inline-flex items-center gap-1 text-[#B5502F]">
                           <VolumeX className="w-3 h-3" /> Son bloqué par le navigateur — cliquez sur la page
+                        </span>
+                      ) : sonnerieMuette ? (
+                        <span className="inline-flex items-center gap-1 text-[#FAF6EF]/50">
+                          <VolumeX className="w-3 h-3" /> Sonneries coupées (mode muet)
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[#FAF6EF]/50">
@@ -429,6 +446,30 @@ export function ShofarNotifier({ onOpenCalendar }: ShofarNotifierProps) {
                     >
                       <Sunset className="w-3.5 h-3.5" />
                       Voir le calendrier
+                    </button>
+                    {/* ⭐ V4.16 — BOUTON MUET : la sonnerie retentit en ce
+                        moment — celui qui serait dérangé la coupe ici, pour
+                        tout le site (intro, appels, prochains shabbats). */}
+                    <button
+                      onClick={() => {
+                        const muet = basculerSonnerieMuette();
+                        setSonnerieMuette(muet);
+                        if (muet) arreterShofar();
+                      }}
+                      className={
+                        sonnerieMuette
+                          ? "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C9A227]/20 border border-[#C9A227]/60 text-[#C9A227] text-[11px] font-bold transition-colors"
+                          : "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/15 text-[#FAF6EF]/55 hover:text-[#FAF6EF] hover:border-[#C9A227]/50 hover:bg-[#C9A227]/10 text-[11px] font-bold transition-colors"
+                      }
+                      title={
+                        sonnerieMuette
+                          ? "Sonneries coupées — cliquer pour réactiver"
+                          : "Couper le son des sonneries (valable pour tout le site)"
+                      }
+                      aria-pressed={sonnerieMuette}
+                    >
+                      {sonnerieMuette ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                      {sonnerieMuette ? "Sonneries coupées" : "Couper le son"}
                     </button>
                     <button
                       onClick={() => setBanniere(null)}

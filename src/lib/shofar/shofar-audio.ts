@@ -343,6 +343,23 @@ function jouerAnnonceSynthese(): boolean {
 }
 
 /**
+ * ⭐ V4.16 — Arrêt immédiat de toute émission du shofar (mode muet global) :
+ * coupe la lecture du fichier réel + ferme le contexte de synthèse (les
+ * notes programmées meurent avec lui ; la prochaine annonce le recrée).
+ */
+export function arreterShofar(): void {
+  arreterLectureFichier();
+  const ctx = contexte;
+  contexte = null;
+  sortieMaitre = null;
+  if (ctx && ctx.state !== "closed") {
+    void ctx.close().catch(() => {
+      /* contexte déjà fermé */
+    });
+  }
+}
+
+/**
  * Tekiah simple (~2,4 s) — pour un test rapide.
  */
 export function testerTekiah(): boolean {

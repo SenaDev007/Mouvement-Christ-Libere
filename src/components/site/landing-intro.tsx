@@ -77,13 +77,23 @@
  * autre onglet du domaine, retour sur l'onglet), le shofar démarre À CET
  * INSTANT, même en cours d'intro, et file ses 30 s sous le site comme
  * toujours.
+ *
+ * ⭐ V4.16 — MODE MUET (demande pasteur) : « un bouton pour mettre le son,
+ * la sonnerie en muet, au cas où ça dérangerait l'utilisateur ». Le shofar
+ * retentit à CHAQUE chargement complet du site (30 s) : un bouton
+ * haut-parleur est désormais visible sur cet écran, à côté de « Passer ».
+ * Le couper taît le shofar immédiatement ET retient le choix pour les
+ * prochains chargements (préférence partagée avec les sonneries d'appel
+ * de Yeshua Connect et le shofar automatique du ShofarNotifier — voir
+ * src/lib/sonnerie-muette.ts).
  * ============================================================================
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { FastForward } from "lucide-react";
+import { FastForward, Volume2, VolumeX } from "lucide-react";
+import { lireSonnerieMuette, ecrireSonnerieMuette } from "@/lib/sonnerie-muette";
 
 /**
  * Drapeau de runtime : true dès que l'intro s'est jouée dans CE cycle de
@@ -151,6 +161,11 @@ export function LandingIntro() {
   // fin + écouteur « playing » sur l'élément audio).
   const nettoyerRelanceRef = useRef<(() => void) | null>(null);
   const termineRef = useRef(false);
+  // ⭐ V4.16 — MODE MUET : état réactif du bouton + arrêt de la boucle de
+  // relance depuis le clic (le ref rend la fonction stable).
+  const arreterBoucleRef = useRef<(() => void) | null>(null);
+  const shofarTermineRef = useRef(false);
+  const [sonnerieMuette, setSonnerieMuette] = useState(false);
   // Capture de l'état initial AU MONTAGE : l'effet ne démarre ses
   // minuteurs/son que si ce montage joue réellement l'intro (navigation
   // interne → déjà jouée dans ce runtime → rien).
@@ -188,6 +203,26 @@ export function LandingIntro() {
     minuteurSortieRef.current = setTimeout(() => setActif(false), FONDE_SORTIE_MS);
   }, []);
 
+  // ── ⭐ V4.16 — BOUTON MUET : couper / réactiver le shofar ──────────────
+  const basculerMuet = useCallback(() => {
+    const nouveau = !lireSonnerieMuette();
+    ecrireSonnerieMuette(nouveau);
+    setSonnerieMuette(nouveau);
+    if (nouveau) {
+      // Coupe IMMÉDIATE : le shofar en cours se tait, l'élément est retiré
+      // et la boucle de relance s'éteint (aucun geste ne le relancera).
+      const a = audioRef.current;
+      if (a) a.pause();
+      arreterBoucleRef.current?.();
+      setAudioVivant(false);
+    } else if (!shofarTermineRef.current && !termineRef.current) {
+      // Réactivation PENDANT l'intro : le shofar repart — ce clic est un
+      // geste utilisateur, l'autoplay est autorisé (l'élément remonté
+      // porte autoPlay + onCanPlay retente).
+      setAudioVivant(true);
+    }
+  }, []);
+
   // ── Montage : minuteurs + shofar (si ce montage joue l'intro) ─────────
   useEffect(() => {
     // Navigation interne : l'intro a déjà été jouée dans ce runtime.
@@ -195,6 +230,13 @@ export function LandingIntro() {
 
     document.body.style.overflow = "hidden"; // pas de défilement pendant l'écran
     debutRef.current = Date.now();
+
+    // ⭐ V4.16 — MODE MUET GLOBAL : si l'utilisateur a coupé les sonneries,
+    // le shofar ne part PAS — l'élément SSR (autoPlay) est stoppé net et
+    // retiré du DOM, la boucle de relance n'est pas armée. (L'état initial
+    // reste identique côté serveur/client → aucune erreur d'hydratation.)
+    const muetteInitiale = lireSonnerieMuette();
+    setSonnerieMuette(muetteInitiale);
 
     // ⭐ V3.53 — Le shofar réel : l'élément <audio autoPlay> est déjà dans
     // le HTML INITIAL (SSR) → le navigateur a pu démarrer la lecture au
@@ -205,7 +247,12 @@ export function LandingIntro() {
     const audio = audioRef.current;
     let debloquer: EventListener | null = null;
 
-    if (audio) {
+    if (muetteInitiale) {
+      audio?.pause();
+      setAudioVivant(false);
+    }
+
+    if (audio && !muetteInitiale) {
       audio.volume = 0.9;
       if (audio.paused && !audio.ended) {
         audio
@@ -220,6 +267,8 @@ export function LandingIntro() {
             // 30 s, même sous le site.
             const surPremierGeste: EventListener = () => {
               nePlusEcouterLeGeste(surPremierGeste);
+              // ⭐ V4.16 — respect du mode muet activé depuis le montage.
+              if (lireSonnerieMuette()) return;
               audio.play().catch(() => {
                 /* reste silencieux : l'écran se poursuit sans son */
               });
@@ -254,6 +303,13 @@ export function LandingIntro() {
         audio.removeEventListener("playing", surLecture);
       };
       const tenterRelance = () => {
+        // ⭐ V4.16 — le mode muet coupe la boucle AUSSI : la préférence est
+        // relue à chaque tentative (le bouton peut être activé en cours
+        // d'intro — plus AUCUNE tentative ne doit partir ensuite).
+        if (lireSonnerieMuette()) {
+          arreterBoucle();
+          return;
+        }
         if (audio.ended) {
           arreterBoucle();
           return;
@@ -273,6 +329,8 @@ export function LandingIntro() {
       intervalleRelance = setInterval(tenterRelance, INTERVALLE_RELANCE_MS);
       finRelance = setTimeout(arreterBoucle, FENETRE_RELANCE_MS);
       audio.addEventListener("playing", surLecture);
+      // ⭐ V4.16 — la boucle est arrêtable depuis le bouton muet (ref).
+      arreterBoucleRef.current = arreterBoucle;
       // Retour sur l'onglet : tentative immédiate (l'intervalle la ferait
       // attendre jusqu'à 800 ms — le shofar part dès le retour de l'œil).
       const surRetourOnglet = () => {
@@ -337,14 +395,18 @@ export function LandingIntro() {
           src={FICHIER}
           autoPlay
           preload="auto"
-          onEnded={() => setAudioVivant(false)}
+          onEnded={() => {
+            shofarTermineRef.current = true;
+            setAudioVivant(false);
+          }}
           onCanPlay={() => {
             // ⭐ V3.54 — nouvelle chance silencieuse dès que le média est
             // prêt (si la tentative initiale est partie avant le
             // chargement du fichier) : play() est sans effet sur un audio
             // déjà lancé, et un échec est ignoré (règle navigateur).
+            // ⭐ V4.16 — jamais si le mode muet est actif.
             const a = audioRef.current;
-            if (a && a.paused && !a.ended) a.play().catch(() => {});
+            if (a && !lireSonnerieMuette() && a.paused && !a.ended) a.play().catch(() => {});
           }}
           aria-hidden="true"
         />
@@ -457,6 +519,27 @@ export function LandingIntro() {
               </p>
             </div>
           </div>
+
+          {/* ⭐ V4.16 — BOUTON MUET (demande pasteur) : le shofar retentit
+              à chaque chargement du site — celui qui serait dérangé le
+              coupe ici, pour cet écran ET les prochains chargements. */}
+          <button
+            onClick={basculerMuet}
+            className={
+              sonnerieMuette
+                ? "absolute bottom-6 left-6 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#C9A227]/60 bg-[#C9A227]/15 text-[#C9A227] transition-colors text-xs font-semibold"
+                : "absolute bottom-6 left-6 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#FAF6EF]/15 text-[#FAF6EF]/55 hover:text-[#FAF6EF] hover:border-[#C9A227]/50 hover:bg-[#C9A227]/10 transition-colors text-xs font-semibold"
+            }
+            title={
+              sonnerieMuette
+                ? "Sonneries coupées — cliquer pour réactiver le son du shofar"
+                : "Couper le son du shofar (valable aussi pour les prochains chargements du site)"
+            }
+            aria-pressed={sonnerieMuette}
+          >
+            {sonnerieMuette ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+            {sonnerieMuette ? "Sonneries coupées" : "Son"}
+          </button>
 
           {/* Passer l'écran (coupe aussi le son) */}
           <button

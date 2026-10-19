@@ -61,6 +61,7 @@ import {
 } from "lucide-react";
 import { Room, RoomEvent, Track, RemoteAudioTrack } from "livekit-client";
 import { cn } from "@/lib/utils";
+import { lireSonnerieMuette, basculerSonnerieMuette, EVENEMENT_SONNERIE_MUETTE } from "@/lib/sonnerie-muette";
 import { BibleWorkspace } from "@/components/bible/BibleWorkspace";
 import { CalendarWorkspace } from "./CalendarWorkspace";
 import { ShofarNotifier } from "./ShofarNotifier";
@@ -465,6 +466,18 @@ export function MessagingView() {
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [globalSearchResults, setGlobalSearchResults] = useState<any>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  // ⭐ V4.16 — MODE MUET GLOBAL : accès permanent depuis le menu ⋮ de
+  // Yeshua Connect (les sonneries d'appel et le shofar automatique
+  // retentissent ici) — réactif aux bascules faites ailleurs (intro,
+  // bannière, écrans d'appel).
+  const [sonnerieMuette, setSonnerieMuette] = useState(false);
+
+  useEffect(() => {
+    setSonnerieMuette(lireSonnerieMuette());
+    const surChangement = () => setSonnerieMuette(lireSonnerieMuette());
+    window.addEventListener(EVENEMENT_SONNERIE_MUETTE, surChangement);
+    return () => window.removeEventListener(EVENEMENT_SONNERIE_MUETTE, surChangement);
+  }, []);
   const [showNewChannel, setShowNewChannel] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [showNotifPrefs, setShowNotifPrefs] = useState(false);
@@ -4163,6 +4176,16 @@ export function MessagingView() {
                     <button onClick={() => setDndEnabled(!dndEnabled)} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#1E0F2B]">
                       {dndEnabled ? <BellOff className="w-3.5 h-3.5 text-red-500" /> : <Bell className="w-3.5 h-3.5" />}
                       {dndEnabled ? "DND activé" : "Activer DND"}
+                    </button>
+                    {/* ⭐ V4.16 — MODE MUET GLOBAL (demande pasteur) : coupe
+                        TOUTES les sonneries du site — shofar de la page de
+                        chargement, sonneries d'appel (sortant + entrant),
+                        shofar automatique du Shabbat. Choix persisté. */}
+                    <button onClick={() => setSonnerieMuette(basculerSonnerieMuette())} className="w-full px-3 py-2 text-left text-xs hover:bg-stone-50 flex items-center gap-2 text-[#1E0F2B]">
+                      {sonnerieMuette
+                        ? <VolumeX className="w-3.5 h-3.5 text-[#9C7E1E]" />
+                        : <Volume2 className="w-3.5 h-3.5" />}
+                      {sonnerieMuette ? "Sonneries muettes" : "Couper les sonneries"}
                     </button>
                   </div>
                 )}
@@ -8929,6 +8952,17 @@ function CallOverlay({
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const ringtoneRef = useRef<HTMLAudioElement>(null);
   const [callDuration, setCallDuration] = useState(0);
+  // ⭐ V4.16 — MODE MUET GLOBAL : la sonnerie d'appel sortant respecte la
+  // préférence (bouton « Son » de la page de chargement, bannière shofar,
+  // ou le bouton ci-dessous pendant la sonnerie) — réactif en direct.
+  const [sonnerieMuette, setSonnerieMuette] = useState(false);
+
+  useEffect(() => {
+    setSonnerieMuette(lireSonnerieMuette());
+    const surChangement = () => setSonnerieMuette(lireSonnerieMuette());
+    window.addEventListener(EVENEMENT_SONNERIE_MUETTE, surChangement);
+    return () => window.removeEventListener(EVENEMENT_SONNERIE_MUETTE, surChangement);
+  }, []);
 
   // (S5) Sonnerie professionnelle pendant l'appel sortant
   // Joue en boucle tant que callState === "outgoing", s'arrête dès que
@@ -8936,10 +8970,11 @@ function CallOverlay({
   // issue arrive (refusé / manqué — ⭐ V3.1).
   // ⭐ V3.19 — Plan C : pas de sonnerie en repli Jitsi (la visio prend le
   // relais, la musique se changerait en cacophonie avec le "join" Jitsi).
+  // ⭐ V4.16 — coupée si le mode muet global est actif.
   useEffect(() => {
     const el = ringtoneRef.current;
     if (!el) return;
-    if (callState === "outgoing" && !endStatus && !jitsiRoom) {
+    if (callState === "outgoing" && !endStatus && !jitsiRoom && !sonnerieMuette) {
       el.loop = true;
       el.volume = 0.5;
       el.play().catch(() => {}); // ignore autoplay-blocked
@@ -8948,7 +8983,7 @@ function CallOverlay({
       el.currentTime = 0;
     }
     return () => { el.pause(); el.currentTime = 0; };
-  }, [callState, endStatus, jitsiRoom]);
+  }, [callState, endStatus, jitsiRoom, sonnerieMuette]);
 
   // ⭐ Compteur de durée d'appel (démarre quand callState === "active")
   useEffect(() => {
@@ -9042,6 +9077,30 @@ function CallOverlay({
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
+      )}
+
+      {/* ⭐ V4.16 — BOUTON MUET pendant que la sonnerie d'appel retentit
+          (phase « outgoing ») : coupe immédiatement ET retient le choix
+          pour toutes les sonneries du site (intro, shofar, appels). */}
+      {callState === "outgoing" && !endStatus && !jitsiRoom && (
+        <button
+          onClick={() => setSonnerieMuette(basculerSonnerieMuette())}
+          className={cn(
+            "absolute top-4 right-4 inline-flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs font-semibold transition-colors z-10",
+            sonnerieMuette
+              ? "border-[#C9A227]/60 bg-[#C9A227]/15 text-[#C9A227]"
+              : "border-[#FAF6EF]/15 text-[#FAF6EF]/55 hover:text-[#FAF6EF] hover:border-[#C9A227]/50 hover:bg-[#C9A227]/10"
+          )}
+          title={
+            sonnerieMuette
+              ? "Sonneries coupées — cliquer pour réactiver"
+              : "Couper le son de la sonnerie (valable pour toutes les sonneries du site)"
+          }
+          aria-pressed={sonnerieMuette}
+        >
+          {sonnerieMuette ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+          {sonnerieMuette ? "Sonneries coupées" : "Sonnerie"}
+        </button>
       )}
 
       {/* Zone centrale : vidéo distante OU avatar */}
@@ -9249,6 +9308,17 @@ function IncomingCallOverlay({
 }) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const [accepting, setAccepting] = useState(false);
+  // ⭐ V4.16 — MODE MUET GLOBAL : le bi-bip d'appel entrant respecte la
+  // préférence (bouton ci-dessous, « Son » de l'intro, bannière shofar).
+  // La vibration mobile reste active (silencieuse, elle ne « dérange » pas).
+  const [sonnerieMuette, setSonnerieMuette] = useState(false);
+
+  useEffect(() => {
+    setSonnerieMuette(lireSonnerieMuette());
+    const surChangement = () => setSonnerieMuette(lireSonnerieMuette());
+    window.addEventListener(EVENEMENT_SONNERIE_MUETTE, surChangement);
+    return () => window.removeEventListener(EVENEMENT_SONNERIE_MUETTE, surChangement);
+  }, []);
 
   // ─── Sonnerie WebAudio (bi-bip toutes les 2 s) + vibration mobile ────
   useEffect(() => {
@@ -9260,7 +9330,7 @@ function IncomingCallOverlay({
       typeof window !== "undefined"
         ? (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
         : undefined;
-    if (AC) {
+    if (AC && !sonnerieMuette) {
       try {
         const ctx = new AC();
         audioCtxRef.current = ctx;
@@ -9302,7 +9372,7 @@ function IncomingCallOverlay({
       try { navigator.vibrate?.(0); } catch {}
       try { audioCtxRef.current?.close(); } catch {}
     };
-  }, []);
+  }, [sonnerieMuette]);
 
   // Un appui n'importe où relance l'AudioContext (autoplay bloqué).
   const resumeRingtone = () => {
@@ -9326,6 +9396,29 @@ function IncomingCallOverlay({
       onPointerDown={resumeRingtone}
       className="fixed inset-0 z-[70] bg-[#2A0E3D]/97 backdrop-blur-sm flex flex-col items-center justify-between p-6 sm:p-10"
     >
+      {/* ⭐ V4.16 — BOUTON MUET pendant que la sonnerie retentit : coupe
+          le bi-bip immédiatement ET retient le choix pour toutes les
+          sonneries du site (intro, shofar, appels). La vibration et
+          l'écran restent actifs — seul le son se tait. */}
+      <button
+        onClick={() => setSonnerieMuette(basculerSonnerieMuette())}
+        className={cn(
+          "absolute top-5 right-5 inline-flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs font-semibold transition-colors z-10",
+          sonnerieMuette
+            ? "border-[#C9A227]/60 bg-[#C9A227]/15 text-[#C9A227]"
+            : "border-[#FAF6EF]/15 text-[#FAF6EF]/55 hover:text-[#FAF6EF] hover:border-[#C9A227]/50 hover:bg-[#C9A227]/10"
+        )}
+        title={
+          sonnerieMuette
+            ? "Sonneries coupées — cliquer pour réactiver"
+            : "Couper le son de la sonnerie (valable pour toutes les sonneries du site)"
+        }
+        aria-pressed={sonnerieMuette}
+      >
+        {sonnerieMuette ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+        {sonnerieMuette ? "Sonneries coupées" : "Sonnerie"}
+      </button>
+
       {/* ─── Appelant ─────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col items-center justify-center w-full text-center">
         <motion.div
