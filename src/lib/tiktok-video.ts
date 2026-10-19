@@ -99,13 +99,27 @@ async function playAddrViaApiMobile(id: string): Promise<string | null> {
   return null;
 }
 
+/** Stats TikTok (vues + likes réels) renvoyées par tikwm. */
+export interface StatsTiktok {
+  playCount: number;
+  diggCount: number;
+}
+
+/** Réponse enrichie du résolveur tikwm. */
+interface ReponseTikwm {
+  url: string | null;
+  stats: StatsTiktok | null;
+}
+
 /**
  * Méthode A — tikwm.com (PILOTE en production, diag V4.04) : résout une
  * URL de lecture directement téléchargeable (répond 206 video/mp4).
  * Gratuité : ~1 requête/s — d'où le traitement backfill SÉQUENTIEL.
  * `data.play` est parfois relatif (/video/…) — on normalise.
+ * ⭐ V4.17 — STATS EN PRIME : la même réponse contient play_count (vues)
+ * et digg_count (likes) — captées pour peupler les compteurs Video.
  */
-async function playAddrViaTikwm(videoUrl: string): Promise<string | null> {
+async function resoudreViaTikwm(videoUrl: string): Promise<ReponseTikwm> {
   try {
     const res = await fetch(
       `https://www.tikwm.com/api/?url=${encodeURIComponent(videoUrl)}`,
@@ -118,22 +132,48 @@ async function playAddrViaTikwm(videoUrl: string): Promise<string | null> {
         cache: "no-store",
       }
     );
-    if (!res.ok) return null;
+    if (!res.ok) return { url: null, stats: null };
     const data = (await res.json()) as {
       code?: number;
       msg?: string;
-      data?: { play?: string; hdplay?: string; wmplay?: string };
+      data?: {
+        play?: string;
+        hdplay?: string;
+        wmplay?: string;
+        play_count?: number;
+        digg_count?: number;
+      };
     };
-    if (data.code !== 0 || !data.data) return null;
+    if (data.code !== 0 || !data.data) return { url: null, stats: null };
     const brut = data.data.play || data.data.hdplay || "";
-    if (!brut) return null;
-    const url = brut.startsWith("http")
-      ? brut
-      : `https://www.tikwm.com${brut.startsWith("/") ? "" : "/"}${brut}`;
-    return url.startsWith("http") ? url : null;
+    const url = brut
+      ? brut.startsWith("http")
+        ? brut
+        : `https://www.tikwm.com${brut.startsWith("/") ? "" : "/"}${brut}`
+      : null;
+    const stats: StatsTiktok | null =
+      typeof data.data.play_count === "number" &&
+      typeof data.data.digg_count === "number"
+        ? {
+            playCount: data.data.play_count,
+            diggCount: data.data.digg_count,
+          }
+        : null;
+    return { url: url && url.startsWith("http") ? url : null, stats };
   } catch {
-    return null;
+    return { url: null, stats: null };
   }
+}
+
+/**
+ * ⭐ V4.17 — STATS SEULES (sans téléchargement) : renvoie les compteurs
+ * réels TikTok d'une vidéo (play_count = vues, digg_count = likes).
+ */
+export async function statsTiktokViaTikwm(
+  videoUrl: string
+): Promise<StatsTiktok | null> {
+  const r = await resoudreViaTikwm(videoUrl);
+  return r.stats;
 }
 
 /**
@@ -245,24 +285,33 @@ function chercherPlayAddr(o: unknown, profondeur = 0): string | null {
   return null;
 }
 
+/** Résultat de la résolution : URL de lecture + méthode + stats TikTok
+ * (vues/likes réels captés au passage quand tikwm répond). */
+export interface ResolutionMp4Tiktok {
+  url: string;
+  methode: "tikwm" | "page" | "api-mobile";
+  stats: StatsTiktok | null;
+}
+
 /** Résout l'URL de lecture directe du MP4 d'une vidéo TikTok. */
 export async function resoudreMp4Tiktok(
   id: string,
   videoUrl: string
-): Promise<{ url: string; methode: "tikwm" | "page" | "api-mobile" } | null> {
+): Promise<ResolutionMp4Tiktok | null> {
   // ① tikwm (seule méthode dont l'URL télécharge en production, diag
   //    V4.04 — le playAddr direct est 403 Akamai).
-  const viaTikwm = await playAddrViaTikwm(videoUrl);
-  if (viaTikwm) return { url: viaTikwm, methode: "tikwm" };
+  const viaTikwm = await resoudreViaTikwm(videoUrl);
+  if (viaTikwm.url)
+    return { url: viaTikwm.url, methode: "tikwm", stats: viaTikwm.stats };
 
   // ② Page vidéo (résolution OK mais téléchargement 403 en production —
   //    conservée : tikwm peut être momentanément indisponible).
   const viaPage = await playAddrViaPage(videoUrl);
-  if (viaPage) return { url: viaPage, methode: "page" };
+  if (viaPage) return { url: viaPage, methode: "page", stats: null };
 
   // ③ API mobile en dernier repli (429 = rate limit datacenter).
   const viaApi = await playAddrViaApiMobile(id);
-  if (viaApi) return { url: viaApi, methode: "api-mobile" };
+  if (viaApi) return { url: viaApi, methode: "api-mobile", stats: null };
 
   return null;
 }
@@ -281,6 +330,13 @@ export async function sauvegarderMp4Tiktok(
     const idTiktok = extraireTiktokId(videoUrl) || id;
     const source = await resoudreMp4Tiktok(idTiktok, videoUrl);
     if (!source) return null;
+
+    // ⭐ V4.17 — STATS TIKTOK captées au passage par la résolution tikwm
+    // (zéro requête supplémentaire) : play_count = vues, digg_count =
+    // likes. Les compteurs ne sont JAMAIS diminués : likes =
+    // max(nôtre, digg_count) pour ne pas effacer les « j'aime » posés sur
+    // notre plateforme — ils ne font qu'augmenter.
+    const stats = source.stats;
 
     // Téléchargement — le CDN TikTok exige parfois un Referer tiktok.com.
     let res = await fetch(source.url, {
@@ -317,10 +373,23 @@ export async function sauvegarderMp4Tiktok(
     const cle = `videos/tiktok-${idTiktok}.mp4`;
     const urlPublique = await uploadToR2(cle, octets, "video/mp4");
 
-    // Persistance (et rien d'autre).
+    // Persistance (et rien d'autre) — ⭐ V4.17 : copie R2 + compteurs réels.
+    // likes = max(nôtre, digg_count) : les « j'aime » posés sur notre
+    // plateforme ne sont jamais effacés par la synchronisation.
+    const avant = await db.video.findUnique({
+      where: { id },
+      select: { likes: true },
+    });
+    const likesAvant = (avant as unknown as { likes?: number })?.likes ?? 0;
     await db.video.updateMany({
       where: { id },
-      data: { tiktokMp4Url: urlPublique },
+      data: {
+        tiktokMp4Url: urlPublique,
+        ...(stats && stats.playCount > 0 ? { views: stats.playCount } : {}),
+        ...(stats && stats.diggCount > likesAvant
+          ? { likes: stats.diggCount }
+          : {}),
+      },
     });
 
     return {
@@ -420,5 +489,76 @@ export async function backfillMp4Tiktok(params?: {
     idsEchecs: idsEchec,
     erreurs: erreurs.slice(0, 10),
     octetsTotaux: octetsTotaux,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V4.17 — SYNCHRONISATION DES COMPTEURS TIKTOK (stats seules)
+// ─────────────────────────────────────────────────────────────────────
+
+export interface ResultatStatsTiktok {
+  traitées: number;
+  misesAJour: number;
+  restantes: number;
+}
+
+/**
+ * ⭐ V4.17 — Synchronise les VUES et LIKES réels TikTok des vidéos qui
+ * n'ont encore AUCUN compteur (views = 0) : play_count → views,
+ * digg_count → likes (max avec nos likes). Sequential + garde 1,2 s —
+ * tikwm est limité à ~1 requête/s en gratuité (même contrat que le
+ * backfill MP4).
+ *
+ * Idempotent : une vidéo dont les compteurs sont peuplés n'est plus
+ * candidate. `misesAJour = 0` ⇒ il n'y a plus de progrès possible
+ * (vidéos privées/supprimées de TikTok) — l'appelant s'arrête.
+ */
+export async function synchroniserStatsTiktok(params?: {
+  limite?: number;
+  budgetMs?: number;
+}): Promise<ResultatStatsTiktok> {
+  const limite = Math.min(Math.max(params?.limite ?? 20, 1), 40);
+  const budgetMs = Math.min(Math.max(params?.budgetMs ?? 200_000, 10_000), 280_000);
+  const debut = Date.now();
+
+  // Candidates : TikTok sans vues (diaporamas /photo/ exclus — pas de
+  // compteurs vidéo uniques).
+  const toutes = await db.video.findMany({
+    where: { videoUrl: { not: null } },
+    select: { id: true, videoUrl: true, views: true, likes: true },
+  });
+  const candidates = toutes.filter(
+    (v) => estUrlTiktok(v.videoUrl) && !v.videoUrl!.includes("/photo/") && !(v.views > 0)
+  );
+
+  let traitees = 0;
+  let misesAJour = 0;
+  for (const v of candidates) {
+    if (traitees >= limite || Date.now() - debut > budgetMs) break;
+    traitees++;
+    try {
+      const stats = await statsTiktokViaTikwm(v.videoUrl as string);
+      if (stats) {
+        const likesAvant = (v as unknown as { likes?: number }).likes ?? 0;
+        const data: { views?: number; likes?: number } = {};
+        if (stats.playCount > 0) data.views = stats.playCount;
+        if (stats.diggCount > likesAvant) data.likes = stats.diggCount;
+        if (Object.keys(data).length > 0) {
+          await db.video.updateMany({ where: { id: v.id }, data });
+          misesAJour++;
+        }
+      }
+    } catch {
+      // vidéo suivante
+    }
+    if (traitees < limite && Date.now() - debut <= budgetMs) {
+      await new Promise((r) => setTimeout(r, 1_200));
+    }
+  }
+
+  return {
+    traitées: traitees,
+    misesAJour,
+    restantes: Math.max(0, candidates.length - misesAJour),
   };
 }

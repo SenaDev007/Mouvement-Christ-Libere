@@ -821,6 +821,13 @@ function VideoPlayerView({ video, allVideos, photos, onBack, onSelectVideo }: {
                   <p className="text-xs font-semibold text-[#1E0F2B] line-clamp-2 group-hover:text-[#C9A227] transition-colors leading-snug mb-1">{rec.title}</p>
                   <p className="text-[10px] text-[#8A8378]">{rec.servantName}</p>
                   <p className="text-[10px] text-[#8A8378]">{rec.category}</p>
+                  {/* ⭐ V4.17 — compteurs de la recommandation (vues + likes). */}
+                  <p className="text-[10px] text-[#8A8378]/80 mt-0.5">
+                    {rec.views > 0
+                      ? `${rec.views.toLocaleString("fr-FR")} vues`
+                      : "Nouveau"}
+                    {rec.likes > 0 && ` · ${rec.likes.toLocaleString("fr-FR")} j'aime`}
+                  </p>
                 </div>
               </button>
             ))}
@@ -941,6 +948,21 @@ function YouTubeStyleCard({ video, photos, onClick }: { video: VideoItem; photos
             <h3 className="text-sm font-semibold text-[#1E0F2B] leading-snug line-clamp-2 break-words group-hover:text-[#C9A227] transition-colors mb-0.5">{video.title}</h3>
             <p className="text-xs text-[#8A8378]">{video.servantName}</p>
             <p className="text-xs text-[#8A8378]/70">{video.category}</p>
+            {/* ⭐ V4.17 — Compteurs visibles sur la carte (comme YouTube /
+                TikTok) : vues réelles + likes — synchronisés depuis les
+                plateformes (/api/videos/sync-stats). */}
+            <div className="flex items-center gap-2.5 mt-1 text-[11px] text-[#8A8378]">
+              <span className="inline-flex items-center gap-1">
+                <Eye className="w-3 h-3" style={{ color: "#C9A227" }} />
+                {video.views > 0 ? `${video.views.toLocaleString("fr-FR")} vues` : "Nouveau"}
+              </span>
+              {video.likes > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Heart className="w-3 h-3 fill-current" style={{ color: "#dc2626" }} />
+                  {video.likes.toLocaleString("fr-FR")}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </button>

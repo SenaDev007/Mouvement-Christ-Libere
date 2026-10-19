@@ -788,6 +788,13 @@ function LecteurAdoration({ video, allMedias, photos, onBack, onSelectVideo }: {
                   </p>
                   <p className="text-[10px] text-[#8A8378]">Afrika</p>
                   <p className="text-[10px] text-[#8A8378]">{rec.category}</p>
+                  {/* ⭐ V4.17 — compteurs de la recommandation (vues + likes). */}
+                  <p className="text-[10px] text-[#8A8378]/80 mt-0.5">
+                    {rec.views > 0
+                      ? `${rec.views.toLocaleString("fr-FR")} vues`
+                      : "Nouveau"}
+                    {(rec.likes || 0) > 0 && ` · ${(rec.likes || 0).toLocaleString("fr-FR")} j'aime`}
+                  </p>
                 </div>
               </button>
             ))}
@@ -932,6 +939,20 @@ function CarteChant({ media, photo, onClick }: { media: MediaAdoration; photo: s
             </h3>
             <p className="text-xs text-[#8A8378]">Afrika</p>
             <p className="text-xs text-[#8A8378]/70">{media.category}</p>
+            {/* ⭐ V4.17 — Compteurs visibles (vues + likes), miroir des
+                cartes de la médiathèque. */}
+            <div className="flex items-center gap-2.5 mt-1 text-[11px] text-[#8A8378]">
+              <span className="inline-flex items-center gap-1">
+                <Eye className="w-3 h-3" style={{ color: "#C9A227" }} />
+                {media.views > 0 ? `${media.views.toLocaleString("fr-FR")} vues` : "Nouveau"}
+              </span>
+              {(media.likes || 0) > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Heart className="w-3 h-3 fill-current" style={{ color: "#dc2626" }} />
+                  {(media.likes || 0).toLocaleString("fr-FR")}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </button>

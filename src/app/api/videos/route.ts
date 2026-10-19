@@ -1,5 +1,5 @@
 /** GET /api/videos — Liste des vidéos depuis la DB */
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { ensureVideoLikesColumn, ensureVideoCategoryColumn, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 import { recupererReplaysManquants } from "@/lib/live-replay-recovery";
@@ -8,6 +8,9 @@ import { categorizeVideo, estRubrique } from "@/lib/video-rubrics";
 // détection TikTok vit désormais à UN seul endroit (routes API, lecteur
 // public, back-office, éditeur de post-production).
 import { extraireTiktokId } from "@/lib/tiktok";
+// ⭐ V4.17 — Compteurs (vues + likes réels YouTube/TikTok) : passe
+// opportuniste throttlée 6 h, JAMAIS dans le chemin de la réponse.
+import { rafraichirStatsThrottlees } from "@/lib/video-stats";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +39,12 @@ export async function GET(request: NextRequest) {
     } catch {
       // Non bloquant — la liste doit toujours être renvoyée.
     }
+
+    // ⭐ V4.17 — compteurs vues/likes : passe opportuniste (throttle 6 h)
+    // APRÈS la réponse — la liste est renvoyée à la vitesse habituelle.
+    after(async () => {
+      await rafraichirStatsThrottlees();
+    });
 
     const { searchParams } = new URL(request.url);
     const servant = searchParams.get("servant");

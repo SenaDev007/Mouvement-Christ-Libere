@@ -141,6 +141,42 @@ export async function fetchYouTubeStats(videoId: string): Promise<{
 }
 
 /**
+ * ⭐ V4.17 — STATS PAR LOT (videos.list accepte 50 ID par appel, 1 unité
+ * de quota) : récupère viewCount + likeCount de jusqu'à 50 vidéos d'un
+ * coup — la synchronisation des compteurs des 759 vidéos YouTube du
+ * ministère ne coûte que ~16 unités au total.
+ *
+ * @param videoIds IDs YouTube (11 caractères chacun, ≤ 50)
+ * @returns Map videoId → { viewCount, likeCount } (seulement les ID connus de YouTube)
+ */
+export async function fetchYouTubeStatsLot(
+  videoIds: string[]
+): Promise<Map<string, { viewCount: number; likeCount: number }>> {
+  const resultat = new Map<string, { viewCount: number; likeCount: number }>();
+  if (videoIds.length === 0) return resultat;
+  if (!isYouTubeOAuthConfigured()) return resultat;
+  try {
+    const youtube = getYouTubeClient();
+    const response = await youtube.videos.list({
+      part: ["statistics"],
+      id: videoIds.slice(0, 50),
+    });
+    for (const item of response.data.items || []) {
+      if (!item.id) continue;
+      const stats = item.statistics;
+      if (!stats) continue;
+      resultat.set(item.id, {
+        viewCount: parseInt(stats.viewCount || "0"),
+        likeCount: parseInt(stats.likeCount || "0"),
+      });
+    }
+  } catch (error) {
+    console.error("[youtube-live-chat] fetchStatsLot error:", error);
+  }
+  return resultat;
+}
+
+/**
  * Récupère les commentaires YouTube d'une vidéo et les persiste en DB
  * Christ Libère (table LiveChatMessage) pour qu'ils apparaissent dans le
  * module chat du replay.

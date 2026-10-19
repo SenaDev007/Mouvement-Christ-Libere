@@ -19,6 +19,8 @@ import {
   ListChecks, Check, CheckCircle2,
   // ⭐ V4.04 — sauvegarde des MP4 TikTok sur notre stockage R2.
   HardDriveDownload,
+  // ⭐ V4.17 — synchronisation des compteurs vues/likes (YouTube + TikTok).
+  TrendingUp,
 } from "lucide-react";
 // ⭐ V3.46 — Rubriques signatures (partagées site public ↔ back-office) :
 // « Saint-Esprit réponds-moi » (Afrika), « Rhema du matin »/« Rhema du soir »
@@ -95,6 +97,73 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
   // description, d'où le retour du pasteur). Le montage reste accessible
   // via le nouveau bouton ciseaux « Post-production ».
   const [editVideo, setEditVideo] = useState<VideoWithServant | null>(null);
+
+  // ─── ⭐ V4.17 — SYNCHRONISATION DES COMPTEURS (vues + likes) ───
+  // Bouton manuel : YouTube (lots de 50 via l'API officielle) + TikTok
+  // (tikwm). Boucle de lots jusqu'à restantes = 0 — une passe opportuniste
+  // throttlée 6 h tourne aussi automatiquement sur les visites publiques.
+  const [syncStats, setSyncStats] = useState<{
+    enCours: boolean;
+    youtube: number;
+    tiktok: number;
+    message?: string;
+  }>({ enCours: false, youtube: 0, tiktok: 0 });
+  const arreterSyncStats = useRef(false);
+  const lancerSyncStats = async () => {
+    if (syncStats.enCours) {
+      arreterSyncStats.current = true; // 2ᵉ clic = arrêter proprement
+      return;
+    }
+    arreterSyncStats.current = false;
+    setSyncStats({ enCours: true, youtube: 0, tiktok: 0 });
+    let majYoutubeTotal = 0;
+    let majTiktokTotal = 0;
+    try {
+      // Garde de sécurité 60 tours (≈ 12 000 YouTube + 1 800 TikTok).
+      for (let tour = 0; tour < 60; tour++) {
+        if (arreterSyncStats.current) break;
+        const res = await fetch("/api/videos/sync-stats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ limiteYoutube: 800, limiteTiktok: 30 }),
+        });
+        if (!res.ok) {
+          const detail = await res.text().catch(() => "");
+          setSyncStats((s) => ({
+            ...s,
+            message: `Arrêt (erreur ${res.status}) ${detail.slice(0, 120)}`,
+          }));
+          break;
+        }
+        const corps = (await res.json()) as {
+          youtube?: { misesAJour?: number; restantes?: number };
+          tiktok?: { misesAJour?: number; restantes?: number };
+        };
+        const majYoutube = corps.youtube?.misesAJour || 0;
+        const majTiktok = corps.tiktok?.misesAJour || 0;
+        majYoutubeTotal += majYoutube;
+        majTiktokTotal += majTiktok;
+        setSyncStats({
+          enCours: true,
+          youtube: majYoutubeTotal,
+          tiktok: majTiktokTotal,
+        });
+        // Terminé quand plus AUCUN des deux côtés ne progresse.
+        if (
+          (corps.youtube?.restantes || 0) <= 0 &&
+          (corps.tiktok?.restantes || 0) <= 0
+        ) {
+          break;
+        }
+        if (majYoutube === 0 && majTiktok === 0) break; // plus de progrès
+      }
+      if (majYoutubeTotal + majTiktokTotal > 0) router.refresh();
+    } catch {
+      setSyncStats((s) => ({ ...s, message: "Arrêt (réseau instable)" }));
+    } finally {
+      setSyncStats((s) => ({ ...s, enCours: false }));
+    }
+  };
 
   // ⭐ V3.46 — Copie locale des vidéos : le sélecteur de rubrique en ligne
   // PATCH l'API puis met à jour CET état (retour visuel instantané) ;
@@ -656,6 +725,26 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           </div>
         </div>
       )}
+      {/* ⭐ V4.17 — Bandeau de retour de la synchronisation des compteurs */}
+      {(syncStats.enCours || syncStats.youtube + syncStats.tiktok > 0) && (
+        <div className="flex items-start gap-3 rounded-xl border border-[#C9A227]/25 bg-[#C9A227]/10 px-4 py-3">
+          {syncStats.enCours ? (
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#DDBE55] mt-0.5" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#DDBE55] mt-0.5" />
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+              {syncStats.enCours
+                ? `Synchronisation des compteurs en cours — ${syncStats.youtube} YouTube · ${syncStats.tiktok} TikTok mis à jour`
+                : `Compteurs actualisés — ${syncStats.youtube} vidéo${syncStats.youtube > 1 ? "s" : ""} YouTube et ${syncStats.tiktok} TikTok — les vues et likes réels s'affichent désormais sur le site et dans l'app.`}
+            </p>
+            {syncStats.message && (
+              <p className="text-xs text-[#FAF6EF]/60 mt-0.5">{syncStats.message}</p>
+            )}
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -672,6 +761,30 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
             Vidéos archivées et lives enregistrés — {videos.length} au total.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={lancerSyncStats}
+          disabled={false}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md ${
+            syncStats.enCours
+              ? "bg-[#3D1A54] text-[#DDBE55]"
+              : "bg-[#C9A227]/10 text-[#DDBE55] hover:bg-[#3D1A54]/10"
+          }`}
+          title={
+            syncStats.enCours
+              ? "Arrêter la synchronisation en cours"
+              : "Récupérer les vues et likes réels depuis YouTube et TikTok — ils s'affichent sur le site et dans l'app"
+          }
+        >
+          {syncStats.enCours ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <TrendingUp className="w-4 h-4" />
+          )}
+          <span className="hidden sm:inline">
+            {syncStats.enCours ? "Arrêter les compteurs" : "Actualiser les compteurs"}
+          </span>
+        </button>
         <button
           type="button"
           onClick={lancerSauvegardeMp4}
