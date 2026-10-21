@@ -6,7 +6,7 @@ import { ShieldCheck, Database, Eye, Clock, Server, Cookie, Lock, Mail, Users, F
 export const metadata: Metadata = {
   title: "Politique de confidentialité — Mouvement Christ Libère",
   description:
-    "Politique de confidentialité du site Mouvement Christ Libère : données collectées, finalités, durée de conservation, hébergement, cookies et vos droits.",
+    "Politique de confidentialité du site et de l'application mobile Christ Libère : données collectées, finalités, durée de conservation, hébergement, cookies et vos droits.",
 };
 
 // ─── Composants ─────────────────────────────────────────────────────────
@@ -34,7 +34,7 @@ function Section({ id, icon, title, children }: SectionProps) {
   );
 }
 
-const LAST_UPDATED = "31 août 2026";
+const LAST_UPDATED = "21 octobre 2026";
 
 export default function ConfidentialitePage() {
   return (
@@ -43,7 +43,7 @@ export default function ConfidentialitePage() {
         imageSrc="https://images.unsplash.com/photo-1504082431402-cb5e50681959?q=80&w=1920&auto=format&fit=crop"
         kicker="Informations légales"
         title="Politique de confidentialité"
-        subtitle="Comment le Mouvement Christ Libère collecte, utilise et protège vos données personnelles, conformément au Règlement Général sur la Protection des Données (RGPD)."
+        subtitle="Comment le Mouvement Christ Libère collecte, utilise et protège vos données personnelles — sur le site web comme dans l'application mobile « Christ Libère » — conformément au Règlement Général sur la Protection des Données (RGPD)."
         primaryCta={{ label: "Demander un rendez-vous", href: "/rendez-vous" }}
       />
 
@@ -60,7 +60,7 @@ export default function ConfidentialitePage() {
             </p>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
               {[
-                ["#editeur", "1. Éditeur du site"],
+                ["#editeur", "1. Éditeur"],
                 ["#donnees", "2. Données collectées"],
                 ["#finalites", "3. Finalités et bases légales"],
                 ["#conservation", "4. Durée de conservation"],
@@ -80,10 +80,12 @@ export default function ConfidentialitePage() {
             </ul>
           </div>
 
-          <Section id="editeur" icon={<FileText className="w-5 h-5 text-[#C9A227]" />} title="1. Éditeur du site">
+          <Section id="editeur" icon={<FileText className="w-5 h-5 text-[#C9A227]" />} title="1. Éditeur">
             <p>
-              Le site <strong>mouvement-christ-libere.vercel.app</strong> (ci-après « le Site ») est
-              édité par le <strong>Mouvement Christ Libère</strong>, une communauté chrétienne à but
+              Le site <strong>www.mouvementchristlibere.com</strong> (ci-après « le Site ») et
+              l&apos;application mobile <strong>« Christ Libère »</strong> (ci-après «
+              l&apos;Application »), distribuée sur Google Play, sont édités par le{" "}
+              <strong>Mouvement Christ Libère</strong>, une communauté chrétienne à but
               non lucratif dont la mission est le partage de témoignages, d&apos;enseignements
               bibliques et la vie de communauté au service du rassemblement.
             </p>
@@ -103,9 +105,12 @@ export default function ConfidentialitePage() {
             </p>
             <ul className="space-y-2 list-none">
               {[
-                ["Formulaires de contact", "nom, coordonnée (email ou téléphone) et message — uniquement si vous nous écrivez volontairement."],
+                ["Formulaires de contact (Site)", "nom, coordonnée (email ou téléphone) et message — uniquement si vous nous écrivez volontairement."],
                 ["Témoignages", "prénom/pseudonyme et contenu du témoignage, si vous choisissez d'en publier un."],
-                ["Comptes utilisateurs", "nom, email et mot de passe chiffré, pour les membres inscrits (accès aux canaux, intercession, appels…)."],
+                ["Comptes membres (Site et Application)", "nom, email et mot de passe chiffré ; sur l'Application : photo de profil, bio, téléphone, ville et pays si vous les renseignez."],
+                ["Messagerie Yeshua Connect (Application)", "conversations, messages texte, messages vocaux (enregistrés via le micro uniquement quand vous appuyez sur le bouton) et pièces jointes — visibles par les participants des conversations concernées."],
+                ["Notifications push (Application)", "un identifiant technique de l'appareil (jeton Firebase) associé à votre compte pour recevoir annonces et rappels du ministère. Aucune donnée de localisation n'est collectée."],
+                ["Stockage hors-ligne (Application)", "une copie du contenu public est conservée sur votre appareil (base locale), ainsi que vos brouillons non envoyés — tout est supprimé automatiquement en désinstallant l'Application."],
                 ["Vidéos et lives", "interactions publiques (chat, réactions) liées aux retransmissions YouTube."],
                 ["Données techniques", "journaux de connexion (adresse IP anonymisée, navigateur) conservés à des fins de sécurité."],
               ].map(([title, desc]) => (
@@ -121,6 +126,7 @@ export default function ConfidentialitePage() {
             <ul className="space-y-1.5 pl-5 list-disc">
               <li><strong>Répondre à vos demandes</strong> de contact ou d&apos;intercession (base légale : votre consentement) ;</li>
               <li><strong>Gérer votre compte membre</strong> et l&apos;accès aux espaces communautaires (exécution du service demandé) ;</li>
+              <li><strong>Vous adresser les annonces et rappels</strong> du ministère par notification push, uniquement si vous avez un compte membre (désactivable à tout moment dans les réglages de l&apos;Application) ;</li>
               <li><strong>Publier vos témoignages et enseignements</strong> avec votre accord explicite ;</li>
               <li><strong>Assurer la sécurité du Site</strong> et prévenir les abus (intérêt légitime).</li>
             </ul>
@@ -135,6 +141,7 @@ export default function ConfidentialitePage() {
               <li><strong>Demandes de contact :</strong> 24 mois après le dernier échange, puis suppression ;</li>
               <li><strong>Comptes membres :</strong> pendant la durée de l&apos;inscription, puis 12 mois avant anonymisation ;</li>
               <li><strong>Témoignages publiés :</strong> jusqu&apos;à votre demande de retrait ;</li>
+              <li><strong>Messages de la messagerie :</strong> pendant la durée des conversations ; suppression possible à tout moment sur demande ;</li>
               <li><strong>Journaux techniques :</strong> 12 mois maximum.</li>
             </ul>
           </Section>
@@ -153,7 +160,9 @@ export default function ConfidentialitePage() {
                 des cookies propres à Google lorsque vous les regardez ;
               </li>
               <li><strong>Cloudflare (R2)</strong> — stockage des fichiers multimédias (miniatures, archives) ;</li>
-              <li><strong>Services de visioconférence</strong> — appels audio/vidéo et salons communautaires.</li>
+              <li><strong>Firebase Cloud Messaging (Google LLC)</strong> — acheminement des notifications push de l&apos;Application (identifiant technique d&apos;appareil, jamais de localisation) ;</li>
+              <li><strong>Services de visioconférence</strong> — appels audio/vidéo et salons communautaires ;</li>
+              <li><strong>Google Play</strong> — distribution et mises à jour de l&apos;Application.</li>
             </ul>
             <p>
               Ces prestataires agissent en qualité de sous-traitants et sont liés par leurs propres
@@ -180,6 +189,11 @@ export default function ConfidentialitePage() {
               >
                 paramètres de confidentialité de Google <Globe className="w-3 h-3" />
               </a>.
+            </p>
+            <p>
+              L&apos;Application, quant à elle, n&apos;utilise pas de cookies : votre session y est
+              conservée de façon chiffrée sur votre appareil et peut être effacée à tout moment
+              en vous déconnectant.
             </p>
           </Section>
 
@@ -218,6 +232,11 @@ export default function ConfidentialitePage() {
               en précisant votre demande. Nous répondons sous 30 jours maximum. Vous pouvez également
               introduire une réclamation auprès de votre autorité de protection des données (en
               France : la CNIL, www.cnil.fr).
+            </p>
+            <p>
+              Depuis l&apos;Application : vous pouvez demander la suppression de votre compte et de
+              vos messages à tout moment via le formulaire ci-dessus, et la copie hors-ligne
+              présente sur votre appareil disparaît intégralement en désinstallant l&apos;Application.
             </p>
           </Section>
 
