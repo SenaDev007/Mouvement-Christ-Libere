@@ -162,16 +162,11 @@ app.use("/api/live", liveRoutes);
 app.use("/api/videos", videosRoutes);
 app.use("/api/email", emailRoutes);
 
-// --- Warmup endpoint (garde Neon DB éveillée) ---
-app.get("/api/warmup", async (_req, res) => {
-  try {
-    const { db } = await import("./lib/db");
-    await db.user.count();
-    res.json({ status: "warm", timestamp: new Date().toISOString() });
-  } catch (error) {
-    res.status(500).json({ status: "error", error: "DB unreachable" });
-  }
-});
+// --- Warmup endpoint SUPPRIMÉ (audit coût Neon, 2026-11-03) ---
+// « Garde Neon DB éveillée » = neutralise le scale-to-zero → compute facturé
+// 24/7 sans traffic réel. Neon se réveille seul (< 1 s) à la première requête.
+// NB : si un monitor externe (UptimeRobot…) pointait /api/warmup, il recevra
+// désormais 404 — mettre son URL à jour vers /api/health.
 
 // --- Stats endpoint ---
 app.get("/api/stats", async (_req, res) => {
