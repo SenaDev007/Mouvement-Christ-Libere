@@ -4,17 +4,25 @@ import { syncYouTubeStatsToVideo } from "@/lib/youtube-live-chat";
 import { autoriserCron } from "@/lib/cron-auth";
 
 /**
- * GET /api/cron/sync-youtube-stats
+ * GET /api/cron/sync-youtube-stats — ⭐ V4.21 : DÉCLENCHEMENT MANUEL UNIQUEMENT.
  *
- * Cron automatique (toutes les 30 min) qui synchronise les stats YouTube
- * pour tous les lives en cours ou récemment terminés (24h).
+ * Ce cron a été RETIRÉ de vercel.json : il réveillait la base Neon selon
+ * une horloge (toutes les 6 h, autrefois 30 min) pour rafraîchir des stats
+ * que personne ne regardait à ces moments-là — l'une des causes de la
+ * facture 158 $/3 mois.
  *
- * Sécurité : ⭐ V3.39 — Authorization Bearer (Vercel Cron) OU X-Cron-Secret
- * (manuel). AVANT : seul X-Cron-Secret était accepté — Vercel Cron envoie
- * Bearer → 401 systématique → la synchro des stats/vues ne tournait jamais.
- * Sécurité (suite) : CRON_SECRET non configuré (dev) → autorisé.
+ * La synchro est désormais « PARESSEUSE » : elle part d'un VRAI spectateur
+ * (GET /api/live/[id]/stats pollé pendant un direct → syncYouTubeStats-
+ * Paresseuse, throttle 10 min par live). Cf. src/lib/sync-youtube-
+ * paresseux.ts.
  *
- * Pour chaque live YouTube :
+ * CETTE ROUTE RESTE pour un balayage complet À LA DEMANDE :
+ *   curl -H "X-Cron-Secret: $CRON_SECRET" https://www.mouvementchristlibere.com/api/cron/sync-youtube-stats
+ *
+ * Sécurité : Authorization Bearer (Vercel Cron) OU X-Cron-Secret (manuel).
+ * CRON_SECRET non configuré (dev) → autorisé.
+ *
+ * Pour chaque live YouTube (en cours ou terminé < 24 h) :
  *  - Récupère viewCount, likeCount, commentCount depuis YouTube
  *  - Met à jour Video.views et LiveStream.viewerCount
  *  - Importe les commentaires YouTube dans LiveChatMessage

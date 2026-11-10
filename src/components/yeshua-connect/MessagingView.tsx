@@ -24,7 +24,6 @@
  *   ✅ Invitations
  *   ✅ Préférences de notifications (mute, DND)
  *   ✅ Profil (avatar + bio)
- *   ✅ Scheduled messages (programmer l'envoi)
  *   ✅ Polls (sondages)
  *   ✅ Typing indicator (UI seulement — pas de Socket.io V1)
  *   ✅ Presence (online/offline — UI statique V1)
@@ -517,14 +516,13 @@ export function MessagingView() {
   const [showCalendar, setShowCalendar] = useState(false);
   // (⭐ V2.5) showScheduleModal / showPollModal supprimés : les formulaires
   // vivent désormais dans les panneaux du modal « Joindre » (attachPanel).
-  // (S5) State pour poll et scheduled message
+  // (S5) State pour poll
+  // ⭐ V4.21 — Messages programmés SUPPRIMÉS (réveil permanent de la base
+  // Neon) : plus de scheduleContent / scheduleAt / submittingSchedule.
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [pollMulti, setPollMulti] = useState(false);
-  const [scheduleContent, setScheduleContent] = useState("");
-  const [scheduleAt, setScheduleAt] = useState("");
   const [submittingPoll, setSubmittingPoll] = useState(false);
-  const [submittingSchedule, setSubmittingSchedule] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<Set<string>>(new Set());
   const [mutedConversations, setMutedConversations] = useState<Set<string>>(new Set());
   const [dndEnabled, setDndEnabled] = useState(false);
@@ -717,9 +715,9 @@ export function MessagingView() {
   const [gifResults, setGifResults] = useState<Array<{ id: string; url: string; preview: string; width?: number; height?: number }>>([]);
   const [gifLoading, setGifLoading] = useState(false);
   // ⭐ V2.5 — Modal « Joindre » unifié façon WhatsApp : un seul bouton trombone
-  // qui ouvre un modal regroupant Document, Image, GIF, Sondage et Programmé.
+  // qui ouvre un modal regroupant Document, Image, GIF et Sondage.
   const [attachOpen, setAttachOpen] = useState(false);
-  const [attachPanel, setAttachPanel] = useState<"menu" | "gif" | "poll" | "schedule">("menu");
+  const [attachPanel, setAttachPanel] = useState<"menu" | "gif" | "poll">("menu");
   const gifSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ⭐ V2.3 — Audit Log (modération)
@@ -5156,9 +5154,9 @@ export function MessagingView() {
             ) : (
               <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
                 {/* ⭐ V2.5 — Bouton « Joindre » unique (façon WhatsApp) :
-                    ouvre le modal regroupant Document, Image, GIF, Sondage
-                    et Programmé. Remplace les 5 boutons séparés
-                    (trombone, image, GIF, sondage, calendrier). */}
+                    ouvre le modal regroupant Document, Image, GIF et Sondage.
+                    Remplace les boutons séparés
+                    (trombone, image, GIF, sondage). */}
                 {/* ⭐ V3.0 — Cible tactile 40×40 sur mobile (accessibilité
                     Android/iOS) ; 36×36 sur desktop comme avant. */}
                 <button
@@ -5273,7 +5271,7 @@ export function MessagingView() {
                     disabled={sending}
                   />
                 </div>
-                {/* (⭐ V2.5) Boutons Sondage et Programmé déplacés dans le modal
+                {/* (⭐ V2.5) Bouton Sondage déplacé dans le modal
                     « Joindre » (trombone) — la barre reste épurée : trombone,
                     emojis, champ de saisie, micro/envoi. */}
                 {(inputText.trim() || pendingFiles.length > 0) ? (
@@ -5589,14 +5587,13 @@ export function MessagingView() {
             • Image     → input image caché
             • GIF       → panneau Giphy intégré
             • Sondage   → formulaire de création intégré
-            • Programmé → formulaire de message programmé intégré */}
+          ⭐ V4.21 — « Programmé » retiré (fonctionnalité supprimée). */}
       {attachOpen && (
         <Modal
           onClose={() => { setAttachOpen(false); setAttachPanel("menu"); }}
           title={
             attachPanel === "gif" ? "Envoyer un GIF" :
             attachPanel === "poll" ? "Créer un sondage" :
-            attachPanel === "schedule" ? "Programmer un message" :
             "Joindre"
           }
         >
@@ -5638,14 +5635,6 @@ export function MessagingView() {
                   icon: <BarChart3 className="w-6 h-6" />,
                   color: "#A3821C",
                   onClick: () => setAttachPanel("poll"),
-                },
-                {
-                  key: "schedule",
-                  label: "Programmé",
-                  desc: "Envoi différé",
-                  icon: <Calendar className="w-6 h-6" />,
-                  color: "#5B21B6",
-                  onClick: () => setAttachPanel("schedule"),
                 },
                 {
                   key: "verse",
@@ -5804,66 +5793,10 @@ export function MessagingView() {
             </div>
           )}
 
-          {/* ── Panneau PROGRAMMÉ (message différé) ────────────────────── */}
-          {attachPanel === "schedule" && (
-            <div className="space-y-3">
-              <button
-                onClick={() => setAttachPanel("menu")}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-[#C9A227] transition-colors cursor-pointer"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" /> Retour
-              </button>
-              <div className="px-3 py-2 rounded-xl bg-[#5B21B6]/5 border border-[#5B21B6]/20 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#5B21B6] flex-shrink-0" />
-                <p className="text-[11px] text-[#1E0F2B]/70">
-                  Le message sera envoyé automatiquement à la date choisie.
-                </p>
-              </div>
-              <textarea
-                value={scheduleContent}
-                onChange={(e) => setScheduleContent(e.target.value)}
-                placeholder="Votre message..."
-                rows={3}
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
-              />
-              <input
-                type="datetime-local"
-                value={scheduleAt}
-                onChange={(e) => setScheduleAt(e.target.value)}
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base md:text-sm outline-none focus:ring-2 focus:ring-[#C9A227]/20"
-              />
-              <button
-                onClick={async () => {
-                  if (!activeConvId || !scheduleContent.trim() || !scheduleAt) return;
-                  setSubmittingSchedule(true);
-                  try {
-                    const res = await fetch(api.url("/api/yeshua-connect/scheduled-messages"), {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ channelId: activeConvId, content: scheduleContent, scheduledAt: scheduleAt }),
-                    });
-                    if (res.ok) {
-                      setAttachOpen(false);
-                      setAttachPanel("menu");
-                      setScheduleContent("");
-                      setScheduleAt("");
-                    } else {
-                      const err = await res.json().catch(() => ({}));
-                      alert(err.error || "Échec de la programmation");
-                    }
-                  } catch (e) {
-                    alert("Erreur réseau");
-                  } finally {
-                    setSubmittingSchedule(false);
-                  }
-                }}
-                disabled={!scheduleContent.trim() || !scheduleAt || submittingSchedule}
-                className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-40 transition-colors cursor-pointer"
-              >
-                {submittingSchedule ? "Programmation..." : "Programmer l'envoi"}
-              </button>
-            </div>
-          )}
+          {/* ⭐ V4.21 — Panneau PROGRAMMÉ SUPPRIMÉ : la messagerie programmée
+              est retirée de la plateforme (chaque consultation de messagerie
+              scannait la table ScheduledMessage et réveillait la base Neon
+              en continu — facture 158 $/3 mois). */}
         </Modal>
       )}
 

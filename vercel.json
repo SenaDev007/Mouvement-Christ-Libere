@@ -67,24 +67,12 @@
 
   "crons": [
     {
-      "path": "/api/cron/dispatch-scheduled",
-      "schedule": "*/15 * * * *"
-    },
-    {
       "path": "/api/cron/fetes-notifications",
       "schedule": "0 9 * * *"
     },
     {
       "path": "/api/cron/backfill-miniatures-tiktok",
       "schedule": "17 3 * * *"
-    },
-    {
-      "path": "/api/cron/sync-youtube-stats",
-      "schedule": "20 */6 * * *"
-    },
-    {
-      "path": "/api/cron/recuperer-dons-fedapay",
-      "schedule": "45 * * * *"
     }
   ]
 }

@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/components/yeshua-connect/MessagingView.tsx",
+    "src/app/api/yeshua-connect/conversations/route.ts",
+    "src/app/api/yeshua-connect/conversations/[id]/messages/route.ts",
+    "src/lib/sync-youtube-paresseux.ts",
+    "src/lib/cron-auth.ts",
+    "src/lib/payments/recuperation-dons.ts",
+    "src/app/api/live/[id]/stats/route.ts",
+    "src/app/api/cron/sync-youtube-stats/route.ts",
+    "src/app/api/cron/recuperer-dons-fedapay/route.ts",
+    "src/app/admin/donations/page.tsx"
+  ],
+  "exclude": ["node_modules", ".next", "backend"]
+}

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { after } from "next/server";
+import { syncYouTubeStatsParesseuse } from "@/lib/sync-youtube-paresseux";
 
 /**
  * ⭐ V2.9 — GET /api/live/[id]/stats — Statistiques TEMPS RÉEL du live.
@@ -90,6 +92,15 @@ export async function GET(
     if (!live) {
       return NextResponse.json({ error: "Live introuvable" }, { status: 404 });
     }
+
+    // ─── ⭐ V4.21 — SYNC YOUTUBE « PARESSEUSE » (remplace le cron) ────
+    // Cette route est pollée UNIQUEMENT par le studio et les spectateurs
+    // d'un direct : quelqu'un est donc en train de REGARDER. On en profite
+    // pour rafraîchir en arrière-plan les stats + commentaires YouTube
+    // (throttle 10 min par live, cf. lib) — SANS attendre la fin de la
+    // réponse. La nuit, personne ne poll : la base Neon dort, plus aucun
+    // cron ne la réveille pour des stats que personne ne regarde.
+    after(() => syncYouTubeStatsParesseuse(id));
 
     // ─── Présence fraîche ───
     const since = new Date(Date.now() - PRESENCE_WINDOW_MS);

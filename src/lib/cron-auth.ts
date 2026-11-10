@@ -17,8 +17,15 @@
  *     backend Railway (requireCronSecret : « No secret configured →
  *     allow »).
  *
- * Utilisée par : /api/cron/dispatch-scheduled, /api/cron/sync-youtube-stats,
- * /api/cron/fetes-notifications.
+ * Utilisée par : /api/cron/fetes-notifications, /api/cron/sync-youtube-stats
+ * (déclenchement manuel), /api/cron/recuperer-dons-fedapay (idem).
+ *
+ * ⭐ V4.21 — Les crons « push » ont été retirés de vercel.json :
+ * sync-youtube-stats et recuperer-dons-fedapay ne tournent plus tout seuls
+ * la nuit (ils réveillaient la base Neon pour rien). Les routes RESTENT
+ * déclenchables manuellement (X-Cron-Secret) — la synchro devient
+ * « paresseuse » : elle part d'une requête d'un VRAI utilisateur (page
+ * regardée / back-office ouvert), jamais d'une horloge.
  */
 export function autoriserCron(req: Request): boolean {
   const secret = process.env.CRON_SECRET;

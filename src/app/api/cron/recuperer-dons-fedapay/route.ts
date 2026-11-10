@@ -4,10 +4,23 @@ import { recupererDonsPendantsFedapay } from "@/lib/payments/recuperation-dons";
 
 /**
  * ⭐ V3.87 — GET /api/cron/recuperer-dons-fedapay
+ * ⭐ V4.21 — DÉCLENCHEMENT MANUEL UNIQUEMENT (cron retiré de vercel.json).
  *
  * Filet de sécurité des dons FedaPay « pending » (paiement réel mais
  * jamais confirmé — POST de confirmation perdu, webhook non envoyé/non
  * déclaré : constat Academia-Helm « le webhook n'est pas toujours envoyé »).
+ *
+ * L'ancien cron horaire réveillait la base Neon 24×/jour pour re-vérifier
+ * des dons en attente, même la nuit (facture 158 $/3 mois). La récupération
+ * est désormais « PARESSEUSE », déclenchée par un VRAI humain :
+ *   · le DONATEUR → page /contriburer/merci (re-vérification instantanée
+ *     via /api/dons/statut/[reference], déjà en place) ;
+ *   · la TRÉSORERIE → ouverture de /admin/dons (récupération arrière-plan
+ *     via after(), throttle 5 min, cf. la page).
+ * Personne ne visite → la base dort.
+ *
+ * CETTE ROUTE RESTE pour un balayage complet À LA DEMANDE :
+ *   curl -H "X-Cron-Secret: $CRON_SECRET" https://www.mouvementchristlibere.com/api/cron/recuperer-dons-fedapay
  *
  * Pour chaque don FedaPay en attente des dernières 48 h :
  *   ① s'il a un providerRef → re-vérification directe auprès de FedaPay
@@ -18,13 +31,9 @@ import { recupererDonsPendantsFedapay } from "@/lib/payments/recuperation-dons";
  * finalise le don (écriture trésorerie unique + reçu email unique).
  *
  * Idempotent (transition atomique pending → final) : relancer ne duplique
- * rien. Budget 25 s < plafond serverless 30 s ; le passage suivant traite
- * le reste. La page /contribuer/merci fait la MÊME re-vérification au fil
- * de l'eau (instantanée pour le donateur présent) — ce cron couvre les
- * donateurs partis avant la confirmation.
+ * rien. Budget 25 s < plafond serverless 30 s.
  *
  * Sécurité : Authorization Bearer (Vercel Cron) OU X-Cron-Secret (manuel).
- * Planification : vercel.json → toutes les 30 minutes.
  */
 
 export const runtime = "nodejs";

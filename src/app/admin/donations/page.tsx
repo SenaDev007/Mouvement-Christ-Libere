@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { after } from "next/server";
 import { db } from "@/lib/db";
+import { recupererDonsPendantsFedapay } from "@/lib/payments/recuperation-dons";
 import {
   Heart,
   Coins,
@@ -75,6 +77,32 @@ const LIBELLES_PROVIDER: Record<string, string> = {
 
 type StatutFiltre = "" | "pending" | "approved" | "failed";
 
+// ─── ⭐ V4.21 — RÉCUPÉRATION FEDAPAY « PARESSEUSE » (remplace le cron) ────
+// L'ancien cron horaire réveillait la base Neon 24×/jour pour re-vérifier
+// des dons « pending » que personne ne regardait à 3 h du matin. La
+// re-vérification part désormais d'un VRAI humain :
+//   · le DONATEUR → page /contriburer/merci (re-vérification instantanée
+//     déjà en place, cf. /api/dons/statut/[reference]) ;
+//   · la TRÉSORERIE → ICI : l'ouverture du back-office des dons déclenche
+//     en arrière-plan (after) la récupération des dons en attente.
+// Personne ne visite → la base dort.
+
+/** Throttle mémoire : au plus une tentative toutes les 5 min par instance
+ * serverless (les rafraîchissements répétés de la page ne martèlent pas
+ * l'API FedaPay). Fonction au niveau MODULE — la mutation de globalThis
+ * n'a pas lieu pendant le rendu du composant (règle react-hooks). */
+const ETAT_RECUPERATION_LAZY = globalThis as unknown as {
+  __donsRecuperationLazy?: number;
+};
+const THROTTLE_RECUPERATION_LAZY_MS = 5 * 60_000;
+
+function recuperationDonsLazyDue(): boolean {
+  const dernier = ETAT_RECUPERATION_LAZY.__donsRecuperationLazy ?? 0;
+  if (Date.now() - dernier <= THROTTLE_RECUPERATION_LAZY_MS) return false;
+  ETAT_RECUPERATION_LAZY.__donsRecuperationLazy = Date.now();
+  return true;
+}
+
 export default async function AdminDonationsPage({
   searchParams,
 }: {
@@ -86,6 +114,24 @@ export default async function AdminDonationsPage({
   )
     ? (statut as StatutFiltre)
     : "";
+
+  // ⭐ V4.21 — planifier la récupération paresseuse (throttle module-level,
+  // cf. recuperationDonsLazyDue ci-dessus) : elle tourne APRÈS l'envoi de
+  // la page (after) — le trésorier voit la liste immédiatement, les dons
+  // récupérés apparaissent au rechargement suivant.
+  after(async () => {
+    if (!recuperationDonsLazyDue()) return;
+    try {
+      const resultat = await recupererDonsPendantsFedapay({ budgetMs: 15_000 });
+      if (resultat.approuves > 0) {
+        console.log(
+          `[admin/dons] Récupération paresseuse FedaPay : ${resultat.approuves} don(s) confirmé(s) — recharger la page pour les voir.`
+        );
+      }
+    } catch {
+      // best-effort — la page s'affiche normalement quoi qu'il arrive
+    }
+  });
 
   const dons = await db.donation.findMany({
     orderBy: { createdAt: "desc" },
