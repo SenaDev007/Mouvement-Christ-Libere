@@ -4,8 +4,15 @@ import { autoriserCron } from "@/lib/cron-auth";
 
 /**
  * GET /api/cron/dispatch-scheduled
- * Cron automatique (toutes les minutes) qui envoie les messages programmés
- * dont l'heure est arrivée.
+ * Cron automatique (toutes les 15 min — ⭐ V4.20 : était chaque minute,
+ * ce qui empêchait la base Neon de jamais s'endormir) qui envoie les
+ * messages programmés dont l'heure est arrivée.
+ *
+ * Le système reste réactif grâce au dispatch OPPORTUNISTE (cf.
+ * src/lib/dispatch-scheduled-messages.ts) appelé par les routes messages
+ * et conversations : un utilisateur connecté reçoit son message
+ * programmé dans les 2 minutes. Ce cron est le filet de secours
+ * « personne n'est connecté » (au pire 15 min de retard).
  *
  * ⭐ V3.39 — DEUX réparations :
  *   1. AUTH : cette route exigeait le header `x-cron-secret`… or Vercel

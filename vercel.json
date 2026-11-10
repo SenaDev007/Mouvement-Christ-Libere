@@ -67,12 +67,8 @@
 
   "crons": [
     {
-      "path": "/api/cron/sync-youtube-stats",
-      "schedule": "*/30 * * * *"
-    },
-    {
       "path": "/api/cron/dispatch-scheduled",
-      "schedule": "* * * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/fetes-notifications",
@@ -83,8 +79,12 @@
       "schedule": "17 3 * * *"
     },
     {
+      "path": "/api/cron/sync-youtube-stats",
+      "schedule": "20 */6 * * *"
+    },
+    {
       "path": "/api/cron/recuperer-dons-fedapay",
-      "schedule": "*/30 * * * *"
+      "schedule": "45 * * * *"
     }
   ]
 }

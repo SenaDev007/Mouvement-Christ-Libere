@@ -39,8 +39,16 @@ import { db } from "@/lib/db";
  *     corrects), et le message est signé par l'auteur de la programmation.
  */
 
-/** Throttle mémoire : minimum entre deux dispatches par instance serveur. */
-const THROTTLE_MS = 10_000;
+/** Throttle mémoire : minimum entre deux dispatches par instance serveur.
+ *
+ * ⭐ V4.20 — 10 s → 120 s : le poll clients (10 s) déclenchait un scan de
+ * ScheduledMessage à CHAQUE requête (6 scans/min constatés, 82 150 scans
+ * en 9,5 jours pour 3 lignes !) — l'une des causes de la base Neon
+ * jamais endormie (facture 158 $ / 3 mois). Avec 120 s, un utilisateur
+ * connecté voit un message programmé arriver au pire 2 min après son
+ * heure (imperceptible), et le cron /15 min de vercel.json reste le
+ * filet de secours « personne n'est connecté ». */
+const THROTTLE_MS = 120_000;
 let dernierDispatch = 0;
 let dispatchEnCours: Promise<number> | null = null;
 
@@ -53,10 +61,10 @@ let dispatchEnCours: Promise<number> | null = null;
 export async function dispatchDueScheduledMessages(
   channelId?: string,
 ): Promise<number> {
-  // Throttle par instance : le poll clients (3 s / 10 s) ne doit pas
-  // transformer chaque requête en scan de table. La fenêtre de 10 s est
+  // Throttle par instance : le poll clients (10 s / 30 s) ne doit pas
+  // transformer chaque requête en scan de table. La fenêtre de 120 s est
   // imperceptible pour l'utilisateur final (le message apparaît au pire
-  // 10 s après l'heure programmée).
+  // 2 min après l'heure programmée ; le cron Vercel rattrape le reste).
   if (Date.now() - dernierDispatch < THROTTLE_MS) return 0;
   if (dispatchEnCours) return dispatchEnCours;
 
