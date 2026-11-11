@@ -1,20 +1,36 @@
 /**
  * Chargeur de données bibliques — Vercel-compatible
  *
- * Importe tous les fichiers JSON directement comme modules ES.
- * Pas de fs.readFileSync, pas de raw-loader, pas de fallback.
- * Les données sont bundlées dans le code JavaScript.
+ * ⭐ V4.20 — CHARGEMENT PARESSEUX (RAM Railway) : les 66 Mo de JSON
+ * bibliques (6 versions + Strong hébreu/grec + morphhb + Peshitta)
+ * étaient importés STATIQUEMENT → analysés en objets JS au DÉMARRAGE du
+ * process Railway, ~247 Mo de RSS 24 h/24, pour des routes bibliques
+ * quasi inutilisées côté Railway (le web sert sa propre API Vercel ;
+ * l'app mobile aussi). Facturation Railway = RAM + CPU consommés.
+ *
+ * Désormais : require() paresseux AU PREMIER APPEL + cache — le process
+ * démarre léger, une version/lexicon n'occupe de la mémoire QUE si
+ * quelqu'un la demande vraiment (et y reste en cache pour les appels
+ * suivants : re-parsing évité).
+ *
+ * NOTE BUILD : plus aucun import statique de JSON → tsc ne les copie plus
+ * dans dist/. Le script build de package.json copie src/data → dist/data
+ * (fs.cpSync, multiplateforme) pour que les require() résolvent en prod.
+ * En dev (tsx), les require() résolvent directement dans src/.
  */
 
-import frApee from "../../data/bible/versions/fr-apee.json";
-import enKjv from "../../data/bible/versions/en-kjv.json";
-import enBbe from "../../data/bible/versions/en-bbe.json";
-import esRvr from "../../data/bible/versions/es-rvr.json";
-import ptAcf from "../../data/bible/versions/pt-acf.json";
-import arSvd from "../../data/bible/versions/ar-svd.json";
-import strongHebrew from "../../data/bible/strongs/hebrew.json";
-import strongGreek from "../../data/bible/strongs/greek.json";
-import morphhb from "../../data/bible/morphhb/index.json";
+// require() paresseux — CommonJS ("type": "commonjs" + module: CommonJS),
+// résout aussi bien sous tsx (src/) qu'en prod (dist/, grâce à la copie
+// du script build). Aucun import statique : c'est le but (RAM au démarrage).
+
+const CHEMINS_VERSIONS: Record<string, { chemin: string; langue: string; nom: string }> = {
+  "fr-apee": { chemin: "../../data/bible/versions/fr-apee.json", langue: "fr", nom: "Bible de l'Épée (Français)" },
+  "en-kjv": { chemin: "../../data/bible/versions/en-kjv.json", langue: "en", nom: "King James Version (English)" },
+  "en-bbe": { chemin: "../../data/bible/versions/en-bbe.json", langue: "en", nom: "Bible in Basic English" },
+  "es-rvr": { chemin: "../../data/bible/versions/es-rvr.json", langue: "es", nom: "Reina Valera (Español)" },
+  "pt-acf": { chemin: "../../data/bible/versions/pt-acf.json", langue: "pt", nom: "Almeida Corrigida Fiel (Português)" },
+  "ar-svd": { chemin: "../../data/bible/versions/ar-svd.json", langue: "ar", nom: "Arabic Bible (العربية)" },
+};
 
 export interface LivreBible {
   id: string;
@@ -47,14 +63,7 @@ const ID_VERS_NOM: Record<string, string> = {
   "1jo": "1 Jean", "2jo": "2 Jean", "3jo": "3 Jean", jd: "Jude", ap: "Apocalypse",
 };
 
-const VERSIONS_DATA: Record<string, { data: LivreBible[]; langue: string; nom: string }> = {
-  "fr-apee": { data: frApee as unknown as LivreBible[], langue: "fr", nom: "Bible de l'Épée (Français)" },
-  "en-kjv": { data: enKjv as unknown as LivreBible[], langue: "en", nom: "King James Version (English)" },
-  "en-bbe": { data: enBbe as unknown as LivreBible[], langue: "en", nom: "Bible in Basic English" },
-  "es-rvr": { data: esRvr as unknown as LivreBible[], langue: "es", nom: "Reina Valera (Español)" },
-  "pt-acf": { data: ptAcf as unknown as LivreBible[], langue: "pt", nom: "Almeida Corrigida Fiel (Português)" },
-  "ar-svd": { data: arSvd as unknown as LivreBible[], langue: "ar", nom: "Arabic Bible (العربية)" },
-};
+const VERSIONS_DATA = CHEMINS_VERSIONS;
 
 const cacheVersions: Record<string, VersionBible> = {};
 
@@ -63,7 +72,8 @@ export function chargerVersion(code: string): VersionBible | null {
   const config = VERSIONS_DATA[code];
   if (!config) return null;
 
-  const livres = config.data;
+  // ⭐ V4.20 — require paresseux : la version n'entre en mémoire qu'ici.
+  const livres = require(config.chemin) as LivreBible[];
   for (const livre of livres) {
     livre.nom = ID_VERS_NOM[livre.id] || livre.id;
   }
@@ -120,17 +130,38 @@ export interface EntreeStrong {
   derivation?: string; strongs_def?: string; kjv_def?: string;
 }
 
-const strongHebrewData = strongHebrew as unknown as Record<string, Omit<EntreeStrong, "numero" | "langue">>;
-const strongGreekData = strongGreek as unknown as Record<string, Omit<EntreeStrong, "numero" | "langue">>;
+// ⭐ V4.20 — Strong hébreu/grec (6 Mo de JSON) chargés AU PREMIER usage.
+let _strongHebreu: Record<string, Omit<EntreeStrong, "numero" | "langue">> | null = null;
+let _strongGrec: Record<string, Omit<EntreeStrong, "numero" | "langue">> | null = null;
+
+function strongHebrewData(): Record<string, Omit<EntreeStrong, "numero" | "langue">> {
+  if (!_strongHebreu) {
+    _strongHebreu = require("../../data/bible/strongs/hebrew.json") as Record<
+      string,
+      Omit<EntreeStrong, "numero" | "langue">
+    >;
+  }
+  return _strongHebreu;
+}
+
+function strongGreekData(): Record<string, Omit<EntreeStrong, "numero" | "langue">> {
+  if (!_strongGrec) {
+    _strongGrec = require("../../data/bible/strongs/greek.json") as Record<
+      string,
+      Omit<EntreeStrong, "numero" | "langue">
+    >;
+  }
+  return _strongGrec;
+}
 
 export function chercherStrong(numero: string): EntreeStrong | null {
   const num = numero.toUpperCase();
   if (num.startsWith("H")) {
-    const entry = strongHebrewData[num];
+    const entry = strongHebrewData()[num];
     return entry ? { ...entry, numero: num, langue: "hebrew" as const } : null;
   }
   if (num.startsWith("G")) {
-    const entry = strongGreekData[num];
+    const entry = strongGreekData()[num];
     return entry ? { ...entry, numero: num, langue: "greek" as const } : null;
   }
   return null;
@@ -139,7 +170,15 @@ export function chercherStrong(numero: string): EntreeStrong | null {
 // === MORPHHB ===
 export interface MotHebreu { mot: string; lemme: string; morphologie: string; }
 
-const morphhbData = morphhb as unknown as Record<string, string[][][][]>;
+// ⭐ V4.20 — morphhb (19 Mo) chargé AU PREMIER usage.
+let _morphhb: Record<string, string[][][][]> | null = null;
+
+function morphhbData(): Record<string, string[][][][]> {
+  if (!_morphhb) {
+    _morphhb = require("../../data/bible/morphhb/index.json") as Record<string, string[][][][]>;
+  }
+  return _morphhb;
+}
 
 const OSHB_VERS_ID: Record<string, string> = {
   Gen: "gn", Exod: "ex", Lev: "lv", Num: "nb", Deut: "dt",
@@ -153,7 +192,7 @@ const OSHB_VERS_ID: Record<string, string> = {
 };
 
 export function getVersetHebreu(livreNom: string, chapitre: number, verset: number): { mots: MotHebreu[] } | null {
-  const livre = morphhbData[livreNom];
+  const livre = morphhbData()[livreNom];
   if (!livre) return null;
   const vers = livre[chapitre - 1]?.[verset - 1];
   if (!vers) return null;
@@ -161,14 +200,14 @@ export function getVersetHebreu(livreNom: string, chapitre: number, verset: numb
 }
 
 export function oshbVersId(nomOshb: string): string | null { return OSHB_VERS_ID[nomOshb] || null; }
-export function listerLivresHebreu(): string[] { return Object.keys(morphhbData); }
+export function listerLivresHebreu(): string[] { return Object.keys(morphhbData()); }
 
 export function concordanceStrong(numero: string, limite = 50) {
   const num = numero.toUpperCase();
   if (!num.startsWith("H")) return [];
   const strongNum = num.substring(1);
   const resultats: Array<{ livre: string; livreId: string; chapitre: number; verset: number; mots: MotHebreu[] }> = [];
-  for (const [nomLivre, livre] of Object.entries(morphhbData)) {
+  for (const [nomLivre, livre] of Object.entries(morphhbData())) {
     const livreId = OSHB_VERS_ID[nomLivre] || nomLivre;
     for (let c = 0; c < livre.length; c++) {
       for (let v = 0; v < livre[c].length; v++) {
@@ -191,20 +230,26 @@ export function concordanceStrong(numero: string, limite = 50) {
 }
 
 // === PESHITTA ===
-import peshittaData from "../../data/bible/peshitta/peshitta.json";
-
 interface PeshittaChapitre {
   livre: string;
   chapitre: number;
   versets: Array<{ numero: number; texte: string }>;
 }
 
-const peshittaCache = peshittaData as unknown as PeshittaChapitre[];
+// ⭐ V4.20 — Peshitta (15 Mo) chargée AU PREMIER usage.
+let _peshitta: PeshittaChapitre[] | null = null;
+
+function peshittaCache(): PeshittaChapitre[] {
+  if (!_peshitta) {
+    _peshitta = require("../../data/bible/peshitta/peshitta.json") as unknown as PeshittaChapitre[];
+  }
+  return _peshitta;
+}
 
 export function getChapitrePeshitta(livre: string, chapitre: number) {
-  return peshittaCache.find((c) => c.livre === livre && c.chapitre === chapitre)?.versets || null;
+  return peshittaCache().find((c) => c.livre === livre && c.chapitre === chapitre)?.versets || null;
 }
 
 export function listerLivresPeshitta(): string[] {
-  return Array.from(new Set(peshittaCache.map((c) => c.livre)));
+  return Array.from(new Set(peshittaCache().map((c) => c.livre)));
 }
