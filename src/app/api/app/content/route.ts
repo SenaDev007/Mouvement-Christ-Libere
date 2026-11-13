@@ -28,6 +28,17 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /* ============================================================
+   ⭐ V4.23b — MICRO-CACHE APPLICATIF 6 MIN (défense en profondeur)
+   Les instances serverless Vercel écrasant l'en-tête Cache-Control,
+   ce cache EN MÉMOIRE garantit qu'un poll d'arrière-plan (anciennes
+   versions de l'app, toutes les 60 s) n'interroge Neon qu'AU PLUS
+   toutes les 6 min par instance — la base peut se rendormir entre
+   deux. Contenu 100 % public : la réponse est identique pour tous.
+   ============================================================ */
+const DUREE_CACHE_MS = 6 * 60 * 1000;
+let cacheContenu: { expire: number; corps: unknown } | null = null;
+
+/* ============================================================
    Hash FNV-1a 32 bits — léger, déterministe, sans dépendance
    ============================================================ */
 
@@ -61,6 +72,14 @@ async function stampOf(
    ============================================================ */
 
 export async function GET() {
+  if (cacheContenu && Date.now() < cacheContenu.expire) {
+    return NextResponse.json(cacheContenu.corps, {
+      headers: {
+        "Cache-Control": "s-maxage=360, stale-while-revalidate=1800",
+        "X-Cache-App": "hit",
+      },
+    });
+  }
   const generatedAt = new Date().toISOString();
 
   // ── Données directes (hero landing + photos serviteurs) ─────────────
@@ -122,6 +141,11 @@ export async function GET() {
   // ⚠ Le hash ne dépend QUE du contenu — jamais de generatedAt — sinon il
   // changerait à chaque appel et l'app se rafraîchirait en boucle.
   const hash = `fnv-${fnv1a(JSON.stringify(data))}`;
+
+  cacheContenu = {
+    expire: Date.now() + DUREE_CACHE_MS,
+    corps: { hash, generatedAt, data },
+  };
 
   return NextResponse.json(
     { hash, generatedAt, data },

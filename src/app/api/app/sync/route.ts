@@ -44,7 +44,27 @@ import { COUNTRIES } from "@/lib/data/countries";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/* ============================================================
+   ⭐ V4.23b — MICRO-CACHE APPLICATIF 6 MIN (défense en profondeur)
+   Les instances serverless Vercel écrasant l'en-tête Cache-Control,
+   ce cache EN MÉMOIRE garantit qu'un poll d'arrière-plan (anciennes
+   versions de l'app) n'exécute les cascades ensure + le chargement
+   complet + la publication des annonces échues qu'AU PLUS toutes les
+   6 min par instance — Neon peut se rendormir entre deux. Contenu
+   100 % public (aucune donnée de membre) : réponse identique pour tous.
+   ============================================================ */
+const DUREE_CACHE_MS = 6 * 60 * 1000;
+let cacheSync: { expire: number; corps: unknown } | null = null;
+
 export async function GET() {
+  if (cacheSync && Date.now() < cacheSync.expire) {
+    return NextResponse.json(cacheSync.corps, {
+      headers: {
+        "Cache-Control": "s-maxage=360, stale-while-revalidate=1800",
+        "X-Cache-App": "hit",
+      },
+    });
+  }
   try {
     // ── Garde-fous idempotents (colonnes créées à la volée si absentes) ──
     await Promise.all([
@@ -172,8 +192,7 @@ export async function GET() {
     // ── Statistiques dispersés (reprises depuis la liste combinée dans la
     // réponse : membres + serviteurs localisés, parité /api/disperses) ──
 
-    return NextResponse.json(
-      {
+    const corps = {
         syncedAt: new Date().toISOString(),
         servants: servants.map((s) => ({
           id: s.id,
@@ -333,19 +352,17 @@ export async function GET() {
             membres,
           };
         })(),
-      },
-      {
-        // ⭐ V4.23 — Cache CDN : contenu 100 % PUBLIC. Chaque appel de
-        // cette route exécutait 6 cascades ensure (DDL + renommages) + le
-        // chargement complet du contenu + la publication des annonces
-        // échues. Les ANCIENNES versions de l'app mobile (avant V2.11)
-        // pollent en arrière-plan toutes les 60 s : sans cache, chaque
-        // poll réveillait Neon. Avec s-maxage=360, le CDN Vercel répond
-        // 6 min sans toucher la base ; stale-while-revalidate = réponse
-        // instantanée, mise à jour en tâche de fond au-delà.
-        headers: { "Cache-Control": "s-maxage=360, stale-while-revalidate=1800" },
-      }
-    );
+      };
+
+    // ⭐ V4.23b — Stockage du micro-cache applicatif 6 min : les polls
+    // d'arrière-plan des anciennes apps servent ce cache sans toucher Neon.
+    cacheSync = { expire: Date.now() + DUREE_CACHE_MS, corps };
+
+    return NextResponse.json(corps, {
+      // ⭐ V4.23 — Cache CDN 6 min si l'en-tête est honoré (le contenu est
+      // public ; stale-while-revalidate = réponse instantanée au-delà).
+      headers: { "Cache-Control": "s-maxage=360, stale-while-revalidate=1800" },
+    });
   } catch (error) {
     console.error("[api/app/sync] Erreur :", error);
     return NextResponse.json(
