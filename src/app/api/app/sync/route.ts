@@ -334,7 +334,17 @@ export async function GET() {
           };
         })(),
       },
-      { headers: { "Cache-Control": "no-store" } }
+      {
+        // ⭐ V4.23 — Cache CDN : contenu 100 % PUBLIC. Chaque appel de
+        // cette route exécutait 6 cascades ensure (DDL + renommages) + le
+        // chargement complet du contenu + la publication des annonces
+        // échues. Les ANCIENNES versions de l'app mobile (avant V2.11)
+        // pollent en arrière-plan toutes les 60 s : sans cache, chaque
+        // poll réveillait Neon. Avec s-maxage=360, le CDN Vercel répond
+        // 6 min sans toucher la base ; stale-while-revalidate = réponse
+        // instantanée, mise à jour en tâche de fond au-delà.
+        headers: { "Cache-Control": "s-maxage=360, stale-while-revalidate=1800" },
+      }
     );
   } catch (error) {
     console.error("[api/app/sync] Erreur :", error);

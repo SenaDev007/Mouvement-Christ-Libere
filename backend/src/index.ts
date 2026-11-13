@@ -168,6 +168,19 @@ app.use("/api/email", emailRoutes);
 // NB : si un monitor externe (UptimeRobot…) pointait /api/warmup, il recevra
 // désormais 404 — mettre son URL à jour vers /api/health.
 
+// --- ⭐ V4.23 — Présence EN MÉMOIRE (zéro DB) ---
+// Compteur des sockets Yeshua Connect actifs (cf. socket/yeshua-connect.ts).
+// Aucune requête SQL : permet de répondre « combien d'utilisateurs sont
+// VRAIMENT connectés ? » sans jamais réveiller Neon — utile au diagnostic
+// (un utilisateur « en ligne » justifie l'activité DB, personne = la base
+// doit dormir) et à tout futur travail différé conditionné à la présence.
+app.get("/api/presence", (_req, res) => {
+  res.json({
+    enLigne: compterUtilisateursEnLigne(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // --- Stats endpoint ---
 app.get("/api/stats", async (_req, res) => {
   try {
@@ -206,7 +219,7 @@ app.use(
 
 // --- Start server (⭐ V3.72 — démarrage blindé multi-ports) ---
 import http from "http";
-import { initSocketServer } from "./socket/yeshua-connect";
+import { initSocketServer, compterUtilisateursEnLigne } from "./socket/yeshua-connect";
 
 // Ports candidats dédupliqués : PORT injecté par Railway en priorité, puis
 // 3001 (EXPOSE historique du Dockerfile / épinglage dashboard éventuellement

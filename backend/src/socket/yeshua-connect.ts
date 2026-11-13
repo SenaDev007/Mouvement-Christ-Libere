@@ -26,6 +26,16 @@ interface AuthData {
 const userSockets = new Map<string, Set<string>>();
 const socketToUser = new Map<string, string>();
 
+/**
+ * ⭐ V4.23 — Nombre d'utilisateurs VRAIMENT en ligne (présence EN MÉMOIRE,
+ * zéro requête DB). Exposé par GET /api/presence (index.ts) : diagnostic
+ * instantané (« quelqu'un est-il connecté ? ») sans réveiller Neon, et
+ * disponible pour tout futur travail différé conditionné à la présence.
+ */
+export function compterUtilisateursEnLigne(): number {
+  return userSockets.size;
+}
+
 export function initSocketServer(httpServer: HttpServer) {
   const io = new SocketServer(httpServer, {
     cors: {

@@ -125,6 +125,11 @@ export async function GET() {
 
   return NextResponse.json(
     { hash, generatedAt, data },
-    { headers: { "Cache-Control": "no-store" } }
+    {
+      // ⭐ V4.23 — Cache CDN 6 min : le hash de contenu est public ; les
+      // polls d'arrière-plan des anciennes apps (60 s) ne réveillent plus
+      // Neon à chaque tick (le CDN Vercel absorbe, la base dort).
+      headers: { "Cache-Control": "s-maxage=360, stale-while-revalidate=1800" },
+    }
   );
 }
