@@ -627,7 +627,7 @@ function TransactionsContenu() {
                 setRecherche(e.target.value);
               }}
               placeholder="Rechercher (libellé, référence, donateur…)…"
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
             />
           </div>
         </div>
@@ -638,7 +638,7 @@ function TransactionsContenu() {
               setPage(1);
               setCategorie(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
             aria-label="Filtrer par catégorie"
           >
             <option value="">Toutes catégories</option>
@@ -659,7 +659,7 @@ function TransactionsContenu() {
               setPage(1);
               setCaisseFiltre(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
             aria-label="Filtrer par caisse"
           >
             <option value="">Toutes caisses</option>
@@ -675,7 +675,7 @@ function TransactionsContenu() {
               setPage(1);
               setDevise(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
             aria-label="Filtrer par devise"
           >
             <option value="">Toutes devises</option>
@@ -692,7 +692,7 @@ function TransactionsContenu() {
               setPage(1);
               setDu(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
             aria-label="Date de début"
           />
           <input
@@ -702,7 +702,7 @@ function TransactionsContenu() {
               setPage(1);
               setAu(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
             aria-label="Date de fin"
           />
           {(du || au || categorie || type || devise || caisseFiltre || recherche) && (
@@ -886,10 +886,10 @@ function TransactionsContenu() {
 
       {/* ── Éditeur de mouvement ── */}
       {editeurOuvert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
           <form
             onSubmit={enregistrer}
-            className="bg-[#1A0826]/70 rounded-2xl shadow-xl max-w-xl w-full p-6 space-y-4 my-8"
+            className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-xl w-full p-6 space-y-4 my-8"
           >
             <div className="flex items-start justify-between">
               <div>
@@ -966,7 +966,7 @@ function TransactionsContenu() {
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
                   placeholder="Ex. 150,00"
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 />
               </div>
               <div>
@@ -977,7 +977,7 @@ function TransactionsContenu() {
                   value={form.currency}
                   disabled={Boolean(editionId)}
                   onChange={(e) => setForm({ ...form, currency: e.target.value, caisseId: "" })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm disabled:opacity-60"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] disabled:opacity-60"
                 >
                   {DEVISE_CODES.map((d) => (
                     <option key={d} value={d}>
@@ -993,7 +993,7 @@ function TransactionsContenu() {
                 <select
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 >
                   {Object.entries(categoriesCourantes).map(([v, l]) => (
                     <option key={v} value={v}>
@@ -1010,7 +1010,7 @@ function TransactionsContenu() {
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 />
               </div>
             </div>
@@ -1023,7 +1023,7 @@ function TransactionsContenu() {
               <select
                 value={form.caisseId}
                 onChange={(e) => setForm({ ...form, caisseId: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
               >
                 <option value="">
                   {caissesDuFormulaire.length > 0
@@ -1054,7 +1054,7 @@ function TransactionsContenu() {
                 value={form.label}
                 onChange={(e) => setForm({ ...form, label: e.target.value })}
                 placeholder="Ex. Offrande du culte du dimanche"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
               />
             </div>
 
@@ -1066,7 +1066,7 @@ function TransactionsContenu() {
                 <select
                   value={form.method}
                   onChange={(e) => setForm({ ...form, method: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 >
                   <option value="">Non précisée</option>
                   {Object.entries(MOUVEMENT_METHODS).map(([v, l]) => (
@@ -1085,7 +1085,7 @@ function TransactionsContenu() {
                   value={form.reference}
                   onChange={(e) => setForm({ ...form, reference: e.target.value })}
                   placeholder="Ex. REC-2026-042"
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 />
               </div>
             </div>
@@ -1102,7 +1102,7 @@ function TransactionsContenu() {
                     disabled={form.isAnonymous}
                     onChange={(e) => setForm({ ...form, donorName: e.target.value })}
                     placeholder="Nom du donateur"
-                    className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm disabled:opacity-50"
+                    className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] disabled:opacity-50"
                   />
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -1130,7 +1130,7 @@ function TransactionsContenu() {
                 value={form.note}
                 onChange={(e) => setForm({ ...form, note: e.target.value })}
                 placeholder="Contexte, précisions…"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm resize-none"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] resize-none"
               />
             </div>
 
@@ -1161,10 +1161,10 @@ function TransactionsContenu() {
 
       {/* ── Transfert entre caisses (V3.67) ── */}
       {transfertOuvert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
           <form
             onSubmit={enregistrerTransfert}
-            className="bg-[#1A0826]/70 rounded-2xl shadow-xl max-w-xl w-full p-6 space-y-4 my-8"
+            className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-xl w-full p-6 space-y-4 my-8"
           >
             <div className="flex items-start justify-between">
               <div>
@@ -1197,7 +1197,7 @@ function TransactionsContenu() {
                   onChange={(e) =>
                     setFormTransfert({ ...formTransfert, caisseId: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 >
                   {caissesActives.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -1218,7 +1218,7 @@ function TransactionsContenu() {
                       caisseDestinationId: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 >
                   {caissesActives.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -1243,7 +1243,7 @@ function TransactionsContenu() {
                     setFormTransfert({ ...formTransfert, amount: e.target.value })
                   }
                   placeholder="Ex. 500,00"
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 />
               </div>
               <div>
@@ -1256,7 +1256,7 @@ function TransactionsContenu() {
                   onChange={(e) =>
                     setFormTransfert({ ...formTransfert, date: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 />
               </div>
             </div>
@@ -1273,7 +1273,7 @@ function TransactionsContenu() {
                   setFormTransfert({ ...formTransfert, label: e.target.value })
                 }
                 placeholder="Ex. Dépôt des offrandes en banque"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
               />
             </div>
 
@@ -1288,7 +1288,7 @@ function TransactionsContenu() {
                   setFormTransfert({ ...formTransfert, reference: e.target.value })
                 }
                 placeholder="Ex. BORD-2026-018 (bordereau de dépôt)"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
               />
             </div>
 
@@ -1327,8 +1327,8 @@ function TransactionsContenu() {
 
       {/* ── Suppression avec motif (gouvernance V3.67) ── */}
       {suppression && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60">
-          <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm">
+          <div className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-md w-full p-6 space-y-4">
             <h2 className="text-lg font-bold text-[#E08B6D] flex items-center gap-2">
               <Trash2 className="w-5 h-5" />
               Supprimer l&apos;écriture
@@ -1351,7 +1351,7 @@ function TransactionsContenu() {
                 value={motifSuppression}
                 onChange={(e) => setMotifSuppression(e.target.value)}
                 placeholder="Ex. Doublon de saisie, erreur de montant…"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 autoFocus
               />
             </div>
@@ -1379,8 +1379,8 @@ function TransactionsContenu() {
       )}
       {/* ── ⭐ V3.88 — Détails du donateur (retracement complet) ── */}
       {details && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 overflow-y-auto">
-          <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-4 my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-lg w-full p-6 space-y-4 my-8">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-lg font-bold font-serif text-[#FAF6EF] flex items-center gap-2">

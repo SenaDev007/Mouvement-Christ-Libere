@@ -288,7 +288,7 @@ export default function SecretariatCourrierPage() {
               onChange={(e) => setToUserId(e.target.value)}
               required
               disabled={envoiEnCours || destinataires.length === 0}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
             >
               {destinataires.length === 0 && (
                 <option value="">Aucun serviteur disponible</option>
@@ -316,7 +316,7 @@ export default function SecretariatCourrierPage() {
             minLength={3}
             maxLength={150}
             disabled={envoiEnCours}
-            className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
           />
         </div>
 
@@ -334,7 +334,7 @@ export default function SecretariatCourrierPage() {
             maxLength={5000}
             rows={8}
             disabled={envoiEnCours}
-            className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] leading-relaxed focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30 resize-y"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] leading-relaxed focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30 resize-y"
           />
           <p className="text-[10px] text-[#BDB4C9] mt-1">
             {message.trim().length}/5000 caractères
@@ -460,10 +460,10 @@ export default function SecretariatCourrierPage() {
       </div>
       {/* ── ⭐ V3.74 Modal : Paramétrage des adresses email des serviteurs ── */}
       {paramModalOuvert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#3D1A54]/60 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
           <form
             onSubmit={envoyerParametrage}
-            className="bg-[#1A0826]/70 rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-5 my-8"
+            className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-lg w-full p-6 space-y-5 my-8"
           >
             <div className="flex items-start justify-between">
               <div>
@@ -500,7 +500,7 @@ export default function SecretariatCourrierPage() {
                     setFormParam({ ...formParam, emailKongo: e.target.value })
                   }
                   placeholder="exemple@gmail.com"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
                 />
                 {parametres?.emailKongo && (
                   <p className="text-[10px] text-[#A3C9B0] mt-1">
@@ -519,7 +519,7 @@ export default function SecretariatCourrierPage() {
                     setFormParam({ ...formParam, emailAfrika: e.target.value })
                   }
                   placeholder="exemple@gmail.com"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
                 />
                 {parametres?.emailAfrika && (
                   <p className="text-[10px] text-[#A3C9B0] mt-1">

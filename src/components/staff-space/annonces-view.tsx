@@ -414,10 +414,13 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
 
       {/* ── Éditeur ── */}
       {editeurOuvert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
+          {/* ⭐ V3.90 — Fond OPAQUE + bordure or : le modal doit se
+              détacher nettement de l'écran (l'ancien fond violet à 70 %
+              de transparence le rendait invisible sur l'overlay). */}
           <form
             onSubmit={enregistrer}
-            className="bg-[#1A0826]/70 rounded-2xl shadow-xl max-w-xl w-full p-6 space-y-4 my-8"
+            className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-xl w-full p-6 space-y-4 my-8"
           >
             <div className="flex items-start justify-between">
               <h2 className="text-lg font-bold font-serif text-[#FAF6EF]">
@@ -443,7 +446,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 placeholder="Ex. Live spécial délivrance — vendredi 20 h"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/30 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/40"
               />
             </div>
 
@@ -484,7 +487,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
                 placeholder="Rédigez l'annonce complète — elle sera visible par le serviteur concerné et, si publiée, dans le registre du ministère…"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm resize-none"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/30 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] resize-none outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/40"
               />
             </div>
 
@@ -525,7 +528,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
                     onChange={(e) =>
                       setForm({ ...form, publishAt: e.target.value })
                     }
-                    className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#8C5FA8]"
+                    className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/30 bg-[#150920] text-sm text-[#FAF6EF] outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/40 [color-scheme:dark]"
                   />
                   <p className="text-[10px] text-[#BDB4C9] mt-1">
                     À l&apos;heure indiquée, l&apos;annonce passera automatiquement
@@ -565,7 +568,7 @@ export function AnnoncesView({ apiBase, sousTitre }: AnnoncesViewProps) {
               <button
                 type="submit"
                 disabled={enregistrement}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#4E2268] transition-colors disabled:opacity-50"
               >
                 {enregistrement && <Loader2 className="w-4 h-4 animate-spin" />}
                 {editionId ? "Enregistrer" : "Créer l'annonce"}

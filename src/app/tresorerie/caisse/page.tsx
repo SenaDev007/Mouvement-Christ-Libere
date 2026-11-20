@@ -199,8 +199,8 @@ function FormulaireCaisse({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/70">
-      <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/25 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm">
+      <div className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#C9A227]/15">
           <h2 className="text-lg font-bold font-serif text-[#FAF6EF]">
             {caisseInitiale ? "Modifier la caisse" : "Nouvelle caisse"}
@@ -222,7 +222,7 @@ function FormulaireCaisse({
             <select
               value={predefinie}
               onChange={(e) => changerPredefinie(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#1A0826]/70 focus:outline-none focus:border-[#C9A227]"
+              className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#150920] text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227]"
             >
               {CAISSES_PREDEFINIES.map((c) => (
                 <option key={c.nom} value={c.nom}>
@@ -267,7 +267,7 @@ function FormulaireCaisse({
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#1A0826]/70 focus:outline-none focus:border-[#C9A227]"
+                className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#150920] text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227]"
               >
                 {CAISSE_TYPE_VALEURS.map((t) => (
                   <option key={t} value={t}>
@@ -287,7 +287,7 @@ function FormulaireCaisse({
                 value={devise}
                 onChange={(e) => setDevise(e.target.value)}
                 disabled={Boolean(caisseInitiale)}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#1A0826]/70 focus:outline-none focus:border-[#C9A227] disabled:bg-[#C9A227]/10 disabled:text-[#BDB4C9]"
+                className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#150920] text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] disabled:bg-[#C9A227]/10 disabled:text-[#BDB4C9]"
               >
                 {DEVISE_CODES.map((d) => (
                   <option key={d} value={d}>
@@ -453,8 +453,8 @@ function FormulaireTransfert({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#3D1A54]/70 overflow-y-auto">
-      <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/25 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 w-full max-w-lg max-h-[90vh] overflow-y-auto my-8">
         <div className="flex items-start justify-between px-6 py-4 border-b border-[#C9A227]/15">
           <div>
             <h2 className="text-lg font-bold font-serif text-[#FAF6EF] flex items-center gap-2">
@@ -484,7 +484,7 @@ function FormulaireTransfert({
               <select
                 value={caisseId}
                 onChange={(e) => setCaisseId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#1A0826]/70 focus:outline-none focus:border-[#C9A227]"
+                className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#150920] text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227]"
               >
                 {actives.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -509,7 +509,7 @@ function FormulaireTransfert({
                 value={destinationEffective}
                 onChange={(e) => setCaisseDestinationId(e.target.value)}
                 disabled={destinations.length === 0}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#1A0826]/70 focus:outline-none focus:border-[#C9A227] disabled:bg-[#C9A227]/10 disabled:text-[#BDB4C9]"
+                className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#150920] text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] disabled:bg-[#C9A227]/10 disabled:text-[#BDB4C9]"
               >
                 {destinations.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -551,7 +551,7 @@ function FormulaireTransfert({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#1A0826]/70 focus:outline-none focus:border-[#C9A227]"
+                className="w-full px-3 py-2.5 rounded-lg border border-[#C9A227]/25 text-sm bg-[#150920] text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227]"
               />
             </div>
           </div>

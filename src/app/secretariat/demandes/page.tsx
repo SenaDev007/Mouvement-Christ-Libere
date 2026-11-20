@@ -338,7 +338,7 @@ function DemandesContenu() {
                 setRecherche(e.target.value);
               }}
               placeholder="Rechercher (nom, objet, contact)…"
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227]"
             />
           </div>
           <select
@@ -347,7 +347,7 @@ function DemandesContenu() {
               setPage(1);
               setServant(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227]"
             aria-label="Filtrer par serviteur"
           >
             <option value="">Tous les serviteurs</option>
@@ -360,7 +360,7 @@ function DemandesContenu() {
               setPage(1);
               setUrgence(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227]"
             aria-label="Filtrer par urgence"
           >
             <option value="">Toutes urgences</option>
@@ -576,7 +576,7 @@ function DemandesContenu() {
                               ? "Note pour le serviteur (facultative) — la demande arrive pré-remplie, vous pouvez la transmettre telle quelle."
                               : "Note pour le serviteur (facultative)…"
                           }
-                          className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227] resize-none"
+                          className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] resize-none"
                         />
                         {demande.source === "SITE" && (
                           <p className="text-[10px] text-[#A3C9B0] flex items-center gap-1.5">
@@ -686,10 +686,10 @@ function DemandesContenu() {
 
       {/* ── Modal : saisie manuelle ── */}
       {formulaireOuvert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1A0826]/60 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
           <form
             onSubmit={creerDemande}
-            className="bg-[#1A0826]/70 rounded-2xl shadow-xl max-w-xl w-full p-6 space-y-4 my-8"
+            className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-xl w-full p-6 space-y-4 my-8"
           >
             <div className="flex items-start justify-between">
               <div>
@@ -721,7 +721,7 @@ function DemandesContenu() {
                   required
                   value={form.requesterName}
                   onChange={(e) => setForm({ ...form, requesterName: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 />
               </div>
               <div>
@@ -733,7 +733,7 @@ function DemandesContenu() {
                   required
                   value={form.contact}
                   onChange={(e) => setForm({ ...form, contact: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 />
               </div>
               <div>
@@ -743,7 +743,7 @@ function DemandesContenu() {
                 <select
                   value={form.servantCode}
                   onChange={(e) => setForm({ ...form, servantCode: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 >
                   <option value="afrika">Sœur Afrika</option>
                   <option value="kongo">Pasteur Kongo</option>
@@ -756,7 +756,7 @@ function DemandesContenu() {
                 <select
                   value={form.urgency}
                   onChange={(e) => setForm({ ...form, urgency: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 >
                   {Object.entries(DEMANDE_URGENCES).map(([v, u]) => (
                     <option key={v} value={v}>
@@ -773,7 +773,7 @@ function DemandesContenu() {
                   type="text"
                   value={form.country}
                   onChange={(e) => setForm({ ...form, country: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 />
               </div>
               <div>
@@ -784,7 +784,7 @@ function DemandesContenu() {
                   type="text"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
                 />
               </div>
             </div>
@@ -798,7 +798,7 @@ function DemandesContenu() {
                 required
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
               />
             </div>
             <div>
@@ -810,7 +810,7 @@ function DemandesContenu() {
                 rows={5}
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm resize-none"
+                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] resize-none"
               />
             </div>
 
