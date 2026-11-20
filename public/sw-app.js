@@ -1,14 +1,16 @@
 /* ============================================================
-   SERVICE WORKER « CHRIST LIBÈRE » — ⭐ V4.11 MODE HORS LIGNE
+   SERVICE WORKER « CHRIST LIBÈRE » — ⭐ V4.12 MODE HORS LIGNE
    ============================================================
 
-   v411 — CORRECTIF URGENT ERR_FAILED : les navigations qui suivent
-   une redirection (ex. https://admin.mouvementchristlibere.com/ →
-   /admin/dashboard → /admin/login) faisaient planter le back-office
-   (net::ERR_FAILED) car respondWith() interdit de renvoyer une
-   réponse « redirected » pour une navigation. On répond désormais
-   par une 302 propre vers l'URL finale, que le navigateur suit
-   lui-même.
+   v412 — FIX DÉFINITIF back-office : sur admin.mouvementchristlibere.com,
+   le SW n'intercepte PLUS AUCUNE navigation (un back-office est un outil
+   en ligne — le hors ligne n'a pas de sens pour l'admin, et l'ancienne
+   interception transformait la racine « / » (307 → /admin/dashboard →
+   307 → /admin/login) en net::ERR_FAILED). Sur le site public, une
+   navigation qui suit une redirection (ex. page protégée → /login)
+   renvoie désormais une réponse RECONSTRUITE propre — le motif
+   recommandé par l'équipe Workbox (Jeff Posnick) : jamais renvoyer une
+   réponse « redirected » ni un 302 synthétique pour une navigation.
 
    Objectif (exigence du pasteur) : « le hors ligne doit fonctionner
    pour toutes les pages de l'application jusqu'à la communauté
@@ -49,7 +51,7 @@
    sur le scope /.
 */
 
-const VERSION = "v411";
+const VERSION = "v412";
 const STATIC_CACHE = `christ-libere-static-${VERSION}`;
 const IMAGES_CACHE = `christ-libere-images-${VERSION}`;
 const PAGES_CACHE = `christ-libere-pages-${VERSION}`;
@@ -99,6 +101,26 @@ const NEVER_CACHE_NAV = [
   "/api/",
 ];
 
+/* ⭐ V4.12 — Back-office (admin.*) : les NAVIGATIONS ne sont jamais
+   interceptées. La racine « / » du back-office redirige en 307 vers
+   /admin/dashboard puis /admin/login : c'est le NAVIGATEUR qui doit
+   suivre cette chaîne lui-même (tout passage par respondWith()
+   provoque net::ERR_FAILED — constaté sur Chrome/HTTPS en prod).
+   Les assets (/_next/static, images) restent mis en cache : c'est
+   bénéfique et sans risque. */
+const IS_BACKOFFICE =
+  self.location.hostname.startsWith("admin.") ||
+  self.location.hostname.startsWith("secretariat.") ||
+  self.location.hostname.startsWith("tresorerie.");
+
+/* Journal diagnostic (mémoire volatile, 40 dernières navigations,
+   lisible via fetch("/__swlog") même origine). */
+const NAVLOG = [];
+function logNav(entry) {
+  NAVLOG.push({ t: Date.now(), ...entry });
+  if (NAVLOG.length > 40) NAVLOG.shift();
+}
+
 /* ============================================================
    INSTALLATION — précache + prise de contrôle immédiate
    ============================================================ */
@@ -109,8 +131,16 @@ self.addEventListener("install", (event) => {
       const cache = await caches.open(PAGES_CACHE);
       const staticCache = await caches.open(STATIC_CACHE);
 
-      // Page hors ligne + icônes : indispensables.
+      // Page hors ligne + icônes : indispensables (statiques, sans base).
       await Promise.allSettled(CORE_ASSETS.map((u) => staticCache.add(u)));
+
+      // ⭐ V4.12 — back-office : PAS de précache des pages (le hors
+      // ligne n'y a pas de sens, et chaque page SSR réveillerait la
+      // base Neon pour rien à chaque mise à jour du SW).
+      if (IS_BACKOFFICE) {
+        await self.skipWaiting();
+        return;
+      }
 
       // Toutes les pages de l'app + accueil du site : best-effort (une
       // page en erreur n'empêche pas l'installation ; les 307 vers
@@ -161,6 +191,16 @@ self.addEventListener("fetch", (event) => {
   // Hors http(s) (blob:, chrome-extension:…) → laisser le navigateur.
   if (url.protocol !== "http:" && url.protocol !== "https:") return;
 
+  // Journal diagnostic (même origine uniquement).
+  if (url.origin === self.location.origin && url.pathname === "/__swlog") {
+    event.respondWith(
+      new Response(JSON.stringify(NAVLOG), {
+        headers: { "content-type": "application/json" },
+      })
+    );
+    return;
+  }
+
   // ── TEMPS RÉEL & VIDÉOS : réseau uniquement, JAMAIS de cache ──────
   if (isRealtimeOrVideo(url, request)) return;
 
@@ -185,6 +225,11 @@ self.addEventListener("fetch", (event) => {
 
   // ── NAVIGATIONS : network-first + repli cache + offline.html ──────
   if (request.mode === "navigate" || request.destination === "document") {
+    // ⭐ V4.12 : back-office → réseau pur, JAMAIS d'interception.
+    if (IS_BACKOFFICE) {
+      logNav({ p: url.pathname, backoffice: true });
+      return;
+    }
     if (shouldNeverCacheNavigation(url.pathname)) return; // réseau seul
     event.respondWith(navigationHandler(request));
     return;
@@ -251,16 +296,26 @@ async function navigationHandler(request) {
     } else {
       res = await fetch(request);
     }
-    // ⚠️ FIX v411 : la page a suivi une redirection (ex. « / » du
-    // back-office → /admin/dashboard → /admin/login). La spécification
-    // interdit de renvoyer via respondWith() une réponse marquée
-    // « redirected » pour une navigation : le navigateur la rejette
-    // d'office → net::ERR_FAILED, page inaccessible (bug v410 qui
-    // bloquait totalement admin.mouvementchristlibere.com). On répond
-    // donc par une 302 « propre » vers l'URL finale : le navigateur
-    // suit la redirection LUI-MÊME, et /admin… reste hors cache.
+    // ⚠️ FIX v412 : la requête a suivi des redirections (ex. page
+    // protégée → /login). Renvoyer la réponse « redirected » →
+    // net::ERR_FAILED (interdit par la spec) ; renvoyer un 302
+    // synthétique → net::ERR_FAILED aussi (constaté en prod Chrome
+    // v411). Solution : RECONSTRUIRE une réponse propre (corps final,
+    // statut 200, drapeau redirected absent) — motif recommandé par
+    // l'équipe Workbox. La barre d'URL reste sur la page demandée.
     if (res && res.redirected && res.url && res.url !== request.url) {
-      return Response.redirect(res.url, 302);
+      logNav({ p: url.pathname, redirected: true, final: res.url.slice(0, 140), fix: "rebuild" });
+      const headers = new Headers(res.headers);
+      headers.delete("content-encoding");
+      headers.delete("content-length");
+      headers.delete("set-cookie");
+      headers.delete("content-disposition");
+      const body = await res.blob();
+      return new Response(body, {
+        status: res.status,
+        statusText: res.statusText,
+        headers,
+      });
     }
     if (res && res.ok) {
       // Stocker une copie NETTOYÉE (sans Set-Cookie/Vary) pour que le
