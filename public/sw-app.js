@@ -1,6 +1,14 @@
 /* ============================================================
-   SERVICE WORKER « CHRIST LIBÈRE » — ⭐ V4.10 MODE HORS LIGNE
+   SERVICE WORKER « CHRIST LIBÈRE » — ⭐ V4.11 MODE HORS LIGNE
    ============================================================
+
+   v411 — CORRECTIF URGENT ERR_FAILED : les navigations qui suivent
+   une redirection (ex. https://admin.mouvementchristlibere.com/ →
+   /admin/dashboard → /admin/login) faisaient planter le back-office
+   (net::ERR_FAILED) car respondWith() interdit de renvoyer une
+   réponse « redirected » pour une navigation. On répond désormais
+   par une 302 propre vers l'URL finale, que le navigateur suit
+   lui-même.
 
    Objectif (exigence du pasteur) : « le hors ligne doit fonctionner
    pour toutes les pages de l'application jusqu'à la communauté
@@ -41,7 +49,7 @@
    sur le scope /.
 */
 
-const VERSION = "v410";
+const VERSION = "v411";
 const STATIC_CACHE = `christ-libere-static-${VERSION}`;
 const IMAGES_CACHE = `christ-libere-images-${VERSION}`;
 const PAGES_CACHE = `christ-libere-pages-${VERSION}`;
@@ -242,6 +250,17 @@ async function navigationHandler(request) {
       res = await withTimeout(fetch(request), 6000);
     } else {
       res = await fetch(request);
+    }
+    // ⚠️ FIX v411 : la page a suivi une redirection (ex. « / » du
+    // back-office → /admin/dashboard → /admin/login). La spécification
+    // interdit de renvoyer via respondWith() une réponse marquée
+    // « redirected » pour une navigation : le navigateur la rejette
+    // d'office → net::ERR_FAILED, page inaccessible (bug v410 qui
+    // bloquait totalement admin.mouvementchristlibere.com). On répond
+    // donc par une 302 « propre » vers l'URL finale : le navigateur
+    // suit la redirection LUI-MÊME, et /admin… reste hors cache.
+    if (res && res.redirected && res.url && res.url !== request.url) {
+      return Response.redirect(res.url, 302);
     }
     if (res && res.ok) {
       // Stocker une copie NETTOYÉE (sans Set-Cookie/Vary) pour que le
