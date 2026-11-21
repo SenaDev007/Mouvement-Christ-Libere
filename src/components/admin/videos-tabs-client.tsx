@@ -21,6 +21,8 @@ import {
   HardDriveDownload,
   // ⭐ V4.17 — synchronisation des compteurs vues/likes (YouTube + TikTok).
   TrendingUp,
+  // ⭐ V4.24 — synchronisation automatique de la chaîne YouTube liée (OAuth).
+  Youtube,
 } from "lucide-react";
 // ⭐ V3.46 — Rubriques signatures (partagées site public ↔ back-office) :
 // « Saint-Esprit réponds-moi » (Afrika), « Rhema du matin »/« Rhema du soir »
@@ -34,7 +36,9 @@ import { DeleteButton } from "@/components/admin/delete-button";
 import { AdminModal, ModalField, ModalError, ModalSubmit, modalInputClass } from "@/components/admin/admin-modal";
 // ⭐ V3.64 — Miniatures TikTok dans la grille back-office : vraie image
 // (R2, backfill) + badge, repli de marque si absente.
-import { estUrlTiktok } from "@/lib/tiktok";
+// ⭐ V4.24 — détection étendue : liens courts vm./vt.tiktok.com (aperçu
+// oEmbed dans le modal « Nouvelle vidéo »).
+import { estUrlTiktok, estLienCourtTiktok } from "@/lib/tiktok";
 import { TiktokNoteIcon, BadgeTikTok } from "@/components/tiktok/tiktok-note-icon";
 import type { Video, Servant } from "@prisma/client";
 // ⭐ V3.48 — compression côté client de la miniature uploadée (ratio
@@ -91,12 +95,64 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
   const [activeTab, setActiveTab] = useState<string>(initialServant);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [modalOpen, setModalOpen] = useState(false);
-  // ⭐ V4.02 — modal « Modifier » : édition du TITRE et de la DESCRIPTION
-  // d'une vidéo directement depuis la carte (le crayon y menait avant à
-  // la post-production — un studio de MONTAGE sans aucun champ titre /
-  // description, d'où le retour du pasteur). Le montage reste accessible
-  // via le nouveau bouton ciseaux « Post-production ».
+  // ⭐ V4.24 — modal « Modifier » COMPLET : le crayon ouvre désormais le
+  // modal « Nouvelle vidéo » en mode édition (tous les champs : serviteur,
+  // titre, rubrique, description, durée, URL, miniature, live). Avant
+  // (V4.02), seuls le titre et la description étaient éditables — corriger
+  // une URL mal saisie obligeait à supprimer puis re-créer la vidéo.
   const [editVideo, setEditVideo] = useState<VideoWithServant | null>(null);
+
+  // ─── ⭐ V4.24 — SYNCHRONISATION AUTOMATIQUE YOUTUBE ───
+  // La chaîne YouTube du pasteur est liée au back-office via OAuth
+  // (YOUTUBE_REFRESH_TOKEN) : ce bouton récupère les dernières vidéos
+  // publiées et importe celles qui manquent au module Vidéos. Un cron
+  // (vercel.json → /api/cron/sync-youtube) fait la même passe 2×/jour.
+  const [syncYouTube, setSyncYouTube] = useState<{
+    enCours: boolean;
+    message: string | null;
+    erreur: boolean;
+  }>({ enCours: false, message: null, erreur: false });
+  const lancerSyncYouTube = async () => {
+    if (syncYouTube.enCours) return;
+    setSyncYouTube({ enCours: true, message: null, erreur: false });
+    try {
+      const res = await fetch("/admin/api/videos/sync-youtube", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          servantCode: activeTab === "all" ? null : activeTab,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ajoutees?: number;
+        ignorees?: number;
+        sautees?: number;
+        error?: string;
+      };
+      if (!res.ok) throw new Error(data.error || `Échec (${res.status})`);
+      const ajoutees = data.ajoutees || 0;
+      const ignorees = data.ignorees || 0;
+      const sautees = data.sautees || 0;
+      setSyncYouTube({
+        enCours: false,
+        erreur: false,
+        message:
+          ajoutees > 0
+            ? `${ajoutees} nouvelle${ajoutees > 1 ? "s" : ""} vidéo${ajoutees > 1 ? "s" : ""} importée${ajoutees > 1 ? "s" : ""} depuis la chaîne YouTube — ${ignorees} déjà présente${ignorees > 1 ? "s" : ""}${sautees ? `, ${sautees} supprimée${sautees > 1 ? "s" : ""} volontairement (ignorée${sautees > 1 ? "s" : ""})` : ""}.`
+            : `Chaîne YouTube à jour — aucune nouvelle vidéo à importer (${ignorees} déjà présente${ignorees > 1 ? "s" : ""}${sautees ? `, ${sautees} supprimée${sautees > 1 ? "s" : ""} volontairement ignorée${sautees > 1 ? "s" : ""}` : ""}).`,
+      });
+      if (ajoutees > 0) router.refresh();
+    } catch (err) {
+      setSyncYouTube({
+        enCours: false,
+        erreur: true,
+        message:
+          err instanceof Error
+            ? `Synchronisation impossible : ${err.message}`
+            : "Synchronisation impossible.",
+      });
+    }
+  };
 
   // ─── ⭐ V4.17 — SYNCHRONISATION DES COMPTEURS (vues + likes) ───
   // Bouton manuel : YouTube (lots de 50 via l'API officielle) + TikTok
@@ -745,6 +801,44 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           </div>
         </div>
       )}
+      {/* ⭐ V4.24 — Retour de la synchronisation YouTube */}
+      {syncYouTube.message && (
+        <div
+          className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${
+            syncYouTube.erreur
+              ? "border-[#B3452E]/40 bg-[#B3452E]/10"
+              : "border-[#5B7052]/40 bg-[#5B7052]/10"
+          }`}
+        >
+          {syncYouTube.erreur ? (
+            <AlertCircle className="h-4 w-4 shrink-0 text-[#E08B6D] mt-0.5" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#A3C9B0] mt-0.5" />
+          )}
+          <p
+            className={`text-sm font-bold min-w-0 flex-1 ${
+              syncYouTube.erreur ? "text-[#E08B6D]" : "text-[#A3C9B0]"
+            }`}
+          >
+            {syncYouTube.message}
+          </p>
+          <button
+            type="button"
+            onClick={() =>
+              setSyncYouTube({ enCours: false, message: null, erreur: false })
+            }
+            className={`shrink-0 transition-colors ${
+              syncYouTube.erreur
+                ? "text-[#E08B6D]/60 hover:text-[#E08B6D]"
+                : "text-[#A3C9B0]/60 hover:text-[#A3C9B0]"
+            }`}
+            aria-label="Fermer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -807,6 +901,28 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           )}
           <span className="hidden sm:inline">
             {sauvegardeMp4.enCours ? "Arrêter la sauvegarde" : "Sauvegarder TikTok"}
+          </span>
+        </button>
+        {/* ⭐ V4.24 — Synchroniser la chaîne YouTube liée (OAuth) : importe
+            automatiquement les nouvelles vidéos publiées par le pasteur. */}
+        <button
+          type="button"
+          onClick={lancerSyncYouTube}
+          disabled={syncYouTube.enCours}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md ${
+            syncYouTube.enCours
+              ? "bg-[#3D1A54] text-[#DDBE55]"
+              : "bg-[#C9A227]/10 text-[#DDBE55] hover:bg-[#3D1A54]/10"
+          }`}
+          title="Récupérer automatiquement les dernières vidéos publiées sur la chaîne YouTube liée (le compte du pasteur) — elles apparaissent dans le module et sur la page publique"
+        >
+          {syncYouTube.enCours ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Youtube className="w-4 h-4" />
+          )}
+          <span className="hidden sm:inline">
+            {syncYouTube.enCours ? "Synchronisation…" : "Synchroniser YouTube"}
           </span>
         </button>
         <button
@@ -1135,16 +1251,18 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                     </Link>
-                    {/* ⭐ V4.02 — « Modifier » : édition RAPIDE du titre et
-                        de la description (modal + PATCH immédiat). Avant, ce
-                        crayon ouvrait la post-production, où ces champs
-                        n'existent pas. */}
+                    {/* ⭐ V4.24 — « Modifier » : modal COMPLET en mode
+                        édition (serviteur, titre, rubrique, description,
+                        durée, URL, miniature, live). Avant (V4.02), seuls
+                        le titre et la description étaient modifiables :
+                        corriger une URL mal saisie obligeait à supprimer
+                        puis re-créer la vidéo. */}
                     <button
                       type="button"
                       onClick={() => setEditVideo(v)}
                       className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#BDB4C9] hover:text-[#C9A227] transition-colors"
-                      aria-label="Modifier le titre et la description"
-                      title="Modifier le titre et la description"
+                      aria-label="Modifier la vidéo"
+                      title="Modifier la vidéo — tous les champs (titre, URL, rubrique, miniature…)"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
@@ -1278,24 +1396,17 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
         )}
       </AdminModal>
 
-      {/* Modal Nouvelle vidéo */}
+      {/* Modal Nouvelle vidéo — ⭐ V4.24 : OUVERT AUSSI en mode édition
+          complète (editVideo ≠ null) via le crayon « Modifier » d'une carte. */}
       <NewVideoModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        open={modalOpen || !!editVideo}
+        onClose={() => {
+          setModalOpen(false);
+          setEditVideo(null);
+        }}
         servants={servants}
         preselectedServantCode={activeTab === "all" ? null : activeTab}
-      />
-
-      {/* ⭐ V4.02 — Modal Modifier : titre + description */}
-      <EditVideoModal
-        video={editVideo}
-        onClose={() => setEditVideo(null)}
-        onSaved={(id, title, description) => {
-          setVideosLocal((prev) =>
-            prev.map((v) => (v.id === id ? { ...v, title, description } : v))
-          );
-          router.refresh();
-        }}
+        editVideo={editVideo}
       />
     </div>
   );
@@ -1366,131 +1477,17 @@ function RubricSelect({ video, onChange }: RubricSelectProps) {
   );
 }
 
-// ============ ⭐ V4.02 — Modal Modifier (titre + description) ============
-interface EditVideoModalProps {
-  /** Vidéo à éditer — null = fermé. */
-  video: VideoWithServant | null;
-  onClose: () => void;
-  /** Appelé après l'enregistrement réussi (mise à jour locale + refresh). */
-  onSaved: (id: string, title: string, description: string) => void;
-}
-
-function EditVideoModal({ video, onClose, onSaved }: EditVideoModalProps) {
-  const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  // Ouvrir le modal → pré-remplir avec les valeurs ACTUELLES de la vidéo
-  // (resynchronisation à chaque ouverture, même si la carte a été
-  // rafraîchie entre-temps).
-  useEffect(() => {
-    if (video) {
-      setTitle(video.title || "");
-      setDescription(video.description || "");
-      setError("");
-    }
-  }, [video]);
-
-  if (!video) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const titrePropre = title.trim();
-    if (!titrePropre) {
-      setError("Le titre est obligatoire.");
-      return;
-    }
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`/admin/api/videos/${video.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: titrePropre,
-          description: description.trim(),
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Échec (${res.status})`);
-      }
-      onSaved(video.id, titrePropre, description.trim());
-      onClose();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? `Enregistrement impossible : ${err.message}`
-          : "Enregistrement impossible."
-      );
-    } finally {
-      setLoading(false);
-      router.refresh();
-    }
-  };
-
-  return (
-    <AdminModal
-      open
-      onClose={onClose}
-      title="Modifier la vidéo"
-      subtitle={`${video.servant?.shortName || "Serviteur"} — titre et description visibles sur la page publique /videos`}
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <ModalField label="Titre" required fullWidth>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            maxLength={300}
-            placeholder="Titre de la vidéo"
-            className={modalInputClass()}
-            autoFocus
-          />
-        </ModalField>
-
-        <ModalField
-          label="Description"
-          help="Affichée sous le lecteur et utilisée par Google (résumé de la vidéo)."
-          fullWidth
-        >
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={5}
-            maxLength={5000}
-            placeholder="Description de la vidéo…"
-            className={`${modalInputClass()} resize-none`}
-          />
-        </ModalField>
-
-        <ModalError error={error} />
-
-        <div className="flex items-center justify-end gap-2 pt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#BDB4C9] hover:text-[#FAF6EF] transition-colors disabled:opacity-40"
-          >
-            Annuler
-          </button>
-          <ModalSubmit loading={loading} label="Enregistrer" />
-        </div>
-      </form>
-    </AdminModal>
-  );
-}
-
 // ============ Modal Nouvelle Vidéo ============
 interface NewVideoModalProps {
   open: boolean;
   onClose: () => void;
   servants: Servant[];
   preselectedServantCode: string | null;
+  /** ⭐ V4.24 — MODE ÉDITION : vidéo à modifier (null = création). Le
+   *  modal s'ouvre pré-rempli avec TOUS les champs et la soumission
+   *  devient un PATCH au lieu d'un POST — corriger une URL mal saisie
+   *  ne demande plus de supprimer puis re-créer la vidéo. */
+  editVideo?: VideoWithServant | null;
 }
 
 /** Formate une durée en secondes → « 1:24:30 » ou « 24:30 ». */
@@ -1624,7 +1621,6 @@ function MiniatureField({
         <div className="relative flex-shrink-0">
           <div className="w-36 h-[81px] rounded-lg border-2 border-[#C9A227]/30 overflow-hidden bg-[#3D1A54] flex items-center justify-center shadow-md">
             {affichee ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={affichee} alt="Miniature de la vidéo" className="w-full h-full object-cover" />
             ) : (
               <ImageIcon className="w-7 h-7 text-[#C9A227]/50" aria-hidden />
@@ -1676,7 +1672,10 @@ function MiniatureField({
   );
 }
 
-function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewVideoModalProps) {
+function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVideo }: NewVideoModalProps) {
+  // ⭐ V4.24 — MODE ÉDITION : true quand le modal est ouvert depuis le
+  // crayon « Modifier » d'une carte (editVideo fourni par le parent).
+  const enEdition = !!editVideo;
   // ⭐ V3.47 — source de la vidéo : lien (YouTube…) OU FICHIER (upload direct).
   const [source, setSource] = useState<"lien" | "fichier">("lien");
   const [form, setForm] = useState({
@@ -1724,22 +1723,175 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
     titreExistant?: string | null;
   } | null>(null);
 
-  // Pré-remplir le serviteur quand le modal s'ouvre
+  // ─── ⭐ V4.24 — DÉTECTION TIKTOK : VRAIE miniature en APERÇU ───
+  // Le proxy serveur /api/tiktok/oembed interroge l'oEmbed officiel
+  // TikTok (le navigateur ne peut pas joindre TikTok directement). Il
+  // résout AUSSI les liens courts vm./vt. vers l'URL canonique (le champ
+  // URL est mis à jour tout seul) et renvoie la légende (pré-remplissage
+  // du titre si vide). Le pasteur voit la miniature AVANT d'enregistrer —
+  // fini la surprise « fond noir TikTok » après création.
+  const [miniatureTiktok, setMiniatureTiktok] = useState<string | null>(null);
+  const [titreTiktok, setTitreTiktok] = useState<string | null>(null);
+  const [tiktokEnCours, setTiktokEnCours] = useState(false);
+  const [erreurUrlTiktok, setErreurUrlTiktok] = useState<string | null>(null);
+  // ⭐ V4.24 — miniature ACTUELLE en mode édition (affichée par défaut,
+  // remplacée par la détection dès que l'URL change).
+  const [miniatureExistante, setMiniatureExistante] = useState<string | null>(null);
+  const minuterieTiktok = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const detecterTiktok = async (url: string) => {
+    setTiktokEnCours(true);
+    setErreurUrlTiktok(null);
+    try {
+      const res = await fetch(`/api/tiktok/oembed?url=${encodeURIComponent(url)}`);
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        titre?: string;
+        miniatureUrl?: string;
+        urlCanonique?: string;
+      };
+      if (!res.ok || !data.ok) {
+        setMiniatureTiktok(null);
+        setTitreTiktok(null);
+        setErreurUrlTiktok(
+          "Miniature TikTok indisponible pour ce lien — vérifiez que la vidéo est publique. Elle sera récupérée automatiquement plus tard."
+        );
+        return;
+      }
+      setMiniatureTiktok(data.miniatureUrl || null);
+      setTitreTiktok(data.titre || null);
+      // Lien court → URL canonique : remplacer le champ pour que la vidéo
+      // soit enregistrée avec l'URL complète (l'embed public l'exige).
+      if (data.urlCanonique && data.urlCanonique !== url) {
+        setForm((f) =>
+          f.videoUrl.trim() === url.trim()
+            ? { ...f, videoUrl: data.urlCanonique as string }
+            : f
+        );
+      }
+      // Légende TikTok → pré-remplissage du titre si vide (modifiable).
+      if (data.titre) {
+        setForm((f) => (f.title.trim() ? f : { ...f, title: data.titre as string }));
+      }
+    } catch {
+      setMiniatureTiktok(null);
+      setErreurUrlTiktok(
+        "TikTok injoignable depuis ce navigateur — la miniature sera récupérée automatiquement à l'enregistrement."
+      );
+    } finally {
+      setTiktokEnCours(false);
+    }
+  };
+
+  // Nettoyage de la minuterie de débounce au démontage.
   useEffect(() => {
-    if (open && preselectedServantCode) {
+    return () => {
+      if (minuterieTiktok.current) clearTimeout(minuterieTiktok.current);
+    };
+  }, []);
+
+  // ⭐ V4.24 — MODE ÉDITION : pré-remplir TOUS les champs avec la vidéo
+  // existante dès l'ouverture (resynchronisation à chaque ouverture).
+  useEffect(() => {
+    if (open && editVideo) {
+      setForm({
+        servantId: editVideo.servantId || "",
+        title: editVideo.title || "",
+        description: editVideo.description || "",
+        duration: editVideo.duration || "",
+        videoUrl: editVideo.videoUrl || "",
+        isLive: editVideo.isLive,
+        views: editVideo.views || 0,
+        category: editVideo.category || "",
+      });
+      setMiniatureExistante(editVideo.thumbnailUrl || null);
+      setMiniatureYouTube(null);
+      setMiniatureTiktok(null);
+      setMiniaturePerso(null);
+      setTitreTiktok(null);
+      setErreurUrlTiktok(null);
+      setFicheCreeeId(null);
+      setSuppressionConnue(null);
+      setPhase("repos");
+      setError("");
+      // Vidéo TikTok sans miniature → montrer immédiatement la vraie
+      // miniature que le serveur récupérera à l'enregistrement.
+      if (
+        editVideo.videoUrl &&
+        !editVideo.thumbnailUrl &&
+        estUrlTiktok(editVideo.videoUrl)
+      ) {
+        void detecterTiktok(editVideo.videoUrl);
+      }
+    }
+  }, [open, editVideo]);
+
+  // ⭐ V4.24 — Réinitialiser à la FERMETURE : la prochaine ouverture
+  // (création ou édition) repart d'un état propre — sinon les valeurs
+  // d'une édition précédente restaient dans le formulaire de création.
+  useEffect(() => {
+    if (!open) {
+      if (minuterieTiktok.current) clearTimeout(minuterieTiktok.current);
+      setSource("lien");
+      setForm({
+        servantId: "",
+        title: "",
+        description: "",
+        duration: "",
+        videoUrl: "",
+        isLive: false,
+        views: 0,
+        category: "",
+      });
+      setMiniatureExistante(null);
+      setMiniatureYouTube(null);
+      setMiniatureTiktok(null);
+      setMiniaturePerso(null);
+      setTitreTiktok(null);
+      setTiktokEnCours(false);
+      setErreurUrlTiktok(null);
+      setFichier(null);
+      setMiniatureAuto(null);
+      setDureeAuto("");
+      setFicheCreeeId(null);
+      setSuppressionConnue(null);
+      setDetailsProgression(null);
+      setPhase("repos");
+    }
+  }, [open]);
+
+  // Pré-remplir le serviteur quand le modal s'ouvre (création uniquement —
+  // en édition, le serviteur de la vidéo prime)
+  useEffect(() => {
+    if (open && preselectedServantCode && !editVideo) {
       const s = servants.find((srv) => srv.code === preselectedServantCode);
       if (s) setForm((f) => ({ ...f, servantId: s.id }));
     }
-  }, [open, preselectedServantCode, servants]);
+  }, [open, preselectedServantCode, servants, editVideo]);
 
   // Auto-extract YouTube ID + miniature depuis l'URL (⭐ V3.48 : la miniature
   // détectée est un DÉFAUT visible dans le champ d'upload — plus de champ
-  // « URL miniature » à remplir manuellement).
+  // « URL miniature » à remplir manuellement). ⭐ V4.24 : détection TikTok
+  // (aperçu oEmbed + résolution des liens courts) avec débounce 600 ms.
   const handleUrlChange = (url: string) => {
     setForm((f) => ({ ...f, videoUrl: url }));
+    setErreurUrlTiktok(null);
+
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
     if (match) {
       setMiniatureYouTube(`https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`);
+    }
+
+    if (minuterieTiktok.current) clearTimeout(minuterieTiktok.current);
+    const urlTrim = url.trim();
+    if (estUrlTiktok(urlTrim) || estLienCourtTiktok(urlTrim)) {
+      minuterieTiktok.current = setTimeout(() => {
+        void detecterTiktok(urlTrim);
+      }, 600);
+    } else {
+      setMiniatureTiktok(null);
+      setTitreTiktok(null);
+      setTiktokEnCours(false);
     }
   };
 
@@ -1796,8 +1948,78 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
       setError("Serviteur et titre sont requis");
       return;
     }
-    if (source === "fichier" && !fichier && !estReessai) {
+    if (source === "fichier" && !fichier && !estReessai && !enEdition) {
       setError("Choisissez le fichier vidéo à envoyer");
+      return;
+    }
+
+    // ─── ⭐ V4.24 — MODE ÉDITION : PATCH de TOUS les champs ───
+    // Le crayon « Modifier » d'une carte ouvre ce modal pré-rempli ; la
+    // soumission met à jour serviteur, titre, rubrique, description,
+    // durée, URL, miniature et live. Quand l'URL change, la miniature
+    // est recalculée automatiquement (TikTok côté serveur, YouTube
+    // détectée ici) — plus besoin de supprimer/recréer pour corriger
+    // une URL mal saisie.
+    if (enEdition && editVideo) {
+      setLoading(true);
+      setError("");
+      try {
+        const urlPropre = form.videoUrl.trim();
+        const urlAChangee = urlPropre !== (editVideo.videoUrl || "");
+        const corps: Record<string, unknown> = {
+          servantId: form.servantId,
+          title: form.title.trim(),
+          description: form.description.trim(),
+          duration: form.duration || dureeAuto || "",
+          videoUrl: urlPropre || null,
+          isLive: form.isLive,
+          category: form.category || null,
+          ...(reintegration ? { reintegration: true } : {}),
+        };
+        if (miniaturePerso) {
+          // Image personnalisée uploadée : elle prime toujours.
+          corps.thumbnailUrl = miniaturePerso;
+        } else if (urlAChangee && estUrlTiktok(urlPropre)) {
+          // URL TikTok corrigée → null : le serveur récupère la VRAIE
+          // miniature (R2 permanent, repli URL signée) au moment du PATCH.
+          corps.thumbnailUrl = null;
+        } else if (urlAChangee && miniatureYouTube) {
+          // URL YouTube corrigée → miniature standard de la nouvelle vidéo.
+          corps.thumbnailUrl = miniatureYouTube;
+        }
+        // URL inchangée sans image uploadée → on n'envoie PAS
+        // thumbnailUrl : la miniature actuelle (personnalisée ou R2)
+        // reste telle quelle.
+
+        const res = await fetch(`/admin/api/videos/${editVideo.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(corps),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          // ⭐ V3.86 — l'URL corrigée correspond à une vidéo supprimée :
+          // confirmation de réintégration demandée en clair.
+          if (res.status === 409 && data.code === "VIDEO_SUPPRIMEE") {
+            setSuppressionConnue({
+              supprimeLe: data.supprimeLe || new Date().toISOString(),
+              titreExistant: data.titreExistant ?? null,
+            });
+            return;
+          }
+          throw new Error(data.error || `Échec (${res.status})`);
+        }
+        onClose();
+        window.location.reload();
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? `Enregistrement impossible : ${err.message}`
+            : "Enregistrement impossible."
+        );
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -2001,17 +2223,23 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
     <AdminModal
       open={open}
       onClose={onClose}
-      title="Nouvelle vidéo"
+      title={enEdition ? "Modifier la vidéo" : "Nouvelle vidéo"}
       subtitle={
-        preselectedServantCode
-          ? `Ajouter une vidéo pour ${preselectedServantCode === "afrika" ? "Afrika" : "Pasteur Kongo"}`
-          : "Ajouter une vidéo ou un live enregistré"
+        enEdition
+          ? `Tous les champs sont modifiables${editVideo?.servant?.shortName ? ` — ${editVideo.servant.shortName}` : ""}`
+          : preselectedServantCode
+            ? `Ajouter une vidéo pour ${preselectedServantCode === "afrika" ? "Afrika" : "Pasteur Kongo"}`
+            : "Ajouter une vidéo ou un live enregistré"
       }
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* ⭐ V3.47 — Sélecteur de source : Lien (YouTube…) OU Fichier */}
-        <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#C9A227]/10 border-2 border-[#C9A227]/15">
+        {/* ⭐ V3.47 — Sélecteur de source : Lien (YouTube…) OU Fichier —
+            caché en mode édition (le remplacement du FICHIER d'une vidéo
+            hébergée passe par la suppression + création, ou la
+            post-production ; ici on édite la fiche et l'URL). */}
+        {!enEdition && (
+          <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#C9A227]/10 border-2 border-[#C9A227]/15">
           <button
             type="button"
             onClick={() => { setSource("lien"); setError(""); }}
@@ -2038,7 +2266,8 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
             <Upload className="w-4 h-4" />
             Fichier vidéo
           </button>
-        </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           {/* Serviteur */}
@@ -2109,29 +2338,77 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
           />
         </ModalField>
 
-        {source === "lien" ? (
+        {enEdition || source === "lien" ? (
           <div className="space-y-4">
             {/* URL vidéo */}
-            <ModalField label="URL vidéo" help="YouTube, Vimeo, etc." fullWidth>
+            <ModalField
+              label="URL vidéo"
+              help={
+                enEdition
+                  ? "Corrigez l'URL ici si elle a été mal saisie — la miniature sera mise à jour automatiquement."
+                  : "YouTube, TikTok, Vimeo, etc. — la miniature est détectée automatiquement."
+              }
+              fullWidth
+            >
               <input
                 type="text"
                 value={form.videoUrl}
                 onChange={(e) => handleUrlChange(e.target.value)}
-                placeholder="https://youtube.com/watch?v=..."
+                placeholder="https://youtube.com/watch?v=… ou https://www.tiktok.com/@…/video/…"
                 className={modalInputClass()}
               />
             </ModalField>
 
+            {/* ⭐ V4.24 — Vidéo hébergée sur NOTRE stockage (fichier uploadé) :
+                avertissement avant modification de l'URL. */}
+            {enEdition && (editVideo?.videoUrl || "").includes(".r2.dev") && (
+              <p className="text-[11px] text-[#DDBE55] leading-relaxed px-3 py-2 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/20">
+                Cette vidéo est un FICHIER hébergé sur notre stockage cloud — ne
+                modifiez ce champ que pour pointer vers un lien externe (YouTube,
+                TikTok…).
+              </p>
+            )}
+
+            {/* ⭐ V4.24 — Détection TikTok en cours / problème */}
+            {tiktokEnCours && (
+              <p className="text-[11px] text-[#BDB4C9] flex items-center gap-1.5">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Récupération de la miniature TikTok…
+              </p>
+            )}
+            {erreurUrlTiktok && (
+              <p className="text-[11px] text-[#E08B6D] flex items-start gap-1.5">
+                <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+                {erreurUrlTiktok}
+              </p>
+            )}
+            {titreTiktok && (
+              <p className="text-[11px] text-[#BDB4C9]/80 leading-relaxed">
+                Légende TikTok détectée — utilisée comme titre si le champ
+                titre est vide (modifiable) : «{" "}
+                {titreTiktok.length > 90 ? titreTiktok.slice(0, 90) + "…" : titreTiktok} »
+              </p>
+            )}
+
             {/* ⭐ V3.48 — MINIATURE PAR UPLOAD (remplace « URL miniature ») :
-                la miniature YouTube détectée sert de DÉFAUT, le pasteur peut
-                en choisir une autre via l'appareil photo (image compressée). */}
+                la miniature détectée (YouTube ⭐ V3.48 ou TikTok ⭐ V4.24 —
+                ou l'actuelle en mode édition) sert de DÉFAUT, le pasteur
+                peut en choisir une autre via l'appareil photo. */}
             <MiniatureField
               perso={miniaturePerso}
-              auto={miniatureYouTube}
-              processing={miniatureProcessing}
+              auto={
+                miniatureYouTube ||
+                miniatureTiktok ||
+                (enEdition ? miniatureExistante : null)
+              }
+              processing={miniatureProcessing || tiktokEnCours}
               onUpload={handleMiniaturePersoChange}
               onRetirer={() => setMiniaturePerso(null)}
-              autoLabel="Miniature YouTube détectée automatiquement"
+              autoLabel={
+                enEdition
+                  ? "Miniature actuelle de la vidéo (remplacée automatiquement si vous changez l'URL)"
+                  : "Miniature détectée automatiquement (YouTube / TikTok)"
+              }
             />
           </div>
         ) : (
@@ -2169,7 +2446,6 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
                   {extractionEnCours ? (
                     <Loader2 className="w-5 h-5 text-[#C9A227] animate-spin" />
                   ) : miniatureAuto ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={miniatureAuto} alt="Miniature détectée" className="w-full h-full object-cover" />
                   ) : (
                     <FileVideo className="w-6 h-6 text-[#C9A227]/60" />
@@ -2322,12 +2598,20 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode }: NewV
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {phase === "envoi" ? "Envoi en cours…" : "Création…"}
+                {enEdition
+                  ? "Enregistrement…"
+                  : phase === "envoi"
+                    ? "Envoi en cours…"
+                    : "Création…"}
               </>
             ) : (
               <>
-                {source === "fichier" ? <Upload className="w-4 h-4" /> : null}
-                {source === "fichier" ? "Créer et envoyer la vidéo" : "Créer la vidéo"}
+                {source === "fichier" && !enEdition ? <Upload className="w-4 h-4" /> : null}
+                {enEdition
+                  ? "Enregistrer les modifications"
+                  : source === "fichier"
+                    ? "Créer et envoyer la vidéo"
+                    : "Créer la vidéo"}
               </>
             )}
           </button>

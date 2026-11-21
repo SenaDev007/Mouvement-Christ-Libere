@@ -4,18 +4,17 @@
   "buildCommand": "bun run build",
   "installCommand": "bun install",
   "devCommand": "bun run dev",
-
   "git": {
     "deploymentEnabled": true
   },
-
-  "regions": ["cdg1"],
+  "regions": [
+    "cdg1"
+  ],
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 30
     }
   },
-
   "headers": [
     {
       "source": "/(.*)",
@@ -48,7 +47,6 @@
       ]
     }
   ],
-
   "redirects": [
     {
       "source": "/accueil",
@@ -61,10 +59,8 @@
       "permanent": true
     }
   ],
-
   "cleanUrls": true,
   "trailingSlash": false,
-
   "crons": [
     {
       "path": "/api/cron/fetes-notifications",
@@ -73,6 +69,10 @@
     {
       "path": "/api/cron/backfill-miniatures-tiktok",
       "schedule": "17 3 * * *"
+    },
+    {
+      "path": "/api/cron/sync-youtube",
+      "schedule": "23 10 * * *"
     }
   ]
 }

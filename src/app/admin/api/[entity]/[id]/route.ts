@@ -11,8 +11,12 @@ import { isR2Configured, purgerArtefactsR2 } from "@/lib/r2";
 import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn, ensureCroyantTestimoniesTable, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme, annoncerLiveAnnule } from "@/lib/live-announcement-relay";
 // ⭐ V3.85 — Miniature TikTok automatique à la modification d'une vidéo.
-import { estUrlTiktok } from "@/lib/tiktok";
-import { replicquerMiniatureTiktok } from "@/lib/tiktok-miniature";
+// ⭐ V4.24 — liens courts vm./vt.tiktok.com + miniature recalculée quand
+// l'URL change (TikTok ET YouTube) — corriger une URL mal saisie met à
+// jour la miniature au lieu de conserver celle de l'ancienne vidéo.
+import { estUrlTiktok, estLienCourtTiktok, resoudreLienCourtTiktok } from "@/lib/tiktok";
+import { recupererMiniatureTiktok } from "@/lib/tiktok-miniature";
+import { extractYoutubeId, getYoutubeThumbnailUrl } from "@/lib/youtube";
 // ⭐ V3.86 — Suppression définitive : mémoire des vidéos supprimées
 // (anti-résurrection à la modification + mémorisation à la suppression).
 import { enregistrerSuppressionVideo, verifierSuppressionVideo, leverSuppressionVideo, cleMediaDe } from "@/lib/suppression-video";
@@ -257,16 +261,33 @@ export async function PATCH(
       })) as typeof ancienLive;
     }
 
+    // ─── ⭐ V4.24 — LIEN COURT TIKTOK → URL CANONIQUE (modification) ───
+    // Même normalisation qu'à la création : le lien vm./vt. collé par le
+    // bouton « Partager » de l'app est remplacé par l'URL complète.
+    if (
+      entity === "videos" &&
+      typeof donnees.videoUrl === "string" &&
+      estLienCourtTiktok(donnees.videoUrl)
+    ) {
+      const canonique = await resoudreLienCourtTiktok(donnees.videoUrl);
+      if (canonique) donnees.videoUrl = canonique;
+    }
+
     // ─── ⭐ V3.86 — GARDE ANTI-RÉSURRECTION (modification) ───
     // Si la modification change l'URL d'une vidéo vers le média d'une
     // vidéo précédemment SUPPRIMÉE, refuser (sauf réintégration explicite
     // reintegration: true) : sans cette garde, « modifier » une autre vidéo
     // en collant l'URL supprimée ferait revenir le média supprimé.
+    // ⭐ V4.24 — on capture AUSSI la miniature actuelle : elle sert au
+    // recalcul automatique quand l'URL change (l'ancienne miniature
+    // correspondrait à l'ancienne vidéo — image trompeuse).
+    let videoAvantEdition: { videoUrl: string | null; thumbnailUrl: string | null } | null = null;
     if (entity === "videos" && typeof donnees.videoUrl === "string" && donnees.videoUrl) {
       const videoActuelle = await db.video.findUnique({
         where: { id },
-        select: { videoUrl: true },
+        select: { videoUrl: true, thumbnailUrl: true },
       });
+      videoAvantEdition = videoActuelle;
       // Clé du média CIBLE (celle qu'on veut poser) vs clé ACTUELLE :
       // même média (autre forme d'URL) → pas un changement → pas de garde.
       const cleCible = cleMediaDe(donnees.videoUrl);
@@ -297,38 +318,82 @@ export async function PATCH(
 
     const updated = await delegate.update({ where: { id }, data: donnees });
 
-    // ⭐ V3.85 — MINIATURE TIKTOK AUTOMATIQUE (modification) : l'URL vient
-    // d'être changée en une URL TikTok sans miniature → récupérer la VRAIE
-    // miniature immédiatement (même mécanique qu'à la création).
+    // ⭐ V3.85 + ⭐ V4.24 — MINIATURE AUTOMATIQUE (modification) :
+    //   ① URL TikTok sans miniature (ou remise à null par le modal quand
+    //      l'URL change) → récupérer la VRAIE miniature (R2 permanent,
+    //      repli URL signée) ;
+    //   ② URL CHANGÉE vers un autre média (TikTok ou YouTube) SANS
+    //      miniature explicite dans la requête → recalculer : l'ancienne
+    //      miniature montrait l'ancienne vidéo (image trompeuse). C'est le
+    //      cas « j'ai mal collé l'URL, je corrige » — la miniature suit.
+    //   ③ Si la requête transporte une miniature explicite (image
+    //      personnalisée uploadée), elle est TOUJOURS respectée.
     if (entity === "videos") {
       const videoMAJ = updated as unknown as {
         id: string;
         videoUrl?: string | null;
         thumbnailUrl?: string | null;
       };
-      if (
-        videoMAJ?.videoUrl &&
-        !videoMAJ.thumbnailUrl &&
-        estUrlTiktok(videoMAJ.videoUrl)
-      ) {
-        const miniature = await replicquerMiniatureTiktok(
-          videoMAJ.id,
-          videoMAJ.videoUrl
-        );
-        if (miniature) {
-          try {
-            await db.video.update({
-              where: { id: videoMAJ.id },
-              data: { thumbnailUrl: miniature },
-            });
-            (updated as { thumbnailUrl?: string | null }).thumbnailUrl =
-              miniature;
-          } catch (e) {
-            console.warn(
-              "[admin/api/videos] Enregistrement de la miniature TikTok impossible :",
-              e instanceof Error ? e.message : e
-            );
+      const miniatureExplicite = "thumbnailUrl" in donnees;
+      const mediaAChange =
+        !!videoAvantEdition &&
+        cleMediaDe(videoMAJ?.videoUrl) !== cleMediaDe(videoAvantEdition.videoUrl);
+
+      let miniatureAuto: string | null = null;
+      let remplacerMiniature = false;
+
+      if (videoMAJ?.videoUrl && estUrlTiktok(videoMAJ.videoUrl)) {
+        // ①/② TikTok : miniature absente (création historique, URL
+        // fraîchement corrigée) OU URL changée vers une AUTRE vidéo
+        // TikTok → (re)calculer la vraie miniature (R2 permanent, repli
+        // URL signée). Une miniature explicite (image uploadée) prime.
+        const doitRecalculer =
+          !videoMAJ.thumbnailUrl || (mediaAChange && !miniatureExplicite);
+        if (doitRecalculer) {
+          miniatureAuto = await recupererMiniatureTiktok(
+            videoMAJ.id,
+            videoMAJ.videoUrl
+          );
+          if (miniatureAuto) {
+            remplacerMiniature = true;
+          } else if (mediaAChange) {
+            // oEmbed indisponible ET vidéo changée : l'ancienne miniature
+            // est trompeuse → on l'efface ; le cron quotidien la récupérera.
+            remplacerMiniature = true;
           }
+        }
+      } else if (
+        mediaAChange &&
+        !miniatureExplicite &&
+        videoMAJ?.videoUrl &&
+        extractYoutubeId(videoMAJ.videoUrl)
+      ) {
+        // ② YouTube : l'URL vient de changer vers une autre vidéo YouTube
+        // → miniature YouTube standard de la NOUVELLE vidéo.
+        miniatureAuto = getYoutubeThumbnailUrl(
+          extractYoutubeId(videoMAJ.videoUrl) as string
+        );
+        remplacerMiniature = true;
+      } else if (mediaAChange && !miniatureExplicite) {
+        // ② Autre plateforme inconnue : effacer l'ancienne miniature
+        // (elle ne correspond plus à la vidéo affichée).
+        miniatureAuto = null;
+        remplacerMiniature = true;
+      }
+
+      if (remplacerMiniature) {
+        try {
+          await db.video.update({
+            where: { id: videoMAJ.id },
+            data: { thumbnailUrl: miniatureAuto },
+          });
+          (updated as { thumbnailUrl?: string | null }).thumbnailUrl =
+            miniatureAuto;
+        } catch (e) {
+          console.warn(
+            "[admin/api/videos] Enregistrement de la miniature automatique impossible :",
+            e instanceof Error ? e.message : e
+          );
         }
       }
     }

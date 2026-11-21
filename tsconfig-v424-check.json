@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/jsx-runtime": [
+        "./node_modules/@types/react/jsx-runtime"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "files": [
+    "src/lib/tiktok.ts",
+    "src/lib/tiktok-miniature.ts",
+    "src/lib/youtube.ts",
+    "src/lib/youtube-sync.ts",
+    "src/lib/suppression-video.ts",
+    "src/app/api/tiktok/oembed/route.ts",
+    "src/app/admin/api/[entity]/route.ts",
+    "src/app/admin/api/[entity]/[id]/route.ts",
+    "src/app/admin/api/videos/sync-youtube/route.ts",
+    "src/app/api/cron/sync-youtube/route.ts",
+    "src/components/admin/videos-tabs-client.tsx"
+  ]
+}

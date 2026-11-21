@@ -17,6 +17,69 @@ const RE_URL_TIKTOK =
 const RE_URL_TIKTOK_TOLERANT =
   /tiktok\.com\/@[^/\s]+\/(?:video|photo)\/(\d{5,25})/;
 
+/** ⭐ V4.24 — Liens courts de partage TikTok (app mobile / bouton Partager). */
+const RE_LIEN_COURT_TIKTOK =
+  /^https:\/\/(?:vm|vt)\.tiktok\.com\/[A-Za-z0-9_-]+\/?(?:\?[^\s]*)?$/;
+
+/** Regex du chemin canonique extrait d'une URL finale TikTok (après redirect). */
+const RE_CHEMIN_CANONIQUE_TIKTOK =
+  /tiktok\.com\/@[^\s?/]+\/(?:video|photo)\/\d{5,25}/;
+
+/** L'URL est-elle un lien court de partage TikTok (vm./vt.) ? */
+export function estLienCourtTiktok(url?: string | null): boolean {
+  if (!url) return false;
+  return RE_LIEN_COURT_TIKTOK.test(url.trim());
+}
+
+/**
+ * ⭐ V4.24 — Résout un lien court TikTok (vm./vt.) vers l'URL canonique
+ * https://www.tiktok.com/@auteur/video/<id> en suivant la redirection
+ * côté SERVEUR (le bac de développement est bloqué par TikTok, la
+ * production Vercel non — même contrainte que l'oEmbed).
+ *
+ * Ne lève jamais : null = échec (réseau, région bloquée, lien mort).
+ * Cache mémoire 10 min (clé : lien court — les liens ne périment pas).
+ */
+const CACHE_LIENS_COURTS = new Map<string, { expire: number; url: string }>();
+
+export async function resoudreLienCourtTiktok(
+  lienCourt: string
+): Promise<string | null> {
+  const cle = lienCourt.trim();
+  const enCache = CACHE_LIENS_COURTS.get(cle);
+  if (enCache && enCache.expire > Date.now()) return enCache.url;
+  try {
+    const res = await fetch(cle, {
+      redirect: "follow",
+      headers: {
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+      },
+      signal: AbortSignal.timeout(8000),
+      cache: "no-store",
+    });
+    // Le corps ne nous intéresse pas : on annule le téléchargement dès
+    // que les en-têtes (avec l'URL finale) sont reçus.
+    res.body?.cancel().catch(() => {});
+    const finale = res.url || "";
+    // Normaliser : couper les paramètres de suivi (?is_from_webapp=…) et
+    // forcer la forme www.tiktok.com/@auteur/video/<id>.
+    const cheminCanonique = finale.match(RE_CHEMIN_CANONIQUE_TIKTOK)?.[0];
+    if (cheminCanonique) {
+      const canonique = `https://www.${cheminCanonique}`;
+      if (CACHE_LIENS_COURTS.size > 200) CACHE_LIENS_COURTS.clear();
+      CACHE_LIENS_COURTS.set(cle, {
+        expire: Date.now() + 10 * 60 * 1000,
+        url: canonique,
+      });
+      return canonique;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /** L'URL est-elle une URL TikTok exploitable (vidéo ou diaporama) ? */
 export function estUrlTiktok(url?: string | null): boolean {
   if (!url) return false;

@@ -64,8 +64,10 @@ export function isYouTubeOAuthConfigured(): boolean {
 /**
  * Crée un client OAuth2 YouTube authentifié.
  * Utilise le refresh token pour obtenir automatiquement un access token.
+ * ⭐ V4.24 — exporté pour la synchronisation de la chaîne
+ * (src/lib/youtube-sync.ts : import automatique des nouvelles vidéos).
  */
-function getYouTubeOAuthClient() {
+export function getYouTubeOAuthClient() {
   const oauth2Client = new google.auth.OAuth2(
     process.env.YOUTUBE_CLIENT_ID,
     process.env.YOUTUBE_CLIENT_SECRET,

@@ -70,6 +70,45 @@ export async function replicquerMiniatureTiktok(
   }
 }
 
+/**
+ * ⭐ V4.24 — Récupère la VRAIE miniature d'une vidéo TikTok « au mieux » :
+ *   ① réplication R2 (URL publique PERMANENTE) — le résultat idéal ;
+ *   ② si R2 échoue (absent, erreur, quota…) → l'URL oEmbed SIGNÉE de
+ *      TikTok, temporaire mais immédiatement affichable : la vidéo
+ *      n'est JAMAIS livrée avec le fond noir « TikTok ». Le cron
+ *      quotidien (/api/cron/backfill-miniatures-tiktok) et l'auto-réparation
+ *      du module Vidéos remplaceront ensuite cette URL temporaire par
+ *      l'URL R2 permanente (le backfill traite désormais aussi les
+ *      miniatures qui ne sont PAS des URLs R2).
+ *   ③ une seconde tentative oEmbed (délai 800 ms) absorbe les hoquets
+ *      réseau passagers de TikTok à la création.
+ *
+ * Ne lève jamais : null = oEmbed définitivement injoignable.
+ */
+export async function recupererMiniatureTiktok(
+  id: string,
+  videoUrl: string
+): Promise<string | null> {
+  let miniature = await replicquerMiniatureTiktok(id, videoUrl);
+  if (miniature) return miniature;
+
+  // Repli temporaire : l'URL signée renvoyée par l'oEmbed officiel.
+  for (let tentative = 0; tentative < 2; tentative++) {
+    if (tentative > 0) {
+      await new Promise((r) => setTimeout(r, 800));
+    }
+    const oembed = await oembedTiktok(videoUrl);
+    if (oembed?.miniatureUrl) {
+      console.warn(
+        "[tiktok-miniature] Repli URL signée (R2 indisponible ou échec de réplication) pour",
+        videoUrl
+      );
+      return oembed.miniatureUrl;
+    }
+  }
+  return null;
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // Backfill par lots (même contrat que la route V3.64)
 // ─────────────────────────────────────────────────────────────────────
@@ -140,7 +179,9 @@ export async function backfillMiniaturesTiktok(params?: {
   const debut = Date.now();
   const erreurs: string[] = [];
 
-  // ① Vidéos TikTok sans miniature (léger : id + videoUrl + thumbnailUrl).
+  // ① Vidéos TikTok sans miniature PERMANENTE : jamais de thumbnailUrl,
+  // ou une URL temporaire (repli signé oEmbed V4.24 — pas de préfixe R2
+  // « thumbnails/tiktok- ») à remplacer par l'URL R2 définitive.
   const candidates = await db.video.findMany({
     where: { videoUrl: { not: null } },
     select: { id: true, videoUrl: true, thumbnailUrl: true },
@@ -148,7 +189,7 @@ export async function backfillMiniaturesTiktok(params?: {
   const tiktokSansMiniature = candidates.filter(
     (v) =>
       estUrlTiktok(v.videoUrl) &&
-      !v.thumbnailUrl &&
+      (!v.thumbnailUrl || !v.thumbnailUrl.includes("/thumbnails/tiktok-")) &&
       !exclure.has(v.id)
   );
 

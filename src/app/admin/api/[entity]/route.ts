@@ -11,8 +11,9 @@ import { db } from "@/lib/db";
 import { ensureChannelAvatarUrl, ensureChannelIsDirectColumn, ensureVoiceVideoColumns, ensureServantLocationColumns, ensureIntercessionAudioColumns, ensureIntercessionContactColumns, ensureHeroSectionsTable, ensureVideoCategoryColumn, ensureLiveCategoryColumn, ensureBiographyPhotoColumn, ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 import { annoncerLiveProgramme } from "@/lib/live-announcement-relay";
 // ⭐ V3.85 — Miniature TikTok automatique à la création d'une vidéo.
-import { estUrlTiktok } from "@/lib/tiktok";
-import { replicquerMiniatureTiktok } from "@/lib/tiktok-miniature";
+// ⭐ V4.24 — liens courts vm./vt.tiktok.com résolus en URL canonique.
+import { estUrlTiktok, estLienCourtTiktok, resoudreLienCourtTiktok } from "@/lib/tiktok";
+import { recupererMiniatureTiktok } from "@/lib/tiktok-miniature";
 // ⭐ V3.86 — Suppression définitive : mémoire des vidéos supprimées
 // (empêche TOUTE ré-insertion — scripts d'import, POST manuel — sans
 // confirmation explicite de réintégration).
@@ -141,6 +142,20 @@ export async function POST(
     if (entity === "biographies") await ensureBiographyPhotoColumn();
     const delegate = getDelegate(entity as EntityName);
 
+    // ─── ⭐ V4.24 — LIEN COURT TIKTOK → URL CANONIQUE (création) ───
+    // Le bouton « Partager » de l'app TikTok donne un lien vm./vt. : on le
+    // résout côté serveur AVANT tout traitement (anti-résurrection,
+    // embed public, miniature oEmbed) — la vidéo est créée avec l'URL
+    // complète https://www.tiktok.com/@auteur/video/<id>.
+    if (
+      entity === "videos" &&
+      typeof donnees.videoUrl === "string" &&
+      estLienCourtTiktok(donnees.videoUrl)
+    ) {
+      const canonique = await resoudreLienCourtTiktok(donnees.videoUrl);
+      if (canonique) donnees.videoUrl = canonique;
+    }
+
     // ─── ⭐ V3.86 — GARDE ANTI-RÉSURRECTION (création) ───
     // Une vidéo dont l'URL a déjà été supprimée du back-office ne peut PAS
     // être re-créée telle quelle : les scripts d'import/correction
@@ -177,11 +192,12 @@ export async function POST(
 
     // ⭐ V3.85 — MINIATURE TIKTOK AUTOMATIQUE : une vidéo TikTok créée sans
     // miniature (le pasteur colle simplement l'URL) reçoit immédiatement sa
-    // VRAIE miniature (oEmbed officiel → réplication R2 permanente) — plus
-    // JAMAIS de fond noir « TikTok » dans la grille du back-office ni sur
-    // le site public. Best-effort : un échec (vidéo privée, TikTok lent)
-    // n'empêche PAS la création — l'auto-réparation du module Vidéos et le
-    // cron quotidien rattraperont.
+    // VRAIE miniature (oEmbed officiel → réplication R2 permanente, repli
+    // URL signée si R2 échoue — ⭐ V4.24) — plus JAMAIS de fond noir
+    // « TikTok » dans la grille du back-office ni sur le site public.
+    // Best-effort : un échec (vidéo privée, TikTok lent) n'empêche PAS la
+    // création — l'auto-réparation du module Vidéos et le cron quotidien
+    // rattraperont.
     if (entity === "videos") {
       const videoCreee = created as unknown as {
         id: string;
@@ -193,7 +209,7 @@ export async function POST(
         !videoCreee.thumbnailUrl &&
         estUrlTiktok(videoCreee.videoUrl)
       ) {
-        const miniature = await replicquerMiniatureTiktok(
+        const miniature = await recupererMiniatureTiktok(
           videoCreee.id,
           videoCreee.videoUrl
         );
