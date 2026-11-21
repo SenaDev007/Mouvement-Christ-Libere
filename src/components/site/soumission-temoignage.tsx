@@ -23,6 +23,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   User, Church, Heart, Sparkles, ArrowRight, ArrowLeft, X,
   Loader2, CheckCircle2, Send, Mail, Phone, MapPin, Briefcase,
@@ -212,11 +213,18 @@ export function SoumissionTemoignage({
       </button>
     );
 
+/* ⭐ V414 — Le modal est rendu dans un PORTAL vers <body> : sur la
+   landing, il était affiché DERRIÈRE les cartes du marquee car son
+   conteneur parent (relative z-10) arrivait avant le marquee (z-10
+   aussi) dans l'ordre du DOM — à z-index égal, c'est l'ordre du DOM
+   qui gagne, et le z-[200] du modal restait piégé dans le contexte
+   d'empilement du parent. Le portal échappe à tout contexte
+   parent : le modal s'affiche désormais au-dessus de TOUT. */
   return (
     <>
       {boutonOuverture}
 
-      {ouvert && (
+      {ouvert && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#1A0826]/80 backdrop-blur-sm"
           onClick={(e) => e.target === e.currentTarget && fermer()}
@@ -446,7 +454,8 @@ export function SoumissionTemoignage({
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

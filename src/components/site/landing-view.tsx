@@ -246,49 +246,6 @@ function tronquer(texte: string, max = 165): string {
   return (dernierEspace > 100 ? coupe.slice(0, dernierEspace) : coupe) + " […]";
 }
 
-/* Fallback d'INVITATION (aucun témoignage validé pour l'instant) :
-   des cartes génériques qui parlent de ce que Dieu fait — et qui
-   renvoient vers /vie-transformee. AUCUN témoignage des serviteurs
-   ici (distinction demandée par le pasteur). */
-const CARTES_FALLBACK: CarteTemoignage[] = [
-  {
-    text: "Votre vie a été transformée par Yeshoua ? Partagez ce que Dieu a fait — votre récit peut relever la foi d'un frère ou d'une sœur.",
-    name: "Partagez le vôtre",
-    role: "Témoignage des croyants",
-    href: "/vie-transformee",
-  },
-  {
-    text: "Des vies délivrées, des corps guéris, des foyers restaurés — les œuvres de Dieu au milieu de son peuple, racontées par ceux qui les ont vécues.",
-    name: "Guérisons & délivrances",
-    role: "Œuvres de Dieu",
-    href: "/vie-transformee",
-  },
-  {
-    text: "La providence de Dieu pourvoit aux besoins de ses enfants au quotidien — venez lire comment il a pourvu, et rendez grâce avec nous.",
-    name: "La providence",
-    role: "Fidélité de Dieu",
-    href: "/vie-transformee",
-  },
-  {
-    text: "Le rassemblement des dispersés d'Israël : d'Afrique à la diaspora, des témoins se lèvent et racontent ce que le Seigneur fait dans leur vie.",
-    name: "Les dispersés",
-    role: "Rassemblement",
-    href: "/vie-transformee",
-  },
-  {
-    text: "Marcher avec le Saint-Esprit au quotidien — des récits simples et vrais de la fidélité de Dieu, du matin au soir.",
-    name: "Marcher avec Dieu",
-    role: "Vie quotidienne",
-    href: "/vie-transformee",
-  },
-  {
-    text: "Des appels entendus, des vies consacrées : chacun raconte sa rencontre avec Yeshoua et ce qui a changé depuis.",
-    name: "Rencontres",
-    role: "Appel & consécration",
-    href: "/vie-transformee",
-  },
-];
-
 function RangeeTemoignages({
   cartes,
   direction,
@@ -335,7 +292,7 @@ function RangeeTemoignages({
 
 export function LandingView({ hero }: { hero: HeroConfig }) {
   const [statsData, setStatsData] = useState<Record<string, number> | null>(null);
-  const [temoignages, setTemoignages] = useState<CarteTemoignage[]>(CARTES_FALLBACK);
+  const [temoignages, setTemoignages] = useState<CarteTemoignage[]>([]);
   const d = hero.data;
 
   useEffect(() => {
@@ -348,7 +305,8 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
   // ⭐ V3.100 — Les cartes de la section « Vies transformées » sont
   // alimentées UNIQUEMENT par les témoignages des CROYANTS validés
   // (statut « publie » — validés par un super admin depuis
-  // /admin/vie-transformee). Plus aucun témoignage de serviteur ici.
+  // /admin/vie-transformee). AUCUN placeholder : tant qu'aucun
+  // témoignage validé n'existe, le carrousel ne s'affiche pas.
   useEffect(() => {
     fetch("/api/temoignages-croyants?limit=12")
       .then(r => (r.ok ? r.json() : null))
@@ -1003,12 +961,17 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
           </div>
         </div>
 
-        <div className="space-y-6 w-full relative z-10 select-none">
-          <RangeeTemoignages cartes={firstRow} direction="left" />
-          {isLargeSet && (
-            <RangeeTemoignages cartes={secondRow} direction="right" />
-          )}
-        </div>
+        {/* Uniquement les VRAIS témoignages validés — aucune carte
+            de remplacement. Section réduite aux titre + CTA tant
+            qu'aucun témoignage n'a été publié. */}
+        {temoignages.length > 0 && (
+          <div className="space-y-6 w-full relative z-10 select-none">
+            <RangeeTemoignages cartes={firstRow} direction="left" />
+            {isLargeSet && (
+              <RangeeTemoignages cartes={secondRow} direction="right" />
+            )}
+          </div>
+        )}
       </section>
     </div>
   );
