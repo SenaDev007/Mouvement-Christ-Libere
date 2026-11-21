@@ -1306,8 +1306,18 @@ model CroyantTestimony {
   eglise     String?  // église locale de rattachement
   categorie  String   @default("vie_transformee") // vie_transformee, guerison, delivrance, restauration, providence, appel, action_graces
   titre      String   // accroche courte du témoignage
-  contenu    String   @db.Text // récit complet
+  contenu    String   @db.Text // récit complet (10 000 caractères max)
   consentement Boolean @default(true) // accepte la publication après relecture pastorale
+
+  // ── ⭐ V4.25 — Note vocale (durée ILLIMITÉE) ──
+  // Le témoin peut enregistrer sa voix en plus (ou à la place) du récit
+  // écrit. L'audio monte DIRECTEMENT vers Cloudflare R2 via une URL
+  // pré-signée (aucune limite de durée ni de taille serverless) ; seule
+  // l'URL publique est stockée ici. Lecture publique après validation.
+  audioUrl    String?  // URL publique R2 de la note vocale
+  audioDuree  Float?   // durée en secondes (renseignée par le client)
+  audioMime   String?  // ex. audio/webm;codecs=opus (web) · audio/mp4 (iOS)
+  audioTaille Int?     // taille en octets
 
   // ── Modération (back-office super admin) ──
   statut      String    @default("en_attente") // en_attente | publie | rejete

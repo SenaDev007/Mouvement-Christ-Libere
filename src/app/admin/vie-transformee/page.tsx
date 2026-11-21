@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
 import { ensureCroyantTestimoniesTable } from "@/lib/ensure-schema";
 import { VieTransformeeActions } from "@/components/admin/vie-transformee-actions";
+import { LecteurAudioTemoignage } from "@/components/site/lecteur-audio-temoignage";
 import {
   Heart, Hourglass, CheckCircle2, XCircle, MapPin, Mail, Phone,
-  Briefcase, Church, Sparkles, Quote,
+  Briefcase, Church, Sparkles, Quote, AudioLines,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -227,6 +228,25 @@ export default async function AdminVieTransformeePage({
                         {t.contenu}
                       </p>
                     </div>
+
+                    {/* ⭐ V4.25 — Note vocale : écouter avant de valider */}
+                    {t.audioUrl && (
+                      <div className="mt-2 space-y-1.5">
+                        <LecteurAudioTemoignage
+                          url={t.audioUrl}
+                          duree={t.audioDuree}
+                          theme="sombre"
+                        />
+                        <div className="flex items-center gap-2 text-[10.5px] text-[#BDB4C9]">
+                          <AudioLines className="w-3 h-3 text-[#C9A227]/70" />
+                          {t.audioDuree
+                            ? `${Math.round(t.audioDuree / 60)} min ${Math.round(t.audioDuree % 60)} s`
+                            : "Durée inconnue"}
+                          {t.audioTaille ? ` · ${(t.audioTaille / 1024 / 1024).toFixed(1)} Mo` : ""}
+                          {t.audioMime ? ` · ${t.audioMime}` : ""}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Coordonnées (confidentielles) */}
                     <div className="flex items-center gap-3 mt-2 flex-wrap text-[11px] text-[#BDB4C9]">

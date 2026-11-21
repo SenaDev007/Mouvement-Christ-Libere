@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ensureCroyantTestimoniesTable } from "@/lib/ensure-schema";
+import { getPublicUrl, isR2Configured } from "@/lib/r2";
 
 /**
  * ⭐ V3.100 — TÉMOIGNAGES DES CROYANTS (« Vies transformées »).
@@ -31,8 +32,21 @@ export const CATEGORIES_TEMOIGNAGES = [
   "action_graces",
 ] as const;
 
-/** Limite anti-abus : un témoignage raison fait moins de 6 000 caractères. */
-const CONTENU_MAX = 6000;
+/** Limite demandée par le pasteur (V4.25) : récit jusqu'à 10 000 caractères. */
+const CONTENU_MAX = 10000;
+
+/** ⭐ V4.25 — Note vocale : les URL audio ne peuvent venir QUE de notre
+ * bucket R2 (préfixe temoignages-audio/ attribué par la route presign).
+ * On bloque ainsi toute URL externe arbitraire injectée dans le POST. */
+function urlAudioValide(url: string): boolean {
+  if (!isR2Configured()) return false;
+  try {
+    const attendu = getPublicUrl("temoignages-audio/");
+    return url.startsWith(attendu) && url.length < 2048;
+  } catch {
+    return false;
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,6 +74,11 @@ export async function GET(request: NextRequest) {
         titre: true,
         contenu: true,
         publishedAt: true,
+        // ⭐ V4.25 — note vocale publique (lecture par tous).
+        audioUrl: true,
+        audioDuree: true,
+        audioMime: true,
+        audioTaille: true,
       },
     });
 
@@ -107,6 +126,33 @@ export async function POST(request: NextRequest) {
     const titre = String(body.titre || "").trim();
     const contenu = String(body.contenu || "").trim();
     const consentement = body.consentement === true;
+
+    // ── Champs — ⭐ V4.25 : note vocale (upload déjà fait vers R2 via
+    //    /api/temoignages-croyants/audio-presign — on ne reçoit que
+    //    l'URL publique + métadonnées déclaratives) ──
+    const audioUrlBrut = String(body.audioUrl || "").trim();
+    const audioUrl = audioUrlBrut && urlAudioValide(audioUrlBrut) ? audioUrlBrut : null;
+
+    let audioDuree: number | null = null;
+    if (typeof body.audioDuree === "number" && Number.isFinite(body.audioDuree) && body.audioDuree > 0) {
+      audioDuree = Math.round(body.audioDuree * 100) / 100; // aucune limite de durée
+    }
+
+    let audioMime: string | null = null;
+    const mimeBrut = String(body.audioMime || "").trim();
+    if (/^audio\/[\w.+-]{1,80}$/.test(mimeBrut)) {
+      audioMime = mimeBrut;
+    }
+
+    let audioTaille: number | null = null;
+    if (
+      typeof body.audioTaille === "number" &&
+      Number.isFinite(body.audioTaille) &&
+      body.audioTaille > 0 &&
+      body.audioTaille <= 5 * 1024 * 1024 * 1024 // plafond physique d'un PUT R2
+    ) {
+      audioTaille = Math.round(body.audioTaille);
+    }
 
     // ── Validation ──
     if (nom.length < 2 || nom.length > 80) {
@@ -168,6 +214,10 @@ export async function POST(request: NextRequest) {
         contenu,
         consentement,
         statut: "en_attente",
+        audioUrl,
+        audioDuree: audioUrl ? audioDuree : null,
+        audioMime: audioUrl ? audioMime : null,
+        audioTaille: audioUrl ? audioTaille : null,
       },
     });
 

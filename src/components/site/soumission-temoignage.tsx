@@ -22,11 +22,12 @@
  * ivoire rounded-3xl bordure or, titres serif, bouton or btn-shimmer.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   User, Church, Heart, Sparkles, ArrowRight, ArrowLeft, X,
   Loader2, CheckCircle2, Send, Mail, Phone, MapPin, Briefcase,
+  Mic, Square, Trash2, AudioLines,
 } from "lucide-react";
 
 /* ── Catégories proposées ── */
@@ -40,7 +41,42 @@ const CATEGORIES: { id: string; label: string }[] = [
   { id: "action_graces", label: "Action de grâces" },
 ];
 
-const CONTENU_MAX = 6000;
+/* ⭐ V4.25 — Limite portée à 10 000 caractères (demande du pasteur). */
+const CONTENU_MAX = 10000;
+
+/* ── ⭐ V4.25 — Enregistrement vocal : types essayés dans l'ordre.
+   Chrome/Firefox → webm/opus ; iOS Safari ≥ 14.3 → mp4/aac.
+   DURÉE ILLIMITÉE : aucune coupure automatique, le compteur tourne
+   tant que le témoin n'arrête pas (l'audio ne transite jamais par le
+   body Next.js — upload DIRECT vers R2 via URL pré-signée). ── */
+const MIMES_AUDIO = [
+  "audio/webm;codecs=opus",
+  "audio/webm",
+  "audio/mp4",
+  "audio/aac",
+  "audio/mpeg",
+];
+
+function choisirMimeAudio(): string {
+  if (typeof window === "undefined" || !("MediaRecorder" in window)) return "";
+  for (const t of MIMES_AUDIO) {
+    try {
+      if (MediaRecorder.isTypeSupported(t)) return t;
+    } catch {
+      /* ignore */
+    }
+  }
+  return "";
+}
+
+function formaterSecondes(s: number): string {
+  const sec = Math.floor(s);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const r = sec % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+  return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+}
 
 interface Champs {
   nom: string;
@@ -121,6 +157,47 @@ export function SoumissionTemoignage({
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState("");
 
+  /* ── ⭐ V4.25 — Enregistrement de la note vocale (durée illimitée) ── */
+  const [enregistrement, setEnregistrement] = useState(false);
+  const [secondesAudio, setSecondesAudio] = useState(0);
+  const [blobAudio, setBlobAudio] = useState<Blob | null>(null);
+  const [urlApercu, setUrlApercu] = useState<string | null>(null);
+  const [envoiAudio, setEnvoiAudio] = useState(false);
+  const enregistreurRef = useRef<MediaRecorder | null>(null);
+  const morceauxRef = useRef<Blob[]>([]);
+  const fluxRef = useRef<MediaStream | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const debutRef = useRef<number>(0);
+
+  /* Arrêt propre de l'enregistrement + libération du micro. */
+  const nettoyerEnregistrement = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    try {
+      if (enregistreurRef.current?.state === "recording") {
+        enregistreurRef.current.stop();
+      }
+    } catch {
+      /* ignore */
+    }
+    enregistreurRef.current = null;
+    if (fluxRef.current) {
+      fluxRef.current.getTracks().forEach((p) => p.stop());
+      fluxRef.current = null;
+    }
+    setEnregistrement(false);
+  }, []);
+
+  /* Suppression du vocal enregistré (re-commencer ou envoyer sans). */
+  const supprimerAudio = useCallback(() => {
+    if (urlApercu) URL.revokeObjectURL(urlApercu);
+    setUrlApercu(null);
+    setBlobAudio(null);
+    setSecondesAudio(0);
+  }, [urlApercu]);
+
   /* Fermeture : Échap */
   useEffect(() => {
     if (!ouvert) return;
@@ -147,7 +224,19 @@ export function SoumissionTemoignage({
     setErreur("");
     setChamps(CHAMPS_VIERGES);
     setEnvoi(false);
+    // ⭐ V4.25 — micro + aperçu libérés à la fermeture.
+    nettoyerEnregistrement();
+    supprimerAudio();
   };
+
+  /* Fermeture par Échap : aussi nettoyer l'enregistrement. */
+  useEffect(() => {
+    return () => {
+      nettoyerEnregistrement();
+      if (urlApercu) URL.revokeObjectURL(urlApercu);
+    };
+     
+  }, []);
 
   /* Étape 1 → 2 : validation des informations personnelles */
   const versEtape2 = () => {
@@ -161,6 +250,79 @@ export function SoumissionTemoignage({
     }
     setErreur("");
     setEtape(2);
+  };
+
+  /* ── ⭐ V4.25 — Démarrer / arrêter l'enregistrement vocal ── */
+  const demarrerEnregistrement = async () => {
+    setErreur("");
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setErreur("Votre navigateur ne permet pas l'enregistrement audio — vous pouvez envoyer votre témoignage écrit.");
+      return;
+    }
+    if (!("MediaRecorder" in window)) {
+      setErreur("Votre navigateur ne supporte pas l'enregistrement audio — vous pouvez envoyer votre témoignage écrit.");
+      return;
+    }
+    try {
+      const flux = await navigator.mediaDevices.getUserMedia({ audio: true });
+      fluxRef.current = flux;
+      const mime = choisirMimeAudio();
+      const enregistreur = mime
+        ? new MediaRecorder(flux, { mimeType: mime })
+        : new MediaRecorder(flux);
+      morceauxRef.current = [];
+      debutRef.current = Date.now();
+
+      enregistreur.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) morceauxRef.current.push(e.data);
+      };
+      enregistreur.onstop = () => {
+        const morceaux = morceauxRef.current;
+        if (morceaux.length > 0) {
+          const blob = new Blob(morceaux, {
+            type: enregistreur.mimeType || morceaux[0].type || "audio/webm",
+          });
+          if (blob.size > 1024) {
+            setBlobAudio(blob);
+            setUrlApercu(URL.createObjectURL(blob));
+          }
+        }
+        if (fluxRef.current) {
+          fluxRef.current.getTracks().forEach((p) => p.stop());
+          fluxRef.current = null;
+        }
+      };
+
+      enregistreurRef.current = enregistreur;
+      enregistreur.start(1000); // morceau chaque seconde : robuste aux onglets endormis
+      setEnregistrement(true);
+      setSecondesAudio(0);
+      intervalRef.current = setInterval(() => {
+        setSecondesAudio(Math.floor((Date.now() - debutRef.current) / 1000));
+      }, 1000);
+    } catch (e) {
+      const nom = (e as DOMException)?.name;
+      if (nom === "NotAllowedError" || nom === "SecurityError") {
+        setErreur("L'accès au microphone a été refusé. Autorisez-le dans votre navigateur pour enregistrer un vocal.");
+      } else {
+        setErreur("Impossible de démarrer l'enregistrement. Vous pouvez envoyer votre témoignage écrit.");
+      }
+    }
+  };
+
+  const arreterEnregistrement = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    try {
+      if (enregistreurRef.current && enregistreurRef.current.state !== "inactive") {
+        enregistreurRef.current.stop();
+      }
+    } catch {
+      /* ignore */
+    }
+    setEnregistrement(false);
   };
 
   /* Envoi final */
@@ -180,10 +342,63 @@ export function SoumissionTemoignage({
     setErreur("");
     setEnvoi(true);
     try {
+      /* ── ⭐ V4.25 — 1) Upload DIRECT de la note vocale vers R2
+         (presign → PUT) : AUCUNE limite de durée, l'audio ne passe
+         jamais par le body de la fonction Next.js. ── */
+      let audioUrl: string | null = null;
+      let audioDuree: number | null = null;
+      let audioMime: string | null = null;
+      let audioTaille: number | null = null;
+
+      if (blobAudio) {
+        setEnvoiAudio(true);
+        try {
+          const mime =
+            blobAudio.type && /^audio\//.test(blobAudio.type)
+              ? blobAudio.type
+              : choisirMimeAudio() || "audio/webm";
+
+          const resPresign = await fetch("/api/temoignages-croyants/audio-presign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contentType: mime }),
+          });
+          const presign = await resPresign.json().catch(() => ({}));
+          if (!resPresign.ok) {
+            throw new Error(presign.error || "Impossible de préparer l'envoi du vocal.");
+          }
+
+          const resPut = await fetch(presign.uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": mime },
+            body: blobAudio,
+          });
+          if (!resPut.ok) {
+            throw new Error(
+              "L'envoi de la note vocale a échoué (stockage) — réessayez, ou supprimez le vocal pour envoyer le texte seul."
+            );
+          }
+
+          audioUrl = presign.publicUrl;
+          audioDuree = secondesAudio > 0 ? secondesAudio : null;
+          audioMime = mime;
+          audioTaille = blobAudio.size;
+        } finally {
+          setEnvoiAudio(false);
+        }
+      }
+
+      /* ── 2) Envoi du témoignage (texte + métadonnées du vocal) ── */
       const res = await fetch("/api/temoignages-croyants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...champs }),
+        body: JSON.stringify({
+          ...champs,
+          audioUrl,
+          audioDuree,
+          audioMime,
+          audioTaille,
+        }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error || "Erreur");
@@ -372,10 +587,102 @@ export function SoumissionTemoignage({
                     />
                     <div className="flex justify-between text-[11px] text-gray-text mt-1">
                       <span>Minimum 30 caractères.</span>
-                      <span className={champs.contenu.length > CONTENU_MAX - 200 ? "text-red-500 font-bold" : ""}>
+                      <span className={champs.contenu.length > CONTENU_MAX - 500 ? "text-red-500 font-bold" : ""}>
                         {champs.contenu.length} / {CONTENU_MAX}
                       </span>
                     </div>
+                  </div>
+
+                  {/* ══ ⭐ V4.25 — NOTE VOCALE (durée illimitée) ══ */}
+                  <div className="rounded-2xl border border-primary-green/25 bg-white/70 p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary-deep">
+                        <Mic className="w-3.5 h-3.5 text-accent-dark shrink-0" /> Votre voix
+                      </span>
+                      {!enregistrement && !urlApercu && (
+                        <span className="text-[10.5px] text-gray-text italic">Facultatif · sans limite de durée</span>
+                      )}
+                    </div>
+
+                    {/* État 1 : rien — proposer l'enregistrement */}
+                    {!enregistrement && !urlApercu && (
+                      <button
+                        type="button"
+                        onClick={demarrerEnregistrement}
+                        className="w-full py-3 rounded-xl border-2 border-dashed border-accent-yellow/60 text-accent-dark font-sans font-bold text-xs hover:bg-accent-yellow/10 transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Mic className="w-4 h-4" /> Enregistrer un vocal de mon témoignage
+                      </button>
+                    )}
+
+                    {/* État 2 : enregistrement en cours — compteur illimité */}
+                    {enregistrement && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="inline-flex items-center gap-2 text-sm font-bold text-red-600">
+                            <span className="relative flex h-2.5 w-2.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                            </span>
+                            Enregistrement…
+                          </span>
+                          <span className="font-mono font-bold text-primary-deep tabular-nums text-lg">
+                            {formaterSecondes(secondesAudio)}
+                          </span>
+                        </div>
+                        {/* Vaguelettes animées */}
+                        <div className="flex items-end justify-center gap-1 h-8" aria-hidden="true">
+                          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
+                            <span
+                              key={i}
+                              className="w-1.5 rounded-full bg-accent-yellow/70 animate-pulse"
+                              style={{
+                                height: `${8 + ((i * 7 + secondesAudio * 3) % 22)}px`,
+                                animationDelay: `${i * 0.08}s`,
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={arreterEnregistrement}
+                          className="w-full py-3 rounded-full bg-primary-deep text-accent-yellow font-sans font-black text-sm shadow-md hover:shadow-lg transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Square className="w-4 h-4" fill="currentColor" /> Arrêter l'enregistrement
+                        </button>
+                      </div>
+                    )}
+
+                    {/* État 3 : vocal prêt — aperçu + suppression */}
+                    {!enregistrement && urlApercu && (
+                      <div className="space-y-2.5">
+                        <div className="flex items-center gap-2 text-xs font-bold text-primary-green">
+                          <AudioLines className="w-4 h-4 text-accent-dark" />
+                          Vocal prêt ({formaterSecondes(secondesAudio)}) — écoutez-le avant d'envoyer :
+                        </div>
+                        { }
+                        <audio controls src={urlApercu} className="w-full h-10" preload="metadata" />
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              supprimerAudio();
+                              demarrerEnregistrement();
+                            }}
+                            className="flex-1 py-2.5 rounded-full border border-primary-green/30 text-primary-deep font-sans font-bold text-xs hover:bg-primary-pale transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Mic className="w-3.5 h-3.5" /> Ré-enregistrer
+                          </button>
+                          <button
+                            type="button"
+                            onClick={supprimerAudio}
+                            className="px-4 py-2.5 rounded-full border border-red-200 text-red-600 font-sans font-bold text-xs hover:bg-red-50 transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <label className="flex items-start gap-3 cursor-pointer group">
@@ -386,7 +693,7 @@ export function SoumissionTemoignage({
                       className="mt-0.5 w-4 h-4 accent-[#C9A227] shrink-0"
                     />
                     <span className="text-xs text-gray-text leading-relaxed">
-                      J&apos;accepte que mon témoignage soit <strong>relu par l&apos;équipe
+                      J&apos;accepte que mon témoignage (récit et note vocale) soit <strong>relu par l&apos;équipe
                       pastorale</strong> avant publication sur le site du Mouvement Christ
                       Libère. Je confirme que ce récit est vrai et personnel.
                     </span>
@@ -417,11 +724,14 @@ export function SoumissionTemoignage({
                     </button>
                     <button
                       onClick={envoyer}
-                      disabled={envoi}
+                      disabled={envoi || enregistrement}
                       className="flex-1 py-3.5 rounded-full bg-accent-yellow hover:bg-[#B8921F] text-primary-deep font-sans font-black text-sm shadow-md hover:shadow-lg transition-all inline-flex items-center justify-center gap-2 cursor-pointer btn-shimmer disabled:opacity-60 disabled:cursor-wait"
                     >
                       {envoi ? (
-                        <><Loader2 className="w-4 h-4 animate-spin" /> Envoi en cours…</>
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {envoiAudio ? "Envoi de la note vocale…" : "Envoi en cours…"}
+                        </>
                       ) : (
                         <><Send className="w-4 h-4" /> Envoyer pour validation</>
                       )}

@@ -2247,6 +2247,20 @@ export function ensureCroyantTestimoniesTable(): Promise<void> {
             CONSTRAINT "CroyantTestimony_pkey" PRIMARY KEY ("id")
         )
       `);
+      // ⭐ V4.25 — Notes vocales (durée illimitée, stockées sur R2 via
+      // upload direct pré-signé — seule l'URL est persistée ici).
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "CroyantTestimony" ADD COLUMN IF NOT EXISTS "audioUrl" TEXT'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "CroyantTestimony" ADD COLUMN IF NOT EXISTS "audioDuree" DOUBLE PRECISION'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "CroyantTestimony" ADD COLUMN IF NOT EXISTS "audioMime" TEXT'
+      );
+      await db.$executeRawUnsafe(
+        'ALTER TABLE "CroyantTestimony" ADD COLUMN IF NOT EXISTS "audioTaille" INTEGER'
+      );
       await db.$executeRawUnsafe(
         'CREATE INDEX IF NOT EXISTS "CroyantTestimony_statut_idx" ON "CroyantTestimony"("statut")'
       );

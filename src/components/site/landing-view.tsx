@@ -25,6 +25,7 @@ import type { HeroConfig } from "@/lib/hero-defaults";
 import { UpcomingLiveFloat } from "@/components/live/upcoming-live-float";
 import { LandingIntro } from "@/components/site/landing-intro";
 import { SoumissionTemoignage } from "@/components/site/soumission-temoignage";
+import { LecteurAudioTemoignage } from "@/components/site/lecteur-audio-temoignage";
 import {
   Sparkles, BookOpen, FileText, Video, Users, ArrowRight,
   Music, Globe2, ScrollText, Heart, Infinity as InfinityIcon,
@@ -225,6 +226,9 @@ interface CarteTemoignage {
   name: string;
   role: string;
   href?: string;
+  /* ⭐ V4.25 — note vocale publique (lecture par tous). */
+  audioUrl?: string | null;
+  audioDuree?: number | null;
 }
 
 /** Libellés des catégories (mêmes clés que l'API). */
@@ -269,6 +273,12 @@ function RangeeTemoignages({
               <p className="text-[13.5px] leading-relaxed text-gray-text font-sans break-words whitespace-normal overflow-hidden italic">
                 {t.text}
               </p>
+              {/* ⭐ V4.25 — le vocal du témoin, écoutable par tous */}
+              {t.audioUrl && (
+                <div className="mt-2">
+                  <LecteurAudioTemoignage url={t.audioUrl} duree={t.audioDuree} variante="pilule" />
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3 mt-4 pt-4 border-t border-primary-pale/40">
               <div className="h-11 w-11 rounded-full bg-primary-pale flex items-center justify-center border border-primary-green/20 text-primary-deep font-serif font-black text-sm select-none shadow-sm shrink-0">
@@ -319,6 +329,8 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
               contenu: string;
               ville?: string | null;
               pays?: string | null;
+              audioUrl?: string | null;
+              audioDuree?: number | null;
             }) => ({
               text: tronquer(t.contenu),
               name: t.nom,
@@ -327,6 +339,8 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                 t.ville || t.pays,
               ].filter(Boolean).join(" · "),
               href: "/vie-transformee",
+              audioUrl: t.audioUrl || null,
+              audioDuree: t.audioDuree || null,
             }))
           );
         }

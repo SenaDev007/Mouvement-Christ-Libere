@@ -3,6 +3,7 @@ import { getHero } from "@/lib/heroes";
 import { PageHero } from "@/components/site/page-hero";
 import { AutoRefresh } from "@/components/site/auto-refresh";
 import { SoumissionTemoignage } from "@/components/site/soumission-temoignage";
+import { LecteurAudioTemoignage } from "@/components/site/lecteur-audio-temoignage";
 import { ensureCroyantTestimoniesTable } from "@/lib/ensure-schema";
 import { Heart, MapPin, Sparkles, ShieldCheck } from "lucide-react";
 
@@ -73,6 +74,9 @@ export default async function VieTransformeePage() {
         titre: true,
         contenu: true,
         publishedAt: true,
+        // ⭐ V4.25 — note vocale publique.
+        audioUrl: true,
+        audioDuree: true,
       },
     }),
   ]);
@@ -164,6 +168,13 @@ export default async function VieTransformeePage() {
                           ? t.contenu.slice(0, 420).trimEnd() + "…"
                           : t.contenu}
                       </p>
+
+                      {/* ⭐ V4.25 — le vocal du témoin, écoutable par tous */}
+                      {t.audioUrl && (
+                        <div className="mb-5">
+                          <LecteurAudioTemoignage url={t.audioUrl} duree={t.audioDuree} />
+                        </div>
+                      )}
 
                       <div className="flex items-center gap-3 pt-4 border-t border-primary-pale/60">
                         <div className="h-11 w-11 rounded-full bg-primary-deep flex items-center justify-center text-accent-yellow font-serif font-black text-sm select-none shrink-0">
