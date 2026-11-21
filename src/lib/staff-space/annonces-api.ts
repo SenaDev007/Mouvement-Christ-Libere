@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { ensureStaffSpaces } from "@/lib/ensure-schema";
 import { exigerSession } from "@/lib/staff-space/session";
 import { ANNONCE_CATEGORIES_VALEURS } from "@/lib/staff-space/constants";
-import { relayerAnnonceMinistere } from "@/lib/staff-space/annonce-relay";
+import { relayerAnnonceMinistere, notifierPublicationAnnonce } from "@/lib/staff-space/annonce-relay";
 import { publierAnnoncesEchues } from "@/lib/staff-space/annonces";
 
 /**
@@ -188,6 +188,20 @@ export async function handlerCreerAnnonce(
       });
     }
 
+    // ⭐ V3.120 — Publication immédiate → NOTIFICATION PUSH mobile pour
+    // tous les membres abonnés (que l'annonce soit relayée dans Yeshua
+    // Connect ou non — directive du pasteur). Les annonces programmées
+    // (publishAt) sont notifiées par publierAnnoncesEchues à leur bascule.
+    if (publier) {
+      after(async () => {
+        await notifierPublicationAnnonce({
+          titre: annonce.title,
+          contenu: annonce.content,
+          categorie: annonce.category,
+        });
+      });
+    }
+
     return NextResponse.json({ item: annonce }, { status: 201 });
   } catch (error) {
     console.error(`${prefixeAudit(rolesAutorises)} POST error:`, error);
@@ -304,6 +318,20 @@ export async function handlerModifierAnnonce(
             })
             .catch(() => {});
         }
+      });
+    }
+
+    // ⭐ V3.120 — Passage de brouillon à PUBLIÉ (publication manuelle ou
+    // planification arrivée à échéance via publishAt passé) → NOTIFICATION
+    // PUSH mobile. Une annonce DÉJÀ publiée que l'on modifie ou re-relaye
+    // ne renotifie pas (pas de spam).
+    if (!annonce.isPublished && modifiee.isPublished) {
+      after(async () => {
+        await notifierPublicationAnnonce({
+          titre: modifiee.title,
+          contenu: modifiee.content,
+          categorie: modifiee.category,
+        });
       });
     }
 

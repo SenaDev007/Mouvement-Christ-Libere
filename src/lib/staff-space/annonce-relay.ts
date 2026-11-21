@@ -10,9 +10,12 @@
  * Même philosophie que le relais des lives V3.36 (live-announcement-relay) :
  *   - find-or-create du canal ANNOUNCEMENT + utilisateur système ;
  *   - message structuré signé « Annonces Christ Libère » ;
- *   - notification push aux membres (notifAnnouncements) — best-effort ;
  *   - AUCUNE erreur ici ne fait échouer la publication dans le
  *     secrétariat (le registre du secrétariat reste la source de vérité).
+ *
+ * ⭐ V3.120 — La NOTIFICATION PUSH n'est plus ici : elle est envoyée à
+ * CHAQUE publication d'une annonce (relais ou non) par
+ * `notifierPublicationAnnonce` — cf. annonces-api.ts et annonces.ts.
  */
 
 import { db } from "@/lib/db";
@@ -147,6 +150,33 @@ async function notifierMembres(titre: string, corps: string): Promise<void> {
 }
 
 /**
+ * ⭐ V3.120 — NOTIFICATION PUSH de publication d'une annonce du ministère.
+ *
+ * Directive du pasteur (2026-11-21) : « quand des annonces du ministère
+ * sont publiées, les utilisateurs doivent recevoir une notification sur
+ * leur mobile » — que l'annonce soit relayée dans Yeshua Connect ou non.
+ *
+ * Appelée à CHAQUE publication :
+ *   · création publiée immédiatement (annonces-api.ts — POST) ;
+ *   · (dé)publication manuelle d'un brouillon (annonces-api.ts — PATCH) ;
+ *   · bascule automatique d'une annonce PROGRAMMÉE arrivée à échéance
+ *     (annonces.ts — publierAnnoncesEchues).
+ *
+ * BEST-EFFORT intégral : n'échoue JAMAIS vers l'appelant.
+ */
+export async function notifierPublicationAnnonce(
+  annonce: AnnonceMinistere
+): Promise<void> {
+  const categorieLibelle =
+    (ANNONCE_CATEGORIES as Record<string, { libelle: string }>)[annonce.categorie]
+      ?.libelle || "Annonce";
+  await notifierMembres(
+    `📢 ${categorieLibelle} : ${annonce.titre}`.substring(0, 100),
+    annonce.contenu.substring(0, 140),
+  );
+}
+
+/**
  * Publie une annonce du ministère dans le canal d'annonces Yeshua Connect.
  * BEST-EFFORT intégral : n'JETTE JAMAIS.
  */
@@ -173,14 +203,6 @@ export async function relayerAnnonceMinistere(
     await db.channel
       .update({ where: { id: canal.id }, data: { lastMessageAt: new Date() } })
       .catch(() => {});
-
-    const categorieLibelle =
-      (ANNONCE_CATEGORIES as Record<string, { libelle: string }>)[annonce.categorie]
-        ?.libelle || "Annonce";
-    await notifierMembres(
-      `📢 ${categorieLibelle} : ${annonce.titre}`.substring(0, 100),
-      annonce.contenu.substring(0, 140),
-    );
 
     console.log(`[annonce-ministere] « ${annonce.titre} » relayée dans le canal ${canal.id}`);
     return { ok: true };
