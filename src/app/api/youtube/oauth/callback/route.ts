@@ -237,7 +237,124 @@ export async function GET(req: NextRequest) {
       console.warn("[youtube-oauth] channels.list a échoué (non bloquant) :", err);
     }
 
+    // ⭐ V4.26 — Persistance multi-comptes : si l'état contient un
+    // `servantCode`, on enregistre / met à jour le compte YouTube en base
+    // (table YoutubeAccount) avec client_id, client_secret (chiffré) et
+    // refresh_token (chiffré). Le client_secret et le refresh_token ne
+    // sont JAMAIS stockés en clair. On retourne ensuite une page de
+    // succès « court » (pas d'affichage des variables à copier).
+    if (state.servantCode) {
+      try {
+        const { db } = await import("@/lib/db");
+        const { chiffrerSecret } = await import("@/lib/chiffrement");
+        const {
+          USAGE_CHIFFREMENT_YOUTUBE,
+          USAGE_CHIFFREMENT_YOUTUBE_SECRET,
+        } = await import("@/lib/youtube");
+
+        // Résolution du serviteur (case-insensitive) — s'il n'existe pas,
+        // on abandonne la persistance et on retourne une page d'erreur
+        // claire (sans pour autant laisser le cookie d'état traîner).
+        const servant = await db.servant.findFirst({
+          where: { code: { equals: state.servantCode, mode: "insensitive" } },
+          select: { id: true, shortName: true, code: true },
+        });
+        if (!servant) {
+          return renderPage(
+            `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Serviteur introuvable</title><style>${PAGE_STYLE}</style></head>
+<body><div class="card">
+  <h1>❌ Serviteur introuvable</h1>
+  <p>Le code serviteur <code>${esc(state.servantCode)}</code> ne correspond à aucun serviteur en base.</p>
+  <p>Créez d'abord le serviteur dans <a class="btn btn-outline" href="/admin/servants">/admin/servants</a>, puis relancez le flux.</p>
+</div></body></html>`,
+            400,
+            invalidate
+          );
+        }
+
+        const clientSecretChiffre = chiffrerSecret(state.clientSecret, USAGE_CHIFFREMENT_YOUTUBE_SECRET);
+        const refreshTokenChiffre = chiffrerSecret(refreshToken, USAGE_CHIFFREMENT_YOUTUBE);
+
+        // Upsert : un seul compte YouTube par serviteur (contrainte @unique
+        // servantId). Si le serviteur était déjà lié à un compte, on écrase
+        // les credentials (typique d'une réautorisation après expiration du
+        // refresh token).
+        await db.youtubeAccount.upsert({
+          where: { servantId: servant.id },
+          create: {
+            servantId: servant.id,
+            channelId: channelId || null,
+            channelTitle: channelTitle || null,
+            clientId: state.clientId,
+            clientSecret: clientSecretChiffre,
+            refreshToken: refreshTokenChiffre,
+            actif: true,
+            dernierSyncAt: new Date(),
+            derniereErreur: null,
+          },
+          update: {
+            channelId: channelId || null,
+            channelTitle: channelTitle || null,
+            clientId: state.clientId,
+            clientSecret: clientSecretChiffre,
+            refreshToken: refreshTokenChiffre,
+            actif: true,
+            dernierSyncAt: new Date(),
+            derniereErreur: null,
+          },
+        });
+
+        console.log(
+          `[youtube-oauth] Compte YouTube persisté pour le serviteur ${servant.code} (channel=${channelTitle || "?"})`
+        );
+
+        return renderPage(
+          `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Compte YouTube lié</title><style>${PAGE_STYLE}</style></head>
+<body><div class="card">
+  <div class="icon-title">
+    ${channelThumbnail ? `<img src="${esc(channelThumbnail)}" alt="" style="width:44px;height:44px;border-radius:12px;">` : ""}
+    <div>
+      <h1>✅ Compte YouTube lié !</h1>
+      ${channelTitle ? `<p>Chaîne : <strong>${esc(channelTitle)}</strong></p>` : ""}
+      <p>Serviteur : <strong>${esc(servant.shortName)}</strong> (<code>${esc(servant.code)}</code>)</p>
+    </div>
+  </div>
+  <p>Le refresh token a été chiffré et enregistré en base. La synchronisation
+     automatique (cron 2×/jour + bouton « Synchroniser YouTube ») récupérera
+     les nouvelles publications de cette chaîne.</p>
+  <p class="muted">Aucune variable à copier sur Vercel — tout est en base.</p>
+  <a class="btn" href="/admin/youtube-accounts">← Retour à la gestion des comptes YouTube</a>
+  <a class="btn btn-outline" href="/admin/videos">Aller au module Vidéos ↗</a>
+</div></body></html>`,
+          200,
+          invalidate
+        );
+      } catch (err) {
+        console.error("[youtube-oauth] Erreur persistance YoutubeAccount :", err);
+        const message = err instanceof Error ? err.message : String(err);
+        return renderPage(
+          `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Erreur de persistance</title><style>${PAGE_STYLE}</style></head>
+<body><div class="card">
+  <h1>⚠️ Erreur lors de l'enregistrement du compte</h1>
+  <p class="muted" style="font-family:monospace">${esc(message.substring(0, 500))}</p>
+  <p>Le refresh token a été obtenu mais n'a pas pu être persisté en base.
+     Réessayez, et si l'erreur persiste, contactez le développeur.</p>
+  <a class="btn btn-outline" href="/admin/youtube-accounts">← Retour</a>
+</div></body></html>`,
+          500,
+          invalidate
+        );
+      }
+    }
+
     // 7. Page de succès — les 4 variables à copier sur Vercel
+    //    (comportement historique, sans servantCode dans l'état)
     const varsBlock =
       `YOUTUBE_CLIENT_ID=${state.clientId}\n` +
       `YOUTUBE_CLIENT_SECRET=${state.clientSecret}\n` +

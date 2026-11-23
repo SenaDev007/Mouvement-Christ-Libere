@@ -66,8 +66,17 @@ function setOAuthCookie(response: NextResponse, value: string): void {
  * de consentement. Le redirect_uri est dérivé de l'origine de la requête
  * (production : https://mouvement-christ-libere.vercel.app — dev : localhost)
  * et stocké dans l'état pour être rejoué à l'identique au token exchange.
+ *
+ * ⭐ V4.26 — `servantCode` (optionnel) est inclus dans l'état chiffré : la
+ * callback l'utilise pour persister le refresh token dans la table
+ * `YoutubeAccount` au lieu d'afficher les variables à copier.
  */
-function prepareFlow(req: NextRequest, clientId: string, clientSecret: string) {
+function prepareFlow(
+  req: NextRequest,
+  clientId: string,
+  clientSecret: string,
+  servantCode?: string | null
+) {
   const redirectUri = `${req.nextUrl.origin}/api/youtube/oauth/callback`;
   const nonce = generateNonce();
   const state: YouTubeOAuthState = {
@@ -76,6 +85,7 @@ function prepareFlow(req: NextRequest, clientId: string, clientSecret: string) {
     redirectUri,
     nonce,
     exp: Date.now() + YOUTUBE_OAUTH_TTL_S * 1000,
+    ...(servantCode ? { servantCode } : {}),
   };
   return {
     consentUrl: buildConsentUrl(clientId, clientSecret, redirectUri, nonce),
@@ -100,7 +110,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const { consentUrl, cookieValue } = prepareFlow(req, clientId, clientSecret);
+  // ⭐ V4.26 — `?servant=<code>` déclenche le flux multi-comptes : la
+  // callback persistera le refresh token dans YoutubeAccount pour ce
+  // serviteur. Sans ce paramètre, comportement historique (variables à copier).
+  const servantCode = req.nextUrl.searchParams.get("servant")?.trim() || null;
+
+  const { consentUrl, cookieValue } = prepareFlow(req, clientId, clientSecret, servantCode);
   const response = NextResponse.redirect(consentUrl);
   setOAuthCookie(response, cookieValue);
   return response;
@@ -113,7 +128,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
-  let body: { clientId?: string; clientSecret?: string } = {};
+  let body: { clientId?: string; clientSecret?: string; servantCode?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -122,6 +137,7 @@ export async function POST(req: NextRequest) {
 
   const clientId = (body.clientId || process.env.YOUTUBE_CLIENT_ID || "").trim();
   const clientSecret = (body.clientSecret || process.env.YOUTUBE_CLIENT_SECRET || "").trim();
+  const servantCode = body.servantCode?.trim() || null;
 
   if (!clientId || !clientSecret) {
     return NextResponse.json(
@@ -150,7 +166,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { consentUrl, cookieValue } = prepareFlow(req, clientId, clientSecret);
+  const { consentUrl, cookieValue } = prepareFlow(req, clientId, clientSecret, servantCode);
   const response = NextResponse.json({ authUrl: consentUrl });
   setOAuthCookie(response, cookieValue);
   return response;

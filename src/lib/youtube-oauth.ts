@@ -53,6 +53,14 @@ export interface YouTubeOAuthState {
   nonce: string;
   /** expiration epoch ms. */
   exp: number;
+  /**
+   * ⭐ V4.26 — Code du serviteur auquel lier ce compte YouTube (multi-comptes).
+   * Si présent, la callback /api/youtube/oauth/callback persiste le refresh
+   * token + channelId dans la table `YoutubeAccount` (chiffré AES-256-GCM).
+   * Si absent, la callback conserve le comportement historique (affichage
+   * des variables à copier sur Vercel).
+   */
+  servantCode?: string;
 }
 
 // ─── Chiffrement AES-256-GCM ─────────────────────────────────────────────

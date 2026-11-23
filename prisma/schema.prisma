@@ -107,6 +107,9 @@ model Servant {
   videos      Video[]
   liveStreams LiveStream[]
   streamConfig ServantStreamConfig?
+  // ⭐ V4.26 — Comptes YouTube/TikTok multi-serviteurs (1:1, optionnels)
+  youtubeAccount YoutubeAccount?
+  tiktokAccount  TiktokAccount?
 }
 
 // --- Biographies (frise chronologique) ---
@@ -1331,3 +1334,63 @@ model CroyantTestimony {
   @@index([publishedAt])
   @@index([createdAt])
 }
+
+// ───────────────────────────────────────────────────────────────────────
+// ⭐ V4.26 — Comptes YouTube multi-serviteurs (Afrika + Pasteur Kongo)
+// ───────────────────────────────────────────────────────────────────────
+// Chaque serviteur peut avoir sa propre chaîne YouTube liée via OAuth 2.0.
+// Le refresh_token est chiffré en base (AES-256-GCM via SESSION_SECRET,
+// sel `${secret}:youtube-account:${id}`) — jamais en clair.
+// La route /api/youtube/oauth/start?servant=<code> initie le flux ;
+// la callback /api/youtube/oauth/callback persiste les tokens ici.
+// syncYouTubeChannel({ servantCode }) lit le compte correspondant.
+// Compat ascendante : si aucun compte en base pour le servantCode,
+// repli sur les variables d'environnement YOUTUBE_* (mono-compte historique).
+model YoutubeAccount {
+  id            String   @id @default(cuid())
+  servantId     String   @unique // un compte YouTube par serviteur
+  channelId     String?  // UC... (récupéré à l'autorisation)
+  channelTitle  String?  // nom affichable de la chaîne
+  clientId      String   // OAuth client ID (Google Cloud Console)
+  clientSecret  String   // chiffré en base (jamais en clair)
+  refreshToken  String   // chiffré en base (jamais en clair)
+  actif         Boolean  @default(true)
+  dernierSyncAt DateTime?
+  derniereErreur String? @db.Text // si non-null, dernière synchro échouée
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  servant       Servant  @relation(fields: [servantId], references: [id], onDelete: Cascade)
+
+  @@index([actif])
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// ⭐ V4.26 — Comptes TikTok multi-serviteurs ( scraping via tikwm.com )
+// ───────────────────────────────────────────────────────────────────────
+// TikTok n'expose aucune API publique pour lister les vidéos d'un créateur.
+// On scrape périodiquement le feed public via tikwm.com (service tiers
+// déjà utilisé pour la résolution MP4 dans src/lib/tiktok-video.ts) :
+//   GET https://www.tikwm.com/api/?user=<username>&count=50
+// Chaque vidéo renvoyée est insérée dans `Video` (idempotente par ID TikTok),
+// attribuée au serviteur lié. Le MP4 et la miniature sont résolus
+// à la demande par les mécanismes existants (tiktok-video.ts, tiktok-miniature.ts).
+model TiktokAccount {
+  id            String   @id @default(cuid())
+  servantId     String   @unique // un compte TikTok par serviteur
+  username      String   // sans le @, ex : "afrika_christ_libere"
+  displayName   String?  // nom affichable (@username si non résolu)
+  actif         Boolean  @default(true)
+  dernierSyncAt DateTime?
+  derniereErreur String? @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  servant       Servant  @relation(fields: [servantId], references: [id], onDelete: Cascade)
+
+  @@index([actif])
+  @@index([username])
+}
+
+// ⭐ V4.26 — Relation inverse côté Servant (déclarée ici pour ne pas
+// toucher au bloc Servant existant en amont du fichier).

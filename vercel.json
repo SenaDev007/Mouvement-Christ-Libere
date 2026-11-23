@@ -73,6 +73,10 @@
     {
       "path": "/api/cron/sync-youtube",
       "schedule": "23 10 * * *"
+    },
+    {
+      "path": "/api/cron/sync-tiktok",
+      "schedule": "33 10 * * *"
     }
   ]
 }

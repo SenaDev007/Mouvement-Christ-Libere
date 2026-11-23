@@ -1,26 +1,23 @@
 /**
- * GET /api/cron/sync-youtube — ⭐ V4.24 Cron de synchronisation AUTOMATIQUE
- * de la chaîne YouTube liée au back-office.
+ * GET /api/cron/sync-youtube — ⭐ V4.26 Cron de synchronisation AUTOMATIQUE
+ * de TOUS les comptes YouTube liés au back-office.
  *
- * Directive : « quand le pasteur publie une vidéo sur YouTube, qu'elle soit
- * récupérée de façon automatique dans le module vidéo pour être rendue sur
- * la page vidéo publique ». Ce cron fait la même passe que le bouton
- * « Synchroniser YouTube » du module Vidéos, sans intervention humaine :
- *   · importe les vidéos publiées absentes du module (≤ 50 par passe) ;
- *   · idempotent (jamais de doublon) ;
- *   · respecte la mémoire des suppressions V3.86 (une vidéo supprimée du
- *     back-office ne revient jamais) ;
- *   · coût YouTube : 3 unités de quota par passe (channels.list +
- *     playlistItems.list + videos.list).
+ * Boucle sur chaque YoutubeAccount actif en base (Afrika + Pasteur Kongo + …)
+ * et appelle syncYouTubeChannel pour chacun. Si aucun compte n'existe en base,
+ * repli sur le comportement historique (variables d'environnement YOUTUBE_*).
  *
  * Sécurité : Authorization Bearer (Vercel Cron) OU X-Cron-Secret (manuel)
  * — même garde que les autres crons (autoriserCron).
  * Planification : vercel.json → 2×/jour (10:23 et 22:23 UTC).
+ *
+ * Coût API YouTube : 3 unités de quota par compte synchronisé (channels.list
+ * + playlistItems.list + videos.list). Avec 2 comptes : 6 unités par passe,
+ * 12 unités/jour → reste très loin du quota de 10 000 unités/jour.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { autoriserCron } from "@/lib/cron-auth";
-import { syncYouTubeChannel } from "@/lib/youtube-sync";
+import { syncTousComptesYouTube } from "@/lib/youtube-sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,29 +28,35 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  // Serviteur d'attribution : variable d'env (défaut « afrika » dans la lib
-  // — toutes les vidéos YouTube actuelles sont les siennes).
-  const resultat = await syncYouTubeChannel({
-    servantCode: process.env.YOUTUBE_SYNC_SERVANT_CODE || null,
-  });
+  const resultat = await syncTousComptesYouTube();
 
-  if (resultat.erreur) {
-    console.error("[cron/sync-youtube] Erreur :", resultat.erreur);
-    return NextResponse.json(
-      { error: resultat.erreur },
-      { status: 503 }
-    );
+  // Logging structuré (Vercel) : on logge chaque compte séparément pour
+  // faciliter le diagnostic en cas d'erreur sur un compte spécifique.
+  for (const d of resultat.details) {
+    if (d.erreur) {
+      console.error(
+        `[cron/sync-youtube] ❌ servant="${d.servantCode}" erreur="${d.erreur}"`
+      );
+    } else {
+      console.log(
+        `[cron/sync-youtube] ✓ servant="${d.servantCode}" chaine="${d.chaine || "?"}" +${d.ajoutees} ~${d.ignorees} ⊘${d.sautees}`
+      );
+    }
   }
 
-  console.log(
-    `[cron/sync-youtube] chaîne="${resultat.chaine || "?"}" ajoutees=${resultat.ajoutees} ignorees=${resultat.ignorees} sautees=${resultat.sautees}`
+  // Si au moins un compte est en erreur, on renvoie 503 (mais on logge
+  // tout de même les comptes qui ont réussi — la réponse JSON contient les
+  // détails par compte).
+  const uneErreur = resultat.details.some((d) => d.erreur);
+  return NextResponse.json(
+    {
+      ok: !uneErreur,
+      comptes: resultat.comptes,
+      ajoutees: resultat.ajoutees,
+      ignorees: resultat.ignorees,
+      sautees: resultat.sautees,
+      details: resultat.details,
+    },
+    { status: uneErreur ? 503 : 200 }
   );
-  return NextResponse.json({
-    ok: true,
-    chaine: resultat.chaine,
-    ajoutees: resultat.ajoutees,
-    ignorees: resultat.ignorees,
-    sautees: resultat.sautees,
-    titres: resultat.titres,
-  });
 }

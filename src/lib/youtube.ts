@@ -81,6 +81,147 @@ export function getYouTubeOAuthClient() {
   return oauth2Client;
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V4.26 — MULTI-COMPTES YOUTUBE (Afrika + Pasteur Kongo)
+// ─────────────────────────────────────────────────────────────────────
+// Le back-office peut lier une chaîne YouTube DISTINCTE par serviteur.
+// Les credentials (refresh token chiffré AES-256-GCM) sont persistés dans
+// la table `YoutubeAccount`. La fonction ci-dessous résout le bon client
+// OAuth pour un serviteur donné, avec repli sur les variables d'environnement
+// YOUTUBE_* (mono-compte historique) si aucun compte en base.
+//
+// Ordre de résolution :
+//   1. Si un YoutubeAccount actif existe en base pour ce servantCode → on
+//      l'utilise (client_id + secret + refresh_token déchiffré).
+//   2. Sinon, si YOUTUBE_* env vars sont présentes → on les utilise
+//      (compat ascendante — un seul compte pour tout le ministère).
+//   3. Sinon → retourne null (l'appelant décide quoi faire).
+// ─────────────────────────────────────────────────────────────────────
+
+import { db } from "@/lib/db";
+import { chiffrerSecret, dechiffrerSecret } from "@/lib/chiffrement";
+
+/** Usage de chiffrement pour les refresh tokens YouTube. */
+export const USAGE_CHIFFREMENT_YOUTUBE = "youtube-account";
+
+/** Usage de chiffrement pour les client secrets YouTube. */
+export const USAGE_CHIFFREMENT_YOUTUBE_SECRET = "youtube-client-secret";
+
+/** Structure retournée par `getCompteYoutube`. */
+export interface CompteYoutube {
+  /** Source des credentials : base (multi-compte) ou env (mono-compte). */
+  source: "db" | "env";
+  /** ID du compte en base (null si source = env). */
+  compteId: string | null;
+  /** ID Prisma du serviteur lié (null si source = env et serviteur non résolu). */
+  servantId: string | null;
+  /** Channel ID YouTube (UC…), si connu. */
+  channelId: string | null;
+  /** Nom affichable de la chaîne, si connu. */
+  channelTitle: string | null;
+}
+
+/**
+ * Charge un client OAuth2 YouTube authentifié pour un serviteur donné.
+ *
+ * @param servantCode  code du serviteur ("afrika" | "kongo" | …) ou null
+ *                     pour récupérer le compte ENV (mono-compte historique).
+ * @returns  { client, compte } ou null si aucun credential disponible.
+ */
+export async function getYouTubeOAuthClientForServant(servantCode: string | null): Promise<{
+  client: ReturnType<typeof getYouTubeOAuthClient>;
+  compte: CompteYoutube;
+} | null> {
+  // ① Multi-comptes : recherche en base
+  if (servantCode) {
+    try {
+      const compte = await db.youtubeAccount.findFirst({
+        where: {
+          actif: true,
+          servant: { code: { equals: servantCode, mode: "insensitive" } },
+        },
+        include: { servant: { select: { id: true } } },
+      });
+      if (compte) {
+        const clientSecret = dechiffrerSecret(compte.clientSecret, USAGE_CHIFFREMENT_YOUTUBE_SECRET);
+        const refreshToken = dechiffrerSecret(compte.refreshToken, USAGE_CHIFFREMENT_YOUTUBE);
+        if (!clientSecret || !refreshToken) {
+          console.warn(`[youtube] Compte ${compte.id} (${servantCode}) : échec de déchiffrement — secret corrompu ?`);
+        } else {
+          const oauth2Client = new google.auth.OAuth2(
+            compte.clientId,
+            clientSecret,
+            "urn:ietf:wg:oauth:2.0:oob"
+          );
+          oauth2Client.setCredentials({ refresh_token: refreshToken });
+          return {
+            client: oauth2Client,
+            compte: {
+              source: "db",
+              compteId: compte.id,
+              servantId: compte.servant.id,
+              channelId: compte.channelId,
+              channelTitle: compte.channelTitle,
+            },
+          };
+        }
+      }
+    } catch (e) {
+      console.warn(`[youtube] Erreur lecture YoutubeAccount pour ${servantCode} :`, e);
+    }
+  }
+
+  // ② Repli mono-compte via variables d'environnement
+  if (isYouTubeOAuthConfigured()) {
+    return {
+      client: getYouTubeOAuthClient(),
+      compte: {
+        source: "env",
+        compteId: null,
+        servantId: null,
+        channelId: process.env.YOUTUBE_CHANNEL_ID || null,
+        channelTitle: null,
+      },
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Récupère la liste de tous les comptes YouTube actifs en base.
+ * Utilisé par le cron /api/cron/sync-youtube pour synchroniser tous les
+ * comptes en une seule passe.
+ */
+export async function listerComptesYouTubeActifs(): Promise<
+  ReadonlyArray<{
+    id: string;
+    servantId: string;
+    servantCode: string;
+    channelId: string | null;
+    channelTitle: string | null;
+  }>
+> {
+  try {
+    const comptes = await db.youtubeAccount.findMany({
+      where: { actif: true },
+      include: { servant: { select: { code: true } } },
+    });
+    return comptes
+      .filter((c) => c.servant?.code)
+      .map((c) => ({
+        id: c.id,
+        servantId: c.servantId,
+        servantCode: c.servant.code,
+        channelId: c.channelId,
+        channelTitle: c.channelTitle,
+      }));
+  } catch (e) {
+    console.warn("[youtube] Erreur listage comptes YouTube actifs :", e);
+    return [];
+  }
+}
+
 /**
  * Récupère l'ID vidéo YouTube du dernier live terminé.
  *

@@ -40,8 +40,8 @@ import { db } from "@/lib/db";
 import {
   extractYoutubeId,
   getYoutubeVideoUrl,
-  isYouTubeOAuthConfigured,
-  getYouTubeOAuthClient,
+  getYouTubeOAuthClientForServant,
+  listerComptesYouTubeActifs,
 } from "@/lib/youtube";
 import { estVideoSupprimee } from "@/lib/suppression-video";
 
@@ -76,33 +76,61 @@ function dureeIsoVersLisible(iso?: string | null): string {
 }
 
 /**
- * Synchronise la chaîne YouTube liée : importe les vidéos publiées qui
- * manquent au module Vidéos.
+ * Synchronise la chaîne YouTube liée à un serviteur : importe les vidéos
+ * publiées qui manquent au module Vidéos.
  *
- * @param opts.servantCode  code du serviteur auquel attribuer les nouvelles
- *                          vidéos (bouton : onglet actif). Défaut : variable
- *                          YOUTUBE_SYNC_SERVANT_CODE, sinon « afrika »
- *                          (toutes les vidéos YouTube actuelles sont les
- *                          siennes).
+ * ⭐ V4.26 — MULTI-COMPTES : la résolution des credentials se fait via
+ * `getYouTubeOAuthClientForServant(servantCode)` qui consulte d'abord
+ * la table `YoutubeAccount` (refresh token chiffré par serviteur), puis
+ * repli sur les variables d'environnement YOUTUBE_* (mono-compte).
+ *
+ * @param opts.servantCode  code du serviteur ("afrika" | "kongo") auquel
+ *                          attribuer les nouvelles vidéos. Défaut : variable
+ *                          d'environnement YOUTUBE_SYNC_SERVANT_CODE, sinon
+ *                          « afrika » (toutes les vidéos YouTube actuelles
+ *                          sont les siennes).
  */
 export async function syncYouTubeChannel(opts?: {
   servantCode?: string | null;
 }): Promise<ResultatSyncYouTube> {
-  if (!isYouTubeOAuthConfigured()) {
+  // Serviteur d'attribution : onglet actif > variable d'env > afrika.
+  const codeServiteur =
+    opts?.servantCode ||
+    process.env.YOUTUBE_SYNC_SERVANT_CODE ||
+    "afrika";
+
+  const servant = await db.servant.findFirst({
+    where: { code: { equals: codeServiteur, mode: "insensitive" } },
+    select: { id: true, shortName: true },
+  });
+  if (!servant) {
+    return {
+      ajoutees: 0,
+      ignorees: 0,
+      sautees: 0,
+      titres: [],
+      erreur: `Serviteur « ${codeServiteur} » introuvable en base.`,
+    };
+  }
+
+  // ⭐ V4.26 — Résolution multi-comptes (DB > ENV).
+  const credentials = await getYouTubeOAuthClientForServant(codeServiteur);
+  if (!credentials) {
     return {
       ajoutees: 0,
       ignorees: 0,
       sautees: 0,
       titres: [],
       erreur:
-        "OAuth YouTube non configuré (YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET / " +
-        "YOUTUBE_REFRESH_TOKEN). Reliez le compte du pasteur via " +
-        "/api/youtube/oauth/start pour activer la synchronisation automatique.",
+        "OAuth YouTube non configuré pour ce serviteur. Reliez le compte via " +
+        "/admin/youtube-accounts (multi-comptes) ou /admin/youtube-setup " +
+        "(mono-compte via variables d'environnement).",
     };
   }
 
+  const { client: auth, compte } = credentials;
+
   try {
-    const auth = getYouTubeOAuthClient();
     const youtube = google.youtube({ version: "v3", auth });
 
     // ① La chaîne liée : titre (compte-rendu) + playlist « uploads ».
@@ -114,6 +142,7 @@ export async function syncYouTubeChannel(opts?: {
     const playlistUploads =
       chaine?.contentDetails?.relatedPlaylists?.uploads || null;
     if (!playlistUploads) {
+      await marquerDerniereErreur(compte.compteId, "Playlist « uploads » introuvable.");
       return {
         ajoutees: 0,
         ignorees: 0,
@@ -176,25 +205,6 @@ export async function syncYouTubeChannel(opts?: {
       if (id) idsExistants.add(id);
     }
 
-    // ⑤ Serviteur d'attribution : onglet actif > variable d'env > afrika.
-    const codeServiteur =
-      opts?.servantCode ||
-      process.env.YOUTUBE_SYNC_SERVANT_CODE ||
-      "afrika";
-    const servant = await db.servant.findFirst({
-      where: { code: { equals: codeServiteur, mode: "insensitive" } },
-      select: { id: true, shortName: true },
-    });
-    if (!servant) {
-      return {
-        ajoutees: 0,
-        ignorees: 0,
-        sautees: 0,
-        titres: [],
-        erreur: `Serviteur « ${codeServiteur} » introuvable en base.`,
-      };
-    }
-
     let ajoutees = 0;
     let ignorees = 0;
     let sautees = 0;
@@ -253,23 +263,150 @@ export async function syncYouTubeChannel(opts?: {
       titres.push(snippet.title);
     }
 
+    await marquerSucces(compte.compteId);
+
     return {
       ajoutees,
       ignorees,
       sautees,
       titres: titres.slice(0, 5),
-      chaine: chaine?.snippet?.title || undefined,
+      chaine: chaine?.snippet?.title || compte.channelTitle || undefined,
     };
   } catch (e) {
+    const message = e instanceof Error ? `API YouTube : ${e.message}` : "Erreur inconnue de l'API YouTube.";
+    await marquerDerniereErreur(compte.compteId, message);
     return {
       ajoutees: 0,
       ignorees: 0,
       sautees: 0,
       titres: [],
-      erreur:
-        e instanceof Error
-          ? `API YouTube : ${e.message}`
-          : "Erreur inconnue de l'API YouTube.",
+      erreur: message,
     };
   }
+}
+
+/**
+ * Met à jour le `dernierSyncAt` et efface `derniereErreur` pour un compte
+ * YouTube en base (best-effort, jamais bloquant).
+ */
+async function marquerSucces(compteId: string | null): Promise<void> {
+  if (!compteId) return;
+  try {
+    await db.youtubeAccount.update({
+      where: { id: compteId },
+      data: { dernierSyncAt: new Date(), derniereErreur: null },
+    });
+  } catch {
+    /* best-effort */
+  }
+}
+
+/**
+ * Persiste la dernière erreur de synchro sur le compte YouTube en base.
+ */
+async function marquerDerniereErreur(compteId: string | null, message: string): Promise<void> {
+  if (!compteId) return;
+  try {
+    await db.youtubeAccount.update({
+      where: { id: compteId },
+      data: { dernierSyncAt: new Date(), derniereErreur: message.slice(0, 2000) },
+    });
+  } catch {
+    /* best-effort */
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V4.26 — SYNC MULTI-COMPTES (cron)
+// ─────────────────────────────────────────────────────────────────────
+// Utilisé par /api/cron/sync-youtube pour synchroniser TOUS les comptes
+// YouTube actifs en base en une seule passe (Afrika + Pasteur Kongo).
+//
+// Compat ascendante : si la base ne contient AUCUN YoutubeAccount, on
+// conserve le comportement historique (appel à syncYouTubeChannel() qui
+// repli sur YOUTUBE_* env vars).
+// ─────────────────────────────────────────────────────────────────────
+
+export interface ResultatSyncMultiYouTube {
+  /** Nombre total de comptes synchronisés (1 si repli env mono-compte). */
+  comptes: number;
+  /** Total des vidéos ajoutées tous comptes confondus. */
+  ajoutees: number;
+  /** Total des vidéos déjà présentes (ignorées). */
+  ignorees: number;
+  /** Total des vidéos supprimées volontairement (sautées). */
+  sautees: number;
+  /** Détail par compte (pour le log cron). */
+  details: Array<{
+    servantCode: string;
+    chaine?: string;
+    ajoutees: number;
+    ignorees: number;
+    sautees: number;
+    titres: string[];
+    erreur?: string;
+  }>;
+}
+
+/**
+ * Synchronise TOUS les comptes YouTube actifs en base.
+ * Si aucun compte n'existe en base, repli sur syncYouTubeChannel() (env vars).
+ */
+export async function syncTousComptesYouTube(): Promise<ResultatSyncMultiYouTube> {
+  const comptes = await listerComptesYouTubeActifs();
+
+  // Aucun compte en base → repli mono-compte (compat ascendante).
+  if (comptes.length === 0) {
+    const r = await syncYouTubeChannel({
+      servantCode: process.env.YOUTUBE_SYNC_SERVANT_CODE || null,
+    });
+    return {
+      comptes: 1,
+      ajoutees: r.ajoutees,
+      ignorees: r.ignorees,
+      sautees: r.sautees,
+      details: [
+        {
+          servantCode: process.env.YOUTUBE_SYNC_SERVANT_CODE || "afrika",
+          chaine: r.chaine,
+          ajoutees: r.ajoutees,
+          ignorees: r.ignorees,
+          sautees: r.sautees,
+          titres: r.titres,
+          erreur: r.erreur,
+        },
+      ],
+    };
+  }
+
+  // Multi-comptes : on sync chaque compte séquentiellement (évite la
+  // concurrence sur les quotas API YouTube et les écritures DB).
+  const details: ResultatSyncMultiYouTube["details"] = [];
+  let ajouteesTotal = 0;
+  let ignoreesTotal = 0;
+  let sauteesTotal = 0;
+
+  for (const compte of comptes) {
+    const r = await syncYouTubeChannel({ servantCode: compte.servantCode });
+    details.push({
+      servantCode: compte.servantCode,
+      chaine: r.chaine,
+      ajoutees: r.ajoutees,
+      ignorees: r.ignorees,
+      sautees: r.sautees,
+      titres: r.titres,
+      erreur: r.erreur,
+    });
+    ajouteesTotal += r.ajoutees;
+    ignoreesTotal += r.ignorees;
+    sauteesTotal += r.sautees;
+  }
+
+  return {
+    comptes: comptes.length,
+    ajoutees: ajouteesTotal,
+    ignorees: ignoreesTotal,
+    sautees: sauteesTotal,
+    details,
+  };
 }

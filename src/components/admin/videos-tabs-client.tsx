@@ -23,6 +23,8 @@ import {
   TrendingUp,
   // ⭐ V4.24 — synchronisation automatique de la chaîne YouTube liée (OAuth).
   Youtube,
+  // ⭐ V4.26 — synchronisation automatique des comptes TikTok liés (scraping tikwm).
+  Music2,
 } from "lucide-react";
 // ⭐ V3.46 — Rubriques signatures (partagées site public ↔ back-office) :
 // « Saint-Esprit réponds-moi » (Afrika), « Rhema du matin »/« Rhema du soir »
@@ -150,6 +152,92 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           err instanceof Error
             ? `Synchronisation impossible : ${err.message}`
             : "Synchronisation impossible.",
+      });
+    }
+  };
+
+  // ─── ⭐ V4.26 — SYNCHRONISATION AUTOMATIQUE TIKTOK (multi-comptes) ───
+  // Récupère les dernières vidéos publiées par le compte TikTok lié au
+  // serviteur de l'onglet actif (via scraping tikwm.com). Si l'onglet "all"
+  // est actif, synchronise tous les comptes TikTok configurés d'un coup.
+  const [syncTikTok, setSyncTikTok] = useState<{
+    enCours: boolean;
+    message: string | null;
+    erreur: boolean;
+  }>({ enCours: false, message: null, erreur: false });
+
+  const lancerSyncTikTok = async () => {
+    if (syncTikTok.enCours) return;
+    setSyncTikTok({ enCours: true, message: null, erreur: false });
+    try {
+      const res = await fetch("/admin/api/videos/sync-tiktok", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ servantCode: activeTab === "all" ? null : activeTab }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        // Réponse mono-compte
+        ajoutees?: number;
+        ignorees?: number;
+        sautees?: number;
+        username?: string;
+        displayName?: string;
+        // Réponse multi-comptes (quand servantCode était null)
+        comptes?: number;
+        details?: Array<{
+          servantCode: string;
+          username?: string;
+          ajoutees: number;
+          ignorees: number;
+          sautees: number;
+          erreur?: string;
+        }>;
+        error?: string;
+      };
+      if (!res.ok) throw new Error(data.error || `Échec (${res.status})`);
+
+      // Cas 1 : multi-comptes (onglet "all")
+      if (data.comptes !== undefined) {
+        const totalAjoutees = (data.details || []).reduce((s, d) => s + d.ajoutees, 0);
+        const totalIgnorees = (data.details || []).reduce((s, d) => s + d.ignorees, 0);
+        const totalSautees = (data.details || []).reduce((s, d) => s + d.sautees, 0);
+        const comptesAvecErreur = (data.details || []).filter((d) => d.erreur).length;
+        setSyncTikTok({
+          enCours: false,
+          erreur: comptesAvecErreur > 0 && totalAjoutees === 0,
+          message:
+            totalAjoutees > 0
+              ? `${totalAjoutees} nouvelle${totalAjoutees > 1 ? "s" : ""} vidéo${totalAjoutees > 1 ? "s" : ""} TikTok importée${totalAjoutees > 1 ? "s" : ""} (${data.comptes} comptes, ${totalIgnorees} déjà présente${totalIgnorees > 1 ? "s" : ""}${totalSautees ? `, ${totalSautees} supprimée${totalSautees > 1 ? "s" : ""}` : ""}).`
+              : comptesAvecErreur > 0
+                ? `${comptesAvecErreur} compte${comptesAvecErreur > 1 ? "s" : ""} en erreur sur ${data.comptes} — voir /admin/tiktok-accounts.`
+                : `Tous les comptes TikTok sont à jour (${data.comptes} comptes synchronisés, ${totalIgnorees} déjà présente${totalIgnorees > 1 ? "s" : ""}).`,
+        });
+      } else {
+        // Cas 2 : mono-compte
+        const a = data.ajoutees || 0;
+        const i = data.ignorees || 0;
+        const s = data.sautees || 0;
+        setSyncTikTok({
+          enCours: false,
+          erreur: false,
+          message:
+            a > 0
+              ? `${a} nouvelle${a > 1 ? "s" : ""} vidéo${a > 1 ? "s" : ""} TikTok importée${a > 1 ? "s" : ""} (@${data.username || "?"}) — ${i} déjà présente${i > 1 ? "s" : ""}${s ? `, ${s} supprimée${s > 1 ? "s" : ""}` : ""}.`
+              : `@${data.username || "?"} à jour — aucune nouvelle vidéo (${i} déjà présente${i > 1 ? "s" : ""}).`,
+        });
+      }
+
+      if ((data.ajoutees || 0) > 0 || ((data.details || []).reduce((s, d) => s + d.ajoutees, 0)) > 0) {
+        router.refresh();
+      }
+    } catch (err) {
+      setSyncTikTok({
+        enCours: false,
+        erreur: true,
+        message:
+          err instanceof Error
+            ? `Synchronisation TikTok impossible : ${err.message}`
+            : "Synchronisation TikTok impossible.",
       });
     }
   };
@@ -838,6 +926,43 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           </button>
         </div>
       )}
+      {/* ⭐ V4.26 — Retour de la synchronisation TikTok */}
+      {syncTikTok.message && (
+        <div
+          className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${
+            syncTikTok.erreur
+              ? "border-[#B3452E]/40 bg-[#B3452E]/10"
+              : "border-[#5B7052]/40 bg-[#5B7052]/10"
+          }`}
+        >
+          {syncTikTok.erreur ? (
+            <AlertCircle className="h-4 w-4 shrink-0 text-[#E08B6D] mt-0.5" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#A3C9B0] mt-0.5" />
+          )}
+          <p
+            className={`text-sm font-bold min-w-0 flex-1 ${
+              syncTikTok.erreur ? "text-[#E08B6D]" : "text-[#A3C9B0]"
+            }`}
+          >
+            {syncTikTok.message}
+          </p>
+          <button
+            type="button"
+            onClick={() =>
+              setSyncTikTok({ enCours: false, message: null, erreur: false })
+            }
+            className={`shrink-0 transition-colors ${
+              syncTikTok.erreur
+                ? "text-[#E08B6D]/60 hover:text-[#E08B6D]"
+                : "text-[#A3C9B0]/60 hover:text-[#A3C9B0]"
+            }`}
+            aria-label="Fermer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -923,6 +1048,31 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           )}
           <span className="hidden sm:inline">
             {syncYouTube.enCours ? "Synchronisation…" : "Synchroniser YouTube"}
+          </span>
+        </button>
+        {/* ⭐ V4.26 — Synchroniser les comptes TikTok liés (scraping tikwm). */}
+        <button
+          type="button"
+          onClick={lancerSyncTikTok}
+          disabled={syncTikTok.enCours}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md ${
+            syncTikTok.enCours
+              ? "bg-[#3D1A54] text-[#DDBE55]"
+              : "bg-[#C9A227]/10 text-[#DDBE55] hover:bg-[#3D1A54]/10"
+          }`}
+          title={
+            activeTab === "all"
+              ? "Récupérer les dernières vidéos publiées par TOUS les comptes TikTok liés ( scraping tikwm.com)."
+              : `Récupérer les dernières vidéos publiées par le compte TikTok lié au serviteur de l'onglet actif ( scraping tikwm.com).`
+          }
+        >
+          {syncTikTok.enCours ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Music2 className="w-4 h-4" />
+          )}
+          <span className="hidden sm:inline">
+            {syncTikTok.enCours ? "Synchronisation…" : "Synchroniser TikTok"}
           </span>
         </button>
         <button
