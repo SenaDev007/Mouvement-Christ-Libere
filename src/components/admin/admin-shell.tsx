@@ -24,6 +24,8 @@ import {
   ShieldAlert,
   Cloud,
   Youtube,
+  // ⭐ V4.26 — Comptes TikTok liés (icone Music2 distincte de Music = Adoration)
+  Music2,
   Image as ImageIcon,
   Building2,
   Wallet,
@@ -70,6 +72,13 @@ const NAV_SECTIONS = [
       // professionnelles sans Canva ni Photoshop (module partagé avec le
       // secrétariat).
       { label: "Studio Créatif", href: "/admin/studio", icon: Sparkles },
+      // ⭐ V4.26 — Multi-comptes YouTube + TikTok : liaison OAuth par
+      // serviteur (Afrika + Pasteur Kongo), synchro automatique des
+      // publications via cron 2×/jour. "Comptes YouTube" est DISTINCT de
+      // "YouTube Setup" (Système) qui gère le mono-compte historique via
+      // variables d'environnement.
+      { label: "Comptes YouTube", href: "/admin/youtube-accounts", icon: Youtube },
+      { label: "Comptes TikTok", href: "/admin/tiktok-accounts", icon: Music2 },
     ],
   },
   {
