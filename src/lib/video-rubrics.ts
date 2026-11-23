@@ -85,6 +85,12 @@ export const CATEGORY_ORDER_AFRIKA: string[] = [
   "Témoignages & Visions",
   "Fêtes & Shabbat",
   "Vie Pastorale",
+  // ⭐ V4.28 — Catégorie générale (fallback) pour les vidéos YouTube/TikTok
+  // d'Afrika dont le titre ne permet pas de deviner une rubrique précise.
+  // Serviteur-EXCLUSIVE (n'apparaît que dans la liste d'Afrika) → impossible
+  // qu'une vidéo d'Afrika finisse dans la section Kongo via cette catégorie.
+  // L'admin peut ensuite reclasser manuellement vers une catégorie plus précise.
+  "Général Afrika",
 ];
 
 export const CATEGORY_ORDER_KONGO: string[] = [
@@ -97,6 +103,10 @@ export const CATEGORY_ORDER_KONGO: string[] = [
   "Retraite spirituelle",
   "Fêtes & Shabbat",
   "Discernement Spirituel",
+  // ⭐ V4.28 — Catégorie générale (fallback) pour les vidéos YouTube/TikTok
+  // de Pasteur Kongo dont le titre ne contient ni « Rhema du matin » ni
+  // « Rhema du soir ». Serviteur-EXCLUSIVE → pas de mélange possible.
+  "Général Kongo",
 ];
 
 /** Ordre des catégories pour un serviteur donné. */
@@ -129,6 +139,13 @@ export const RUBRIQUE_OPTIONS: { value: string; label: string }[] = [
   { value: "Fêtes & Shabbat", label: "Fêtes & Shabbat" },
   { value: "Discernement Spirituel", label: "Discernement Spirituel" },
   { value: "Vie Pastorale", label: "Vie Pastorale" },
+  // ⭐ V4.28 — Catégories générales (fallback sync YouTube/TikTok) :
+  // une par serviteur, serviteur-EXCLUSIVES (pas de mélange possible).
+  // Atterrissage automatique des vidéos importées dont le titre ne
+  // permet pas de deviner une rubrique précise. L'admin peut ensuite
+  // reclasser vers une catégorie plus spécifique.
+  { value: "Général Afrika", label: "⚑ Général Afrika (fallback sync YouTube/TikTok)" },
+  { value: "Général Kongo", label: "⚑ Général Kongo (fallback sync YouTube/TikTok)" },
 ];
 
 /**
@@ -167,3 +184,94 @@ export function categorizeVideo(
   if (t.includes("shabbat") || t.includes("fête")) return "Fêtes & Shabbat";
   return "Paroles & Exhortations";
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V4.28 — Catégorisation INTELLIGENTE pour les vidéos importées
+// automatiquement depuis YouTube et TikTok (syncYouTubeChannel + syncTikTokAccount).
+// ─────────────────────────────────────────────────────────────────────
+// Contrairement à `categorizeVideo` (qui devine parmi TOUTES les
+// catégories par mots-clés), cette fonction est CONSERVATIVE :
+//   - elle ne détecte QUE les rubriques SIGNATURES du serviteur
+//     (le « vitrine » du ministère — ne pas se tromper sur celles-ci) ;
+//   - tout le reste va dans la catégorie GÉNÉRALE serviteur-exclusive
+//     (« Général Afrika » / « Général Kongo »), créée pour cela.
+//
+// Rationale pasteur :
+//   - Pasteur Kongo a DEUX rubriques signatures (« Rhema du matin » /
+//     « Rhema du soir ») → le système doit les reconnaître automatiquement
+//     dans le titre des vidéos importées ;
+//   - Afrika a UNE rubrique signature (« Saint-Esprit réponds-moi ») ;
+//   - les vidéos dont le titre ne permet pas de deviner une signature
+//     vont dans une catégorie générale (une par serviteur, exclusive),
+//     pour ne JAMAIS se mélanger entre Afrika et Kongo sur la page /videos.
+//     L'admin peut ensuite reclasser manuellement vers une catégorie
+//     plus précise (Enseignements, Prière, etc.).
+//
+// Robustesse :
+//   - normalisation : lowercase + suppression des accents (NFD) →
+//     « Réponds-moi », « reponds-moi », « RÉPONDS-MOI » matchent tous ;
+//   - détection large : « rhema » + « matin » suffit (pas seulement
+//     la forme exacte « Rhema du matin »), pour tolérer les variations
+//     de titre (« Rhema matin #42 », « Le Rhema du matin du 12/03 »…).
+// ─────────────────────────────────────────────────────────────────────
+
+/** Normalise une chaîne pour la comparaison : lowercase + sans accents. */
+function normaliserPourComparaison(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, ""); // supprime les diacritiques
+}
+
+/** Catégorie générale (fallback) d'un serviteur — jamais null. */
+export function categorieGenerale(servantCode: string | null | undefined): string {
+  return servantCode === "kongo" ? "Général Kongo" : "Général Afrika";
+}
+
+/**
+ * Devine la catégorie d'une vidéo importée depuis YouTube/TikTok à partir
+ * de son titre et du serviteur propriétaire.
+ *
+ *  · Pasteur Kongo :
+ *    - « Rhema du matin » si le titre contient « rhema » ET « matin » ;
+ *    - « Rhema du soir » si le titre contient « rhema » ET « soir » ;
+ *    - « Général Kongo » sinon.
+ *
+ *  · Afrika :
+ *    - « Saint-Esprit réponds-moi » si le titre contient « saint-esprit »
+ *      (ou « saint esprit ») ET « réponds » (ou « reponds »), ou
+ *      directement « réponds-moi » / « reponds-moi » ;
+ *    - « Général Afrika » sinon.
+ *
+ * @returns  toujours une catégorie serviteur-EXCLUSIVE (jamais null, jamais
+ *           une catégorie commune aux deux serviteurs).
+ */
+export function devinerCategorieSync(
+  title: string,
+  servantCode: string | null | undefined
+): string {
+  const t = normaliserPourComparaison(title);
+
+  if (servantCode === "kongo") {
+    // ⭐ Détection des DEUX rubriques signatures de Pasteur Kongo
+    if (t.includes("rhema")) {
+      if (t.includes("matin")) return "Rhema du matin";
+      if (t.includes("soir")) return "Rhema du soir";
+    }
+    // Sinon → catégorie générale exclusive Kongo
+    return "Général Kongo";
+  }
+
+  // Afrika — détection de sa rubrique signature « Saint-Esprit réponds-moi »
+  const contientSaintEsprit =
+    t.includes("saint-esprit") || t.includes("saint esprit") || t.includes("saintesprit");
+  const contientReponds =
+    t.includes("reponds-moi") || t.includes("reponds moi") || t.includes("reponds");
+  if ((contientSaintEsprit && contientReponds) || t.includes("reponds-moi")) {
+    return "Saint-Esprit réponds-moi";
+  }
+
+  // Sinon → catégorie générale exclusive Afrika
+  return "Général Afrika";
+}
+

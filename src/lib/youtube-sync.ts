@@ -44,7 +44,7 @@ import {
   listerComptesYouTubeActifs,
 } from "@/lib/youtube";
 import { estVideoSupprimee } from "@/lib/suppression-video";
-import { rubriquesDe } from "@/lib/video-rubrics";
+import { devinerCategorieSync } from "@/lib/video-rubrics";
 
 export interface ResultatSyncYouTube {
   /** Vidéos importées (nouvelles sur la chaîne, absentes du module). */
@@ -211,17 +211,19 @@ export async function syncYouTubeChannel(opts?: {
     let sautees = 0;
     const titres: string[] = [];
 
-    // ⭐ V4.26 — Catégorie par défaut = rubrique SIGNATURE du serviteur,
-    // pour garantir qu'aucune vidéo d'Afrika ne se retrouve dans la section
-    // Pasteur Kongo (et inverse versa). Sans cela, category: null déclencherait
-    // la catégorisation automatique par mots-clés du titre — risqué :
-    // un titre comme "Prière de délivrance" pourrait être deviné dans
-    // "Prière & Délivrance" (catégorie commune aux deux serviteurs) et
-    // s'afficher dans les deux sections sur /videos.
-    //   · Afrika       → "Saint-Esprit réponds-moi" (sa seule rubrique signature)
-    //   · Pasteur Kongo → "Rhema du matin" (première de ses deux rubriques)
-    // L'admin peut ensuite affiner manuellement la catégorie dans le back-office.
-    const rubriqueParDefaut = rubriquesDe(codeServiteur)[0] || null;
+    // ⭐ V4.28 — Catégorisation INTELLIGENTE par détection de mots-clés
+    // dans le titre (cf. devinerCategorieSync dans video-rubrics.ts) :
+    //   · Pasteur Kongo → « Rhema du matin » / « Rhema du soir » si le titre
+    //     les mentionne, sinon « Général Kongo » ;
+    //   · Afrika → « Saint-Esprit réponds-moi » si le titre le mentionne,
+    //     sinon « Général Afrika ».
+    // La catégorie est TOUJOURS serviteur-EXCLUSIVE → aucune chance qu'une
+    // vidéo d'Afrika se retrouve dans la section Pasteur Kongo (et inverse
+    // versa). L'admin peut ensuite reclasser manuellement vers une catégorie
+    // plus précise (Enseignements, Prière, etc.) dans le back-office.
+    // NOTE : la catégorie est calculée PAR VIDÉO (pas par serviteur global)
+    // car deux vidéos du même serviteur peuvent avoir des rubriques
+    // différentes (« Rhema du matin » vs « Rhema du soir » chez Kongo).
 
     // Ordre chronologique (la playlist est « plus récent d'abord » — on
     // insère du plus ancien au plus récent pour un tri propre).
@@ -267,8 +269,9 @@ export async function syncYouTubeChannel(opts?: {
           views: detail?.vues || 0,
           likes: detail?.likes || 0,
           isLive: false,
-          // ⭐ V4.26 — Rubrique signature du serviteur (cf. commentaire plus haut).
-          category: rubriqueParDefaut,
+          // ⭐ V4.28 — Catégorisation intelligente par titre (cf. commentaire
+          // ci-dessus). Calculée par vidéo, pas par serviteur global.
+          category: devinerCategorieSync(snippet.title, codeServiteur),
           publishedAt: datePublication,
         },
       });

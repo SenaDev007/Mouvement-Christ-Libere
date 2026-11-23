@@ -44,7 +44,7 @@
 import { db } from "@/lib/db";
 import { extraireTiktokId } from "@/lib/tiktok";
 import { estVideoSupprimee } from "@/lib/suppression-video";
-import { rubriquesDe } from "@/lib/video-rubrics";
+import { devinerCategorieSync } from "@/lib/video-rubrics";
 
 const TIKWM_ENDPOINT = "https://www.tikwm.com/api/";
 const UA_NAVIGATEUR =
@@ -226,13 +226,13 @@ export async function syncTikTokAccount(opts: {
   let sautees = 0;
   const titres: string[] = [];
 
-  // ⭐ V4.26 — Catégorie par défaut = rubrique SIGNATURE du serviteur,
-  // pour garantir qu'aucune vidéo TikTok d'Afrika ne se retrouve dans la
-  // section Pasteur Kongo (et inverse versa). Cf. commentaire équivalent
-  // dans youtube-sync.ts.
-  //   · Afrika       → "Saint-Esprit réponds-moi"
-  //   · Pasteur Kongo → "Rhema du matin"
-  const rubriqueParDefaut = rubriquesDe(codeServiteur)[0] || null;
+  // ⭐ V4.28 — Catégorisation INTELLIGENTE par détection de mots-clés dans
+  // le titre (cf. devinerCategorieSync dans video-rubrics.ts) :
+  //   · Pasteur Kongo → « Rhema du matin » / « Rhema du soir » si le titre
+  //     les mentionne, sinon « Général Kongo » ;
+  //   · Afrika → « Saint-Esprit réponds-moi » si le titre le mentionne,
+  //     sinon « Général Afrika ».
+  // Calculée PAR VIDÉO (cf. youtube-sync.ts pour le rationale complet).
 
   // Ordre chronologique (tikwm renvoie plus récent d'abord — on inverse).
   for (const v of [...videos].reverse()) {
@@ -272,8 +272,9 @@ export async function syncTikTokAccount(opts: {
           views: v.play_count || 0,
           likes: v.digg_count || 0,
           isLive: false,
-          // ⭐ V4.26 — Rubrique signature du serviteur (cf. commentaire plus haut).
-          category: rubriqueParDefaut,
+          // ⭐ V4.28 — Catégorisation intelligente par titre (cf. commentaire
+          // ci-dessus). Calculée par vidéo, pas par serviteur global.
+          category: devinerCategorieSync(v.title, codeServiteur),
           publishedAt: datePublication,
         },
       });
