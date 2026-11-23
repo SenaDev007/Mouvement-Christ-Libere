@@ -44,6 +44,7 @@
 import { db } from "@/lib/db";
 import { extraireTiktokId } from "@/lib/tiktok";
 import { estVideoSupprimee } from "@/lib/suppression-video";
+import { rubriquesDe } from "@/lib/video-rubrics";
 
 const TIKWM_ENDPOINT = "https://www.tikwm.com/api/";
 const UA_NAVIGATEUR =
@@ -225,6 +226,14 @@ export async function syncTikTokAccount(opts: {
   let sautees = 0;
   const titres: string[] = [];
 
+  // ⭐ V4.26 — Catégorie par défaut = rubrique SIGNATURE du serviteur,
+  // pour garantir qu'aucune vidéo TikTok d'Afrika ne se retrouve dans la
+  // section Pasteur Kongo (et inverse versa). Cf. commentaire équivalent
+  // dans youtube-sync.ts.
+  //   · Afrika       → "Saint-Esprit réponds-moi"
+  //   · Pasteur Kongo → "Rhema du matin"
+  const rubriqueParDefaut = rubriquesDe(codeServiteur)[0] || null;
+
   // Ordre chronologique (tikwm renvoie plus récent d'abord — on inverse).
   for (const v of [...videos].reverse()) {
     const videoId = String(v.video_id || "");
@@ -263,7 +272,8 @@ export async function syncTikTokAccount(opts: {
           views: v.play_count || 0,
           likes: v.digg_count || 0,
           isLive: false,
-          category: null,
+          // ⭐ V4.26 — Rubrique signature du serviteur (cf. commentaire plus haut).
+          category: rubriqueParDefaut,
           publishedAt: datePublication,
         },
       });

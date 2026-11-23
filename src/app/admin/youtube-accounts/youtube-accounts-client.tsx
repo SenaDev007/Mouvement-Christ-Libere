@@ -5,7 +5,7 @@
  * Gestion multi-comptes YouTube : liste + liaison OAuth + activation.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Youtube,
@@ -19,6 +19,8 @@ import {
   ExternalLink,
   Power,
   Calendar,
+  Copy,
+  KeyRound,
 } from "lucide-react";
 
 interface ServantLite {
@@ -54,6 +56,42 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
   const [enCours, setEnCours] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [redirectUri, setRedirectUri] = useState<string>("");
+  const [copie, setCopie] = useState<boolean>(false);
+
+  // ⭐ V4.26 — Calcule l'URL de redirection OAuth exacte que Google attend
+  // dans la console Cloud (Authorized redirect URIs). Cette URL est
+  // déterminée par l'origine du back-office : en production
+  // https://admin.mouvementchristlibere.com/api/youtube/oauth/callback.
+  // L'afficher proactivement évite l'erreur 400 redirect_uri_mismatch.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setRedirectUri(`${window.location.origin}/api/youtube/oauth/callback`);
+    }
+  }, []);
+
+  const copierRedirectUri = async () => {
+    if (!redirectUri) return;
+    try {
+      await navigator.clipboard.writeText(redirectUri);
+      setCopie(true);
+      setTimeout(() => setCopie(false), 2000);
+    } catch {
+      // Fallback : sélection manuelle
+      const ta = document.createElement("textarea");
+      ta.value = redirectUri;
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        setCopie(true);
+        setTimeout(() => setCopie(false), 2000);
+      } catch {
+        /* ignore */
+      }
+      document.body.removeChild(ta);
+    }
+  };
 
   const servantsAvecCompte = new Set(comptes.map((c) => c.servantCode));
   const servantsDisponibles = servants.filter((s) => !servantsAvecCompte.has(s.code));
@@ -207,6 +245,68 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
                   Tant que vous n'avez pas lié de compte ici, la synchro utilise le fallback
                   historique (variables d'environnement <code className="bg-black/30 px-1 rounded">YOUTUBE_*</code> sur Vercel).
                   Liez un premier compte ci-dessous pour activer le mode multi-comptes.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ⭐ V4.26 — Encart de configuration Google Cloud Console : affiche
+            proactivement l'URL de redirection OAuth à enregistrer pour
+            éviter l'erreur 400 redirect_uri_mismatch lors du clic sur
+            « Lier via Google ». */}
+        {redirectUri && (
+          <div className="rounded-lg border border-[#C9A227]/40 bg-[#C9A227]/5 p-4 text-sm">
+            <div className="flex items-start gap-3">
+              <KeyRound className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+              <div className="space-y-2 flex-1">
+                <p className="font-semibold text-[#C9A227]">
+                  ⚠️ Avant de lier le premier compte — configurez Google Cloud Console
+                </p>
+                <p className="text-[#FAF6EF]/80">
+                  Si vous obtenez l'erreur <code className="bg-black/30 px-1 rounded">Erreur 400 : redirect_uri_mismatch</code> lors
+                  du clic sur « Lier via Google », c'est que l'URL de redirection ci-dessous n'est
+                  pas déclarée chez Google. Ajoutez-la dans :
+                </p>
+                <p className="text-[#FAF6EF]/70 text-xs pl-3 border-l-2 border-[#C9A227]/30">
+                  Google Cloud Console → APIs &amp; Services → Credentials →
+                  votre OAuth 2.0 Client ID → Authorized redirect URIs → « ADD URI »
+                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <code className="bg-black/30 px-2 py-1 rounded text-[#DDBE55] text-xs flex-1 min-w-0 break-all">
+                    {redirectUri}
+                  </code>
+                  <button
+                    onClick={copierRedirectUri}
+                    className="inline-flex items-center gap-1.5 bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-bold text-xs px-3 py-1.5 rounded-md transition-colors flex-shrink-0"
+                  >
+                    {copie ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Copié !
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        Copier
+                      </>
+                    )}
+                  </button>
+                </div>
+                <a
+                  href="https://console.cloud.google.com/apis/credentials"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[#C9A227] hover:underline text-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Ouvrir Google Cloud Console → Credentials
+                </a>
+                <p className="text-[#FAF6EF]/50 text-xs mt-1">
+                  ℹ️ Cette URL est dérivée du domaine actuel du back-office (
+                  <code className="bg-black/30 px-1 rounded">{typeof window !== "undefined" ? window.location.host : "…"}</code>
+                  ). Si vous utilisez aussi <code className="bg-black/30 px-1 rounded">localhost</code> en dev,
+                  ajoutez aussi <code className="bg-black/30 px-1 rounded">http://localhost:3000/api/youtube/oauth/callback</code>.
                 </p>
               </div>
             </div>

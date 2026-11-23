@@ -44,6 +44,7 @@ import {
   listerComptesYouTubeActifs,
 } from "@/lib/youtube";
 import { estVideoSupprimee } from "@/lib/suppression-video";
+import { rubriquesDe } from "@/lib/video-rubrics";
 
 export interface ResultatSyncYouTube {
   /** Vidéos importées (nouvelles sur la chaîne, absentes du module). */
@@ -210,6 +211,18 @@ export async function syncYouTubeChannel(opts?: {
     let sautees = 0;
     const titres: string[] = [];
 
+    // ⭐ V4.26 — Catégorie par défaut = rubrique SIGNATURE du serviteur,
+    // pour garantir qu'aucune vidéo d'Afrika ne se retrouve dans la section
+    // Pasteur Kongo (et inverse versa). Sans cela, category: null déclencherait
+    // la catégorisation automatique par mots-clés du titre — risqué :
+    // un titre comme "Prière de délivrance" pourrait être deviné dans
+    // "Prière & Délivrance" (catégorie commune aux deux serviteurs) et
+    // s'afficher dans les deux sections sur /videos.
+    //   · Afrika       → "Saint-Esprit réponds-moi" (sa seule rubrique signature)
+    //   · Pasteur Kongo → "Rhema du matin" (première de ses deux rubriques)
+    // L'admin peut ensuite affiner manuellement la catégorie dans le back-office.
+    const rubriqueParDefaut = rubriquesDe(codeServiteur)[0] || null;
+
     // Ordre chronologique (la playlist est « plus récent d'abord » — on
     // insère du plus ancien au plus récent pour un tri propre).
     for (const item of [...items].reverse()) {
@@ -254,7 +267,8 @@ export async function syncYouTubeChannel(opts?: {
           views: detail?.vues || 0,
           likes: detail?.likes || 0,
           isLive: false,
-          category: null,
+          // ⭐ V4.26 — Rubrique signature du serviteur (cf. commentaire plus haut).
+          category: rubriqueParDefaut,
           publishedAt: datePublication,
         },
       });
