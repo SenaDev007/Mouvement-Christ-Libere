@@ -205,8 +205,8 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
       const f = data.filtrees || 0;
       setInfo(
         a > 0
-          ? `${a} nouvelle${a > 1 ? "s" : ""} vidéo${a > 1 ? "s" : ""} importée${a > 1 ? "s" : ""} (${i} déjà présente${i > 1 ? "s" : ""}${f ? `, ${f} filtrée${f > 1 ? "s" : ""} (>10 jours)` : ""}${s ? `, ${s} supprimée${s > 1 ? "s" : ""}` : ""}).`
-          : `Chaîne à jour — aucune nouvelle vidéo (${i} déjà présente${i > 1 ? "s" : ""}${f ? `, ${f} filtrée${f > 1 ? "s" : ""} (>10 jours)` : ""}).`
+          ? `${a} nouvelle${a > 1 ? "s" : ""} vidéo${a > 1 ? "s" : ""} importée${a > 1 ? "s" : ""} (${i} déjà en base, non réimportée${i > 1 ? "s" : ""}${f ? `, ${f} filtrée${f > 1 ? "s" : ""} (>10 jours)` : ""}${s ? `, ${s} supprimée${s > 1 ? "s" : ""}` : ""}).`
+          : `Chaîne à jour — aucune nouvelle vidéo (${i} déjà en base, non réimportée${i > 1 ? "s" : ""}${f ? `, ${f} filtrée${f > 1 ? "s" : ""} (>10 jours)` : ""}).`
       );
       // Recharger les métadonnées (dernierSyncAt, derniereErreur) :
       const res2 = await fetch("/admin/api/youtube/accounts");

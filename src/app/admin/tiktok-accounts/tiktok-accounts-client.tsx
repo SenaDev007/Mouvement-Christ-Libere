@@ -139,8 +139,8 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
       const f = data.filtrees || 0;
       setInfo(
         a > 0
-          ? `@${compte.username} : ${a} nouvelle${a > 1 ? "s" : ""} vidéo${a > 1 ? "s" : ""} importée${a > 1 ? "s" : ""} (${i} déjà présente${i > 1 ? "s" : ""}${f ? `, ${f} filtrée${f > 1 ? "s" : ""} (>10 jours)` : ""}${s ? `, ${s} supprimée${s > 1 ? "s" : ""}` : ""}).`
-          : `@${compte.username} à jour — aucune nouvelle vidéo (${i} déjà présente${i > 1 ? "s" : ""}${f ? `, ${f} filtrée${f > 1 ? "s" : ""} (>10 jours)` : ""}).`
+          ? `@${compte.username} : ${a} nouvelle${a > 1 ? "s" : ""} vidéo${a > 1 ? "s" : ""} importée${a > 1 ? "s" : ""} (${i} déjà en base, non réimportée${i > 1 ? "s" : ""}${f ? `, ${f} filtrée${f > 1 ? "s" : ""} (>10 jours)` : ""}${s ? `, ${s} supprimée${s > 1 ? "s" : ""}` : ""}).`
+          : `@${compte.username} à jour — aucune nouvelle vidéo (${i} déjà en base, non réimportée${i > 1 ? "s" : ""}${f ? `, ${f} filtrée${f > 1 ? "s" : ""} (>10 jours)` : ""}).`
       );
       await recharger();
     } catch (err) {

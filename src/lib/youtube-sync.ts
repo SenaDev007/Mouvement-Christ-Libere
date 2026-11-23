@@ -296,29 +296,55 @@ export async function syncYouTubeChannel(opts?: {
       const detail = details.get(videoId);
       if (detail?.aVenir) continue;
 
-      await db.video.create({
-        data: {
-          servantId: servant.id,
-          title: snippet.title,
-          description:
-            (snippet.description || "").slice(0, 5000) ||
-            `Vidéo de ${servant.shortName} — ${snippet.title}`,
-          duration: detail?.duree || "",
-          videoUrl: url,
-          thumbnailUrl:
-            detail?.miniature || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-          views: detail?.vues || 0,
-          likes: detail?.likes || 0,
-          isLive: false,
-          // ⭐ V4.28 — Catégorisation intelligente par titre (cf. commentaire
-          // ci-dessus). Calculée par vidéo, pas par serviteur global.
-          category: devinerCategorieSync(snippet.title, codeServiteur),
-          publishedAt: datePublication,
-        },
-      });
-      idsExistants.add(videoId);
-      ajoutees++;
-      titres.push(snippet.title);
+      // ⭐ V4.30 — Try/catch sur l'insertion pour gérer le cas (très rare mais
+      // possible) où deux syncs tournent en parallèle (cron + clic manuel)
+      // et insèrent la même vidéo entre le check idsExistants et le create.
+      // L'index unique partiel sur Video.videoUrl (migration 20261123130000)
+      // garantit qu'aucun doublon ne peut exister en base — le P2002 est
+      // traité comme "ignorée" (ignorees++) plutôt que comme une erreur.
+      try {
+        await db.video.create({
+          data: {
+            servantId: servant.id,
+            title: snippet.title,
+            description:
+              (snippet.description || "").slice(0, 5000) ||
+              `Vidéo de ${servant.shortName} — ${snippet.title}`,
+            duration: detail?.duree || "",
+            videoUrl: url,
+            thumbnailUrl:
+              detail?.miniature || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+            views: detail?.vues || 0,
+            likes: detail?.likes || 0,
+            isLive: false,
+            // ⭐ V4.28 — Catégorisation intelligente par titre (cf. commentaire
+            // ci-dessus). Calculée par vidéo, pas par serviteur global.
+            category: devinerCategorieSync(snippet.title, codeServiteur),
+            publishedAt: datePublication,
+          },
+        });
+        idsExistants.add(videoId);
+        ajoutees++;
+        titres.push(snippet.title);
+      } catch (e) {
+        if (
+          e instanceof Error &&
+          "code" in e &&
+          (e as { code?: string }).code === "P2002"
+        ) {
+          // Unique constraint violation — la vidéo a été insérée entre notre
+          // check et notre create (race condition). On la compte comme
+          // ignorée, pas comme une erreur.
+          ignorees++;
+          idsExistants.add(videoId);
+        } else {
+          // Erreur réelle (DB down, etc.) — on logge sans tout casser.
+          console.warn(
+            `[youtube-sync] Échec insertion vidéo ${videoId} pour ${codeServiteur} :`,
+            e instanceof Error ? e.message : e
+          );
+        }
+      }
     }
 
     await marquerSucces(compte.compteId);

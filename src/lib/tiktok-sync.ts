@@ -316,12 +316,26 @@ export async function syncTikTokAccount(opts: {
       ajoutees++;
       titres.push(v.title);
     } catch (e) {
-      // Une insertion peut échouer si, par exemple, deux vidéos ont le
-      // même ID (très rare) — on continue sans tout casser.
-      console.warn(
-        `[tiktok-sync] Échec insertion vidéo ${videoId} pour ${codeServiteur} :`,
-        e instanceof Error ? e.message : e
-      );
+      // ⭐ V4.30 — Distinguer le P2002 (unique constraint violation) des
+      // autres erreurs. L'index unique partiel sur Video.videoUrl
+      // (migration 20261123130000) garantit qu'aucun doublon ne peut
+      // exister en base — si une insertion échoue avec P2002, c'est qu'une
+      // autre sync a inséré la même vidéo entre notre check et notre create
+      // (race condition) → on compte comme "ignorée", pas comme une erreur.
+      if (
+        e instanceof Error &&
+        "code" in e &&
+        (e as { code?: string }).code === "P2002"
+      ) {
+        ignorees++;
+        idsExistants.add(videoId);
+      } else {
+        // Erreur réelle (DB down, etc.) — on logge sans tout casser.
+        console.warn(
+          `[tiktok-sync] Échec insertion vidéo ${videoId} pour ${codeServiteur} :`,
+          e instanceof Error ? e.message : e
+        );
+      }
     }
   }
 
