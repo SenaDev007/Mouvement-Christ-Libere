@@ -76,18 +76,17 @@ export default function AdminLoginPage() {
         transition={{ duration: 0.6 }}
         className="w-full max-w-md relative z-10"
       >
-        {/* En-tête : logo Christ Libère (halo conique rotatif) + nom */}
+        {/* En-tête : logo Christ Libère (⭐ V4.26 : sans cercle ni halo,
+            retour pasteur) + nom */}
         <div className="flex flex-col items-center mb-8">
-          <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border border-primary-green/30 bg-noir-vert logo-light-beam shadow-lg flex items-center justify-center p-1.5 mb-4">
-            <Image
-              src="/logo-christ-libere-v3.png"
-              alt="Christ Libère"
-              width={80}
-              height={80}
-              className="object-contain w-full h-full"
-              priority
-            />
-          </div>
+          <Image
+            src="/logo-christ-libere-v3.png"
+            alt="Christ Libère"
+            width={96}
+            height={96}
+            className="w-20 h-20 md:w-24 md:h-24 object-contain mb-4"
+            priority
+          />
           {/* Nom "Christ Libère" — Christ en or, Libère en ivoire */}
           <h1 className="text-3xl md:text-4xl font-bold mb-1 font-serif">
             <span style={{ color: "#C9A227" }}>Christ</span>

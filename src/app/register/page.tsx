@@ -119,10 +119,8 @@ export default function RegisterPage() {
           <div className="bg-[#2A0E3D] px-8 py-8 text-center relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A227]/10 blur-3xl rounded-full pointer-events-none" />
             <div className="relative z-10 flex flex-col items-center">
-              <div className="relative mb-3">
-                <div className="absolute inset-0 rounded-full pointer-events-none logo-halo" />
-                <Image src="/logo-christ-libere-v3.png" alt="Christ Libère" width={64} height={64} className="relative w-14 h-14 md:w-16 md:h-16 object-contain" priority />
-              </div>
+              {/* ⭐ V4.26 — logo seul, sans halo pulsant (retour pasteur) */}
+              <Image src="/logo-christ-libere-v3.png" alt="Christ Libère" width={64} height={64} className="relative w-14 h-14 md:w-16 md:h-16 object-contain mb-3" priority />
               <h1 className="text-xl md:text-2xl font-bold mb-1">
                 <span style={{ color: "#C9A227" }}>Christ</span>
                 <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>

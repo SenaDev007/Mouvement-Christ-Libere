@@ -114,17 +114,15 @@ export function SpaceShell({
           <div className="px-5 py-5 border-b border-[#C9A227]/15">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {/* ⭐ V3.97 — halo conique Win Agro autour du logo */}
-                <div className="relative w-11 h-11 rounded-full overflow-hidden border border-[#C9A227]/30 bg-[#1A0826] logo-light-beam shadow-md flex items-center justify-center p-0.5">
-                  <Image
-                    src="/logo-christ-libere-v3.png"
-                    alt="Christ Libère"
-                    width={40}
-                    height={40}
-                    className="object-contain w-full h-full"
-                    priority
-                  />
-                </div>
+                {/* ⭐ V4.26 — logo seul, sans cercle ni halo (retour pasteur) */}
+                <Image
+                  src="/logo-christ-libere-v3.png"
+                  alt="Christ Libère"
+                  width={44}
+                  height={44}
+                  className="w-11 h-11 object-contain shrink-0"
+                  priority
+                />
                 <div className="min-w-0">
                   <div className="text-base font-bold leading-tight whitespace-nowrap font-serif">
                     <span style={{ color: "#C9A227" }}>Christ</span>

@@ -5,9 +5,9 @@
  *
  * Portage du footer Win Agro : fond violet nuit + texture grain, bordure
  * or 4px, 4 colonnes (marque / Parole / Médias / Communauté & contact),
- * titres serif soulignés or, liens hover or, logo seul (⭐ V3.99 : plus
- * de halo rotatif — retour pasteur), pastilles sociales rondes, CTA doré.
- * Palette de couleurs Christ Libère conservée (violet/or/ivoire).
+ * titres serif soulignés or, liens hover or, logo seul (⭐ V4.26 : plus
+ * NI cercle NI halo autour du logo — retour pasteur), pastilles sociales
+ * rondes, CTA doré. Palette de couleurs Christ Libère conservée (violet/or/ivoire).
  */
 
 import React from "react";
@@ -94,22 +94,21 @@ export const Footer = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
 
-            {/* ═══ Colonne marque — logo (sans halo, V3.99) + description + CTA ═══ */}
+            {/* ═══ Colonne marque — logo seul (⭐ V4.26 : sans cercle ni
+                halo, retour pasteur) + description + CTA ═══ */}
             <div className="space-y-6">
               <Link
                 href="/"
                 className="inline-flex items-center gap-3 focus:outline-none"
                 aria-label="Mouvement Christ Libère — Retour à l'accueil"
               >
-                <div className="relative w-16 h-16 overflow-hidden rounded-full border border-primary-green/30 bg-noir-vert flex items-center justify-center p-1 shadow-md">
-                  <Image
-                    src="/logo-christ-libere-v3.png"
-                    alt="Mouvement Christ Libère"
-                    width={60}
-                    height={60}
-                    className="object-contain w-full h-full"
-                  />
-                </div>
+                <Image
+                  src="/logo-christ-libere-v3.png"
+                  alt="Mouvement Christ Libère"
+                  width={64}
+                  height={64}
+                  className="w-16 h-16 object-contain shrink-0"
+                />
                 <div className="flex flex-col">
                   <span className="font-serif text-lg font-bold leading-tight text-white tracking-wide">
                     Christ Libère
