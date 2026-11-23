@@ -62,7 +62,10 @@ export function AdminModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      // ⭐ V4.27 — classe .cl-modal : ancre de portée CSS pour les
+      // <option> des <select> du modal (fond sombre opaque — avant :
+      // texte ivoire invisible sur le fond blanc natif du menu).
+      className="cl-modal fixed inset-0 z-[100] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}

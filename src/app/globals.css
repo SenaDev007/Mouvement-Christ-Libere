@@ -328,6 +328,26 @@
    retour pasteur, plus aucun halo autour du logo.)
    ============================================================ */
 
+/* ============================================================
+   ⭐ V4.27 — OPTIONS DES <select> DU BACK-OFFICE (fond sombre)
+   Les modals AdminModal (portals document.body, classe .cl-modal)
+   et les pages admin/staff (shell .bo-winagro) posent un TEXTE
+   IVOIRE sur les <select> — mais les <option> du menu déroulant
+   s'affichaient sur le fond BLANC natif du navigateur : texte
+   invisible jusqu'au survol (signalement pasteur, module Vidéos).
+   Fond violet opaque + texte ivoire sur toutes les options, et
+   color-scheme dark pour la flèche/barre de défilement natives.
+   ============================================================ */
+.cl-modal select,
+.bo-winagro select {
+  color-scheme: dark;
+}
+.cl-modal select option,
+.bo-winagro select option {
+  background-color: #2A0E3D;
+  color: #FAF6EF;
+}
+
 /* Reflet brillant qui traverse les boutons (shine infini) */
 .btn-shimmer {
   position: relative;

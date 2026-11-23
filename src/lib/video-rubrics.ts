@@ -78,6 +78,10 @@ export const CATEGORY_ORDER_AFRIKA: string[] = [
   "Lives & Directs",
   "Prière & Délivrance",
   "Enseignements & Prédications",
+  // ⭐ V4.27 — nouvelle catégorie « Retraite spirituelle » (retour
+  // pasteur) : assignable depuis le back-office, auto-détectée par
+  // mot-clé « retraite » dans le titre, visible sur la page /videos.
+  "Retraite spirituelle",
   "Témoignages & Visions",
   "Fêtes & Shabbat",
   "Vie Pastorale",
@@ -89,6 +93,8 @@ export const CATEGORY_ORDER_KONGO: string[] = [
   "Lives & Directs",
   "Prière & Délivrance",
   "Enseignements & Prédications",
+  // ⭐ V4.27 — idem Afrika : « Retraite spirituelle » pour Kongo.
+  "Retraite spirituelle",
   "Fêtes & Shabbat",
   "Discernement Spirituel",
 ];
@@ -117,6 +123,8 @@ export const RUBRIQUE_OPTIONS: { value: string; label: string }[] = [
   { value: "Lives & Directs", label: "Lives & Directs" },
   { value: "Prière & Délivrance", label: "Prière & Délivrance" },
   { value: "Enseignements & Prédications", label: "Enseignements & Prédications" },
+  // ⭐ V4.27 — nouvelle rubrique « Retraite spirituelle » (retour pasteur).
+  { value: "Retraite spirituelle", label: "Retraite spirituelle" },
   { value: "Témoignages & Visions", label: "Témoignages & Visions" },
   { value: "Fêtes & Shabbat", label: "Fêtes & Shabbat" },
   { value: "Discernement Spirituel", label: "Discernement Spirituel" },
@@ -142,6 +150,8 @@ export function categorizeVideo(
   // Les replays de lives vont dans "Lives & Directs"
   if (t.includes("replay") || t.includes("(live)")) return "Lives & Directs";
   if (servantCode === "kongo") {
+    // ⭐ V4.27 — retraites spirituelles (les deux serviteurs).
+    if (t.includes("retraite")) return "Retraite spirituelle";
     if (t.includes("prière") || t.includes("délivrance")) return "Prière & Délivrance";
     if (t.includes("enseignement") || t.includes("prédication")) return "Enseignements & Prédications";
     if (t.includes("fête") || t.includes("shabbat")) return "Fêtes & Shabbat";
@@ -149,6 +159,8 @@ export function categorizeVideo(
     return "Paroles & Exhortations";
   }
   if (t.includes("direct") || t.includes("en direct")) return "Lives & Directs";
+  // ⭐ V4.27 — retraites spirituelles (Afrika aussi).
+  if (t.includes("retraite")) return "Retraite spirituelle";
   if (t.includes("prière") || t.includes("délivrance")) return "Prière & Délivrance";
   if (t.includes("enseignement") || t.includes("prédication")) return "Enseignements & Prédications";
   if (t.includes("témoignage") || t.includes("vision")) return "Témoignages & Visions";
