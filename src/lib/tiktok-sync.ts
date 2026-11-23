@@ -52,6 +52,20 @@ const UA_NAVIGATEUR =
 const TIMEOUT_MS = 12_000;
 const GARDE_ENTRE_COMPTES_MS = 1200; // ~1 req/s
 
+// ⭐ V4.29 — Limite d'âge des vidéos TikTok importées (en jours).
+// Les vidéos dont la date de création (create_time renvoyé par tikwm) est
+// antérieure à (now - LIMITE_JOURS_TIKTOK jours) sont FILTRÉES : non
+// importées, même si elles ne sont pas déjà en base. Directive pasteur :
+// éviter la synchro en masse des vieilles vidéos déjà curées manuellement.
+//
+// Configurable via SYNC_LIMITE_JOURS_TIKTOK (sur Vercel :
+// Settings → Environment Variables). Défaut : 10 jours.
+const LIMITE_JOURS_TIKTOK = Math.max(
+  1,
+  Math.min(365, Number(process.env.SYNC_LIMITE_JOURS_TIKTOK) || 10)
+);
+const MS_PAR_JOUR = 24 * 60 * 60 * 1000;
+
 export interface ResultatSyncTikTok {
   /** Vidéos importées (nouvelles, absentes du module). */
   ajoutees: number;
@@ -59,6 +73,13 @@ export interface ResultatSyncTikTok {
   ignorees: number;
   /** Vidéos volontairement supprimées — non ré-importées. */
   sautees: number;
+  /**
+   * ⭐ V4.29 — Vidéos filtrées par le filtre d'âge (> LIMITE_JOURS_TIKTOK
+   * jours) : non importées, non comptabilisées dans `ignorees`. Directive
+   * pasteur : on ne veut PAS récupérer en masse les vieilles vidéos TikTok
+   * (la plupart ont déjà été curées et intégrées manuellement).
+   */
+  filtrees: number;
   /** Titres des vidéos importées (compte-rendu). */
   titres: string[];
   /** Username TikTok synchronisé (sans le @). */
@@ -203,6 +224,7 @@ export async function syncTikTokAccount(opts: {
       ajoutees: 0,
       ignorees: 0,
       sautees: 0,
+      filtrees: 0,
       titres: [],
       username,
       displayName: reponse.data.userInfo?.nickname || compte.displayName || undefined,
@@ -224,7 +246,13 @@ export async function syncTikTokAccount(opts: {
   let ajoutees = 0;
   let ignorees = 0;
   let sautees = 0;
+  let filtrees = 0;
   const titres: string[] = [];
+
+  // ⭐ V4.29 — Filtre d'âge : on ne synchronise que les vidéos publiées
+  // dans les LIMITE_JOURS_TIKTOK derniers jours (défaut : 10). Les vidéos
+  // plus anciennes sont filtrées et non importées — directive pasteur.
+  const dateLimiteMs = Date.now() - LIMITE_JOURS_TIKTOK * MS_PAR_JOUR;
 
   // ⭐ V4.28 — Catégorisation INTELLIGENTE par détection de mots-clés dans
   // le titre (cf. devinerCategorieSync dans video-rubrics.ts) :
@@ -239,6 +267,16 @@ export async function syncTikTokAccount(opts: {
     const videoId = String(v.video_id || "");
     if (!videoId || !v.title) continue;
 
+    // ⭐ V4.29 — Filtre d'âge (AVANT l'idempotence, pour économiser un
+    // lookup DB). create_time est un epoch seconde côté tikwm.
+    const datePublication = v.create_time
+      ? new Date(v.create_time * 1000)
+      : new Date();
+    if (datePublication.getTime() < dateLimiteMs) {
+      filtrees++;
+      continue;
+    }
+
     if (idsExistants.has(videoId)) {
       ignorees++;
       continue;
@@ -251,10 +289,6 @@ export async function syncTikTokAccount(opts: {
       sautees++;
       continue;
     }
-
-    const datePublication = v.create_time
-      ? new Date(v.create_time * 1000)
-      : new Date();
 
     const miniature = v.cover || v.origin_cover || null;
     const description = (v.title || "").slice(0, 5000);
@@ -297,6 +331,7 @@ export async function syncTikTokAccount(opts: {
     ajoutees,
     ignorees,
     sautees,
+    filtrees,
     titres: titres.slice(0, 5),
     username,
     displayName: reponse.data.userInfo?.nickname || compte.displayName || undefined,
@@ -312,6 +347,7 @@ export interface ResultatSyncMultiTikTok {
   ajoutees: number;
   ignorees: number;
   sautees: number;
+  filtrees: number;
   details: Array<{
     servantCode: string;
     username?: string;
@@ -319,6 +355,7 @@ export interface ResultatSyncMultiTikTok {
     ajoutees: number;
     ignorees: number;
     sautees: number;
+    filtrees: number;
     titres: string[];
     erreur?: string;
   }>;
@@ -339,6 +376,7 @@ export async function syncTousComptesTikTok(): Promise<ResultatSyncMultiTikTok> 
       ajoutees: 0,
       ignorees: 0,
       sautees: 0,
+      filtrees: 0,
       details: [],
     };
   }
@@ -347,6 +385,7 @@ export async function syncTousComptesTikTok(): Promise<ResultatSyncMultiTikTok> 
   let ajouteesTotal = 0;
   let ignoreesTotal = 0;
   let sauteesTotal = 0;
+  let filtreesTotal = 0;
 
   for (let i = 0; i < comptes.length; i++) {
     const compte = comptes[i];
@@ -360,12 +399,14 @@ export async function syncTousComptesTikTok(): Promise<ResultatSyncMultiTikTok> 
       ajoutees: r.ajoutees,
       ignorees: r.ignorees,
       sautees: r.sautees,
+      filtrees: r.filtrees,
       titres: r.titres,
       erreur: r.erreur,
     });
     ajouteesTotal += r.ajoutees;
     ignoreesTotal += r.ignorees;
     sauteesTotal += r.sautees;
+    filtreesTotal += r.filtrees;
 
     // Garde entre les comptes (rate limit tikwm).
     if (i < comptes.length - 1) {
@@ -378,6 +419,7 @@ export async function syncTousComptesTikTok(): Promise<ResultatSyncMultiTikTok> 
     ajoutees: ajouteesTotal,
     ignorees: ignoreesTotal,
     sautees: sauteesTotal,
+    filtrees: filtreesTotal,
     details,
   };
 }
@@ -387,7 +429,7 @@ export async function syncTousComptesTikTok(): Promise<ResultatSyncMultiTikTok> 
 // ─────────────────────────────────────────────────────────────────────
 
 function resultatVide(erreur: string, username?: string): ResultatSyncTikTok {
-  return { ajoutees: 0, ignorees: 0, sautees: 0, titres: [], erreur, username };
+  return { ajoutees: 0, ignorees: 0, sautees: 0, filtrees: 0, titres: [], erreur, username };
 }
 
 async function marquerSucces(compteId: string): Promise<void> {

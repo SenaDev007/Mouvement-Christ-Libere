@@ -129,19 +129,21 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
         ajoutees?: number;
         ignorees?: number;
         sautees?: number;
+        filtrees?: number;
         error?: string;
       };
       if (!res.ok) throw new Error(data.error || `Échec (${res.status})`);
       const ajoutees = data.ajoutees || 0;
       const ignorees = data.ignorees || 0;
       const sautees = data.sautees || 0;
+      const filtrees = data.filtrees || 0;
       setSyncYouTube({
         enCours: false,
         erreur: false,
         message:
           ajoutees > 0
-            ? `${ajoutees} nouvelle${ajoutees > 1 ? "s" : ""} vidéo${ajoutees > 1 ? "s" : ""} importée${ajoutees > 1 ? "s" : ""} depuis la chaîne YouTube — ${ignorees} déjà présente${ignorees > 1 ? "s" : ""}${sautees ? `, ${sautees} supprimée${sautees > 1 ? "s" : ""} volontairement (ignorée${sautees > 1 ? "s" : ""})` : ""}.`
-            : `Chaîne YouTube à jour — aucune nouvelle vidéo à importer (${ignorees} déjà présente${ignorees > 1 ? "s" : ""}${sautees ? `, ${sautees} supprimée${sautees > 1 ? "s" : ""} volontairement ignorée${sautees > 1 ? "s" : ""}` : ""}).`,
+            ? `${ajoutees} nouvelle${ajoutees > 1 ? "s" : ""} vidéo${ajoutees > 1 ? "s" : ""} importée${ajoutees > 1 ? "s" : ""} depuis la chaîne YouTube — ${ignorees} déjà présente${ignorees > 1 ? "s" : ""}${filtrees ? `, ${filtrees} filtrée${filtrees > 1 ? "s" : ""} (>10 jours)` : ""}${sautees ? `, ${sautees} supprimée${sautees > 1 ? "s" : ""} volontairement (ignorée${sautees > 1 ? "s" : ""})` : ""}.`
+            : `Chaîne YouTube à jour — aucune nouvelle vidéo à importer (${ignorees} déjà présente${ignorees > 1 ? "s" : ""}${filtrees ? `, ${filtrees} filtrée${filtrees > 1 ? "s" : ""} (>10 jours)` : ""}${sautees ? `, ${sautees} supprimée${sautees > 1 ? "s" : ""} volontairement ignorée${sautees > 1 ? "s" : ""}` : ""}).`,
       });
       if (ajoutees > 0) router.refresh();
     } catch (err) {
@@ -180,6 +182,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
         ajoutees?: number;
         ignorees?: number;
         sautees?: number;
+        filtrees?: number;
         username?: string;
         displayName?: string;
         // Réponse multi-comptes (quand servantCode était null)
@@ -190,6 +193,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           ajoutees: number;
           ignorees: number;
           sautees: number;
+          filtrees?: number;
           erreur?: string;
         }>;
         error?: string;
@@ -201,29 +205,31 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
         const totalAjoutees = (data.details || []).reduce((s, d) => s + d.ajoutees, 0);
         const totalIgnorees = (data.details || []).reduce((s, d) => s + d.ignorees, 0);
         const totalSautees = (data.details || []).reduce((s, d) => s + d.sautees, 0);
+        const totalFiltrees = (data.details || []).reduce((s, d) => s + (d.filtrees || 0), 0);
         const comptesAvecErreur = (data.details || []).filter((d) => d.erreur).length;
         setSyncTikTok({
           enCours: false,
           erreur: comptesAvecErreur > 0 && totalAjoutees === 0,
           message:
             totalAjoutees > 0
-              ? `${totalAjoutees} nouvelle${totalAjoutees > 1 ? "s" : ""} vidéo${totalAjoutees > 1 ? "s" : ""} TikTok importée${totalAjoutees > 1 ? "s" : ""} (${data.comptes} comptes, ${totalIgnorees} déjà présente${totalIgnorees > 1 ? "s" : ""}${totalSautees ? `, ${totalSautees} supprimée${totalSautees > 1 ? "s" : ""}` : ""}).`
+              ? `${totalAjoutees} nouvelle${totalAjoutees > 1 ? "s" : ""} vidéo${totalAjoutees > 1 ? "s" : ""} TikTok importée${totalAjoutees > 1 ? "s" : ""} (${data.comptes} comptes, ${totalIgnorees} déjà présente${totalIgnorees > 1 ? "s" : ""}${totalFiltrees ? `, ${totalFiltrees} filtrée${totalFiltrees > 1 ? "s" : ""} (>10 jours)` : ""}${totalSautees ? `, ${totalSautees} supprimée${totalSautees > 1 ? "s" : ""}` : ""}).`
               : comptesAvecErreur > 0
                 ? `${comptesAvecErreur} compte${comptesAvecErreur > 1 ? "s" : ""} en erreur sur ${data.comptes} — voir /admin/tiktok-accounts.`
-                : `Tous les comptes TikTok sont à jour (${data.comptes} comptes synchronisés, ${totalIgnorees} déjà présente${totalIgnorees > 1 ? "s" : ""}).`,
+                : `Tous les comptes TikTok sont à jour (${data.comptes} comptes synchronisés, ${totalIgnorees} déjà présente${totalIgnorees > 1 ? "s" : ""}${totalFiltrees ? `, ${totalFiltrees} filtrée${totalFiltrees > 1 ? "s" : ""} (>10 jours)` : ""}).`,
         });
       } else {
         // Cas 2 : mono-compte
         const a = data.ajoutees || 0;
         const i = data.ignorees || 0;
         const s = data.sautees || 0;
+        const f = data.filtrees || 0;
         setSyncTikTok({
           enCours: false,
           erreur: false,
           message:
             a > 0
-              ? `${a} nouvelle${a > 1 ? "s" : ""} vidéo${a > 1 ? "s" : ""} TikTok importée${a > 1 ? "s" : ""} (@${data.username || "?"}) — ${i} déjà présente${i > 1 ? "s" : ""}${s ? `, ${s} supprimée${s > 1 ? "s" : ""}` : ""}.`
-              : `@${data.username || "?"} à jour — aucune nouvelle vidéo (${i} déjà présente${i > 1 ? "s" : ""}).`,
+              ? `${a} nouvelle${a > 1 ? "s" : ""} vidéo${a > 1 ? "s" : ""} TikTok importée${a > 1 ? "s" : ""} (@${data.username || "?"}) — ${i} déjà présente${i > 1 ? "s" : ""}${f ? `, ${f} filtrée${f > 1 ? "s" : ""} (>10 jours)` : ""}${s ? `, ${s} supprimée${s > 1 ? "s" : ""}` : ""}.`
+              : `@${data.username || "?"} à jour — aucune nouvelle vidéo (${i} déjà présente${i > 1 ? "s" : ""}${f ? `, ${f} filtrée${f > 1 ? "s" : ""} (>10 jours)` : ""}).`,
         });
       }
 

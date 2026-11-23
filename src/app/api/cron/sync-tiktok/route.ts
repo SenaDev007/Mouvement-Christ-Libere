@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       );
     } else {
       console.log(
-        `[cron/sync-tiktok] ✓ servant="${d.servantCode}" username="${d.username || "?"}" +${d.ajoutees} ~${d.ignorees} ⊘${d.sautees}`
+        `[cron/sync-tiktok] ✓ servant="${d.servantCode}" username="${d.username || "?"}" +${d.ajoutees} ~${d.ignorees} ⊘${d.sautees} ⏳${d.filtrees}`
       );
     }
   }

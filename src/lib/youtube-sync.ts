@@ -46,6 +46,22 @@ import {
 import { estVideoSupprimee } from "@/lib/suppression-video";
 import { devinerCategorieSync } from "@/lib/video-rubrics";
 
+// ⭐ V4.29 — Limite d'âge des vidéos importées (en jours).
+// Les vidéos YouTube dont la date de publication est antérieure à
+// (now - LIMITE_JOURS_YOUTUBE jours) sont FILTRÉES : non importées, même
+// si elles ne sont pas déjà en base. Directive pasteur : on ne veut PAS
+// récupérer en masse les vieilles vidéos de la chaîne (la plupart ont
+// déjà été curées et intégrées manuellement via les scripts de scraping
+// historiques) — la synchro auto ne doit concerner que l'activité RÉCENTE.
+//
+// Configurable via la variable d'environnement SYNC_LIMITE_JOURS_YOUTUBE
+// (sur Vercel : Settings → Environment Variables). Défaut : 10 jours.
+const LIMITE_JOURS_YOUTUBE = Math.max(
+  1,
+  Math.min(365, Number(process.env.SYNC_LIMITE_JOURS_YOUTUBE) || 10)
+);
+const MS_PAR_JOUR = 24 * 60 * 60 * 1000;
+
 export interface ResultatSyncYouTube {
   /** Vidéos importées (nouvelles sur la chaîne, absentes du module). */
   ajoutees: number;
@@ -53,6 +69,13 @@ export interface ResultatSyncYouTube {
   ignorees: number;
   /** Vidéos volontairement supprimées du back-office — jamais ré-importées. */
   sautees: number;
+  /**
+   * ⭐ V4.29 — Vidéos filtrées par le filtre d'âge (> LIMITE_JOURS_YOUTUBE
+   * jours) : non importées, non comptabilisées dans `ignorees`. Directive
+   * pasteur : on ne veut PAS récupérer en masse les vieilles vidéos de la
+   * chaîne (la plupart ont déjà été curées et intégrées manuellement).
+   */
+  filtrees: number;
   /** Titres des vidéos importées (compte-rendu au pasteur). */
   titres: string[];
   /** Nom de la chaîne synchronisée (information). */
@@ -109,6 +132,7 @@ export async function syncYouTubeChannel(opts?: {
       ajoutees: 0,
       ignorees: 0,
       sautees: 0,
+      filtrees: 0,
       titres: [],
       erreur: `Serviteur « ${codeServiteur} » introuvable en base.`,
     };
@@ -121,6 +145,7 @@ export async function syncYouTubeChannel(opts?: {
       ajoutees: 0,
       ignorees: 0,
       sautees: 0,
+      filtrees: 0,
       titres: [],
       erreur:
         "OAuth YouTube non configuré pour ce serviteur. Reliez le compte via " +
@@ -148,6 +173,7 @@ export async function syncYouTubeChannel(opts?: {
         ajoutees: 0,
         ignorees: 0,
         sautees: 0,
+        filtrees: 0,
         titres: [],
         erreur: "Playlist « uploads » introuvable sur la chaîne YouTube liée.",
       };
@@ -209,7 +235,15 @@ export async function syncYouTubeChannel(opts?: {
     let ajoutees = 0;
     let ignorees = 0;
     let sautees = 0;
+    let filtrees = 0;
     const titres: string[] = [];
+
+    // ⭐ V4.29 — Filtre d'âge : on ne synchronise que les vidéos publiées
+    // dans les LIMITE_JOURS_YOUTUBE derniers jours (défaut : 10). Les
+    // vidéos plus anciennes sont filtrées (filtrees++) et non importées,
+    // même si elles ne sont pas déjà en base — directive pasteur pour
+    // éviter de récupérer en masse les vieilles vidéos déjà curées.
+    const dateLimiteMs = Date.now() - LIMITE_JOURS_YOUTUBE * MS_PAR_JOUR;
 
     // ⭐ V4.28 — Catégorisation INTELLIGENTE par détection de mots-clés
     // dans le titre (cf. devinerCategorieSync dans video-rubrics.ts) :
@@ -232,6 +266,17 @@ export async function syncYouTubeChannel(opts?: {
       const snippet = item.snippet;
       if (!videoId || !snippet?.title) continue;
 
+      // ⭐ V4.29 — Filtre d'âge (AVANT l'idempotence, pour économiser un
+      // lookup DB sur les vieilles vidéos). On calcule la date de publication
+      // ici et on la réutilise plus bas pour l'insertion.
+      const datePublication = snippet.publishedAt
+        ? new Date(snippet.publishedAt)
+        : new Date();
+      if (datePublication.getTime() < dateLimiteMs) {
+        filtrees++;
+        continue;
+      }
+
       // Déjà dans le module → ignorer (idempotence).
       if (idsExistants.has(videoId)) {
         ignorees++;
@@ -250,10 +295,6 @@ export async function syncYouTubeChannel(opts?: {
       // Live programmé non démarré (première) → rien à afficher.
       const detail = details.get(videoId);
       if (detail?.aVenir) continue;
-
-      const datePublication = snippet.publishedAt
-        ? new Date(snippet.publishedAt)
-        : new Date();
 
       await db.video.create({
         data: {
@@ -286,6 +327,7 @@ export async function syncYouTubeChannel(opts?: {
       ajoutees,
       ignorees,
       sautees,
+      filtrees,
       titres: titres.slice(0, 5),
       chaine: chaine?.snippet?.title || compte.channelTitle || undefined,
     };
@@ -296,6 +338,7 @@ export async function syncYouTubeChannel(opts?: {
       ajoutees: 0,
       ignorees: 0,
       sautees: 0,
+      filtrees: 0,
       titres: [],
       erreur: message,
     };
@@ -353,6 +396,8 @@ export interface ResultatSyncMultiYouTube {
   ignorees: number;
   /** Total des vidéos supprimées volontairement (sautées). */
   sautees: number;
+  /** ⭐ V4.29 — Total des vidéos filtrées par le filtre d'âge (> 10 jours). */
+  filtrees: number;
   /** Détail par compte (pour le log cron). */
   details: Array<{
     servantCode: string;
@@ -360,6 +405,7 @@ export interface ResultatSyncMultiYouTube {
     ajoutees: number;
     ignorees: number;
     sautees: number;
+    filtrees: number;
     titres: string[];
     erreur?: string;
   }>;
@@ -382,6 +428,7 @@ export async function syncTousComptesYouTube(): Promise<ResultatSyncMultiYouTube
       ajoutees: r.ajoutees,
       ignorees: r.ignorees,
       sautees: r.sautees,
+      filtrees: r.filtrees,
       details: [
         {
           servantCode: process.env.YOUTUBE_SYNC_SERVANT_CODE || "afrika",
@@ -389,6 +436,7 @@ export async function syncTousComptesYouTube(): Promise<ResultatSyncMultiYouTube
           ajoutees: r.ajoutees,
           ignorees: r.ignorees,
           sautees: r.sautees,
+          filtrees: r.filtrees,
           titres: r.titres,
           erreur: r.erreur,
         },
@@ -402,6 +450,7 @@ export async function syncTousComptesYouTube(): Promise<ResultatSyncMultiYouTube
   let ajouteesTotal = 0;
   let ignoreesTotal = 0;
   let sauteesTotal = 0;
+  let filtreesTotal = 0;
 
   for (const compte of comptes) {
     const r = await syncYouTubeChannel({ servantCode: compte.servantCode });
@@ -411,12 +460,14 @@ export async function syncTousComptesYouTube(): Promise<ResultatSyncMultiYouTube
       ajoutees: r.ajoutees,
       ignorees: r.ignorees,
       sautees: r.sautees,
+      filtrees: r.filtrees,
       titres: r.titres,
       erreur: r.erreur,
     });
     ajouteesTotal += r.ajoutees;
     ignoreesTotal += r.ignorees;
     sauteesTotal += r.sautees;
+    filtreesTotal += r.filtrees;
   }
 
   return {
@@ -424,6 +475,7 @@ export async function syncTousComptesYouTube(): Promise<ResultatSyncMultiYouTube
     ajoutees: ajouteesTotal,
     ignorees: ignoreesTotal,
     sautees: sauteesTotal,
+    filtrees: filtreesTotal,
     details,
   };
 }

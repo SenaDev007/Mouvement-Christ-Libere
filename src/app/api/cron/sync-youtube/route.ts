@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
       );
     } else {
       console.log(
-        `[cron/sync-youtube] ✓ servant="${d.servantCode}" chaine="${d.chaine || "?"}" +${d.ajoutees} ~${d.ignorees} ⊘${d.sautees}`
+        `[cron/sync-youtube] ✓ servant="${d.servantCode}" chaine="${d.chaine || "?"}" +${d.ajoutees} ~${d.ignorees} ⊘${d.sautees} ⏳${d.filtrees}`
       );
     }
   }
