@@ -16,7 +16,7 @@ import { syncTousComptesTikTok } from "@/lib/tiktok-sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // scraping séquentiel tikwm = ~1 req/s
+export const maxDuration = 120; // ⭐ V4.34 : fallback tikwm peut prendre ~20s par compte
 
 export async function GET(req: NextRequest) {
   if (!autoriserCron(req)) {

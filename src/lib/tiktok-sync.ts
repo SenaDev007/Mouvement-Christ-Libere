@@ -48,6 +48,11 @@ const LIMITE_JOURS_TIKTOK = Math.max(
 );
 const MS_PAR_JOUR = 24 * 60 * 60 * 1000;
 
+// ⭐ V4.34 — Constantes pour le fallback tikwm (résolution individuelle)
+const TIKWM_ENDPOINT = "https://www.tikwm.com/api/";
+const GARDE_TIKWM_MS = 1300; // tikwm ~1 req/s → 1.3s pour être prudent
+const MAX_VIDEOS_TIKWM = 15; // limite pour rester sous le timeout serverless (15×1.3s ≈ 20s)
+
 export interface ResultatSyncTikTok {
   ajoutees: number;
   ignorees: number;
@@ -483,11 +488,185 @@ function chercherItemListeVideos(o: unknown, profondeur = 0): VideoTiktokScraped
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// FONCTION PRINCIPALE — scraping deux-étapes + fallback
+// ⭐ V4.34 — FALLBACK tikwm : extraction IDs vidéo du HTML + résolution individuelle
+// ─────────────────────────────────────────────────────────────────────
+// Quand /api/post/item_list/ retourne une réponse vide (X-Bogus manquant),
+// on extrait les IDs vidéo directement du HTML de la page profil (regex sur
+// les URLs /@username/video/<id>), puis on résout chaque vidéo individuellement
+// via tikwm.com qui fonctionne pour les vidéos individuelles.
+//
+// Limites :
+//   - MAX_VIDEOS_TIKWM = 15 (pour rester sous le timeout serverless)
+//   - GARDE_TIKWM_MS = 1.3s entre chaque appel tikwm (rate limit ~1 req/s)
+//   - tikwm peut être en panne ou rate-limit → on skip les échecs
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Extrait tous les IDs vidéo TikTok présents dans le HTML de la page profil.
+ * Cherche les patterns :
+ *   - /@<username>/video/<numeric_id> dans les href et les URLs
+ *   - "aweme_id":"<numeric_id>" dans le JSON
+ *   - "item_id":"<numeric_id>" dans le JSON
+ *
+ * @returns tableau d'IDs vidéo dédupliqués (strings numériques)
+ */
+function extraireVideoIdsDepuisHTML(html: string): string[] {
+  const ids = new Set<string>();
+
+  // Pattern 1 : URLs vidéo dans le HTML (href, data-*, etc.)
+  // tiktok.com/@username/video/1234567890123456789
+  const regexUrl = /tiktok\.com\/@[^/"]+\/video\/(\d{5,25})/g;
+  let match: RegExpExecArray | null;
+  while ((match = regexUrl.exec(html)) !== null) {
+    if (match[1]) ids.add(match[1]);
+  }
+
+  // Pattern 2 : URLs vidéo relatives (/@username/video/...)
+  const regexUrlRelative = /\/@[^/"]+\/video\/(\d{5,25})/g;
+  while ((match = regexUrlRelative.exec(html)) !== null) {
+    if (match[1]) ids.add(match[1]);
+  }
+
+  // Pattern 3 : "aweme_id":"123..." dans le JSON
+  const regexAweme = /"aweme_id"\s*:\s*"(\d{5,25})"/g;
+  while ((match = regexAweme.exec(html)) !== null) {
+    if (match[1]) ids.add(match[1]);
+  }
+
+  // Pattern 4 : "item_id":"123..." dans le JSON
+  const regexItem = /"item_id"\s*:\s*"(\d{5,25})"/g;
+  while ((match = regexItem.exec(html)) !== null) {
+    if (match[1]) ids.add(match[1]);
+  }
+
+  // Pattern 5 : "id":"123..." où l'ID fait 18-20 chiffres (typique TikTok)
+  // Plus risqué (faux positifs possibles) — on ne l'utilise que si rien d'autre
+  if (ids.size === 0) {
+    const regexIdLong = /"id"\s*:\s*"?(\d{18,20})"?/g;
+    while ((match = regexIdLong.exec(html)) !== null) {
+      if (match[1]) ids.add(match[1]);
+    }
+  }
+
+  return Array.from(ids);
+}
+
+interface ReponseTikwmVideo {
+  code?: number;
+  msg?: string;
+  data?: {
+    id?: string | number;
+    title?: string;
+    desc?: string;
+    cover?: string;
+    origin_cover?: string;
+    play_count?: number;
+    digg_count?: number;
+    create_time?: number;
+  };
+}
+
+/**
+ * Résout une vidéo TikTok individuelle via tikwm.com.
+ * tikwm fonctionne pour les vidéos individuelles (contrairement au feed user).
+ *
+ * @param url  URL canonique de la vidéo : https://www.tiktok.com/@<username>/video/<id>
+ * @returns métadonnées de la vidéo, ou null si tikwm échoue
+ */
+async function resoudreVideoViaTikwm(url: string): Promise<VideoTiktokScraped | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
+
+  try {
+    const tikwmUrl = `${TIKWM_ENDPOINT}?url=${encodeURIComponent(url)}`;
+    const res = await fetch(tikwmUrl, {
+      headers: {
+        "User-Agent": UA_NAVIGATEUR,
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+      cache: "no-store",
+    });
+
+    if (!res.ok) return null;
+
+    const reponse = (await res.json()) as ReponseTikwmVideo;
+    if (reponse.code !== 0 || !reponse.data) return null;
+
+    const d = reponse.data;
+    const videoId = String(d.id || "");
+    if (!videoId) return null;
+
+    return {
+      video_id: videoId,
+      title: d.title || d.desc || "",
+      cover: d.cover,
+      origin_cover: d.origin_cover,
+      play_count: d.play_count,
+      digg_count: d.digg_count,
+      create_time: d.create_time,
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * ⭐ V4.34 — Fallback tikwm : extrait les IDs vidéo du HTML de la page profil,
+ * puis résout chaque vidéo individuellement via tikwm.com.
+ *
+ * Étapes :
+ *   ① extraireVideoIdsDepuisHTML(html) → tableau d'IDs dédupliqués
+ *   ② Limiter à MAX_VIDEOS_TIKWM (15) pour rester sous le timeout
+ *   ③ Pour chaque ID : resoudreVideoViaTikwm(url) avec garde 1.3s
+ *   ④ Filtrer les null (tikwm peut échouer sur certaines vidéos)
+ *
+ * @returns tableau de vidéos résolues, ou null si aucune ID trouvée dans le HTML
+ */
+async function fallbackTikwmIndividuel(
+  html: string,
+  username: string
+): Promise<VideoTiktokScraped[] | null> {
+  const ids = extraireVideoIdsDepuisHTML(html);
+  if (ids.length === 0) return null;
+
+  console.log(
+    `[tiktok-sync] Fallback tikwm : ${ids.length} IDs vidéo trouvés dans le HTML, résolution individuelle (max ${MAX_VIDEOS_TIKWM})`
+  );
+
+  const idsAResoudre = ids.slice(0, MAX_VIDEOS_TIKWM);
+  const videos: VideoTiktokScraped[] = [];
+
+  for (let i = 0; i < idsAResoudre.length; i++) {
+    const videoId = idsAResoudre[i];
+    const url = urlTiktokVideo(username, videoId);
+
+    const video = await resoudreVideoViaTikwm(url);
+    if (video && video.title) {
+      videos.push(video);
+    }
+
+    // Garde entre les appels tikwm (rate limit ~1 req/s)
+    if (i < idsAResoudre.length - 1) {
+      await delay(GARDE_TIKWM_MS);
+    }
+  }
+
+  console.log(
+    `[tiktok-sync] Fallback tikwm : ${videos.length}/${idsAResoudre.length} vidéos résolues avec succès`
+  );
+
+  return videos.length > 0 ? videos : null;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// FONCTION PRINCIPALE — scraping deux-étapes + fallbacks
 // ─────────────────────────────────────────────────────────────────────
 
 async function scraperProfilTiktok(username: string): Promise<ResultatScrapingProfil> {
-  // Étape 1 : page profil → secUid + cookies
+  // Étape 1 : page profil → secUid + cookies + HTML
   const infos = await scraperProfilPourSecUid(username);
 
   // Étape 2 : /api/post/item_list/ avec secUid + cookies
@@ -499,13 +678,13 @@ async function scraperProfilTiktok(username: string): Promise<ResultatScrapingPr
     };
   }
 
-  // Fallback : recherche récursive dans le JSON de la page profil
+  // Fallback A : recherche récursive dans le JSON de la page profil
   const universalData = extraireUniversalData(infos.html);
   if (universalData) {
     const videosFallback = chercherItemListeVideos(universalData);
     if (videosFallback && videosFallback.length > 0) {
       console.log(
-        `[tiktok-sync] /api/post/item_list/ a échoué — ${videosFallback.length} vidéos trouvées via fallback HTML`
+        `[tiktok-sync] /api/post/item_list/ a échoué — ${videosFallback.length} vidéos trouvées via fallback JSON`
       );
       return {
         nickname: infos.nickname,
@@ -514,10 +693,27 @@ async function scraperProfilTiktok(username: string): Promise<ResultatScrapingPr
     }
   }
 
+  // ⭐ V4.34 — Fallback B : extraction IDs vidéo du HTML + résolution individuelle via tikwm
+  // C'est le fallback de dernier recours quand /api/post/item_list/ retourne une réponse
+  // vide (X-Bogus manquant) ET que le JSON de la page ne contient pas non plus de liste.
+  // On extrait les IDs vidéo du HTML (regex sur les URLs /@user/video/<id>) puis on
+  // résout chaque vidéo individuellement via tikwm.com qui fonctionne pour les vidéos
+  // individuelles (contrairement au feed user).
+  const videosTikwm = await fallbackTikwmIndividuel(infos.html, username);
+  if (videosTikwm && videosTikwm.length > 0) {
+    return {
+      nickname: infos.nickname,
+      videos: videosTikwm,
+    };
+  }
+
   throw new Error(
-    "Aucune vidéo récupérée. L'API interne TikTok (/api/post/item_list/) retourne une réponse vide " +
-      "(elle exige parfois une signature X-Bogus que nous ne générons pas). " +
-      "Le secUid a bien été extrait mais la liste des vidéos n'est pas accessible sans signature. " +
+    "Aucune vidéo récupérée après toutes les stratégies :\n" +
+      "  ① /api/post/item_list/ → réponse vide (X-Bogus manquant)\n" +
+      "  ② Recherche JSON récursive → aucune liste trouvée\n" +
+      "  ③ Extraction IDs HTML + tikwm individuel → aucun ID trouvé ou tikwm en panne\n" +
+      "Causes possibles : TikTok bloque l'IP, le compte n'a pas de vidéos publiques, " +
+      "ou la structure de la page a totalement changé. " +
       "Solution alternative : importez manuellement les URLs TikTok via le module Vidéos."
   );
 }

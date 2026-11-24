@@ -18,7 +18,7 @@ import { syncTikTokAccount, syncTousComptesTikTok } from "@/lib/tiktok-sync";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // scraping tikwm = ~1 req/s, peut prendre du temps
+export const maxDuration = 120; // ⭐ V4.34 : fallback tikwm peut prendre ~20s par compte
 
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
