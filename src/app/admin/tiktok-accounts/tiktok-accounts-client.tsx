@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Stethoscope,
   Upload,
+  Bookmark,
 } from "lucide-react";
 
 interface ServantLite {
@@ -321,24 +322,87 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
           </div>
         </div>
 
-        {/* Bandeau d'avertissement : TikTok = pas d'API officielle */}
+        {/* Bandeau : explication de la situation TikTok */}
         <div className="rounded-lg border border-[#C9A227]/30 bg-[#C9A227]/10 p-4 text-sm">
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-semibold text-[#C9A227]">Comment ça marche ?</p>
+            <div className="space-y-2">
+              <p className="font-semibold text-[#C9A227]">
+                ⚠️ Synchro automatique indisponible — TikTok a migré vers une architecture "serverless"
+              </p>
               <p className="text-[#FAF6EF]/80">
-                TikTok n'expose pas d'API publique pour lister les vidéos d'un créateur.
-                On scrape donc directement la page profil publique (<code className="bg-black/30 px-1 rounded">tiktok.com/@username</code>)
-                et on extrait le JSON <code className="bg-black/30 px-1 rounded">__UNIVERSAL_DATA_FOR_REHYDRATION__</code>
-                qui contient la liste des vidéos récentes.
-                <strong> Limitations :</strong> si TikTok bloque la requête (captcha, rate limit),
-                la synchro échoue sans perte de données (les vidéos déjà importées restent). Le
-                username doit correspondre à un compte PUBLIC (pas privé).
+                Diagnostic confirmé en production : TikTok sert désormais un <strong>shell HTML vide</strong>.
+                La page profil (<code className="bg-black/30 px-1 rounded">tiktok.com/@username</code>) ne contient
+                plus aucune URL vidéo — tout est chargé par JavaScript après le rendu.
+                Le tag <code className="bg-black/30 px-1 rounded">__UNIVERSAL_DATA_FOR_REHYDRATION__</code> est
+                présent mais son <code className="bg-black/30 px-1 rounded">__DEFAULT_SCOPE__</code> est vide.
+              </p>
+              <p className="text-[#FAF6EF]/80">
+                → <strong>La synchro automatique (cron 2×/jour) ne peut plus fonctionner</strong> sans un
+                navigateur headless. Utilisez le <strong>bookmarklet ci-dessous</strong> + l'import manuel
+                pour récupérer les vidéos. Le cron continuera d'essayer au cas où TikTok change.
               </p>
             </div>
           </div>
         </div>
+
+        {/* ⭐ V4.36 — Bookmarklet pour extraire les URLs vidéo depuis le navigateur */}
+        <section className="rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/30 p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Bookmark className="w-5 h-5 text-[#C9A227]" />
+            <h2 className="text-lg font-semibold">Bookmarklet — extraction en 1 clic</h2>
+          </div>
+          <p className="text-sm text-[#FAF6EF]/70">
+            Ce bookmarklet extrait toutes les URLs vidéo d'une page profil TikTok et les copie dans votre
+            presse-papier. Plus rapide que de copier les URLs une par une.
+          </p>
+          <ol className="text-sm text-[#FAF6EF]/60 space-y-1 list-decimal list-inside">
+            <li>
+              <strong>Glissez ce lien</strong> dans votre barre de favoris :
+            </li>
+          </ol>
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Le bookmarklet : href="javascript:..." — glisser-déposer dans la barre de favoris */}
+            <a
+              href={`javascript:(function(){var links=document.querySelectorAll('a[href*="/video/"]');var urls=new Set();links.forEach(function(a){var h=a.href;if(h.match(/tiktok\\.com\\/@[^\\/]+\\/video\\/\\d+/)){urls.add(h)}});var t=Array.from(urls).join('\\n');if(t){try{navigator.clipboard.writeText(t).then(function(){alert(urls.size+' URLs TikTok copiees dans le presse-papier !\\n\\nAllez sur /admin/tiktok-accounts et collez-les dans le champ Import manuel.')},function(){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.top='10px';ta.style.left='10px';ta.style.width='90%25';ta.style.height='300px';ta.style.zIndex='999999';ta.style.background='white';ta.style.color='black';document.body.appendChild(ta);ta.select();alert(urls.size+' URLs trouvees. Copiez-les (Ctrl+C) puis collez-les dans /admin/tiktok-accounts.')})}catch(e){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.top='10px';ta.style.left='10px';ta.style.width='90%25';ta.style.height='300px';ta.style.zIndex='999999';ta.style.background='white';ta.style.color='black';document.body.appendChild(ta);ta.select();alert(urls.size+' URLs trouvees. Copiez-les (Ctrl+C) puis collez-les dans /admin/tiktok-accounts.')}}else{alert('Aucune URL video trouvee sur cette page. Faites defiler la page pour charger plus de videos, puis reessayez.')}})();`}
+              onClick={(e) => {
+                e.preventDefault();
+                alert(
+                  "Pour installer le bookmarklet :\n\n" +
+                  "1. Affichez la barre de favoris de votre navigateur (Ctrl+Shift+B sur Chrome)\n" +
+                  "2. Glissez ce lien « 📋 Extraire URLs TikTok » dans la barre de favoris\n" +
+                  "3. Ouvrez un profil TikTok dans votre navigateur\n" +
+                  "4. Cliquez sur le favori → les URLs sont copiées\n" +
+                  "5. Revenez sur /admin/tiktok-accounts et collez-les dans le champ Import manuel"
+                );
+              }}
+              className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-bold px-4 py-2.5 rounded-lg cursor-grab transition-colors select-none"
+              title="Glissez-moi dans votre barre de favoris"
+            >
+              <Bookmark className="w-4 h-4" />
+              📋 Extraire URLs TikTok
+            </a>
+            <span className="text-xs text-[#FAF6EF]/40">
+              ← glisser-déposer dans la barre de favoris
+            </span>
+          </div>
+          <div className="text-sm text-[#FAF6EF]/60 space-y-1 pt-2 border-t border-white/10">
+            <p className="font-semibold text-[#FAF6EF]/80">Mode d'emploi :</p>
+            <ol className="space-y-1 list-decimal list-inside text-[#FAF6EF]/60">
+              <li>Affichez la barre de favoris (Ctrl+Shift+B sur Chrome/Firefox)</li>
+              <li>Glissez le lien ci-dessus dans la barre → un nouveau favori est créé</li>
+              <li>Ouvrez le profil TikTok du serviteur dans votre navigateur</li>
+              <li>
+                <strong>Faites défiler vers le bas</strong> pour charger les vidéos récentes
+                (TikTok utilise le défilement infini)
+              </li>
+              <li>Cliquez sur le favori « 📋 Extraire URLs TikTok »</li>
+              <li>Les URLs sont copiées dans votre presse-papier</li>
+              <li>Revenez ici, dans la section « Import manuel » ci-dessous</li>
+              <li>Collez les URLs (Ctrl+V), sélectionnez le serviteur, cliquez « Importer »</li>
+            </ol>
+          </div>
+        </section>
 
         {/* ⭐ V4.35 — Import batch d'URLs TikTok */}
         <section className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-4">
