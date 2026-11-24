@@ -20,6 +20,8 @@ import {
   Calendar,
   Pencil,
   ExternalLink,
+  Stethoscope,
+  Upload,
 } from "lucide-react";
 
 interface ServantLite {
@@ -59,6 +61,83 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
   const [editionId, setEditionId] = useState<string | null>(null);
   const [editUsername, setEditUsername] = useState("");
   const [editDisplayName, setEditDisplayName] = useState("");
+
+  // ⭐ V4.35 — Diagnostic : voir ce que TikTok renvoie réellement
+  const [diagUsername, setDiagUsername] = useState("");
+  const [diagEnCours, setDiagEnCours] = useState(false);
+  const [diagResultat, setDiagResultat] = useState<Record<string, unknown> | null>(null);
+
+  // ⭐ V4.35 — Import batch d'URLs TikTok
+  const [importServantCode, setImportServantCode] = useState("");
+  const [importUrls, setImportUrls] = useState("");
+  const [importEnCours, setImportEnCours] = useState(false);
+  const [importResultat, setImportResultat] = useState<{
+    traitées?: number;
+    ajoutees?: number;
+    ignorees?: number;
+    sautees?: number;
+    filtrees?: number;
+    erreurs?: string[];
+    titres?: string[];
+    error?: string;
+  } | null>(null);
+
+  const lancerDiagnostic = async () => {
+    if (!diagUsername.trim()) {
+      setErreur("Saisissez un username pour le diagnostic.");
+      return;
+    }
+    setDiagEnCours(true);
+    setDiagResultat(null);
+    setErreur(null);
+    try {
+      const res = await fetch(
+        `/admin/api/tiktok/diagnostic?username=${encodeURIComponent(diagUsername.trim())}`
+      );
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      setDiagResultat(data);
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : "Erreur diagnostic.");
+    } finally {
+      setDiagEnCours(false);
+    }
+  };
+
+  const importerUrls = async () => {
+    if (!importServantCode) {
+      setErreur("Sélectionnez un serviteur pour l'import.");
+      return;
+    }
+    if (!importUrls.trim()) {
+      setErreur("Collez au moins une URL TikTok.");
+      return;
+    }
+    setImportEnCours(true);
+    setImportResultat(null);
+    setErreur(null);
+    try {
+      const urls = importUrls
+        .split(/[\n,\s]+/)
+        .map((u) => u.trim())
+        .filter((u) => u.length > 0);
+      const res = await fetch("/admin/api/tiktok/import-urls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ servantCode: importServantCode, urls }),
+      });
+      const data = (await res.json().catch(() => ({}))) as typeof importResultat;
+      setImportResultat(data);
+      if (data.ajoutees && data.ajoutees > 0) {
+        setInfo(
+          `${data.ajoutees} vidéo${data.ajoutees > 1 ? "s" : ""} importée${data.ajoutees > 1 ? "s" : ""} (${data.ignorees || 0} déjà en base, ${data.filtrees || 0} filtrée${(data.filtrees || 0) > 1 ? "s" : ""} >10 jours).`
+        );
+      }
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : "Erreur import.");
+    } finally {
+      setImportEnCours(false);
+    }
+  };
 
   const servantsAvecCompte = new Set(comptes.map((c) => c.servantCode));
   const servantsDisponibles = servants.filter((s) => !servantsAvecCompte.has(s.code));
@@ -260,6 +339,134 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
             </div>
           </div>
         </div>
+
+        {/* ⭐ V4.35 — Import batch d'URLs TikTok */}
+        <section className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Upload className="w-5 h-5 text-[#C9A227]" />
+            <h2 className="text-lg font-semibold">Import manuel d'URLs TikTok</h2>
+          </div>
+          <p className="text-sm text-[#FAF6EF]/60">
+            Si la synchro automatique échoue (TikTok bloque le scraping), vous pouvez importer
+            manuellement les URLs des vidéos TikTok. Allez sur le profil TikTok du serviteur dans
+            votre navigateur, copiez les URLs des vidéos récentes (une par ligne), collez-les ci-dessous.
+          </p>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Serviteur</label>
+              <select
+                value={importServantCode}
+                onChange={(e) => setImportServantCode(e.target.value)}
+                className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+              >
+                <option value="">— Sélectionnez —</option>
+                {servants.map((s) => (
+                  <option key={s.id} value={s.code}>
+                    {s.shortName} ({s.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">
+                URLs TikTok (une par ligne, max 30)
+              </label>
+              <textarea
+                value={importUrls}
+                onChange={(e) => setImportUrls(e.target.value)}
+                placeholder={"https://www.tiktok.com/@afrika/video/1234567890\nhttps://www.tiktok.com/@afrika/video/9876543210\n..."}
+                rows={6}
+                className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] font-mono text-sm focus:outline-none focus:border-[#C9A227] resize-y"
+              />
+            </div>
+            <button
+              onClick={importerUrls}
+              disabled={importEnCours || !importServantCode || !importUrls.trim()}
+              className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#DDBE55] disabled:opacity-50 text-[#1E0F2B] font-bold px-5 py-2 rounded-lg transition-colors"
+            >
+              {importEnCours ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Import en cours…
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4" />
+                  Importer les URLs
+                </>
+              )}
+            </button>
+          </div>
+          {importResultat && (
+            <div className="rounded-lg border border-white/10 bg-black/20 p-3 text-sm space-y-1">
+              <p className="font-semibold text-[#C9A227]">Résultat de l'import</p>
+              <p className="text-[#FAF6EF]/80">
+                {importResultat.traitées ?? 0} traitées — {importResultat.ajoutees ?? 0} importées,
+                {" "}{importResultat.ignorees ?? 0} déjà en base,
+                {" "}{importResultat.filtrees ?? 0} filtrées (&gt;10 jours),
+                {" "}{importResultat.sautees ?? 0} supprimées.
+              </p>
+              {importResultat.erreurs && importResultat.erreurs.length > 0 && (
+                <p className="text-red-300/80 text-xs">
+                  {importResultat.erreurs.length} erreur(s) : {importResultat.erreurs[0]}
+                  {importResultat.erreurs.length > 1 ? ` (+${importResultat.erreurs.length - 1} autres)` : ""}
+                </p>
+              )}
+              {importResultat.error && (
+                <p className="text-red-300/80 text-xs">{importResultat.error}</p>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* ⭐ V4.35 — Diagnostic : voir ce que TikTok renvoie */}
+        <section className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Stethoscope className="w-5 h-5 text-[#C9A227]" />
+            <h2 className="text-lg font-semibold">Diagnostic TikTok</h2>
+          </div>
+          <p className="text-sm text-[#FAF6EF]/60">
+            Vérifiez ce que TikTok renvoie réellement pour un username donné. Utile pour comprendre
+            pourquoi la synchro automatique échoue.
+          </p>
+          <div className="flex gap-3 items-end">
+            <div className="flex-1 space-y-1">
+              <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">
+                Username TikTok
+              </label>
+              <div className="flex items-center bg-[#1A0826] border border-white/20 rounded-lg focus-within:border-[#C9A227]">
+                <span className="pl-3 text-[#FAF6EF]/40">@</span>
+                <input
+                  type="text"
+                  value={diagUsername}
+                  onChange={(e) => setDiagUsername(e.target.value)}
+                  placeholder="afrika_christ_libere"
+                  className="flex-1 bg-transparent px-2 py-2 text-[#FAF6EF] focus:outline-none"
+                />
+              </div>
+            </div>
+            <button
+              onClick={lancerDiagnostic}
+              disabled={diagEnCours || !diagUsername.trim()}
+              className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/20 disabled:opacity-50 text-[#FAF6EF] font-bold px-4 py-2 rounded-lg transition-colors"
+            >
+              {diagEnCours ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Stethoscope className="w-4 h-4" />
+              )}
+              Diagnostiquer
+            </button>
+          </div>
+          {diagResultat && (
+            <div className="rounded-lg border border-white/10 bg-black/20 p-3 text-sm space-y-2 max-h-96 overflow-y-auto">
+              <p className="font-semibold text-[#C9A227]">Résultat du diagnostic</p>
+              <pre className="text-xs text-[#FAF6EF]/70 font-mono whitespace-pre-wrap break-all">
+                {JSON.stringify(diagResultat, null, 2)}
+              </pre>
+            </div>
+          )}
+        </section>
 
         {/* Créer un nouveau lien */}
         <section className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-4">
