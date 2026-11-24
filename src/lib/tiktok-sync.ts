@@ -124,6 +124,87 @@ function extraireCookies(setCookie: string | string[] | null): string {
     .join("; ");
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V4.33 — Recherche récursive de secUid (robuste aux changements de structure)
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Recherche récursive d'un objet "user" contenant secUid dans une structure
+ * JSON arbitraire. Retourne { secUid, nickname? } ou null.
+ *
+ * On cherche un objet qui contient À LA FOIS secUid (ou sec_uid) ET
+ * uniqueId (ou nickname) — pour éviter de matcher un faux positif.
+ * Profondeur limitée à 8.
+ */
+interface UserTrouve {
+  secUid: string;
+  nickname?: string;
+  uniqueId?: string;
+}
+
+function chercherUserAvecSecUid(o: unknown, profondeur = 0): UserTrouve | null {
+  if (profondeur > 8 || !o) return null;
+
+  if (typeof o === "object") {
+    const obj = o as Record<string, unknown>;
+    const secUid = (obj.secUid as string) || (obj.sec_uid as string);
+    const uniqueId = (obj.uniqueId as string) || (obj.unique_id as string);
+    const nickname = obj.nickname as string;
+
+    // Heuristique : un objet "user" a secUid ET (uniqueId ou nickname)
+    if (secUid && (uniqueId || nickname)) {
+      return {
+        secUid: String(secUid),
+        nickname: nickname ? String(nickname) : undefined,
+        uniqueId: uniqueId ? String(uniqueId) : undefined,
+      };
+    }
+
+    // Sinon, recurse dans les valeurs
+    for (const key of Object.keys(obj)) {
+      const result = chercherUserAvecSecUid(obj[key], profondeur + 1);
+      if (result) return result;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Fallback regex sur le HTML brut : cherche "secUid":"MS4..." directement.
+ * Moins précis que la recherche JSON mais robuste si le JSON est cassé
+ * ou dans un format inattendu.
+ */
+function extraireSecUidViaRegex(html: string): UserTrouve | null {
+  // secUid commence typiquement par "MS4" et fait 70+ caractères alphanumériques
+  const match = html.match(/"secUid"\s*:\s*"(MS4[A-Za-z0-9_\-]{50,120})"/);
+  if (match && match[1]) {
+    // Chercher aussi le nickname à proximité (dans les 500 chars autour)
+    const idx = match.index ?? 0;
+    const snippet = html.slice(Math.max(0, idx - 500), idx + 500);
+    const nickMatch = snippet.match(/"nickname"\s*:\s*"([^"]+)"/);
+    const uniqueMatch = snippet.match(/"uniqueId"\s*:\s*"([^"]+)"/);
+    return {
+      secUid: match[1],
+      nickname: nickMatch?.[1],
+      uniqueId: uniqueMatch?.[1],
+    };
+  }
+  // Variante snake_case
+  const matchSnake = html.match(/"sec_uid"\s*:\s*"(MS4[A-Za-z0-9_\-]{50,120})"/);
+  if (matchSnake && matchSnake[1]) {
+    return { secUid: matchSnake[1] };
+  }
+  return null;
+}
+
+/** Liste les clés disponibles dans __DEFAULT_SCOPE__ pour le diagnostic. */
+function listerClesScope(universalData: Record<string, unknown>): string[] {
+  const scopes = universalData.__DEFAULT_SCOPE as Record<string, unknown> | undefined;
+  if (!scopes || typeof scopes !== "object") return [];
+  return Object.keys(scopes);
+}
+
 interface InfosUserTiktok {
   secUid: string;
   nickname?: string;
@@ -184,22 +265,54 @@ async function scraperProfilPourSecUid(username: string): Promise<InfosUserTikto
       );
     }
 
+    // ⭐ V4.33 — Recherche secUid multi-stratégies :
+    //   ① Chemin direct (fast path) : webapp.user-detail.userInfo.user.secUid
+    //   ② Recherche récursive dans tout le JSON (robuste aux changements de structure)
+    //   ③ Regex sur le HTML brut (fallback ultime si le JSON est cassé)
     const scopes = universalData.__DEFAULT_SCOPE as Record<string, unknown> | undefined;
     const userDetail = scopes?.["webapp.user-detail"] as Record<string, unknown> | undefined;
-    const userInfo = userDetail?.userInfo as Record<string, unknown> | undefined;
-    const user = userInfo?.user as Record<string, unknown> | undefined;
+    const userInfoDirect = userDetail?.userInfo as Record<string, unknown> | undefined;
+    const userDirect = userInfoDirect?.user as Record<string, unknown> | undefined;
+    const secUidDirect =
+      (userDirect?.secUid as string | undefined) || (userDirect?.sec_uid as string | undefined);
 
-    const secUid = (user?.secUid as string | undefined) || (user?.sec_uid as string | undefined);
+    let secUid: string | undefined = secUidDirect || undefined;
+    let nickname: string | undefined =
+      (userDirect?.nickname as string | undefined) || undefined;
+
+    // ② Fallback : recherche récursive dans tout le JSON
     if (!secUid) {
+      const userTrouve = chercherUserAvecSecUid(universalData);
+      if (userTrouve) {
+        secUid = userTrouve.secUid;
+        nickname = nickname || userTrouve.nickname;
+      }
+    }
+
+    // ③ Fallback ultime : regex sur le HTML brut
+    if (!secUid) {
+      const userRegex = extraireSecUidViaRegex(html);
+      if (userRegex) {
+        secUid = userRegex.secUid;
+        nickname = nickname || userRegex.nickname;
+      }
+    }
+
+    if (!secUid) {
+      // Diagnostic détaillé pour aider à comprendre ce que TikTok renvoie
+      const clesScope = listerClesScope(universalData);
       throw new Error(
-        "secUid introuvable dans le JSON de la page profil. " +
-          "Le compte est peut-être privé, ou TikTok a changé la structure du JSON."
+        "secUid introuvable dans la page profil TikTok après recherche récursive + regex. " +
+          "Le compte est peut-être privé, ou TikTok a changé sa structure.\n" +
+          `Taille HTML : ${html.length} caractères.\n` +
+          `Clés __DEFAULT_SCOPE__ disponibles : ${clesScope.length > 0 ? clesScope.join(", ") : "(aucune)"}.\n` +
+          `Chemins testés : webapp.user-detail.userInfo.user.secUid, recherche récursive, regex HTML.`
       );
     }
 
     return {
       secUid,
-      nickname: (user?.nickname as string | undefined) || undefined,
+      nickname,
       html,
       cookies,
     };
