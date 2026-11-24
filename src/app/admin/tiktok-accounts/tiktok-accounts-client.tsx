@@ -235,9 +235,9 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Comptes TikTok liés</h1>
             <p className="text-sm text-[#FAF6EF]/60 mt-1">
-              ⭐ V4.26 — Multi-comptes : liez un username TikTok par serviteur. Les nouvelles
-              publications sont récupérées automatiquement (cron 2×/jour + bouton manuel) via
-              le service <code className="bg-black/30 px-1 rounded">tikwm.com</code>.
+              ⭐ V4.26/V4.31 — Multi-comptes : liez un username TikTok par serviteur. Les nouvelles
+              publications sont récupérées automatiquement (cron 2×/jour + bouton manuel) par
+              scraping direct de la page profil publique TikTok.
             </p>
           </div>
         </div>
@@ -250,11 +250,12 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
               <p className="font-semibold text-[#C9A227]">Comment ça marche ?</p>
               <p className="text-[#FAF6EF]/80">
                 TikTok n'expose pas d'API publique pour lister les vidéos d'un créateur.
-                On scrape donc le feed public via <code className="bg-black/30 px-1 rounded">tikwm.com</code>
-                (déjà utilisé pour la résolution MP4 — pas de nouvelle dépendance externe).
-                <strong> Limitations :</strong> si tikwm est en panne ou rate-limit, la synchro
-                échoue sans perte de données (les vidéos déjà importées restent). Le username
-                doit correspondre à un compte PUBLIC (pas privé).
+                On scrape donc directement la page profil publique (<code className="bg-black/30 px-1 rounded">tiktok.com/@username</code>)
+                et on extrait le JSON <code className="bg-black/30 px-1 rounded">__UNIVERSAL_DATA_FOR_REHYDRATION__</code>
+                qui contient la liste des vidéos récentes.
+                <strong> Limitations :</strong> si TikTok bloque la requête (captcha, rate limit),
+                la synchro échoue sans perte de données (les vidéos déjà importées restent). Le
+                username doit correspondre à un compte PUBLIC (pas privé).
               </p>
             </div>
           </div>

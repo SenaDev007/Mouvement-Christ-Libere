@@ -1,5 +1,5 @@
 /**
- * lib/tiktok-sync.ts — ⭐ V4.26 Synchronisation AUTOMATIQUE des comptes
+ * lib/tiktok-sync.ts — ⭐ V4.26/V4.31 Synchronisation AUTOMATIQUE des comptes
  * TikTok liés au back-office.
  *
  * ============================================================================
@@ -9,31 +9,27 @@
  * La Content Posting API sert à POSTER vers TikTok, pas à lire. La Login Kit
  * Display API ne donne accès qu'au profil de l'utilisateur connecté.
  *
- * LA PARADE : on scrape le feed public via le service tiers `tikwm.com`
- * (déjà utilisé pour la résolution MP4 dans src/lib/tiktok-video.ts — pas
- * de nouvelle dépendance externe).
+ * ⭐ V4.31 — CHANGEMENT D'APPROCHE : on scrape directement la page profil
+ * publique TikTok (https://www.tiktok.com/@<username>) au lieu d'utiliser
+ * tikwm.com (qui ne supportait PAS le listing des vidéos d'un user — erreur
+ * "'url' is required").
  *
- *   GET https://www.tikwm.com/api/?user=<username>&count=50
+ * La page profil contient un tag <script id="__UNIVERSAL_DATA_FOR_REHYDRATION__">
+ * avec un JSON complet incluant la liste des vidéos récentes dans
+ * __DEFAULT_SCOPE__["webapp.user-detail"].itemList.
  *
- * Renvoie un JSON { data: { videos: [...] } } avec pour chaque vidéo :
- *   - video_id (string numérique)
- *   - title (string)
- *   - play_addr (URL .mp4 — non utilisée ici, résolue à la demande par
- *     src/lib/tiktok-video.ts)
- *   - cover (URL miniature)
- *   - play_count / digg_count (vues / likes)
- *   - create_time (epoch)
- *
- * On insère chaque vidéo dans `Video` avec videoUrl =
- *   `https://www.tiktok.com/@<username>/video/<video_id>`
+ * Le code existant src/lib/tiktok-video.ts confirme que ce scraping fonctionne
+ * en production (Vercel Paris / cdg1) — les IP datacenter de Vercel ne sont
+ * pas bloquées par TikTok pour les pages profil publiques.
  *
  * Garde-fous (alignés sur youtube-sync.ts) :
  *   - Idempotent : pas de doublon par ID TikTok (toutes formes d'URL);
  *   - ⭐ V3.86 (mémoire des suppressions) : une vidéo volontairement
  *     supprimée n'est JAMAIS ré-importée ;
- *   - Best-effort : tikwm peut être en panne ou rate-limit → on retourne
- *     un compte-rendu, jamais d'exception non gérée ;
- *   - Rate limit tikwm ~1 req/s → 1,2s de garde entre les comptes.
+ *   - ⭐ V4.29 : filtre d'âge (≤ 10 jours par défaut);
+ *   - ⭐ V4.30 : index unique DB sur Video.videoUrl + gestion P2002;
+ *   - Best-effort : TikTok peut bloquer → on retourne un compte-rendu,
+ *     jamais d'exception non gérée.
  *
  * DÉCLENCHEURS :
  *   ① Bouton « Synchroniser TikTok » du module Vidéos (back-office) ;
@@ -46,20 +42,12 @@ import { extraireTiktokId } from "@/lib/tiktok";
 import { estVideoSupprimee } from "@/lib/suppression-video";
 import { devinerCategorieSync } from "@/lib/video-rubrics";
 
-const TIKWM_ENDPOINT = "https://www.tikwm.com/api/";
 const UA_NAVIGATEUR =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
-const TIMEOUT_MS = 12_000;
-const GARDE_ENTRE_COMPTES_MS = 1200; // ~1 req/s
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const TIMEOUT_MS = 15_000;
+const GARDE_ENTRE_COMPTES_MS = 1500; // ~1 req/1.5s (prudent avec TikTok)
 
 // ⭐ V4.29 — Limite d'âge des vidéos TikTok importées (en jours).
-// Les vidéos dont la date de création (create_time renvoyé par tikwm) est
-// antérieure à (now - LIMITE_JOURS_TIKTOK jours) sont FILTRÉES : non
-// importées, même si elles ne sont pas déjà en base. Directive pasteur :
-// éviter la synchro en masse des vieilles vidéos déjà curées manuellement.
-//
-// Configurable via SYNC_LIMITE_JOURS_TIKTOK (sur Vercel :
-// Settings → Environment Variables). Défaut : 10 jours.
 const LIMITE_JOURS_TIKTOK = Math.max(
   1,
   Math.min(365, Number(process.env.SYNC_LIMITE_JOURS_TIKTOK) || 10)
@@ -73,53 +61,47 @@ export interface ResultatSyncTikTok {
   ignorees: number;
   /** Vidéos volontairement supprimées — non ré-importées. */
   sautees: number;
-  /**
-   * ⭐ V4.29 — Vidéos filtrées par le filtre d'âge (> LIMITE_JOURS_TIKTOK
-   * jours) : non importées, non comptabilisées dans `ignorees`. Directive
-   * pasteur : on ne veut PAS récupérer en masse les vieilles vidéos TikTok
-   * (la plupart ont déjà été curées et intégrées manuellement).
-   */
+  /** ⭐ V4.29 — Vidéos filtrées par le filtre d'âge (> LIMITE_JOURS_TIKTOK jours). */
   filtrees: number;
   /** Titres des vidéos importées (compte-rendu). */
   titres: string[];
   /** Username TikTok synchronisé (sans le @). */
   username?: string;
-  /** Nom affichable (résolu depuis tikwm si disponible). */
+  /** Nom affichable (résolu depuis la page profil si disponible). */
   displayName?: string;
-  /** Message d'erreur (tikwm en panne, rate-limit, username invalide…) */
+  /** Message d'erreur (TikTok bloque, username invalide…) */
   erreur?: string;
 }
 
-/**
- * Type partiel de la réponse de tikwm — on ne déclare que les champs
- * utilisés. Toute structure supplémentaire est ignorée.
- */
-interface ReponseTikwmUser {
-  code?: number;
-  msg?: string;
-  data?: {
-    userInfo?: {
-      uniqueId?: string;
-      nickname?: string;
-    };
-    videos?: Array<{
-      video_id?: string | number;
-      title?: string;
-      cover?: string;
-      origin_cover?: string;
-      play_count?: number;
-      digg_count?: number;
-      create_time?: number;
-    }>;
-  };
+// ─────────────────────────────────────────────────────────────────────
+// TYPES — structure des vidéos extraites du scraping
+// ─────────────────────────────────────────────────────────────────────
+
+interface VideoTiktokScraped {
+  video_id: string;
+  title: string;
+  cover?: string;
+  origin_cover?: string;
+  play_count?: number;
+  digg_count?: number;
+  create_time?: number;
 }
+
+interface ResultatScrapingProfil {
+  nickname?: string;
+  videos: VideoTiktokScraped[];
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────
 
 /** Construit l'URL canonique TikTok d'une vidéo à partir du username + id. */
 function urlTiktokVideo(username: string, videoId: string): string {
   return `https://www.tiktok.com/@${username}/video/${videoId}`;
 }
 
-/** Garde-bien : retourne un username nettoyé (sans @, sans espaces, sans slash). */
+/** Nettoie un username (sans @, sans espaces, sans slash). */
 function nettoyerUsername(username: string): string {
   return username
     .trim()
@@ -129,14 +111,256 @@ function nettoyerUsername(username: string): string {
     .replace(/\s+/g, "");
 }
 
-/** Pause non-bloquante. */
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V4.31 — SCRAPING DE LA PAGE PROFIL TIKTOK
+// ─────────────────────────────────────────────────────────────────────
+
 /**
- * Synchronise un compte TikTok : récupère les dernières vidéos publiées via
- * tikwm et importe celles qui manquent au module Vidéos.
+ * Extrait le JSON de __UNIVERSAL_DATA_FOR_REHYDRATION__ du HTML de la page
+ * profil TikTok. Retourne null si le tag n'est pas trouvé.
+ *
+ * On utilise indexOf plutôt qu'une regex pour éviter les pièges liés aux
+ * caractères spéciaux dans le JSON (le JSON peut contenir des </script>
+ * dans des valeurs string — très rare mais possible).
+ */
+function extraireUniversalData(html: string): unknown | null {
+  const MARKER_DEBUT = '<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">';
+  const idxDebut = html.indexOf(MARKER_DEBUT);
+  if (idxDebut === -1) return null;
+  const idxJsonDebut = idxDebut + MARKER_DEBUT.length;
+  const idxFin = html.indexOf("</script>", idxJsonDebut);
+  if (idxFin === -1) return null;
+  const jsonStr = html.slice(idxJsonDebut, idxFin).trim();
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Extrait le JSON de __SIGI_STATE__ (ancien format TikTok, pré-2023).
+ * Fallback si __UNIVERSAL_DATA_FOR_REHYDRATION__ n'est pas présent.
+ */
+function extraireSigiState(html: string): unknown | null {
+  const MARKER_DEBUT = '<script id="SIGI_STATE" type="application/json">';
+  const idxDebut = html.indexOf(MARKER_DEBUT);
+  if (idxDebut === -1) return null;
+  const idxJsonDebut = idxDebut + MARKER_DEBUT.length;
+  const idxFin = html.indexOf("</script>", idxJsonDebut);
+  if (idxFin === -1) return null;
+  const jsonStr = html.slice(idxJsonDebut, idxFin).trim();
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Recherche récursive d'un tableau qui ressemble à une liste de vidéos
+ * TikTok dans une structure JSON arbitraire. Chaque élément doit avoir un
+ * identifiant (id/aweme_id/item_id) ET un champ desc ou video.
+ *
+ * Profondeur limitée à 6 pour éviter les boucles infinies et les
+ * performances catastrophiques sur des JSON très profonds.
+ */
+function chercherItemListeVideos(o: unknown, profondeur = 0): VideoTiktokScraped[] | null {
+  if (profondeur > 6 || !o) return null;
+
+  if (Array.isArray(o)) {
+    if (o.length > 0 && typeof o[0] === "object" && o[0] !== null) {
+      const premier = o[0] as Record<string, unknown>;
+      const aUnId = "id" in premier || "aweme_id" in premier || "item_id" in premier;
+      const aDescOuVideo = "desc" in premier || "video" in premier;
+      if (aUnId && aDescOuVideo) {
+        // C'est probablement une liste de vidéos — on extrait chaque item.
+        const videos: VideoTiktokScraped[] = [];
+        for (const item of o) {
+          if (!item || typeof item !== "object") continue;
+          const v = item as Record<string, unknown>;
+          const videoId = String(v.id || v.aweme_id || v.item_id || "");
+          if (!videoId) continue;
+          const stats = (v.stats || v.statistics) as Record<string, unknown> | undefined;
+          const video = v.video as Record<string, unknown> | undefined;
+          videos.push({
+            video_id: videoId,
+            title: String(v.desc || ""),
+            cover: video?.cover as string | undefined,
+            origin_cover:
+              (video?.originCover as string | undefined) ||
+              (video?.origin_cover as string | undefined),
+            play_count:
+              (stats?.playCount as number | undefined) ||
+              (stats?.play_count as number | undefined),
+            digg_count:
+              (stats?.diggCount as number | undefined) ||
+              (stats?.digg_count as number | undefined),
+            create_time:
+              (v.createTime as number | undefined) ||
+              (v.create_time as number | undefined),
+          });
+        }
+        if (videos.length > 0) return videos;
+      }
+    }
+    // Sinon, recurse dans les éléments du tableau
+    for (const item of o) {
+      const result = chercherItemListeVideos(item, profondeur + 1);
+      if (result && result.length > 0) return result;
+    }
+    return null;
+  }
+
+  if (typeof o === "object") {
+    const obj = o as Record<string, unknown>;
+    // Chercher les clés communes qui contiennent des listes de vidéos
+    for (const key of ["itemList", "items", "aweme_list", "posts", "videos"]) {
+      if (key in obj) {
+        const result = chercherItemListeVideos(obj[key], profondeur + 1);
+        if (result && result.length > 0) return result;
+      }
+    }
+    // Sinon, recurse dans toutes les valeurs
+    for (const key of Object.keys(obj)) {
+      const result = chercherItemListeVideos(obj[key], profondeur + 1);
+      if (result && result.length > 0) return result;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Recherche récursive d'un nickname dans une structure JSON.
+ * Retourne le premier nickname trouvé dans un objet qui ressemble à un user.
+ */
+function chercherNickname(o: unknown, profondeur = 0): string | undefined {
+  if (profondeur > 5 || !o || typeof o !== "object") return undefined;
+  const obj = o as Record<string, unknown>;
+  // Si l'objet a une clé "uniqueId" ou "sec_uid" → c'est probablement un user
+  if ("uniqueId" in obj || "sec_uid" in obj || "secUid" in obj) {
+    if (typeof obj.nickname === "string" && obj.nickname) return obj.nickname;
+  }
+  for (const key of Object.keys(obj)) {
+    const result = chercherNickname(obj[key], profondeur + 1);
+    if (result) return result;
+  }
+  return undefined;
+}
+
+/**
+ * Scrap la page profil publique TikTok d'un utilisateur et extrait la liste
+ * de ses vidéos récentes.
+ *
+ * @param username  username TikTok SANS le @
+ * @returns { nickname?, videos[] } — ou lance une Error si le scraping échoue
+ */
+async function scraperProfilTiktok(username: string): Promise<ResultatScrapingProfil> {
+  const url = `https://www.tiktok.com/@${username}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": UA_NAVIGATEUR,
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        Referer: "https://www.tiktok.com/",
+        "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "upgrade-insecure-requests": "1",
+      },
+      signal: controller.signal,
+      redirect: "follow",
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new Error(`Username TikTok @${username} introuvable (404). Vérifiez l'orthographe.`);
+      }
+      if (res.status === 403 || res.status === 429) {
+        throw new Error(
+          `TikTok bloque la requête (HTTP ${res.status} — captcha ou rate limit). Réessayez dans quelques minutes.`
+        );
+      }
+      throw new Error(`HTTP ${res.status} en scrapant la page profil TikTok.`);
+    }
+
+    const html = await res.text();
+
+    // ① Essayer __UNIVERSAL_DATA_FOR_REHYDRATION__ (format récent, post-2023)
+    const universalData = extraireUniversalData(html);
+    if (universalData) {
+      const scopes = (universalData as Record<string, unknown>).__DEFAULT_SCOPE as
+        | Record<string, unknown>
+        | undefined;
+      const userDetail = scopes?.["webapp.user-detail"] as Record<string, unknown> | undefined;
+
+      // Chemin direct : webapp.user-detail.itemList
+      if (userDetail?.itemList && Array.isArray(userDetail.itemList)) {
+        const videos = chercherItemListeVideos(userDetail.itemList);
+        if (videos && videos.length > 0) {
+          const userInfo = userDetail.userInfo as Record<string, unknown> | undefined;
+          const user = userInfo?.user as Record<string, unknown> | undefined;
+          return {
+            nickname: (user?.nickname as string | undefined) || chercherNickname(universalData),
+            videos,
+          };
+        }
+      }
+
+      // Fallback : recherche récursive dans tout le JSON
+      const videos = chercherItemListeVideos(universalData);
+      if (videos && videos.length > 0) {
+        return {
+          nickname: chercherNickname(universalData),
+          videos,
+        };
+      }
+    }
+
+    // ② Fallback : __SIGI_STATE__ (ancien format, pré-2023)
+    const sigiState = extraireSigiState(html);
+    if (sigiState) {
+      const videos = chercherItemListeVideos(sigiState);
+      if (videos && videos.length > 0) {
+        return {
+          nickname: chercherNickname(sigiState),
+          videos,
+        };
+      }
+    }
+
+    // ③ Aucun JSON exploitable trouvé
+    throw new Error(
+      "Format de page TikTok inattendu — le JSON de profil n'a pas pu être extrait. " +
+        "TikTok a peut-être changé sa structure ou bloque la requête."
+    );
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error(`Timeout (${TIMEOUT_MS}ms) en scrapant la page profil TikTok.`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SYNCHRONISATION — fonction principale
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Synchronise un compte TikTok : scrape la page profil publique et importe
+ * les vidéos récentes qui manquent au module Vidéos.
  *
  * @param opts.servantCode  code du serviteur auquel attribuer les vidéos.
  */
@@ -172,52 +396,17 @@ export async function syncTikTokAccount(opts: {
     return resultatVide(`Username TikTok invalide pour « ${codeServiteur} ».`);
   }
 
-  // ② Appel à tikwm : GET /api/?user=<username>&count=50
-  let reponse: ReponseTikwmUser;
+  // ② Scraping de la page profil publique TikTok
+  let scraping: ResultatScrapingProfil;
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    const url = `${TIKWM_ENDPOINT}?user=${encodeURIComponent(username)}&count=50`;
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        "User-Agent": UA_NAVIGATEUR,
-        Accept: "application/json",
-      },
-      signal: controller.signal,
-      // On force le cache désactivé (sinon Vercel peut cacher une réponse
-      // d'erreur et on ne se rend pas compte que tikwm est en panne).
-      cache: "no-store",
-    });
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      await marquerDerniereErreur(compte.id, `tikwm HTTP ${res.status}`);
-      return resultatVide(
-        `Service tikwm indisponible (HTTP ${res.status}). Réessayez plus tard.`,
-        username
-      );
-    }
-
-    reponse = (await res.json()) as ReponseTikwmUser;
+    scraping = await scraperProfilTiktok(username);
   } catch (e) {
-    const msg = e instanceof Error ? `Erreur réseau tikwm : ${e.message}` : "Erreur réseau tikwm.";
+    const msg = e instanceof Error ? e.message : "Erreur lors du scraping TikTok.";
     await marquerDerniereErreur(compte.id, msg);
     return resultatVide(msg, username);
   }
 
-  // ③ Validation de la réponse
-  if (reponse.code !== 0 || !reponse.data?.videos) {
-    const msg =
-      reponse.msg ||
-      (reponse.code === -1
-        ? "Username TikTok introuvable ou compte privé."
-        : `Réponse tikwm inattendue (code=${reponse.code ?? "?"}).`);
-    await marquerDerniereErreur(compte.id, msg);
-    return resultatVide(msg, username);
-  }
-
-  const videos = reponse.data.videos.filter((v) => v.video_id && v.title);
+  const videos = scraping.videos.filter((v) => v.video_id && v.title);
   if (videos.length === 0) {
     await marquerSucces(compte.id);
     return {
@@ -227,11 +416,11 @@ export async function syncTikTokAccount(opts: {
       filtrees: 0,
       titres: [],
       username,
-      displayName: reponse.data.userInfo?.nickname || compte.displayName || undefined,
+      displayName: scraping.nickname || compte.displayName || undefined,
     };
   }
 
-  // ④ Vidéos déjà présentes en base (par ID TikTok).
+  // ③ Vidéos déjà présentes en base (par ID TikTok).
   const existantes = await db.video.findMany({
     where: { videoUrl: { not: null } },
     select: { videoUrl: true },
@@ -242,7 +431,7 @@ export async function syncTikTokAccount(opts: {
     if (id) idsExistants.add(id);
   }
 
-  // ⑤ Insertion des nouvelles vidéos
+  // ④ Insertion des nouvelles vidéos
   let ajoutees = 0;
   let ignorees = 0;
   let sautees = 0;
@@ -250,25 +439,16 @@ export async function syncTikTokAccount(opts: {
   const titres: string[] = [];
 
   // ⭐ V4.29 — Filtre d'âge : on ne synchronise que les vidéos publiées
-  // dans les LIMITE_JOURS_TIKTOK derniers jours (défaut : 10). Les vidéos
-  // plus anciennes sont filtrées et non importées — directive pasteur.
+  // dans les LIMITE_JOURS_TIKTOK derniers jours (défaut : 10).
   const dateLimiteMs = Date.now() - LIMITE_JOURS_TIKTOK * MS_PAR_JOUR;
 
-  // ⭐ V4.28 — Catégorisation INTELLIGENTE par détection de mots-clés dans
-  // le titre (cf. devinerCategorieSync dans video-rubrics.ts) :
-  //   · Pasteur Kongo → « Rhema du matin » / « Rhema du soir » si le titre
-  //     les mentionne, sinon « Général Kongo » ;
-  //   · Afrika → « Saint-Esprit réponds-moi » si le titre le mentionne,
-  //     sinon « Général Afrika ».
-  // Calculée PAR VIDÉO (cf. youtube-sync.ts pour le rationale complet).
-
-  // Ordre chronologique (tikwm renvoie plus récent d'abord — on inverse).
+  // Ordre chronologique (TikTok renvoie plus récent d'abord — on inverse).
   for (const v of [...videos].reverse()) {
     const videoId = String(v.video_id || "");
     if (!videoId || !v.title) continue;
 
     // ⭐ V4.29 — Filtre d'âge (AVANT l'idempotence, pour économiser un
-    // lookup DB). create_time est un epoch seconde côté tikwm.
+    // lookup DB). create_time est un epoch seconde côté TikTok.
     const datePublication = v.create_time
       ? new Date(v.create_time * 1000)
       : new Date();
@@ -300,14 +480,13 @@ export async function syncTikTokAccount(opts: {
           title: v.title,
           description:
             description || `Vidéo TikTok de ${servant.shortName} — ${v.title}`,
-          duration: "", // tikwm ne fournit pas la durée côté user feed
+          duration: "", // TikTok ne fournit pas la durée dans le profil
           videoUrl: url,
           thumbnailUrl: miniature,
           views: v.play_count || 0,
           likes: v.digg_count || 0,
           isLive: false,
-          // ⭐ V4.28 — Catégorisation intelligente par titre (cf. commentaire
-          // ci-dessus). Calculée par vidéo, pas par serviteur global.
+          // ⭐ V4.28 — Catégorisation intelligente par titre.
           category: devinerCategorieSync(v.title, codeServiteur),
           publishedAt: datePublication,
         },
@@ -317,11 +496,8 @@ export async function syncTikTokAccount(opts: {
       titres.push(v.title);
     } catch (e) {
       // ⭐ V4.30 — Distinguer le P2002 (unique constraint violation) des
-      // autres erreurs. L'index unique partiel sur Video.videoUrl
-      // (migration 20261123130000) garantit qu'aucun doublon ne peut
-      // exister en base — si une insertion échoue avec P2002, c'est qu'une
-      // autre sync a inséré la même vidéo entre notre check et notre create
-      // (race condition) → on compte comme "ignorée", pas comme une erreur.
+      // autres erreurs. L'index unique sur Video.videoUrl garantit qu'aucun
+      // doublon ne peut exister en base.
       if (
         e instanceof Error &&
         "code" in e &&
@@ -330,7 +506,6 @@ export async function syncTikTokAccount(opts: {
         ignorees++;
         idsExistants.add(videoId);
       } else {
-        // Erreur réelle (DB down, etc.) — on logge sans tout casser.
         console.warn(
           `[tiktok-sync] Échec insertion vidéo ${videoId} pour ${codeServiteur} :`,
           e instanceof Error ? e.message : e
@@ -348,7 +523,7 @@ export async function syncTikTokAccount(opts: {
     filtrees,
     titres: titres.slice(0, 5),
     username,
-    displayName: reponse.data.userInfo?.nickname || compte.displayName || undefined,
+    displayName: scraping.nickname || compte.displayName || undefined,
   };
 }
 
@@ -422,7 +597,7 @@ export async function syncTousComptesTikTok(): Promise<ResultatSyncMultiTikTok> 
     sauteesTotal += r.sautees;
     filtreesTotal += r.filtrees;
 
-    // Garde entre les comptes (rate limit tikwm).
+    // Garde entre les comptes (prudent avec TikTok — évite le rate limit).
     if (i < comptes.length - 1) {
       await delay(GARDE_ENTRE_COMPTES_MS);
     }
