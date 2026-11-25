@@ -26,8 +26,6 @@ import {
   Youtube,
   // ⭐ V4.26 — Comptes TikTok liés (icone Music2 distincte de Music = Adoration)
   Music2,
-  // ⭐ V4.38 — Bibliothèque documentaire (livres gratuits)
-  BookOpen,
   Image as ImageIcon,
   Building2,
   Wallet,
