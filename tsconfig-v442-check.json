@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/app/bibliotheque/**/*.ts",
+    "src/app/bibliotheque/**/*.tsx",
+    "src/app/admin/bibliotheque/**/*.tsx",
+    "src/app/admin/tiktok-accounts/**/*.tsx",
+    "src/app/admin/youtube-accounts/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/node_modules"
+  ]
+}

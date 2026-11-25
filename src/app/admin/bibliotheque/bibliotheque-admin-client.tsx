@@ -4,6 +4,11 @@
  * Client — /admin/bibliotheque
  * Gestion CRUD de la bibliothèque documentaire.
  *
+ * ⭐ V4.42 — SCISSON STRICTE PAR SERVITEUR : la liste est organisée en onglets
+ * d'espaces (Pasteur Kongo / Afrika Pamela DALI / Collectif). Un livre
+ * appartient à UN seul espace (son servantCode), jamais un mélange. Le
+ * bouton « Nouveau livre » pré-sélectionne le serviteur de l'espace actif.
+ *
  * ⭐ V4.40 — Uploads DIRECTS : la couverture et le PDF partent du navigateur
  * vers Cloudflare R2 via une URL pré-signée (aucune limite de taille
  * Vercel — le fichier ne transite pas par le serveur), avec barre de
@@ -86,6 +91,51 @@ const CATEGORIES = [
   "Adoration & Louanges",
   "Autres",
 ];
+
+// ⭐ V4.42 — Espaces de la bibliothèque : scission stricte par serviteur
+// (codes identiques au modèle Servant : "kongo" | "afrika").
+type EspaceCode = "kongo" | "afrika" | "collectif";
+
+const NOMS_ESPACE: Record<EspaceCode, string> = {
+  kongo: "Pasteur Kongo",
+  afrika: "Afrika Pamela DALI",
+  collectif: "Collectif",
+};
+
+const ACCENTS_ESPACE: Record<EspaceCode, string> = {
+  kongo: "#C9A227",
+  afrika: "#B87AEB",
+  collectif: "#8FA3C8",
+};
+
+/** Espace d'un livre : son servantCode, ou « Collectif » s'il n'en a pas. */
+function codeEspaceDuLivre(book: Book): EspaceCode {
+  const code = (book.servantCode || "").toLowerCase();
+  if (code === "kongo") return "kongo";
+  if (code === "afrika") return "afrika";
+  return "collectif";
+}
+
+/** Formulaire vierge (partagé par l'état initial et la réinitialisation). */
+const FORM_VIDE: Partial<Book> = {
+  title: "",
+  author: "",
+  description: "",
+  category: "Enseignements",
+  coverUrl: "",
+  fileUrl: "",
+  fileSize: null,
+  pageCount: null,
+  language: "Français",
+  publishedYear: null,
+  isbn: "",
+  editeur: "",
+  tags: "",
+  isDownloadable: true,
+  isPublished: true,
+  sortOrder: 0,
+  servantId: null,
+};
 
 // Plafonds côté navigateur (avant même l'envoi) — guardrails UX.
 const TAILLE_MAX_PDF = 100 * 1024 * 1024; // 100 Mo
@@ -189,6 +239,8 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
   const [info, setInfo] = useState<string | null>(null);
   const [editionId, setEditionId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  // ⭐ V4.42 — espace affiché dans la liste : un seul à la fois, jamais un mélange
+  const [espaceListe, setEspaceListe] = useState<EspaceCode>("kongo");
 
   // Uploads + analyse
   const [uploadPdf, setUploadPdf] = useState<EtatUpload>(ETAT_UPLOAD_VIDE);
@@ -198,46 +250,10 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
   const inputCouvertureRef = useRef<HTMLInputElement | null>(null);
 
   // Form state
-  const [form, setForm] = useState<Partial<Book>>({
-    title: "",
-    author: "",
-    description: "",
-    category: "Enseignements",
-    coverUrl: "",
-    fileUrl: "",
-    fileSize: null,
-    pageCount: null,
-    language: "Français",
-    publishedYear: null,
-    isbn: "",
-    editeur: "",
-    tags: "",
-    isDownloadable: true,
-    isPublished: true,
-    sortOrder: 0,
-    servantId: null,
-  });
+  const [form, setForm] = useState<Partial<Book>>(() => ({ ...FORM_VIDE }));
 
   const resetForm = () => {
-    setForm({
-      title: "",
-      author: "",
-      description: "",
-      category: "Enseignements",
-      coverUrl: "",
-      fileUrl: "",
-      fileSize: null,
-      pageCount: null,
-      language: "Français",
-      publishedYear: null,
-      isbn: "",
-      editeur: "",
-      tags: "",
-      isDownloadable: true,
-      isPublished: true,
-      sortOrder: 0,
-      servantId: null,
-    });
+    setForm({ ...FORM_VIDE });
     setUploadPdf(ETAT_UPLOAD_VIDE);
     setUploadCouverture(ETAT_UPLOAD_VIDE);
     setAnalyse(ANALYSE_VIDE);
@@ -453,6 +469,16 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
     "w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] text-sm focus:outline-none focus:border-[#C9A227]";
   const labelCls = "text-xs uppercase tracking-wide text-[#FAF6EF]/60";
 
+  // ⭐ V4.42 — répartition des livres par espace + liste de l'espace actif
+  const nbParEspace = books.reduce(
+    (compte, b) => {
+      compte[codeEspaceDuLivre(b)] += 1;
+      return compte;
+    },
+    { kongo: 0, afrika: 0, collectif: 0 } as Record<EspaceCode, number>
+  );
+  const booksEspace = books.filter((b) => codeEspaceDuLivre(b) === espaceListe);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A0826] to-[#2A0E3D] text-[#FAF6EF] p-6 md:p-10">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -470,8 +496,20 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
           </div>
           <button
             onClick={() => {
-              if (showForm) resetForm();
-              else setShowForm(true);
+              if (showForm) {
+                resetForm();
+              } else {
+                // ⭐ V4.42 — pré-sélectionne le serviteur de l'espace actif :
+                // créer depuis l'onglet Afrika rattache d'office à Afrika.
+                const serviteurEspace =
+                  espaceListe === "collectif"
+                    ? null
+                    : servants.find(
+                        (s) => s.code.toLowerCase() === espaceListe
+                      );
+                setForm({ ...FORM_VIDE, servantId: serviteurEspace?.id ?? null });
+                setShowForm(true);
+              }
             }}
             className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-bold px-5 py-2.5 rounded-xl transition-colors"
           >
@@ -545,6 +583,10 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                     <option key={s.id} value={s.id}>{s.shortName}</option>
                   ))}
                 </select>
+                <p className="text-[11px] text-[#FAF6EF]/40">
+                  Détermine l'espace d'affichage : chaque serviteur a le sien,
+                  les ouvrages ne sont jamais mélangés.
+                </p>
               </div>
               <div className="md:col-span-2 space-y-1">
                 <label className={labelCls}>Description</label>
@@ -875,12 +917,50 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
           </div>
         )}
 
-        {/* Liste des livres */}
+        {/* ⭐ V4.42 — Onglets d'espaces : chaque serviteur a son espace dédié */}
+        <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Espaces de la bibliothèque">
+          <span className="text-xs uppercase tracking-wide text-[#FAF6EF]/40 mr-1">
+            Espaces
+          </span>
+          {(["kongo", "afrika", "collectif"] as EspaceCode[])
+            .filter((code) => code !== "collectif" || nbParEspace.collectif > 0)
+            .map((code) => {
+              const actif = espaceListe === code;
+              const accent = ACCENTS_ESPACE[code];
+              const nb = nbParEspace[code];
+              return (
+                <button
+                  key={code}
+                  role="tab"
+                  aria-selected={actif}
+                  onClick={() => setEspaceListe(code)}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                    actif
+                      ? "bg-white/10"
+                      : "bg-white/5 border-white/10 text-[#FAF6EF]/60 hover:text-[#FAF6EF] hover:bg-white/10"
+                  }`}
+                  style={
+                    actif
+                      ? { borderColor: `${accent}99`, color: accent }
+                      : undefined
+                  }
+                >
+                  {NOMS_ESPACE[code]}
+                  <span className="ml-2 text-xs opacity-70">{nb}</span>
+                </button>
+              );
+            })}
+        </div>
+
+        {/* Liste des livres (espace actif uniquement) */}
         <div className="space-y-3">
-          {books.length === 0 ? (
-            <p className="text-center text-[#FAF6EF]/50 py-12">Aucun livre. Cliquez « Nouveau livre » pour commencer.</p>
+          {booksEspace.length === 0 ? (
+            <p className="text-center text-[#FAF6EF]/50 py-12">
+              Aucun livre dans l'espace « {NOMS_ESPACE[espaceListe]} ».
+              Cliquez « Nouveau livre » pour commencer.
+            </p>
           ) : (
-            books.map((book) => (
+            booksEspace.map((book) => (
               <div
                 key={book.id}
                 className="rounded-xl border border-white/10 bg-white/5 p-4 flex items-center gap-4"

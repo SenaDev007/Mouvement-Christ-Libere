@@ -340,7 +340,7 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
                   <option value="">— Sélectionnez —</option>
                   {servantsDisponibles.map((s) => (
                     <option key={s.id} value={s.code}>
-                      {s.shortName} ({s.code}) — {s.fullName}
+                      {s.shortName}
                     </option>
                   ))}
                 </select>

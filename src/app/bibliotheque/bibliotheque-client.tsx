@@ -6,6 +6,10 @@
  * En-tête animé (orbes ambiants, compteurs), grille avec entrées en cascade,
  * cartes 3D (survol, reflet, overlay « Lire »), pastilles de filtre animées
  * (layoutId) et lecteur PDF en modale avec ressort d'entrée.
+ * ⭐ V4.42 — Scission stricte en espaces distincts : sélecteur « Pasteur
+ * Kongo / Afrika » (+ Collectif si des ouvrages sans serviteur existent),
+ * filtrage par servantCode, identité visuelle propre à chaque espace
+ * (or pour Kongo, violet pour Afrika), statistiques calculées par espace.
  * Bibliothèque documentaire publique avec filtres + lecteur PDF intégré.
  */
 
@@ -59,7 +63,6 @@ interface BookLite {
 
 interface Props {
   books: BookLite[];
-  categories: string[];
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -81,6 +84,133 @@ function formatTaille(octets: number | null | undefined): string {
   if (ko < 1024) return `${ko.toFixed(ko < 10 ? 1 : 0).replace(".", ",")} Ko`;
   const mo = ko / 1024;
   return `${mo.toFixed(mo < 10 ? 1 : 0).replace(".", ",")} Mo`;
+}
+
+/* ── ⭐ V4.42 — Espaces distincts (scission stricte par serviteur) ──── */
+
+type EspaceCode = "kongo" | "afrika" | "collectif";
+
+interface EspaceDef {
+  code: EspaceCode;
+  nom: string;
+  sousTitre: string;
+  initiales: string;
+  accent: string;
+  accentClair: string;
+}
+
+/**
+ * Chaque espace a sa propre identité visuelle. « Collectif » n'est affiché
+ * que si des ouvrages sans serviteur existent : un livre appartient à UN
+ * seul espace, jamais plusieurs.
+ */
+const ESPACES: EspaceDef[] = [
+  {
+    code: "kongo",
+    nom: "Pasteur Kongo",
+    sousTitre: "Époux, ministre pastoral",
+    initiales: "PK",
+    accent: "#C9A227",
+    accentClair: "#E8D48B",
+  },
+  {
+    code: "afrika",
+    nom: "Afrika Pamela DALI",
+    sousTitre: "Servante de l'Éternel",
+    initiales: "AP",
+    accent: "#B87AEB",
+    accentClair: "#D9B8FA",
+  },
+  {
+    code: "collectif",
+    nom: "Collectif",
+    sousTitre: "Ouvrages du ministère",
+    initiales: "MC",
+    accent: "#8FA3C8",
+    accentClair: "#B8C8E0",
+  },
+];
+
+/** ⭐ V4.42 — Rattachement strict d'un livre à un espace (servantCode). */
+function appartientAEspace(livre: BookLite, code: EspaceCode): boolean {
+  const codeLivre = (livre.servantCode || "").toLowerCase();
+  if (code === "collectif") return !codeLivre;
+  return codeLivre === code;
+}
+
+/** Carte d'espace : état actif partagé via layoutId (glissement du halo). */
+function CarteEspace({
+  espace,
+  actif,
+  nbOuvrages,
+  onChoisir,
+}: {
+  espace: EspaceDef;
+  actif: boolean;
+  nbOuvrages: number;
+  onChoisir: () => void;
+}) {
+  return (
+    <motion.button
+      onClick={onChoisir}
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      className={`relative text-left rounded-2xl p-5 border transition-colors duration-300 ${
+        actif
+          ? "bg-white/[0.08]"
+          : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06]"
+      }`}
+      style={
+        actif
+          ? {
+              borderColor: `${espace.accent}99`,
+              boxShadow: `0 12px 40px -12px ${espace.accent}55`,
+            }
+          : undefined
+      }
+      aria-pressed={actif}
+    >
+      {actif && (
+        <motion.span
+          layoutId="espace-active"
+          className="absolute inset-0 rounded-2xl"
+          style={{
+            background: `linear-gradient(135deg, ${espace.accent}1F, transparent 65%)`,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 28 }}
+        />
+      )}
+      <div className="relative z-10 flex items-center gap-4 min-w-0">
+        <span
+          className="w-12 h-12 rounded-full flex items-center justify-center font-serif font-bold text-sm flex-shrink-0"
+          style={{
+            background: `${espace.accent}1A`,
+            border: `1.5px solid ${espace.accent}66`,
+            color: espace.accentClair,
+          }}
+        >
+          {espace.initiales}
+        </span>
+        <div className="min-w-0">
+          <p
+            className="font-serif font-bold text-base md:text-lg leading-tight truncate"
+            style={{ color: actif ? espace.accentClair : "#FAF6EF" }}
+          >
+            {espace.nom}
+          </p>
+          <p className="text-xs text-[#FAF6EF]/50 mt-0.5 truncate">
+            {espace.sousTitre}
+          </p>
+          <p
+            className="text-[11px] uppercase tracking-wider mt-1"
+            style={{ color: `${espace.accent}CC` }}
+          >
+            {nbOuvrages} ouvrage{nbOuvrages > 1 ? "s" : ""}
+          </p>
+        </div>
+      </div>
+    </motion.button>
+  );
 }
 
 /* ── Variantes d'animation ─────────────────────────────────────────── */
@@ -192,14 +322,48 @@ function OrbesAmbiants() {
 
 /* ── Composant principal ───────────────────────────────────────────── */
 
-export function BibliotequeClient({ books, categories }: Props) {
+export function BibliotequeClient({ books }: Props) {
+  // ⭐ V4.42 — espace actif : un seul espace visible à la fois, jamais un mélange.
+  const [espaceActif, setEspaceActif] = useState<EspaceCode>("kongo");
   const [categorieSelectionnee, setCategorieSelectionnee] = useState<string | null>(null);
   const [recherche, setRecherche] = useState("");
   const [livreOuvert, setLivreOuvert] = useState<BookLite | null>(null);
   const [lecteurCharge, setLecteurCharge] = useState(false);
 
+  // Ouvrages de l'espace actif uniquement (rattachement par servantCode)
+  const livresEspace = useMemo(
+    () => books.filter((b) => appartientAEspace(b, espaceActif)),
+    [books, espaceActif]
+  );
+
+  // Répartition des ouvrages par espace (pour les compteurs des cartes)
+  const nbParEspace = useMemo(() => {
+    const compte: Record<EspaceCode, number> = { kongo: 0, afrika: 0, collectif: 0 };
+    for (const b of books) {
+      const code = (b.servantCode || "").toLowerCase();
+      if (code === "kongo") compte.kongo += 1;
+      else if (code === "afrika") compte.afrika += 1;
+      else compte.collectif += 1;
+    }
+    return compte;
+  }, [books]);
+
+  // ⭐ V4.42 — l'espace « Collectif » n'apparaît que s'il contient des ouvrages.
+  const espacesVisibles = ESPACES.filter(
+    (e) => e.code !== "collectif" || nbParEspace.collectif > 0
+  );
+  const espaceCourant =
+    ESPACES.find((e) => e.code === espaceActif) ?? ESPACES[0];
+
+  // Catégories présentes dans l'espace actif uniquement
+  const categoriesEspace = useMemo(() => {
+    const ensemble = new Set<string>();
+    livresEspace.forEach((b) => b.category && ensemble.add(b.category));
+    return Array.from(ensemble);
+  }, [livresEspace]);
+
   const livresFiltres = useMemo(() => {
-    return books.filter((b) => {
+    return livresEspace.filter((b) => {
       if (categorieSelectionnee && b.category !== categorieSelectionnee) return false;
       if (recherche) {
         const q = recherche.toLowerCase();
@@ -213,13 +377,20 @@ export function BibliotequeClient({ books, categories }: Props) {
       }
       return true;
     });
-  }, [books, categorieSelectionnee, recherche]);
+  }, [livresEspace, categorieSelectionnee, recherche]);
 
-  // Statistiques animées de l'en-tête
+  // Statistiques animées de l'en-tête — calculées sur l'espace actif
   const nbTelechargements = useMemo(
-    () => books.reduce((total, b) => total + (b.downloadCount || 0), 0),
-    [books]
+    () => livresEspace.reduce((total, b) => total + (b.downloadCount || 0), 0),
+    [livresEspace]
   );
+
+  const choisirEspace = (code: EspaceCode) => {
+    if (code === espaceActif) return;
+    setEspaceActif(code);
+    // Les catégories d'un espace n'ont pas de sens dans l'autre
+    setCategorieSelectionnee(null);
+  };
 
   // Modale : fermeture avec Échap + verrouillage du défilement du corps
   useEffect(() => {
@@ -245,7 +416,6 @@ export function BibliotequeClient({ books, categories }: Props) {
     setCategorieSelectionnee(null);
     setRecherche("");
   };
-
   return (
     <MotionConfig reducedMotion="user">
       <div className="relative min-h-screen bg-gradient-to-b from-[#1A0826] via-[#2A0E3D] to-[#1A0826] text-[#FAF6EF]">
@@ -302,17 +472,18 @@ export function BibliotequeClient({ books, categories }: Props) {
               variants={vHeroItem}
               className="text-[#FAF6EF]/60 max-w-2xl mx-auto text-base md:text-lg"
             >
-              Livres gratuits du pasteur Kongo et de Afrika.
+              Deux espaces bien distincts : les ouvrages du pasteur Kongo et
+              ceux d'Afrika Pamela DALI.
             </motion.p>
 
-            {/* Statistiques avec compteurs */}
+            {/* Statistiques avec compteurs — calculées sur l'espace actif */}
             <motion.div
               variants={vHeroItem}
               className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-4"
             >
               {[
-                { valeur: books.length, label: "ouvrages", icone: BookOpen },
-                { valeur: categories.length, label: "catégories", icone: Layers },
+                { valeur: livresEspace.length, label: "ouvrages", icone: BookOpen },
+                { valeur: categoriesEspace.length, label: "catégories", icone: Layers },
                 { valeur: nbTelechargements, label: "téléchargements", icone: Download },
               ].map(({ valeur, label, icone: Icone }) => (
                 <div key={label} className="flex items-center gap-2.5">
@@ -327,6 +498,31 @@ export function BibliotequeClient({ books, categories }: Props) {
               ))}
             </motion.div>
           </motion.header>
+
+          {/* ── ⭐ V4.42 Sélecteur d'espace : scission stricte par serviteur ── */}
+          <motion.section
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.45, ease: "easeOut" }}
+            className="relative mb-8"
+            aria-label="Choisir un espace"
+          >
+            <div
+              className={`grid gap-4 ${
+                espacesVisibles.length > 2 ? "sm:grid-cols-3" : "sm:grid-cols-2"
+              }`}
+            >
+              {espacesVisibles.map((espace) => (
+                <CarteEspace
+                  key={espace.code}
+                  espace={espace}
+                  actif={espaceActif === espace.code}
+                  nbOuvrages={nbParEspace[espace.code]}
+                  onChoisir={() => choisirEspace(espace.code)}
+                />
+              ))}
+            </div>
+          </motion.section>
 
           {/* ── Recherche ── */}
           <motion.div
@@ -363,7 +559,7 @@ export function BibliotequeClient({ books, categories }: Props) {
             animate="visible"
             className="flex flex-wrap gap-2.5 mb-6"
           >
-            {categories.map((cat) => {
+            {categoriesEspace.map((cat) => {
               const actif = categorieSelectionnee === cat;
               return (
                 <motion.button
@@ -383,7 +579,11 @@ export function BibliotequeClient({ books, categories }: Props) {
                   {actif && (
                     <motion.span
                       layoutId="pastille-active"
-                      className="absolute inset-0 rounded-full bg-gradient-to-r from-[#C9A227] to-[#DDBE55] shadow-lg shadow-[#C9A227]/30"
+                      className="absolute inset-0 rounded-full shadow-lg"
+                      style={{
+                        background: `linear-gradient(90deg, ${espaceCourant.accent}, ${espaceCourant.accentClair})`,
+                        boxShadow: `0 8px 24px -6px ${espaceCourant.accent}66`,
+                      }}
                       transition={{ type: "spring", stiffness: 320, damping: 26 }}
                     />
                   )}
@@ -432,8 +632,8 @@ export function BibliotequeClient({ books, categories }: Props) {
                 <BookOpen className="w-16 h-16 text-[#C9A227]/30 mx-auto" />
               </motion.div>
               <p className="text-[#FAF6EF]/50 text-lg">
-                {books.length === 0
-                  ? "Aucun livre publié pour l'instant. Revenez bientôt !"
+                {livresEspace.length === 0
+                  ? `Aucun livre publié dans l'espace « ${espaceCourant.nom} » pour l'instant.`
                   : "Aucun livre ne correspond à votre recherche."}
               </p>
               {filtreActif && (
@@ -449,7 +649,11 @@ export function BibliotequeClient({ books, categories }: Props) {
               )}
             </motion.div>
           ) : (
-            <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <motion.div
+              key={espaceActif}
+              layout
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"
+            >
               <AnimatePresence mode="popLayout">
                 {livresFiltres.map((book) => (
                   <motion.article

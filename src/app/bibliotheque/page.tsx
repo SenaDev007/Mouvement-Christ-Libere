@@ -1,6 +1,9 @@
 /**
  * Page publique — /bibliotheque
- * Bibliothèque documentaire : livres gratuits du pasteur Kongo et de Afrika.
+ * ⭐ V4.42 — Bibliothèque scindée en espaces distincts par serviteur :
+ * l'espace du pasteur Kongo et l'espace d'Afrika Pamela DALI (plus un
+ * espace « Collectif » si des ouvrages sans serviteur existent). Chaque
+ * espace a son identité visuelle et ses statistiques ; rien n'est mélangé.
  * Catégorisée, avec miniatures, lecteur PDF intégré et téléchargement.
  */
 
@@ -11,7 +14,8 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Bibliothèque — Mouvement Christ Libère",
-  description: "Livres gratuits du pasteur Kongo et de Afrika.",
+  description:
+    "Deux espaces bien distincts : les livres gratuits du pasteur Kongo et ceux d'Afrika Pamela DALI.",
 };
 
 export default async function BibliothequePage() {
@@ -22,11 +26,6 @@ export default async function BibliothequePage() {
       servant: { select: { code: true, shortName: true } },
     },
   });
-
-  // Catégories uniques pour le filtre
-  const categories = Array.from(
-    new Set(books.map((b) => b.category).filter(Boolean))
-  ).sort();
 
   return (
     <BibliotequeClient
@@ -50,7 +49,6 @@ export default async function BibliothequePage() {
         servantCode: b.servant?.code || null,
         servantShortName: b.servant?.shortName || null,
       }))}
-      categories={categories}
     />
   );
 }

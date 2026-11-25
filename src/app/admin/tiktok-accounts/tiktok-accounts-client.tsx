@@ -443,7 +443,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                 <option value="">— Sélectionnez —</option>
                 {servants.map((s) => (
                   <option key={s.id} value={s.code}>
-                    {s.shortName} ({s.code})
+                    {s.shortName}
                   </option>
                 ))}
               </select>
@@ -572,7 +572,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                   <option value="">— Sélectionnez —</option>
                   {servantsDisponibles.map((s) => (
                     <option key={s.id} value={s.code}>
-                      {s.shortName} ({s.code})
+                      {s.shortName}
                     </option>
                   ))}
                 </select>
