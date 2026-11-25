@@ -21,6 +21,9 @@ const NAV_GROUPS = [
     items: [
       { label: "Témoignages", href: "/temoignages" },
       { label: "Enseignements", href: "/enseignements" },
+      // ⭐ V4.39 — Bibliothèque documentaire publique (livres gratuits du
+      // ministère) : le lien manquait du menu du site public.
+      { label: "Bibliothèque", href: "/bibliotheque" },
       { label: "Bible", href: "/bible" },
     ],
   },

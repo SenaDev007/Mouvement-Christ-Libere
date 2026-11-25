@@ -9,6 +9,8 @@ const FOOTER_LINKS = {
       { label: "Pasteur Kongo", href: "/pasteur-kongo" },
       { label: "Témoignages", href: "/temoignages" },
       { label: "Enseignements", href: "/enseignements" },
+      // ⭐ V4.39 — Bibliothèque documentaire publique (livres gratuits).
+      { label: "Bibliothèque", href: "/bibliotheque" },
       { label: "Vidéos & Lives", href: "/videos" },
       // ⭐ V3.79 — Page dédiée Adoration & Louanges (Afrika, chantre de l'Éternel).
       { label: "Adoration & Louanges", href: "/adoration-louanges" },

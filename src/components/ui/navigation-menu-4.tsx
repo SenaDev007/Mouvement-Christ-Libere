@@ -67,6 +67,10 @@ const navigationLinks = [
     items: [
       { href: "/temoignages", label: "Témoignages", icon: "FileText" },
       { href: "/enseignements", label: "Enseignements", icon: "BookOpen" },
+      // ⭐ V4.39 — Bibliothèque documentaire publique (livres gratuits du
+      // ministère) : la page /bibliotheque existait mais le lien manquait
+      // de la barre de navigation du site public.
+      { href: "/bibliotheque", label: "Bibliothèque", icon: "BookOpen" },
       { href: "/bible", label: "Bible en ligne", icon: "Sparkles" },
       { href: "/calendrier-biblique", label: "Calendrier biblique", icon: "Calendar" },
     ],
