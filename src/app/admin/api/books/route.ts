@@ -75,6 +75,11 @@ export async function POST(request: NextRequest) {
   const pageCount = body.pageCount ? Number(body.pageCount) : null;
   const language = (body.language as string)?.trim() || "Français";
   const publishedYear = body.publishedYear ? Number(body.publishedYear) : null;
+  // ⭐ V4.40 — champs professionnels : ISBN, éditeur, mots-clés, téléchargeable.
+  const isbn = (body.isbn as string)?.trim() || null;
+  const editeur = (body.editeur as string)?.trim() || null;
+  const tags = (body.tags as string)?.trim() || null;
+  const isDownloadable = body.isDownloadable !== false;
   const isPublished = body.isPublished !== false;
   const sortOrder = body.sortOrder ? Number(body.sortOrder) : 0;
   const servantId = (body.servantId as string)?.trim() || null;
@@ -96,6 +101,10 @@ export async function POST(request: NextRequest) {
         pageCount,
         language,
         publishedYear,
+        isbn,
+        editeur,
+        tags,
+        isDownloadable,
         isPublished,
         sortOrder,
         servantId,

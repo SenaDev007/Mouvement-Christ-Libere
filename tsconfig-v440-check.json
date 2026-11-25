@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/app/admin/bibliotheque/page.tsx",
+    "src/app/admin/bibliotheque/bibliotheque-admin-client.tsx",
+    "src/app/admin/api/books/route.ts",
+    "src/app/admin/api/books/[id]/route.ts",
+    "src/app/admin/api/books/presign/route.ts",
+    "src/app/admin/api/books/scan-pdf/route.ts",
+    "src/app/api/books/route.ts",
+    "src/app/bibliotheque/page.tsx",
+    "src/app/bibliotheque/bibliotheque-client.tsx"
+  ],
+  "exclude": ["node_modules", ".next", "backend"]
+}

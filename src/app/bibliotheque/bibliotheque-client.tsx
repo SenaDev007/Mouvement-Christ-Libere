@@ -26,9 +26,14 @@ interface BookLite {
   category: string;
   coverUrl: string | null;
   fileUrl: string | null;
+  fileSize: number | null;
   pageCount: number | null;
   language: string;
   publishedYear: number | null;
+  isbn: string | null;
+  editeur: string | null;
+  tags: string | null;
+  isDownloadable: boolean;
   downloadCount: number;
   servantCode: string | null;
   servantShortName: string | null;
@@ -50,6 +55,16 @@ const CATEGORY_COLORS: Record<string, string> = {
   Autres: "from-gray-600 to-slate-800",
 };
 
+/** ⭐ V4.40 — Taille lisible en français (ex. « 2,4 Mo »). */
+function formatTaille(octets: number | null | undefined): string {
+  if (octets == null || octets <= 0) return "";
+  if (octets < 1024) return `${octets} o`;
+  const ko = octets / 1024;
+  if (ko < 1024) return `${ko.toFixed(ko < 10 ? 1 : 0).replace(".", ",")} Ko`;
+  const mo = ko / 1024;
+  return `${mo.toFixed(mo < 10 ? 1 : 0).replace(".", ",")} Mo`;
+}
+
 export function BibliotequeClient({ books, categories }: Props) {
   const [categorieSelectionnee, setCategorieSelectionnee] = useState<string | null>(null);
   const [recherche, setRecherche] = useState("");
@@ -63,7 +78,9 @@ export function BibliotequeClient({ books, categories }: Props) {
         return (
           b.title.toLowerCase().includes(q) ||
           b.author.toLowerCase().includes(q) ||
-          b.description.toLowerCase().includes(q)
+          b.description.toLowerCase().includes(q) ||
+          // ⭐ V4.40 — les mots-clés entrent aussi dans la recherche.
+          (b.tags || "").toLowerCase().includes(q)
         );
       }
       return true;
@@ -200,15 +217,45 @@ export function BibliotequeClient({ books, categories }: Props) {
           >
             {/* En-tête */}
             <div className="flex items-center justify-between p-4 border-b border-white/10">
-              <div>
+              <div className="min-w-0">
                 <h2 className="font-bold text-lg">{livreOuvert.title}</h2>
                 <p className="text-sm text-[#FAF6EF]/60">
                   {livreOuvert.author}
                   {livreOuvert.servantShortName ? ` · ${livreOuvert.servantShortName}` : ""}
                 </p>
+                {/* ⭐ V4.40 — fiche professionnelle : éditeur, ISBN, pages,
+                    taille, langue, année — tout ce que le back-office sait. */}
+                <p className="text-xs text-[#FAF6EF]/40 mt-0.5">
+                  {[
+                    livreOuvert.editeur,
+                    livreOuvert.isbn ? `ISBN ${livreOuvert.isbn}` : null,
+                    livreOuvert.pageCount ? `${livreOuvert.pageCount} pages` : null,
+                    formatTaille(livreOuvert.fileSize),
+                    livreOuvert.language,
+                    livreOuvert.publishedYear ? String(livreOuvert.publishedYear) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+                {(livreOuvert.tags || "").trim() && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {livreOuvert
+                      .tags!.split(",")
+                      .map((t) => t.trim())
+                      .filter(Boolean)
+                      .map((t) => (
+                        <span
+                          key={t}
+                          className="text-[10px] uppercase tracking-wide bg-white/10 text-[#FAF6EF]/70 px-2 py-0.5 rounded-full"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                {livreOuvert.fileUrl && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {livreOuvert.fileUrl && livreOuvert.isDownloadable !== false && (
                   <a
                     href={livreOuvert.fileUrl}
                     target="_blank"
@@ -218,6 +265,11 @@ export function BibliotequeClient({ books, categories }: Props) {
                     <Download className="w-4 h-4" />
                     Télécharger
                   </a>
+                )}
+                {livreOuvert.fileUrl && livreOuvert.isDownloadable === false && (
+                  <span className="text-xs text-[#FAF6EF]/50 px-3 py-2">
+                    Lecture en ligne seulement
+                  </span>
                 )}
                 <button
                   onClick={() => setLivreOuvert(null)}

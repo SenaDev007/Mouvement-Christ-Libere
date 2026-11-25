@@ -37,9 +37,14 @@ export async function GET(request: NextRequest) {
         category: true,
         coverUrl: true,
         fileUrl: true,
+        fileSize: true, // ⭐ V4.40 — taille affichée + transmise à l'app mobile
         pageCount: true,
         language: true,
         publishedYear: true,
+        isbn: true, // ⭐ V4.40 — champs professionnels
+        editeur: true,
+        tags: true,
+        isDownloadable: true,
         downloadCount: true,
         servant: { select: { code: true, shortName: true } },
       },

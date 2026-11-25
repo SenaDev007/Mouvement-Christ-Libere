@@ -1415,10 +1415,14 @@ model Book {
   category      String   @default("Autres")
   coverUrl      String?  // miniature (upload R2 ou URL externe)
   fileUrl       String?  // PDF stocké sur R2 (livres/book-<id>.pdf)
-  fileSize      Int?     // taille en octets
-  pageCount     Int?     // nombre de pages (renseigné manuellement)
+  fileSize      Int?     // taille en octets (déduite automatiquement à l'upload)
+  pageCount     Int?     // nombre de pages (extrait automatiquement du PDF)
   language      String   @default("Français")
   publishedYear Int?     // année de publication
+  isbn          String?  // ⭐ V4.40 — ISBN (identifiant international du livre)
+  editeur       String?  // ⭐ V4.40 — maison d'édition
+  tags          String?  // ⭐ V4.40 — mots-clés séparés par virgules (recherche)
+  isDownloadable Boolean @default(true) // ⭐ V4.40 — téléchargement autorisé (sinon lecture en ligne seule)
   downloadCount Int      @default(0)
   isPublished   Boolean  @default(true) // visible sur le site public
   sortOrder     Int      @default(0)    // ordre d'affichage (0 = premier)

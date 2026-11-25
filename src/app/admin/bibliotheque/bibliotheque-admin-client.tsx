@@ -3,9 +3,20 @@
 /**
  * Client — /admin/bibliotheque
  * Gestion CRUD de la bibliothèque documentaire.
+ *
+ * ⭐ V4.40 — Uploads DIRECTS : la couverture et le PDF partent du navigateur
+ * vers Cloudflare R2 via une URL pré-signée (aucune limite de taille
+ * Vercel — le fichier ne transite pas par le serveur), avec barre de
+ * progression. Le PDF est ensuite ANALYSÉ automatiquement par le serveur
+ * (pdf-lib) : nombre de pages réel, taille exacte, titre / auteur / année
+ * des métadonnées du document — les champs vides du formulaire sont
+ * pré-remplis (l'humain garde le dernier mot).
+ *
+ * Nouveaux champs professionnels : ISBN, éditeur, mots-clés (tags),
+ * téléchargeable (lecture en ligne seule si décoché).
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   BookOpen,
   Plus,
@@ -17,6 +28,11 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  Upload,
+  FileText,
+  ImagePlus,
+  Sparkles,
+  X,
 } from "lucide-react";
 
 interface Book {
@@ -31,6 +47,10 @@ interface Book {
   pageCount: number | null;
   language: string;
   publishedYear: number | null;
+  isbn: string | null;
+  editeur: string | null;
+  tags: string | null;
+  isDownloadable: boolean;
   downloadCount: number;
   isPublished: boolean;
   sortOrder: number;
@@ -67,6 +87,101 @@ const CATEGORIES = [
   "Autres",
 ];
 
+// Plafonds côté navigateur (avant même l'envoi) — guardrails UX.
+const TAILLE_MAX_PDF = 100 * 1024 * 1024; // 100 Mo
+const TAILLE_MAX_COUVERTURE = 10 * 1024 * 1024; // 10 Mo
+
+/** État d'un upload en cours (PDF ou couverture). */
+interface EtatUpload {
+  enCours: boolean;
+  progres: number; // 0 → 100
+  nomFichier: string | null;
+  erreur: string | null;
+}
+
+const ETAT_UPLOAD_VIDE: EtatUpload = {
+  enCours: false,
+  progres: 0,
+  nomFichier: null,
+  erreur: null,
+};
+
+/** Taille lisible en français (ex. « 2,4 Mo »). */
+function formatTaille(octets: number | null | undefined): string {
+  if (octets == null || octets <= 0) return "";
+  if (octets < 1024) return `${octets} o`;
+  const ko = octets / 1024;
+  if (ko < 1024) return `${ko.toFixed(ko < 10 ? 1 : 0).replace(".", ",")} Ko`;
+  const mo = ko / 1024;
+  return `${mo.toFixed(mo < 10 ? 1 : 0).replace(".", ",")} Mo`;
+}
+
+/**
+ * Envoie le fichier DIRECTEMENT au stockage R2 via une URL pré-signée
+ * (XHR : seul moyen d'avoir la progression d'envoi dans le navigateur).
+ * Retourne l'URL publique finale du fichier.
+ */
+async function envoyerVersR2(
+  file: File,
+  type: "pdf" | "couverture",
+  onProgress: (pct: number) => void
+): Promise<string> {
+  const pres = await fetch("/admin/api/books/presign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type,
+      filename: file.name,
+      contentType: file.type || (type === "pdf" ? "application/pdf" : "image/jpeg"),
+    }),
+  });
+  const presData = (await pres.json().catch(() => ({}))) as {
+    uploadUrl?: string;
+    publicUrl?: string;
+    error?: string;
+  };
+  if (!pres.ok) {
+    throw new Error(presData.error || `Échec de la préparation de l'envoi (${pres.status})`);
+  }
+  if (!presData.uploadUrl || !presData.publicUrl) {
+    throw new Error("Réponse d'upload incomplète du serveur.");
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", presData.uploadUrl as string);
+    xhr.setRequestHeader(
+      "Content-Type",
+      file.type || (type === "pdf" ? "application/pdf" : "image/jpeg")
+    );
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`Envoi refusé par le stockage (HTTP ${xhr.status})`));
+    };
+    xhr.onerror = () =>
+      reject(
+        new Error(
+          "Envoi interrompu (réseau ou CORS) — réessayez ; si l'échec persiste, /admin/r2-test diagnostique le stockage."
+        )
+      );
+    xhr.send(file);
+  });
+
+  return presData.publicUrl;
+}
+
+/** Résultat de l'analyse automatique du PDF (scan-pdf). */
+interface ResultatAnalyse {
+  enCours: boolean;
+  resume: string | null;
+  erreur: string | null;
+}
+
+const ANALYSE_VIDE: ResultatAnalyse = { enCours: false, resume: null, erreur: null };
+
 export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
   const [books, setBooks] = useState<Book[]>(booksInit);
   const [enCours, setEnCours] = useState<string | null>(null);
@@ -74,6 +189,13 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
   const [info, setInfo] = useState<string | null>(null);
   const [editionId, setEditionId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+
+  // Uploads + analyse
+  const [uploadPdf, setUploadPdf] = useState<EtatUpload>(ETAT_UPLOAD_VIDE);
+  const [uploadCouverture, setUploadCouverture] = useState<EtatUpload>(ETAT_UPLOAD_VIDE);
+  const [analyse, setAnalyse] = useState<ResultatAnalyse>(ANALYSE_VIDE);
+  const inputPdfRef = useRef<HTMLInputElement | null>(null);
+  const inputCouvertureRef = useRef<HTMLInputElement | null>(null);
 
   // Form state
   const [form, setForm] = useState<Partial<Book>>({
@@ -83,9 +205,14 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
     category: "Enseignements",
     coverUrl: "",
     fileUrl: "",
+    fileSize: null,
     pageCount: null,
     language: "Français",
     publishedYear: null,
+    isbn: "",
+    editeur: "",
+    tags: "",
+    isDownloadable: true,
     isPublished: true,
     sortOrder: 0,
     servantId: null,
@@ -99,21 +226,152 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
       category: "Enseignements",
       coverUrl: "",
       fileUrl: "",
+      fileSize: null,
       pageCount: null,
       language: "Français",
       publishedYear: null,
+      isbn: "",
+      editeur: "",
+      tags: "",
+      isDownloadable: true,
       isPublished: true,
       sortOrder: 0,
       servantId: null,
     });
+    setUploadPdf(ETAT_UPLOAD_VIDE);
+    setUploadCouverture(ETAT_UPLOAD_VIDE);
+    setAnalyse(ANALYSE_VIDE);
     setEditionId(null);
     setShowForm(false);
   };
 
   const ouvrirEdition = (book: Book) => {
-    setForm(book);
+    setForm({ ...book });
+    setUploadPdf(ETAT_UPLOAD_VIDE);
+    setUploadCouverture(ETAT_UPLOAD_VIDE);
+    setAnalyse(ANALYSE_VIDE);
     setEditionId(book.id);
     setShowForm(true);
+  };
+
+  // ─── Upload du PDF (fichier choisi) ─────────────────────────────────
+
+  const choisirPdf = async (file: File) => {
+    setErreur(null);
+    if (file.type && !/^application\/pdf$/i.test(file.type)) {
+      setErreur("Ce fichier n'est pas un PDF. Choisissez un document .pdf.");
+      return;
+    }
+    if (file.size > TAILLE_MAX_PDF) {
+      setErreur(`PDF trop volumineux (${formatTaille(file.size)}) — plafond : 100 Mo.`);
+      return;
+    }
+
+    setUploadPdf({ enCours: true, progres: 0, nomFichier: file.name, erreur: null });
+    setAnalyse(ANALYSE_VIDE);
+    try {
+      const publicUrl = await envoyerVersR2(file, "pdf", (pct) =>
+        setUploadPdf((prev) => ({ ...prev, progres: pct }))
+      );
+      setForm((prev) => ({ ...prev, fileUrl: publicUrl, fileSize: file.size }));
+      setUploadPdf((prev) => ({ ...prev, enCours: false, progres: 100 }));
+
+      // ─── Analyse intelligente : pages, taille, métadonnées ───
+      setAnalyse({ enCours: true, resume: null, erreur: null });
+      try {
+        const res = await fetch("/admin/api/books/scan-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileUrl: publicUrl }),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          analysed?: boolean;
+          pageCount?: number;
+          fileSize?: number;
+          pdfTitle?: string | null;
+          pdfAuthor?: string | null;
+          pdfYear?: number | null;
+          error?: string;
+        };
+
+        if (data.analysed) {
+          // Pré-remplissage SEULEMENT des champs laissés vides : l'humain
+          // garde le dernier mot sur ce qu'il a déjà saisi.
+          const dejaTitre = !!form.title?.trim();
+          const dejaAuteur = !!form.author?.trim();
+          const pdfTitle = data.pdfTitle?.trim() || "";
+          const pdfAuthor = data.pdfAuthor?.trim() || "";
+          let morceaux = "";
+          if (!dejaTitre && pdfTitle) morceaux += ` · titre : « ${pdfTitle} »`;
+          if (!dejaAuteur && pdfAuthor) morceaux += ` · auteur : « ${pdfAuthor} »`;
+          setForm((prev) => ({
+            ...prev,
+            pageCount: prev.pageCount ?? data.pageCount ?? null,
+            fileSize: data.fileSize ?? prev.fileSize ?? null,
+            title: dejaTitre ? prev.title : pdfTitle || prev.title,
+            author: dejaAuteur ? prev.author : pdfAuthor || prev.author,
+            publishedYear: prev.publishedYear ?? data.pdfYear ?? null,
+          }));
+          setAnalyse({
+            enCours: false,
+            resume: `✓ ${data.pageCount} page${(data.pageCount ?? 0) > 1 ? "s" : ""} détectée${
+              (data.pageCount ?? 0) > 1 ? "s" : ""
+            } · ${formatTaille(data.fileSize ?? file.size)}${morceaux}`,
+            erreur: null,
+          });
+        } else {
+          setForm((prev) => ({ ...prev, fileSize: data.fileSize ?? prev.fileSize ?? null }));
+          setAnalyse({
+            enCours: false,
+            resume: null,
+            erreur: data.error || "Analyse impossible — renseignez les pages manuellement.",
+          });
+        }
+      } catch {
+        setAnalyse({
+          enCours: false,
+          resume: null,
+          erreur: "Analyse indisponible — renseignez les pages manuellement.",
+        });
+      }
+    } catch (err) {
+      setUploadPdf({
+        enCours: false,
+        progres: 0,
+        nomFichier: file.name,
+        erreur: err instanceof Error ? err.message : "Échec de l'envoi.",
+      });
+    }
+  };
+
+  // ─── Upload de la couverture (fichier choisi) ───────────────────────
+
+  const choisirCouverture = async (file: File) => {
+    setErreur(null);
+    if (file.type && !/^image\/(jpeg|png|webp|avif)$/i.test(file.type)) {
+      setErreur("Couverture : choisissez une image JPG, PNG ou WebP.");
+      return;
+    }
+    if (file.size > TAILLE_MAX_COUVERTURE) {
+      setErreur(`Image trop volumineuse (${formatTaille(file.size)}) — plafond : 10 Mo.`);
+      return;
+    }
+
+    setUploadCouverture({ enCours: true, progres: 0, nomFichier: file.name, erreur: null });
+    try {
+      const publicUrl = await envoyerVersR2(file, "couverture", (pct) =>
+        setUploadCouverture((prev) => ({ ...prev, progres: pct }))
+      );
+      setForm((prev) => ({ ...prev, coverUrl: publicUrl }));
+      setUploadCouverture((prev) => ({ ...prev, enCours: false, progres: 100 }));
+    } catch (err) {
+      setUploadCouverture({
+        enCours: false,
+        progres: 0,
+        nomFichier: file.name,
+        erreur: err instanceof Error ? err.message : "Échec de l'envoi.",
+      });
+    }
   };
 
   const sauvegarder = async () => {
@@ -148,13 +406,13 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
   };
 
   const supprimer = async (book: Book) => {
-    if (!confirm(`Supprimer « ${book.title} » ?`)) return;
+    if (!confirm(`Supprimer « ${book.title} » ?\n\nSa couverture et son PDF seront aussi retirés du stockage.`)) return;
     setEnCours(`del-${book.id}`);
     try {
       const res = await fetch(`/admin/api/books/${book.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Échec suppression");
       setBooks((prev) => prev.filter((b) => b.id !== book.id));
-      setInfo("Livre supprimé.");
+      setInfo("Livre supprimé (fichiers du stockage purgés).");
     } catch (err) {
       setErreur(err instanceof Error ? err.message : "Erreur suppression.");
     } finally {
@@ -188,6 +446,12 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
       if (data?.books) setBooks(data.books);
     }
   };
+
+  const inputCls =
+    "w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]";
+  const inputClsSm =
+    "w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] text-sm focus:outline-none focus:border-[#C9A227]";
+  const labelCls = "text-xs uppercase tracking-wide text-[#FAF6EF]/60";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A0826] to-[#2A0E3D] text-[#FAF6EF] p-6 md:p-10">
@@ -238,29 +502,29 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Titre *</label>
+                <label className={labelCls}>Titre *</label>
                 <input
                   type="text"
                   value={form.title || ""}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  className={inputCls}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Auteur *</label>
+                <label className={labelCls}>Auteur *</label>
                 <input
                   type="text"
                   value={form.author || ""}
                   onChange={(e) => setForm({ ...form, author: e.target.value })}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  className={inputCls}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Catégorie</label>
+                <label className={labelCls}>Catégorie</label>
                 <select
                   value={form.category || "Autres"}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  className={inputCls}
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -268,96 +532,341 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Serviteur</label>
+                {/* ⭐ V4.40 — libellés SANS parenthèses : « Afrika », « Pasteur
+                    Kongo » — le code technique n'a rien à faire ici. */}
+                <label className={labelCls}>Serviteur</label>
                 <select
                   value={form.servantId || ""}
                   onChange={(e) => setForm({ ...form, servantId: e.target.value || null })}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  className={inputCls}
                 >
                   <option value="">— Collectif —</option>
                   {servants.map((s) => (
-                    <option key={s.id} value={s.id}>{s.shortName} ({s.code})</option>
+                    <option key={s.id} value={s.id}>{s.shortName}</option>
                   ))}
                 </select>
               </div>
               <div className="md:col-span-2 space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Description</label>
+                <label className={labelCls}>Description</label>
                 <textarea
                   value={form.description || ""}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={3}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227] resize-y"
+                  className={`${inputCls} resize-y`}
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">URL miniature (couverture)</label>
-                <input
-                  type="text"
-                  value={form.coverUrl || ""}
-                  onChange={(e) => setForm({ ...form, coverUrl: e.target.value })}
-                  placeholder="https://... ou chemin R2"
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] text-sm focus:outline-none focus:border-[#C9A227]"
-                />
+            </div>
+
+            {/* ─── ⭐ V4.40 — Zone fichier PDF (upload direct + analyse) ─── */}
+            <div className="rounded-xl border border-white/10 bg-[#1A0826]/60 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[#C9A227]" />
+                  <span className="text-sm font-semibold">Fichier PDF du livre</span>
+                </div>
+                {form.fileUrl ? (
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={form.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-[#C9A227] hover:underline inline-flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Ouvrir le PDF actuel
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm({ ...form, fileUrl: "", fileSize: null })
+                      }
+                      className="text-xs text-red-300 hover:text-red-200 inline-flex items-center gap-1"
+                      title="Retirer le fichier"
+                    >
+                      <X className="w-3 h-3" />
+                      Retirer
+                    </button>
+                  </div>
+                ) : null}
               </div>
-              <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">URL fichier PDF</label>
-                <input
-                  type="text"
-                  value={form.fileUrl || ""}
-                  onChange={(e) => setForm({ ...form, fileUrl: e.target.value })}
-                  placeholder="https://... ou chemin R2"
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] text-sm focus:outline-none focus:border-[#C9A227]"
-                />
+
+              <input
+                ref={inputPdfRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = ""; // permet de re-choisir le même fichier
+                  if (f) void choisirPdf(f);
+                }}
+              />
+              {uploadPdf.enCours ? (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#C9A227]" />
+                    <span className="truncate">{uploadPdf.nomFichier}</span>
+                    <span className="ml-auto text-[#FAF6EF]/60">{uploadPdf.progres}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full bg-[#C9A227] transition-all"
+                      style={{ width: `${uploadPdf.progres}%` }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => inputPdfRef.current?.click()}
+                  className="w-full inline-flex items-center justify-center gap-2 border border-dashed border-[#C9A227]/50 hover:border-[#C9A227] rounded-lg px-4 py-3 text-sm text-[#FAF6EF]/80 hover:text-[#C9A227] transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  {form.fileUrl
+                    ? "Remplacer le PDF…"
+                    : "Choisir un fichier PDF… (jusqu'à 100 Mo)"}
+                </button>
+              )}
+              {uploadPdf.erreur && (
+                <p className="text-xs text-red-300 flex items-center gap-1">
+                  <XCircle className="w-3.5 h-3.5" />
+                  {uploadPdf.erreur}
+                </p>
+              )}
+
+              {/* Résultat de l'analyse automatique */}
+              {analyse.enCours && (
+                <p className="text-xs text-[#C9A227]/80 flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Analyse du document (pages, métadonnées)…
+                </p>
+              )}
+              {analyse.resume && (
+                <p className="text-xs text-green-300 flex items-start gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  <span>Analyse automatique : {analyse.resume}</span>
+                </p>
+              )}
+              {analyse.erreur && (
+                <p className="text-xs text-amber-300 flex items-start gap-1.5">
+                  <XCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  <span>{analyse.erreur}</span>
+                </p>
+              )}
+            </div>
+
+            {/* ─── ⭐ V4.40 — Zone couverture (upload direct) ─── */}
+            <div className="rounded-xl border border-white/10 bg-[#1A0826]/60 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <ImagePlus className="w-4 h-4 text-[#C9A227]" />
+                <span className="text-sm font-semibold">Miniature de couverture</span>
               </div>
+              <div className="flex items-start gap-4 flex-wrap">
+                <div className="w-24 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#3D1A54] to-[#2A0E3D] flex items-center justify-center border border-white/10">
+                  {form.coverUrl ? (
+                    <img src={form.coverUrl} alt="Couverture" className="w-full h-full object-cover" />
+                  ) : (
+                    <BookOpen className="w-8 h-8 text-[#C9A227]/60" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-[220px] space-y-2">
+                  <input
+                    ref={inputCouvertureRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (f) void choisirCouverture(f);
+                    }}
+                  />
+                  {uploadCouverture.enCours ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin text-[#C9A227]" />
+                        <span className="truncate">{uploadCouverture.nomFichier}</span>
+                        <span className="ml-auto text-[#FAF6EF]/60">{uploadCouverture.progres}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full bg-[#C9A227] transition-all"
+                          style={{ width: `${uploadCouverture.progres}%` }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => inputCouvertureRef.current?.click()}
+                        className="inline-flex items-center gap-2 border border-dashed border-[#C9A227]/50 hover:border-[#C9A227] rounded-lg px-4 py-2.5 text-sm text-[#FAF6EF]/80 hover:text-[#C9A227] transition-colors"
+                      >
+                        <Upload className="w-4 h-4" />
+                        {form.coverUrl ? "Remplacer…" : "Choisir une image… (JPG, PNG, WebP)"}
+                      </button>
+                      {form.coverUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, coverUrl: "" })}
+                          className="inline-flex items-center gap-1.5 text-xs text-red-300 hover:text-red-200 px-2"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          Retirer
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {uploadCouverture.erreur && (
+                    <p className="text-xs text-red-300 flex items-center gap-1">
+                      <XCircle className="w-3.5 h-3.5" />
+                      {uploadCouverture.erreur}
+                    </p>
+                  )}
+                  <p className="text-[11px] text-[#FAF6EF]/40">
+                    Format conseillé : portrait 3:4 (ex. 600 × 800 px). Sans couverture,
+                    le site affiche un dégradé aux couleurs de la catégorie.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* URL manuelle — secours (PDF hébergé ailleurs, image externe) */}
+            <details className="text-sm">
+              <summary className="cursor-pointer text-[#FAF6EF]/50 hover:text-[#C9A227] text-xs uppercase tracking-wide">
+                Avancé — URL manuelle (PDF ou image hébergée ailleurs)
+              </summary>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div className="space-y-1">
+                  <label className={labelCls}>URL miniature externe</label>
+                  <input
+                    type="text"
+                    value={form.coverUrl || ""}
+                    onChange={(e) => setForm({ ...form, coverUrl: e.target.value })}
+                    placeholder="https://…"
+                    className={inputClsSm}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className={labelCls}>URL PDF externe</label>
+                  <input
+                    type="text"
+                    value={form.fileUrl || ""}
+                    onChange={(e) => setForm({ ...form, fileUrl: e.target.value })}
+                    placeholder="https://…"
+                    className={inputClsSm}
+                  />
+                </div>
+              </div>
+            </details>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Nombre de pages</label>
+                <label className={labelCls}>Nombre de pages</label>
                 <input
                   type="number"
                   value={form.pageCount ?? ""}
                   onChange={(e) => setForm({ ...form, pageCount: e.target.value ? Number(e.target.value) : null })}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  placeholder="Auto si PDF analysé"
+                  className={inputCls}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Année de publication</label>
+                <label className={labelCls}>Taille du fichier</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={form.fileSize ? formatTaille(form.fileSize) : ""}
+                  placeholder="Auto à l'upload"
+                  className={`${inputCls} opacity-70 cursor-not-allowed`}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className={labelCls}>Année de publication</label>
                 <input
                   type="number"
                   value={form.publishedYear ?? ""}
                   onChange={(e) => setForm({ ...form, publishedYear: e.target.value ? Number(e.target.value) : null })}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  className={inputCls}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Langue</label>
+                <label className={labelCls}>Langue</label>
                 <input
                   type="text"
                   value={form.language || "Français"}
                   onChange={(e) => setForm({ ...form, language: e.target.value })}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  className={inputCls}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Ordre d'affichage</label>
+                {/* ⭐ V4.40 — champ professionnel : ISBN */}
+                <label className={labelCls}>ISBN</label>
+                <input
+                  type="text"
+                  value={form.isbn || ""}
+                  onChange={(e) => setForm({ ...form, isbn: e.target.value })}
+                  placeholder="978-… (optionnel)"
+                  className={inputCls}
+                />
+              </div>
+              <div className="space-y-1">
+                {/* ⭐ V4.40 — champ professionnel : éditeur */}
+                <label className={labelCls}>Éditeur</label>
+                <input
+                  type="text"
+                  value={form.editeur || ""}
+                  onChange={(e) => setForm({ ...form, editeur: e.target.value })}
+                  placeholder="Maison d'édition (optionnel)"
+                  className={inputCls}
+                />
+              </div>
+              <div className="md:col-span-2 space-y-1">
+                {/* ⭐ V4.40 — champ professionnel : mots-clés */}
+                <label className={labelCls}>Mots-clés (séparés par des virgules)</label>
+                <input
+                  type="text"
+                  value={form.tags || ""}
+                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                  placeholder="jeunesse, prière, guérison…"
+                  className={inputCls}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className={labelCls}>Ordre d'affichage</label>
                 <input
                   type="number"
                   value={form.sortOrder ?? 0}
                   onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  className={inputCls}
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.isPublished !== false}
-                onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
-                className="w-4 h-4 rounded"
-              />
-              <label className="text-sm">Publié (visible sur le site public)</label>
+            <div className="flex items-center gap-6 flex-wrap">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.isPublished !== false}
+                  onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
+                  className="w-4 h-4 rounded"
+                />
+                Publié (visible sur le site public)
+              </label>
+              {/* ⭐ V4.40 — contrôler le téléchargement (lecture en ligne seule) */}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.isDownloadable !== false}
+                  onChange={(e) => setForm({ ...form, isDownloadable: e.target.checked })}
+                  className="w-4 h-4 rounded"
+                />
+                Téléchargeable (sinon lecture en ligne seule)
+              </label>
             </div>
             <button
               onClick={sauvegarder}
-              disabled={enCours === "save"}
+              disabled={enCours === "save" || uploadPdf.enCours || uploadCouverture.enCours}
               className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#DDBE55] disabled:opacity-50 text-[#1E0F2B] font-bold px-5 py-2 rounded-lg transition-colors"
             >
               {enCours === "save" ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
@@ -393,11 +902,17 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                         Brouillon
                       </span>
                     )}
+                    {!book.isDownloadable && (
+                      <span className="text-xs bg-[#C9A227]/20 text-[#DDBE55] px-2 py-0.5 rounded-full">
+                        Lecture seule
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-[#FAF6EF]/50">
                     {book.author} · {book.category}
                     {book.servantShortName ? ` · ${book.servantShortName}` : ""}
                     {book.pageCount ? ` · ${book.pageCount}p` : ""}
+                    {book.fileSize ? ` · ${formatTaille(book.fileSize)}` : ""}
                     {book.downloadCount > 0 ? ` · ${book.downloadCount} téléch.` : ""}
                   </p>
                 </div>
