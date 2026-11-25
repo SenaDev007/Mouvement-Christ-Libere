@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/components/site/landing-view.tsx",
+    "src/app/retraite-spirituelle/**/*",
+    "src/components/ui/navigation-menu-4.tsx"
+  ],
+  "exclude": ["node_modules", "**/node_modules"]
+}

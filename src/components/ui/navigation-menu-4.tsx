@@ -105,6 +105,9 @@ const navigationLinks = [
       // serviteur de Dieu (/rendez-vous — porte d'entrée du secrétariat).
       { href: "/annonces", label: "Annonces du ministère" },
       { href: "/rendez-vous", label: "Demander un rendez-vous" },
+      // ⭐ V4.46 — Retraite spirituelle : accès direct depuis la barre du
+      // site (bloc « Communauté »), comme le header et le footer (V4.43).
+      { href: "/retraite-spirituelle", label: "Retraite spirituelle" },
     ],
   },
 ];

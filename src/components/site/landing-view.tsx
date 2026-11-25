@@ -746,24 +746,36 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-            {RESSOURCES.map((r, index) => {
+          {/* ⭐ V4.46 — RANGÉE UNIQUE DÉFILANTE (droite → gauche) : avant,
+              une grille 3 colonnes rejetait la 4ᵉ carte (Retraite spirituelle)
+              SEULE sur une 2ᵉ ligne. Deux copies identiques de la rangée +
+              .animate-marquee (translate -50 %) = boucle parfaite sur UNE
+              seule ligne ; pause au survol (CSS existant) ; fondus ivoire
+              sur les bords pour une entrée/sortie élégantes. */}
+          <div className="relative">
+            <div
+              className="flex w-max animate-marquee gap-8"
+              style={{ animationDuration: "45s" }}
+            >
+              {[0, 1].map((copie) => (
+                <div
+                  key={copie}
+                  aria-hidden={copie === 1}
+                  className="flex gap-8 shrink-0"
+                >
+                  {RESSOURCES.map((r, index) => {
               const Icone = r.icon;
               if (r.isPremium) {
                 return (
                   <motion.div
                     key={r.key}
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
                     whileHover={{
                       y: -10,
                       scale: 1.03,
                       borderColor: "rgba(201, 162, 39, 0.4)",
                       boxShadow: "0 20px 25px -5px rgba(201, 162, 39, 0.15), 0 8px 10px -6px rgba(201, 162, 39, 0.15)",
                     }}
-                    className="relative rounded-3xl bg-primary-deep text-white border-2 border-accent-yellow shadow-2xl p-8 flex flex-col justify-between transition-all duration-300 card-shimmer"
+                    className="relative w-[320px] sm:w-[380px] shrink-0 rounded-3xl bg-primary-deep text-white border-2 border-accent-yellow shadow-2xl p-8 flex flex-col justify-between transition-all duration-300 card-shimmer"
                   >
                     {/* ⭐ V3.100 — Badge « Cœur du Mouvement » : AVANT en
                         absolute -top-4 il était ROGNÉ par l'overflow hidden
@@ -814,17 +826,13 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
               return (
                 <motion.div
                   key={r.key}
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
                   whileHover={{
                     y: -10,
                     scale: 1.03,
                     borderColor: "rgba(201, 162, 39, 0.4)",
                     boxShadow: "0 20px 25px -5px rgba(42, 14, 61, 0.1), 0 8px 10px -6px rgba(42, 14, 61, 0.1)",
                   }}
-                  className="rounded-3xl bg-white border border-primary-pale shadow-lg p-8 flex flex-col justify-between transition-all duration-300 card-shimmer"
+                  className="w-[320px] sm:w-[380px] shrink-0 rounded-3xl bg-white border border-primary-pale shadow-lg p-8 flex flex-col justify-between transition-all duration-300 card-shimmer"
                 >
                   <div>
                     <div className="mb-6">
@@ -864,6 +872,13 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                 </motion.div>
               );
             })}
+          </div>
+          ))}
+
+          {/* Fondus latéraux — les cartes entrent/sortent dans l'ivoire */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-28 bg-gradient-to-r from-[#FAF6EF] to-transparent z-10" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 sm:w-28 bg-gradient-to-l from-[#FAF6EF] to-transparent z-10" />
+            </div>
           </div>
         </div>
       </section>

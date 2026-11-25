@@ -20,6 +20,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   Mountain,
@@ -28,6 +29,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowLeft,
+  ArrowDown,
   ShieldCheck,
   Search,
   ChevronDown,
@@ -334,6 +336,111 @@ export function RetraiteView() {
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
+      {/* ══════════════════════════════════════════════════════════════
+          ⭐ V4.46 — HÉROS PROFESSIONNEL : même grammaire que le héros du
+          landing — photo des serviteurs en fond, voile violet impérial
+          (mix-blend-multiply), halos or/lilas, grain, badge animé, titre
+          serif avec soulignement or animé, encarts clés et CTA vers le
+          formulaire (ancré plus bas).
+          ══════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden bg-[#2A0E3D] text-white min-h-[62vh] flex items-center">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/pam-kongo-hero.webp"
+            alt="Afrika et Pasteur Kongo — Mouvement Christ Libère"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#2A0E3D]/90 via-[#2A0E3D]/80 to-[#1A0826]/90 mix-blend-multiply" />
+          <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#C9A227]/15 rounded-full blur-[110px]" />
+          <div className="absolute bottom-0 right-0 w-[420px] h-[420px] bg-[#8C5FA8]/15 rounded-full blur-[130px]" />
+          <div className="absolute inset-0 bg-grain opacity-[0.08] mix-blend-overlay" />
+        </div>
+
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 relative z-10 w-full py-16 md:py-20 text-center flex flex-col items-center">
+          {/* Badge animé (ping doré) */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#C9A227]/20 border border-[#C9A227]/50 text-[#DDBE55] font-sans font-bold text-[11px] uppercase tracking-[0.18em] mb-6"
+          >
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9A227] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C9A227]" />
+            </span>
+            <Mountain className="w-3.5 h-3.5 shrink-0" />
+            Lieu aménagé en Côte d&apos;Ivoire
+          </motion.div>
+
+          {/* Titre serif + soulignement or animé */}
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+            className="font-serif font-extrabold text-3xl sm:text-4xl md:text-5xl tracking-tight leading-[1.15] mb-4"
+          >
+            Retraite{" "}
+            <span className="relative inline-block text-[#C9A227]">
+              spirituelle
+              <motion.span
+                animate={{ scaleX: [0, 1, 1, 0], transformOrigin: ["0% 50%", "0% 50%", "100% 50%", "100% 50%"] }}
+                transition={{ duration: 3, repeat: Infinity, times: [0, 0.15, 0.85, 1], ease: "easeInOut" }}
+                className="absolute bottom-1 left-0 w-full h-[4px] bg-[#C9A227] rounded-full"
+              />
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+            className="text-sm md:text-base text-[#FAF6EF]/80 leading-relaxed max-w-xl mb-8"
+          >
+            Quelques jours hors du bruit, pour prier, jeûner et se laisser
+            reconstruire par la Parole — sur le lieu aménagé du Mouvement
+            Christ Libère, accueilli et encadré par les serviteurs.
+          </motion.p>
+
+          {/* Encarts clés + CTA vers le formulaire */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+            className="flex flex-wrap items-center justify-center gap-2.5 mb-9"
+          >
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#FAF6EF]/85">
+              <CalendarDays className="w-3.5 h-3.5 text-[#DDBE55]" />
+              Séjour de quelques jours
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#FAF6EF]/85">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#DDBE55]" />
+              Dossier examiné par la secrétaire
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#FAF6EF]/85">
+              <Coins className="w-3.5 h-3.5 text-[#DDBE55]" />
+              Frais de dossier : 15 000 FCFA
+            </span>
+          </motion.div>
+          <motion.button
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+            onClick={() =>
+              document
+                .getElementById("bloc-formulaire")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#C9A227] text-[#1E0F2B] text-sm font-black shadow-xl hover:bg-[#DDBE55] transition-colors btn-shimmer"
+          >
+            <ArrowDown className="w-4 h-4" />
+            Déposer ma demande
+          </motion.button>
+        </div>
+      </section>
+
       <main className="max-w-3xl mx-auto px-4 py-8 md:py-12">
         <div className="mb-6">
           <Link
@@ -355,9 +462,9 @@ export function RetraiteView() {
             <div className="w-16 h-16 rounded-full bg-[#5B7052]/10 flex items-center justify-center mx-auto mb-5">
               <CheckCircle2 className="w-8 h-8 text-[#5B7052]" />
             </div>
-            <h1 className="font-serif text-2xl md:text-3xl font-semibold text-[#1E0F2B] mb-3">
+            <h2 className="font-serif text-2xl md:text-3xl font-semibold text-[#1E0F2B] mb-3">
               Votre demande de retraite est enregistrée
-            </h1>
+            </h2>
             <p className="text-sm text-[#8A8378] leading-relaxed max-w-md mx-auto mb-6">
               Votre dossier (identité, pièces jointes et preuve de paiement)
               a été transmis à la secrétaire du ministère. Elle l&apos;examinera
@@ -429,20 +536,18 @@ export function RetraiteView() {
             transition={{ duration: 0.5 }}
             className="space-y-6"
           >
-            {/* En-tête */}
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#2A0E3D] flex items-center justify-center mx-auto mb-4">
-                <Mountain className="w-7 h-7 text-[#C9A227]" />
-              </div>
-              <h1 className="font-serif text-3xl md:text-4xl font-semibold text-[#1E0F2B] mb-3">
-                Retraite spirituelle
-              </h1>
-              <p className="text-sm md:text-base text-[#8A8378] leading-relaxed max-w-xl mx-auto">
-                Un lieu a été aménagé en Côte d&apos;Ivoire pour accueillir
-                toute personne désireuse de passer quelques jours de retraite
-                spirituelle avec le Mouvement Christ Libère. Déposez d&apos;abord
-                votre demande : elle est transmise à la secrétaire, qui vous
-                recontacte après examen.
+            {/* En-tête du formulaire — ⭐ V4.46 : le titre et le descriptif
+                vivent désormais dans le HÉROS (ci-dessus) ; ici seulement
+                l'ancrage de défilement + un chapeau court. */}
+            <div className="text-center" id="bloc-formulaire">
+              <h2 className="font-serif text-2xl md:text-3xl font-semibold text-[#1E0F2B] mb-2">
+                Formulaire de demande
+              </h2>
+              <p className="text-sm text-[#8A8378] leading-relaxed max-w-xl mx-auto">
+                Remplissez ce formulaire : il est transmis directement à la
+                secrétaire du ministère, qui vous recontacte après examen —
+                n&apos;entreprennez aucun voyage avant l&apos;acceptation
+                expresse de votre demande.
               </p>
             </div>
 
