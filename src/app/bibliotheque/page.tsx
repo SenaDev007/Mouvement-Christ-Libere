@@ -1,6 +1,6 @@
 /**
  * Page publique — /bibliotheque
- * Bibliothèque documentaire : livres gratuits du pasteur et d'Afrika Pamela.
+ * Bibliothèque documentaire : livres gratuits du pasteur Kongo et de Afrika.
  * Catégorisée, avec miniatures, lecteur PDF intégré et téléchargement.
  */
 
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Bibliothèque — Mouvement Christ Libère",
-  description: "Livres et enseignements gratuits du Pasteur Kongo et d'Afrika Pamela.",
+  description: "Livres gratuits du pasteur Kongo et de Afrika.",
 };
 
 export default async function BibliothequePage() {
