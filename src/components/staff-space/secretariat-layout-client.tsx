@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { SpaceShell, type SectionNav } from "@/components/staff-space/space-shell";
 import { ClocheNotifications } from "@/components/staff-space/notifications";
-import { LayoutDashboard, Inbox, Megaphone, FileText, ShieldCheck, Mail, Sparkles } from "lucide-react";
+import { LayoutDashboard, Inbox, Megaphone, FileText, ShieldCheck, Mail, Sparkles, Mountain } from "lucide-react";
 
 /**
  * ⭐ V3.66/V3.67 — Layout CLIENT de l'espace Secrétariat.
@@ -23,8 +23,17 @@ import { LayoutDashboard, Inbox, Megaphone, FileText, ShieldCheck, Mail, Sparkle
  * la secrétaire est notifiée ici (badge + panneau).
  */
 
-function useBadgeDemandes(): string | null {
-  const [badge, setBadge] = useState<string | null>(null);
+/**
+ * ⭐ V3.67 — Badge des demandes de rencontre à examiner (RECUE + urgentes).
+ * ⭐ V4.43 — étendu aux demandes de RETRAITE SPIRITUELLE (SOUMISE +
+ * EN_EXAMEN) : UNE seule requête /secretariat/api/stats alimente les deux
+ * badges (un seul polling 60 s).
+ */
+function useBadges(): { demandes: string | null; retraites: string | null } {
+  const [badges, setBadges] = useState<{
+    demandes: string | null;
+    retraites: string | null;
+  }>({ demandes: null, retraites: null });
 
   useEffect(() => {
     let annule = false;
@@ -39,7 +48,13 @@ function useBadgeDemandes(): string | null {
           (json?.demandes?.recues || 0) +
           (json?.demandes?.transmises || 0) +
           (json?.demandes?.validees || 0);
-        setBadge(aExaminer > 0 ? String(aExaminer) : null);
+        const retraitesAExaminer =
+          (json?.retraites?.soumises || 0) +
+          (json?.retraites?.enExamen || 0);
+        setBadges({
+          demandes: aExaminer > 0 ? String(aExaminer) : null,
+          retraites: retraitesAExaminer > 0 ? String(retraitesAExaminer) : null,
+        });
       } catch {
         // silencieux : le badge n'est pas critique.
       }
@@ -53,7 +68,7 @@ function useBadgeDemandes(): string | null {
     };
   }, []);
 
-  return badge;
+  return badges;
 }
 
 export function SecretariatLayoutClient({
@@ -61,7 +76,7 @@ export function SecretariatLayoutClient({
 }: {
   children: React.ReactNode;
 }) {
-  const badge = useBadgeDemandes();
+  const { demandes: badge, retraites: badgeRetraites } = useBadges();
 
   const SECTIONS: SectionNav[] = [
     {
@@ -82,6 +97,14 @@ export function SecretariatLayoutClient({
           href: "/secretariat/demandes",
           icon: Inbox,
           badge,
+        },
+        {
+          // ⭐ V4.43 — retraite spirituelle : demandes de séjour sur le
+          // lieu aménagé (formulaire public + app mobile → ici).
+          label: "Retraites spirituelles",
+          href: "/secretariat/retraites",
+          icon: Mountain,
+          badge: badgeRetraites,
         },
         {
           label: "Annonces",

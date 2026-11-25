@@ -38,6 +38,9 @@ export async function GET(request: NextRequest) {
       annoncesBrouillons,
       dernieresDemandes,
       dernieresAnnonces,
+      // ⭐ V4.43 — retraite spirituelle : demandes à examiner.
+      retraiteSoumises,
+      retraiteEnExamen,
     ] = await Promise.all([
       db.meetingRequest.count({ where: { status: "RECUE" } }),
       db.meetingRequest.count({ where: { status: "TRANSMISE" } }),
@@ -80,6 +83,9 @@ export async function GET(request: NextRequest) {
           publishedAt: true,
         },
       }),
+      // ⭐ V4.43 — demandes de retraite spirituelle en attente de traitement.
+      db.retreatRequest.count({ where: { status: "SOUMISE" } }),
+      db.retreatRequest.count({ where: { status: "EN_EXAMEN" } }),
     ]);
 
     return NextResponse.json({
@@ -94,6 +100,8 @@ export async function GET(request: NextRequest) {
         pourKongo,
       },
       annonces: { publiees: annoncesPubliees, brouillons: annoncesBrouillons },
+      // ⭐ V4.43 — badge de l'item « Retraites spirituelles » de la nav.
+      retraites: { soumises: retraiteSoumises, enExamen: retraiteEnExamen },
       dernieresDemandes,
       dernieresAnnonces,
     });

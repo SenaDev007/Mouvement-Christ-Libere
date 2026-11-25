@@ -1105,6 +1105,55 @@ model MeetingRequest {
   @@index([createdAt])
 }
 
+// --- V4.43 — Retraite spirituelle : demandes de séjour au lieu aménagé ---
+
+// Le ministère accueille des retraites spirituelles sur un lieu aménagé en
+// Côte d'Ivoire. Toute personne désireuse de venir passer quelques jours
+// dépose D'ABORD sa demande : informations identitaires, durée du séjour,
+// photo de sa pièce d'identité et preuve du paiement des frais de dossier
+// (15 000 FCFA). La demande atterrit dans l'espace Secrétariat
+// (/secretariat/retraites), qui l'examine et tranche ; le demandeur reçoit
+// un code de suivi « RET-XXXXXX » à citer auprès de la secrétaire.
+model RetreatRequest {
+  id                String    @id @default(cuid())
+  trackingCode      String    @unique
+  // Identité du demandeur
+  firstName         String
+  lastName          String
+  gender            String    @default("NON_PRECISE") // HOMME | FEMME | NON_PRECISE
+  email             String?
+  phone             String    // téléphone / WhatsApp — contact principal
+  country           String    // pays de résidence
+  city              String    // ville d'origine
+  address           String?   // quartier / adresse (facultatif)
+  profession        String?   // profession / occupation (facultatif)
+  maritalStatus     String?   // situation matrimoniale (facultatif)
+  emergencyContact  String?   // nom + téléphone d'une personne à prévenir
+  // Séjour souhaité
+  arrivalDate       DateTime? // date d'arrivée souhaitée (facultative)
+  numberOfDays      Int       // nombre de jours de retraite souhaités
+  expectations      String?   @db.Text // motif / attentes spirituelles
+  hasBeenBefore     Boolean   @default(false) // déjà venu sur le lieu ?
+  // Pièces jointes (images envoyées directement à R2 via presign)
+  idDocumentUrl     String    // photo lisible de la pièce d'identité
+  paymentProofUrl   String    // capture du paiement des frais de dossier
+  paymentAmount     Int       @default(15000) // FCFA
+  paymentMethod     String?   // Orange Money | Wave | MTN MoMo | Moov Money | Autre
+  // Traitement par la secrétaire
+  status            String    @default("SOUMISE") // SOUMISE | EN_EXAMEN | ACCEPTEE | REJETEE
+  decisionReason    String?   @db.Text // précisions / motif communiqué au demandeur
+  secretaryNote     String?   @db.Text // note interne de la secrétaire
+  processedAt       DateTime?
+  handledById       String?   // compte ayant traité (traçabilité AuditLog)
+  // Origine du dépôt : SITE (formulaire web) | MOBILE (application)
+  source            String    @default("SITE")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
 // --- V3.66 — Secrétariat : annonces officielles du ministère ---
 
 // La secrétaire est chargée des annonces du ministère : vies programmés,

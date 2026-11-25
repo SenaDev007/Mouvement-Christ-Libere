@@ -38,6 +38,11 @@ export const CATEGORIES_EMAIL = {
   EMAIL_CHANGE: "EMAIL_CHANGE",
   // ⭐ V3.82 — reçu d'un don approuvé (page Contribuer, passerelles).
   RECU_DON: "RECU_DON",
+  // ⭐ V4.43 — retraite spirituelle : accusé au demandeur, notification
+  // secrétaire, décision (acceptée / rejetée).
+  RETRAITE_RECUE: "RETRAITE_RECUE",
+  RETRAITE_SOUMISE: "RETRAITE_SOUMISE",
+  RETRAITE_DECISION: "RETRAITE_DECISION",
   TEST: "TEST",
 } as const;
 

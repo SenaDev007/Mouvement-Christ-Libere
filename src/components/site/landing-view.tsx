@@ -28,7 +28,7 @@ import { SoumissionTemoignage } from "@/components/site/soumission-temoignage";
 import { LecteurAudioTemoignage } from "@/components/site/lecteur-audio-temoignage";
 import {
   Sparkles, BookOpen, FileText, Video, Users, ArrowRight,
-  Music, Globe2, ScrollText, Heart, Infinity as InfinityIcon,
+  Music, Globe2, ScrollText, Heart, Infinity as InfinityIcon, Mountain,
 } from "lucide-react";
 
 /* ============================================================
@@ -162,6 +162,24 @@ const RESSOURCES = [
     cta: "Regarder maintenant →",
     href: "/videos",
     icon: Video,
+    isPremium: false,
+  },
+  {
+    // ⭐ V4.43 — retraite spirituelle : lieu aménagé en Côte d'Ivoire.
+    key: "retraite",
+    title: "Retraite spirituelle",
+    hook: "Quelques jours à part, sur le lieu aménagé du ministère.",
+    problem:
+      "Un lieu a été aménagé en Côte d'Ivoire pour accueillir ceux qui veulent se retirer pour chercher l'Éternel : recueillement, prière et enseignement, encadrés par le ministère.",
+    bullets: [
+      "Séjour de quelques jours au lieu aménagé (Côte d'Ivoire)",
+      "Demande déposée en ligne : identité, durée, pièces jointes",
+      "Frais de dossier 15 000 FCFA — suivi par la secrétaire",
+    ],
+    availability: "Sur demande — chaque dossier est examiné par la secrétaire",
+    cta: "Demander une retraite →",
+    href: "/retraite-spirituelle",
+    icon: Mountain,
     isPremium: false,
   },
 ];

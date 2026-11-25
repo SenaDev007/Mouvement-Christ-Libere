@@ -1323,6 +1323,52 @@ export function ensureStaffSpaces(): Promise<void> {
         'CREATE INDEX IF NOT EXISTS "MeetingRequest_createdAt_idx" ON "MeetingRequest"("createdAt")'
       );
 
+      // ② bis — ⭐ V4.43 Retraite spirituelle : demandes de séjour au lieu
+      // aménagé (formulaire public web/mobile → espace Secrétariat).
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "RetreatRequest" (
+          "id" TEXT NOT NULL,
+          "trackingCode" TEXT NOT NULL,
+          "firstName" TEXT NOT NULL,
+          "lastName" TEXT NOT NULL,
+          "gender" TEXT NOT NULL DEFAULT 'NON_PRECISE',
+          "email" TEXT,
+          "phone" TEXT NOT NULL,
+          "country" TEXT NOT NULL,
+          "city" TEXT NOT NULL,
+          "address" TEXT,
+          "profession" TEXT,
+          "maritalStatus" TEXT,
+          "emergencyContact" TEXT,
+          "arrivalDate" TIMESTAMPTZ,
+          "numberOfDays" INTEGER NOT NULL,
+          "expectations" TEXT,
+          "hasBeenBefore" BOOLEAN NOT NULL DEFAULT false,
+          "idDocumentUrl" TEXT NOT NULL,
+          "paymentProofUrl" TEXT NOT NULL,
+          "paymentAmount" INTEGER NOT NULL DEFAULT 15000,
+          "paymentMethod" TEXT,
+          "status" TEXT NOT NULL DEFAULT 'SOUMISE',
+          "decisionReason" TEXT,
+          "secretaryNote" TEXT,
+          "processedAt" TIMESTAMPTZ,
+          "handledById" TEXT,
+          "source" TEXT NOT NULL DEFAULT 'SITE',
+          "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          CONSTRAINT "RetreatRequest_pkey" PRIMARY KEY ("id")
+        )`
+      );
+      await db.$executeRawUnsafe(
+        'CREATE UNIQUE INDEX IF NOT EXISTS "RetreatRequest_trackingCode_key" ON "RetreatRequest"("trackingCode")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "RetreatRequest_status_idx" ON "RetreatRequest"("status")'
+      );
+      await db.$executeRawUnsafe(
+        'CREATE INDEX IF NOT EXISTS "RetreatRequest_createdAt_idx" ON "RetreatRequest"("createdAt")'
+      );
+
       // ③ Secrétariat — annonces officielles du ministère.
       await db.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "MinistryAnnouncement" (

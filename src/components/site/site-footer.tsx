@@ -34,6 +34,8 @@ const FOOTER_LINKS = {
       { label: "Annonces du ministère", href: "/annonces" },
       { label: "Demander un rendez-vous", href: "/rendez-vous" },
       { label: "Suivre ma demande", href: "/rendez-vous/suivi" },
+      // ⭐ V4.43 — retraite spirituelle (lieu aménagé en Côte d'Ivoire).
+      { label: "Retraite spirituelle", href: "/retraite-spirituelle" },
     ],
   },
   info: {

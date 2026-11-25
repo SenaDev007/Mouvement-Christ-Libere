@@ -584,3 +584,224 @@ Conservez cet email comme reçu de votre ${libelleType.toLowerCase()} pour vos a
 
   return { html, text };
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// ⑧ ⭐ V4.43 — Retraite spirituelle : accusé au demandeur, notification
+//     secrétaire et décision (acceptée / rejetée)
+// ═══════════════════════════════════════════════════════════════════════
+
+interface OptionsRetraiteRecue {
+  demande: {
+    prenom: string;
+    nomComplet: string;
+    trackingCode: string;
+    pays: string;
+    ville: string;
+    nombreDeJours: number;
+    dateArrivee?: string | null;
+  };
+}
+
+export function sujetRetraiteRecue(nomDemandeur: string): string {
+  return `Votre demande de retraite spirituelle est enregistrée — ${nomDemandeur}`;
+}
+
+/** Accusé de réception envoyé au DEMANDEUR après soumission du formulaire. */
+export function templateRetraiteRecue(
+  options: OptionsRetraiteRecue
+): { html: string; text: string } {
+  const d = options.demande;
+  const html = enveloppe(
+    `Demande de retraite enregistrée — ${d.trackingCode}`,
+    `
+    <p style="margin:0 0 6px 0;">Shalom ${echapperHtml(d.prenom)},</p>
+    <p style="margin:0 0 8px 0;">
+      Votre demande de retraite spirituelle vient d&rsquo;&ecirc;tre enregistr&eacute;e.
+      La secr&eacute;taire du minist&egrave;re va examiner vos informations ainsi que
+      vos pi&egrave;ces (pi&egrave;ce d&rsquo;identit&eacute; et preuve de paiement).
+      Vous serez contact&eacute;(e) au num&eacute;ro indiqu&eacute; pour la suite.
+    </p>
+
+    ${blocInfo([
+      { libelle: "Demandeur", valeur: d.nomComplet },
+      { libelle: "Pays / ville", valeur: `${d.pays} — ${d.ville}` },
+      { libelle: "Durée souhaitée", valeur: `${d.nombreDeJours} jour(s)` },
+      ...(d.dateArrivee
+        ? [{ libelle: "Arrivée souhaitée", valeur: d.dateArrivee }]
+        : []),
+      { libelle: "Code de suivi", valeur: d.trackingCode },
+    ])}
+
+    <p style="margin:0; font-size:13px; color:${GRIS};">
+      Conservez ce code de suivi : citez-le dans tous vos &eacute;changes avec la
+      secr&eacute;taire. Aucun voyage ne doit &ecirc;tre entrepris avant
+      l&rsquo;acceptation expresse de votre demande.
+    </p>
+    `
+  );
+
+  const text = `Shalom ${d.prenom},
+
+Votre demande de retraite spirituelle vient d'être enregistrée.
+La secrétaire du ministère va examiner vos informations ainsi que vos pièces (pièce d'identité et preuve de paiement). Vous serez contacté(e) au numéro indiqué pour la suite.
+
+Demandeur : ${d.nomComplet}
+Pays / ville : ${d.pays} — ${d.ville}
+Durée souhaitée : ${d.nombreDeJours} jour(s)
+${d.dateArrivee ? "Arrivée souhaitée : " + d.dateArrivee + "\n" : ""}Code de suivi : ${d.trackingCode}
+
+Conservez ce code de suivi : citez-le dans tous vos échanges avec la secrétaire. Aucun voyage ne doit être entrepris avant l'acceptation expresse de votre demande.
+
+— Mouvement Christ Libère (mouvementchristlibere.com)`;
+
+  return { html, text };
+}
+
+interface OptionsRetraiteNotification {
+  secretaire: string;
+  demande: {
+    nomComplet: string;
+    pays: string;
+    ville: string;
+    nombreDeJours: number;
+    trackingCode: string;
+    source: string;
+  };
+}
+
+export function sujetRetraiteNotification(nomDemandeur: string): string {
+  return `Nouvelle demande de retraite spirituelle — ${nomDemandeur}`;
+}
+
+/** Notification envoyée à la SECRÉTAIRE à chaque nouvelle demande. */
+export function templateRetraiteNotification(
+  options: OptionsRetraiteNotification
+): { html: string; text: string } {
+  const d = options.demande;
+  const origine =
+    d.source === "MOBILE"
+      ? "application mobile"
+      : "formulaire du site web";
+  const html = enveloppe(
+    `Nouvelle demande de retraite — ${d.nomComplet}`,
+    `
+    <p style="margin:0 0 6px 0;">Shalom ${echapperHtml(options.secretaire)},</p>
+    <p style="margin:0 0 8px 0;">
+      Une nouvelle demande de retraite spirituelle vient d&rsquo;&ecirc;tre d&eacute;pos&eacute;e
+      depuis l&rsquo;<strong>${origine}</strong>. Elle est visible dans votre espace,
+      rubrique <strong>Retraites spirituelles</strong>.
+    </p>
+
+    ${blocInfo([
+      { libelle: "Demandeur", valeur: d.nomComplet },
+      { libelle: "Pays / ville", valeur: `${d.pays} — ${d.ville}` },
+      { libelle: "Durée souhaitée", valeur: `${d.nombreDeJours} jour(s)` },
+      { libelle: "Code de suivi", valeur: d.trackingCode },
+    ])}
+
+    <p style="margin:0; font-size:13px; color:${GRIS};">
+      Pensez &agrave; v&eacute;rifier la pi&egrave;ce d&rsquo;identit&eacute; et la preuve du
+      paiement des frais de dossier avant toute acceptation.
+    </p>
+    `
+  );
+
+  const text = `Shalom ${options.secretaire},
+
+Une nouvelle demande de retraite spirituelle vient d'être déposée depuis l'${origine}. Elle est visible dans votre espace, rubrique « Retraites spirituelles ».
+
+Demandeur : ${d.nomComplet}
+Pays / ville : ${d.pays} — ${d.ville}
+Durée souhaitée : ${d.nombreDeJours} jour(s)
+Code de suivi : ${d.trackingCode}
+
+Pensez à vérifier la pièce d'identité et la preuve du paiement des frais de dossier avant toute acceptation.
+
+— Mouvement Christ Libère (mouvementchristlibere.com)`;
+
+  return { html, text };
+}
+
+interface OptionsRetraiteDecision {
+  demande: {
+    prenom: string;
+    nomComplet: string;
+    trackingCode: string;
+  };
+  acceptee: boolean;
+  raison?: string | null;
+}
+
+export function sujetRetraiteDecision(
+  nomDemandeur: string,
+  acceptee: boolean
+): string {
+  return acceptee
+    ? `Votre demande de retraite est acceptée — ${nomDemandeur}`
+    : `Suivi de votre demande de retraite — ${nomDemandeur}`;
+}
+
+/** Décision de la secrétaire communiquée au DEMANDEUR. */
+export function templateRetraiteDecision(
+  options: OptionsRetraiteDecision
+): { html: string; text: string } {
+  const d = options.demande;
+  const titre = options.acceptee
+    ? `Demande acceptée — ${d.trackingCode}`
+    : `Suivi de votre demande — ${d.trackingCode}`;
+  const corps = options.acceptee
+    ? `
+    <p style="margin:0 0 8px 0;">
+      Bonne nouvelle : votre demande de retraite spirituelle est
+      <strong style="color:${OR};">accept&eacute;e</strong>. La secr&eacute;taire du
+      minist&egrave;re va vous contacter au num&eacute;ro indiqu&eacute; dans votre
+      dossier pour pr&eacute;parer votre s&eacute;jour sur le lieu am&eacute;nag&eacute;
+      (orientations pratiques, arriv&eacute;e, what to bring).
+    </p>`
+    : `
+    <p style="margin:0 0 8px 0;">
+      Apr&egrave;s examen, votre demande de retraite spirituelle n&rsquo;a
+      <strong>pas pu &ecirc;tre accept&eacute;e</strong> en l&rsquo;&eacute;tat.
+    </p>${
+      options.raison
+        ? `
+    ${blocInfo([{ libelle: "Précisions", valeur: options.raison }])}`
+        : ""
+    }
+    <p style="margin:0; font-size:13px; color:${GRIS};">
+      Vous pouvez contacter la secr&eacute;taire du minist&egrave;re en citant votre
+      code de suivi pour obtenir des informations compl&eacute;mentaires.
+    </p>`;
+
+  const html = enveloppe(
+    titre,
+    `
+    <p style="margin:0 0 6px 0;">Shalom ${echapperHtml(d.prenom)},</p>
+    ${corps}
+
+    ${blocInfo([
+      { libelle: "Demandeur", valeur: d.nomComplet },
+      { libelle: "Code de suivi", valeur: d.trackingCode },
+    ])}
+    `
+  );
+
+  const text = options.acceptee
+    ? `Shalom ${d.prenom},
+
+Bonne nouvelle : votre demande de retraite spirituelle (${d.trackingCode}) est acceptée. La secrétaire du ministère va vous contacter au numéro indiqué dans votre dossier pour préparer votre séjour sur le lieu aménagé.
+
+Demandeur : ${d.nomComplet}
+Code de suivi : ${d.trackingCode}
+
+— Mouvement Christ Libère (mouvementchristlibere.com)`
+    : `Shalom ${d.prenom},
+
+Après examen, votre demande de retraite spirituelle (${d.trackingCode}) n'a pas pu être acceptée en l'état.
+${options.raison ? "\nPrécisions : " + options.raison + "\n" : ""}
+Vous pouvez contacter la secrétaire du ministère en citant votre code de suivi pour obtenir des informations complémentaires.
+
+— Mouvement Christ Libère (mouvementchristlibere.com)`;
+
+  return { html, text };
+}

@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/app/retraite-spirituelle/**/*.tsx",
+    "src/app/api/retreat/**/*.ts",
+    "src/app/secretariat/retraites/**/*.tsx",
+    "src/app/secretariat/api/retraites/**/*.ts",
+    "src/app/secretariat/api/stats/route.ts",
+    "src/components/staff-space/secretariat-layout-client.tsx",
+    "src/components/site/site-header.tsx",
+    "src/components/site/site-footer.tsx",
+    "src/components/site/landing-view.tsx",
+    "src/lib/email.ts",
+    "src/lib/email-templates.ts",
+    "src/lib/ensure-schema.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/node_modules"
+  ]
+}

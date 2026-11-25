@@ -49,6 +49,8 @@ const NAV_GROUPS = [
       { label: "Annonces", href: "/annonces" },
       // ⭐ V3.67 — Demande de rencontre (porte du secrétariat).
       { label: "Rendez-vous", href: "/rendez-vous" },
+      // ⭐ V4.43 — Retraite spirituelle : lieu aménagé en Côte d'Ivoire.
+      { label: "Retraite spirituelle", href: "/retraite-spirituelle" },
     ],
   },
 ];
