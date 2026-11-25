@@ -6,11 +6,22 @@
  * En-tête animé (orbes ambiants, compteurs), grille avec entrées en cascade,
  * cartes 3D (survol, reflet, overlay « Lire »), pastilles de filtre animées
  * (layoutId) et lecteur PDF en modale avec ressort d'entrée.
- * ⭐ V4.42 — Scission stricte en espaces distincts : sélecteur « Pasteur
- * Kongo / Afrika » (+ Collectif si des ouvrages sans serviteur existent),
- * filtrage par servantCode, identité visuelle propre à chaque espace
- * (or pour Kongo, violet pour Afrika), statistiques calculées par espace.
- * Bibliothèque documentaire publique avec filtres + lecteur PDF intégré.
+ * ⭐ V4.42 — Scission stricte en espaces : filtrage par servantCode,
+ * identité visuelle propre à chaque espace (or pour Kongo, violet pour
+ * Afrika), statistiques calculées par espace.
+ * ⭐ V4.44 — VRAIE bibliothèque (retours pasteur) :
+ *   ① par défaut, TOUTE la bibliothèque est affichée avec ses TOTAUX
+ *      (ouvrages, catégories, téléchargements) ;
+ *   ② cliquer « Pasteur Kongo » ou « Afrika » ouvre SON espace : la grille
+ *      ne montre que ses ouvrages et les compteurs se mettent à jour ;
+ *   ③ cliquer dans le vide (ou re-cliquer la carte active, ou la pilule
+ *      d'espace) ramène à toute la bibliothèque ;
+ *   ④ les cartes d'espace affichent les VRAIES photos de profil des
+ *      serviteurs lues depuis la base (servant-photos.ts — même source
+ *      unique que la landing, plus jamais d'initiales pour Kongo/Afrika) ;
+ *   ⑤ plaques d'espace redessinées (médaillon photo à double anneau,
+ *      rôle en petites capitales, pilule compteur, coche d'espace actif,
+ *      barre d'accent) — fini le fond gris « dans l'espace » qui se voyait.
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -37,8 +48,12 @@ import {
   Languages,
   Building2,
   Hash,
+  BadgeCheck,
   type LucideIcon,
 } from "lucide-react";
+// ⭐ V4.44 — photo de profil serviteur (SmartImage : gère les data URLs du
+// back-office, que next/image ne sait pas optimiser).
+import { SmartImage } from "@/components/site/smart-image";
 
 interface BookLite {
   id: string;
@@ -61,8 +76,15 @@ interface BookLite {
   servantShortName: string | null;
 }
 
+/** ⭐ V4.44 — photos de profil effectives (photosServiteurs(), page serveur). */
+interface PhotosServiteurs {
+  afrika: string;
+  kongo: string;
+}
+
 interface Props {
   books: BookLite[];
+  photos: PhotosServiteurs;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -138,76 +160,119 @@ function appartientAEspace(livre: BookLite, code: EspaceCode): boolean {
   return codeLivre === code;
 }
 
-/** Carte d'espace : état actif partagé via layoutId (glissement du halo). */
+/** ⭐ V4.44 — Plaque d'espace : médaillon photo (double anneau accent),
+ * nom en serif, rôle en petites capitales, pilule compteur — et à l'état
+ * actif : halo gradient, barre d'accent latérale et coche. Plus jamais de
+ * fond gris flottant : la plaque au repos est TRANSPARENTE (juste une
+ * bordure fine), elle s'illumine uniquement quand elle est choisie. */
 function CarteEspace({
   espace,
   actif,
   nbOuvrages,
+  photo,
   onChoisir,
 }: {
   espace: EspaceDef;
   actif: boolean;
   nbOuvrages: number;
+  photo?: string;
   onChoisir: () => void;
 }) {
   return (
     <motion.button
       onClick={onChoisir}
-      whileHover={{ scale: 1.02, y: -2 }}
+      whileHover={actif ? undefined : { y: -3 }}
       whileTap={{ scale: 0.98 }}
-      className={`relative text-left rounded-2xl p-5 border transition-colors duration-300 ${
-        actif
-          ? "bg-white/[0.08]"
-          : "bg-white/[0.03] border-white/10 hover:bg-white/[0.06]"
-      }`}
-      style={
-        actif
-          ? {
-              borderColor: `${espace.accent}99`,
-              boxShadow: `0 12px 40px -12px ${espace.accent}55`,
-            }
-          : undefined
-      }
+      className="relative w-full text-left rounded-2xl px-5 py-4 border transition-colors duration-300"
+      style={{
+        borderColor: actif ? `${espace.accent}AA` : "rgba(250,246,239,0.10)",
+        background: actif
+          ? `linear-gradient(135deg, ${espace.accent}14, transparent 70%)`
+          : "transparent",
+        boxShadow: actif
+          ? `0 16px 44px -18px ${espace.accent}66, inset 0 1px 0 ${espace.accent}30`
+          : "none",
+      }}
       aria-pressed={actif}
     >
+      {/* Barre d'accent latérale (état actif) */}
       {actif && (
         <motion.span
-          layoutId="espace-active"
-          className="absolute inset-0 rounded-2xl"
+          layoutId="espace-barre"
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-[3px] rounded-r-full"
           style={{
-            background: `linear-gradient(135deg, ${espace.accent}1F, transparent 65%)`,
+            background: `linear-gradient(${espace.accent}, ${espace.accent}44)`,
           }}
           transition={{ type: "spring", stiffness: 300, damping: 28 }}
         />
       )}
+
       <div className="relative z-10 flex items-center gap-4 min-w-0">
+        {/* Médaillon : photo réelle du serviteur (V4.44) ou initiales (Collectif) */}
         <span
-          className="w-12 h-12 rounded-full flex items-center justify-center font-serif font-bold text-sm flex-shrink-0"
+          className="relative flex-shrink-0 rounded-full"
           style={{
-            background: `${espace.accent}1A`,
-            border: `1.5px solid ${espace.accent}66`,
-            color: espace.accentClair,
+            padding: 2,
+            background: `linear-gradient(140deg, ${espace.accent}99, ${espace.accent}1F 55%, transparent 100%)`,
           }}
         >
-          {espace.initiales}
+          {photo ? (
+            <span className="block w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden bg-[#1A0826]">
+              <SmartImage
+                src={photo}
+                alt={`Photo de profil — ${espace.nom}`}
+                width={56}
+                height={56}
+                className="w-full h-full object-cover"
+              />
+            </span>
+          ) : (
+            <span
+              className="flex w-12 h-12 md:w-14 md:h-14 rounded-full items-center justify-center font-serif font-bold text-sm bg-[#1A0826]"
+              style={{ color: espace.accentClair }}
+            >
+              {espace.initiales}
+            </span>
+          )}
+          {/* Coche d'espace actif */}
+          {actif && (
+            <span
+              className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center shadow-lg"
+              style={{ background: espace.accent }}
+            >
+              <BadgeCheck className="w-3.5 h-3.5 text-[#1E0F2B]" />
+            </span>
+          )}
         </span>
-        <div className="min-w-0">
+
+        {/* Nom + rôle — plaque d'auteur */}
+        <div className="min-w-0 flex-1">
           <p
             className="font-serif font-bold text-base md:text-lg leading-tight truncate"
             style={{ color: actif ? espace.accentClair : "#FAF6EF" }}
           >
             {espace.nom}
           </p>
-          <p className="text-xs text-[#FAF6EF]/50 mt-0.5 truncate">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-[#FAF6EF]/45 mt-1 truncate">
             {espace.sousTitre}
           </p>
-          <p
-            className="text-[11px] uppercase tracking-wider mt-1"
-            style={{ color: `${espace.accent}CC` }}
-          >
-            {nbOuvrages} ouvrage{nbOuvrages > 1 ? "s" : ""}
-          </p>
         </div>
+
+        {/* Compteur d'ouvrages — pilule d'accent */}
+        <span
+          className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold"
+          style={{
+            background: `${espace.accent}14`,
+            border: `1px solid ${espace.accent}44`,
+            color: espace.accentClair,
+          }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: espace.accent }}
+          />
+          {nbOuvrages}
+        </span>
       </div>
     </motion.button>
   );
@@ -322,17 +387,25 @@ function OrbesAmbiants() {
 
 /* ── Composant principal ───────────────────────────────────────────── */
 
-export function BibliotequeClient({ books }: Props) {
-  // ⭐ V4.42 — espace actif : un seul espace visible à la fois, jamais un mélange.
-  const [espaceActif, setEspaceActif] = useState<EspaceCode>("kongo");
+export function BibliotequeClient({ books, photos }: Props) {
+  // ⭐ V4.44 — null = TOUTE la bibliothèque (état PAR DÉFAUT, tous les
+  // ouvrages confondus) ; un code = l'espace du serviteur (grille + chiffres
+  // filtrés). Retour à « tout » : clic dans le vide, re-clic de la carte
+  // active, ou pilule d'espace.
+  const [espaceActif, setEspaceActif] = useState<EspaceCode | null>(null);
   const [categorieSelectionnee, setCategorieSelectionnee] = useState<string | null>(null);
   const [recherche, setRecherche] = useState("");
   const [livreOuvert, setLivreOuvert] = useState<BookLite | null>(null);
   const [lecteurCharge, setLecteurCharge] = useState(false);
 
-  // Ouvrages de l'espace actif uniquement (rattachement par servantCode)
+  // ⭐ V4.44 — ouvrages affichés : tous (vue par défaut), ou uniquement ceux
+  // de l'espace actif — comme dans une vraie bibliothèque : on voit l'ensemble
+  // des rayons, puis on se rend au rayon d'un auteur.
   const livresEspace = useMemo(
-    () => books.filter((b) => appartientAEspace(b, espaceActif)),
+    () =>
+      espaceActif
+        ? books.filter((b) => appartientAEspace(b, espaceActif))
+        : books,
     [books, espaceActif]
   );
 
@@ -352,7 +425,10 @@ export function BibliotequeClient({ books }: Props) {
   const espacesVisibles = ESPACES.filter(
     (e) => e.code !== "collectif" || nbParEspace.collectif > 0
   );
-  const espaceCourant =
+  // ⭐ V4.44 — définition de l'espace actif (accent des pastilles de
+  // catégories) ; en vue « toute la bibliothèque », l'or du ministère
+  // (première entrée) sert d'accent neutre.
+  const espaceActifDef =
     ESPACES.find((e) => e.code === espaceActif) ?? ESPACES[0];
 
   // Catégories présentes dans l'espace actif uniquement
@@ -386,10 +462,27 @@ export function BibliotequeClient({ books }: Props) {
   );
 
   const choisirEspace = (code: EspaceCode) => {
-    if (code === espaceActif) return;
-    setEspaceActif(code);
+    // ⭐ V4.44 — re-cliquer l'espace actif ramène à toute la bibliothèque.
+    if (code === espaceActif) {
+      setEspaceActif(null);
+    } else {
+      setEspaceActif(code);
+    }
     // Les catégories d'un espace n'ont pas de sens dans l'autre
     setCategorieSelectionnee(null);
+  };
+
+  /**
+   * ⭐ V4.44 — clic dans le VIDE (fond de page) : retour à toute la
+   * bibliothèque. Les clics qui tombent sur un élément interactif (bouton,
+   * carte de livre, lien, champ) sont ignorés — seuls les clics posés
+   * directement sur le fond réinitialisent.
+   */
+  const surClicFond = (e: React.MouseEvent) => {
+    if (livreOuvert) return;
+    const cible = e.target as HTMLElement | null;
+    if (cible?.closest("button, a, article, input, textarea, select")) return;
+    setEspaceActif(null);
   };
 
   // Modale : fermeture avec Échap + verrouillage du défilement du corps
@@ -418,7 +511,10 @@ export function BibliotequeClient({ books }: Props) {
   };
   return (
     <MotionConfig reducedMotion="user">
-      <div className="relative min-h-screen bg-gradient-to-b from-[#1A0826] via-[#2A0E3D] to-[#1A0826] text-[#FAF6EF]">
+      <div
+        className="relative min-h-screen bg-gradient-to-b from-[#1A0826] via-[#2A0E3D] to-[#1A0826] text-[#FAF6EF]"
+        onClick={surClicFond}
+      >
         <div className="relative max-w-7xl mx-auto px-4 py-12 md:py-20">
           <OrbesAmbiants />
 
@@ -472,8 +568,9 @@ export function BibliotequeClient({ books }: Props) {
               variants={vHeroItem}
               className="text-[#FAF6EF]/60 max-w-2xl mx-auto text-base md:text-lg"
             >
-              Deux espaces bien distincts : les ouvrages du pasteur Kongo et
-              ceux d'Afrika Pamela DALI.
+              Tous les ouvrages du ministère réunis, comme dans une
+              bibliothèque réelle — cliquez sur un serviteur pour n&apos;ouvrir
+              que son espace.
             </motion.p>
 
             {/* Statistiques avec compteurs — calculées sur l'espace actif */}
@@ -518,11 +615,49 @@ export function BibliotequeClient({ books }: Props) {
                   espace={espace}
                   actif={espaceActif === espace.code}
                   nbOuvrages={nbParEspace[espace.code]}
+                  photo={
+                    espace.code === "kongo"
+                      ? photos.kongo
+                      : espace.code === "afrika"
+                        ? photos.afrika
+                        : undefined
+                  }
                   onChoisir={() => choisirEspace(espace.code)}
                 />
               ))}
             </div>
           </motion.section>
+
+          {/* ── ⭐ V4.44 Pilule d'espace actif (retour « toute la bibliothèque ») ── */}
+          <AnimatePresence>
+            {espaceActif && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                animate={{ opacity: 1, height: "auto", marginBottom: 20 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <button
+                  onClick={() => setEspaceActif(null)}
+                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold border transition-colors"
+                  style={{
+                    borderColor: `${espaceActifDef.accent}55`,
+                    background: `${espaceActifDef.accent}12`,
+                    color: espaceActifDef.accentClair,
+                  }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: espaceActifDef.accent }}
+                  />
+                  Espace « {espaceActifDef.nom} » — afficher toute la
+                  bibliothèque
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ── Recherche ── */}
           <motion.div
@@ -581,8 +716,8 @@ export function BibliotequeClient({ books }: Props) {
                       layoutId="pastille-active"
                       className="absolute inset-0 rounded-full shadow-lg"
                       style={{
-                        background: `linear-gradient(90deg, ${espaceCourant.accent}, ${espaceCourant.accentClair})`,
-                        boxShadow: `0 8px 24px -6px ${espaceCourant.accent}66`,
+                        background: `linear-gradient(90deg, ${espaceActifDef.accent}, ${espaceActifDef.accentClair})`,
+                        boxShadow: `0 8px 24px -6px ${espaceActifDef.accent}66`,
                       }}
                       transition={{ type: "spring", stiffness: 320, damping: 26 }}
                     />
@@ -633,7 +768,9 @@ export function BibliotequeClient({ books }: Props) {
               </motion.div>
               <p className="text-[#FAF6EF]/50 text-lg">
                 {livresEspace.length === 0
-                  ? `Aucun livre publié dans l'espace « ${espaceCourant.nom} » pour l'instant.`
+                  ? espaceActif
+                    ? `Aucun livre publié dans l'espace « ${espaceActifDef.nom} » pour l'instant.`
+                    : "Aucun livre publié dans la bibliothèque pour l'instant."
                   : "Aucun livre ne correspond à votre recherche."}
               </p>
               {filtreActif && (
@@ -650,7 +787,7 @@ export function BibliotequeClient({ books }: Props) {
             </motion.div>
           ) : (
             <motion.div
-              key={espaceActif}
+              key={espaceActif ?? "tous"}
               layout
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"
             >

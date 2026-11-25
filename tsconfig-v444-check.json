@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/app/bibliotheque/**/*",
+    "src/components/site/smart-image.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/node_modules"
+  ]
+}
