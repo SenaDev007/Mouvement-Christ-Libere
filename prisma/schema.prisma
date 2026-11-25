@@ -110,6 +110,7 @@ model Servant {
   // ⭐ V4.26 — Comptes YouTube/TikTok multi-serviteurs (1:1, optionnels)
   youtubeAccount YoutubeAccount?
   tiktokAccount  TiktokAccount?
+  books          Book[]
 }
 
 // --- Biographies (frise chronologique) ---
@@ -1394,3 +1395,41 @@ model TiktokAccount {
 
 // ⭐ V4.26 — Relation inverse côté Servant (déclarée ici pour ne pas
 // toucher au bloc Servant existant en amont du fichier).
+
+// ───────────────────────────────────────────────────────────────────────
+// ⭐ V4.38 — BIBLIOTHÈQUE DOCUMENTAIRE
+// ───────────────────────────────────────────────────────────────────────
+// Le pasteur et Afrika Pamela publient des livres gratuits (enseignements,
+// révélations, prières). La bibliothèque est publique sur /bibliotheque
+// avec catégorisation, miniatures, lecteur PDF intégré, et téléchargement.
+// Gérée depuis le back-office /admin/bibliotheque.
+//
+// Catégories : Enseignements, Prières, Révélations, Délivrance,
+//              Vie Chrétienne, Prophéties, Jeunesse, Autres
+
+model Book {
+  id            String   @id @default(cuid())
+  title         String
+  author        String
+  description   String   @db.Text
+  category      String   @default("Autres")
+  coverUrl      String?  // miniature (upload R2 ou URL externe)
+  fileUrl       String?  // PDF stocké sur R2 (livres/book-<id>.pdf)
+  fileSize      Int?     // taille en octets
+  pageCount     Int?     // nombre de pages (renseigné manuellement)
+  language      String   @default("Français")
+  publishedYear Int?     // année de publication
+  downloadCount Int      @default(0)
+  isPublished   Boolean  @default(true) // visible sur le site public
+  sortOrder     Int      @default(0)    // ordre d'affichage (0 = premier)
+  servantId     String?  // serviteur auteur (optionnel — peut être null pour un livre collectif)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  servant       Servant? @relation(fields: [servantId], references: [id], onDelete: SetNull)
+
+  @@index([isPublished])
+  @@index([category])
+  @@index([sortOrder])
+  @@index([servantId])
+}

@@ -26,6 +26,8 @@ import {
   Youtube,
   // ⭐ V4.26 — Comptes TikTok liés (icone Music2 distincte de Music = Adoration)
   Music2,
+  // ⭐ V4.38 — Bibliothèque documentaire (livres gratuits)
+  BookOpen,
   Image as ImageIcon,
   Building2,
   Wallet,
@@ -79,6 +81,8 @@ const NAV_SECTIONS = [
       // variables d'environnement.
       { label: "Comptes YouTube", href: "/admin/youtube-accounts", icon: Youtube },
       { label: "Comptes TikTok", href: "/admin/tiktok-accounts", icon: Music2 },
+      // ⭐ V4.38 — Bibliothèque documentaire (livres gratuits du pasteur et Afrika)
+      { label: "Bibliothèque", href: "/admin/bibliotheque", icon: BookOpen },
     ],
   },
   {
