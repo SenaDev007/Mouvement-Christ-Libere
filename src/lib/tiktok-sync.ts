@@ -662,59 +662,136 @@ async function fallbackTikwmIndividuel(
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// FONCTION PRINCIPALE — scraping deux-étapes + fallbacks
+// ⭐ V4.37 — Rendu JavaScript via ScrapingAnt (service de rendu)
+// ─────────────────────────────────────────────────────────────────────
+// TikTok sert un shell HTML vide (architecture "serverless") — le HTML
+// ne contient aucune URL vidéo car tout est rendu par JavaScript.
+// ScrapingAnt est un service qui exécute le JavaScript côté serveur et
+// retourne le HTML rendu (avec toutes les vidéos chargées).
+//
+// Offre gratuite : 10 000 crédits/mois ≈ 1 000 pages rendues avec JS.
+// Pour 2 comptes × 2 syncs/jour = ~120 pages/mois, largement suffisant.
+//
+// Configuration :
+//   1. Inscrivez-vous sur https://scrapingant.com (gratuit, 2 min)
+//   2. Copiez votre API key depuis le dashboard
+//   3. Ajoutez SCRAPINGANT_API_KEY sur Vercel (Settings → Environment Variables)
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Rend une page TikTok via ScrapingAnt — exécute le JavaScript et retourne
+ * le HTML rendu avec toutes les vidéos chargées dans le DOM.
+ *
+ * @returns HTML rendu, ou null si ScrapingAnt n'est pas configuré ou échoue
+ */
+async function renderPageViaScrapingAnt(url: string): Promise<string | null> {
+  const apiKey = process.env.SCRAPINGANT_API_KEY;
+  if (!apiKey) return null;
+
+  const apiUrl = `https://app.scrapingant.com/api/v1/extract?url=${encodeURIComponent(url)}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20_000);
+
+  try {
+    const res = await fetch(apiUrl, {
+      headers: {
+        "x-api-key": apiKey,
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      console.warn(`[tiktok-sync] ScrapingAnt HTTP ${res.status}`);
+      return null;
+    }
+
+    const data = (await res.json()) as { content?: string; html?: string };
+    const html = data.content || data.html || null;
+    if (html && html.length > 1000) {
+      console.log(`[tiktok-sync] ScrapingAnt : HTML rendu reçu (${html.length} caractères)`);
+      return html;
+    }
+    return null;
+  } catch (e) {
+    console.warn(
+      "[tiktok-sync] ScrapingAnt erreur :",
+      e instanceof Error ? e.message : e
+    );
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// FONCTION PRINCIPALE — ScrapingAnt (rendu JS) → extraction URLs → tikwm
 // ─────────────────────────────────────────────────────────────────────
 
 async function scraperProfilTiktok(username: string): Promise<ResultatScrapingProfil> {
-  // Étape 1 : page profil → secUid + cookies + HTML
-  const infos = await scraperProfilPourSecUid(username);
+  const profileUrl = `https://www.tiktok.com/@${username}`;
 
-  // Étape 2 : /api/post/item_list/ avec secUid + cookies
-  const videosApi = await fetchItemList(infos.secUid, username, infos.cookies);
-  if (videosApi && videosApi.length > 0) {
-    return {
-      nickname: infos.nickname,
-      videos: videosApi,
-    };
-  }
+  // ⭐ V4.37 — Stratégie principale : ScrapingAnt (rend le JavaScript)
+  // C'est la SEULE méthode qui fonctionne avec l'architecture "serverless"
+  // de TikTok (shell HTML vide + rendu JS côté client).
+  const htmlRendu = await renderPageViaScrapingAnt(profileUrl);
 
-  // Fallback A : recherche récursive dans le JSON de la page profil
-  const universalData = extraireUniversalData(infos.html);
-  if (universalData) {
-    const videosFallback = chercherItemListeVideos(universalData);
-    if (videosFallback && videosFallback.length > 0) {
+  if (htmlRendu) {
+    // Le HTML rendu contient les URLs vidéo (les éléments <a> sont dans le DOM)
+    const ids = extraireVideoIdsDepuisHTML(htmlRendu);
+    if (ids.length > 0) {
       console.log(
-        `[tiktok-sync] /api/post/item_list/ a échoué — ${videosFallback.length} vidéos trouvées via fallback JSON`
+        `[tiktok-sync] ScrapingAnt : ${ids.length} URLs vidéo extraites du HTML rendu`
       );
-      return {
-        nickname: infos.nickname,
-        videos: videosFallback,
-      };
+
+      // Résoudre chaque vidéo via tikwm (max 15, garde 1.3s)
+      const idsAResoudre = ids.slice(0, MAX_VIDEOS_TIKWM);
+      const videos: VideoTiktokScraped[] = [];
+
+      // Extraire aussi le nickname du HTML rendu
+      let nickname: string | undefined;
+      const nickMatch = htmlRendu.match(/"nickname"\s*:\s*"([^"]+)"/);
+      if (nickMatch?.[1]) nickname = nickMatch[1];
+
+      for (let i = 0; i < idsAResoudre.length; i++) {
+        const videoId = idsAResoudre[i];
+        const url = urlTiktokVideo(username, videoId);
+        const video = await resoudreVideoViaTikwm(url);
+        if (video && video.title) {
+          videos.push(video);
+        }
+        if (i < idsAResoudre.length - 1) await delay(GARDE_TIKWM_MS);
+      }
+
+      if (videos.length > 0) {
+        return { nickname, videos };
+      }
     }
   }
 
-  // ⭐ V4.34 — Fallback B : extraction IDs vidéo du HTML + résolution individuelle via tikwm
-  // C'est le fallback de dernier recours quand /api/post/item_list/ retourne une réponse
-  // vide (X-Bogus manquant) ET que le JSON de la page ne contient pas non plus de liste.
-  // On extrait les IDs vidéo du HTML (regex sur les URLs /@user/video/<id>) puis on
-  // résout chaque vidéo individuellement via tikwm.com qui fonctionne pour les vidéos
-  // individuelles (contrairement au feed user).
-  const videosTikwm = await fallbackTikwmIndividuel(infos.html, username);
-  if (videosTikwm && videosTikwm.length > 0) {
-    return {
-      nickname: infos.nickname,
-      videos: videosTikwm,
-    };
+  // Si ScrapingAnt n'est pas configuré, erreur claire
+  if (!process.env.SCRAPINGANT_API_KEY) {
+    throw new Error(
+      "Synchro automatique TikTok impossible sans service de rendu JavaScript.\n" +
+        "TikTok sert un shell HTML vide (architecture 'serverless') — le HTML ne contient\n" +
+        "aucune URL vidéo car tout est rendu par JavaScript côté client.\n\n" +
+        "SOLUTION (gratuite, 2 minutes) :\n" +
+        "  1. Inscrivez-vous sur https://scrapingant.com (gratuit, 10 000 requêtes/mois)\n" +
+        "  2. Copiez votre API key depuis le dashboard\n" +
+        "  3. Ajoutez SCRAPINGANT_API_KEY sur Vercel (Settings → Environment Variables)\n" +
+        "  4. Redéployez\n\n" +
+        "Le cron utilisera alors ScrapingAnt pour rendre la page profil avec JavaScript\n" +
+        "et extraire automatiquement les URLs vidéo."
+    );
   }
 
+  // Si ScrapingAnt est configuré mais n'a rien trouvé
   throw new Error(
-    "Aucune vidéo récupérée après toutes les stratégies :\n" +
-      "  ① /api/post/item_list/ → réponse vide (X-Bogus manquant)\n" +
-      "  ② Recherche JSON récursive → aucune liste trouvée\n" +
-      "  ③ Extraction IDs HTML + tikwm individuel → aucun ID trouvé ou tikwm en panne\n" +
-      "Causes possibles : TikTok bloque l'IP, le compte n'a pas de vidéos publiques, " +
-      "ou la structure de la page a totalement changé. " +
-      "Solution alternative : importez manuellement les URLs TikTok via le module Vidéos."
+    "ScrapingAnt a rendu la page mais aucune URL vidéo n'a été trouvée dans le HTML rendu.\n" +
+      "Causes possibles : le compte n'a pas de vidéos publiques, le username est incorrect,\n" +
+      "ou TikTok a renvoyé une page de captcha à ScrapingAnt.\n" +
+      "Vérifiez le username et réessayez. Si le problème persiste, consultez les logs Vercel."
   );
 }
 

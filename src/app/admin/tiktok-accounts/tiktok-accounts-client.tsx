@@ -322,25 +322,42 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
           </div>
         </div>
 
-        {/* Bandeau : explication de la situation TikTok */}
+        {/* Bandeau : ScrapingAnt pour automatisation */}
         <div className="rounded-lg border border-[#C9A227]/30 bg-[#C9A227]/10 p-4 text-sm">
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
             <div className="space-y-2">
               <p className="font-semibold text-[#C9A227]">
-                ⚠️ Synchro automatique indisponible — TikTok a migré vers une architecture "serverless"
+                ⭐ Automatisation via ScrapingAnt (rendu JavaScript)
               </p>
               <p className="text-[#FAF6EF]/80">
-                Diagnostic confirmé en production : TikTok sert désormais un <strong>shell HTML vide</strong>.
-                La page profil (<code className="bg-black/30 px-1 rounded">tiktok.com/@username</code>) ne contient
-                plus aucune URL vidéo — tout est chargé par JavaScript après le rendu.
-                Le tag <code className="bg-black/30 px-1 rounded">__UNIVERSAL_DATA_FOR_REHYDRATION__</code> est
-                présent mais son <code className="bg-black/30 px-1 rounded">__DEFAULT_SCOPE__</code> est vide.
+                TikTok sert un <strong>shell HTML vide</strong> (architecture "serverless") — le HTML
+                ne contient aucune URL vidéo car tout est rendu par JavaScript. Pour automatiser la
+                synchro, on utilise <strong>ScrapingAnt</strong>, un service qui exécute le JavaScript
+                côté serveur et retourne le HTML rendu (avec toutes les vidéos chargées).
               </p>
               <p className="text-[#FAF6EF]/80">
-                → <strong>La synchro automatique (cron 2×/jour) ne peut plus fonctionner</strong> sans un
-                navigateur headless. Utilisez le <strong>bookmarklet ci-dessous</strong> + l'import manuel
-                pour récupérer les vidéos. Le cron continuera d'essayer au cas où TikTok change.
+                <strong>Configuration (gratuite, 2 minutes) :</strong>
+              </p>
+              <ol className="text-[#FAF6EF]/70 space-y-1 list-decimal list-inside ml-2">
+                <li>
+                  Inscrivez-vous sur{" "}
+                  <a href="https://scrapingant.com" target="_blank" rel="noopener noreferrer" className="text-[#C9A227] hover:underline">
+                    scrapingant.com <ExternalLink className="w-3 h-3 inline" />
+                  </a>{" "}
+                  (gratuit, 10 000 requêtes/mois)
+                </li>
+                <li>Copiez votre API key depuis le dashboard</li>
+                <li>
+                  Ajoutez-la sur Vercel :{" "}
+                  <code className="bg-black/30 px-1 rounded">SCRAPINGANT_API_KEY</code>{" "}
+                  (Settings → Environment Variables → Production + Preview)
+                </li>
+                <li>Redéployez — le cron 2×/jour synchronisera automatiquement les vidéos</li>
+              </ol>
+              <p className="text-[#FAF6EF]/50 text-xs mt-2">
+                Consommation estimée : 2 comptes × 2 syncs/jour = ~120 pages/mois (sur les 1 000 incluses
+                dans le plan gratuit). Chaque page rendue avec JS coûte 10 crédits.
               </p>
             </div>
           </div>
