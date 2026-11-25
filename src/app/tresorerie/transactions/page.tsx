@@ -145,7 +145,7 @@ export default function TresorerieTransactionsPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center py-24 text-[#BDB4C9]">
+        <div className="flex items-center justify-center py-24 text-[#8a8378]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       }
@@ -470,10 +470,10 @@ function TransactionsContenu() {
       {/* En-tête */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#1e0f2b]">
             Journal des mouvements
           </h1>
-          <p className="text-sm text-[#BDB4C9] mt-1">
+          <p className="text-sm text-[#8a8378] mt-1">
             {total} écriture{total > 1 ? "s" : ""} — recettes, dépenses et
             transferts internes, tracés ligne par ligne.
           </p>
@@ -481,10 +481,10 @@ function TransactionsContenu() {
         <div className="flex items-center gap-2">
           <button
             onClick={exporterExcel}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#1e0f2b] text-sm font-semibold hover:bg-white transition-colors shadow-sm"
             title="Export Excel (.xlsx) — classeur designé : Synthèse, Recettes, Dépenses et Transferts (selon les filtres actifs)"
           >
-            <FileSpreadsheet className="w-4 h-4 text-[#DDBE55]" />
+            <FileSpreadsheet className="w-4 h-4 text-[#a3821c]" />
             <span className="hidden sm:inline">Export Excel</span>
           </button>
           <button
@@ -495,14 +495,14 @@ function TransactionsContenu() {
                 ? "Créez au moins deux caisses actives pour transférer"
                 : "Transférer des fonds entre deux caisses"
             }
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#8C5FA8]/30 text-sm font-medium text-[#C9AEE3] hover:bg-[#8C5FA8]/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#8C5FA8]/30 text-sm font-medium text-[#6b4480] hover:bg-[#8C5FA8]/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ArrowLeftRight className="w-4 h-4" />
             <span className="hidden sm:inline">Transfert</span>
           </button>
           <button
             onClick={ouvrirCreation}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#1e0f2b] text-sm font-semibold hover:bg-white transition-colors"
           >
             <Plus className="w-4 h-4" />
             Saisir
@@ -513,9 +513,9 @@ function TransactionsContenu() {
       {/* Totaux de la sélection — ⭐ V3.88 : conversion automatique vers la
           devise d'affichage (défaut XOF) ; le détail natif par devise reste
           visible dessous (le montant d'origine n'est JAMAIS remplacé). */}
-      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 space-y-3">
+      <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
+          <p className="text-[10px] uppercase font-bold text-[#8a8378] tracking-wider">
             Totaux de la sélection — toutes devises converties en
           </p>
           <div className="flex items-center gap-1.5">
@@ -525,8 +525,8 @@ function TransactionsContenu() {
                 onClick={() => setDeviseAffichage(d)}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
                   deviseAffichage === d
-                    ? "bg-[#3D1A54] text-[#FAF6EF]"
-                    : "bg-[#C9A227]/10 text-[#BDB4C9] hover:bg-[#C9A227]/10"
+                    ? "bg-white text-[#1e0f2b]"
+                    : "bg-[#C9A227]/10 text-[#8a8378] hover:bg-[#C9A227]/10"
                 }`}
               >
                 {d}
@@ -536,28 +536,28 @@ function TransactionsContenu() {
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-xl border border-[#5B7052]/20 bg-[#5B7052]/5 p-3">
-            <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
+            <p className="text-[10px] uppercase font-bold text-[#8a8378] tracking-wider">
               Recettes (filtre)
             </p>
-            <p className="text-lg font-bold text-[#A3C9B0] mt-1">
+            <p className="text-lg font-bold text-[#3f5039] mt-1">
               {formaterMontant(totaux.recettes, deviseAffichage)}
             </p>
           </div>
           <div className="rounded-xl border border-[#B3452E]/20 bg-[#B3452E]/5 p-3">
-            <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
+            <p className="text-[10px] uppercase font-bold text-[#8a8378] tracking-wider">
               Dépenses (filtre)
             </p>
-            <p className="text-lg font-bold text-[#E08B6D] mt-1">
+            <p className="text-lg font-bold text-[#c05a3c] mt-1">
               {formaterMontant(totaux.depenses, deviseAffichage)}
             </p>
           </div>
-          <div className="rounded-xl bg-[#3D1A54] border border-[#C9A227]/20 p-3">
-            <p className="text-[10px] uppercase font-bold text-[#DDBE55] tracking-wider">
+          <div className="rounded-xl bg-white border border-[#c9a227]/40 p-3">
+            <p className="text-[10px] uppercase font-bold text-[#a3821c] tracking-wider">
               Solde (filtre)
             </p>
             <p
               className={`text-lg font-bold mt-1 ${
-                totaux.recettes - totaux.depenses >= 0 ? "text-[#DDBE55]" : "text-[#E88A76]"
+                totaux.recettes - totaux.depenses >= 0 ? "text-[#a3821c]" : "text-[#c05a3c]"
               }`}
             >
               {formaterMontant(totaux.recettes - totaux.depenses, deviseAffichage)}
@@ -566,7 +566,7 @@ function TransactionsContenu() {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           {/* Détail natif par devise : le montant saisi reste visible. */}
-          <p className="text-[11px] text-[#BDB4C9]">
+          <p className="text-[11px] text-[#8a8378]">
             {(totaux.parDevise?.length ?? 0) > 0
               ? totaux.parDevise!
                   .map(
@@ -579,14 +579,14 @@ function TransactionsContenu() {
                   .join(" · ")
               : "Aucune écriture dans la sélection."}
           </p>
-          <p className="text-[10px] text-[#FAF6EF]/50 italic">
+          <p className="text-[10px] text-[#1e0f2b]/50 italic">
             {noteTauxReference(deviseAffichage)}
           </p>
         </div>
       </div>
 
       {/* Filtres */}
-      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 space-y-3">
+      <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex gap-2">
             <button
@@ -596,8 +596,8 @@ function TransactionsContenu() {
               }}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 type === ""
-                  ? "bg-[#3D1A54] text-[#FAF6EF]"
-                  : "bg-[#C9A227]/10 text-[#BDB4C9] hover:bg-[#C9A227]/10"
+                  ? "bg-white text-[#1e0f2b]"
+                  : "bg-[#C9A227]/10 text-[#8a8378] hover:bg-[#C9A227]/10"
               }`}
             >
               Tous
@@ -610,7 +610,7 @@ function TransactionsContenu() {
                   setType(v);
                 }}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  type === v ? "bg-[#3D1A54] text-[#FAF6EF]" : "bg-[#C9A227]/10 text-[#BDB4C9] hover:bg-[#C9A227]/10"
+                  type === v ? "bg-white text-[#1e0f2b]" : "bg-[#C9A227]/10 text-[#8a8378] hover:bg-[#C9A227]/10"
                 }`}
               >
                 {t2.libelle}s
@@ -618,7 +618,7 @@ function TransactionsContenu() {
             ))}
           </div>
           <div className="relative flex-1 min-w-40">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FAF6EF]/35" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e0f2b]/35" />
             <input
               type="search"
               value={recherche}
@@ -627,7 +627,7 @@ function TransactionsContenu() {
                 setRecherche(e.target.value);
               }}
               placeholder="Rechercher (libellé, référence, donateur…)…"
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
             />
           </div>
         </div>
@@ -638,7 +638,7 @@ function TransactionsContenu() {
               setPage(1);
               setCategorie(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+            className="px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
             aria-label="Filtrer par catégorie"
           >
             <option value="">Toutes catégories</option>
@@ -659,7 +659,7 @@ function TransactionsContenu() {
               setPage(1);
               setCaisseFiltre(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+            className="px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
             aria-label="Filtrer par caisse"
           >
             <option value="">Toutes caisses</option>
@@ -675,7 +675,7 @@ function TransactionsContenu() {
               setPage(1);
               setDevise(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+            className="px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
             aria-label="Filtrer par devise"
           >
             <option value="">Toutes devises</option>
@@ -692,7 +692,7 @@ function TransactionsContenu() {
               setPage(1);
               setDu(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+            className="px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
             aria-label="Date de début"
           />
           <input
@@ -702,7 +702,7 @@ function TransactionsContenu() {
               setPage(1);
               setAu(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+            className="px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
             aria-label="Date de fin"
           />
           {(du || au || categorie || type || devise || caisseFiltre || recherche) && (
@@ -717,7 +717,7 @@ function TransactionsContenu() {
                 setRecherche("");
                 setPage(1);
               }}
-              className="text-xs text-[#C9A227] hover:text-[#DDBE55] font-semibold px-2"
+              className="text-xs text-[#a3821c] hover:text-[#a3821c] font-semibold px-2"
             >
               Réinitialiser
             </button>
@@ -726,7 +726,7 @@ function TransactionsContenu() {
       </div>
 
       {erreur && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#E08B6D] text-xs border border-[#B3452E]/30">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#c05a3c] text-xs border border-[#B3452E]/30">
           <AlertCircle className="w-4 h-4" />
           {erreur}
         </div>
@@ -734,20 +734,20 @@ function TransactionsContenu() {
 
       {/* Liste */}
       {chargement ? (
-        <div className="flex items-center justify-center py-16 text-[#BDB4C9]">
+        <div className="flex items-center justify-center py-16 text-[#8a8378]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 px-6 py-14 text-center">
-          <BookOpen className="w-8 h-8 text-[#FAF6EF]/25 mx-auto mb-3" />
-          <p className="text-sm text-[#BDB4C9]">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 px-6 py-14 text-center">
+          <BookOpen className="w-8 h-8 text-[#1e0f2b]/25 mx-auto mb-3" />
+          <p className="text-sm text-[#8a8378]">
             Aucune écriture ne correspond aux filtres.
           </p>
         </div>
       ) : (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 divide-y divide-[#C9A227]/10 overflow-x-auto">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 divide-y divide-[#C9A227]/10 overflow-x-auto">
           {/* En-tête tableau (desktop) */}
-          <div className="hidden md:grid grid-cols-[110px_1fr_150px_120px_110px_118px] gap-2 px-5 py-3 text-[10px] uppercase font-bold tracking-wider text-[#BDB4C9]">
+          <div className="hidden md:grid grid-cols-[110px_1fr_150px_120px_110px_118px] gap-2 px-5 py-3 text-[10px] uppercase font-bold tracking-wider text-[#8a8378]">
             <span>Date</span>
             <span>Libellé</span>
             <span>Catégorie</span>
@@ -767,7 +767,7 @@ function TransactionsContenu() {
                 key={t.id}
                 className="md:grid md:grid-cols-[110px_1fr_150px_120px_110px_118px] flex flex-col md:flex-row gap-1 md:gap-2 px-5 py-3.5 hover:bg-[#C9A227]/15 transition-colors items-start md:items-center"
               >
-                <span className="text-xs text-[#BDB4C9] whitespace-nowrap">
+                <span className="text-xs text-[#8a8378] whitespace-nowrap">
                   {new Date(t.date).toLocaleDateString("fr-FR", {
                     day: "2-digit",
                     month: "2-digit",
@@ -775,17 +775,17 @@ function TransactionsContenu() {
                   })}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-[#FAF6EF] flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-[#1e0f2b] flex items-center gap-1.5">
                     {estTransfert ? (
-                      <ArrowLeftRight className="w-3.5 h-3.5 text-[#C9AEE3] flex-shrink-0" />
+                      <ArrowLeftRight className="w-3.5 h-3.5 text-[#6b4480] flex-shrink-0" />
                     ) : estRecette ? (
-                      <ArrowDownCircle className="w-3.5 h-3.5 text-[#A3C9B0] flex-shrink-0" />
+                      <ArrowDownCircle className="w-3.5 h-3.5 text-[#3f5039] flex-shrink-0" />
                     ) : (
-                      <ArrowUpCircle className="w-3.5 h-3.5 text-[#E08B6D] flex-shrink-0" />
+                      <ArrowUpCircle className="w-3.5 h-3.5 text-[#c05a3c] flex-shrink-0" />
                     )}
                     <span className="truncate">{t.label}</span>
                   </p>
-                  <p className="text-[11px] text-[#BDB4C9] truncate">
+                  <p className="text-[11px] text-[#8a8378] truncate">
                     {estTransfert ? (
                       <>
                         {t.caisseNom || "?"} → {t.caisseDestinationNom || "?"}
@@ -807,23 +807,23 @@ function TransactionsContenu() {
                     )}
                   </p>
                 </div>
-                <span className="text-[11px] text-[#BDB4C9]">
+                <span className="text-[11px] text-[#8a8378]">
                   {libelleCategorie(t.category, t.type)}
                 </span>
-                <span className="text-[11px] text-[#BDB4C9] truncate">
+                <span className="text-[11px] text-[#8a8378] truncate">
                   {estTransfert
                     ? `${t.caisseNom || "?"} → ${t.caisseDestinationNom || "?"}`
                     : t.caisseNom || (
-                        <span className="italic text-[#FAF6EF]/40">non affecté</span>
+                        <span className="italic text-[#1e0f2b]/40">non affecté</span>
                       )}
                 </span>
                 <span
                   className={`text-sm font-bold md:text-right ${
                     estTransfert
-                      ? "text-[#C9AEE3]"
+                      ? "text-[#6b4480]"
                       : estRecette
-                        ? "text-[#A3C9B0]"
-                        : "text-[#E08B6D]"
+                        ? "text-[#3f5039]"
+                        : "text-[#c05a3c]"
                   }`}
                 >
                   {estRecette ? "+" : "−"}
@@ -831,7 +831,7 @@ function TransactionsContenu() {
                   {/* ⭐ V3.88 — équivalent converti (jamais de « 0 » quand on
                       change de devise d'affichage). */}
                   {equivalent && (
-                    <span className="block text-[10px] font-medium text-[#FAF6EF]/60">
+                    <span className="block text-[10px] font-medium text-[#1e0f2b]/60">
                       {equivalent}
                     </span>
                   )}
@@ -840,7 +840,7 @@ function TransactionsContenu() {
                   {estRecette && (
                     <button
                       onClick={() => setDetails(t)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:text-[#C9AEE3] hover:bg-[#8C5FA8]/10 transition-colors"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8a8378] hover:text-[#6b4480] hover:bg-[#8C5FA8]/10 transition-colors"
                       aria-label="Détails du donateur"
                       title="Retracer le donateur et le don (coordonnées complètes)"
                     >
@@ -850,7 +850,7 @@ function TransactionsContenu() {
                   {!estTransfert && (
                     <button
                       onClick={() => ouvrirCorrection(t)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:text-[#C9A227] hover:bg-[#C9A227]/10 transition-colors"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8a8378] hover:text-[#a3821c] hover:bg-[#C9A227]/10 transition-colors"
                       aria-label="Corriger"
                       title="Corriger l'écriture"
                     >
@@ -863,7 +863,7 @@ function TransactionsContenu() {
                       setMotifSuppression("");
                       setErreurSuppression("");
                     }}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:text-[#E08B6D] hover:bg-[#B3452E]/10 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8a8378] hover:text-[#c05a3c] hover:bg-[#B3452E]/10 transition-colors"
                     aria-label="Supprimer"
                     title="Supprimer l'écriture (motif obligatoire)"
                   >
@@ -873,7 +873,7 @@ function TransactionsContenu() {
               </div>
             );
           })}
-          <div className="border-t border-[#C9A227]/10 px-4 pb-3">
+          <div className="border-t border-[#c9a227]/30 px-4 pb-3">
             <Pagination
               total={total}
               page={page}
@@ -889,15 +889,15 @@ function TransactionsContenu() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
           <form
             onSubmit={enregistrer}
-            className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-xl w-full p-6 space-y-4 my-8"
+            className="bg-white rounded-2xl shadow-2xl border border-[#c9a227]/50 max-w-xl w-full p-6 space-y-4 my-8"
           >
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-bold font-serif text-[#FAF6EF]">
+                <h2 className="text-lg font-bold font-serif text-[#1e0f2b]">
                   {editionId ? "Corriger l'écriture" : "Saisir un mouvement"}
                 </h2>
                 {editionId && (
-                  <p className="text-[11px] text-[#BDB4C9] mt-0.5">
+                  <p className="text-[11px] text-[#8a8378] mt-0.5">
                     Le type ({form.type}) et la devise ({form.currency}) sont
                     figés — supprimez l&apos;écriture si sa nature doit changer.
                   </p>
@@ -906,7 +906,7 @@ function TransactionsContenu() {
               <button
                 type="button"
                 onClick={() => setEditeurOuvert(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:bg-[#C9A227]/10"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8a8378] hover:bg-[#C9A227]/10"
                 aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
@@ -937,9 +937,9 @@ function TransactionsContenu() {
                         className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-bold transition-all ${
                           actif
                             ? v === "RECETTE"
-                              ? "border-[#5B7052] bg-[#5B7052]/5 text-[#A3C9B0]"
-                              : "border-[#B3452E] bg-[#B3452E]/5 text-[#E08B6D]"
-                            : "border-[#C9A227]/15 text-[#BDB4C9] hover:border-[#C9A227]/40"
+                              ? "border-[#5B7052] bg-[#5B7052]/5 text-[#3f5039]"
+                              : "border-[#B3452E] bg-[#B3452E]/5 text-[#c05a3c]"
+                            : "border-[#c9a227]/35 text-[#8a8378] hover:border-[#c9a227]/60"
                         }`}
                       >
                         {v === "RECETTE" ? (
@@ -956,7 +956,7 @@ function TransactionsContenu() {
 
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Montant *
                 </label>
                 <input
@@ -966,18 +966,18 @@ function TransactionsContenu() {
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
                   placeholder="Ex. 150,00"
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Devise
                 </label>
                 <select
                   value={form.currency}
                   disabled={Boolean(editionId)}
                   onChange={(e) => setForm({ ...form, currency: e.target.value, caisseId: "" })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] disabled:opacity-60"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] disabled:opacity-60"
                 >
                   {DEVISE_CODES.map((d) => (
                     <option key={d} value={d}>
@@ -987,13 +987,13 @@ function TransactionsContenu() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Catégorie *
                 </label>
                 <select
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 >
                   {Object.entries(categoriesCourantes).map(([v, l]) => (
                     <option key={v} value={v}>
@@ -1003,27 +1003,27 @@ function TransactionsContenu() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Date comptable
                 </label>
                 <input
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 />
               </div>
             </div>
 
             {/* ⭐ V3.67 — Caisse de rattachement */}
             <div>
-              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+              <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                 Caisse (multicaisse)
               </label>
               <select
                 value={form.caisseId}
                 onChange={(e) => setForm({ ...form, caisseId: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
               >
                 <option value="">
                   {caissesDuFormulaire.length > 0
@@ -1037,7 +1037,7 @@ function TransactionsContenu() {
                 ))}
               </select>
               {caissesDuFormulaire.length > 0 && !form.caisseId && (
-                <p className="text-[10px] text-[#DDBE55] mt-1">
+                <p className="text-[10px] text-[#a3821c] mt-1">
                   Recommandé : rattacher chaque écriture à une caisse pour une
                   situation multicaisse exacte.
                 </p>
@@ -1045,7 +1045,7 @@ function TransactionsContenu() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+              <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                 Libellé *
               </label>
               <input
@@ -1054,19 +1054,19 @@ function TransactionsContenu() {
                 value={form.label}
                 onChange={(e) => setForm({ ...form, label: e.target.value })}
                 placeholder="Ex. Offrande du culte du dimanche"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
               />
             </div>
 
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Méthode
                 </label>
                 <select
                   value={form.method}
                   onChange={(e) => setForm({ ...form, method: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 >
                   <option value="">Non précisée</option>
                   {Object.entries(MOUVEMENT_METHODS).map(([v, l]) => (
@@ -1077,7 +1077,7 @@ function TransactionsContenu() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Référence (pièce / reçu)
                 </label>
                 <input
@@ -1085,7 +1085,7 @@ function TransactionsContenu() {
                   value={form.reference}
                   onChange={(e) => setForm({ ...form, reference: e.target.value })}
                   placeholder="Ex. REC-2026-042"
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 />
               </div>
             </div>
@@ -1093,7 +1093,7 @@ function TransactionsContenu() {
             {form.type === "RECETTE" && (
               <div className="space-y-2">
                 <div>
-                  <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                  <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                     Donateur (facultatif)
                   </label>
                   <input
@@ -1102,7 +1102,7 @@ function TransactionsContenu() {
                     disabled={form.isAnonymous}
                     onChange={(e) => setForm({ ...form, donorName: e.target.value })}
                     placeholder="Nom du donateur"
-                    className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] disabled:opacity-50"
+                    className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] disabled:opacity-50"
                   />
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -1114,7 +1114,7 @@ function TransactionsContenu() {
                     }
                     className="w-4 h-4 accent-[#C9A227]"
                   />
-                  <span className="text-xs text-[#FAF6EF] font-semibold">
+                  <span className="text-xs text-[#1e0f2b] font-semibold">
                     Don anonyme
                   </span>
                 </label>
@@ -1122,7 +1122,7 @@ function TransactionsContenu() {
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+              <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                 Note (facultatif)
               </label>
               <textarea
@@ -1130,26 +1130,26 @@ function TransactionsContenu() {
                 value={form.note}
                 onChange={(e) => setForm({ ...form, note: e.target.value })}
                 placeholder="Contexte, précisions…"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] resize-none"
+                className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] resize-none"
               />
             </div>
 
             {erreurForm && (
-              <p className="text-xs text-[#E08B6D]">{erreurForm}</p>
+              <p className="text-xs text-[#c05a3c]">{erreurForm}</p>
             )}
 
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setEditeurOuvert(false)}
-                className="px-4 py-2 rounded-lg text-sm text-[#BDB4C9] hover:text-[#FAF6EF]"
+                className="px-4 py-2 rounded-lg text-sm text-[#8a8378] hover:text-[#1e0f2b]"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={enregistrement}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white text-[#1e0f2b] text-sm font-semibold hover:bg-white transition-colors disabled:opacity-50"
               >
                 {enregistrement && <Loader2 className="w-4 h-4 animate-spin" />}
                 {editionId ? "Enregistrer la correction" : "Enregistrer"}
@@ -1164,15 +1164,15 @@ function TransactionsContenu() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
           <form
             onSubmit={enregistrerTransfert}
-            className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-xl w-full p-6 space-y-4 my-8"
+            className="bg-white rounded-2xl shadow-2xl border border-[#c9a227]/50 max-w-xl w-full p-6 space-y-4 my-8"
           >
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-bold font-serif text-[#FAF6EF] flex items-center gap-2">
-                  <ArrowLeftRight className="w-5 h-5 text-[#C9AEE3]" />
+                <h2 className="text-lg font-bold font-serif text-[#1e0f2b] flex items-center gap-2">
+                  <ArrowLeftRight className="w-5 h-5 text-[#6b4480]" />
                   Transfert entre caisses
                 </h2>
-                <p className="text-[11px] text-[#BDB4C9] mt-0.5">
+                <p className="text-[11px] text-[#8a8378] mt-0.5">
                   Mouvement interne : l&apos;argent sort d&apos;une caisse et
                   entre dans l&apos;autre — le total consolidé ne change pas.
                 </p>
@@ -1180,7 +1180,7 @@ function TransactionsContenu() {
               <button
                 type="button"
                 onClick={() => setTransfertOuvert(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:bg-[#C9A227]/10"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8a8378] hover:bg-[#C9A227]/10"
                 aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
@@ -1189,7 +1189,7 @@ function TransactionsContenu() {
 
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Caisse source *
                 </label>
                 <select
@@ -1197,7 +1197,7 @@ function TransactionsContenu() {
                   onChange={(e) =>
                     setFormTransfert({ ...formTransfert, caisseId: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 >
                   {caissesActives.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -1207,7 +1207,7 @@ function TransactionsContenu() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Caisse destination *
                 </label>
                 <select
@@ -1218,7 +1218,7 @@ function TransactionsContenu() {
                       caisseDestinationId: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 >
                   {caissesActives.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -1231,7 +1231,7 @@ function TransactionsContenu() {
 
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Montant *
                 </label>
                 <input
@@ -1243,11 +1243,11 @@ function TransactionsContenu() {
                     setFormTransfert({ ...formTransfert, amount: e.target.value })
                   }
                   placeholder="Ex. 500,00"
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Date comptable
                 </label>
                 <input
@@ -1256,13 +1256,13 @@ function TransactionsContenu() {
                   onChange={(e) =>
                     setFormTransfert({ ...formTransfert, date: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+              <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                 Libellé *
               </label>
               <input
@@ -1273,12 +1273,12 @@ function TransactionsContenu() {
                   setFormTransfert({ ...formTransfert, label: e.target.value })
                 }
                 placeholder="Ex. Dépôt des offrandes en banque"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+              <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                 Référence / note (facultatif)
               </label>
               <input
@@ -1288,34 +1288,34 @@ function TransactionsContenu() {
                   setFormTransfert({ ...formTransfert, reference: e.target.value })
                 }
                 placeholder="Ex. BORD-2026-018 (bordereau de dépôt)"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
               />
             </div>
 
             {formTransfert.caisseId &&
               formTransfert.caisseDestinationId &&
               formTransfert.caisseId === formTransfert.caisseDestinationId && (
-                <p className="text-xs text-[#E08B6D]">
+                <p className="text-xs text-[#c05a3c]">
                   La source et la destination doivent être des caisses différentes.
                 </p>
               )}
 
             {erreurTransfert && (
-              <p className="text-xs text-[#E08B6D]">{erreurTransfert}</p>
+              <p className="text-xs text-[#c05a3c]">{erreurTransfert}</p>
             )}
 
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setTransfertOuvert(false)}
-                className="px-4 py-2 rounded-lg text-sm text-[#BDB4C9] hover:text-[#FAF6EF]"
+                className="px-4 py-2 rounded-lg text-sm text-[#8a8378] hover:text-[#1e0f2b]"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={enregistrement}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white text-[#1e0f2b] text-sm font-semibold hover:bg-white transition-colors disabled:opacity-50"
               >
                 {enregistrement && <Loader2 className="w-4 h-4 animate-spin" />}
                 Effectuer le transfert
@@ -1328,22 +1328,22 @@ function TransactionsContenu() {
       {/* ── Suppression avec motif (gouvernance V3.67) ── */}
       {suppression && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm">
-          <div className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-md w-full p-6 space-y-4">
-            <h2 className="text-lg font-bold text-[#E08B6D] flex items-center gap-2">
+          <div className="bg-white rounded-2xl shadow-2xl border border-[#c9a227]/50 max-w-md w-full p-6 space-y-4">
+            <h2 className="text-lg font-bold text-[#c05a3c] flex items-center gap-2">
               <Trash2 className="w-5 h-5" />
               Supprimer l&apos;écriture
             </h2>
-            <p className="text-sm text-[#FAF6EF]">
+            <p className="text-sm text-[#1e0f2b]">
               « {suppression.label} » ·{" "}
               <b>{formaterMontant(suppression.amount, suppression.currency)}</b>
             </p>
-            <p className="text-xs text-[#BDB4C9] leading-relaxed">
+            <p className="text-xs text-[#8a8378] leading-relaxed">
               Gouvernance : l&apos;écriture disparaît du journal, mais son
               contenu complet, votre nom et le motif ci-dessous restent
               consignés dans le journal d&apos;audit.
             </p>
             <div>
-              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+              <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                 Motif de suppression * (au moins 3 caractères)
               </label>
               <input
@@ -1351,18 +1351,18 @@ function TransactionsContenu() {
                 value={motifSuppression}
                 onChange={(e) => setMotifSuppression(e.target.value)}
                 placeholder="Ex. Doublon de saisie, erreur de montant…"
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 autoFocus
               />
             </div>
             {erreurSuppression && (
-              <p className="text-xs text-[#E08B6D]">{erreurSuppression}</p>
+              <p className="text-xs text-[#c05a3c]">{erreurSuppression}</p>
             )}
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setSuppression(null)}
-                className="px-4 py-2 rounded-lg text-sm text-[#BDB4C9] hover:text-[#FAF6EF]"
+                className="px-4 py-2 rounded-lg text-sm text-[#8a8378] hover:text-[#1e0f2b]"
               >
                 Annuler
               </button>
@@ -1380,14 +1380,14 @@ function TransactionsContenu() {
       {/* ── ⭐ V3.88 — Détails du donateur (retracement complet) ── */}
       {details && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-lg w-full p-6 space-y-4 my-8">
+          <div className="bg-white rounded-2xl shadow-2xl border border-[#c9a227]/50 max-w-lg w-full p-6 space-y-4 my-8">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold font-serif text-[#FAF6EF] flex items-center gap-2">
-                  <UserRound className="w-5 h-5 text-[#C9AEE3]" />
+                <h2 className="text-lg font-bold font-serif text-[#1e0f2b] flex items-center gap-2">
+                  <UserRound className="w-5 h-5 text-[#6b4480]" />
                   Détails du don
                 </h2>
-                <p className="text-[11px] text-[#BDB4C9] mt-0.5">
+                <p className="text-[11px] text-[#8a8378] mt-0.5">
                   Toutes les informations du donateur — pour le retracement et
                   la prière.
                 </p>
@@ -1395,7 +1395,7 @@ function TransactionsContenu() {
               <button
                 type="button"
                 onClick={() => setDetails(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:bg-[#C9A227]/10"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8a8378] hover:bg-[#C9A227]/10"
                 aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
@@ -1403,27 +1403,27 @@ function TransactionsContenu() {
             </div>
 
             {/* Donateur */}
-            <div className="rounded-xl border border-[#C9A227]/30 bg-[#C9A227]/5 p-4 space-y-2">
-              <p className="text-[10px] uppercase font-bold text-[#DDBE55] tracking-wider">
+            <div className="rounded-xl border border-[#c9a227]/50 bg-[#C9A227]/5 p-4 space-y-2">
+              <p className="text-[10px] uppercase font-bold text-[#a3821c] tracking-wider">
                 Donateur
               </p>
-              <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+              <p className="text-sm font-bold font-serif text-[#1e0f2b]">
                 {details.don?.donorName || details.donorName ||
                   (details.isAnonymous ? "Don anonyme" : "Donateur non précisé")}
               </p>
               {details.don?.donorEmail && (
                 <a
                   href={`mailto:${details.don.donorEmail}`}
-                  className="inline-flex items-center gap-1.5 text-xs text-[#C9AEE3] hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#6b4480] hover:underline"
                 >
                   <Mail className="w-3.5 h-3.5" />
                   {details.don.donorEmail}
                 </a>
               )}
               {details.don?.message && (
-                <div className="px-3 py-2 rounded-lg bg-[#1A0826]/70 border border-[#C9A227]/10 flex items-start gap-2">
-                  <MessageSquare className="w-3.5 h-3.5 text-[#BDB4C9] flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-[#FAF6EF]/70 italic">
+                <div className="px-3 py-2 rounded-lg bg-white border border-[#c9a227]/30 flex items-start gap-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-[#8a8378] flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-[#1e0f2b]/70 italic">
                     {details.don.message}
                   </p>
                 </div>
@@ -1432,33 +1432,33 @@ function TransactionsContenu() {
 
             {/* Caractéristiques du don */}
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="rounded-lg border border-[#C9A227]/15 px-3 py-2">
-                <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
+              <div className="rounded-lg border border-[#c9a227]/35 px-3 py-2">
+                <p className="text-[10px] uppercase font-bold text-[#8a8378] tracking-wider">
                   Montant
                 </p>
-                <p className="font-bold text-[#A3C9B0] mt-0.5">
+                <p className="font-bold text-[#3f5039] mt-0.5">
                   {formaterMontant(details.amount, details.currency)}
                   {details.montantConverti != null &&
                     details.montantConverti !== details.amount && (
-                      <span className="block text-[10px] font-medium text-[#BDB4C9]">
+                      <span className="block text-[10px] font-medium text-[#8a8378]">
                         ≈ {formaterMontant(details.montantConverti, deviseAffichage)}
                       </span>
                     )}
                 </p>
               </div>
-              <div className="rounded-lg border border-[#C9A227]/15 px-3 py-2">
-                <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
+              <div className="rounded-lg border border-[#c9a227]/35 px-3 py-2">
+                <p className="text-[10px] uppercase font-bold text-[#8a8378] tracking-wider">
                   Nature
                 </p>
-                <p className="font-semibold text-[#FAF6EF] mt-0.5">
+                <p className="font-semibold text-[#1e0f2b] mt-0.5">
                   {libelleCategorie(details.category, details.type)}
                 </p>
               </div>
-              <div className="rounded-lg border border-[#C9A227]/15 px-3 py-2">
-                <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
+              <div className="rounded-lg border border-[#c9a227]/35 px-3 py-2">
+                <p className="text-[10px] uppercase font-bold text-[#8a8378] tracking-wider">
                   Date
                 </p>
-                <p className="font-semibold text-[#FAF6EF] mt-0.5">
+                <p className="font-semibold text-[#1e0f2b] mt-0.5">
                   {new Date(details.date).toLocaleDateString("fr-FR", {
                     day: "numeric",
                     month: "long",
@@ -1466,11 +1466,11 @@ function TransactionsContenu() {
                   })}
                 </p>
               </div>
-              <div className="rounded-lg border border-[#C9A227]/15 px-3 py-2">
-                <p className="text-[10px] uppercase font-bold text-[#BDB4C9] tracking-wider">
+              <div className="rounded-lg border border-[#c9a227]/35 px-3 py-2">
+                <p className="text-[10px] uppercase font-bold text-[#8a8378] tracking-wider">
                   Méthode
                 </p>
-                <p className="font-semibold text-[#FAF6EF] mt-0.5">
+                <p className="font-semibold text-[#1e0f2b] mt-0.5">
                   {libelleMethode(details.method)}
                 </p>
               </div>
@@ -1479,11 +1479,11 @@ function TransactionsContenu() {
             {/* Dons en ligne : passerelle + statut + référence */}
             {details.don && (
               <div className="rounded-xl border border-[#8C5FA8]/25 bg-[#8C5FA8]/5 p-4 space-y-1.5 text-xs">
-                <p className="text-[10px] uppercase font-bold text-[#C9AEE3] tracking-wider flex items-center gap-1.5">
+                <p className="text-[10px] uppercase font-bold text-[#6b4480] tracking-wider flex items-center gap-1.5">
                   <Globe className="w-3.5 h-3.5" />
                   Don en ligne
                 </p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[#FAF6EF]/80">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[#1e0f2b]/80">
                   <span>
                     Passerelle :{" "}
                     <b>
@@ -1517,7 +1517,7 @@ function TransactionsContenu() {
                   )}
                 </div>
                 {details.reference && (
-                  <p className="text-[10px] text-[#BDB4C9] break-all">
+                  <p className="text-[10px] text-[#8a8378] break-all">
                     Référence : {details.reference}
                   </p>
                 )}
@@ -1525,20 +1525,20 @@ function TransactionsContenu() {
             )}
 
             {/* Caisse + note du trésorier */}
-            <div className="text-xs text-[#FAF6EF]/70 space-y-1">
+            <div className="text-xs text-[#1e0f2b]/70 space-y-1">
               <p>
                 Caisse :{" "}
                 <b>{details.caisseNom || "non affectée"}</b>
               </p>
               {details.note && (
-                <p className="italic text-[#BDB4C9]">« {details.note} »</p>
+                <p className="italic text-[#8a8378]">« {details.note} »</p>
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#C9A227]/10">
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#c9a227]/30">
               <a
                 href="/tresorerie/donateurs"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#C9A227] hover:text-[#DDBE55]"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#a3821c] hover:text-[#a3821c]"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 Historique des donateurs
@@ -1547,7 +1547,7 @@ function TransactionsContenu() {
                 type="button"
                 onClick={() => telechargerRecu(details)}
                 disabled={telechargementRecu}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#C9A227]/25 text-xs font-medium text-[#FAF6EF] hover:bg-[#C9A227]/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#c9a227]/45 text-xs font-medium text-[#1e0f2b] hover:bg-[#C9A227]/10 transition-colors disabled:opacity-50"
               >
                 {telechargementRecu ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />

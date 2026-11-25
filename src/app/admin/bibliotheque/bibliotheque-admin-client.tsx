@@ -464,10 +464,10 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
   };
 
   const inputCls =
-    "w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]";
+    "w-full bg-[#faf6ef] border border-[#1e0f2b]/20 rounded-lg px-3 py-2 text-[#1e0f2b] focus:outline-none focus:border-[#C9A227]";
   const inputClsSm =
-    "w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] text-sm focus:outline-none focus:border-[#C9A227]";
-  const labelCls = "text-xs uppercase tracking-wide text-[#FAF6EF]/60";
+    "w-full bg-[#faf6ef] border border-[#1e0f2b]/20 rounded-lg px-3 py-2 text-[#1e0f2b] text-sm focus:outline-none focus:border-[#C9A227]";
+  const labelCls = "text-xs uppercase tracking-wide text-[#1e0f2b]/60";
 
   // ⭐ V4.42 — répartition des livres par espace + liste de l'espace actif
   const nbParEspace = books.reduce(
@@ -480,15 +480,15 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
   const booksEspace = books.filter((b) => codeEspaceDuLivre(b) === espaceListe);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1A0826] to-[#2A0E3D] text-[#FAF6EF] p-6 md:p-10">
+    <div className="min-h-screen bg-gradient-to-b from-[#faf6ef] to-[#f3ecf8] text-[#1e0f2b] p-6 md:p-10">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* En-tête */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <BookOpen className="w-8 h-8 text-[#C9A227]" />
+            <BookOpen className="w-8 h-8 text-[#a3821c]" />
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">Bibliothèque</h1>
-              <p className="text-sm text-[#FAF6EF]/60">
+              <p className="text-sm text-[#1e0f2b]/60">
                 {books.length} livre{books.length > 1 ? "s" : ""} ·{" "}
                 {books.filter((b) => b.isPublished).length} publié{books.filter((b) => b.isPublished).length > 1 ? "s" : ""}
               </p>
@@ -534,7 +534,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
 
         {/* Formulaire */}
         {showForm && (
-          <div className="rounded-xl bg-white/5 border border-white/10 p-6 space-y-4">
+          <div className="rounded-xl bg-[#2a0e3d]/5 border border-[#1e0f2b]/10 p-6 space-y-4">
             <h2 className="text-lg font-semibold">
               {editionId ? "Modifier le livre" : "Nouveau livre"}
             </h2>
@@ -583,7 +583,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                     <option key={s.id} value={s.id}>{s.shortName}</option>
                   ))}
                 </select>
-                <p className="text-[11px] text-[#FAF6EF]/40">
+                <p className="text-[11px] text-[#1e0f2b]/40">
                   Détermine l'espace d'affichage : chaque serviteur a le sien,
                   les ouvrages ne sont jamais mélangés.
                 </p>
@@ -600,10 +600,10 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
             </div>
 
             {/* ─── ⭐ V4.40 — Zone fichier PDF (upload direct + analyse) ─── */}
-            <div className="rounded-xl border border-white/10 bg-[#1A0826]/60 p-4 space-y-3">
+            <div className="rounded-xl border border-[#1e0f2b]/10 bg-white p-4 space-y-3">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-[#C9A227]" />
+                  <FileText className="w-4 h-4 text-[#a3821c]" />
                   <span className="text-sm font-semibold">Fichier PDF du livre</span>
                 </div>
                 {form.fileUrl ? (
@@ -612,7 +612,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                       href={form.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-[#C9A227] hover:underline inline-flex items-center gap-1"
+                      className="text-xs text-[#a3821c] hover:underline inline-flex items-center gap-1"
                     >
                       <ExternalLink className="w-3 h-3" />
                       Ouvrir le PDF actuel
@@ -622,7 +622,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                       onClick={() =>
                         setForm({ ...form, fileUrl: "", fileSize: null })
                       }
-                      className="text-xs text-red-300 hover:text-red-200 inline-flex items-center gap-1"
+                      className="text-xs text-red-700 hover:text-red-800 inline-flex items-center gap-1"
                       title="Retirer le fichier"
                     >
                       <X className="w-3 h-3" />
@@ -646,11 +646,11 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
               {uploadPdf.enCours ? (
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#C9A227]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#a3821c]" />
                     <span className="truncate">{uploadPdf.nomFichier}</span>
-                    <span className="ml-auto text-[#FAF6EF]/60">{uploadPdf.progres}%</span>
+                    <span className="ml-auto text-[#1e0f2b]/60">{uploadPdf.progres}%</span>
                   </div>
-                  <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-2 rounded-full bg-[#2a0e3d]/10 overflow-hidden">
                     <div
                       className="h-full bg-[#C9A227] transition-all"
                       style={{ width: `${uploadPdf.progres}%` }}
@@ -661,7 +661,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                 <button
                   type="button"
                   onClick={() => inputPdfRef.current?.click()}
-                  className="w-full inline-flex items-center justify-center gap-2 border border-dashed border-[#C9A227]/50 hover:border-[#C9A227] rounded-lg px-4 py-3 text-sm text-[#FAF6EF]/80 hover:text-[#C9A227] transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-2 border border-dashed border-[#c9a227]/70 hover:border-[#C9A227] rounded-lg px-4 py-3 text-sm text-[#1e0f2b]/80 hover:text-[#a3821c] transition-colors"
                 >
                   <Upload className="w-4 h-4" />
                   {form.fileUrl
@@ -670,7 +670,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                 </button>
               )}
               {uploadPdf.erreur && (
-                <p className="text-xs text-red-300 flex items-center gap-1">
+                <p className="text-xs text-red-700 flex items-center gap-1">
                   <XCircle className="w-3.5 h-3.5" />
                   {uploadPdf.erreur}
                 </p>
@@ -678,20 +678,20 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
 
               {/* Résultat de l'analyse automatique */}
               {analyse.enCours && (
-                <p className="text-xs text-[#C9A227]/80 flex items-center gap-2">
+                <p className="text-xs text-[#a3821c]/80 flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5" />
                   <Loader2 className="w-3 h-3 animate-spin" />
                   Analyse du document (pages, métadonnées)…
                 </p>
               )}
               {analyse.resume && (
-                <p className="text-xs text-green-300 flex items-start gap-1.5">
+                <p className="text-xs text-green-700 flex items-start gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                   <span>Analyse automatique : {analyse.resume}</span>
                 </p>
               )}
               {analyse.erreur && (
-                <p className="text-xs text-amber-300 flex items-start gap-1.5">
+                <p className="text-xs text-amber-700 flex items-start gap-1.5">
                   <XCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                   <span>{analyse.erreur}</span>
                 </p>
@@ -699,17 +699,17 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
             </div>
 
             {/* ─── ⭐ V4.40 — Zone couverture (upload direct) ─── */}
-            <div className="rounded-xl border border-white/10 bg-[#1A0826]/60 p-4 space-y-3">
+            <div className="rounded-xl border border-[#1e0f2b]/10 bg-white p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <ImagePlus className="w-4 h-4 text-[#C9A227]" />
+                <ImagePlus className="w-4 h-4 text-[#a3821c]" />
                 <span className="text-sm font-semibold">Miniature de couverture</span>
               </div>
               <div className="flex items-start gap-4 flex-wrap">
-                <div className="w-24 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#3D1A54] to-[#2A0E3D] flex items-center justify-center border border-white/10">
+                <div className="w-24 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#f3ecf8] to-[#f3ecf8] flex items-center justify-center border border-[#1e0f2b]/10">
                   {form.coverUrl ? (
                     <img src={form.coverUrl} alt="Couverture" className="w-full h-full object-cover" />
                   ) : (
-                    <BookOpen className="w-8 h-8 text-[#C9A227]/60" />
+                    <BookOpen className="w-8 h-8 text-[#a3821c]/60" />
                   )}
                 </div>
                 <div className="flex-1 min-w-[220px] space-y-2">
@@ -727,11 +727,11 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                   {uploadCouverture.enCours ? (
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-sm">
-                        <Loader2 className="w-4 h-4 animate-spin text-[#C9A227]" />
+                        <Loader2 className="w-4 h-4 animate-spin text-[#a3821c]" />
                         <span className="truncate">{uploadCouverture.nomFichier}</span>
-                        <span className="ml-auto text-[#FAF6EF]/60">{uploadCouverture.progres}%</span>
+                        <span className="ml-auto text-[#1e0f2b]/60">{uploadCouverture.progres}%</span>
                       </div>
-                      <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                      <div className="h-2 rounded-full bg-[#2a0e3d]/10 overflow-hidden">
                         <div
                           className="h-full bg-[#C9A227] transition-all"
                           style={{ width: `${uploadCouverture.progres}%` }}
@@ -743,7 +743,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                       <button
                         type="button"
                         onClick={() => inputCouvertureRef.current?.click()}
-                        className="inline-flex items-center gap-2 border border-dashed border-[#C9A227]/50 hover:border-[#C9A227] rounded-lg px-4 py-2.5 text-sm text-[#FAF6EF]/80 hover:text-[#C9A227] transition-colors"
+                        className="inline-flex items-center gap-2 border border-dashed border-[#c9a227]/70 hover:border-[#C9A227] rounded-lg px-4 py-2.5 text-sm text-[#1e0f2b]/80 hover:text-[#a3821c] transition-colors"
                       >
                         <Upload className="w-4 h-4" />
                         {form.coverUrl ? "Remplacer…" : "Choisir une image… (JPG, PNG, WebP)"}
@@ -752,7 +752,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                         <button
                           type="button"
                           onClick={() => setForm({ ...form, coverUrl: "" })}
-                          className="inline-flex items-center gap-1.5 text-xs text-red-300 hover:text-red-200 px-2"
+                          className="inline-flex items-center gap-1.5 text-xs text-red-700 hover:text-red-800 px-2"
                         >
                           <X className="w-3.5 h-3.5" />
                           Retirer
@@ -761,12 +761,12 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                     </div>
                   )}
                   {uploadCouverture.erreur && (
-                    <p className="text-xs text-red-300 flex items-center gap-1">
+                    <p className="text-xs text-red-700 flex items-center gap-1">
                       <XCircle className="w-3.5 h-3.5" />
                       {uploadCouverture.erreur}
                     </p>
                   )}
-                  <p className="text-[11px] text-[#FAF6EF]/40">
+                  <p className="text-[11px] text-[#1e0f2b]/40">
                     Format conseillé : portrait 3:4 (ex. 600 × 800 px). Sans couverture,
                     le site affiche un dégradé aux couleurs de la catégorie.
                   </p>
@@ -776,7 +776,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
 
             {/* URL manuelle — secours (PDF hébergé ailleurs, image externe) */}
             <details className="text-sm">
-              <summary className="cursor-pointer text-[#FAF6EF]/50 hover:text-[#C9A227] text-xs uppercase tracking-wide">
+              <summary className="cursor-pointer text-[#1e0f2b]/50 hover:text-[#a3821c] text-xs uppercase tracking-wide">
                 Avancé — URL manuelle (PDF ou image hébergée ailleurs)
               </summary>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
@@ -919,7 +919,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
 
         {/* ⭐ V4.42 — Onglets d'espaces : chaque serviteur a son espace dédié */}
         <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Espaces de la bibliothèque">
-          <span className="text-xs uppercase tracking-wide text-[#FAF6EF]/40 mr-1">
+          <span className="text-xs uppercase tracking-wide text-[#1e0f2b]/40 mr-1">
             Espaces
           </span>
           {(["kongo", "afrika", "collectif"] as EspaceCode[])
@@ -936,8 +936,8 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                   onClick={() => setEspaceListe(code)}
                   className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
                     actif
-                      ? "bg-white/10"
-                      : "bg-white/5 border-white/10 text-[#FAF6EF]/60 hover:text-[#FAF6EF] hover:bg-white/10"
+                      ? "bg-[#2a0e3d]/10"
+                      : "bg-[#2a0e3d]/5 border-[#1e0f2b]/10 text-[#1e0f2b]/60 hover:text-[#1e0f2b] hover:bg-[#2a0e3d]/10"
                   }`}
                   style={
                     actif
@@ -955,7 +955,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
         {/* Liste des livres (espace actif uniquement) */}
         <div className="space-y-3">
           {booksEspace.length === 0 ? (
-            <p className="text-center text-[#FAF6EF]/50 py-12">
+            <p className="text-center text-[#1e0f2b]/50 py-12">
               Aucun livre dans l'espace « {NOMS_ESPACE[espaceListe]} ».
               Cliquez « Nouveau livre » pour commencer.
             </p>
@@ -963,14 +963,14 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
             booksEspace.map((book) => (
               <div
                 key={book.id}
-                className="rounded-xl border border-white/10 bg-white/5 p-4 flex items-center gap-4"
+                className="rounded-xl border border-[#1e0f2b]/10 bg-[#2a0e3d]/5 p-4 flex items-center gap-4"
               >
                 {/* Miniature */}
-                <div className="w-12 h-16 rounded-md overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#3D1A54] to-[#2A0E3D] flex items-center justify-center">
+                <div className="w-12 h-16 rounded-md overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#f3ecf8] to-[#f3ecf8] flex items-center justify-center">
                   {book.coverUrl ? (
                     <img src={book.coverUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <BookOpen className="w-5 h-5 text-[#C9A227]" />
+                    <BookOpen className="w-5 h-5 text-[#a3821c]" />
                   )}
                 </div>
                 {/* Infos */}
@@ -978,17 +978,17 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold truncate">{book.title}</span>
                     {!book.isPublished && (
-                      <span className="text-xs bg-gray-500/20 text-gray-300 px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-gray-500/20 text-gray-600 px-2 py-0.5 rounded-full">
                         Brouillon
                       </span>
                     )}
                     {!book.isDownloadable && (
-                      <span className="text-xs bg-[#C9A227]/20 text-[#DDBE55] px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-[#C9A227]/20 text-[#a3821c] px-2 py-0.5 rounded-full">
                         Lecture seule
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[#FAF6EF]/50">
+                  <p className="text-xs text-[#1e0f2b]/50">
                     {book.author} · {book.category}
                     {book.servantShortName ? ` · ${book.servantShortName}` : ""}
                     {book.pageCount ? ` · ${book.pageCount}p` : ""}
@@ -1003,23 +1003,23 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                       href={book.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                      className="p-2 hover:bg-[#2a0e3d]/10 rounded-lg transition-colors"
                       title="Ouvrir le PDF"
                     >
-                      <ExternalLink className="w-4 h-4 text-[#C9A227]" />
+                      <ExternalLink className="w-4 h-4 text-[#a3821c]" />
                     </a>
                   )}
                   <button
                     onClick={() => basculerPublication(book)}
                     disabled={enCours === `pub-${book.id}`}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 hover:bg-[#2a0e3d]/10 rounded-lg transition-colors"
                     title={book.isPublished ? "Masquer" : "Publier"}
                   >
                     {book.isPublished ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                   </button>
                   <button
                     onClick={() => ouvrirEdition(book)}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 hover:bg-[#2a0e3d]/10 rounded-lg transition-colors"
                     title="Modifier"
                   >
                     <Pencil className="w-4 h-4" />
@@ -1027,7 +1027,7 @@ export function BibliothequeAdminClient({ books: booksInit, servants }: Props) {
                   <button
                     onClick={() => supprimer(book)}
                     disabled={enCours === `del-${book.id}`}
-                    className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-300"
+                    className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-700"
                     title="Supprimer"
                   >
                     <Trash2 className="w-4 h-4" />

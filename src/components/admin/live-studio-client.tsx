@@ -1592,32 +1592,32 @@ export function LiveStudioClient({
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#C9A227]/10 text-[#FAF6EF] overflow-x-clip">
+    <div className="min-h-screen bg-[#C9A227]/10 text-[#1e0f2b] overflow-x-clip">
       {/* Header */}
-      <div className="border-b border-[#C9A227]/15 px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-2 bg-[#C9A227]/10">
+      <div className="border-b border-[#c9a227]/35 px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-2 bg-[#C9A227]/10">
         <div className="flex items-center gap-4 min-w-0 flex-wrap">
-          <Link href="/admin/lives" className="text-xs text-[#FAF6EF]/50 hover:text-[#C9A227] transition-colors">← Lives</Link>
+          <Link href="/admin/lives" className="text-xs text-[#1e0f2b]/50 hover:text-[#a3821c] transition-colors">← Lives</Link>
           <div className="h-4 w-px bg-[#C9A227]/10" />
           <div className="min-w-0">
-            <h1 className="text-base font-bold font-serif text-[#FAF6EF] truncate max-w-[400px]">{title}</h1>
-            <p className="text-[11px] text-[#FAF6EF]/40">{servantName} · Studio Live</p>
+            <h1 className="text-base font-bold font-serif text-[#1e0f2b] truncate max-w-[400px]">{title}</h1>
+            <p className="text-[11px] text-[#1e0f2b]/40">{servantName} · Studio Live</p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           {isLive ? (
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-600 text-[#FAF6EF] text-xs font-bold">
-                <span className="w-2 h-2 rounded-full bg-[#1A0826]/70 animate-pulse" />
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-600 text-[#1e0f2b] text-xs font-bold">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                 EN DIRECT · {formatDuration(streamDuration)}
               </span>
-              <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#C9A227]/10 text-[#FAF6EF]/70 text-xs font-bold">
+              <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#C9A227]/10 text-[#1e0f2b]/70 text-xs font-bold">
                 <Eye className="w-3 h-3" />{viewerCount}
               </div>
             </div>
           ) : status === "ENDED" ? (
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C9A227]/10 text-[#FAF6EF]/40 text-xs font-bold">TERMINÉ</span>
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C9A227]/10 text-[#1e0f2b]/40 text-xs font-bold">TERMINÉ</span>
           ) : (
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C9A227]/15 text-[#C9A227] text-xs font-bold border border-[#C9A227]/30">PROGRAMMÉ</span>
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C9A227]/15 text-[#a3821c] text-xs font-bold border border-[#c9a227]/50">PROGRAMMÉ</span>
           )}
         </div>
       </div>
@@ -1650,8 +1650,8 @@ export function LiveStudioClient({
                 <div className="absolute inset-0 bg-black/70" />
                 <div className="relative h-full flex items-center justify-center">
                   <div className="text-center">
-                    <VideoOff className="w-12 h-12 text-[#FAF6EF]/40 mx-auto mb-2" />
-                    <p className="text-sm text-[#FAF6EF]/60">Caméra désactivée</p>
+                    <VideoOff className="w-12 h-12 text-[#1e0f2b]/40 mx-auto mb-2" />
+                    <p className="text-sm text-[#1e0f2b]/60">Caméra désactivée</p>
                   </div>
                 </div>
               </div>
@@ -1671,26 +1671,26 @@ export function LiveStudioClient({
                 {thumbnailUrl ? (
                   <img src={thumbnailUrl} alt={title} className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#2A0E3D] to-[#1A0826]" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#f3ecf8] to-[#faf6ef]" />
                 )}
                 {thumbnailUrl && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1A0826] via-[#1A0826]/55 to-[#1A0826]/25" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#faf6ef] via-[#faf6ef]/55 to-transparent" />
                 )}
                 <div className="relative h-full flex flex-col items-center justify-center text-center px-4 sm:px-6">
                   {status !== "ENDED" ? (
                     <>
-                      <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30 flex items-center justify-center mb-1.5 sm:mb-4">
-                        <Calendar className="w-4 h-4 sm:w-6 sm:h-6 text-[#C9A227]" />
+                      <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-full bg-[#C9A227]/10 border border-[#c9a227]/50 flex items-center justify-center mb-1.5 sm:mb-4">
+                        <Calendar className="w-4 h-4 sm:w-6 sm:h-6 text-[#a3821c]" />
                       </div>
-                      <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.25em] font-bold text-[#C9A227] mb-1 sm:mb-2">Live programmé</p>
-                      <h2 className="text-sm sm:text-base md:text-xl font-bold text-[#FAF6EF] mb-1 sm:mb-2 max-w-md line-clamp-2">{title}</h2>
+                      <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.25em] font-bold text-[#a3821c] mb-1 sm:mb-2">Live programmé</p>
+                      <h2 className="text-sm sm:text-base md:text-xl font-bold text-[#1e0f2b] mb-1 sm:mb-2 max-w-md line-clamp-2">{title}</h2>
                       {scheduledAt && (
-                        <p className="text-[11px] sm:text-sm text-[#FAF6EF]/75 mb-2 sm:mb-3">
+                        <p className="text-[11px] sm:text-sm text-[#1e0f2b]/75 mb-2 sm:mb-3">
                           {new Date(scheduledAt).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
                         </p>
                       )}
                       {preLiveCountdown && (
-                        <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-[#C9A227] text-[#FAF6EF] text-xs sm:text-sm font-bold">
+                        <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-[#C9A227] text-[#1e0f2b] text-xs sm:text-sm font-bold">
                           <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />{preLiveCountdown}
                         </span>
                       )}
@@ -1699,16 +1699,16 @@ export function LiveStudioClient({
                           l'initialisation, même longue. Dans le flux (et non
                           en absolute) : aucun chevauchement sur les petits
                           écrans où la preview fait ~180 px de haut. */}
-                      <span className="mt-3 sm:mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-[#FAF6EF]/90 text-xs font-medium">
-                        <Loader2 className="w-3.5 h-3.5 text-[#C9A227] animate-spin" />
+                      <span className="mt-3 sm:mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white/90 text-xs font-medium">
+                        <Loader2 className="w-3.5 h-3.5 text-[#ddbe55] animate-spin" />
                         Initialisation de la caméra…
                       </span>
                     </>
                   ) : (
                     <div className="text-center">
-                      <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-[#FAF6EF]/30 mx-auto mb-2 sm:mb-3" />
-                      <p className="text-sm sm:text-lg font-bold text-[#FAF6EF] mb-1">Ce direct est terminé</p>
-                      <p className="text-xs sm:text-sm text-[#FAF6EF]/50">Le replay sera disponible en post-production</p>
+                      <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-[#1e0f2b]/30 mx-auto mb-2 sm:mb-3" />
+                      <p className="text-sm sm:text-lg font-bold text-[#1e0f2b] mb-1">Ce direct est terminé</p>
+                      <p className="text-xs sm:text-sm text-[#1e0f2b]/50">Le replay sera disponible en post-production</p>
                     </div>
                   )}
                 </div>
@@ -1724,14 +1724,14 @@ export function LiveStudioClient({
                   <div className="w-16 h-16 rounded-full bg-red-600/20 flex items-center justify-center mx-auto mb-4">
                     <Camera className="w-8 h-8 text-red-400" />
                   </div>
-                  <p className="text-lg font-bold text-[#FAF6EF]">Caméra inaccessible</p>
-                  <p className="text-sm font-semibold text-[#C9A227] mt-1">{cameraDiag.reason}</p>
-                  <p className="text-sm text-[#FAF6EF]/75 mt-3 text-left leading-relaxed">{cameraDiag.hint}</p>
+                  <p className="text-lg font-bold text-[#1e0f2b]">Caméra inaccessible</p>
+                  <p className="text-sm font-semibold text-[#a3821c] mt-1">{cameraDiag.reason}</p>
+                  <p className="text-sm text-[#1e0f2b]/75 mt-3 text-left leading-relaxed">{cameraDiag.hint}</p>
                   <button onClick={() => initCamera()}
                     className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#0F0F0F] font-bold text-sm hover:bg-[#DDBE55] transition-colors">
                     <RotateCcw className="w-4 h-4" />Réessayer
                   </button>
-                  <p className="text-[11px] text-[#FAF6EF]/40 mt-3">« Réessayer » relance la caméra sans recharger la page — utilisez-le après avoir modifié les autorisations.</p>
+                  <p className="text-[11px] text-[#1e0f2b]/40 mt-3">« Réessayer » relance la caméra sans recharger la page — utilisez-le après avoir modifié les autorisations.</p>
                 </div>
               </div>
             )}
@@ -1745,13 +1745,13 @@ export function LiveStudioClient({
                 avec cause probable + relance sans rechargement. */}
             {!isLive && cameraReady && !cameraDiag && cameraOn && blackFeed && (
               <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 w-[min(92%,26rem)]">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1A0826]/95 border border-[#C9A227]/40 text-[#FAF6EF] text-xs shadow-lg">
-                  <AlertCircle className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-[#c9a227]/60 text-[#1e0f2b] text-xs shadow-lg">
+                  <AlertCircle className="w-4 h-4 text-[#a3821c] flex-shrink-0" />
                   <span className="min-w-0 flex-1 text-left leading-snug">
                     Flux caméra noir — vérifiez que Windows autorise les applications de bureau (Chrome/Edge) à utiliser la caméra.
                   </span>
                   <button onClick={() => { setBlackFeed(false); initCamera(); }}
-                    className="inline-flex items-center gap-1.5 px-3 min-h-[36px] rounded-lg bg-[#C9A227] text-[#FAF6EF] font-bold text-xs hover:bg-[#DDBE55] transition-colors flex-shrink-0">
+                    className="inline-flex items-center gap-1.5 px-3 min-h-[36px] rounded-lg bg-[#C9A227] text-[#1e0f2b] font-bold text-xs hover:bg-[#DDBE55] transition-colors flex-shrink-0">
                     <RotateCcw className="w-3.5 h-3.5" />Réessayer
                   </button>
                 </div>
@@ -1767,12 +1767,12 @@ export function LiveStudioClient({
                 )}
                 <div className="relative z-10 text-center">
                   <div className="w-20 h-20 rounded-full bg-[#C9A227]/20 flex items-center justify-center mx-auto mb-4">
-                    <Pause className="w-10 h-10 text-[#C9A227]" fill="currentColor" />
+                    <Pause className="w-10 h-10 text-[#a3821c]" fill="currentColor" />
                   </div>
-                  <p className="text-xl font-bold text-[#C9A227]">Diffusion en pause</p>
-                  <p className="text-xs text-[#FAF6EF]/50 mt-2">Les viewers voient la miniature du live</p>
+                  <p className="text-xl font-bold text-[#a3821c]">Diffusion en pause</p>
+                  <p className="text-xs text-[#1e0f2b]/50 mt-2">Les viewers voient la miniature du live</p>
                   <button onClick={togglePause}
-                    className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#FAF6EF] font-bold text-sm hover:bg-[#DDBE55] transition-colors pointer-events-auto">
+                    className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] font-bold text-sm hover:bg-[#DDBE55] transition-colors pointer-events-auto">
                     <Play className="w-4 h-4" fill="currentColor" />Reprendre
                   </button>
                 </div>
@@ -1783,17 +1783,17 @@ export function LiveStudioClient({
             <div className={`absolute top-4 left-4 right-4 flex items-start justify-between z-20 transition-opacity duration-300 ${showControls || !isLive ? "opacity-100" : "opacity-0"}`}>
               <div className="flex items-center gap-2">
                 {isLive && (
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${isPaused ? "bg-[#C9A227] text-[#FAF6EF]" : "bg-red-600 text-[#FAF6EF]"}`}>
-                    {isPaused ? <><Pause className="w-3 h-3" fill="currentColor" /> PAUSE</> : <><span className="w-2 h-2 rounded-full bg-[#1A0826]/70 animate-pulse" /> LIVE</>}
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${isPaused ? "bg-[#C9A227] text-[#1e0f2b]" : "bg-red-600 text-[#1e0f2b]"}`}>
+                    {isPaused ? <><Pause className="w-3 h-3" fill="currentColor" /> PAUSE</> : <><span className="w-2 h-2 rounded-full bg-white animate-pulse" /> LIVE</>}
                   </span>
                 )}
                 {isLive && isRecording && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#C9A227]/10 text-[#FAF6EF] text-[10px] font-bold">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#C9A227]/10 text-[#1e0f2b] text-[10px] font-bold">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-400/100 animate-pulse" /> REC
                   </span>
                 )}
                 {!isLive && status !== "ENDED" && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#C9A227]/10 text-[#FAF6EF] text-xs font-bold">HORS LIGNE</span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#C9A227]/10 text-[#1e0f2b] text-xs font-bold">HORS LIGNE</span>
                 )}
               </div>
               {isLive && (
@@ -1812,12 +1812,12 @@ export function LiveStudioClient({
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#3D1A54]/80 text-white text-xs font-bold backdrop-blur-sm">{servantName}</span>
                 {screenSharing && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-600 text-[#FAF6EF] text-xs font-bold"><Monitor className="w-3 h-3" /> Partage d'écran</span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-600 text-[#1e0f2b] text-xs font-bold"><Monitor className="w-3 h-3" /> Partage d'écran</span>
                 )}
               </div>
               {isLive && (
                 <button onClick={toggleFullscreen}
-                  className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md bg-[#3D1A54]/80 text-white hover:bg-[#3D1A54] transition-colors backdrop-blur-sm"
+                  className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md bg-[#3D1A54]/80 text-white hover:bg-white transition-colors backdrop-blur-sm"
                   title={isFullscreen ? "Quitter plein écran" : "Plein écran"}>
                   {isFullscreen ? <X className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 </button>
@@ -1839,26 +1839,26 @@ export function LiveStudioClient({
               className={`rounded-xl p-4 border ${
                 localReplayMeta.uploadFailed
                   ? "bg-amber-400/10 border-amber-400/30"
-                  : "bg-[#C9A227]/10 border-[#C9A227]/30"
+                  : "bg-[#C9A227]/10 border-[#c9a227]/50"
               }`}
             >
               <div className="flex items-start gap-3">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                     localReplayMeta.uploadFailed
-                      ? "bg-amber-400/15 text-amber-300"
-                      : "bg-[#C9A227]/10 text-[#C9A227]"
+                      ? "bg-amber-400/15 text-amber-700"
+                      : "bg-[#C9A227]/10 text-[#a3821c]"
                   }`}
                 >
                   <FolderDown className="w-5 h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+                  <p className="text-sm font-bold font-serif text-[#1e0f2b]">
                     {localReplayMeta.uploadFailed
                       ? "Vidéo du live préservée sur cet appareil (upload échoué)"
                       : "Enregistrement local du live disponible"}
                   </p>
-                  <p className="text-xs text-[#FAF6EF]/70 mt-1 leading-relaxed">
+                  <p className="text-xs text-[#1e0f2b]/70 mt-1 leading-relaxed">
                     {localReplayMeta.uploadFailed
                       ? "L'envoi du replay vers le serveur R2 a échoué, mais la vidéo complète est sauvegardée en sécurité sur cet appareil — elle résiste au rechargement de cette page."
                       : "La vidéo enregistrée de ce direct est disponible sur cet appareil."}
@@ -1874,7 +1874,7 @@ export function LiveStudioClient({
                     })}
                     )
                   </p>
-                  <p className="text-[11px] text-[#FAF6EF]/50 mt-1.5 leading-relaxed">
+                  <p className="text-[11px] text-[#1e0f2b]/50 mt-1.5 leading-relaxed">
                     Téléchargez le fichier pour le réuploader ensuite (module Vidéos → «
                     Nouvelle vidéo ») et le travailler en post-production. Sur smartphone, le
                     fichier arrive dans Téléchargements (Android) ou Fichiers (iPhone/iPad).
@@ -1883,7 +1883,7 @@ export function LiveStudioClient({
                     <button
                       onClick={handleDownloadLocalReplay}
                       disabled={downloadingReplay}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227] text-[#FAF6EF] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-50 shadow-md"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227] text-[#1e0f2b] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-50 shadow-md"
                     >
                       {downloadingReplay ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -1895,7 +1895,7 @@ export function LiveStudioClient({
                     <button
                       onClick={handleRetryUploadReplay}
                       disabled={retryingUpload || loading}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227]/10 text-[#FAF6EF] text-sm font-bold hover:bg-[#3D1A54]/10 transition-colors disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227]/10 text-[#1e0f2b] text-sm font-bold hover:bg-[#f3ecf8] transition-colors disabled:opacity-50"
                     >
                       {retryingUpload ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -1907,7 +1907,7 @@ export function LiveStudioClient({
                     <button
                       onClick={handleDeleteLocalReplay}
                       disabled={downloadingReplay || retryingUpload}
-                      className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-[#FAF6EF]/50 hover:text-red-400 text-sm font-medium transition-colors disabled:opacity-40"
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-[#1e0f2b]/50 hover:text-red-400 text-sm font-medium transition-colors disabled:opacity-40"
                       title="Supprimer la copie locale de cet appareil"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -1920,22 +1920,22 @@ export function LiveStudioClient({
           )}
 
           {/* Source mode selector — Webcam vs Encodeur externe (OBS) */}
-          <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-3 border border-[#C9A227]/15">
+          <div className="bg-white rounded-2xl shadow-lg p-3 border border-[#c9a227]/35">
             <div className="flex items-center gap-2 mb-2">
-              <Cast className="w-4 h-4 text-[#C9A227]" />
-              <span className="text-xs font-bold font-serif text-[#FAF6EF] uppercase tracking-wider">Source vidéo</span>
+              <Cast className="w-4 h-4 text-[#a3821c]" />
+              <span className="text-xs font-bold font-serif text-[#1e0f2b] uppercase tracking-wider">Source vidéo</span>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => handleSourceModeChange("webcam")}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${sourceMode === "webcam" ? "bg-[#C9A227] text-[#FAF6EF]" : "bg-[#C9A227]/10 text-[#FAF6EF] hover:bg-[#3D1A54]/10"}`}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${sourceMode === "webcam" ? "bg-[#C9A227] text-[#1e0f2b]" : "bg-[#C9A227]/10 text-[#1e0f2b] hover:bg-[#f3ecf8]"}`}
               >
                 <Video className="w-4 h-4" />
                 Webcam
               </button>
               <button
                 onClick={() => handleSourceModeChange("encoder")}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${sourceMode === "encoder" ? "bg-[#C9A227] text-[#FAF6EF]" : "bg-[#C9A227]/10 text-[#FAF6EF] hover:bg-[#3D1A54]/10"}`}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${sourceMode === "encoder" ? "bg-[#C9A227] text-[#1e0f2b]" : "bg-[#C9A227]/10 text-[#1e0f2b] hover:bg-[#f3ecf8]"}`}
               >
                 <Cast className="w-4 h-4" />
                 Encodeur externe (OBS)
@@ -1944,50 +1944,50 @@ export function LiveStudioClient({
 
             {/* Encoder info panel */}
             {sourceMode === "encoder" && ingressInfo && (
-              <div className="mt-3 space-y-2 p-3 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/15">
-                <p className="text-xs font-bold text-[#C9A227] uppercase tracking-wider mb-2">
+              <div className="mt-3 space-y-2 p-3 rounded-lg bg-[#C9A227]/10 border border-[#c9a227]/35">
+                <p className="text-xs font-bold text-[#a3821c] uppercase tracking-wider mb-2">
                   Configuration OBS Studio
                 </p>
                 <div className="space-y-2">
                   <div>
-                    <label className="text-[10px] text-[#FAF6EF]/50 uppercase">URL du serveur RTMP</label>
+                    <label className="text-[10px] text-[#1e0f2b]/50 uppercase">URL du serveur RTMP</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         readOnly
                         value={ingressInfo.rtmpUrl}
-                        className="flex-1 px-3 py-1.5 rounded-lg bg-[#1A0826]/70 text-xs text-[#FAF6EF] font-mono border border-[#C9A227]/15"
+                        className="flex-1 px-3 py-1.5 rounded-lg bg-white text-xs text-[#1e0f2b] font-mono border border-[#c9a227]/35"
                       />
                       <button
                         onClick={() => copyToClipboard(ingressInfo.rtmpUrl, "rtmpUrl")}
-                        className="p-1.5 rounded-lg bg-[#C9A227]/10 text-[#FAF6EF] hover:bg-[#3D1A54]/10"
+                        className="p-1.5 rounded-lg bg-[#C9A227]/10 text-[#1e0f2b] hover:bg-[#f3ecf8]"
                       >
                         {copiedField === "rtmpUrl" ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] text-[#FAF6EF]/50 uppercase">Clé de stream</label>
+                    <label className="text-[10px] text-[#1e0f2b]/50 uppercase">Clé de stream</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         readOnly
                         value={ingressInfo.streamKey}
-                        className="flex-1 px-3 py-1.5 rounded-lg bg-[#1A0826]/70 text-xs text-[#FAF6EF] font-mono border border-[#C9A227]/15"
+                        className="flex-1 px-3 py-1.5 rounded-lg bg-white text-xs text-[#1e0f2b] font-mono border border-[#c9a227]/35"
                       />
                       <button
                         onClick={() => copyToClipboard(ingressInfo.streamKey, "streamKey")}
-                        className="p-1.5 rounded-lg bg-[#C9A227]/10 text-[#FAF6EF] hover:bg-[#3D1A54]/10"
+                        className="p-1.5 rounded-lg bg-[#C9A227]/10 text-[#1e0f2b] hover:bg-[#f3ecf8]"
                       >
                         {copiedField === "streamKey" ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                   </div>
                 </div>
-                <div className="mt-2 pt-2 border-t border-[#C9A227]/15">
+                <div className="mt-2 pt-2 border-t border-[#c9a227]/35">
                   <ol className="space-y-1">
                     {ingressInfo.obsInstructions.map((step, i) => (
-                      <li key={i} className="text-[10px] text-[#FAF6EF]/60">{step}</li>
+                      <li key={i} className="text-[10px] text-[#1e0f2b]/60">{step}</li>
                     ))}
                   </ol>
                 </div>
@@ -2002,26 +2002,26 @@ export function LiveStudioClient({
             )}
             {sourceMode === "encoder" && !ingressInfo && (
               <div className="mt-3 flex items-center justify-center py-3">
-                <Loader2 className="w-5 h-5 text-[#C9A227] animate-spin" />
+                <Loader2 className="w-5 h-5 text-[#a3821c] animate-spin" />
               </div>
             )}
           </div>
 
           {/* Controls bar */}
-          <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-3 border border-[#C9A227]/15">
+          <div className="bg-white rounded-2xl shadow-lg p-3 border border-[#c9a227]/35">
             <div className="flex items-center justify-center gap-1.5 flex-wrap">
               <button onClick={toggleCamera} disabled={!cameraReady}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 ${cameraOn ? "bg-[#C9A227]/10 text-[#FAF6EF] hover:bg-[#3D1A54]/10" : "bg-red-600/20 text-red-400 hover:bg-red-600/30"}`}>
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 ${cameraOn ? "bg-[#C9A227]/10 text-[#1e0f2b] hover:bg-[#f3ecf8]" : "bg-red-600/20 text-red-400 hover:bg-red-600/30"}`}>
                 {cameraOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
                 <span className="hidden sm:inline">{cameraOn ? "Caméra" : "Caméra off"}</span>
               </button>
               <button onClick={toggleMic} disabled={!cameraReady}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 ${micOn ? "bg-[#C9A227]/10 text-[#FAF6EF] hover:bg-[#3D1A54]/10" : "bg-red-600/20 text-red-400 hover:bg-red-600/30"}`}>
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 ${micOn ? "bg-[#C9A227]/10 text-[#1e0f2b] hover:bg-[#f3ecf8]" : "bg-red-600/20 text-red-400 hover:bg-red-600/30"}`}>
                 {micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                 <span className="hidden sm:inline">{micOn ? "Micro" : "Micro off"}</span>
               </button>
               <button onClick={toggleScreenShare}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${screenSharing ? "bg-blue-600/20 text-blue-400 hover:bg-blue-600/30" : "bg-[#C9A227]/10 text-[#FAF6EF] hover:bg-[#3D1A54]/10"}`}>
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${screenSharing ? "bg-blue-600/20 text-blue-400 hover:bg-blue-600/30" : "bg-[#C9A227]/10 text-[#1e0f2b] hover:bg-[#f3ecf8]"}`}>
                 {screenSharing ? <MonitorOff className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
                 <span className="hidden sm:inline">{screenSharing ? "Stop écran" : "Partager écran"}</span>
               </button>
@@ -2044,7 +2044,7 @@ export function LiveStudioClient({
 
               {isLive && (
                 <button onClick={togglePause}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isPaused ? "bg-[#C9A227] text-[#FAF6EF] hover:bg-[#DDBE55]" : "bg-[#C9A227]/10 text-[#FAF6EF] hover:bg-[#3D1A54]/10"}`}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isPaused ? "bg-[#C9A227] text-[#1e0f2b] hover:bg-[#DDBE55]" : "bg-[#C9A227]/10 text-[#1e0f2b] hover:bg-[#f3ecf8]"}`}
                   title={isPaused ? "Reprendre le live" : "Mettre en pause"}>
                   {isPaused ? <Play className="w-4 h-4" fill="currentColor" /> : <Pause className="w-4 h-4" fill="currentColor" />}
                   <span className="hidden sm:inline">{isPaused ? "Reprendre" : "Pause"}</span>
@@ -2055,13 +2055,13 @@ export function LiveStudioClient({
 
               {!isLive && status !== "ENDED" ? (
                 <button onClick={goLive} disabled={loading || !cameraReady}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-red-600 text-[#FAF6EF] font-bold text-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg">
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-red-600 text-[#1e0f2b] font-bold text-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
                   {loading ? "Démarrage..." : "Go Live"}
                 </button>
               ) : isLive ? (
                 <button onClick={() => setShowStopModal(true)} disabled={loading}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#C9A227]/10 text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54]/10 transition-colors disabled:opacity-50">
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#C9A227]/10 text-[#1e0f2b] font-bold text-sm hover:bg-[#f3ecf8] transition-colors disabled:opacity-50">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" fill="currentColor" />}
                   Terminer
                 </button>
@@ -2069,7 +2069,7 @@ export function LiveStudioClient({
             </div>
 
             {reconnecting && (
-              <div className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#8B6914] text-sm">
+              <div className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227]/10 border border-[#c9a227]/50 text-[#8B6914] text-sm">
                 <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
                 <span>Reconnexion à la diffusion en cours… (l'état de pause et la durée réelle sont restaurés)</span>
               </div>
@@ -2089,53 +2089,53 @@ export function LiveStudioClient({
           </div>
 
           {/* Info card */}
-          <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-4 border border-[#C9A227]/15 space-y-3">
-            <h2 className="text-base font-bold font-serif text-[#FAF6EF]">{title}</h2>
+          <div className="bg-white rounded-2xl shadow-lg p-4 border border-[#c9a227]/35 space-y-3">
+            <h2 className="text-base font-bold font-serif text-[#1e0f2b]">{title}</h2>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">
                 {servantPortraitUrl ? (
                    
                   <img src={servantPortraitUrl} alt={servantName} className="w-9 h-9 rounded-full object-cover" />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2A0E3D] to-[#3D1A54] flex items-center justify-center text-[#C9A227] font-bold text-sm">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#f3ecf8] to-[#f3ecf8] flex items-center justify-center text-[#a3821c] font-bold text-sm">
                     {servantName.charAt(0)}
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-bold font-serif text-[#FAF6EF] flex items-center gap-1">{servantName}<CheckCircle2 className="w-3.5 h-3.5 text-[#C9A227]" /></p>
-                  <p className="text-[11px] text-[#FAF6EF]/40">{isLive ? `En direct · ${viewerCount} spectateur${viewerCount > 1 ? "s" : ""}` : "Studio de diffusion"}</p>
+                  <p className="text-sm font-bold font-serif text-[#1e0f2b] flex items-center gap-1">{servantName}<CheckCircle2 className="w-3.5 h-3.5 text-[#a3821c]" /></p>
+                  <p className="text-[11px] text-[#1e0f2b]/40">{isLive ? `En direct · ${viewerCount} spectateur${viewerCount > 1 ? "s" : ""}` : "Studio de diffusion"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {isLive && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 text-[#FAF6EF] text-xs font-bold"><Radio className="w-3 h-3" />{formatDuration(streamDuration)}</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 text-[#1e0f2b] text-xs font-bold"><Radio className="w-3 h-3" />{formatDuration(streamDuration)}</span>
                 )}
                 {isLive && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#C9A227]/10 text-[#FAF6EF]/60 text-xs font-bold"><Eye className="w-3 h-3" />{viewerCount} spectateurs</span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#C9A227]/10 text-[#1e0f2b]/60 text-xs font-bold"><Eye className="w-3 h-3" />{viewerCount} spectateurs</span>
                 )}
                 {isLive && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#C9A227]/10 text-[#FAF6EF]/60 text-xs font-bold"><Heart className="w-3 h-3" />{likesTotal}</span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#C9A227]/10 text-[#1e0f2b]/60 text-xs font-bold"><Heart className="w-3 h-3" />{likesTotal}</span>
                 )}
               </div>
             </div>
           </div>
 
           {/* Advanced settings */}
-          <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg overflow-hidden border border-[#C9A227]/15">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-[#c9a227]/35">
             <button onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#3D1A54]/5 transition-colors">
-              <span className="flex items-center gap-2 text-sm font-bold font-serif text-[#FAF6EF]"><Settings className="w-4 h-4 text-[#FAF6EF]/60" />Paramètres de diffusion</span>
-              {showAdvancedSettings ? <ChevronUp className="w-4 h-4 text-[#FAF6EF]/40" /> : <ChevronDown className="w-4 h-4 text-[#FAF6EF]/40" />}
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#f3ecf8] transition-colors">
+              <span className="flex items-center gap-2 text-sm font-bold font-serif text-[#1e0f2b]"><Settings className="w-4 h-4 text-[#1e0f2b]/60" />Paramètres de diffusion</span>
+              {showAdvancedSettings ? <ChevronUp className="w-4 h-4 text-[#1e0f2b]/40" /> : <ChevronDown className="w-4 h-4 text-[#1e0f2b]/40" />}
             </button>
             {showAdvancedSettings && (
-              <div className="px-4 pb-4 space-y-3 border-t border-[#C9A227]/15">
-                <div className="flex items-center justify-between pt-3"><span className="text-xs text-[#FAF6EF]/50">Qualité vidéo</span><span className="text-xs font-bold font-serif text-[#FAF6EF]">720p · H.264</span></div>
-                <div className="flex items-center justify-between"><span className="text-xs text-[#FAF6EF]/50">Qualité audio</span><span className="text-xs font-bold font-serif text-[#FAF6EF]">Opus · Stéréo</span></div>
-                <div className="flex items-center justify-between"><span className="text-xs text-[#FAF6EF]/50">Spectateurs</span><span className="text-xs font-bold font-serif text-[#FAF6EF]">{isLive ? String(viewerCount) : "—"}</span></div>
-                <div className="flex items-center justify-between"><span className="text-xs text-[#FAF6EF]/50">Room LiveKit</span><span className="text-xs font-mono text-[#FAF6EF]/40 truncate max-w-[200px]">{roomName}</span></div>
-                <div className="flex items-center justify-between"><span className="text-xs text-[#FAF6EF]/50">Réseau de diffusion</span><span className="text-xs font-bold font-serif text-[#FAF6EF]">{mediaProvider === "livekit" ? "LiveKit (source de vérité)" : mediaProvider === "agora" ? "Agora (repli)" : "Daily (repli)"}</span></div>
-                <div className="flex items-center justify-between"><span className="text-xs text-[#FAF6EF]/50">Mode viewers</span><span className="text-xs font-bold font-serif text-[#FAF6EF]">{mediaProvider === "livekit" ? "YouTube (HLS, 0 participant)" : "Spectateurs (repli)"}</span></div>
-                <div className="flex items-center justify-between"><span className="text-xs text-[#FAF6EF]/50">Mode</span><span className="text-xs font-bold font-serif text-[#FAF6EF]">{isPaused ? "En pause" : isLive ? "Diffusion active" : "En attente"}</span></div>
+              <div className="px-4 pb-4 space-y-3 border-t border-[#c9a227]/35">
+                <div className="flex items-center justify-between pt-3"><span className="text-xs text-[#1e0f2b]/50">Qualité vidéo</span><span className="text-xs font-bold font-serif text-[#1e0f2b]">720p · H.264</span></div>
+                <div className="flex items-center justify-between"><span className="text-xs text-[#1e0f2b]/50">Qualité audio</span><span className="text-xs font-bold font-serif text-[#1e0f2b]">Opus · Stéréo</span></div>
+                <div className="flex items-center justify-between"><span className="text-xs text-[#1e0f2b]/50">Spectateurs</span><span className="text-xs font-bold font-serif text-[#1e0f2b]">{isLive ? String(viewerCount) : "—"}</span></div>
+                <div className="flex items-center justify-between"><span className="text-xs text-[#1e0f2b]/50">Room LiveKit</span><span className="text-xs font-mono text-[#1e0f2b]/40 truncate max-w-[200px]">{roomName}</span></div>
+                <div className="flex items-center justify-between"><span className="text-xs text-[#1e0f2b]/50">Réseau de diffusion</span><span className="text-xs font-bold font-serif text-[#1e0f2b]">{mediaProvider === "livekit" ? "LiveKit (source de vérité)" : mediaProvider === "agora" ? "Agora (repli)" : "Daily (repli)"}</span></div>
+                <div className="flex items-center justify-between"><span className="text-xs text-[#1e0f2b]/50">Mode viewers</span><span className="text-xs font-bold font-serif text-[#1e0f2b]">{mediaProvider === "livekit" ? "YouTube (HLS, 0 participant)" : "Spectateurs (repli)"}</span></div>
+                <div className="flex items-center justify-between"><span className="text-xs text-[#1e0f2b]/50">Mode</span><span className="text-xs font-bold font-serif text-[#1e0f2b]">{isPaused ? "En pause" : isLive ? "Diffusion active" : "En attente"}</span></div>
               </div>
             )}
           </div>
@@ -2143,17 +2143,17 @@ export function LiveStudioClient({
 
         {/* Right column */}
         <div className="space-y-3">
-          <div className="flex gap-1 bg-[#1A0826]/70 rounded-2xl shadow-lg p-1 border border-[#C9A227]/15">
+          <div className="flex gap-1 bg-white rounded-2xl shadow-lg p-1 border border-[#c9a227]/35">
             <button onClick={() => setActiveTab("chat")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "chat" ? "bg-[#3D1A54] text-white" : "text-[#FAF6EF]/50 hover:text-[#FAF6EF]"}`}>
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "chat" ? "bg-[#1e0f2b] text-white" : "text-[#1e0f2b]/50 hover:text-[#1e0f2b]"}`}>
               <MessageCircle className="w-3.5 h-3.5" />Chat
             </button>
             <button onClick={() => setActiveTab("stats")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "stats" ? "bg-[#3D1A54] text-white" : "text-[#FAF6EF]/50 hover:text-[#FAF6EF]"}`}>
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "stats" ? "bg-[#1e0f2b] text-white" : "text-[#1e0f2b]/50 hover:text-[#1e0f2b]"}`}>
               <BarChart3 className="w-3.5 h-3.5" />Stats
             </button>
             <button onClick={() => setActiveTab("health")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "health" ? "bg-[#3D1A54] text-white" : "text-[#FAF6EF]/50 hover:text-[#FAF6EF]"}`}>
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-colors ${activeTab === "health" ? "bg-[#1e0f2b] text-white" : "text-[#1e0f2b]/50 hover:text-[#1e0f2b]"}`}>
               <Activity className="w-3.5 h-3.5" />Santé
             </button>
           </div>
@@ -2161,10 +2161,10 @@ export function LiveStudioClient({
           {activeTab === "chat" && (
             <div className="h-[calc(100vh-280px)]">
               {isLive ? <LiveChat liveId={liveId} isLive={isLive} /> : (
-                <div className="flex items-center justify-center h-full bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15">
+                <div className="flex items-center justify-center h-full bg-white rounded-2xl shadow-lg border border-[#c9a227]/35">
                   <div className="text-center">
-                    <MessageCircle className="w-8 h-8 text-[#FAF6EF]/20 mx-auto mb-2" />
-                    <p className="text-xs text-[#FAF6EF]/40 italic">Le chat sera disponible en direct</p>
+                    <MessageCircle className="w-8 h-8 text-[#1e0f2b]/20 mx-auto mb-2" />
+                    <p className="text-xs text-[#1e0f2b]/40 italic">Le chat sera disponible en direct</p>
                   </div>
                 </div>
               )}
@@ -2172,45 +2172,45 @@ export function LiveStudioClient({
           )}
 
           {activeTab === "stats" && (
-            <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-4 space-y-4 border border-[#C9A227]/15">
+            <div className="bg-white rounded-2xl shadow-lg p-4 space-y-4 border border-[#c9a227]/35">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs uppercase tracking-wider font-bold font-serif text-[#FAF6EF]/40">Statistiques en direct</h3>
+                <h3 className="text-xs uppercase tracking-wider font-bold font-serif text-[#1e0f2b]/40">Statistiques en direct</h3>
                 {/* ⭐ V2.9 — Indicateur de fraîcheur : les stats sont réellement
                     rafraîchies toutes les 5 s pendant la diffusion. */}
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-300">
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/100 animate-pulse" />
                   {isLive ? "Temps réel · 5 s" : "En pause"}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#C9A227]/10 rounded-lg p-3">
-                  <div className="flex items-center gap-1 text-[10px] text-[#FAF6EF]/40 uppercase mb-1"><Eye className="w-3 h-3" />Spectateurs (site)</div>
-                  <div className="text-2xl font-bold font-serif text-[#FAF6EF]">{isLive ? viewerCount : "—"}</div>
+                  <div className="flex items-center gap-1 text-[10px] text-[#1e0f2b]/40 uppercase mb-1"><Eye className="w-3 h-3" />Spectateurs (site)</div>
+                  <div className="text-2xl font-bold font-serif text-[#1e0f2b]">{isLive ? viewerCount : "—"}</div>
                 </div>
                 <div className="bg-[#C9A227]/10 rounded-lg p-3">
-                  <div className="flex items-center gap-1 text-[10px] text-[#FAF6EF]/40 uppercase mb-1"><Clock className="w-3 h-3" />Durée</div>
-                  <div className="text-2xl font-bold font-serif text-[#FAF6EF]">{isLive ? formatDuration(streamDuration) : "—"}</div>
+                  <div className="flex items-center gap-1 text-[10px] text-[#1e0f2b]/40 uppercase mb-1"><Clock className="w-3 h-3" />Durée</div>
+                  <div className="text-2xl font-bold font-serif text-[#1e0f2b]">{isLive ? formatDuration(streamDuration) : "—"}</div>
                 </div>
                 <div className="bg-[#C9A227]/10 rounded-lg p-3">
-                  <div className="flex items-center gap-1 text-[10px] text-[#FAF6EF]/40 uppercase mb-1"><MessageCircle className="w-3 h-3" />Messages chat</div>
-                  <div className="text-2xl font-bold font-serif text-[#FAF6EF]">{isLive ? chatMessageCount : "—"}</div>
+                  <div className="flex items-center gap-1 text-[10px] text-[#1e0f2b]/40 uppercase mb-1"><MessageCircle className="w-3 h-3" />Messages chat</div>
+                  <div className="text-2xl font-bold font-serif text-[#1e0f2b]">{isLive ? chatMessageCount : "—"}</div>
                 </div>
                 <div className="bg-[#C9A227]/10 rounded-lg p-3">
-                  <div className="flex items-center gap-1 text-[10px] text-[#FAF6EF]/40 uppercase mb-1"><Heart className="w-3 h-3" />J&apos;aime (site)</div>
-                  <div className="text-2xl font-bold font-serif text-[#FAF6EF]">{isLive ? likesTotal : "—"}</div>
+                  <div className="flex items-center gap-1 text-[10px] text-[#1e0f2b]/40 uppercase mb-1"><Heart className="w-3 h-3" />J&apos;aime (site)</div>
+                  <div className="text-2xl font-bold font-serif text-[#1e0f2b]">{isLive ? likesTotal : "—"}</div>
                 </div>
               </div>
 
               {/* ⭐ V2.9 — Stats YouTube RÉELLES (si OAuth configuré) : vues et
                   likes du direct YouTube, rafraîchis toutes les 5 s —
                   avant : toujours zéro (aucun appel n'existait côté studio). */}
-              <div className="pt-3 border-t border-[#C9A227]/15">
+              <div className="pt-3 border-t border-[#c9a227]/35">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] text-[#FAF6EF]/40 uppercase tracking-wider flex items-center gap-1.5">
+                  <p className="text-[10px] text-[#1e0f2b]/40 uppercase tracking-wider flex items-center gap-1.5">
                     <Youtube className="w-3.5 h-3.5 text-[#FF0000]" />YouTube
                   </p>
                   {!youtubeConfigured && (
-                    <span className="text-[9px] font-semibold text-amber-300 bg-amber-400/10 border border-amber-400/25 rounded-full px-2 py-0.5">
+                    <span className="text-[9px] font-semibold text-amber-700 bg-amber-400/10 border border-amber-400/25 rounded-full px-2 py-0.5">
                       OAuth YouTube non configuré
                     </span>
                   )}
@@ -2218,20 +2218,20 @@ export function LiveStudioClient({
                 {youtubeStats ? (
                   <div className="grid grid-cols-3 gap-2">
                     <div className="bg-[#FF0000]/5 rounded-lg p-2.5 text-center">
-                      <div className="flex items-center justify-center gap-1 text-[10px] text-[#FAF6EF]/40 uppercase mb-0.5"><Eye className="w-3 h-3" />Vues</div>
-                      <div className="text-xl font-bold font-serif text-[#FAF6EF]">{youtubeStats.viewCount.toLocaleString("fr-FR")}</div>
+                      <div className="flex items-center justify-center gap-1 text-[10px] text-[#1e0f2b]/40 uppercase mb-0.5"><Eye className="w-3 h-3" />Vues</div>
+                      <div className="text-xl font-bold font-serif text-[#1e0f2b]">{youtubeStats.viewCount.toLocaleString("fr-FR")}</div>
                     </div>
                     <div className="bg-[#FF0000]/5 rounded-lg p-2.5 text-center">
-                      <div className="flex items-center justify-center gap-1 text-[10px] text-[#FAF6EF]/40 uppercase mb-0.5"><Heart className="w-3 h-3" />J&apos;aime</div>
-                      <div className="text-xl font-bold font-serif text-[#FAF6EF]">{youtubeStats.likeCount.toLocaleString("fr-FR")}</div>
+                      <div className="flex items-center justify-center gap-1 text-[10px] text-[#1e0f2b]/40 uppercase mb-0.5"><Heart className="w-3 h-3" />J&apos;aime</div>
+                      <div className="text-xl font-bold font-serif text-[#1e0f2b]">{youtubeStats.likeCount.toLocaleString("fr-FR")}</div>
                     </div>
                     <div className="bg-[#FF0000]/5 rounded-lg p-2.5 text-center">
-                      <div className="flex items-center justify-center gap-1 text-[10px] text-[#FAF6EF]/40 uppercase mb-0.5"><MessageCircle className="w-3 h-3" />Comm.</div>
-                      <div className="text-xl font-bold font-serif text-[#FAF6EF]">{youtubeStats.commentCount.toLocaleString("fr-FR")}</div>
+                      <div className="flex items-center justify-center gap-1 text-[10px] text-[#1e0f2b]/40 uppercase mb-0.5"><MessageCircle className="w-3 h-3" />Comm.</div>
+                      <div className="text-xl font-bold font-serif text-[#1e0f2b]">{youtubeStats.commentCount.toLocaleString("fr-FR")}</div>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-[11px] text-[#FAF6EF]/40 italic">
+                  <p className="text-[11px] text-[#1e0f2b]/40 italic">
                     {youtubeConfigured
                       ? "Aucune donnée YouTube (URL manquante ou direct non démarré côté YouTube)."
                       : "Configurez YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET / YOUTUBE_REFRESH_TOKEN sur Vercel pour les stats YouTube en direct."}
@@ -2240,10 +2240,10 @@ export function LiveStudioClient({
               </div>
 
               {isLive && (
-                <div className="pt-3 border-t border-[#C9A227]/15">
-                  <p className="text-[10px] text-[#FAF6EF]/40 uppercase tracking-wider mb-2">État</p>
+                <div className="pt-3 border-t border-[#c9a227]/35">
+                  <p className="text-[10px] text-[#1e0f2b]/40 uppercase tracking-wider mb-2">État</p>
                   {isPaused ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#C9A227]/20 text-[#C9A227] text-xs font-bold"><Pause className="w-3 h-3" fill="currentColor" /> En pause</span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#C9A227]/20 text-[#a3821c] text-xs font-bold"><Pause className="w-3 h-3" fill="currentColor" /> En pause</span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-600/20 text-emerald-400 text-xs font-bold"><span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Diffusion active</span>
                   )}
@@ -2253,8 +2253,8 @@ export function LiveStudioClient({
           )}
 
           {activeTab === "health" && (
-            <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-4 space-y-4 border border-[#C9A227]/15">
-              <h3 className="text-xs uppercase tracking-wider font-bold font-serif text-[#FAF6EF]/40">État de la diffusion</h3>
+            <div className="bg-white rounded-2xl shadow-lg p-4 space-y-4 border border-[#c9a227]/35">
+              <h3 className="text-xs uppercase tracking-wider font-bold font-serif text-[#1e0f2b]/40">État de la diffusion</h3>
               <div className="space-y-2">
                 {[
                   { label: "Connexion caméra", ok: cameraReady },
@@ -2263,18 +2263,18 @@ export function LiveStudioClient({
                   { label: "Flux audio", ok: isLive && micOn && !isPaused },
                   { label: "Overlay canvas", ok: !!overlayStreamRef.current },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between py-2 border-b border-[#C9A227]/15">
-                    <span className="text-xs text-[#FAF6EF]/70">{item.label}</span>
+                  <div key={item.label} className="flex items-center justify-between py-2 border-b border-[#c9a227]/35">
+                    <span className="text-xs text-[#1e0f2b]/70">{item.label}</span>
                     {item.ok ? (
                       <span className="flex items-center gap-1 text-xs text-emerald-400 font-bold"><CheckCircle2 className="w-3 h-3" />OK</span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs text-[#FAF6EF]/30"><AlertCircle className="w-3 h-3" />—</span>
+                      <span className="flex items-center gap-1 text-xs text-[#1e0f2b]/30"><AlertCircle className="w-3 h-3" />—</span>
                     )}
                   </div>
                 ))}
               </div>
               <div className="pt-2">
-                <h4 className="text-xs uppercase tracking-wider font-bold font-serif text-[#FAF6EF]/40 mb-2">Multistreaming</h4>
+                <h4 className="text-xs uppercase tracking-wider font-bold font-serif text-[#1e0f2b]/40 mb-2">Multistreaming</h4>
                 <div className="space-y-1.5">
                   {[
                     { label: "YouTube", active: multistream.youtube, icon: Youtube, color: "#FF0000" },
@@ -2287,20 +2287,20 @@ export function LiveStudioClient({
                       <div key={p.label} className={`flex items-center justify-between px-3 py-2 rounded-lg ${p.active ? "bg-[#C9A227]/10" : "opacity-40"}`}>
                         <div className="flex items-center gap-2">
                           <Icon className="w-3.5 h-3.5" style={{ color: p.color }} />
-                          <span className="text-xs font-medium text-[#FAF6EF]">{p.label}</span>
+                          <span className="text-xs font-medium text-[#1e0f2b]">{p.label}</span>
                         </div>
                         {p.active && isLive ? (
                           <span className="text-xs text-emerald-400 font-bold">● En direct</span>
                         ) : p.active ? (
-                          <span className="text-xs text-[#FAF6EF]/40">En attente</span>
+                          <span className="text-xs text-[#1e0f2b]/40">En attente</span>
                         ) : (
-                          <span className="text-xs text-[#FAF6EF]/30">Off</span>
+                          <span className="text-xs text-[#1e0f2b]/30">Off</span>
                         )}
                       </div>
                     );
                   })}
                 </div>
-                <Link href="/admin/servants" className="block mt-3 text-xs text-[#C9A227] hover:underline">Configurer les clés RTMP →</Link>
+                <Link href="/admin/servants" className="block mt-3 text-xs text-[#a3821c] hover:underline">Configurer les clés RTMP →</Link>
               </div>
             </div>
           )}
@@ -2312,9 +2312,9 @@ export function LiveStudioClient({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#1A0826]/80 backdrop-blur-md" onClick={() => !loading && setShowStopModal(false)} />
 
-          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl shadow-2xl border border-[#C9A227]/20">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl shadow-2xl border border-[#c9a227]/40">
             {/* Bandeau dégradé */}
-            <div className="relative h-32 bg-gradient-to-br from-[#2A0E3D] via-[#3D1A54] to-[#1A0826] overflow-hidden">
+            <div className="relative h-32 bg-gradient-to-br from-[#f3ecf8] via-[#f3ecf8] to-[#faf6ef] overflow-hidden">
               {/* Halo doré */}
               <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-[#C9A227]/20 blur-3xl" />
               <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-red-600/10 blur-3xl" />
@@ -2333,7 +2333,7 @@ export function LiveStudioClient({
               {!loading && (
                 <button
                   onClick={() => setShowStopModal(false)}
-                  className="absolute top-4 right-4 p-1.5 rounded-lg bg-[#1A0826]/10 hover:bg-[#1A0826]/20 text-white/70 hover:text-white transition-colors"
+                  className="absolute top-4 right-4 p-1.5 rounded-lg bg-[#2a0e3d]/10 hover:bg-[#2a0e3d]/20 text-white/70 hover:text-white transition-colors"
                   aria-label="Fermer"
                 >
                   <X className="w-4 h-4" />
@@ -2345,41 +2345,41 @@ export function LiveStudioClient({
             <div className="bg-[#C9A227]/10 px-7 py-6">
               {/* Titre */}
               <div className="text-center mb-5">
-                <h2 className="text-xl font-bold font-serif text-[#FAF6EF]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                <h2 className="text-xl font-bold font-serif text-[#1e0f2b]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                   Terminer la diffusion ?
                 </h2>
-                <p className="text-sm text-[#FAF6EF]/60 mt-2 leading-relaxed">
+                <p className="text-sm text-[#1e0f2b]/60 mt-2 leading-relaxed">
                   Votre live sera arrêté et archivé en replay automatiquement.
                   <br />
-                  <span className="text-[#BDB4C9] text-xs">Cette action est irréversible.</span>
+                  <span className="text-[#8a8378] text-xs">Cette action est irréversible.</span>
                 </p>
               </div>
 
               {/* Stats du live */}
               {isLive && (
                 <div className="grid grid-cols-3 gap-2 mb-5">
-                  <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-3 text-center border border-[#C9A227]/10">
-                    <Clock className="w-4 h-4 text-[#C9A227] mx-auto mb-1" />
-                    <div className="text-base font-bold font-serif text-[#FAF6EF]">{formatDuration(streamDuration)}</div>
-                    <div className="text-[9px] uppercase tracking-wider text-[#BDB4C9]">Durée</div>
+                  <div className="bg-white rounded-2xl shadow-lg p-3 text-center border border-[#c9a227]/30">
+                    <Clock className="w-4 h-4 text-[#a3821c] mx-auto mb-1" />
+                    <div className="text-base font-bold font-serif text-[#1e0f2b]">{formatDuration(streamDuration)}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[#8a8378]">Durée</div>
                   </div>
-                  <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-3 text-center border border-[#C9A227]/10">
-                    <Users className="w-4 h-4 text-[#C9A227] mx-auto mb-1" />
-                    <div className="text-base font-bold font-serif text-[#FAF6EF]">{viewerCount}</div>
-                    <div className="text-[9px] uppercase tracking-wider text-[#BDB4C9]">Spectateurs</div>
+                  <div className="bg-white rounded-2xl shadow-lg p-3 text-center border border-[#c9a227]/30">
+                    <Users className="w-4 h-4 text-[#a3821c] mx-auto mb-1" />
+                    <div className="text-base font-bold font-serif text-[#1e0f2b]">{viewerCount}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[#8a8378]">Spectateurs</div>
                   </div>
-                  <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg p-3 text-center border border-[#C9A227]/10">
-                    <Radio className="w-4 h-4 text-[#C9A227] mx-auto mb-1" />
-                    <div className="text-base font-bold font-serif text-[#FAF6EF]">{isRecording ? "OUI" : "—"}</div>
-                    <div className="text-[9px] uppercase tracking-wider text-[#BDB4C9]">Enregistrement</div>
+                  <div className="bg-white rounded-2xl shadow-lg p-3 text-center border border-[#c9a227]/30">
+                    <Radio className="w-4 h-4 text-[#a3821c] mx-auto mb-1" />
+                    <div className="text-base font-bold font-serif text-[#1e0f2b]">{isRecording ? "OUI" : "—"}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[#8a8378]">Enregistrement</div>
                   </div>
                 </div>
               )}
 
               {/* Avertissement */}
-              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/15 mb-4">
-                <AlertCircle className="w-4 h-4 text-[#C9A227] flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-[#FAF6EF]/70 leading-relaxed">
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#C9A227]/5 border border-[#c9a227]/35 mb-4">
+                <AlertCircle className="w-4 h-4 text-[#a3821c] flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-[#1e0f2b]/70 leading-relaxed">
                   Le replay sera généré et publié sur la page Vidéos.
                   {multistream.youtube
                     ? " Une copie YouTube sera aussi disponible comme source de secours."
@@ -2389,11 +2389,11 @@ export function LiveStudioClient({
 
               {/* URL YouTube du replay (si multistream YouTube) */}
               {multistream.youtube && (
-                <div className="mb-4 px-3 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/15">
+                <div className="mb-4 px-3 py-3 rounded-xl bg-[#C9A227]/10 border border-[#c9a227]/35">
                   <div className="flex items-center gap-1.5 mb-2">
                     <Youtube className="w-3.5 h-3.5 text-red-400" />
-                    <span className="text-xs font-bold font-serif text-[#FAF6EF]">URL YouTube du replay</span>
-                    <span className="text-[10px] text-[#BDB4C9]">(optionnel — économise le stockage R2)</span>
+                    <span className="text-xs font-bold font-serif text-[#1e0f2b]">URL YouTube du replay</span>
+                    <span className="text-[10px] text-[#8a8378]">(optionnel — économise le stockage R2)</span>
                   </div>
                   <div className="flex gap-2">
                     <input
@@ -2401,7 +2401,7 @@ export function LiveStudioClient({
                       value={youtubeReplayUrl}
                       onChange={(e) => setYoutubeReplayUrl(e.target.value)}
                       placeholder="https://www.youtube.com/watch?v=..."
-                      className="flex-1 px-2.5 py-2 rounded-lg border border-[#C9A227]/20 bg-[#1A0826]/70 text-xs focus:outline-none focus:border-[#C9A227]"
+                      className="flex-1 px-2.5 py-2 rounded-lg border border-[#c9a227]/40 bg-white text-xs focus:outline-none focus:border-[#C9A227]"
                     />
                     <button
                       onClick={handleFetchYoutubeReplay}
@@ -2412,7 +2412,7 @@ export function LiveStudioClient({
                       Auto
                     </button>
                   </div>
-                  <p className="text-[10px] text-[#BDB4C9] mt-1.5 leading-relaxed">
+                  <p className="text-[10px] text-[#8a8378] mt-1.5 leading-relaxed">
                     Collez l'URL YouTube ou cliquez "Auto" pour la récupérer via l'API.
                     Si vide, le replay utilisera l'enregistrement R2 (si disponible).
                   </p>
@@ -2424,7 +2424,7 @@ export function LiveStudioClient({
                 <button
                   onClick={() => setShowStopModal(false)}
                   disabled={loading}
-                  className="flex-1 px-5 py-3 rounded-xl text-sm font-bold font-serif text-[#FAF6EF]/60 hover:text-[#FAF6EF] hover:bg-[#3D1A54]/5 transition-colors disabled:opacity-40"
+                  className="flex-1 px-5 py-3 rounded-xl text-sm font-bold font-serif text-[#1e0f2b]/60 hover:text-[#1e0f2b] hover:bg-[#f3ecf8] transition-colors disabled:opacity-40"
                 >
                   Continuer le live
                 </button>

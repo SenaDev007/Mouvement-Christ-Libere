@@ -222,14 +222,14 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1A0826] to-[#2A0E3D] text-[#FAF6EF] p-6 md:p-10">
+    <div className="min-h-screen bg-gradient-to-b from-[#faf6ef] to-[#f3ecf8] text-[#1e0f2b] p-6 md:p-10">
       <div className="max-w-5xl mx-auto space-y-8">
         {/* En-tête */}
         <div className="flex items-center gap-3">
-          <Youtube className="w-8 h-8 text-[#C9A227]" />
+          <Youtube className="w-8 h-8 text-[#a3821c]" />
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Comptes YouTube liés</h1>
-            <p className="text-sm text-[#FAF6EF]/60 mt-1">
+            <p className="text-sm text-[#1e0f2b]/60 mt-1">
               ⭐ V4.26 — Multi-comptes : liez une chaîne YouTube DISTINCTE par serviteur.
               Les publications sont récupérées automatiquement (cron 2×/jour + bouton manuel).
             </p>
@@ -238,12 +238,12 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
 
         {/* Bandeau d'information : compat ascendante */}
         {comptes.length === 0 && (
-          <div className="rounded-lg border border-[#C9A227]/30 bg-[#C9A227]/10 p-4 text-sm">
+          <div className="rounded-lg border border-[#c9a227]/50 bg-[#C9A227]/10 p-4 text-sm">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-[#a3821c] flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="font-semibold text-[#C9A227]">Aucun compte en base pour l'instant</p>
-                <p className="text-[#FAF6EF]/80">
+                <p className="font-semibold text-[#a3821c]">Aucun compte en base pour l'instant</p>
+                <p className="text-[#1e0f2b]/80">
                   Tant que vous n'avez pas lié de compte ici, la synchro utilise le fallback
                   historique (variables d'environnement <code className="bg-black/30 px-1 rounded">YOUTUBE_*</code> sur Vercel).
                   Liez un premier compte ci-dessous pour activer le mode multi-comptes.
@@ -258,24 +258,24 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
             éviter l'erreur 400 redirect_uri_mismatch lors du clic sur
             « Lier via Google ». */}
         {redirectUri && (
-          <div className="rounded-lg border border-[#C9A227]/40 bg-[#C9A227]/5 p-4 text-sm">
+          <div className="rounded-lg border border-[#c9a227]/60 bg-[#C9A227]/5 p-4 text-sm">
             <div className="flex items-start gap-3">
-              <KeyRound className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+              <KeyRound className="w-5 h-5 text-[#a3821c] flex-shrink-0 mt-0.5" />
               <div className="space-y-2 flex-1">
-                <p className="font-semibold text-[#C9A227]">
+                <p className="font-semibold text-[#a3821c]">
                   ⚠️ Avant de lier le premier compte — configurez Google Cloud Console
                 </p>
-                <p className="text-[#FAF6EF]/80">
+                <p className="text-[#1e0f2b]/80">
                   Si vous obtenez l'erreur <code className="bg-black/30 px-1 rounded">Erreur 400 : redirect_uri_mismatch</code> lors
                   du clic sur « Lier via Google », c'est que l'URL de redirection ci-dessous n'est
                   pas déclarée chez Google. Ajoutez-la dans :
                 </p>
-                <p className="text-[#FAF6EF]/70 text-xs pl-3 border-l-2 border-[#C9A227]/30">
+                <p className="text-[#1e0f2b]/70 text-xs pl-3 border-l-2 border-[#c9a227]/50">
                   Google Cloud Console → APIs &amp; Services → Credentials →
                   votre OAuth 2.0 Client ID → Authorized redirect URIs → « ADD URI »
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <code className="bg-black/30 px-2 py-1 rounded text-[#DDBE55] text-xs flex-1 min-w-0 break-all">
+                  <code className="bg-black/30 px-2 py-1 rounded text-[#a3821c] text-xs flex-1 min-w-0 break-all">
                     {redirectUri}
                   </code>
                   <button
@@ -299,12 +299,12 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
                   href="https://console.cloud.google.com/apis/credentials"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[#C9A227] hover:underline text-xs"
+                  className="inline-flex items-center gap-1.5 text-[#a3821c] hover:underline text-xs"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   Ouvrir Google Cloud Console → Credentials
                 </a>
-                <p className="text-[#FAF6EF]/50 text-xs mt-1">
+                <p className="text-[#1e0f2b]/50 text-xs mt-1">
                   ℹ️ Cette URL est dérivée du domaine actuel du back-office (
                   <code className="bg-black/30 px-1 rounded">{typeof window !== "undefined" ? window.location.host : "…"}</code>
                   ). Si vous utilisez aussi <code className="bg-black/30 px-1 rounded">localhost</code> en dev,
@@ -316,26 +316,26 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
         )}
 
         {/* Lier un nouveau compte */}
-        <section className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-4">
+        <section className="rounded-xl bg-[#2a0e3d]/5 border border-[#1e0f2b]/10 p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <Plus className="w-5 h-5 text-[#C9A227]" />
+            <Plus className="w-5 h-5 text-[#a3821c]" />
             <h2 className="text-lg font-semibold">Lier une nouvelle chaîne YouTube</h2>
           </div>
           {servantsDisponibles.length === 0 ? (
-            <p className="text-sm text-[#FAF6EF]/60">
+            <p className="text-sm text-[#1e0f2b]/60">
               Tous les serviteurs actifs ont déjà un compte YouTube lié. Pour en ajouter un nouveau,
-              créez d'abord le serviteur dans <Link href="/admin/servants" className="text-[#C9A227] hover:underline">/admin/servants</Link>.
+              créez d'abord le serviteur dans <Link href="/admin/servants" className="text-[#a3821c] hover:underline">/admin/servants</Link>.
             </p>
           ) : (
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
               <div className="flex-1 space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">
+                <label className="text-xs uppercase tracking-wide text-[#1e0f2b]/60">
                   Serviteur
                 </label>
                 <select
                   value={servantSelectionne}
                   onChange={(e) => setServantSelectionne(e.target.value)}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  className="w-full bg-[#faf6ef] border border-[#1e0f2b]/20 rounded-lg px-3 py-2 text-[#1e0f2b] focus:outline-none focus:border-[#C9A227]"
                 >
                   <option value="">— Sélectionnez —</option>
                   {servantsDisponibles.map((s) => (
@@ -359,7 +359,7 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
               </button>
             </div>
           )}
-          <p className="text-xs text-[#FAF6EF]/40">
+          <p className="text-xs text-[#1e0f2b]/40">
             Vous serez redirigé vers Google pour autoriser l'accès à la chaîne YouTube.
             Le refresh token sera chiffré et stocké en base — aucune variable à copier.
           </p>
@@ -383,7 +383,7 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Comptes liés ({comptes.length})</h2>
           {comptes.length === 0 ? (
-            <p className="text-sm text-[#FAF6EF]/60 italic">Aucun compte lié pour l'instant.</p>
+            <p className="text-sm text-[#1e0f2b]/60 italic">Aucun compte lié pour l'instant.</p>
           ) : (
             <ul className="space-y-3">
               {comptes.map((c) => (
@@ -391,42 +391,42 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
                   key={c.id}
                   className={`rounded-xl border p-4 transition-colors ${
                     c.actif
-                      ? "bg-white/5 border-white/10"
-                      : "bg-white/[0.02] border-white/5 opacity-70"
+                      ? "bg-[#2a0e3d]/5 border-[#1e0f2b]/10"
+                      : "bg-[#2a0e3d]/2 border-[#1e0f2b]/5 opacity-70"
                   }`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     {/* Identité */}
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Youtube className="w-5 h-5 text-[#C9A227]" />
+                        <Youtube className="w-5 h-5 text-[#a3821c]" />
                         <span className="font-semibold text-lg">
                           {c.channelTitle || c.servantShortName || "Chaîne sans nom"}
                         </span>
                         {c.actif ? (
-                          <span className="inline-flex items-center gap-1 text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-xs bg-green-500/20 text-green-700 px-2 py-0.5 rounded-full">
                             <CheckCircle2 className="w-3 h-3" /> Actif
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs bg-gray-500/20 text-gray-300 px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-xs bg-gray-500/20 text-gray-600 px-2 py-0.5 rounded-full">
                             <Power className="w-3 h-3" /> Désactivé
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-[#FAF6EF]/60">
-                        Serviteur : <span className="text-[#FAF6EF]/90">{c.servantFullName} ({c.servantCode})</span>
+                      <p className="text-xs text-[#1e0f2b]/60">
+                        Serviteur : <span className="text-[#1e0f2b]/90">{c.servantFullName} ({c.servantCode})</span>
                       </p>
                       {c.channelId && (
-                        <p className="text-xs text-[#FAF6EF]/50 font-mono">Channel ID : {c.channelId}</p>
+                        <p className="text-xs text-[#1e0f2b]/50 font-mono">Channel ID : {c.channelId}</p>
                       )}
                       {c.dernierSyncAt && (
-                        <p className="text-xs text-[#FAF6EF]/50 flex items-center gap-1">
+                        <p className="text-xs text-[#1e0f2b]/50 flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           Dernière synchro : {new Date(c.dernierSyncAt).toLocaleString("fr-FR")}
                         </p>
                       )}
                       {c.derniereErreur && (
-                        <p className="text-xs text-red-300/90 mt-1 flex items-start gap-1">
+                        <p className="text-xs text-red-700/90 mt-1 flex items-start gap-1">
                           <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
                           <span className="line-clamp-2">{c.derniereErreur}</span>
                         </p>
@@ -449,7 +449,7 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
                       </button>
                       <button
                         onClick={() => relancerOAuth(c)}
-                        className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/20 text-[#FAF6EF] text-sm px-3 py-1.5 rounded-md transition-colors"
+                        className="inline-flex items-center gap-1.5 bg-[#2a0e3d]/5 hover:bg-[#2a0e3d]/10 border border-[#1e0f2b]/20 text-[#1e0f2b] text-sm px-3 py-1.5 rounded-md transition-colors"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                         Relancer l'autorisation
@@ -457,7 +457,7 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
                       <button
                         onClick={() => basculerActif(c)}
                         disabled={enCours === `toggle-${c.id}`}
-                        className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/20 text-[#FAF6EF] text-sm px-3 py-1.5 rounded-md transition-colors"
+                        className="inline-flex items-center gap-1.5 bg-[#2a0e3d]/5 hover:bg-[#2a0e3d]/10 border border-[#1e0f2b]/20 text-[#1e0f2b] text-sm px-3 py-1.5 rounded-md transition-colors"
                       >
                         <Power className="w-3.5 h-3.5" />
                         {c.actif ? "Désactiver" : "Activer"}
@@ -465,7 +465,7 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
                       <button
                         onClick={() => supprimer(c)}
                         disabled={enCours === `del-${c.id}`}
-                        className="inline-flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 text-sm px-3 py-1.5 rounded-md transition-colors"
+                        className="inline-flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-700 text-sm px-3 py-1.5 rounded-md transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         Supprimer
@@ -479,14 +479,14 @@ export function YoutubeAccountsClient({ servants, comptes: comptesInit }: Props)
         </section>
 
         {/* Liens utiles */}
-        <div className="text-sm text-[#FAF6EF]/50 flex flex-wrap gap-4 pt-4 border-t border-white/10">
-          <Link href="/admin/videos" className="hover:text-[#C9A227] transition-colors">
+        <div className="text-sm text-[#1e0f2b]/50 flex flex-wrap gap-4 pt-4 border-t border-[#1e0f2b]/10">
+          <Link href="/admin/videos" className="hover:text-[#a3821c] transition-colors">
             ← Module Vidéos
           </Link>
-          <Link href="/admin/youtube-setup" className="hover:text-[#C9A227] transition-colors">
+          <Link href="/admin/youtube-setup" className="hover:text-[#a3821c] transition-colors">
             Configuration mono-compte (legacy) →
           </Link>
-          <Link href="/admin/tiktok-accounts" className="hover:text-[#C9A227] transition-colors">
+          <Link href="/admin/tiktok-accounts" className="hover:text-[#a3821c] transition-colors">
             Comptes TikTok →
           </Link>
         </div>

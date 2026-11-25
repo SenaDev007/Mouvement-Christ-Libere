@@ -329,23 +329,22 @@
    ============================================================ */
 
 /* ============================================================
-   ⭐ V4.27 — OPTIONS DES <select> DU BACK-OFFICE (fond sombre)
+   ⭐ V4.45 — OPTIONS DES <select> DU BACK-OFFICE (thème clair)
    Les modals AdminModal (portals document.body, classe .cl-modal)
    et les pages admin/staff (shell .bo-winagro) posent un TEXTE
-   IVOIRE sur les <select> — mais les <option> du menu déroulant
-   s'affichaient sur le fond BLANC natif du navigateur : texte
-   invisible jusqu'au survol (signalement pasteur, module Vidéos).
-   Fond violet opaque + texte ivoire sur toutes les options, et
-   color-scheme dark pour la flèche/barre de défilement natives.
+   ENCRE sur les <select> — les <option> du menu déroulant restent
+   sur le fond BLANC natif du navigateur : lisibles partout.
+   color-scheme light pour la flèche/barre de défilement natives.
+   (Avant V4.45 : fond violet + texte ivoire, thème sombre.)
    ============================================================ */
 .cl-modal select,
 .bo-winagro select {
-  color-scheme: dark;
+  color-scheme: light;
 }
 .cl-modal select option,
 .bo-winagro select option {
-  background-color: #2A0E3D;
-  color: #FAF6EF;
+  background-color: #ffffff;
+  color: #1e0f2b;
 }
 
 /* Reflet brillant qui traverse les boutons (shine infini) */
@@ -442,40 +441,42 @@
 }
 
 /* ============================================================
-   ⭐ V3.98 — THÈME WIN AGRO DU BACK-OFFICE (scope .bo-winagro)
-   Design Win Agro appliqué aux modules admin / secrétariat /
-   trésorerie : les tokens sémantiques (ink · stone · ivory) sont
-   inversés pour le fond violet nuit #150920 — la PALETTE Christ
-   Libère est conservée (or sacré · ivoire · violet impérial).
+   ⭐ V4.45 — THÈME « PATTERN LANDING » DU BACK-OFFICE (scope .bo-winagro)
+   Design aligné sur la page d'accueil : sections CLAIRES dominantes
+   (ivoire Christ Libère · blanc), texte encre, or foncé pour les
+   accents — le violet impérial n'est plus jamais dominant (voiles
+   d'images et touches pâles uniquement). Les tokens sémantiques
+   retrouvent leurs valeurs d'origine (avant V3.98 ils étaient
+   INVERSÉS pour le fond violet nuit #150920).
    La classe est posée par admin-shell.tsx et space-shell.tsx.
    ============================================================ */
 .bo-winagro {
-  /* text-ink → ivoire (titres & valeurs sur fond sombre) */
-  --color-ink: #FAF6EF;
-  /* text-stone → gris lilas clair (textes secondaires) */
-  --color-stone: #BDB4C9;
-  /* bg-ivory → violet profond (champs de formulaire) */
-  --color-ivory: #221032;
+  /* text-ink → encre (titres & valeurs sur fond clair) */
+  --color-ink: #1e0f2b;
+  /* text-stone → pierre (textes secondaires) */
+  --color-stone: #8a8378;
+  /* bg-ivory → ivoire Christ Libère (champs de formulaire) */
+  --color-ivory: #faf6ef;
 }
 
 /* Les panneaux « card-gold-top » (formulaires admin-form) passent
-   en verre violet nuit bordé or — comme les panneaux Win Agro. */
+   en verre BLANC bordé or — comme les cartes du landing. */
 .bo-winagro .card-gold-top {
-  background-color: rgba(26, 8, 38, 0.7);
-  border-color: rgba(201, 162, 39, 0.18);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  background-color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(201, 162, 39, 0.3);
+  box-shadow: 0 10px 28px rgba(42, 14, 61, 0.08);
 }
 
-/* Scrollbar : piste sombre dans le back-office (la piste ivoire
-   globale éblouirait sur le violet nuit). */
+/* Scrollbar : piste ivoire-violet très pâle dans le back-office
+   (la piste sombre #0f0518 d'avant V4.45 éblouissait sur le clair). */
 .bo-winagro ::-webkit-scrollbar-track {
-  background: #0f0518;
+  background: #f3ecf8;
 }
 
-/* Sélection de texte dorée sur violet — clin d'œil Win Agro */
+/* Sélection de texte dorée sur clair — clin d'œil Win Agro */
 .bo-winagro ::selection {
-  background: rgba(201, 162, 39, 0.35);
-  color: #FAF6EF;
+  background: rgba(201, 162, 39, 0.3);
+  color: #1e0f2b;
 }
 
 /* ============================================================

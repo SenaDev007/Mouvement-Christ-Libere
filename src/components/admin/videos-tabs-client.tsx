@@ -715,14 +715,14 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       {replaysLocaux.length > 0 && (
         <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3">
           <div className="flex items-start gap-3">
-            <FolderDown className="h-4 w-4 shrink-0 text-amber-300 mt-0.5" />
+            <FolderDown className="h-4 w-4 shrink-0 text-amber-700 mt-0.5" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-amber-900">
                 {replaysLocaux.length === 1
                   ? "Vidéo d'un live sauvegardée sur cet appareil (upload R2 échoué)"
                   : `${replaysLocaux.length} vidéos de lives sauvegardées sur cet appareil (upload R2 échoué)`}
               </p>
-              <p className="text-xs text-amber-300/80 mt-0.5">
+              <p className="text-xs text-amber-700/80 mt-0.5">
                 Ces enregistrements n'ont pas pu être envoyés au serveur au moment de l'arrêt du
                 live, mais ils restent en sécurité dans ce navigateur (même après fermeture de
                 la page). Téléchargez-les, puis réuploadez-les ici via « Nouvelle vidéo » pour
@@ -732,11 +732,11 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                 {replaysLocaux.map((r) => (
                   <div
                     key={r.liveId}
-                    className="flex items-center gap-2 flex-wrap rounded-lg bg-[#1A0826]/80 border border-amber-400/25 px-3 py-2"
+                    className="flex items-center gap-2 flex-wrap rounded-lg bg-[#faf6ef] border border-[#c9a227]/40 px-3 py-2"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold font-serif text-[#FAF6EF] truncate">{r.title}</p>
-                      <p className="text-[10px] text-[#FAF6EF]/50">
+                      <p className="text-xs font-bold font-serif text-[#1e0f2b] truncate">{r.title}</p>
+                      <p className="text-[10px] text-[#1e0f2b]/50">
                         {tailleLisible(r.sizeBytes)} · {(r.mimeType || "video/webm").includes("mp4") ? "MP4" : "WebM"} ·{" "}
                         {new Date(r.savedAt).toLocaleString("fr-FR", {
                           day: "numeric",
@@ -763,7 +763,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                       type="button"
                       onClick={() => supprimerReplayLocal(r)}
                       disabled={telechargementEnCours === r.liveId}
-                      className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-amber-300/60 hover:text-red-400 text-xs font-medium transition-colors disabled:opacity-40"
+                      className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-amber-700/60 hover:text-red-400 text-xs font-medium transition-colors disabled:opacity-40"
                       title="Supprimer cette copie locale"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -781,12 +781,12 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           YouTube n'est pas disponible » remonté par le pasteur). */}
       {youtubeOauthMissing && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3">
-          <AlertCircle className="h-4 w-4 shrink-0 text-amber-300 mt-0.5" />
+          <AlertCircle className="h-4 w-4 shrink-0 text-amber-700 mt-0.5" />
           <div className="min-w-0">
             <p className="text-sm font-bold text-amber-900">
               Récupération automatique YouTube inactive — configuration manquante
             </p>
-            <p className="text-xs text-amber-300/80 mt-0.5">
+            <p className="text-xs text-amber-700/80 mt-0.5">
               {pendingReplayCount > 1
                 ? `${pendingReplayCount} lives sont terminés sans replay récupéré, et `
                 : "Un live est terminé sans replay récupéré, et "}
@@ -804,14 +804,14 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       )}
       {/* ⭐ V3.34 — bandeau de récupération des replays YouTube en cours */}
       {pendingReplayCount > 0 && !youtubeOauthMissing && (
-        <div className="flex items-start gap-3 rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10 px-4 py-3">
-          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#C9A227] mt-0.5" />
+        <div className="flex items-start gap-3 rounded-xl border border-[#c9a227]/60 bg-[#C9A227]/10 px-4 py-3">
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#a3821c] mt-0.5" />
           <div className="min-w-0">
-            <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+            <p className="text-sm font-bold font-serif text-[#1e0f2b]">
               Récupération du replay YouTube en cours
               {pendingReplayCount > 1 ? ` (${pendingReplayCount} lives en attente)` : ""}
             </p>
-            <p className="text-xs text-[#FAF6EF]/60 mt-0.5">
+            <p className="text-xs text-[#1e0f2b]/60 mt-0.5">
               YouTube publie la vidéo quelques minutes après la fin du direct — cette page se met
               à jour automatiquement et la vidéo apparaîtra ici toute seule.
             </p>
@@ -822,10 +822,10 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           vidéos sans vraie miniature (fond noir « TikTok ») sont récupérées
           en ce moment même (oEmbed → R2) — la grille se rafraîchit seule. */}
       {retourMiniatures && retourMiniatures.recuperees > 0 && (
-        <div className="flex items-start gap-3 rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10 px-4 py-3">
-          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#C9A227] mt-0.5" />
+        <div className="flex items-start gap-3 rounded-xl border border-[#c9a227]/60 bg-[#C9A227]/10 px-4 py-3">
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#a3821c] mt-0.5" />
           <div className="min-w-0">
-            <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+            <p className="text-sm font-bold font-serif text-[#1e0f2b]">
               Récupération des miniatures TikTok en cours —{" "}
               {retourMiniatures.recuperees > 1
                 ? `${retourMiniatures.recuperees} miniatures déjà récupérées`
@@ -834,7 +834,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                 ? `, ${retourMiniatures.restantes} restante${retourMiniatures.restantes > 1 ? "s" : ""}`
                 : " — c'est terminé"}
             </p>
-            <p className="text-xs text-[#FAF6EF]/60 mt-0.5">
+            <p className="text-xs text-[#1e0f2b]/60 mt-0.5">
               Les vraies miniatures sont téléchargées depuis TikTok puis stockées de façon
               permanente — la grille se met à jour toute seule au fur et à mesure (un cron
               quotidien complète silencieusement le reste si besoin).
@@ -848,17 +848,17 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
         <div
           className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${
             sauvegardeMp4.enCours
-              ? "border-[#C9A227]/40 bg-[#C9A227]/10"
+              ? "border-[#c9a227]/60 bg-[#C9A227]/10"
               : "border-emerald-500/40 bg-emerald-500/10"
           }`}
         >
           {sauvegardeMp4.enCours ? (
-            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#C9A227] mt-0.5" />
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#a3821c] mt-0.5" />
           ) : (
             <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
           )}
           <div className="min-w-0">
-            <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+            <p className="text-sm font-bold font-serif text-[#1e0f2b]">
               {sauvegardeMp4.enCours
                 ? `Sauvegarde des vidéos TikTok en cours — ${sauvegardeMp4.sauvegardees} sauvegardée${sauvegardeMp4.sauvegardees > 1 ? "s" : ""}${
                     sauvegardeMp4.restantes > 0
@@ -867,7 +867,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                   }`
                 : `${sauvegardeMp4.sauvegardees} vidéo${sauvegardeMp4.sauvegardees > 1 ? "s" : ""} TikTok sauvegardée${sauvegardeMp4.sauvegardees > 1 ? "s" : ""} sur notre stockage — lecture garantie même quand TikTok sature.`}
             </p>
-            <p className="text-xs text-[#FAF6EF]/60 mt-0.5">
+            <p className="text-xs text-[#1e0f2b]/60 mt-0.5">
               {sauvegardeMp4.message
                 ? sauvegardeMp4.message
                 : "Chaque vidéo est copiée depuis TikTok vers notre stockage : le site la joue ensuite directement, sans dépendre de leurs serveurs. Vous pouvez quitter et reprendre à tout moment."}
@@ -877,20 +877,20 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       )}
       {/* ⭐ V4.17 — Bandeau de retour de la synchronisation des compteurs */}
       {(syncStats.enCours || syncStats.youtube + syncStats.tiktok > 0) && (
-        <div className="flex items-start gap-3 rounded-xl border border-[#C9A227]/25 bg-[#C9A227]/10 px-4 py-3">
+        <div className="flex items-start gap-3 rounded-xl border border-[#c9a227]/45 bg-[#C9A227]/10 px-4 py-3">
           {syncStats.enCours ? (
-            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#DDBE55] mt-0.5" />
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#a3821c] mt-0.5" />
           ) : (
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#DDBE55] mt-0.5" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#a3821c] mt-0.5" />
           )}
           <div className="min-w-0">
-            <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+            <p className="text-sm font-bold font-serif text-[#1e0f2b]">
               {syncStats.enCours
                 ? `Synchronisation des compteurs en cours — ${syncStats.youtube} YouTube · ${syncStats.tiktok} TikTok mis à jour`
                 : `Compteurs actualisés — ${syncStats.youtube} vidéo${syncStats.youtube > 1 ? "s" : ""} YouTube et ${syncStats.tiktok} TikTok — les vues et likes réels s'affichent désormais sur le site et dans l'app.`}
             </p>
             {syncStats.message && (
-              <p className="text-xs text-[#FAF6EF]/60 mt-0.5">{syncStats.message}</p>
+              <p className="text-xs text-[#1e0f2b]/60 mt-0.5">{syncStats.message}</p>
             )}
           </div>
         </div>
@@ -905,13 +905,13 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           }`}
         >
           {syncYouTube.erreur ? (
-            <AlertCircle className="h-4 w-4 shrink-0 text-[#E08B6D] mt-0.5" />
+            <AlertCircle className="h-4 w-4 shrink-0 text-[#c05a3c] mt-0.5" />
           ) : (
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#A3C9B0] mt-0.5" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#3f5039] mt-0.5" />
           )}
           <p
             className={`text-sm font-bold min-w-0 flex-1 ${
-              syncYouTube.erreur ? "text-[#E08B6D]" : "text-[#A3C9B0]"
+              syncYouTube.erreur ? "text-[#c05a3c]" : "text-[#3f5039]"
             }`}
           >
             {syncYouTube.message}
@@ -923,8 +923,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
             }
             className={`shrink-0 transition-colors ${
               syncYouTube.erreur
-                ? "text-[#E08B6D]/60 hover:text-[#E08B6D]"
-                : "text-[#A3C9B0]/60 hover:text-[#A3C9B0]"
+                ? "text-[#c05a3c]/60 hover:text-[#c05a3c]"
+                : "text-[#3f5039]/60 hover:text-[#3f5039]"
             }`}
             aria-label="Fermer"
           >
@@ -942,13 +942,13 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           }`}
         >
           {syncTikTok.erreur ? (
-            <AlertCircle className="h-4 w-4 shrink-0 text-[#E08B6D] mt-0.5" />
+            <AlertCircle className="h-4 w-4 shrink-0 text-[#c05a3c] mt-0.5" />
           ) : (
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#A3C9B0] mt-0.5" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#3f5039] mt-0.5" />
           )}
           <p
             className={`text-sm font-bold min-w-0 flex-1 ${
-              syncTikTok.erreur ? "text-[#E08B6D]" : "text-[#A3C9B0]"
+              syncTikTok.erreur ? "text-[#c05a3c]" : "text-[#3f5039]"
             }`}
           >
             {syncTikTok.message}
@@ -960,8 +960,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
             }
             className={`shrink-0 transition-colors ${
               syncTikTok.erreur
-                ? "text-[#E08B6D]/60 hover:text-[#E08B6D]"
-                : "text-[#A3C9B0]/60 hover:text-[#A3C9B0]"
+                ? "text-[#c05a3c]/60 hover:text-[#c05a3c]"
+                : "text-[#3f5039]/60 hover:text-[#3f5039]"
             }`}
             aria-label="Fermer"
           >
@@ -973,16 +973,16 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#8a8378] font-bold mb-1">
             Bibliothèque vidéo
           </p>
           <h1
-            className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]"
+            className="text-2xl md:text-3xl font-bold font-serif text-[#1e0f2b]"
            
           >
             Vidéos
           </h1>
-          <p className="text-sm text-[#BDB4C9] mt-1">
+          <p className="text-sm text-[#8a8378] mt-1">
             Vidéos archivées et lives enregistrés — {videos.length} au total.
           </p>
         </div>
@@ -992,8 +992,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           disabled={false}
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md ${
             syncStats.enCours
-              ? "bg-[#3D1A54] text-[#DDBE55]"
-              : "bg-[#C9A227]/10 text-[#DDBE55] hover:bg-[#3D1A54]/10"
+              ? "bg-white text-[#a3821c]"
+              : "bg-[#C9A227]/10 text-[#a3821c] hover:bg-[#f3ecf8]"
           }`}
           title={
             syncStats.enCours
@@ -1016,8 +1016,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           disabled={false}
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md ${
             sauvegardeMp4.enCours
-              ? "bg-[#3D1A54] text-[#DDBE55]"
-              : "bg-[#C9A227]/10 text-[#DDBE55] hover:bg-[#3D1A54]/10"
+              ? "bg-white text-[#a3821c]"
+              : "bg-[#C9A227]/10 text-[#a3821c] hover:bg-[#f3ecf8]"
           }`}
           title={
             sauvegardeMp4.enCours
@@ -1042,8 +1042,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           disabled={syncYouTube.enCours}
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md ${
             syncYouTube.enCours
-              ? "bg-[#3D1A54] text-[#DDBE55]"
-              : "bg-[#C9A227]/10 text-[#DDBE55] hover:bg-[#3D1A54]/10"
+              ? "bg-white text-[#a3821c]"
+              : "bg-[#C9A227]/10 text-[#a3821c] hover:bg-[#f3ecf8]"
           }`}
           title="Récupérer automatiquement les dernières vidéos publiées sur la chaîne YouTube liée (le compte du pasteur) — elles apparaissent dans le module et sur la page publique"
         >
@@ -1063,8 +1063,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           disabled={syncTikTok.enCours}
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md ${
             syncTikTok.enCours
-              ? "bg-[#3D1A54] text-[#DDBE55]"
-              : "bg-[#C9A227]/10 text-[#DDBE55] hover:bg-[#3D1A54]/10"
+              ? "bg-white text-[#a3821c]"
+              : "bg-[#C9A227]/10 text-[#a3821c] hover:bg-[#f3ecf8]"
           }`}
           title={
             activeTab === "all"
@@ -1088,8 +1088,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
           }
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md ${
             modeSelection
-              ? "bg-[#3D1A54] text-[#DDBE55]"
-              : "bg-[#C9A227]/10 text-[#DDBE55] hover:bg-[#3D1A54]/10"
+              ? "bg-white text-[#a3821c]"
+              : "bg-[#C9A227]/10 text-[#a3821c] hover:bg-[#f3ecf8]"
           }`}
           title={
             modeSelection
@@ -1105,7 +1105,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
         <button
           type="button"
           onClick={openNewVideoModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#FAF6EF] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
         >
           <Plus className="w-4 h-4" />
           {activeTab === "all"
@@ -1119,14 +1119,14 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       {/* ⭐ V3.81 — Retour de la suppression multiple */}
       {retourSuppressionMultiple && (
         <div className="flex items-start gap-3 rounded-xl border border-[#5B7052]/40 bg-[#5B7052]/10 px-4 py-3">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-[#A3C9B0] mt-0.5" />
-          <p className="text-sm font-bold text-[#A3C9B0] min-w-0 flex-1">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-[#3f5039] mt-0.5" />
+          <p className="text-sm font-bold text-[#3f5039] min-w-0 flex-1">
             {retourSuppressionMultiple}
           </p>
           <button
             type="button"
             onClick={() => setRetourSuppressionMultiple(null)}
-            className="shrink-0 text-[#A3C9B0]/60 hover:text-[#A3C9B0] transition-colors"
+            className="shrink-0 text-[#3f5039]/60 hover:text-[#3f5039] transition-colors"
             aria-label="Fermer"
           >
             <X className="w-4 h-4" />
@@ -1135,7 +1135,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       )}
 
       {/* Onglets serviteurs */}
-      <div className="flex items-center gap-2 border-b border-[#C9A227]/15 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-[#c9a227]/35 overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -1148,8 +1148,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
               }}
               className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors whitespace-nowrap ${
                 isActive
-                  ? "text-[#FAF6EF]"
-                  : "text-[#BDB4C9] hover:text-[#FAF6EF]"
+                  ? "text-[#1e0f2b]"
+                  : "text-[#8a8378] hover:text-[#1e0f2b]"
               }`}
             >
               <Icon
@@ -1162,8 +1162,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                   isActive
                     ? tab.color
                       ? "text-white"
-                      : "bg-[#3D1A54] text-white"
-                    : "bg-[#FAF6EF]/15 text-[#BDB4C9]"
+                      : "bg-[#1e0f2b] text-white"
+                    : "bg-[#FAF6EF]/15 text-[#8a8378]"
                 }`}
                 style={
                   isActive && tab.color
@@ -1187,7 +1187,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       {/* Filtres catégories */}
       {activeTab !== "all" && categories.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs uppercase tracking-wider font-bold text-[#BDB4C9] flex items-center gap-1.5">
+          <span className="text-xs uppercase tracking-wider font-bold text-[#8a8378] flex items-center gap-1.5">
             <Tag className="w-3 h-3" />
             Catégorie:
           </span>
@@ -1195,8 +1195,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
             onClick={() => setActiveCategory("all")}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               activeCategory === "all"
-                ? "bg-[#3D1A54] text-[#FAF6EF]"
-                : "bg-[#FAF6EF]/10 text-[#BDB4C9] hover:bg-[#FAF6EF]/20"
+                ? "bg-white text-[#1e0f2b]"
+                : "bg-[#FAF6EF]/10 text-[#8a8378] hover:bg-[#FAF6EF]/20"
             }`}
           >
             Toutes ({videosByServant.length})
@@ -1207,10 +1207,10 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
               onClick={() => setActiveCategory(cat.name)}
               className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 activeCategory === cat.name
-                  ? "bg-[#C9A227] text-[#FAF6EF]"
+                  ? "bg-[#C9A227] text-[#1e0f2b]"
                   : estRubrique(cat.name)
-                    ? "bg-[#C9A227]/15 text-[#DDBE55] hover:bg-[#C9A227]/25"
-                    : "bg-[#FAF6EF]/10 text-[#BDB4C9] hover:bg-[#FAF6EF]/20"
+                    ? "bg-[#C9A227]/15 text-[#a3821c] hover:bg-[#C9A227]/25"
+                    : "bg-[#FAF6EF]/10 text-[#8a8378] hover:bg-[#FAF6EF]/20"
               }`}
             >
               {estRubrique(cat.name) && <Star className="w-3 h-3" />}
@@ -1222,9 +1222,9 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
 
       {/* Grille vidéos */}
       {filteredVideos.length === 0 ? (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-dashed border-[#C9A227]/30 p-12 text-center">
-          <VideoIcon className="w-10 h-10 text-[#FAF6EF]/20 mx-auto mb-3" />
-          <p className="text-sm text-[#BDB4C9] italic">
+        <div className="bg-white rounded-2xl shadow-xl border border-dashed border-[#c9a227]/50 p-12 text-center">
+          <VideoIcon className="w-10 h-10 text-[#1e0f2b]/20 mx-auto mb-3" />
+          <p className="text-sm text-[#8a8378] italic">
             {activeCategory !== "all"
               ? `Aucune vidéo dans la catégorie "${activeCategory}".`
               : activeTab === "all"
@@ -1244,19 +1244,19 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                 onClick={
                   modeSelection ? () => basculerSelection(v.id) : undefined
                 }
-                className={`bg-[#1A0826]/70 rounded-2xl shadow-lg border overflow-hidden hover:shadow-lg transition-all group ${
+                className={`bg-white rounded-2xl shadow-lg border overflow-hidden hover:shadow-lg transition-all group ${
                   modeSelection ? "cursor-pointer" : ""
                 } ${
                   modeSelection && idsSelection.has(v.id)
                     ? "border-transparent ring-2 ring-[#C9A227] shadow-md"
-                    : "border-[#C9A227]/15"
+                    : "border-[#c9a227]/35"
                 }`}
               >
                 {/* Thumbnail — ⭐ V3.64 : les vidéos TikTok montrent leur
                     VRAIE miniature (R2 permanente) + badge TikTok, comme
                     YouTube montre img.youtube.com ; repli de marque si la
                     miniature est absente (backfill non encore passé). */}
-                <div className="relative aspect-video bg-[#1A0826] overflow-hidden">
+                <div className="relative aspect-video bg-[#faf6ef] overflow-hidden">
                   {/* ⭐ V3.81 — Case à cocher de la suppression multiple */}
                   {modeSelection && (
                     <button
@@ -1272,8 +1272,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                       }
                       className={`absolute top-2 left-2 z-10 w-9 h-9 rounded-lg flex items-center justify-center border-2 transition-all shadow-md ${
                         idsSelection.has(v.id)
-                          ? "bg-[#C9A227] border-[#C9A227] text-[#FAF6EF] scale-105"
-                          : "bg-black/50 border-white/90 text-transparent backdrop-blur-sm hover:bg-black/70"
+                          ? "bg-[#C9A227] border-[#C9A227] text-[#1e0f2b] scale-105"
+                          : "bg-black/50 border-[#1e0f2b]/90 text-transparent backdrop-blur-sm hover:bg-black/70"
                       }`}
                     >
                       <Check className="w-5 h-5" strokeWidth={3} />
@@ -1305,7 +1305,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <VideoIcon className="w-8 h-8 text-[#FAF6EF]/30" />
+                      <VideoIcon className="w-8 h-8 text-[#1e0f2b]/30" />
                     </div>
                   )}
 
@@ -1327,7 +1327,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                       (() => {
                         const cat = categorizeVideo(v.title, v.servant.code, v.category);
                         return estRubrique(cat) ? (
-                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#C9A227] text-[#FAF6EF] backdrop-blur-sm">
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#C9A227] text-[#1e0f2b] backdrop-blur-sm">
                             <Star className="w-2.5 h-2.5" />
                             {cat}
                           </span>
@@ -1360,7 +1360,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
 
                 {/* Body */}
                 <div className="p-3">
-                  <h3 className="font-semibold text-sm text-[#FAF6EF] line-clamp-2 leading-tight">
+                  <h3 className="font-semibold text-sm text-[#1e0f2b] line-clamp-2 leading-tight">
                     {v.title}
                   </h3>
 
@@ -1378,7 +1378,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                     <RubricSelect video={v} onChange={changerRubrique} />
                   </div>
 
-                  <div className="flex items-center gap-3 mt-2 text-[11px] text-[#BDB4C9]">
+                  <div className="flex items-center gap-3 mt-2 text-[11px] text-[#8a8378]">
                     <span className="flex items-center gap-1">
                       <Eye className="w-3 h-3" />
                       {v.views.toLocaleString("fr-FR")}
@@ -1392,7 +1392,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                   </div>
 
                   <div
-                    className={`flex items-center justify-end gap-1 mt-3 pt-3 border-t border-[#C9A227]/10 ${
+                    className={`flex items-center justify-end gap-1 mt-3 pt-3 border-t border-[#c9a227]/30 ${
                       modeSelection ? "pointer-events-none opacity-30" : ""
                     }`}
                   >
@@ -1401,7 +1401,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                         s'ouvre PRÉ-REMPLI (vidéo associée + titre). */}
                     <Link
                       href={`/admin/studio?video=${v.id}&titre=${encodeURIComponent(v.title)}`}
-                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#FF6A00]/10 text-[#BDB4C9] hover:text-[#FF6A00] transition-colors"
+                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#FF6A00]/10 text-[#8a8378] hover:text-[#FF6A00] transition-colors"
                       aria-label="Créer une miniature dans le Studio Créatif"
                       title="Créer une miniature (Studio Créatif)"
                     >
@@ -1416,7 +1416,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                     <button
                       type="button"
                       onClick={() => setEditVideo(v)}
-                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#BDB4C9] hover:text-[#C9A227] transition-colors"
+                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8a8378] hover:text-[#a3821c] transition-colors"
                       aria-label="Modifier la vidéo"
                       title="Modifier la vidéo — tous les champs (titre, URL, rubrique, miniature…)"
                     >
@@ -1425,7 +1425,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                     {/* Montage vidéo (découpage, texte, sous-titres…) */}
                     <Link
                       href={`/admin/videos/${v.id}/edit`}
-                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#8C5FA8]/10 text-[#BDB4C9] hover:text-[#8C5FA8] transition-colors"
+                      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#8C5FA8]/10 text-[#8a8378] hover:text-[#6b4480] transition-colors"
                       aria-label="Post-production (montage)"
                       title="Post-production (montage)"
                     >
@@ -1443,16 +1443,16 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       {/* ⭐ V3.81 — Barre d'actions flottante de la suppression multiple */}
       {modeSelection && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] w-[calc(100%-2rem)] max-w-2xl px-1">
-          <div className="bg-[#3D1A54] text-[#FAF6EF] rounded-2xl shadow-2xl border border-[#C9A227]/30 px-4 py-3 flex items-center gap-2 flex-wrap justify-center">
+          <div className="bg-white text-[#1e0f2b] rounded-2xl shadow-2xl border border-[#c9a227]/50 px-4 py-3 flex items-center gap-2 flex-wrap justify-center">
             <span className="text-sm font-bold whitespace-nowrap">
               {idsSelection.size} vidéo{idsSelection.size > 1 ? "s" : ""}{" "}
               sélectionnée{idsSelection.size > 1 ? "s" : ""}
             </span>
-            <span className="w-px h-5 bg-[#1A0826]/20 hidden sm:block" />
+            <span className="w-px h-5 bg-[#2a0e3d]/20 hidden sm:block" />
             <button
               type="button"
               onClick={toutSelectionner}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-[#C9A227]/40 text-[#DDBE55] hover:bg-[#C9A227]/10 transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-[#c9a227]/60 text-[#a3821c] hover:bg-[#C9A227]/10 transition-colors whitespace-nowrap"
             >
               <ListChecks className="w-3.5 h-3.5" />
               {filteredVideos.length > 0 &&
@@ -1464,7 +1464,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
               type="button"
               onClick={() => setConfirmationMultipleOuverte(true)}
               disabled={idsSelection.size === 0 || suppressionEnCours}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-state-danger text-ivory hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-state-danger text-ink hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Supprimer ({idsSelection.size})
@@ -1473,7 +1473,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
               type="button"
               onClick={quitterModeSelection}
               disabled={suppressionEnCours}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[#FAF6EF]/60 hover:text-[#FAF6EF] hover:bg-[#1A0826]/10 transition-colors disabled:opacity-40"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[#1e0f2b]/60 hover:text-[#1e0f2b] hover:bg-[#2a0e3d]/10 transition-colors disabled:opacity-40"
               aria-label="Quitter le mode sélection"
               title="Quitter le mode sélection"
             >
@@ -1496,8 +1496,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
       >
         {suppressionEnCours ? (
           <div className="py-6 flex flex-col items-center gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-[#E08B6D]" />
-            <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+            <Loader2 className="w-8 h-8 animate-spin text-[#c05a3c]" />
+            <p className="text-sm font-bold font-serif text-[#1e0f2b]">
               Suppression en cours… {progressionSuppression.fait}/
               {progressionSuppression.total}
             </p>
@@ -1513,7 +1513,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
                 }}
               />
             </div>
-            <p className="text-xs text-[#BDB4C9]">
+            <p className="text-xs text-[#8a8378]">
               Les fichiers et miniatures sont purgés du stockage cloud en
               même temps.
             </p>
@@ -1521,8 +1521,8 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
         ) : (
           <div className="space-y-4">
             <div className="flex items-start gap-3 rounded-xl border border-[#B3452E]/30 bg-[#B3452E]/5 p-3">
-              <AlertCircle className="w-5 h-5 text-[#E08B6D] shrink-0 mt-0.5" />
-              <p className="text-sm text-[#FAF6EF]/80 leading-relaxed">
+              <AlertCircle className="w-5 h-5 text-[#c05a3c] shrink-0 mt-0.5" />
+              <p className="text-sm text-[#1e0f2b]/80 leading-relaxed">
                 Cette action est <b>définitive</b> : {idsSelection.size} vidéo
                 {idsSelection.size > 1 ? "s" : ""} sera
                 {idsSelection.size > 1 ? "nt" : ""} supprimée
@@ -1535,14 +1535,14 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
               <button
                 type="button"
                 onClick={() => setConfirmationMultipleOuverte(false)}
-                className="px-4 py-2 rounded-xl border border-[#C9A227]/30 text-sm font-semibold text-[#FAF6EF] hover:bg-[#FAF6EF]/10 transition-colors"
+                className="px-4 py-2 rounded-xl border border-[#c9a227]/50 text-sm font-semibold text-[#1e0f2b] hover:bg-[#FAF6EF]/10 transition-colors"
               >
                 Annuler
               </button>
               <button
                 type="button"
                 onClick={confirmerSuppressionMultiple}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-state-danger text-ivory text-sm font-bold hover:opacity-90 transition-opacity"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-state-danger text-ink text-sm font-bold hover:opacity-90 transition-opacity"
               >
                 <Trash2 className="w-4 h-4" />
                 Supprimer définitivement
@@ -1603,7 +1603,7 @@ function RubricSelect({ video, onChange }: RubricSelectProps) {
 
   return (
     <div className="relative">
-      <label className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] mb-1">
+      <label className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-[#8a8378] mb-1">
         <Tag className="w-2.5 h-2.5" />
         Rubrique
       </label>
@@ -1616,8 +1616,8 @@ function RubricSelect({ video, onChange }: RubricSelectProps) {
           erreur
             ? "border-red-400 bg-red-400/10 text-red-400"
             : estSignature
-              ? "border-[#C9A227]/60 bg-[#C9A227]/10 text-[#DDBE55] focus:border-[#C9A227]"
-              : "border-[#C9A227]/25 bg-[#C9A227]/10 text-[#FAF6EF]/80 focus:border-[#C9A227]"
+              ? "border-[#c9a227]/80 bg-[#C9A227]/10 text-[#a3821c] focus:border-[#C9A227]"
+              : "border-[#c9a227]/45 bg-[#C9A227]/10 text-[#1e0f2b]/80 focus:border-[#C9A227]"
         }`}
       >
         {RUBRIQUE_OPTIONS.map((opt) => (
@@ -1627,7 +1627,7 @@ function RubricSelect({ video, onChange }: RubricSelectProps) {
         ))}
       </select>
       {saving && (
-        <Loader2 className="w-3 h-3 animate-spin text-[#C9A227] absolute right-2 bottom-2 pointer-events-none" />
+        <Loader2 className="w-3 h-3 animate-spin text-[#a3821c] absolute right-2 bottom-2 pointer-events-none" />
       )}
     </div>
   );
@@ -1763,23 +1763,23 @@ function MiniatureField({
 }) {
   const affichee = perso || auto;
   return (
-    <div className="rounded-xl border-2 border-[#C9A227]/15 bg-[#C9A227]/20 p-4">
+    <div className="rounded-xl border-2 border-[#c9a227]/35 bg-[#C9A227]/20 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <ImageIcon className="w-4 h-4 text-[#C9A227]" aria-hidden />
-        <p className="text-xs font-bold font-serif text-[#FAF6EF] uppercase tracking-wider">
+        <ImageIcon className="w-4 h-4 text-[#a3821c]" aria-hidden />
+        <p className="text-xs font-bold font-serif text-[#1e0f2b] uppercase tracking-wider">
           Miniature de la vidéo
         </p>
-        <span className="text-[10px] text-[#BDB4C9] font-medium">
+        <span className="text-[10px] text-[#8a8378] font-medium">
           (affichée sur la page publique)
         </span>
       </div>
       <div className="flex items-center gap-4">
         <div className="relative flex-shrink-0">
-          <div className="w-36 h-[81px] rounded-lg border-2 border-[#C9A227]/30 overflow-hidden bg-[#3D1A54] flex items-center justify-center shadow-md">
+          <div className="w-36 h-[81px] rounded-lg border-2 border-[#c9a227]/50 overflow-hidden bg-white flex items-center justify-center shadow-md">
             {affichee ? (
               <img src={affichee} alt="Miniature de la vidéo" className="w-full h-full object-cover" />
             ) : (
-              <ImageIcon className="w-7 h-7 text-[#C9A227]/50" aria-hidden />
+              <ImageIcon className="w-7 h-7 text-[#a3821c]/50" aria-hidden />
             )}
             {processing && (
               <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
@@ -1788,7 +1788,7 @@ function MiniatureField({
             )}
           </div>
           <label
-            className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#FAF6EF] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
+            className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#1e0f2b] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
             title="Choisir une miniature personnalisée (image)"
           >
             {processing ? (
@@ -1806,7 +1806,7 @@ function MiniatureField({
           </label>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] text-[#FAF6EF]/70 leading-relaxed">
+          <p className="text-[11px] text-[#1e0f2b]/70 leading-relaxed">
             {perso
               ? "Miniature personnalisée — c'est elle qui sera affichée sur la page publique."
               : auto
@@ -2395,15 +2395,15 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
             hébergée passe par la suppression + création, ou la
             post-production ; ici on édite la fiche et l'URL). */}
         {!enEdition && (
-          <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#C9A227]/10 border-2 border-[#C9A227]/15">
+          <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#C9A227]/10 border-2 border-[#c9a227]/35">
           <button
             type="button"
             onClick={() => { setSource("lien"); setError(""); }}
             disabled={loading}
             className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors disabled:opacity-50 ${
               source === "lien"
-                ? "bg-[#1A0826]/70 text-[#FAF6EF] shadow-md border border-[#C9A227]/40"
-                : "text-[#BDB4C9] hover:text-[#FAF6EF]"
+                ? "bg-white text-[#1e0f2b] shadow-md border border-[#c9a227]/60"
+                : "text-[#8a8378] hover:text-[#1e0f2b]"
             }`}
           >
             <LinkIcon className="w-4 h-4" />
@@ -2415,8 +2415,8 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
             disabled={loading}
             className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors disabled:opacity-50 ${
               source === "fichier"
-                ? "bg-[#1A0826]/70 text-[#FAF6EF] shadow-md border border-[#C9A227]/40"
-                : "text-[#BDB4C9] hover:text-[#FAF6EF]"
+                ? "bg-white text-[#1e0f2b] shadow-md border border-[#c9a227]/60"
+                : "text-[#8a8378] hover:text-[#1e0f2b]"
             }`}
           >
             <Upload className="w-4 h-4" />
@@ -2518,7 +2518,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
             {/* ⭐ V4.24 — Vidéo hébergée sur NOTRE stockage (fichier uploadé) :
                 avertissement avant modification de l'URL. */}
             {enEdition && (editVideo?.videoUrl || "").includes(".r2.dev") && (
-              <p className="text-[11px] text-[#DDBE55] leading-relaxed px-3 py-2 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/20">
+              <p className="text-[11px] text-[#a3821c] leading-relaxed px-3 py-2 rounded-lg bg-[#C9A227]/10 border border-[#c9a227]/40">
                 Cette vidéo est un FICHIER hébergé sur notre stockage cloud — ne
                 modifiez ce champ que pour pointer vers un lien externe (YouTube,
                 TikTok…).
@@ -2527,19 +2527,19 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
 
             {/* ⭐ V4.24 — Détection TikTok en cours / problème */}
             {tiktokEnCours && (
-              <p className="text-[11px] text-[#BDB4C9] flex items-center gap-1.5">
+              <p className="text-[11px] text-[#8a8378] flex items-center gap-1.5">
                 <Loader2 className="w-3 h-3 animate-spin" />
                 Récupération de la miniature TikTok…
               </p>
             )}
             {erreurUrlTiktok && (
-              <p className="text-[11px] text-[#E08B6D] flex items-start gap-1.5">
+              <p className="text-[11px] text-[#c05a3c] flex items-start gap-1.5">
                 <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
                 {erreurUrlTiktok}
               </p>
             )}
             {titreTiktok && (
-              <p className="text-[11px] text-[#BDB4C9]/80 leading-relaxed">
+              <p className="text-[11px] text-[#8a8378]/80 leading-relaxed">
                 Légende TikTok détectée — utilisée comme titre si le champ
                 titre est vide (modifiable) : «{" "}
                 {titreTiktok.length > 90 ? titreTiktok.slice(0, 90) + "…" : titreTiktok} »
@@ -2572,15 +2572,15 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
           <div className="space-y-3">
             {!fichier ? (
               <label
-                className="flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-xl border-2 border-dashed border-[#C9A227]/50 bg-[#C9A227]/5 cursor-pointer hover:bg-[#C9A227]/10 transition-colors"
+                className="flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-xl border-2 border-dashed border-[#c9a227]/70 bg-[#C9A227]/5 cursor-pointer hover:bg-[#C9A227]/10 transition-colors"
                 title="Choisir le fichier vidéo à envoyer"
               >
-                <FileVideo className="w-10 h-10 text-[#C9A227]" />
+                <FileVideo className="w-10 h-10 text-[#a3821c]" />
                 <div className="text-center">
-                  <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+                  <p className="text-sm font-bold font-serif text-[#1e0f2b]">
                     Choisir le fichier vidéo
                   </p>
-                  <p className="text-xs text-[#BDB4C9] mt-1">
+                  <p className="text-xs text-[#8a8378] mt-1">
                     MP4, WebM, MOV — envoyé directement sur le site, sans passer par YouTube.
                     <br />
                     La miniature et la durée sont détectées automatiquement.
@@ -2596,28 +2596,28 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
                 />
               </label>
             ) : (
-              <div className="flex items-start gap-4 p-4 rounded-xl border-2 border-[#C9A227]/40 bg-[#C9A227]/10">
+              <div className="flex items-start gap-4 p-4 rounded-xl border-2 border-[#c9a227]/60 bg-[#C9A227]/10">
                 {/* Aperçu miniature auto-capturée */}
-                <div className="w-36 h-[81px] rounded-lg overflow-hidden bg-[#3D1A54] flex items-center justify-center flex-shrink-0 border border-[#C9A227]/15">
+                <div className="w-36 h-[81px] rounded-lg overflow-hidden bg-white flex items-center justify-center flex-shrink-0 border border-[#c9a227]/35">
                   {extractionEnCours ? (
-                    <Loader2 className="w-5 h-5 text-[#C9A227] animate-spin" />
+                    <Loader2 className="w-5 h-5 text-[#a3821c] animate-spin" />
                   ) : miniatureAuto ? (
                     <img src={miniatureAuto} alt="Miniature détectée" className="w-full h-full object-cover" />
                   ) : (
-                    <FileVideo className="w-6 h-6 text-[#C9A227]/60" />
+                    <FileVideo className="w-6 h-6 text-[#a3821c]/60" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold font-serif text-[#FAF6EF] truncate" title={fichier.name}>
+                  <p className="text-sm font-bold font-serif text-[#1e0f2b] truncate" title={fichier.name}>
                     {fichier.name}
                   </p>
-                  <p className="text-xs text-[#BDB4C9] mt-0.5">
+                  <p className="text-xs text-[#8a8378] mt-0.5">
                     {tailleLisibleFichier(fichier.size)}
                     {dureeAuto ? ` · durée ${dureeAuto}` : ""}
                     {extractionEnCours ? " · analyse en cours…" : ""}
                   </p>
                   {miniatureAuto && (
-                    <p className="text-[10px] text-[#FAF6EF]/60 mt-1 flex items-center gap-1">
+                    <p className="text-[10px] text-[#1e0f2b]/60 mt-1 flex items-center gap-1">
                       <Camera className="w-3 h-3" /> Miniature capturée automatiquement
                     </p>
                   )}
@@ -2654,7 +2654,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
         )}
 
         {/* Checkbox Live */}
-        <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#C9A227]/20 bg-[#C9A227]/10 cursor-pointer hover:border-[#C9A227] transition-colors">
+        <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#c9a227]/40 bg-[#C9A227]/10 cursor-pointer hover:border-[#C9A227] transition-colors">
           <input
             type="checkbox"
             checked={form.isLive}
@@ -2662,8 +2662,8 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
             className="w-4 h-4 accent-[#C9A227]"
           />
           <div>
-            <div className="text-sm font-semibold text-[#FAF6EF]">En direct maintenant</div>
-            <div className="text-xs text-[#BDB4C9]">Marquer comme live actif</div>
+            <div className="text-sm font-semibold text-[#1e0f2b]">En direct maintenant</div>
+            <div className="text-xs text-[#8a8378]">Marquer comme live actif</div>
           </div>
         </label>
 
@@ -2673,7 +2673,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
             réintégration requise. Sans elle, une vidéo supprimée ne peut
             JAMAIS revenir (ni par une nouvelle saisie, ni par un import). */}
         {suppressionConnue && !loading && (
-          <div className="px-4 py-3 rounded-xl border-2 border-[#DDBE55]/40 bg-[#C9A227]/10">
+          <div className="px-4 py-3 rounded-xl border-2 border-[#c9a227]/60 bg-[#C9A227]/10">
             <p className="text-sm font-bold text-[#7A6414] flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               Cette vidéo a été supprimée de la plateforme
@@ -2692,7 +2692,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
               <button
                 type="button"
                 onClick={() => setSuppressionConnue(null)}
-                className="px-3 py-2 rounded-lg text-xs font-bold text-[#BDB4C9] hover:text-[#FAF6EF] transition-colors"
+                className="px-3 py-2 rounded-lg text-xs font-bold text-[#8a8378] hover:text-[#1e0f2b] transition-colors"
               >
                 Ne pas réintégrer
               </button>
@@ -2712,14 +2712,14 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
 
         {/* ⭐ V3.47 — Progression de l'envoi */}
         {loading && (phase === "envoi" || phase === "fiche" || phase === "finalisation") && (
-          <div className="px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30">
+          <div className="px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#c9a227]/50">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold font-serif text-[#FAF6EF] flex items-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9A227]" />
+              <p className="text-xs font-bold font-serif text-[#1e0f2b] flex items-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#a3821c]" />
                 {phaseLabel[phase]}
               </p>
               {phase === "envoi" && (
-                <span className="text-xs font-bold text-[#DDBE55]">{progression}%</span>
+                <span className="text-xs font-bold text-[#a3821c]">{progression}%</span>
               )}
             </div>
             <div className="h-2 rounded-full bg-[#FAF6EF]/15 overflow-hidden">
@@ -2729,7 +2729,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
               />
             </div>
             {fichier && phase === "envoi" && (
-              <p className="text-[10px] text-[#BDB4C9] mt-1.5">
+              <p className="text-[10px] text-[#8a8378] mt-1.5">
                 {tailleLisibleFichier(fichier.size)} — ne fermez pas cette fenêtre pendant l&apos;envoi.
               </p>
             )}
@@ -2737,19 +2737,19 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#C9A227]/10">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#c9a227]/30">
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#BDB4C9] hover:text-[#FAF6EF] transition-colors disabled:opacity-40"
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8a8378] hover:text-[#1e0f2b] transition-colors disabled:opacity-40"
           >
             Annuler
           </button>
           <button
             type="submit"
             disabled={loading || extractionEnCours || miniatureProcessing}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#1e0f2b] font-bold text-sm hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
@@ -2776,7 +2776,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
             <button
               type="button"
               onClick={() => envoyer(true)}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#FAF6EF] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
             >
               <Upload className="w-4 h-4" /> Réessayer l&apos;envoi
             </button>

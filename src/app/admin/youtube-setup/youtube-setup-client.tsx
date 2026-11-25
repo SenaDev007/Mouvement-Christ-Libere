@@ -149,7 +149,7 @@ export function YoutubeSetupClient({
   const termsUrl = `${origin || "https://mouvement-christ-libere.vercel.app"}/conditions`;
 
   return (
-    <div className="min-h-screen text-[#FAF6EF]">
+    <div className="min-h-screen text-[#1e0f2b]">
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
@@ -158,7 +158,7 @@ export function YoutubeSetupClient({
           </div>
           <div>
             <h1 className="text-xl font-bold">Configuration YouTube</h1>
-            <p className="text-xs text-[#BDB4C9]">Auto-récupération des replays (Tier B + C)</p>
+            <p className="text-xs text-[#8a8378]">Auto-récupération des replays (Tier B + C)</p>
           </div>
         </div>
 
@@ -167,20 +167,20 @@ export function YoutubeSetupClient({
           <div className="flex items-center gap-3">
             {oauthConfigured ? (
               <>
-                <CheckCircle2 className="w-6 h-6 text-emerald-300 flex-shrink-0" />
+                <CheckCircle2 className="w-6 h-6 text-emerald-700 flex-shrink-0" />
                 <div>
-                  <p className="font-bold text-emerald-300">OAuth YouTube configuré ✓</p>
-                  <p className="text-xs text-emerald-300">
+                  <p className="font-bold text-emerald-700">OAuth YouTube configuré ✓</p>
+                  <p className="text-xs text-emerald-700">
                     Le Tier B (auto-récupération) et Tier C (broadcast pré-créé) sont actifs.
                   </p>
                 </div>
               </>
             ) : (
               <>
-                <AlertCircle className="w-6 h-6 text-amber-300 flex-shrink-0" />
+                <AlertCircle className="w-6 h-6 text-amber-700 flex-shrink-0" />
                 <div>
-                  <p className="font-bold text-amber-300">OAuth YouTube non configuré</p>
-                  <p className="text-xs text-amber-300">
+                  <p className="font-bold text-amber-700">OAuth YouTube non configuré</p>
+                  <p className="text-xs text-amber-700">
                     {credentialsConfigured
                       ? "Client ID et Secret déjà présents sur Vercel — il ne manque que le refresh token (étape 2)."
                       : "Seul le Tier A (saisie manuelle) fonctionne actuellement. Suivez les étapes ci-dessous."}
@@ -197,14 +197,14 @@ export function YoutubeSetupClient({
         {oauthConfigured && (
           <div className="rounded-2xl p-5 mb-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200">
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-6 h-6 text-emerald-300 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-6 h-6 text-emerald-700 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-bold text-green-900 mb-1">Configuration terminée — rien à refaire ✓</p>
-                <p className="text-xs text-emerald-300 leading-relaxed mb-3">
+                <p className="text-xs text-emerald-700 leading-relaxed mb-3">
                   Les 4 variables sont en place et le système fonctionne sans intervention.
                   Cette page reste utile en permanence pour :
                 </p>
-                <ul className="text-xs text-emerald-300 space-y-1 mb-3">
+                <ul className="text-xs text-emerald-700 space-y-1 mb-3">
                   <li>• <strong>Tester</strong> la récupération des replays (section Test ci-dessous) ;</li>
                   <li>• <strong>Régénérer le refresh token</strong> si besoin : en mode « Testing » chez Google,
                     il expire tous les 7 jours (relancez le flux via « Reconfigurer »). Si l'app est
@@ -213,7 +213,7 @@ export function YoutubeSetupClient({
                 </ul>
                 <button
                   onClick={() => setShowSetupGuide(!showSetupGuide)}
-                  className="text-xs font-bold text-emerald-300 hover:text-green-900 underline cursor-pointer"
+                  className="text-xs font-bold text-emerald-700 hover:text-green-900 underline cursor-pointer"
                 >
                   {showSetupGuide ? "Masquer le guide de configuration" : "Reconfigurer / régénérer le token →"}
                 </button>
@@ -229,7 +229,7 @@ export function YoutubeSetupClient({
           <div className="flex items-start gap-3">
             <ShieldAlert className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-bold text-red-300 mb-1">
+              <p className="font-bold text-red-700 mb-1">
                 Google affiche « Accès bloqué — Erreur 403 : access_denied » ?
               </p>
               <p className="text-xs text-red-400 leading-relaxed mb-3">
@@ -239,11 +239,11 @@ export function YoutubeSetupClient({
                 d&apos;une application en mode <strong>Testing</strong> : votre compte Google
                 n&apos;est pas encore déclaré comme testeur. Ajoutez-le en 30 secondes :
               </p>
-              <ol className="space-y-1.5 text-xs text-red-300 mb-3">
+              <ol className="space-y-1.5 text-xs text-red-700 mb-3">
                 <li>
                   1. Ouvrez{" "}
                   <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" rel="noopener noreferrer"
-                    className="text-red-300 font-bold underline hover:text-red-400 inline-flex items-center gap-0.5">
+                    className="text-red-700 font-bold underline hover:text-red-400 inline-flex items-center gap-0.5">
                     OAuth consent screen <ExternalLink className="w-3 h-3" />
                   </a>{" "}
                   (Google Cloud Console → APIs &amp; Services)
@@ -269,14 +269,14 @@ export function YoutubeSetupClient({
         {/* Encart : écran de consentement Google (politique + conditions) —
             replié en mode post-configuration */}
         {(showSetupGuide || !oauthConfigured) && (
-        <div className="rounded-2xl p-5 mb-6 bg-[#1A0826]/70 border-2 border-[#C9A227]/30">
+        <div className="rounded-2xl p-5 mb-6 bg-white border-2 border-[#c9a227]/50">
           <div className="flex items-start gap-3">
-            <FileText className="w-6 h-6 text-[#C9A227] flex-shrink-0 mt-0.5" />
+            <FileText className="w-6 h-6 text-[#a3821c] flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-bold font-serif text-[#FAF6EF] mb-1">
+              <p className="font-bold font-serif text-[#1e0f2b] mb-1">
                 Écran de consentement Google — liens légaux à déclarer
               </p>
-              <p className="text-xs text-[#FAF6EF]/70 leading-relaxed mb-3">
+              <p className="text-xs text-[#1e0f2b]/70 leading-relaxed mb-3">
                 Google exige une <strong>politique de confidentialité</strong> (et recommande des
                 conditions d&apos;utilisation) pour valider l&apos;écran de consentement. Les deux
                 pages sont désormais publiées sur le site — déclarez ces URLs dans{" "}
@@ -287,16 +287,16 @@ export function YoutubeSetupClient({
                   { label: "Privacy Policy URL", value: privacyPolicyUrl, key: "privacy" },
                   { label: "Terms of Service URL", value: termsUrl, key: "terms" },
                 ].map((l) => (
-                  <div key={l.key} className="px-3 py-2 rounded-lg bg-[#C9A227]/5 border border-[#C9A227]/20">
+                  <div key={l.key} className="px-3 py-2 rounded-lg bg-[#C9A227]/5 border border-[#c9a227]/40">
                     <div className="flex items-center gap-2 flex-wrap">
                       <code className="text-xs font-bold break-all flex-1 min-w-0">{l.value}</code>
                       <button onClick={() => copyToClipboard(l.value, l.key)}
-                        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#3D1A54]/10 text-[#BDB4C9] flex-shrink-0">
+                        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#f3ecf8] text-[#8a8378] flex-shrink-0">
                         <Copy className="w-3 h-3" />
                       </button>
-                      {copied === l.key && <span className="text-[10px] text-emerald-300">Copié !</span>}
+                      {copied === l.key && <span className="text-[10px] text-emerald-700">Copié !</span>}
                     </div>
-                    <p className="text-[10px] text-[#BDB4C9] mt-1">→ champ « {l.label} »</p>
+                    <p className="text-[10px] text-[#8a8378] mt-1">→ champ « {l.label} »</p>
                   </div>
                 ))}
               </div>
@@ -310,7 +310,7 @@ export function YoutubeSetupClient({
           <div className="rounded-2xl p-4 mb-6 bg-red-400/10 border border-red-400/25 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm text-red-300">{queryError}</p>
+              <p className="text-sm text-red-700">{queryError}</p>
               <button onClick={() => setQueryError("")} className="text-xs text-red-400 hover:underline mt-1">
                 Masquer
               </button>
@@ -328,11 +328,11 @@ export function YoutubeSetupClient({
           title="Créer les credentials OAuth sur Google Cloud"
           icon={Settings}
         >
-          <ol className="space-y-2 text-sm text-[#FAF6EF]/80">
+          <ol className="space-y-2 text-sm text-[#1e0f2b]/80">
             <li>
               Allez sur{" "}
               <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer"
-                className="text-[#C9A227] font-bold hover:underline inline-flex items-center gap-0.5">
+                className="text-[#a3821c] font-bold hover:underline inline-flex items-center gap-0.5">
                 Google Cloud Console <ExternalLink className="w-3 h-3" />
               </a>
             </li>
@@ -343,30 +343,30 @@ export function YoutubeSetupClient({
             <li>
               Dans <strong>Authorized redirect URIs</strong>, ajoutez <strong>les 2 URIs</strong> :
               <div className="mt-2 space-y-2">
-                <div className="px-3 py-2 rounded-lg bg-[#C9A227]/5 border border-[#C9A227]/20">
+                <div className="px-3 py-2 rounded-lg bg-[#C9A227]/5 border border-[#c9a227]/40">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Globe className="w-3.5 h-3.5 text-[#C9A227] flex-shrink-0" />
+                    <Globe className="w-3.5 h-3.5 text-[#a3821c] flex-shrink-0" />
                     <code className="text-xs font-bold break-all flex-1 min-w-0">{inAppRedirectUri}</code>
                     <button onClick={() => copyToClipboard(inAppRedirectUri, "redirect-inapp")}
-                      className="ml-auto inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#3D1A54]/10 text-[#BDB4C9] flex-shrink-0">
+                      className="ml-auto inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#f3ecf8] text-[#8a8378] flex-shrink-0">
                       <Copy className="w-3 h-3" />
                     </button>
-                    {copied === "redirect-inapp" && <span className="text-[10px] text-emerald-300">Copié !</span>}
+                    {copied === "redirect-inapp" && <span className="text-[10px] text-emerald-700">Copié !</span>}
                   </div>
-                  <p className="text-[10px] text-[#BDB4C9] mt-1">
+                  <p className="text-[10px] text-[#8a8378] mt-1">
                     → <strong>requis pour la méthode recommandée (étape 2)</strong> — flux directement depuis le site
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Terminal className="w-3.5 h-3.5 text-[#BDB4C9] flex-shrink-0" />
+                  <Terminal className="w-3.5 h-3.5 text-[#8a8378] flex-shrink-0" />
                   <code className="px-2 py-1 bg-[#C9A227]/10 rounded text-xs break-all">http://localhost:3001/callback</code>
                   <button onClick={() => copyToClipboard("http://localhost:3001/callback", "redirect-local")}
-                    className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#3D1A54]/10 text-[#BDB4C9] flex-shrink-0">
+                    className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#f3ecf8] text-[#8a8378] flex-shrink-0">
                     <Copy className="w-3 h-3" />
                   </button>
-                  {copied === "redirect-local" && <span className="text-[10px] text-emerald-300">Copié !</span>}
+                  {copied === "redirect-local" && <span className="text-[10px] text-emerald-700">Copié !</span>}
                 </div>
-                <p className="text-[10px] text-[#BDB4C9]">→ uniquement si vous utilisez le script local (étape 3)</p>
+                <p className="text-[10px] text-[#8a8378]">→ uniquement si vous utilisez le script local (étape 3)</p>
               </div>
             </li>
             <li>Notez votre <strong>Client ID</strong> et <strong>Client Secret</strong></li>
@@ -379,7 +379,7 @@ export function YoutubeSetupClient({
           title="Générer le refresh token — depuis le site (recommandé)"
           icon={Globe}
         >
-          <p className="text-sm text-[#FAF6EF]/80 mb-3">
+          <p className="text-sm text-[#1e0f2b]/80 mb-3">
             Une seule opération, <strong>sans terminal ni Node.js local</strong> : vous cliquez,
             vous autorisez le compte YouTube du ministère sur l'écran Google, et le site affiche
             les variables à copier sur Vercel.
@@ -389,15 +389,15 @@ export function YoutubeSetupClient({
           <div className={`px-3 py-2 rounded-lg mb-4 flex items-center gap-2 ${credentialsConfigured ? "bg-emerald-400/10" : "bg-amber-400/10"}`}>
             {credentialsConfigured ? (
               <>
-                <CheckCircle2 className="w-4 h-4 text-emerald-300 flex-shrink-0" />
-                <p className="text-xs text-emerald-300">
+                <CheckCircle2 className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+                <p className="text-xs text-emerald-700">
                   Credentials détectés sur Vercel (YOUTUBE_CLIENT_ID / SECRET) — prêt à démarrer.
                 </p>
               </>
             ) : (
               <>
-                <AlertCircle className="w-4 h-4 text-amber-300 flex-shrink-0" />
-                <p className="text-xs text-amber-300">
+                <AlertCircle className="w-4 h-4 text-amber-700 flex-shrink-0" />
+                <p className="text-xs text-amber-700">
                   Credentials absents de Vercel — collez-les ci-dessous, le flux fonctionnera quand même.
                 </p>
               </>
@@ -408,7 +408,7 @@ export function YoutubeSetupClient({
           {(showManual || !credentialsConfigured) && (
             <div className="space-y-3 mb-4">
               <div>
-                <label className="text-xs font-bold font-serif text-[#FAF6EF]/70 mb-1 flex items-center gap-1">
+                <label className="text-xs font-bold font-serif text-[#1e0f2b]/70 mb-1 flex items-center gap-1">
                   <KeyRound className="w-3 h-3" /> Client ID (…apps.googleusercontent.com)
                 </label>
                 <input
@@ -418,11 +418,11 @@ export function YoutubeSetupClient({
                   placeholder="123456789-abcdef.apps.googleusercontent.com"
                   autoComplete="off"
                   spellCheck={false}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#1A0826]/70 text-sm font-mono focus:outline-none focus:border-[#C9A227]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-white text-sm font-mono focus:outline-none focus:border-[#C9A227]"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold font-serif text-[#FAF6EF]/70 mb-1 flex items-center gap-1">
+                <label className="text-xs font-bold font-serif text-[#1e0f2b]/70 mb-1 flex items-center gap-1">
                   <KeyRound className="w-3 h-3" /> Client Secret (GOCSPX-…)
                 </label>
                 <div className="relative">
@@ -433,18 +433,18 @@ export function YoutubeSetupClient({
                     placeholder="GOCSPX-xxxxxxxxxxxxxxxxxxxx"
                     autoComplete="off"
                     spellCheck={false}
-                    className="w-full px-3 py-2 pr-10 rounded-lg border border-[#C9A227]/25 bg-[#1A0826]/70 text-sm font-mono focus:outline-none focus:border-[#C9A227]"
+                    className="w-full px-3 py-2 pr-10 rounded-lg border border-[#c9a227]/45 bg-white text-sm font-mono focus:outline-none focus:border-[#C9A227]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowSecret(!showSecret)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#BDB4C9] hover:text-[#FAF6EF]"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#8a8378] hover:text-[#1e0f2b]"
                     aria-label={showSecret ? "Masquer le secret" : "Afficher le secret"}
                   >
                     {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[10px] text-[#BDB4C9] mt-1">
+                <p className="text-[10px] text-[#8a8378] mt-1">
                   🔒 Chiffré côté serveur dans un cookie httpOnly à usage unique (10 min) — jamais affiché ni stocké en clair.
                 </p>
               </div>
@@ -480,14 +480,14 @@ export function YoutubeSetupClient({
           {credentialsConfigured && (
             <button
               onClick={() => setShowManual(!showManual)}
-              className="mt-3 text-xs text-[#BDB4C9] hover:text-[#FAF6EF] underline"
+              className="mt-3 text-xs text-[#8a8378] hover:text-[#1e0f2b] underline"
             >
               {showManual ? "Masquer les champs" : "Utiliser d'autres credentials…"}
             </button>
           )}
 
-          <div className="mt-4 px-3 py-2 rounded-lg bg-[#C9A227]/10 text-xs text-[#FAF6EF]/70 leading-relaxed">
-            <p className="font-bold font-serif text-[#FAF6EF] mb-1">Écrans Google à prévoir :</p>
+          <div className="mt-4 px-3 py-2 rounded-lg bg-[#C9A227]/10 text-xs text-[#1e0f2b]/70 leading-relaxed">
+            <p className="font-bold font-serif text-[#1e0f2b] mb-1">Écrans Google à prévoir :</p>
             <p className="mb-1 text-red-400">
               <strong>0.</strong> « Accès bloqué / 403 access_denied » → votre email n&apos;est pas
               dans <strong>Test users</strong> (voir encart rouge ci-dessus, section{" "}
@@ -505,11 +505,11 @@ export function YoutubeSetupClient({
           title="Alternative : script local (terminal)"
           icon={Terminal}
         >
-          <p className="text-xs text-[#BDB4C9] mb-3">
+          <p className="text-xs text-[#8a8378] mb-3">
             Si vous préférez générer le token depuis votre ordinateur (Node.js requis) — méthode historique.
           </p>
-          <div className="bg-[#1A0826] rounded-xl p-4 font-mono text-xs text-[#C9A227] overflow-x-auto">
-            <div className="text-[#FAF6EF]/40 mb-2"># Dans le terminal, à la racine du projet :</div>
+          <div className="bg-[#faf6ef] rounded-xl p-4 font-mono text-xs text-[#a3821c] overflow-x-auto">
+            <div className="text-[#1e0f2b]/40 mb-2"># Dans le terminal, à la racine du projet :</div>
             <div>
               <span className="text-green-400">node</span> scripts/youtube-oauth-setup.js{" "}
               <span className="text-blue-400">"VOTRE_CLIENT_ID"</span>{" "}
@@ -519,11 +519,11 @@ export function YoutubeSetupClient({
           <div className="mt-3 flex items-center gap-2">
             <button
               onClick={() => copyToClipboard('node scripts/youtube-oauth-setup.js "CLIENT_ID" "CLIENT_SECRET"', "cmd")}
-              className="px-3 py-1.5 rounded-lg bg-[#C9A227]/10 text-xs font-bold hover:bg-[#3D1A54]/10 transition-colors flex items-center gap-1"
+              className="px-3 py-1.5 rounded-lg bg-[#C9A227]/10 text-xs font-bold hover:bg-[#f3ecf8] transition-colors flex items-center gap-1"
             >
               <Copy className="w-3 h-3" /> Copier la commande
             </button>
-            {copied === "cmd" && <span className="text-[10px] text-emerald-300">Copié !</span>}
+            {copied === "cmd" && <span className="text-[10px] text-emerald-700">Copié !</span>}
           </div>
         </Section>
 
@@ -533,10 +533,10 @@ export function YoutubeSetupClient({
           title="Ajouter les variables sur Vercel"
           icon={ExternalLink}
         >
-          <p className="text-sm text-[#FAF6EF]/80 mb-3">
+          <p className="text-sm text-[#1e0f2b]/80 mb-3">
             Allez sur{" "}
             <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer"
-              className="text-[#C9A227] font-bold hover:underline inline-flex items-center gap-0.5">
+              className="text-[#a3821c] font-bold hover:underline inline-flex items-center gap-0.5">
               Vercel Dashboard <ExternalLink className="w-3 h-3" />
             </a>{" "}
             → votre projet → <strong>Settings</strong> → <strong>Environment Variables</strong>.
@@ -549,20 +549,20 @@ export function YoutubeSetupClient({
               { key: "YOUTUBE_CHANNEL_ID", desc: "ID de votre chaîne (UC...)" },
             ].map((v) => (
               <div key={v.key} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#C9A227]/10 flex-wrap">
-                <code className="text-xs font-bold font-serif text-[#FAF6EF]">{v.key}</code>
-                <span className="text-[10px] text-[#BDB4C9] flex-1 min-w-0">{v.desc}</span>
+                <code className="text-xs font-bold font-serif text-[#1e0f2b]">{v.key}</code>
+                <span className="text-[10px] text-[#8a8378] flex-1 min-w-0">{v.desc}</span>
                 <button
                   onClick={() => copyToClipboard(v.key, v.key)}
-                  className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#3D1A54]/10 text-[#BDB4C9] flex-shrink-0"
+                  className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded hover:bg-[#f3ecf8] text-[#8a8378] flex-shrink-0"
                 >
                   <Copy className="w-3 h-3" />
                 </button>
-                {copied === v.key && <span className="text-[10px] text-emerald-300">✓</span>}
+                {copied === v.key && <span className="text-[10px] text-emerald-700">✓</span>}
               </div>
             ))}
           </div>
-          <div className="mt-3 px-3 py-2 rounded-lg bg-[#C9A227]/5 border border-[#C9A227]/15">
-            <p className="text-xs text-[#FAF6EF]/70">
+          <div className="mt-3 px-3 py-2 rounded-lg bg-[#C9A227]/5 border border-[#c9a227]/35">
+            <p className="text-xs text-[#1e0f2b]/70">
               ⚠️ Après avoir ajouté les variables, <strong>redeployez</strong> le projet sur Vercel
               (push un commit ou cliquez "Redeploy" dans Vercel).
             </p>
@@ -578,18 +578,18 @@ export function YoutubeSetupClient({
           icon={Video}
         >
           {recentLives.length === 0 ? (
-            <p className="text-sm text-[#BDB4C9]">Aucun live YouTube récent à tester.</p>
+            <p className="text-sm text-[#8a8378]">Aucun live YouTube récent à tester.</p>
           ) : (
             <div className="space-y-2">
               {recentLives.map((live) => (
                 <div key={live.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#C9A227]/10">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold truncate">{live.title}</p>
-                    <p className="text-[10px] text-[#BDB4C9]">
+                    <p className="text-[10px] text-[#8a8378]">
                       {live.status === "LIVE" ? "🔴 En cours" : live.status === "ENDED" ? "Terminé" : live.status}
                       {live.youtubeUrl && (
                         <a href={live.youtubeUrl} target="_blank" rel="noopener noreferrer"
-                          className="ml-2 text-[#C9A227] hover:underline inline-flex items-center gap-0.5">
+                          className="ml-2 text-[#a3821c] hover:underline inline-flex items-center gap-0.5">
                           YouTube <ExternalLink className="w-2.5 h-2.5" />
                         </a>
                       )}
@@ -598,7 +598,7 @@ export function YoutubeSetupClient({
                   <button
                     onClick={() => testFetchReplay(live.id)}
                     disabled={!oauthConfigured || testingLiveId === live.id}
-                    className="px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#FAF6EF] text-xs font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-30 flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#1e0f2b] text-xs font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-30 flex items-center gap-1"
                   >
                     {testingLiveId === live.id ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -613,7 +613,7 @@ export function YoutubeSetupClient({
                 <div
                   key={id}
                   className={`px-3 py-2 rounded-lg text-xs ${
-                    result.success ? "bg-emerald-400/10 text-emerald-300" : "bg-red-400/10 text-red-400"
+                    result.success ? "bg-emerald-400/10 text-emerald-700" : "bg-red-400/10 text-red-400"
                   }`}
                 >
                   {result.message}
@@ -624,29 +624,29 @@ export function YoutubeSetupClient({
         </Section>
 
         {/* Récap des tiers */}
-        <div className="mt-8 rounded-2xl bg-[#3D1A54] text-[#FAF6EF] p-5">
+        <div className="mt-8 rounded-2xl bg-white text-[#1e0f2b] p-5">
           <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
-            <ChevronRight className="w-4 h-4 text-[#C9A227]" />
+            <ChevronRight className="w-4 h-4 text-[#a3821c]" />
             Stratégie de fallback YouTube
           </h3>
           <div className="space-y-2 text-xs">
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${oauthConfigured ? "bg-green-400" : "bg-amber-400"}`} />
-              <span className={oauthConfigured ? "text-green-300" : "text-amber-300"}>
+              <span className={oauthConfigured ? "text-green-700" : "text-amber-700"}>
                 <strong>Tier C</strong> — Broadcast pré-créé (au démarrage du live) —{" "}
                 {oauthConfigured ? "ACTIF" : "en attente OAuth"}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${oauthConfigured ? "bg-green-400" : "bg-amber-400"}`} />
-              <span className={oauthConfigured ? "text-green-300" : "text-amber-300"}>
+              <span className={oauthConfigured ? "text-green-700" : "text-amber-700"}>
                 <strong>Tier B</strong> — Auto-récupération post-live (API YouTube) —{" "}
                 {oauthConfigured ? "ACTIF" : "en attente OAuth"}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-green-300">
+              <span className="text-green-700">
                 <strong>Tier A</strong> — Saisie manuelle URL (dans le modal stop) — ACTIF
               </span>
             </div>
@@ -669,13 +669,13 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl p-5 border border-[#C9A227]/15 mb-4">
+    <div className="bg-white rounded-2xl shadow-xl p-5 border border-[#c9a227]/35 mb-4">
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-8 h-8 rounded-lg bg-[#C9A227]/10 flex items-center justify-center text-[#C9A227] font-bold text-sm">
+        <div className="w-8 h-8 rounded-lg bg-[#C9A227]/10 flex items-center justify-center text-[#a3821c] font-bold text-sm">
           {number}
         </div>
         <h2 className="text-sm font-bold flex items-center gap-2">
-          <Icon className="w-4 h-4 text-[#BDB4C9]" />
+          <Icon className="w-4 h-4 text-[#8a8378]" />
           {title}
         </h2>
       </div>

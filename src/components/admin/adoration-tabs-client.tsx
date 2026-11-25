@@ -118,27 +118,27 @@ export function AdorationTabsClient({ medias, servants }: AdorationTabsClientPro
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#8a8378] font-bold mb-1">
             Page publique : /adoration-louanges
           </p>
           <h1
-            className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]"
+            className="text-2xl md:text-3xl font-bold font-serif text-[#1e0f2b]"
            
           >
             Adoration &amp; Louanges
           </h1>
-          <p className="text-sm text-[#BDB4C9] mt-1">
+          <p className="text-sm text-[#8a8378] mt-1">
             Les chants d&apos;Afrika, chantre de l&apos;Éternel — {medias.length} média
             {medias.length > 1 ? "s" : ""} publié{medias.length > 1 ? "s" : ""} sur la page
             dédiée du site.
           </p>
           <div className="flex items-center gap-1.5 mt-2">
-            <ExternalLink className="w-3.5 h-3.5 text-[#C9A227]" />
+            <ExternalLink className="w-3.5 h-3.5 text-[#a3821c]" />
             <a
               href="/adoration-louanges"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-semibold text-[#C9A227] hover:text-[#DDBE55] transition-colors"
+              className="text-xs font-semibold text-[#a3821c] hover:text-[#a3821c] transition-colors"
             >
               Voir la page publique
             </a>
@@ -147,7 +147,7 @@ export function AdorationTabsClient({ medias, servants }: AdorationTabsClientPro
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#FAF6EF] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
         >
           <Plus className="w-4 h-4" />
           Nouveau média · {activeCategory}
@@ -155,7 +155,7 @@ export function AdorationTabsClient({ medias, servants }: AdorationTabsClientPro
       </div>
 
       {/* Onglets catégories (scission) */}
-      <div className="flex items-center gap-2 border-b border-[#C9A227]/15 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-[#c9a227]/35 overflow-x-auto">
         {mediasParCategorie.map(({ name, medias: liste }) => {
           const Icon = name === "Adoration" ? Sparkles : Music;
           const isActive = activeCategory === name;
@@ -164,14 +164,14 @@ export function AdorationTabsClient({ medias, servants }: AdorationTabsClientPro
               key={name}
               onClick={() => setActiveCategory(name)}
               className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors whitespace-nowrap ${
-                isActive ? "text-[#FAF6EF]" : "text-[#BDB4C9] hover:text-[#FAF6EF]"
+                isActive ? "text-[#1e0f2b]" : "text-[#8a8378] hover:text-[#1e0f2b]"
               }`}
             >
               <Icon className="w-4 h-4" style={isActive ? { color: "#C9A227" } : undefined} />
               {name}
               <span
                 className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold ${
-                  isActive ? "bg-[#C9A227] text-[#FAF6EF]" : "bg-[#FAF6EF]/15 text-[#BDB4C9]"
+                  isActive ? "bg-[#C9A227] text-[#1e0f2b]" : "bg-[#FAF6EF]/15 text-[#8a8378]"
                 }`}
               >
                 {liste.length}
@@ -186,16 +186,16 @@ export function AdorationTabsClient({ medias, servants }: AdorationTabsClientPro
 
       {/* Grille médias de la catégorie active */}
       {mediasAffiches.length === 0 ? (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-dashed border-[#C9A227]/30 p-12 text-center">
+        <div className="bg-white rounded-2xl shadow-xl border border-dashed border-[#c9a227]/50 p-12 text-center">
           {activeCategory === "Adoration" ? (
-            <Sparkles className="w-10 h-10 text-[#C9A227]/40 mx-auto mb-3" />
+            <Sparkles className="w-10 h-10 text-[#a3821c]/40 mx-auto mb-3" />
           ) : (
-            <Music className="w-10 h-10 text-[#C9A227]/40 mx-auto mb-3" />
+            <Music className="w-10 h-10 text-[#a3821c]/40 mx-auto mb-3" />
           )}
-          <p className="text-sm text-[#BDB4C9] italic">
+          <p className="text-sm text-[#8a8378] italic">
             Aucun média dans « {activeCategory} » pour l&apos;instant.
           </p>
-          <p className="text-xs text-[#FAF6EF]/50 mt-1">
+          <p className="text-xs text-[#1e0f2b]/50 mt-1">
             Cliquez sur « Nouveau média · {activeCategory} » pour publier le premier chant
             d&apos;Afrika — il apparaîtra aussitôt sur la page publique.
           </p>
@@ -232,10 +232,10 @@ interface CarteMediaProps {
 
 function CarteMedia({ media, onChangeCategory }: CarteMediaProps) {
   return (
-    <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 overflow-hidden hover:shadow-lg transition-all group">
+    <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 overflow-hidden hover:shadow-lg transition-all group">
       {/* Miniature — ⭐ V3.64 : TikTok → vraie miniature + badge, repli
           de marque si absente. */}
-      <div className="relative aspect-video bg-[#1A0826] overflow-hidden">
+      <div className="relative aspect-video bg-[#faf6ef] overflow-hidden">
         {estUrlTiktok(media.videoUrl) ? (
           media.thumbnailUrl ? (
             <>
@@ -264,13 +264,13 @@ function CarteMedia({ media, onChangeCategory }: CarteMediaProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Music className="w-8 h-8 text-[#FAF6EF]/30" />
+            <Music className="w-8 h-8 text-[#1e0f2b]/30" />
           </div>
         )}
 
         {/* Badge catégorie (doré — c'est LA catégorie de la page dédiée) */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#C9A227] text-[#FAF6EF] backdrop-blur-sm">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#C9A227] text-[#1e0f2b] backdrop-blur-sm">
             <Star className="w-2.5 h-2.5" />
             {media.category}
           </span>
@@ -290,7 +290,7 @@ function CarteMedia({ media, onChangeCategory }: CarteMediaProps) {
 
       {/* Body */}
       <div className="p-3">
-        <h3 className="font-semibold text-sm text-[#FAF6EF] line-clamp-2 leading-tight">
+        <h3 className="font-semibold text-sm text-[#1e0f2b] line-clamp-2 leading-tight">
           {media.title}
         </h3>
 
@@ -300,7 +300,7 @@ function CarteMedia({ media, onChangeCategory }: CarteMediaProps) {
           <BasculeCategorie media={media} onChange={onChangeCategory} />
         </div>
 
-        <div className="flex items-center gap-3 mt-2 text-[11px] text-[#BDB4C9]">
+        <div className="flex items-center gap-3 mt-2 text-[11px] text-[#8a8378]">
           <span className="flex items-center gap-1">
             <Eye className="w-3 h-3" />
             {media.views.toLocaleString("fr-FR")}
@@ -313,10 +313,10 @@ function CarteMedia({ media, onChangeCategory }: CarteMediaProps) {
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-[#C9A227]/10">
+        <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-[#c9a227]/30">
           <Link
             href={`/admin/videos/${media.id}/edit`}
-            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#BDB4C9] hover:text-[#C9A227] transition-colors"
+            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8a8378] hover:text-[#a3821c] transition-colors"
             aria-label="Modifier (post-production)"
             title="Modifier — post-production (timeline, overlays, rendu)"
           >
@@ -357,7 +357,7 @@ function BasculeCategorie({ media, onChange }: CarteMediaProps) {
 
   return (
     <div className="relative">
-      <label className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] mb-1">
+      <label className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-[#8a8378] mb-1">
         <Tag className="w-2.5 h-2.5" />
         Catégorie (page publique)
       </label>
@@ -369,7 +369,7 @@ function BasculeCategorie({ media, onChange }: CarteMediaProps) {
         className={`w-full px-2 py-1.5 rounded-lg border text-xs font-semibold focus:outline-none focus:ring-1 transition-colors cursor-pointer disabled:opacity-60 ${
           erreur
             ? "border-red-400 bg-red-400/10 text-red-400"
-            : "border-[#C9A227]/60 bg-[#C9A227]/10 text-[#DDBE55] focus:border-[#C9A227]"
+            : "border-[#c9a227]/80 bg-[#C9A227]/10 text-[#a3821c] focus:border-[#C9A227]"
         }`}
       >
         {CATEGORIES_ADORATION.map((c) => (
@@ -379,7 +379,7 @@ function BasculeCategorie({ media, onChange }: CarteMediaProps) {
         ))}
       </select>
       {saving && (
-        <Loader2 className="w-3 h-3 animate-spin text-[#C9A227] absolute right-2 bottom-2 pointer-events-none" />
+        <Loader2 className="w-3 h-3 animate-spin text-[#a3821c] absolute right-2 bottom-2 pointer-events-none" />
       )}
     </div>
   );
@@ -498,24 +498,24 @@ function MiniatureField({
 }) {
   const affichee = perso || auto;
   return (
-    <div className="rounded-xl border-2 border-[#C9A227]/15 bg-[#C9A227]/20 p-4">
+    <div className="rounded-xl border-2 border-[#c9a227]/35 bg-[#C9A227]/20 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <ImageIcon className="w-4 h-4 text-[#C9A227]" aria-hidden />
-        <p className="text-xs font-bold font-serif text-[#FAF6EF] uppercase tracking-wider">
+        <ImageIcon className="w-4 h-4 text-[#a3821c]" aria-hidden />
+        <p className="text-xs font-bold font-serif text-[#1e0f2b] uppercase tracking-wider">
           Miniature du média
         </p>
-        <span className="text-[10px] text-[#BDB4C9] font-medium">
+        <span className="text-[10px] text-[#8a8378] font-medium">
           (affichée sur la page publique)
         </span>
       </div>
       <div className="flex items-center gap-4">
         <div className="relative flex-shrink-0">
-          <div className="w-36 h-[81px] rounded-lg border-2 border-[#C9A227]/30 overflow-hidden bg-[#3D1A54] flex items-center justify-center shadow-md">
+          <div className="w-36 h-[81px] rounded-lg border-2 border-[#c9a227]/50 overflow-hidden bg-white flex items-center justify-center shadow-md">
             {affichee ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={affichee} alt="Miniature du média" className="w-full h-full object-cover" />
             ) : (
-              <ImageIcon className="w-7 h-7 text-[#C9A227]/50" aria-hidden />
+              <ImageIcon className="w-7 h-7 text-[#a3821c]/50" aria-hidden />
             )}
             {processing && (
               <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
@@ -524,7 +524,7 @@ function MiniatureField({
             )}
           </div>
           <label
-            className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#FAF6EF] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
+            className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#1e0f2b] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
             title="Choisir une miniature personnalisée (image)"
           >
             {processing ? (
@@ -542,7 +542,7 @@ function MiniatureField({
           </label>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] text-[#FAF6EF]/70 leading-relaxed">
+          <p className="text-[11px] text-[#1e0f2b]/70 leading-relaxed">
             {perso
               ? "Miniature personnalisée — c'est elle qui sera affichée sur la page publique."
               : auto
@@ -903,15 +903,15 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Sélecteur de source : Lien (YouTube/TikTok) OU Fichier */}
-        <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#C9A227]/10 border-2 border-[#C9A227]/15">
+        <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#C9A227]/10 border-2 border-[#c9a227]/35">
           <button
             type="button"
             onClick={() => { setSource("lien"); setError(""); }}
             disabled={loading}
             className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors disabled:opacity-50 ${
               source === "lien"
-                ? "bg-[#1A0826]/70 text-[#FAF6EF] shadow-md border border-[#C9A227]/40"
-                : "text-[#BDB4C9] hover:text-[#FAF6EF]"
+                ? "bg-white text-[#1e0f2b] shadow-md border border-[#c9a227]/60"
+                : "text-[#8a8378] hover:text-[#1e0f2b]"
             }`}
           >
             <LinkIcon className="w-4 h-4" />
@@ -923,8 +923,8 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
             disabled={loading}
             className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors disabled:opacity-50 ${
               source === "fichier"
-                ? "bg-[#1A0826]/70 text-[#FAF6EF] shadow-md border border-[#C9A227]/40"
-                : "text-[#BDB4C9] hover:text-[#FAF6EF]"
+                ? "bg-white text-[#1e0f2b] shadow-md border border-[#c9a227]/60"
+                : "text-[#8a8378] hover:text-[#1e0f2b]"
             }`}
           >
             <Upload className="w-4 h-4" />
@@ -976,8 +976,8 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
                   disabled={loading}
                   className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${
                     actif
-                      ? "bg-[#C9A227] text-[#FAF6EF] shadow-md"
-                      : "bg-[#C9A227]/10 text-[#BDB4C9] border-2 border-[#C9A227]/20 hover:border-[#C9A227]/50 hover:text-[#FAF6EF]"
+                      ? "bg-[#C9A227] text-[#1e0f2b] shadow-md"
+                      : "bg-[#C9A227]/10 text-[#8a8378] border-2 border-[#c9a227]/40 hover:border-[#c9a227]/70 hover:text-[#1e0f2b]"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -1045,15 +1045,15 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
           <div className="space-y-3">
             {!fichier ? (
               <label
-                className="flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-xl border-2 border-dashed border-[#C9A227]/50 bg-[#C9A227]/5 cursor-pointer hover:bg-[#C9A227]/10 transition-colors"
+                className="flex flex-col items-center justify-center gap-3 px-6 py-8 rounded-xl border-2 border-dashed border-[#c9a227]/70 bg-[#C9A227]/5 cursor-pointer hover:bg-[#C9A227]/10 transition-colors"
                 title="Choisir le fichier vidéo à envoyer"
               >
-                <FileVideo className="w-10 h-10 text-[#C9A227]" />
+                <FileVideo className="w-10 h-10 text-[#a3821c]" />
                 <div className="text-center">
-                  <p className="text-sm font-bold font-serif text-[#FAF6EF]">
+                  <p className="text-sm font-bold font-serif text-[#1e0f2b]">
                     Choisir le fichier vidéo
                   </p>
-                  <p className="text-xs text-[#BDB4C9] mt-1">
+                  <p className="text-xs text-[#8a8378] mt-1">
                     MP4, WebM, MOV — envoyé directement sur le site, sans passer par YouTube.
                     <br />
                     La miniature et la durée sont détectées automatiquement.
@@ -1069,29 +1069,29 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
                 />
               </label>
             ) : (
-              <div className="flex items-start gap-4 p-4 rounded-xl border-2 border-[#C9A227]/40 bg-[#C9A227]/10">
+              <div className="flex items-start gap-4 p-4 rounded-xl border-2 border-[#c9a227]/60 bg-[#C9A227]/10">
                 {/* Aperçu miniature auto-capturée */}
-                <div className="w-36 h-[81px] rounded-lg overflow-hidden bg-[#3D1A54] flex items-center justify-center flex-shrink-0 border border-[#C9A227]/15">
+                <div className="w-36 h-[81px] rounded-lg overflow-hidden bg-white flex items-center justify-center flex-shrink-0 border border-[#c9a227]/35">
                   {extractionEnCours ? (
-                    <Loader2 className="w-5 h-5 text-[#C9A227] animate-spin" />
+                    <Loader2 className="w-5 h-5 text-[#a3821c] animate-spin" />
                   ) : miniatureAuto ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={miniatureAuto} alt="Miniature détectée" className="w-full h-full object-cover" />
                   ) : (
-                    <FileVideo className="w-6 h-6 text-[#C9A227]/60" />
+                    <FileVideo className="w-6 h-6 text-[#a3821c]/60" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold font-serif text-[#FAF6EF] truncate" title={fichier.name}>
+                  <p className="text-sm font-bold font-serif text-[#1e0f2b] truncate" title={fichier.name}>
                     {fichier.name}
                   </p>
-                  <p className="text-xs text-[#BDB4C9] mt-0.5">
+                  <p className="text-xs text-[#8a8378] mt-0.5">
                     {tailleLisibleFichier(fichier.size)}
                     {dureeAuto ? ` · durée ${dureeAuto}` : ""}
                     {extractionEnCours ? " · analyse en cours…" : ""}
                   </p>
                   {miniatureAuto && (
-                    <p className="text-[10px] text-[#FAF6EF]/60 mt-1 flex items-center gap-1">
+                    <p className="text-[10px] text-[#1e0f2b]/60 mt-1 flex items-center gap-1">
                       <Camera className="w-3 h-3" /> Miniature capturée automatiquement
                     </p>
                   )}
@@ -1131,7 +1131,7 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
         {/* ⭐ V3.86 — Média précédemment supprimé : confirmation de
             réintégration requise (même garde que le module Vidéos). */}
         {suppressionConnue && !loading && (
-          <div className="px-4 py-3 rounded-xl border-2 border-[#DDBE55]/40 bg-[#C9A227]/10">
+          <div className="px-4 py-3 rounded-xl border-2 border-[#c9a227]/60 bg-[#C9A227]/10">
             <p className="text-sm font-bold text-[#7A6414] flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               Ce média a été supprimé de la plateforme
@@ -1150,7 +1150,7 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
               <button
                 type="button"
                 onClick={() => setSuppressionConnue(null)}
-                className="px-3 py-2 rounded-lg text-xs font-bold text-[#BDB4C9] hover:text-[#FAF6EF] transition-colors"
+                className="px-3 py-2 rounded-lg text-xs font-bold text-[#8a8378] hover:text-[#1e0f2b] transition-colors"
               >
                 Ne pas réintégrer
               </button>
@@ -1160,7 +1160,7 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
                   setSuppressionConnue(null);
                   envoyer(false, true);
                 }}
-                className="px-4 py-2 rounded-lg text-xs font-bold bg-[#A3821C] text-white hover:bg-[#8a6d18] transition-colors"
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-[#A3821C] text-[#1e0f2b] hover:bg-[#8a6d18] transition-colors"
               >
                 Réintégrer ce média
               </button>
@@ -1170,14 +1170,14 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
 
         {/* ⭐ V3.47 — Progression de l'envoi */}
         {loading && (phase === "envoi" || phase === "fiche" || phase === "finalisation") && (
-          <div className="px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30">
+          <div className="px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#c9a227]/50">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold font-serif text-[#FAF6EF] flex items-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9A227]" />
+              <p className="text-xs font-bold font-serif text-[#1e0f2b] flex items-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#a3821c]" />
                 {phaseLabel[phase]}
               </p>
               {phase === "envoi" && (
-                <span className="text-xs font-bold text-[#DDBE55]">{progression}%</span>
+                <span className="text-xs font-bold text-[#a3821c]">{progression}%</span>
               )}
             </div>
             <div className="h-2 rounded-full bg-[#FAF6EF]/15 overflow-hidden">
@@ -1187,7 +1187,7 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
               />
             </div>
             {fichier && phase === "envoi" && (
-              <p className="text-[10px] text-[#BDB4C9] mt-1.5">
+              <p className="text-[10px] text-[#8a8378] mt-1.5">
                 {tailleLisibleFichier(fichier.size)} — ne fermez pas cette fenêtre pendant l&apos;envoi.
               </p>
             )}
@@ -1195,19 +1195,19 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#C9A227]/10">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#c9a227]/30">
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#BDB4C9] hover:text-[#FAF6EF] transition-colors disabled:opacity-40"
+            className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8a8378] hover:text-[#1e0f2b] transition-colors disabled:opacity-40"
           >
             Annuler
           </button>
           <button
             type="submit"
             disabled={loading || extractionEnCours || miniatureProcessing}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#1e0f2b] font-bold text-sm hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
@@ -1226,7 +1226,7 @@ function NouveauMediaModal({ open, onClose, servants, preselectedServantId, pres
             <button
               type="button"
               onClick={() => envoyer(true)}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#FAF6EF] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
             >
               <Upload className="w-4 h-4" /> Réessayer l&apos;envoi
             </button>

@@ -86,7 +86,7 @@ export default function SecretariatDemandesPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center py-24 text-[#BDB4C9]">
+        <div className="flex items-center justify-center py-24 text-[#8a8378]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       }
@@ -262,10 +262,10 @@ function DemandesContenu() {
       {/* En-tête */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#1e0f2b]">
             Demandes de rencontre
           </h1>
-          <p className="text-sm text-[#BDB4C9] mt-1">
+          <p className="text-sm text-[#8a8378] mt-1">
             {total} demande{total > 1 ? "s" : ""} — reçues, transmises aux
             serviteurs de Dieu, traitées.
           </p>
@@ -273,15 +273,15 @@ function DemandesContenu() {
         <div className="flex items-center gap-2">
           <button
             onClick={exporterCsv}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#C9A227]/25 text-sm font-medium text-[#FAF6EF] hover:bg-[#1A0826]/70 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#c9a227]/45 text-sm font-medium text-[#1e0f2b] hover:bg-white transition-colors"
             title="Exporter la sélection en CSV (Excel)"
           >
-            <Download className="w-4 h-4 text-[#C9A227]" />
+            <Download className="w-4 h-4 text-[#a3821c]" />
             <span className="hidden sm:inline">Export CSV</span>
           </button>
           <button
             onClick={() => setFormulaireOuvert(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#1e0f2b] text-sm font-semibold hover:bg-white transition-colors"
           >
             <Plus className="w-4 h-4" />
             Saisir une demande
@@ -294,8 +294,8 @@ function DemandesContenu() {
         <div
           className={`flex items-start gap-2 px-4 py-3 rounded-xl border text-sm ${
             confirmation.type === "succes"
-              ? "bg-[#5B7052]/10 border-[#5B7052]/30 text-[#A3C9B0]"
-              : "bg-[#C9A227]/10 border-[#C9A227]/40 text-[#DDBE55]"
+              ? "bg-[#5B7052]/10 border-[#5B7052]/30 text-[#3f5039]"
+              : "bg-[#C9A227]/10 border-[#c9a227]/60 text-[#a3821c]"
           }`}
         >
           {confirmation.type === "succes" ? (
@@ -308,7 +308,7 @@ function DemandesContenu() {
       )}
 
       {/* Filtres */}
-      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 space-y-3">
+      <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4 space-y-3">
         <div className="flex flex-wrap gap-2">
           {ONGLET_STATUTS.map((o) => (
             <button
@@ -319,8 +319,8 @@ function DemandesContenu() {
               }}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 statut === o.valeur
-                  ? "bg-[#3D1A54] text-[#FAF6EF]"
-                  : "bg-[#C9A227]/10 text-[#BDB4C9] hover:bg-[#C9A227]/10 hover:text-[#DDBE55]"
+                  ? "bg-white text-[#1e0f2b]"
+                  : "bg-[#C9A227]/10 text-[#8a8378] hover:bg-[#C9A227]/10 hover:text-[#a3821c]"
               }`}
             >
               {o.libelle}
@@ -329,7 +329,7 @@ function DemandesContenu() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-48">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FAF6EF]/35" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e0f2b]/35" />
             <input
               type="search"
               value={recherche}
@@ -338,7 +338,7 @@ function DemandesContenu() {
                 setRecherche(e.target.value);
               }}
               placeholder="Rechercher (nom, objet, contact)…"
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227]"
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] focus:outline-none focus:border-[#C9A227]"
             />
           </div>
           <select
@@ -347,7 +347,7 @@ function DemandesContenu() {
               setPage(1);
               setServant(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] focus:outline-none focus:border-[#C9A227]"
             aria-label="Filtrer par serviteur"
           >
             <option value="">Tous les serviteurs</option>
@@ -360,7 +360,7 @@ function DemandesContenu() {
               setPage(1);
               setUrgence(e.target.value);
             }}
-            className="px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227]"
+            className="px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] focus:outline-none focus:border-[#C9A227]"
             aria-label="Filtrer par urgence"
           >
             <option value="">Toutes urgences</option>
@@ -375,7 +375,7 @@ function DemandesContenu() {
 
       {/* Erreur */}
       {erreur && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#E08B6D] text-xs border border-[#B3452E]/30">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-[#B3452E]/10 text-[#c05a3c] text-xs border border-[#B3452E]/30">
           <AlertCircle className="w-4 h-4" />
           {erreur}
         </div>
@@ -383,13 +383,13 @@ function DemandesContenu() {
 
       {/* Liste */}
       {chargement ? (
-        <div className="flex items-center justify-center py-16 text-[#BDB4C9]">
+        <div className="flex items-center justify-center py-16 text-[#8a8378]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 px-6 py-14 text-center">
-          <Inbox className="w-8 h-8 text-[#FAF6EF]/25 mx-auto mb-3" />
-          <p className="text-sm text-[#BDB4C9]">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 px-6 py-14 text-center">
+          <Inbox className="w-8 h-8 text-[#1e0f2b]/25 mx-auto mb-3" />
+          <p className="text-sm text-[#8a8378]">
             Aucune demande ne correspond aux filtres.
           </p>
         </div>
@@ -406,7 +406,7 @@ function DemandesContenu() {
             return (
               <div
                 key={demande.id}
-                className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 overflow-hidden"
+                className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 overflow-hidden"
               >
                 {/* Ligne principale */}
                 <button
@@ -416,7 +416,7 @@ function DemandesContenu() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="text-sm font-semibold text-[#FAF6EF]">
+                        <span className="text-sm font-semibold text-[#1e0f2b]">
                           {demande.requesterName}
                         </span>
                         <span
@@ -429,27 +429,27 @@ function DemandesContenu() {
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
                             demande.source === "SITE"
-                              ? "bg-[#5B7052]/10 text-[#A3C9B0] border-[#5B7052]/30"
-                              : "bg-[#FAF6EF]/10 text-[#6B6459] border-[#C9A227]/30"
+                              ? "bg-[#5B7052]/10 text-[#3f5039] border-[#5B7052]/30"
+                              : "bg-[#FAF6EF]/10 text-[#6B6459] border-[#c9a227]/50"
                           }`}
                         >
                           {demande.source === "SITE" ? "Site public" : "Présentiel"}
                         </span>
                         {demande.urgency === "urgente" && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#B3452E]/10 text-[#E08B6D]">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#B3452E]/10 text-[#c05a3c]">
                             URGENTE
                           </span>
                         )}
                         {demande.urgency === "elevee" && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#C9A227]/10 text-[#DDBE55]">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#C9A227]/10 text-[#a3821c]">
                             ÉLEVÉE
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-[#FAF6EF]/80 font-medium truncate">
+                      <p className="text-sm text-[#1e0f2b]/80 font-medium truncate">
                         {demande.subject}
                       </p>
-                      <div className="flex items-center gap-3 mt-1 text-[11px] text-[#BDB4C9] flex-wrap">
+                      <div className="flex items-center gap-3 mt-1 text-[11px] text-[#8a8378] flex-wrap">
                         <span>→ {serviteur?.libelle ?? demande.servantCode}</span>
                         <span className="inline-flex items-center gap-1">
                           <Clock className="w-3 h-3" />
@@ -461,55 +461,55 @@ function DemandesContenu() {
                           })}
                         </span>
                         {demande.trackingCode && (
-                          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#C9A227]/10 text-[#DDBE55]">
+                          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#C9A227]/10 text-[#a3821c]">
                             {demande.trackingCode}
                           </span>
                         )}
                       </div>
                     </div>
                     <ChevronDown
-                      className={`w-4 h-4 text-[#BDB4C9] flex-shrink-0 transition-transform ${ouvert ? "rotate-180" : ""}`}
+                      className={`w-4 h-4 text-[#8a8378] flex-shrink-0 transition-transform ${ouvert ? "rotate-180" : ""}`}
                     />
                   </div>
                 </button>
 
                 {/* Détail */}
                 {ouvert && (
-                  <div className="px-4 md:px-5 pb-5 border-t border-[#C9A227]/10 pt-4 space-y-4">
+                  <div className="px-4 md:px-5 pb-5 border-t border-[#c9a227]/30 pt-4 space-y-4">
                     <div className="grid sm:grid-cols-2 gap-3 text-xs">
-                      <div className="flex items-center gap-2 text-[#BDB4C9]">
-                        <Phone className="w-3.5 h-3.5 text-[#C9A227]" />
+                      <div className="flex items-center gap-2 text-[#8a8378]">
+                        <Phone className="w-3.5 h-3.5 text-[#a3821c]" />
                         {demande.contact}
                       </div>
                       {(demande.city || demande.country) && (
-                        <div className="flex items-center gap-2 text-[#BDB4C9]">
-                          <MapPin className="w-3.5 h-3.5 text-[#C9A227]" />
+                        <div className="flex items-center gap-2 text-[#8a8378]">
+                          <MapPin className="w-3.5 h-3.5 text-[#a3821c]" />
                           {[demande.city, demande.country].filter(Boolean).join(", ")}
                         </div>
                       )}
                       {demande.trackingCode && (
-                        <div className="flex items-center gap-2 text-[#BDB4C9]">
-                          <Clock className="w-3.5 h-3.5 text-[#C9A227]" />
+                        <div className="flex items-center gap-2 text-[#8a8378]">
+                          <Clock className="w-3.5 h-3.5 text-[#a3821c]" />
                           Code de suivi public :{" "}
-                          <span className="font-mono text-[#DDBE55] font-semibold">
+                          <span className="font-mono text-[#a3821c] font-semibold">
                             {demande.trackingCode}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    <div className="px-4 py-3 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/10">
-                      <p className="text-xs whitespace-pre-wrap leading-relaxed text-[#FAF6EF]/90">
+                    <div className="px-4 py-3 rounded-lg bg-[#C9A227]/10 border border-[#c9a227]/30">
+                      <p className="text-xs whitespace-pre-wrap leading-relaxed text-[#1e0f2b]/90">
                         {demande.message}
                       </p>
                     </div>
 
                     {demande.transmissionNote && (
-                      <div className="px-4 py-3 rounded-lg bg-[#C9A227]/5 border border-[#C9A227]/25">
-                        <p className="text-[10px] uppercase font-bold text-[#DDBE55] mb-1">
+                      <div className="px-4 py-3 rounded-lg bg-[#C9A227]/5 border border-[#c9a227]/45">
+                        <p className="text-[10px] uppercase font-bold text-[#a3821c] mb-1">
                           Note de transmission
                         </p>
-                        <p className="text-xs whitespace-pre-wrap text-[#FAF6EF]/80">
+                        <p className="text-xs whitespace-pre-wrap text-[#1e0f2b]/80">
                           {demande.transmissionNote}
                         </p>
                       </div>
@@ -517,7 +517,7 @@ function DemandesContenu() {
 
                     {/* Dates clés */}
                     {(demande.transmittedAt || demande.validatedAt || demande.processedAt) && (
-                      <div className="flex gap-4 text-[11px] text-[#BDB4C9] flex-wrap">
+                      <div className="flex gap-4 text-[11px] text-[#8a8378] flex-wrap">
 
                         {demande.transmittedAt && (
                           <span>
@@ -531,7 +531,7 @@ function DemandesContenu() {
                           </span>
                         )}
                         {demande.validatedAt && (
-                          <span className="font-semibold text-[#DDBE55]">
+                          <span className="font-semibold text-[#a3821c]">
                             ✓ Validée par le serviteur le{" "}
                             {new Date(demande.validatedAt).toLocaleString("fr-FR", {
                               day: "numeric",
@@ -576,10 +576,10 @@ function DemandesContenu() {
                               ? "Note pour le serviteur (facultative) — la demande arrive pré-remplie, vous pouvez la transmettre telle quelle."
                               : "Note pour le serviteur (facultative)…"
                           }
-                          className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] resize-none"
+                          className="w-full px-3.5 py-2.5 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] focus:outline-none focus:border-[#C9A227] resize-none"
                         />
                         {demande.source === "SITE" && (
-                          <p className="text-[10px] text-[#A3C9B0] flex items-center gap-1.5">
+                          <p className="text-[10px] text-[#3f5039] flex items-center gap-1.5">
                             <Send className="w-3 h-3" />
                             Déposée sur le site public — toutes les infos sont
                             déjà renseignées : cliquez directement sur
@@ -617,7 +617,7 @@ function DemandesContenu() {
                               if (confirm("Archiver cette demande sans la transmettre ?"))
                                 agir(demande, "archiver");
                             }}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#C9A227]/30 text-[#BDB4C9] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#c9a227]/50 text-[#8a8378] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors"
                           >
                             <Archive className="w-3.5 h-3.5" />
                             Archiver
@@ -627,7 +627,7 @@ function DemandesContenu() {
                       {(demande.status === "TRANSMISE" || demande.status === "VALIDEE") && (
                         <>
                           {demande.status === "TRANSMISE" && (
-                            <p className="w-full text-[10px] text-[#BDB4C9] flex items-center gap-1.5">
+                            <p className="w-full text-[10px] text-[#8a8378] flex items-center gap-1.5">
                               <Clock className="w-3 h-3" />
                               En attente de validation par {serviteur?.libelle} dans
                               son back-office — vous serez notifiée dès qu&apos;il la
@@ -648,7 +648,7 @@ function DemandesContenu() {
                           </button>
                           <button
                             onClick={() => agir(demande, "rouvrir")}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#C9A227]/30 text-[#BDB4C9] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#c9a227]/50 text-[#8a8378] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
                             Rouvrir
@@ -658,7 +658,7 @@ function DemandesContenu() {
                       {(demande.status === "TRAITEE" || demande.status === "ARCHIVEE") && (
                         <button
                           onClick={() => agir(demande, "rouvrir")}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#C9A227]/30 text-[#BDB4C9] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#c9a227]/50 text-[#8a8378] text-xs font-semibold hover:bg-[#C9A227]/10 transition-colors"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           Rouvrir
@@ -689,14 +689,14 @@ function DemandesContenu() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
           <form
             onSubmit={creerDemande}
-            className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-xl w-full p-6 space-y-4 my-8"
+            className="bg-white rounded-2xl shadow-2xl border border-[#c9a227]/50 max-w-xl w-full p-6 space-y-4 my-8"
           >
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-bold font-serif text-[#FAF6EF]">
+                <h2 className="text-lg font-bold font-serif text-[#1e0f2b]">
                   Saisir une demande reçue
                 </h2>
-                <p className="text-xs text-[#BDB4C9] mt-1">
+                <p className="text-xs text-[#8a8378] mt-1">
                   Pour les demandes arrivées par téléphone, WhatsApp ou en
                   personne — les demandes du formulaire public arrivent seules.
                 </p>
@@ -704,7 +704,7 @@ function DemandesContenu() {
               <button
                 type="button"
                 onClick={() => setFormulaireOuvert(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:bg-[#C9A227]/10"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8a8378] hover:bg-[#C9A227]/10"
                 aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
@@ -713,7 +713,7 @@ function DemandesContenu() {
 
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Nom du demandeur *
                 </label>
                 <input
@@ -721,11 +721,11 @@ function DemandesContenu() {
                   required
                   value={form.requesterName}
                   onChange={(e) => setForm({ ...form, requesterName: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Contact (téléphone / WhatsApp / email) *
                 </label>
                 <input
@@ -733,30 +733,30 @@ function DemandesContenu() {
                   required
                   value={form.contact}
                   onChange={(e) => setForm({ ...form, contact: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Serviteur demandé *
                 </label>
                 <select
                   value={form.servantCode}
                   onChange={(e) => setForm({ ...form, servantCode: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 >
                   <option value="afrika">Sœur Afrika</option>
                   <option value="kongo">Pasteur Kongo</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Urgence
                 </label>
                 <select
                   value={form.urgency}
                   onChange={(e) => setForm({ ...form, urgency: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 >
                   {Object.entries(DEMANDE_URGENCES).map(([v, u]) => (
                     <option key={v} value={v}>
@@ -766,31 +766,31 @@ function DemandesContenu() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Pays
                 </label>
                 <input
                   type="text"
                   value={form.country}
                   onChange={(e) => setForm({ ...form, country: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                   Ville
                 </label>
                 <input
                   type="text"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+              <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                 Objet *
               </label>
               <input
@@ -798,11 +798,11 @@ function DemandesContenu() {
                 required
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8]"
+                className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#FAF6EF] mb-1">
+              <label className="block text-xs font-semibold text-[#1e0f2b] mb-1">
                 Message *
               </label>
               <textarea
@@ -810,26 +810,26 @@ function DemandesContenu() {
                 rows={5}
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] resize-none"
+                className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] resize-none"
               />
             </div>
 
             {erreurCreation && (
-              <p className="text-xs text-[#E08B6D]">{erreurCreation}</p>
+              <p className="text-xs text-[#c05a3c]">{erreurCreation}</p>
             )}
 
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setFormulaireOuvert(false)}
-                className="px-4 py-2 rounded-lg text-sm text-[#BDB4C9] hover:text-[#FAF6EF]"
+                className="px-4 py-2 rounded-lg text-sm text-[#8a8378] hover:text-[#1e0f2b]"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={creationEnCours}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white text-[#1e0f2b] text-sm font-semibold hover:bg-white transition-colors disabled:opacity-50"
               >
                 {creationEnCours && <Loader2 className="w-4 h-4 animate-spin" />}
                 Enregistrer

@@ -307,14 +307,14 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1A0826] to-[#2A0E3D] text-[#FAF6EF] p-6 md:p-10">
+    <div className="min-h-screen bg-gradient-to-b from-[#faf6ef] to-[#f3ecf8] text-[#1e0f2b] p-6 md:p-10">
       <div className="max-w-5xl mx-auto space-y-8">
         {/* En-tête */}
         <div className="flex items-center gap-3">
-          <Music2 className="w-8 h-8 text-[#C9A227]" />
+          <Music2 className="w-8 h-8 text-[#a3821c]" />
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Comptes TikTok liés</h1>
-            <p className="text-sm text-[#FAF6EF]/60 mt-1">
+            <p className="text-sm text-[#1e0f2b]/60 mt-1">
               ⭐ V4.26/V4.31 — Multi-comptes : liez un username TikTok par serviteur. Les nouvelles
               publications sont récupérées automatiquement (cron 2×/jour + bouton manuel) par
               scraping direct de la page profil publique TikTok.
@@ -323,26 +323,26 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
         </div>
 
         {/* Bandeau : ScrapingAnt pour automatisation */}
-        <div className="rounded-lg border border-[#C9A227]/30 bg-[#C9A227]/10 p-4 text-sm">
+        <div className="rounded-lg border border-[#c9a227]/50 bg-[#C9A227]/10 p-4 text-sm">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-[#C9A227] flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-[#a3821c] flex-shrink-0 mt-0.5" />
             <div className="space-y-2">
-              <p className="font-semibold text-[#C9A227]">
+              <p className="font-semibold text-[#a3821c]">
                 ⭐ Automatisation via ScrapingAnt (rendu JavaScript)
               </p>
-              <p className="text-[#FAF6EF]/80">
+              <p className="text-[#1e0f2b]/80">
                 TikTok sert un <strong>shell HTML vide</strong> (architecture "serverless") — le HTML
                 ne contient aucune URL vidéo car tout est rendu par JavaScript. Pour automatiser la
                 synchro, on utilise <strong>ScrapingAnt</strong>, un service qui exécute le JavaScript
                 côté serveur et retourne le HTML rendu (avec toutes les vidéos chargées).
               </p>
-              <p className="text-[#FAF6EF]/80">
+              <p className="text-[#1e0f2b]/80">
                 <strong>Configuration (gratuite, 2 minutes) :</strong>
               </p>
-              <ol className="text-[#FAF6EF]/70 space-y-1 list-decimal list-inside ml-2">
+              <ol className="text-[#1e0f2b]/70 space-y-1 list-decimal list-inside ml-2">
                 <li>
                   Inscrivez-vous sur{" "}
-                  <a href="https://scrapingant.com" target="_blank" rel="noopener noreferrer" className="text-[#C9A227] hover:underline">
+                  <a href="https://scrapingant.com" target="_blank" rel="noopener noreferrer" className="text-[#a3821c] hover:underline">
                     scrapingant.com <ExternalLink className="w-3 h-3 inline" />
                   </a>{" "}
                   (gratuit, 10 000 requêtes/mois)
@@ -355,7 +355,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                 </li>
                 <li>Redéployez — le cron 2×/jour synchronisera automatiquement les vidéos</li>
               </ol>
-              <p className="text-[#FAF6EF]/50 text-xs mt-2">
+              <p className="text-[#1e0f2b]/50 text-xs mt-2">
                 Consommation estimée : 2 comptes × 2 syncs/jour = ~120 pages/mois (sur les 1 000 incluses
                 dans le plan gratuit). Chaque page rendue avec JS coûte 10 crédits.
               </p>
@@ -364,16 +364,16 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
         </div>
 
         {/* ⭐ V4.36 — Bookmarklet pour extraire les URLs vidéo depuis le navigateur */}
-        <section className="rounded-xl bg-[#C9A227]/5 border border-[#C9A227]/30 p-5 space-y-4">
+        <section className="rounded-xl bg-[#C9A227]/5 border border-[#c9a227]/50 p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <Bookmark className="w-5 h-5 text-[#C9A227]" />
+            <Bookmark className="w-5 h-5 text-[#a3821c]" />
             <h2 className="text-lg font-semibold">Bookmarklet — extraction en 1 clic</h2>
           </div>
-          <p className="text-sm text-[#FAF6EF]/70">
+          <p className="text-sm text-[#1e0f2b]/70">
             Ce bookmarklet extrait toutes les URLs vidéo d'une page profil TikTok et les copie dans votre
             presse-papier. Plus rapide que de copier les URLs une par une.
           </p>
-          <ol className="text-sm text-[#FAF6EF]/60 space-y-1 list-decimal list-inside">
+          <ol className="text-sm text-[#1e0f2b]/60 space-y-1 list-decimal list-inside">
             <li>
               <strong>Glissez ce lien</strong> dans votre barre de favoris :
             </li>
@@ -399,13 +399,13 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
               <Bookmark className="w-4 h-4" />
               📋 Extraire URLs TikTok
             </a>
-            <span className="text-xs text-[#FAF6EF]/40">
+            <span className="text-xs text-[#1e0f2b]/40">
               ← glisser-déposer dans la barre de favoris
             </span>
           </div>
-          <div className="text-sm text-[#FAF6EF]/60 space-y-1 pt-2 border-t border-white/10">
-            <p className="font-semibold text-[#FAF6EF]/80">Mode d'emploi :</p>
-            <ol className="space-y-1 list-decimal list-inside text-[#FAF6EF]/60">
+          <div className="text-sm text-[#1e0f2b]/60 space-y-1 pt-2 border-t border-[#1e0f2b]/10">
+            <p className="font-semibold text-[#1e0f2b]/80">Mode d'emploi :</p>
+            <ol className="space-y-1 list-decimal list-inside text-[#1e0f2b]/60">
               <li>Affichez la barre de favoris (Ctrl+Shift+B sur Chrome/Firefox)</li>
               <li>Glissez le lien ci-dessus dans la barre → un nouveau favori est créé</li>
               <li>Ouvrez le profil TikTok du serviteur dans votre navigateur</li>
@@ -422,23 +422,23 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
         </section>
 
         {/* ⭐ V4.35 — Import batch d'URLs TikTok */}
-        <section className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-4">
+        <section className="rounded-xl bg-[#2a0e3d]/5 border border-[#1e0f2b]/10 p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <Upload className="w-5 h-5 text-[#C9A227]" />
+            <Upload className="w-5 h-5 text-[#a3821c]" />
             <h2 className="text-lg font-semibold">Import manuel d'URLs TikTok</h2>
           </div>
-          <p className="text-sm text-[#FAF6EF]/60">
+          <p className="text-sm text-[#1e0f2b]/60">
             Si la synchro automatique échoue (TikTok bloque le scraping), vous pouvez importer
             manuellement les URLs des vidéos TikTok. Allez sur le profil TikTok du serviteur dans
             votre navigateur, copiez les URLs des vidéos récentes (une par ligne), collez-les ci-dessous.
           </p>
           <div className="space-y-3">
             <div className="space-y-1">
-              <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Serviteur</label>
+              <label className="text-xs uppercase tracking-wide text-[#1e0f2b]/60">Serviteur</label>
               <select
                 value={importServantCode}
                 onChange={(e) => setImportServantCode(e.target.value)}
-                className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                className="w-full bg-[#faf6ef] border border-[#1e0f2b]/20 rounded-lg px-3 py-2 text-[#1e0f2b] focus:outline-none focus:border-[#C9A227]"
               >
                 <option value="">— Sélectionnez —</option>
                 {servants.map((s) => (
@@ -449,7 +449,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">
+              <label className="text-xs uppercase tracking-wide text-[#1e0f2b]/60">
                 URLs TikTok (une par ligne, max 30)
               </label>
               <textarea
@@ -457,7 +457,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                 onChange={(e) => setImportUrls(e.target.value)}
                 placeholder={"https://www.tiktok.com/@afrika/video/1234567890\nhttps://www.tiktok.com/@afrika/video/9876543210\n..."}
                 rows={6}
-                className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] font-mono text-sm focus:outline-none focus:border-[#C9A227] resize-y"
+                className="w-full bg-[#faf6ef] border border-[#1e0f2b]/20 rounded-lg px-3 py-2 text-[#1e0f2b] font-mono text-sm focus:outline-none focus:border-[#C9A227] resize-y"
               />
             </div>
             <button
@@ -479,57 +479,57 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
             </button>
           </div>
           {importResultat && (
-            <div className="rounded-lg border border-white/10 bg-black/20 p-3 text-sm space-y-1">
-              <p className="font-semibold text-[#C9A227]">Résultat de l'import</p>
-              <p className="text-[#FAF6EF]/80">
+            <div className="rounded-lg border border-[#1e0f2b]/10 bg-black/20 p-3 text-sm space-y-1">
+              <p className="font-semibold text-[#a3821c]">Résultat de l'import</p>
+              <p className="text-[#1e0f2b]/80">
                 {importResultat.traitées ?? 0} traitées — {importResultat.ajoutees ?? 0} importées,
                 {" "}{importResultat.ignorees ?? 0} déjà en base,
                 {" "}{importResultat.filtrees ?? 0} filtrées (&gt;10 jours),
                 {" "}{importResultat.sautees ?? 0} supprimées.
               </p>
               {importResultat.erreurs && importResultat.erreurs.length > 0 && (
-                <p className="text-red-300/80 text-xs">
+                <p className="text-red-700/80 text-xs">
                   {importResultat.erreurs.length} erreur(s) : {importResultat.erreurs[0]}
                   {importResultat.erreurs.length > 1 ? ` (+${importResultat.erreurs.length - 1} autres)` : ""}
                 </p>
               )}
               {importResultat.error && (
-                <p className="text-red-300/80 text-xs">{importResultat.error}</p>
+                <p className="text-red-700/80 text-xs">{importResultat.error}</p>
               )}
             </div>
           )}
         </section>
 
         {/* ⭐ V4.35 — Diagnostic : voir ce que TikTok renvoie */}
-        <section className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-4">
+        <section className="rounded-xl bg-[#2a0e3d]/5 border border-[#1e0f2b]/10 p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <Stethoscope className="w-5 h-5 text-[#C9A227]" />
+            <Stethoscope className="w-5 h-5 text-[#a3821c]" />
             <h2 className="text-lg font-semibold">Diagnostic TikTok</h2>
           </div>
-          <p className="text-sm text-[#FAF6EF]/60">
+          <p className="text-sm text-[#1e0f2b]/60">
             Vérifiez ce que TikTok renvoie réellement pour un username donné. Utile pour comprendre
             pourquoi la synchro automatique échoue.
           </p>
           <div className="flex gap-3 items-end">
             <div className="flex-1 space-y-1">
-              <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">
+              <label className="text-xs uppercase tracking-wide text-[#1e0f2b]/60">
                 Username TikTok
               </label>
-              <div className="flex items-center bg-[#1A0826] border border-white/20 rounded-lg focus-within:border-[#C9A227]">
-                <span className="pl-3 text-[#FAF6EF]/40">@</span>
+              <div className="flex items-center bg-[#faf6ef] border border-[#1e0f2b]/20 rounded-lg focus-within:border-[#C9A227]">
+                <span className="pl-3 text-[#1e0f2b]/40">@</span>
                 <input
                   type="text"
                   value={diagUsername}
                   onChange={(e) => setDiagUsername(e.target.value)}
                   placeholder="afrika_christ_libere"
-                  className="flex-1 bg-transparent px-2 py-2 text-[#FAF6EF] focus:outline-none"
+                  className="flex-1 bg-transparent px-2 py-2 text-[#1e0f2b] focus:outline-none"
                 />
               </div>
             </div>
             <button
               onClick={lancerDiagnostic}
               disabled={diagEnCours || !diagUsername.trim()}
-              className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/20 disabled:opacity-50 text-[#FAF6EF] font-bold px-4 py-2 rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 bg-[#2a0e3d]/5 hover:bg-[#2a0e3d]/10 border border-[#1e0f2b]/20 disabled:opacity-50 text-[#1e0f2b] font-bold px-4 py-2 rounded-lg transition-colors"
             >
               {diagEnCours ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -540,9 +540,9 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
             </button>
           </div>
           {diagResultat && (
-            <div className="rounded-lg border border-white/10 bg-black/20 p-3 text-sm space-y-2 max-h-96 overflow-y-auto">
-              <p className="font-semibold text-[#C9A227]">Résultat du diagnostic</p>
-              <pre className="text-xs text-[#FAF6EF]/70 font-mono whitespace-pre-wrap break-all">
+            <div className="rounded-lg border border-[#1e0f2b]/10 bg-black/20 p-3 text-sm space-y-2 max-h-96 overflow-y-auto">
+              <p className="font-semibold text-[#a3821c]">Résultat du diagnostic</p>
+              <pre className="text-xs text-[#1e0f2b]/70 font-mono whitespace-pre-wrap break-all">
                 {JSON.stringify(diagResultat, null, 2)}
               </pre>
             </div>
@@ -550,24 +550,24 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
         </section>
 
         {/* Créer un nouveau lien */}
-        <section className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-4">
+        <section className="rounded-xl bg-[#2a0e3d]/5 border border-[#1e0f2b]/10 p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <Plus className="w-5 h-5 text-[#C9A227]" />
+            <Plus className="w-5 h-5 text-[#a3821c]" />
             <h2 className="text-lg font-semibold">Lier un nouveau compte TikTok</h2>
           </div>
           {servantsDisponibles.length === 0 ? (
-            <p className="text-sm text-[#FAF6EF]/60">
+            <p className="text-sm text-[#1e0f2b]/60">
               Tous les serviteurs actifs ont déjà un compte TikTok lié. Créez un nouveau serviteur
-              dans <Link href="/admin/servants" className="text-[#C9A227] hover:underline">/admin/servants</Link> pour en ajouter.
+              dans <Link href="/admin/servants" className="text-[#a3821c] hover:underline">/admin/servants</Link> pour en ajouter.
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">Serviteur</label>
+                <label className="text-xs uppercase tracking-wide text-[#1e0f2b]/60">Serviteur</label>
                 <select
                   value={servantSelectionne}
                   onChange={(e) => setServantSelectionne(e.target.value)}
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  className="w-full bg-[#faf6ef] border border-[#1e0f2b]/20 rounded-lg px-3 py-2 text-[#1e0f2b] focus:outline-none focus:border-[#C9A227]"
                 >
                   <option value="">— Sélectionnez —</option>
                   {servantsDisponibles.map((s) => (
@@ -578,22 +578,22 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">
+                <label className="text-xs uppercase tracking-wide text-[#1e0f2b]/60">
                   Username TikTok
                 </label>
-                <div className="flex items-center bg-[#1A0826] border border-white/20 rounded-lg focus-within:border-[#C9A227]">
-                  <span className="pl-3 text-[#FAF6EF]/40">@</span>
+                <div className="flex items-center bg-[#faf6ef] border border-[#1e0f2b]/20 rounded-lg focus-within:border-[#C9A227]">
+                  <span className="pl-3 text-[#1e0f2b]/40">@</span>
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="afrika_christ_libere"
-                    className="flex-1 bg-transparent px-2 py-2 text-[#FAF6EF] focus:outline-none"
+                    className="flex-1 bg-transparent px-2 py-2 text-[#1e0f2b] focus:outline-none"
                   />
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wide text-[#FAF6EF]/60">
+                <label className="text-xs uppercase tracking-wide text-[#1e0f2b]/60">
                   Nom affiché (optionnel)
                 </label>
                 <input
@@ -601,7 +601,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Afrika"
-                  className="w-full bg-[#1A0826] border border-white/20 rounded-lg px-3 py-2 text-[#FAF6EF] focus:outline-none focus:border-[#C9A227]"
+                  className="w-full bg-[#faf6ef] border border-[#1e0f2b]/20 rounded-lg px-3 py-2 text-[#1e0f2b] focus:outline-none focus:border-[#C9A227]"
                 />
               </div>
               <div className="md:col-span-3 flex justify-end">
@@ -640,7 +640,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Comptes liés ({comptes.length})</h2>
           {comptes.length === 0 ? (
-            <p className="text-sm text-[#FAF6EF]/60 italic">Aucun compte TikTok lié pour l'instant.</p>
+            <p className="text-sm text-[#1e0f2b]/60 italic">Aucun compte TikTok lié pour l'instant.</p>
           ) : (
             <ul className="space-y-3">
               {comptes.map((c) => {
@@ -650,21 +650,21 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                     key={c.id}
                     className={`rounded-xl border p-4 transition-colors ${
                       c.actif
-                        ? "bg-white/5 border-white/10"
-                        : "bg-white/[0.02] border-white/5 opacity-70"
+                        ? "bg-[#2a0e3d]/5 border-[#1e0f2b]/10"
+                        : "bg-[#2a0e3d]/2 border-[#1e0f2b]/5 opacity-70"
                     }`}
                   >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Music2 className="w-5 h-5 text-[#C9A227]" />
+                          <Music2 className="w-5 h-5 text-[#a3821c]" />
                           {enEdition ? (
-                            <div className="flex items-center bg-[#1A0826] border border-[#C9A227]/40 rounded px-2">
-                              <span className="text-[#FAF6EF]/40">@</span>
+                            <div className="flex items-center bg-[#faf6ef] border border-[#c9a227]/60 rounded px-2">
+                              <span className="text-[#1e0f2b]/40">@</span>
                               <input
                                 value={editUsername}
                                 onChange={(e) => setEditUsername(e.target.value)}
-                                className="bg-transparent px-1 py-1 text-[#FAF6EF] focus:outline-none w-48"
+                                className="bg-transparent px-1 py-1 text-[#1e0f2b] focus:outline-none w-48"
                               />
                             </div>
                           ) : (
@@ -677,43 +677,43 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                               value={editDisplayName}
                               onChange={(e) => setEditDisplayName(e.target.value)}
                               placeholder="Nom affiché"
-                              className="bg-[#1A0826] border border-white/20 rounded px-2 py-1 text-sm text-[#FAF6EF] focus:outline-none focus:border-[#C9A227] w-40"
+                              className="bg-[#faf6ef] border border-[#1e0f2b]/20 rounded px-2 py-1 text-sm text-[#1e0f2b] focus:outline-none focus:border-[#C9A227] w-40"
                             />
                           ) : c.displayName ? (
-                            <span className="text-sm text-[#FAF6EF]/60">({c.displayName})</span>
+                            <span className="text-sm text-[#1e0f2b]/60">({c.displayName})</span>
                           ) : null}
                           {c.actif ? (
-                            <span className="inline-flex items-center gap-1 text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-xs bg-green-500/20 text-green-700 px-2 py-0.5 rounded-full">
                               <CheckCircle2 className="w-3 h-3" /> Actif
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-xs bg-gray-500/20 text-gray-300 px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-xs bg-gray-500/20 text-gray-600 px-2 py-0.5 rounded-full">
                               <Power className="w-3 h-3" /> Désactivé
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-[#FAF6EF]/60">
-                          Serviteur : <span className="text-[#FAF6EF]/90">{c.servantFullName} ({c.servantCode})</span>
+                        <p className="text-xs text-[#1e0f2b]/60">
+                          Serviteur : <span className="text-[#1e0f2b]/90">{c.servantFullName} ({c.servantCode})</span>
                         </p>
                         {!enEdition && (
                           <a
                             href={`https://www.tiktok.com/@${c.username}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-[#C9A227] hover:underline"
+                            className="inline-flex items-center gap-1 text-xs text-[#a3821c] hover:underline"
                           >
                             <ExternalLink className="w-3 h-3" />
                             Voir le profil TikTok
                           </a>
                         )}
                         {c.dernierSyncAt && !enEdition && (
-                          <p className="text-xs text-[#FAF6EF]/50 flex items-center gap-1">
+                          <p className="text-xs text-[#1e0f2b]/50 flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             Dernière synchro : {new Date(c.dernierSyncAt).toLocaleString("fr-FR")}
                           </p>
                         )}
                         {c.derniereErreur && !enEdition && (
-                          <p className="text-xs text-red-300/90 mt-1 flex items-start gap-1">
+                          <p className="text-xs text-red-700/90 mt-1 flex items-start gap-1">
                             <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
                             <span className="line-clamp-2">{c.derniereErreur}</span>
                           </p>
@@ -738,7 +738,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                             </button>
                             <button
                               onClick={() => setEditionId(null)}
-                              className="inline-flex items-center gap-1.5 bg-white/5 border border-white/20 text-[#FAF6EF] text-sm px-3 py-1.5 rounded-md"
+                              className="inline-flex items-center gap-1.5 bg-[#2a0e3d]/5 border border-[#1e0f2b]/20 text-[#1e0f2b] text-sm px-3 py-1.5 rounded-md"
                             >
                               Annuler
                             </button>
@@ -759,7 +759,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                             </button>
                             <button
                               onClick={() => demarrerEdition(c)}
-                              className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/20 text-[#FAF6EF] text-sm px-3 py-1.5 rounded-md"
+                              className="inline-flex items-center gap-1.5 bg-[#2a0e3d]/5 hover:bg-[#2a0e3d]/10 border border-[#1e0f2b]/20 text-[#1e0f2b] text-sm px-3 py-1.5 rounded-md"
                             >
                               <Pencil className="w-3.5 h-3.5" />
                               Modifier
@@ -767,7 +767,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                             <button
                               onClick={() => basculerActif(c)}
                               disabled={enCours === `toggle-${c.id}`}
-                              className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/20 text-[#FAF6EF] text-sm px-3 py-1.5 rounded-md"
+                              className="inline-flex items-center gap-1.5 bg-[#2a0e3d]/5 hover:bg-[#2a0e3d]/10 border border-[#1e0f2b]/20 text-[#1e0f2b] text-sm px-3 py-1.5 rounded-md"
                             >
                               <Power className="w-3.5 h-3.5" />
                               {c.actif ? "Désactiver" : "Activer"}
@@ -775,7 +775,7 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
                             <button
                               onClick={() => supprimer(c)}
                               disabled={enCours === `del-${c.id}`}
-                              className="inline-flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 text-sm px-3 py-1.5 rounded-md"
+                              className="inline-flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-700 text-sm px-3 py-1.5 rounded-md"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                               Supprimer
@@ -792,11 +792,11 @@ export function TiktokAccountsClient({ servants, comptes: comptesInit }: Props) 
         </section>
 
         {/* Liens utiles */}
-        <div className="text-sm text-[#FAF6EF]/50 flex flex-wrap gap-4 pt-4 border-t border-white/10">
-          <Link href="/admin/videos" className="hover:text-[#C9A227] transition-colors">
+        <div className="text-sm text-[#1e0f2b]/50 flex flex-wrap gap-4 pt-4 border-t border-[#1e0f2b]/10">
+          <Link href="/admin/videos" className="hover:text-[#a3821c] transition-colors">
             ← Module Vidéos
           </Link>
-          <Link href="/admin/youtube-accounts" className="hover:text-[#C9A227] transition-colors">
+          <Link href="/admin/youtube-accounts" className="hover:text-[#a3821c] transition-colors">
             Comptes YouTube →
           </Link>
         </div>

@@ -78,13 +78,13 @@ export function DeleteButton({ entity, id, redirectTo, label }: DeleteButtonProp
             placeholder="Tapez SUPPRIMER"
             aria-label="Tapez SUPPRIMER pour confirmer la suppression définitive"
             disabled={deleting}
-            className="w-40 px-3 py-2 min-h-[44px] rounded-lg text-[11px] bg-[#1A0826] border border-stone/30 text-[#FAF6EF] placeholder:text-stone/40 focus:outline-none focus:border-state-danger/70"
+            className="w-40 px-3 py-2 min-h-[44px] rounded-lg text-[11px] bg-[#faf6ef] border border-stone/30 text-[#1e0f2b] placeholder:text-stone/40 focus:outline-none focus:border-state-danger/70"
           />
           <button
             onClick={handleDelete}
             disabled={deleting || !motValide}
             title={motValide ? "Supprimer définitivement" : "Tapez SUPPRIMER pour armer ce bouton"}
-            className="inline-flex items-center justify-center min-h-[44px] px-3 rounded-lg text-[10px] font-semibold bg-state-danger text-ivory transition-opacity disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90"
+            className="inline-flex items-center justify-center min-h-[44px] px-3 rounded-lg text-[10px] font-semibold bg-state-danger text-ink transition-opacity disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90"
           >
             {deleting ? (
               <Loader2 className="w-3 h-3 animate-spin" aria-hidden />
@@ -110,7 +110,7 @@ export function DeleteButton({ entity, id, redirectTo, label }: DeleteButtonProp
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="inline-flex items-center justify-center min-h-[44px] px-3 rounded text-[10px] font-semibold bg-state-danger text-ivory hover:opacity-90 transition-opacity"
+          className="inline-flex items-center justify-center min-h-[44px] px-3 rounded text-[10px] font-semibold bg-state-danger text-ink hover:opacity-90 transition-opacity"
         >
           {deleting ? (
             <Loader2 className="w-3 h-3 animate-spin" />

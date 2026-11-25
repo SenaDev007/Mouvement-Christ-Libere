@@ -30,18 +30,18 @@ const PAR_PAGE = 25;
 /** Libellé humain d'une action brute (« TRESORERIE_CAISSE_UPDATE » → …). */
 function libelleAction(action: string): { libelle: string; couleur: string } {
   const map: Record<string, { libelle: string; couleur: string }> = {
-    LOGIN: { libelle: "Connexion", couleur: "text-[#BDB4C9]" },
-    CREATE: { libelle: "Création", couleur: "text-[#A3C9B0]" },
-    UPDATE: { libelle: "Correction", couleur: "text-[#DDBE55]" },
-    DELETE: { libelle: "Suppression", couleur: "text-[#E08B6D]" },
-    TRANSFERT: { libelle: "Transfert entre caisses", couleur: "text-[#C9AEE3]" },
-    RECU_PDF: { libelle: "Reçu PDF émis", couleur: "text-[#C9AEE3]" },
-    TRANSMETTRE: { libelle: "Demande transmise", couleur: "text-[#A3C9B0]" },
-    TRAITER: { libelle: "Demande traitée", couleur: "text-[#C9AEE3]" },
-    ARCHIVER: { libelle: "Demande archivée", couleur: "text-[#BDB4C9]" },
-    ROUVRIR: { libelle: "Demande rouverte", couleur: "text-[#DDBE55]" },
-    STAFF_CREATE: { libelle: "Accréditation créée", couleur: "text-[#E08B6D]" },
-    STAFF_UPDATE: { libelle: "Accréditation modifiée", couleur: "text-[#DDBE55]" },
+    LOGIN: { libelle: "Connexion", couleur: "text-[#8a8378]" },
+    CREATE: { libelle: "Création", couleur: "text-[#3f5039]" },
+    UPDATE: { libelle: "Correction", couleur: "text-[#a3821c]" },
+    DELETE: { libelle: "Suppression", couleur: "text-[#c05a3c]" },
+    TRANSFERT: { libelle: "Transfert entre caisses", couleur: "text-[#6b4480]" },
+    RECU_PDF: { libelle: "Reçu PDF émis", couleur: "text-[#6b4480]" },
+    TRANSMETTRE: { libelle: "Demande transmise", couleur: "text-[#3f5039]" },
+    TRAITER: { libelle: "Demande traitée", couleur: "text-[#6b4480]" },
+    ARCHIVER: { libelle: "Demande archivée", couleur: "text-[#8a8378]" },
+    ROUVRIR: { libelle: "Demande rouverte", couleur: "text-[#a3821c]" },
+    STAFF_CREATE: { libelle: "Accréditation créée", couleur: "text-[#c05a3c]" },
+    STAFF_UPDATE: { libelle: "Accréditation modifiée", couleur: "text-[#a3821c]" },
   };
   // TRESORERIE_CREATE → CREATE ; DEMANDE_TRANSMETTRE → TRANSMETTRE…
   const suffixe = action.split("_").slice(1).join("_");
@@ -52,7 +52,7 @@ function libelleAction(action: string): { libelle: string; couleur: string } {
         .slice(1)
         .join(" ")
         .toLowerCase(),
-      couleur: "text-[#FAF6EF]",
+      couleur: "text-[#1e0f2b]",
     }
   );
 }
@@ -133,17 +133,17 @@ export function JournalAuditView({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#1e0f2b]">
             Journal d&apos;audit
           </h1>
-          <p className="text-sm text-[#BDB4C9] mt-1">
+          <p className="text-sm text-[#8a8378] mt-1">
             Gouvernance {titreEspace.toLowerCase()} — chaque action est tracée :
             qui, quoi, quand. Les suppressions portent leur motif.
           </p>
         </div>
         <button
           onClick={charger}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1A0826]/70 border border-[#C9A227]/20 text-sm font-medium text-[#FAF6EF] hover:bg-[#C9A227]/10 transition-colors flex-shrink-0"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[#c9a227]/40 text-sm font-medium text-[#1e0f2b] hover:bg-[#C9A227]/10 transition-colors flex-shrink-0"
         >
           <RefreshCw className="w-4 h-4" />
           Rafraîchir
@@ -151,23 +151,23 @@ export function JournalAuditView({
       </div>
 
       {chargement && items.length === 0 ? (
-        <div className="flex items-center justify-center py-24 text-[#BDB4C9]">
+        <div className="flex items-center justify-center py-24 text-[#8a8378]">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
       ) : erreur ? (
-        <div className="max-w-xl mx-auto mt-12 px-4 py-6 rounded-xl bg-[#B3452E]/10 border border-[#B3452E]/30 text-[#E08B6D] text-sm">
+        <div className="max-w-xl mx-auto mt-12 px-4 py-6 rounded-xl bg-[#B3452E]/10 border border-[#B3452E]/30 text-[#c05a3c] text-sm">
           {erreur}
         </div>
       ) : total === 0 ? (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 px-6 py-14 text-center">
-          <ShieldCheck className="w-8 h-8 text-[#FAF6EF]/25 mx-auto mb-3" />
-          <p className="text-sm text-[#BDB4C9]">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 px-6 py-14 text-center">
+          <ShieldCheck className="w-8 h-8 text-[#1e0f2b]/25 mx-auto mb-3" />
+          <p className="text-sm text-[#8a8378]">
             Aucune action tracée pour le moment — le journal se remplit dès la
             première connexion ou saisie.
           </p>
         </div>
       ) : (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 overflow-hidden">
           <ul className="divide-y divide-[#C9A227]/10">
             {items.map((e) => {
               const { libelle, couleur } = libelleAction(e.action);
@@ -179,27 +179,27 @@ export function JournalAuditView({
                       <span className={`text-sm font-bold ${couleur}`}>
                         {libelle}
                       </span>
-                      <span className="text-[10px] uppercase tracking-wider text-[#FAF6EF]/40 font-semibold">
+                      <span className="text-[10px] uppercase tracking-wider text-[#1e0f2b]/40 font-semibold">
                         {e.action}
                       </span>
                     </div>
                     {resume && (
-                      <p className="text-[12px] text-[#FAF6EF]/80 mt-1 break-words">
+                      <p className="text-[12px] text-[#1e0f2b]/80 mt-1 break-words">
                         {resume}
                       </p>
                     )}
-                    <p className="text-[11px] text-[#BDB4C9] mt-1">
+                    <p className="text-[11px] text-[#8a8378] mt-1">
                       Par {e.userName || "compte supprimé"} · {formaterDate(e.createdAt)}
                     </p>
                   </div>
-                  <span className="text-[10px] text-[#FAF6EF]/35 font-mono flex-shrink-0 hidden sm:block">
+                  <span className="text-[10px] text-[#1e0f2b]/35 font-mono flex-shrink-0 hidden sm:block">
                     {(e.targetId || e.id).substring(0, 10)}
                   </span>
                 </li>
               );
             })}
           </ul>
-          <div className="border-t border-[#C9A227]/10 px-4 pb-3">
+          <div className="border-t border-[#c9a227]/30 px-4 pb-3">
             <Pagination
               total={total}
               page={page}
@@ -210,9 +210,9 @@ export function JournalAuditView({
         </div>
       )}
 
-      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/15">
-        <ShieldCheck className="w-4 h-4 text-[#C9A227] flex-shrink-0 mt-0.5" />
-        <p className="text-[11px] text-[#BDB4C9] leading-relaxed">
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#c9a227]/35">
+        <ShieldCheck className="w-4 h-4 text-[#a3821c] flex-shrink-0 mt-0.5" />
+        <p className="text-[11px] text-[#8a8378] leading-relaxed">
           Ce journal est la source de vérité de la gouvernance : il ne peut
           être ni modifié ni supprimé depuis les espaces. Les super admins
           (Sœur Afrika, Pasteur Kongo) en conservent la supervision complète.

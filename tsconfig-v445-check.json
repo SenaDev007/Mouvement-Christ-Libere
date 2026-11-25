@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/app/admin/**/*",
+    "src/app/secretariat/**/*",
+    "src/app/tresorerie/**/*",
+    "src/app/bibliotheque/**/*",
+    "src/components/admin/**/*",
+    "src/components/staff-space/**/*",
+    "src/components/site/smart-image.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/node_modules"
+  ]
+}

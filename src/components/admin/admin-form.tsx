@@ -182,8 +182,8 @@ export function AdminForm({
                   <div
                     className={
                       field.type === "image"
-                        ? "relative w-40 h-[100px] rounded-xl bg-gradient-to-br from-[#2A0E3D] to-[#1A0826] flex items-center justify-center text-[#C9A227] overflow-hidden border-2 border-[#C9A227]/30 flex-shrink-0 shadow-md"
-                        : "relative w-20 h-20 rounded-full bg-gradient-to-br from-[#C9A227] to-[#A3821C] flex items-center justify-center text-white font-bold text-2xl overflow-hidden border-2 border-[#C9A227]/30 flex-shrink-0"
+                        ? "relative w-40 h-[100px] rounded-xl bg-gradient-to-br from-[#f3ecf8] to-[#faf6ef] flex items-center justify-center text-[#a3821c] overflow-hidden border-2 border-[#c9a227]/50 flex-shrink-0 shadow-md"
+                        : "relative w-20 h-20 rounded-full bg-gradient-to-br from-[#C9A227] to-[#A3821C] flex items-center justify-center text-[#1e0f2b] font-bold text-2xl overflow-hidden border-2 border-[#c9a227]/50 flex-shrink-0"
                     }
                   >
                     {photoValues[field.name] ? (
@@ -191,11 +191,11 @@ export function AdminForm({
                     ) : field.type === "image" ? (
                       // ⭐ V3.48 — icône professionnelle (plus d'emoji) pour les
                       // champs « image » rectangulaires (photo de jalon, miniature…)
-                      <ImageIcon className="w-7 h-7 text-[#C9A227]/60" aria-hidden />
+                      <ImageIcon className="w-7 h-7 text-[#a3821c]/60" aria-hidden />
                     ) : (
                       // ⭐ V3.48 — icône professionnelle (plus d'emoji) pour les
                       // champs « photo » carrés (avatars)
-                      <Camera className="w-7 h-7 text-white/85" aria-hidden />
+                      <Camera className="w-7 h-7 text-[#1e0f2b]/85" aria-hidden />
                     )}
                     {photoProcessing === field.name && (
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -216,7 +216,7 @@ export function AdminForm({
                       type="button"
                       onClick={() => photoFileRef.current[field.name]?.click()}
                       disabled={photoProcessing === field.name}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#3D1A54] text-[#FAF6EF] text-xs font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white text-[#1e0f2b] text-xs font-bold hover:bg-white transition-colors disabled:opacity-50"
                     >
                       <Camera className="w-3.5 h-3.5" />
                       {photoValues[field.name] ? "Changer la photo" : "Ajouter une photo"}

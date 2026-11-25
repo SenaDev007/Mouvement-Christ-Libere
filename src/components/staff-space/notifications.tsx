@@ -122,12 +122,12 @@ export function ClocheNotifications({
       <button
         ref={boutonRef}
         onClick={ouvrirPanneau}
-        className="relative w-10 h-10 flex items-center justify-center rounded-lg text-[#FAF6EF]/70 hover:text-[#FAF6EF] hover:bg-[#C9A227]/10 transition-colors"
+        className="relative w-10 h-10 flex items-center justify-center rounded-lg text-[#1e0f2b]/70 hover:text-[#1e0f2b] hover:bg-[#C9A227]/10 transition-colors"
         aria-label={`Notifications${nonLues > 0 ? ` (${nonLues} non lues)` : ""}`}
       >
         <Bell className="w-5 h-5" />
         {nonLues > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-[#C9A227] text-[#DDBE55] text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-[#C9A227] text-[#a3821c] text-[10px] font-bold flex items-center justify-center">
             {nonLues > 99 ? "99+" : nonLues}
           </span>
         )}
@@ -136,17 +136,17 @@ export function ClocheNotifications({
       {ouvert && (
         <div
           ref={panneauRef}
-          className="absolute left-0 top-12 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl bg-[#1A0826]/70 border border-[#C9A227]/20 shadow-xl overflow-hidden"
+          className="absolute left-0 top-12 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl bg-white border border-[#c9a227]/40 shadow-xl overflow-hidden"
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#C9A227]/10 bg-[#C9A227]/10">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#FAF6EF]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#c9a227]/30 bg-[#C9A227]/10">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#1e0f2b]">
               Notifications
             </p>
             {nonLues > 0 && (
               <button
                 onClick={marquerToutLu}
                 disabled={marquageEnCours}
-                className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#DDBE55] hover:text-[#FAF6EF] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#a3821c] hover:text-[#1e0f2b] transition-colors disabled:opacity-50"
               >
                 {marquageEnCours ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -160,11 +160,11 @@ export function ClocheNotifications({
 
           <div className="max-h-80 overflow-y-auto">
             {chargement ? (
-              <div className="flex items-center justify-center py-8 text-[#BDB4C9]">
+              <div className="flex items-center justify-center py-8 text-[#8a8378]">
                 <Loader2 className="w-5 h-5 animate-spin" />
               </div>
             ) : visibles.length === 0 ? (
-              <p className="px-4 py-8 text-xs text-[#BDB4C9] text-center">
+              <p className="px-4 py-8 text-xs text-[#8a8378] text-center">
                 Aucune notification — vous serez prévenue dès qu&apos;un
                 serviteur valide une demande.
               </p>
@@ -180,17 +180,17 @@ export function ClocheNotifications({
                         <div className="min-w-0 flex-1">
                           <p
                             className={`text-xs font-semibold leading-tight ${
-                              n.readAt ? "text-[#BDB4C9]" : "text-[#FAF6EF]"
+                              n.readAt ? "text-[#8a8378]" : "text-[#1e0f2b]"
                             }`}
                           >
                             {n.titre}
                           </p>
                           {n.message && (
-                            <p className="text-[11px] text-[#BDB4C9] leading-relaxed mt-0.5">
+                            <p className="text-[11px] text-[#8a8378] leading-relaxed mt-0.5">
                               {n.message}
                             </p>
                           )}
-                          <p className="text-[10px] text-[#FAF6EF]/40 mt-1">
+                          <p className="text-[10px] text-[#1e0f2b]/40 mt-1">
                             {dateRelative(n.createdAt)}
                           </p>
                         </div>

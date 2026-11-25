@@ -40,7 +40,7 @@ export function LoginView({
   prefixeEspace,
   libelleSousDomaine,
   sousDomaine,
-  accentTexte = "text-[#C9A227]",
+  accentTexte = "text-[#a3821c]",
 }: LoginViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -121,30 +121,30 @@ export function LoginView({
             className="w-20 h-20 md:w-24 md:h-24 object-contain mb-4"
             priority
           />
-          <h1 className="text-2xl md:text-3xl font-bold text-[#FAF6EF] text-center font-serif">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#1e0f2b] text-center font-serif">
             <span className={accentTexte}>{titreEspace}</span>
           </h1>
-          <p className="text-sm text-[#FAF6EF]/60 text-center mt-1.5 max-w-xs leading-relaxed">
+          <p className="text-sm text-[#1e0f2b]/60 text-center mt-1.5 max-w-xs leading-relaxed">
             {soustitre}
           </p>
-          <p className="text-[10px] font-mono text-[#DDBE55]/40 mt-2">
+          <p className="text-[10px] font-mono text-[#a3821c]/40 mt-2">
             {sousDomaine}
           </p>
         </div>
 
         {/* Carte de connexion */}
-        <div className="relative bg-primary-deep/60 backdrop-blur-sm rounded-2xl border border-[#C9A227]/15 p-6 md:p-8 shadow-2xl card-shimmer">
+        <div className="relative bg-primary-deep/60 backdrop-blur-sm rounded-2xl border border-[#c9a227]/35 p-6 md:p-8 shadow-2xl card-shimmer">
           <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-[#C9A227]/50 to-transparent" />
 
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-[#C9A227]/15 flex items-center justify-center">
-              <Lock className="w-5 h-5 text-[#C9A227]" />
+              <Lock className="w-5 h-5 text-[#a3821c]" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-[#FAF6EF]">
+              <h2 className="text-base font-semibold text-[#1e0f2b]">
                 Connexion
               </h2>
-              <p className="text-xs text-[#FAF6EF]/50">
+              <p className="text-xs text-[#1e0f2b]/50">
                 Accès réservé aux personnes accréditées
               </p>
             </div>
@@ -161,19 +161,19 @@ export function LoginView({
             <div>
               <label
                 htmlFor="login-name"
-                className="block text-xs font-semibold text-[#FAF6EF]/70 mb-1.5"
+                className="block text-xs font-semibold text-[#1e0f2b]/70 mb-1.5"
               >
                 Nom ou email
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FAF6EF]/30" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e0f2b]/30" />
                 <input
                   id="login-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="username"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#1A0826]/60 border border-[#C9A227]/20 text-sm text-[#FAF6EF] placeholder:text-[#FAF6EF]/25 focus:outline-none focus:border-[#C9A227]/60 focus:ring-1 focus:ring-[#C9A227]/30 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-[#c9a227]/40 text-sm text-[#1e0f2b] placeholder:text-[#1e0f2b]/25 focus:outline-none focus:border-[#c9a227]/80 focus:ring-1 focus:ring-[#C9A227]/30 transition-colors"
                   placeholder="Votre nom ou email"
                   required
                 />
@@ -183,19 +183,19 @@ export function LoginView({
             <div>
               <label
                 htmlFor="login-password"
-                className="block text-xs font-semibold text-[#FAF6EF]/70 mb-1.5"
+                className="block text-xs font-semibold text-[#1e0f2b]/70 mb-1.5"
               >
                 Mot de passe
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FAF6EF]/30" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1e0f2b]/30" />
                 <input
                   id="login-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#1A0826]/60 border border-[#C9A227]/20 text-sm text-[#FAF6EF] placeholder:text-[#FAF6EF]/25 focus:outline-none focus:border-[#C9A227]/60 focus:ring-1 focus:ring-[#C9A227]/30 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-[#c9a227]/40 text-sm text-[#1e0f2b] placeholder:text-[#1e0f2b]/25 focus:outline-none focus:border-[#c9a227]/80 focus:ring-1 focus:ring-[#C9A227]/30 transition-colors"
                   placeholder="••••••••"
                   required
                 />
@@ -227,7 +227,7 @@ export function LoginView({
         <div className="mt-6 text-center">
           <a
             href={accueilPublicUrl}
-            className="inline-flex items-center gap-1.5 text-xs text-[#FAF6EF]/40 hover:text-[#C9A227] transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-[#1e0f2b]/40 hover:text-[#a3821c] transition-colors"
           >
             Retour à l&apos;accueil
             <ChevronRight className="w-3 h-3" />

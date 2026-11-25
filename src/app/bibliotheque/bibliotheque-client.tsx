@@ -117,7 +117,10 @@ interface EspaceDef {
   nom: string;
   sousTitre: string;
   initiales: string;
+  /** Couleur d'accent de l'espace (bordures, pilules, halo). */
   accent: string;
+  /** ⭐ V4.45 — variante FONCÉE lisible sur fond clair (textes d'accent) ;
+   * avant V4.45 c'était une variante pâle prévue pour le fond violet nuit. */
   accentClair: string;
 }
 
@@ -133,7 +136,7 @@ const ESPACES: EspaceDef[] = [
     sousTitre: "Époux, ministre pastoral",
     initiales: "PK",
     accent: "#C9A227",
-    accentClair: "#E8D48B",
+    accentClair: "#A3821C",
   },
   {
     code: "afrika",
@@ -141,7 +144,7 @@ const ESPACES: EspaceDef[] = [
     sousTitre: "Servante de l'Éternel",
     initiales: "AP",
     accent: "#B87AEB",
-    accentClair: "#D9B8FA",
+    accentClair: "#7C3AED",
   },
   {
     code: "collectif",
@@ -149,7 +152,7 @@ const ESPACES: EspaceDef[] = [
     sousTitre: "Ouvrages du ministère",
     initiales: "MC",
     accent: "#8FA3C8",
-    accentClair: "#B8C8E0",
+    accentClair: "#5A7099",
   },
 ];
 
@@ -185,7 +188,7 @@ function CarteEspace({
       whileTap={{ scale: 0.98 }}
       className="relative w-full text-left rounded-2xl px-5 py-4 border transition-colors duration-300"
       style={{
-        borderColor: actif ? `${espace.accent}AA` : "rgba(250,246,239,0.10)",
+        borderColor: actif ? `${espace.accent}AA` : "rgba(42,14,61,0.14)",
         background: actif
           ? `linear-gradient(135deg, ${espace.accent}14, transparent 70%)`
           : "transparent",
@@ -217,7 +220,7 @@ function CarteEspace({
           }}
         >
           {photo ? (
-            <span className="block w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden bg-[#1A0826]">
+            <span className="block w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden bg-[#faf6ef]">
               <SmartImage
                 src={photo}
                 alt={`Photo de profil — ${espace.nom}`}
@@ -228,7 +231,7 @@ function CarteEspace({
             </span>
           ) : (
             <span
-              className="flex w-12 h-12 md:w-14 md:h-14 rounded-full items-center justify-center font-serif font-bold text-sm bg-[#1A0826]"
+              className="flex w-12 h-12 md:w-14 md:h-14 rounded-full items-center justify-center font-serif font-bold text-sm bg-[#faf6ef]"
               style={{ color: espace.accentClair }}
             >
               {espace.initiales}
@@ -249,11 +252,11 @@ function CarteEspace({
         <div className="min-w-0 flex-1">
           <p
             className="font-serif font-bold text-base md:text-lg leading-tight truncate"
-            style={{ color: actif ? espace.accentClair : "#FAF6EF" }}
+            style={{ color: actif ? espace.accentClair : "#1E0F2B" }}
           >
             {espace.nom}
           </p>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-[#FAF6EF]/45 mt-1 truncate">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-[#1e0f2b]/45 mt-1 truncate">
             {espace.sousTitre}
           </p>
         </div>
@@ -367,7 +370,7 @@ function OrbesAmbiants() {
         }}
       />
       <motion.div
-        className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#6D28D9]/25 blur-3xl"
+        className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#8c5fa8]/15 blur-3xl"
         animate={{ y: [0, 30, 0], x: [0, 20, 0] }}
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -377,7 +380,7 @@ function OrbesAmbiants() {
         transition={{ duration: 13, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
       <motion.div
-        className="absolute bottom-44 left-1/4 w-72 h-72 rounded-full bg-[#7C3AED]/20 blur-3xl"
+        className="absolute bottom-44 left-1/4 w-72 h-72 rounded-full bg-[#8c5fa8]/12 blur-3xl"
         animate={{ y: [0, 18, 0] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
       />
@@ -512,7 +515,7 @@ export function BibliotequeClient({ books, photos }: Props) {
   return (
     <MotionConfig reducedMotion="user">
       <div
-        className="relative min-h-screen bg-gradient-to-b from-[#1A0826] via-[#2A0E3D] to-[#1A0826] text-[#FAF6EF]"
+        className="relative min-h-screen bg-gradient-to-b from-[#faf6ef] via-[#f3ecf8] to-[#faf6ef] text-[#1e0f2b]"
         onClick={surClicFond}
       >
         <div className="relative max-w-7xl mx-auto px-4 py-12 md:py-20">
@@ -527,23 +530,23 @@ export function BibliotequeClient({ books, photos }: Props) {
           >
             <motion.div variants={vHeroItem} className="mb-5 inline-block">
               <motion.div
-                className="relative w-20 h-20 mx-auto flex items-center justify-center rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30"
+                className="relative w-20 h-20 mx-auto flex items-center justify-center rounded-full bg-[#C9A227]/10 border border-[#c9a227]/50"
                 initial={{ scale: 0, rotate: -12 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 220, damping: 16 }}
               >
                 {/* Anneaux pulsants autour de l'icône */}
                 <motion.span
-                  className="absolute inset-0 rounded-full border border-[#C9A227]/40"
+                  className="absolute inset-0 rounded-full border border-[#c9a227]/60"
                   animate={{ scale: [1, 1.35], opacity: [0.6, 0] }}
                   transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
                 />
                 <motion.span
-                  className="absolute inset-0 rounded-full border border-[#C9A227]/30"
+                  className="absolute inset-0 rounded-full border border-[#c9a227]/50"
                   animate={{ scale: [1, 1.35], opacity: [0.6, 0] }}
                   transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", delay: 1.2 }}
                 />
-                <BookOpen className="w-9 h-9 text-[#C9A227]" />
+                <BookOpen className="w-9 h-9 text-[#a3821c]" />
               </motion.div>
             </motion.div>
 
@@ -566,7 +569,7 @@ export function BibliotequeClient({ books, photos }: Props) {
 
             <motion.p
               variants={vHeroItem}
-              className="text-[#FAF6EF]/60 max-w-2xl mx-auto text-base md:text-lg"
+              className="text-[#1e0f2b]/60 max-w-2xl mx-auto text-base md:text-lg"
             >
               Tous les ouvrages du ministère réunis, comme dans une
               bibliothèque réelle — cliquez sur un serviteur pour n&apos;ouvrir
@@ -584,11 +587,11 @@ export function BibliotequeClient({ books, photos }: Props) {
                 { valeur: nbTelechargements, label: "téléchargements", icone: Download },
               ].map(({ valeur, label, icone: Icone }) => (
                 <div key={label} className="flex items-center gap-2.5">
-                  <Icone className="w-4 h-4 text-[#C9A227]/70" />
-                  <span className="font-serif text-2xl md:text-3xl font-bold text-[#C9A227]">
+                  <Icone className="w-4 h-4 text-[#a3821c]/70" />
+                  <span className="font-serif text-2xl md:text-3xl font-bold text-[#a3821c]">
                     <Compteur valeur={valeur} />
                   </span>
-                  <span className="text-xs uppercase tracking-wider text-[#FAF6EF]/40">
+                  <span className="text-xs uppercase tracking-wider text-[#1e0f2b]/40">
                     {label}
                   </span>
                 </div>
@@ -667,18 +670,18 @@ export function BibliotequeClient({ books, photos }: Props) {
             className="relative mb-6"
           >
             <div className="group relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FAF6EF]/40 transition-colors group-focus-within:text-[#C9A227]" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1e0f2b]/40 transition-colors group-focus-within:text-[#a3821c]" />
               <input
                 type="text"
                 value={recherche}
                 onChange={(e) => setRecherche(e.target.value)}
                 placeholder="Rechercher un livre, un auteur, un mot-clé..."
-                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3.5 text-[#FAF6EF] placeholder-[#FAF6EF]/30 focus:outline-none focus:border-[#C9A227]/70 focus:bg-white/[0.07] focus:shadow-[0_0_0_4px_rgba(201,162,39,0.12)] transition-all duration-300"
+                className="w-full bg-[#2a0e3d]/5 border border-[#1e0f2b]/10 rounded-2xl pl-12 pr-4 py-3.5 text-[#1e0f2b] placeholder-[#a8a199]/30 focus:outline-none focus:border-[#c9a227]/85 focus:bg-[#2a0e3d]/7 focus:shadow-[0_0_0_4px_rgba(201,162,39,0.12)] transition-all duration-300"
               />
               {recherche && (
                 <button
                   onClick={() => setRecherche("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-white/10 text-[#FAF6EF]/50 hover:text-[#FAF6EF] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-[#2a0e3d]/10 text-[#1e0f2b]/50 hover:text-[#1e0f2b] transition-colors"
                   aria-label="Effacer la recherche"
                 >
                   <X className="w-4 h-4" />
@@ -708,7 +711,7 @@ export function BibliotequeClient({ books, photos }: Props) {
                   className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
                     actif
                       ? "text-[#1E0F2B]"
-                      : "bg-white/5 text-[#FAF6EF]/70 border border-white/10 hover:text-[#FAF6EF] hover:bg-white/10"
+                      : "bg-[#2a0e3d]/5 text-[#1e0f2b]/70 border border-[#1e0f2b]/10 hover:text-[#1e0f2b] hover:bg-[#2a0e3d]/10"
                   }`}
                 >
                   {actif && (
@@ -740,7 +743,7 @@ export function BibliotequeClient({ books, photos }: Props) {
               >
                 <button
                   onClick={reinitialiser}
-                  className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-sm text-[#FAF6EF]/70 hover:text-[#FAF6EF] transition-colors"
+                  className="inline-flex items-center gap-2 bg-[#2a0e3d]/5 hover:bg-[#2a0e3d]/10 border border-[#1e0f2b]/10 rounded-xl px-4 py-2 text-sm text-[#1e0f2b]/70 hover:text-[#1e0f2b] transition-colors"
                 >
                   <Filter className="w-4 h-4" />
                   {livresFiltres.length} ouvrage
@@ -764,9 +767,9 @@ export function BibliotequeClient({ books, photos }: Props) {
                 transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
                 className="inline-block mb-5"
               >
-                <BookOpen className="w-16 h-16 text-[#C9A227]/30 mx-auto" />
+                <BookOpen className="w-16 h-16 text-[#a3821c]/30 mx-auto" />
               </motion.div>
-              <p className="text-[#FAF6EF]/50 text-lg">
+              <p className="text-[#1e0f2b]/50 text-lg">
                 {livresEspace.length === 0
                   ? espaceActif
                     ? `Aucun livre publié dans l'espace « ${espaceActifDef.nom} » pour l'instant.`
@@ -806,7 +809,7 @@ export function BibliotequeClient({ books, photos }: Props) {
                     onClick={() => book.fileUrl && setLivreOuvert(book)}
                   >
                     {/* Couverture */}
-                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-xl ring-1 ring-white/10 group-hover:ring-[#C9A227]/60 group-hover:shadow-[0_20px_60px_-15px_rgba(201,162,39,0.35)] transition-all duration-300 mb-3">
+                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-xl ring-1 ring-[#1e0f2b]/10 group-hover:ring-[#C9A227]/60 group-hover:shadow-[0_20px_60px_-15px_rgba(201,162,39,0.35)] transition-all duration-300 mb-3">
                       {book.coverUrl ? (
                         <Image
                           src={book.coverUrl}
@@ -853,7 +856,7 @@ export function BibliotequeClient({ books, photos }: Props) {
                       {/* Badge lecture seule / bientôt */}
                       {(!book.fileUrl || book.isDownloadable === false) && (
                         <div className="absolute top-2 right-2">
-                          <span className="text-[10px] font-semibold bg-[#1E0F2B]/80 text-[#FAF6EF]/80 px-2 py-1 rounded backdrop-blur-sm">
+                          <span className="text-[10px] font-semibold bg-[#1E0F2B]/80 text-white/90 px-2 py-1 rounded backdrop-blur-sm">
                             {!book.fileUrl ? "Bientôt" : "En ligne"}
                           </span>
                         </div>
@@ -861,14 +864,14 @@ export function BibliotequeClient({ books, photos }: Props) {
                     </div>
 
                     {/* Infos */}
-                    <p className="font-semibold text-sm line-clamp-2 mb-1 transition-colors group-hover:text-[#E8D48B]">
+                    <p className="font-semibold text-sm line-clamp-2 mb-1 transition-colors group-hover:text-[#a3821c]">
                       {book.title}
                     </p>
-                    <p className="text-xs text-[#FAF6EF]/50 flex items-center gap-1.5">
+                    <p className="text-xs text-[#1e0f2b]/50 flex items-center gap-1.5">
                       <User className="w-3 h-3 flex-shrink-0" />
                       <span className="truncate">{book.author}</span>
                     </p>
-                    <p className="text-[11px] text-[#FAF6EF]/30 mt-1.5 flex items-center gap-3">
+                    <p className="text-[11px] text-[#1e0f2b]/30 mt-1.5 flex items-center gap-3">
                       {book.pageCount && <span>{book.pageCount} pages</span>}
                       {book.downloadCount > 0 && (
                         <span className="inline-flex items-center gap-1">
@@ -902,16 +905,16 @@ export function BibliotequeClient({ books, photos }: Props) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 24, scale: 0.97 }}
                 transition={{ type: "spring", stiffness: 260, damping: 26 }}
-                className="bg-[#1A0826] rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-[#C9A227]/20 shadow-2xl shadow-[#C9A227]/10"
+                className="bg-[#faf6ef] rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-[#C9A227]/20 shadow-2xl shadow-[#C9A227]/10"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* En-tête */}
-                <div className="flex items-start justify-between gap-3 p-4 md:p-5 border-b border-white/10">
+                <div className="flex items-start justify-between gap-3 p-4 md:p-5 border-b border-[#1e0f2b]/10">
                   <div className="min-w-0">
                     <h2 className="font-serif font-bold text-lg md:text-xl line-clamp-2">
                       {livreOuvert.title}
                     </h2>
-                    <p className="text-sm text-[#FAF6EF]/60 mt-0.5">
+                    <p className="text-sm text-[#1e0f2b]/60 mt-0.5">
                       <span className="inline-flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5" />
                         {livreOuvert.author}
@@ -942,9 +945,9 @@ export function BibliotequeClient({ books, photos }: Props) {
                       ).map(({ icone: Icone, texte }) => (
                         <span
                           key={texte}
-                          className="inline-flex items-center gap-1 text-[11px] bg-white/5 border border-white/10 text-[#FAF6EF]/60 px-2 py-1 rounded-md"
+                          className="inline-flex items-center gap-1 text-[11px] bg-[#2a0e3d]/5 border border-[#1e0f2b]/10 text-[#1e0f2b]/60 px-2 py-1 rounded-md"
                         >
-                          <Icone className="w-3 h-3 text-[#C9A227]/70" />
+                          <Icone className="w-3 h-3 text-[#a3821c]/70" />
                           {texte}
                         </span>
                       ))}
@@ -958,7 +961,7 @@ export function BibliotequeClient({ books, photos }: Props) {
                           .map((t) => (
                             <span
                               key={t}
-                              className="text-[10px] uppercase tracking-wide bg-[#C9A227]/10 border border-[#C9A227]/25 text-[#E8D48B] px-2 py-0.5 rounded-full"
+                              className="text-[10px] uppercase tracking-wide bg-[#C9A227]/10 border border-[#c9a227]/45 text-[#a3821c] px-2 py-0.5 rounded-full"
                             >
                               {t}
                             </span>
@@ -981,7 +984,7 @@ export function BibliotequeClient({ books, photos }: Props) {
                       </motion.a>
                     )}
                     {livreOuvert.fileUrl && livreOuvert.isDownloadable === false && (
-                      <span className="text-xs text-[#FAF6EF]/50 px-3 py-2">
+                      <span className="text-xs text-[#1e0f2b]/50 px-3 py-2">
                         Lecture en ligne seulement
                       </span>
                     )}
@@ -989,7 +992,7 @@ export function BibliotequeClient({ books, photos }: Props) {
                       onClick={() => setLivreOuvert(null)}
                       whileHover={{ scale: 1.1, rotate: 90 }}
                       whileTap={{ scale: 0.9 }}
-                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                      className="p-2 hover:bg-[#2a0e3d]/10 rounded-lg transition-colors"
                       aria-label="Fermer"
                     >
                       <X className="w-5 h-5" />
@@ -1018,16 +1021,16 @@ export function BibliotequeClient({ books, photos }: Props) {
                           <motion.div
                             animate={{ rotate: 360 }}
                             transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }}
-                            className="w-10 h-10 rounded-full border-2 border-[#C9A227]/30 border-t-[#C9A227]"
+                            className="w-10 h-10 rounded-full border-2 border-[#c9a227]/50 border-t-[#C9A227]"
                           />
-                          <p className="text-sm text-[#FAF6EF]/40">
+                          <p className="text-sm text-[#1e0f2b]/40">
                             Chargement du lecteur…
                           </p>
                         </motion.div>
                       )}
                     </>
                   ) : (
-                    <div className="flex items-center justify-center h-full text-[#FAF6EF]/40">
+                    <div className="flex items-center justify-center h-full text-[#1e0f2b]/40">
                       Aucun fichier PDF disponible
                     </div>
                   )}

@@ -43,8 +43,8 @@ const PLUGIN = {
 function SectionTitle({ icon: Icon, children }: { icon: ComponentType<{ className?: string }>; children: ReactNode }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <Icon className="w-4 h-4 text-[#C9A227] flex-shrink-0" />
-      <h3 className="text-xs font-bold font-serif text-[#FAF6EF] uppercase tracking-wider">{children}</h3>
+      <Icon className="w-4 h-4 text-[#a3821c] flex-shrink-0" />
+      <h3 className="text-xs font-bold font-serif text-[#1e0f2b] uppercase tracking-wider">{children}</h3>
     </div>
   );
 }
@@ -52,11 +52,11 @@ function SectionTitle({ icon: Icon, children }: { icon: ComponentType<{ classNam
 function Step({ n, title, children }: { n: number; title: string; children?: ReactNode }) {
   return (
     <li className="flex items-start gap-3">
-      <span className="w-5 h-5 rounded-full bg-[#C9A227] text-[#FAF6EF] text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+      <span className="w-5 h-5 rounded-full bg-[#C9A227] text-[#1e0f2b] text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
         {n}
       </span>
-      <p className="text-xs text-[#FAF6EF]/70 leading-relaxed min-w-0">
-        <span className="font-bold font-serif text-[#FAF6EF]">{title}</span>{" "}
+      <p className="text-xs text-[#1e0f2b]/70 leading-relaxed min-w-0">
+        <span className="font-bold font-serif text-[#1e0f2b]">{title}</span>{" "}
         {children}
       </p>
     </li>
@@ -65,14 +65,14 @@ function Step({ n, title, children }: { n: number; title: string; children?: Rea
 
 function BenefitCard({ icon: Icon, title, children }: { icon: ComponentType<{ className?: string }>; title: string; children: ReactNode }) {
   return (
-    <div className="p-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/15">
+    <div className="p-3 rounded-xl bg-[#C9A227]/10 border border-[#c9a227]/35">
       <div className="flex items-center gap-2 mb-1.5">
         <div className="w-7 h-7 rounded-lg bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
-          <Icon className="w-3.5 h-3.5 text-[#DDBE55]" />
+          <Icon className="w-3.5 h-3.5 text-[#a3821c]" />
         </div>
-        <p className="text-xs font-bold font-serif text-[#FAF6EF]">{title}</p>
+        <p className="text-xs font-bold font-serif text-[#1e0f2b]">{title}</p>
       </div>
-      <p className="text-[11px] text-[#FAF6EF]/60 leading-relaxed">{children}</p>
+      <p className="text-[11px] text-[#1e0f2b]/60 leading-relaxed">{children}</p>
     </div>
   );
 }
@@ -101,20 +101,20 @@ function CopyField({ label, value }: { label: string; value: string }) {
 
   return (
     <div>
-      <label className="block text-[10px] text-[#FAF6EF]/50 uppercase mb-1 font-semibold">{label}</label>
+      <label className="block text-[10px] text-[#1e0f2b]/50 uppercase mb-1 font-semibold">{label}</label>
       <div className="flex items-center gap-2">
         <input
           type="text"
           readOnly
           value={value}
           onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 min-w-0 px-3 py-1.5 rounded-lg bg-[#1A0826]/70 text-[11px] text-[#FAF6EF] font-mono border border-[#C9A227]/15 truncate"
+          className="flex-1 min-w-0 px-3 py-1.5 rounded-lg bg-white text-[11px] text-[#1e0f2b] font-mono border border-[#c9a227]/35 truncate"
           aria-label={label}
         />
         <button
           type="button"
           onClick={copy}
-          className="p-1.5 rounded-lg bg-[#C9A227]/15 text-[#DDBE55] hover:bg-[#C9A227]/30 transition-colors flex-shrink-0"
+          className="p-1.5 rounded-lg bg-[#C9A227]/15 text-[#a3821c] hover:bg-[#C9A227]/30 transition-colors flex-shrink-0"
           aria-label={`Copier ${label}`}
           title={`Copier ${label}`}
         >
@@ -163,8 +163,8 @@ export function ObsMultiRtmpGuideModal({
         {/* ① Pourquoi ce plugin */}
         <section>
           <SectionTitle icon={Layers}>Pourquoi ce plugin</SectionTitle>
-          <p className="text-xs text-[#FAF6EF]/70 leading-relaxed mb-3">
-            Le plugin <span className="font-bold font-serif text-[#FAF6EF]">obs-multi-rtmp</span> ajoute à OBS Studio la
+          <p className="text-xs text-[#1e0f2b]/70 leading-relaxed mb-3">
+            Le plugin <span className="font-bold font-serif text-[#1e0f2b]">obs-multi-rtmp</span> ajoute à OBS Studio la
             capacité de pousser le même direct vers plusieurs serveurs RTMP <span className="font-bold">en même
             temps</span>. Le studio du site et vos plateformes sociales reçoivent chacun leur flux, sans relais
             intermédiaire.
@@ -193,29 +193,29 @@ export function ObsMultiRtmpGuideModal({
         <section>
           <SectionTitle icon={Download}>Téléchargement</SectionTitle>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#C9A227]/15 text-[#DDBE55] text-[11px] font-bold">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#C9A227]/15 text-[#a3821c] text-[11px] font-bold">
               <Radio className="w-3 h-3" />
               Version {PLUGIN.version} · Windows 64 bits
             </span>
-            <span className="text-[10px] text-[#BDB4C9]">Liens officiels GitHub, vérifiés le 09/09/2026</span>
+            <span className="text-[10px] text-[#8a8378]">Liens officiels GitHub, vérifiés le 09/09/2026</span>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <a
               href={PLUGIN.windowsInstallerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-[#FAF6EF] hover:opacity-90 transition-opacity"
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-[#1e0f2b] hover:opacity-90 transition-opacity"
               style={{ backgroundColor: accentColor }}
             >
               <Download className="w-4 h-4" />
               Installateur Windows (.exe)
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#3D1A54]/10">recommandé</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#f3ecf8]">recommandé</span>
             </a>
             <a
               href={PLUGIN.windowsZipUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-[#C9A227]/20 bg-[#C9A227]/10 font-bold text-sm text-[#FAF6EF] hover:border-[#C9A227] transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-[#c9a227]/40 bg-[#C9A227]/10 font-bold text-sm text-[#1e0f2b] hover:border-[#C9A227] transition-colors"
             >
               <Download className="w-4 h-4" />
               Archive portable (.zip)
@@ -225,14 +225,14 @@ export function ObsMultiRtmpGuideModal({
             href={PLUGIN.releasesUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-[#DDBE55] hover:underline"
+            className="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-[#a3821c] hover:underline"
           >
             Toutes les versions sur GitHub (Linux .deb inclus)
             <ExternalLink className="w-3 h-3" />
           </a>
-          <div className="flex items-start gap-2 mt-3 p-2.5 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/15">
-            <Info className="w-3.5 h-3.5 text-[#DDBE55] flex-shrink-0 mt-0.5" />
-            <p className="text-[11px] text-[#FAF6EF]/60 leading-relaxed">
+          <div className="flex items-start gap-2 mt-3 p-2.5 rounded-lg bg-[#C9A227]/10 border border-[#c9a227]/35">
+            <Info className="w-3.5 h-3.5 text-[#a3821c] flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-[#1e0f2b]/60 leading-relaxed">
               Prérequis : OBS Studio installé sur votre ordinateur (Windows 64 bits). Fermez OBS Studio avant
               l&apos;installation.
             </p>
@@ -281,14 +281,14 @@ export function ObsMultiRtmpGuideModal({
           <div className="space-y-2">
             {/* Sortie studio (contextuelle au live ouvert dans le studio) */}
             {ingressUrl && ingressKey && (
-              <div className="p-3.5 rounded-xl border border-[#C9A227]/30 bg-[#C9A227]/5">
+              <div className="p-3.5 rounded-xl border border-[#c9a227]/50 bg-[#C9A227]/5">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-7 h-7 rounded-lg bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
-                    <Server className="w-3.5 h-3.5 text-[#DDBE55]" />
+                    <Server className="w-3.5 h-3.5 text-[#a3821c]" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold font-serif text-[#FAF6EF]">Destination 1 — Le studio du site (ce direct)</p>
-                    <p className="text-[10px] text-[#BDB4C9]">
+                    <p className="text-xs font-bold font-serif text-[#1e0f2b]">Destination 1 — Le studio du site (ce direct)</p>
+                    <p className="text-[10px] text-[#8a8378]">
                       Ajoutez cette sortie pour que le direct s&apos;affiche sur le site : viewer, chat, réactions
                       et enregistrement du replay.
                     </p>
@@ -302,14 +302,14 @@ export function ObsMultiRtmpGuideModal({
             )}
 
             {/* Plateformes sociales */}
-            <div className="p-3.5 rounded-xl border border-[#C9A227]/15 bg-[#C9A227]/10">
+            <div className="p-3.5 rounded-xl border border-[#c9a227]/35 bg-[#C9A227]/10">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-7 h-7 rounded-lg bg-[#C9A227]/10 flex items-center justify-center flex-shrink-0">
-                  <Layers className="w-3.5 h-3.5 text-[#DDBE55]" />
+                  <Layers className="w-3.5 h-3.5 text-[#a3821c]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold font-serif text-[#FAF6EF]">Destinations 2+ — Vos plateformes sociales</p>
-                  <p className="text-[10px] text-[#BDB4C9]">
+                  <p className="text-xs font-bold font-serif text-[#1e0f2b]">Destinations 2+ — Vos plateformes sociales</p>
+                  <p className="text-[10px] text-[#8a8378]">
                     Les clés enregistrées par serviteur dans le back-office se copient telles quelles dans le
                     plugin.
                   </p>
@@ -321,7 +321,7 @@ export function ObsMultiRtmpGuideModal({
                   return (
                     <span
                       key={p.label}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#1A0826]/70 border border-[#C9A227]/15 text-[10px] font-bold font-serif text-[#FAF6EF]"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white border border-[#c9a227]/35 text-[10px] font-bold font-serif text-[#1e0f2b]"
                     >
                       <Icon className="w-3 h-3" style={{ color: p.color }} />
                       {p.label}
@@ -331,7 +331,7 @@ export function ObsMultiRtmpGuideModal({
               </div>
               <Link
                 href="/admin/servants"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#DDBE55] hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#a3821c] hover:underline"
               >
                 Ouvrir « Serviteurs → Configuration RTMP »
                 <ExternalLink className="w-3 h-3" />
@@ -339,10 +339,10 @@ export function ObsMultiRtmpGuideModal({
             </div>
 
             {/* Anti double-diffusion */}
-            <div className="flex items-start gap-2.5 p-3 rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10">
-              <AlertTriangle className="w-4 h-4 text-[#DDBE55] flex-shrink-0 mt-0.5" />
-              <p className="text-[11px] text-[#FAF6EF]/75 leading-relaxed">
-                <span className="font-bold font-serif text-[#FAF6EF]">Évitez la double diffusion :</span> une même clé ne
+            <div className="flex items-start gap-2.5 p-3 rounded-xl border border-[#c9a227]/60 bg-[#C9A227]/10">
+              <AlertTriangle className="w-4 h-4 text-[#a3821c] flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#1e0f2b]/75 leading-relaxed">
+                <span className="font-bold font-serif text-[#1e0f2b]">Évitez la double diffusion :</span> une même clé ne
                 doit être alimentée que par une seule source à la fois. Si une plateforme est poussée par le
                 plugin, décochez-la dans le formulaire « Programmer un live » — le site continuera
                 d&apos;afficher le direct grâce à la sortie studio.
@@ -356,32 +356,32 @@ export function ObsMultiRtmpGuideModal({
           <SectionTitle icon={Cpu}>Bon à savoir</SectionTitle>
           <ul className="space-y-2">
             <li className="flex items-start gap-2.5">
-              <Cpu className="w-3.5 h-3.5 text-[#DDBE55] flex-shrink-0 mt-0.5" />
-              <p className="text-[11px] text-[#FAF6EF]/65 leading-relaxed">
-                <span className="font-bold font-serif text-[#FAF6EF]">Encodeur partagé :</span> « Use current streaming
+              <Cpu className="w-3.5 h-3.5 text-[#a3821c] flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#1e0f2b]/65 leading-relaxed">
+                <span className="font-bold font-serif text-[#1e0f2b]">Encodeur partagé :</span> « Use current streaming
                 settings » n&apos;encode qu&apos;une fois pour toutes les sorties — CPU quasi inchangé. Encodeurs
                 dédiés : qualité et résolution différentes par plateforme, mais CPU plus sollicité.
               </p>
             </li>
             <li className="flex items-start gap-2.5">
-              <Gauge className="w-3.5 h-3.5 text-[#DDBE55] flex-shrink-0 mt-0.5" />
-              <p className="text-[11px] text-[#FAF6EF]/65 leading-relaxed">
-                <span className="font-bold font-serif text-[#FAF6EF]">Bande passante :</span> chaque sortie consomme son
+              <Gauge className="w-3.5 h-3.5 text-[#a3821c] flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#1e0f2b]/65 leading-relaxed">
+                <span className="font-bold font-serif text-[#1e0f2b]">Bande passante :</span> chaque sortie consomme son
                 propre débit — deux sorties à 4,5 Mbps exigent environ 9 Mbps en montée. Vérifiez votre connexion
                 avant d&apos;activer de nombreuses destinations.
               </p>
             </li>
             <li className="flex items-start gap-2.5">
-              <Radio className="w-3.5 h-3.5 text-[#DDBE55] flex-shrink-0 mt-0.5" />
-              <p className="text-[11px] text-[#FAF6EF]/65 leading-relaxed">
-                <span className="font-bold font-serif text-[#FAF6EF]">Pendant le direct :</span> chaque sortie se démarre et
+              <Radio className="w-3.5 h-3.5 text-[#a3821c] flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#1e0f2b]/65 leading-relaxed">
+                <span className="font-bold font-serif text-[#1e0f2b]">Pendant le direct :</span> chaque sortie se démarre et
                 s&apos;arrête individuellement — une plateforme peut être ajoutée en cours de route.
               </p>
             </li>
             <li className="flex items-start gap-2.5">
-              <Wrench className="w-3.5 h-3.5 text-[#DDBE55] flex-shrink-0 mt-0.5" />
-              <p className="text-[11px] text-[#FAF6EF]/65 leading-relaxed">
-                <span className="font-bold font-serif text-[#FAF6EF]">Désinstallation :</span> via l&apos;installateur, ou en
+              <Wrench className="w-3.5 h-3.5 text-[#a3821c] flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#1e0f2b]/65 leading-relaxed">
+                <span className="font-bold font-serif text-[#1e0f2b]">Désinstallation :</span> via l&apos;installateur, ou en
                 supprimant le dossier{" "}
                 <span className="font-mono text-[10px]">C:\ProgramData\obs-studio\plugins\obs-multi-rtmp</span>.
               </p>
@@ -390,15 +390,15 @@ export function ObsMultiRtmpGuideModal({
         </section>
 
         {/* Pied — source officielle */}
-        <div className="pt-3 border-t border-[#C9A227]/10 flex items-center justify-between gap-3 flex-wrap">
-          <p className="text-[10px] text-[#BDB4C9]">
+        <div className="pt-3 border-t border-[#c9a227]/30 flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-[10px] text-[#8a8378]">
             Plugin communautaire obs-multi-rtmp — sorayuki · Gratuit, sans engagement.
           </p>
           <a
             href={PLUGIN.homepageUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#DDBE55] hover:underline"
+            className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#a3821c] hover:underline"
           >
             Documentation officielle
             <ExternalLink className="w-2.5 h-2.5" />
@@ -437,7 +437,7 @@ export function ObsMultiRtmpGuide({
         <button
           type="button"
           onClick={openModal}
-          className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-[#C9A227]/40 text-[#DDBE55] text-xs font-bold hover:bg-[#C9A227]/10 transition-colors"
+          className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-[#c9a227]/60 text-[#a3821c] text-xs font-bold hover:bg-[#C9A227]/10 transition-colors"
         >
           <Layers className="w-3.5 h-3.5" />
           {buttonLabel || "Diffuser sur plusieurs plateformes — plugin Multi-RTMP"}
@@ -456,13 +456,13 @@ export function ObsMultiRtmpGuide({
   if (variant === "banner") {
     return (
       <>
-        <div className="flex items-start gap-3 p-4 rounded-2xl border border-[#C9A227]/30 bg-[#C9A227]/5">
+        <div className="flex items-start gap-3 p-4 rounded-2xl border border-[#c9a227]/50 bg-[#C9A227]/5">
           <div className="w-9 h-9 rounded-xl bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
-            <Layers className="w-4 h-4 text-[#DDBE55]" />
+            <Layers className="w-4 h-4 text-[#a3821c]" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold font-serif text-[#FAF6EF]">Plugin OBS Multi-RTMP — diffusez partout en même temps</p>
-            <p className="text-xs text-[#BDB4C9] mt-0.5 leading-relaxed">
+            <p className="text-sm font-bold font-serif text-[#1e0f2b]">Plugin OBS Multi-RTMP — diffusez partout en même temps</p>
+            <p className="text-xs text-[#8a8378] mt-0.5 leading-relaxed">
               Les clés configurées ci-dessous se copient telles quelles dans le plugin obs-multi-rtmp d&apos;OBS
               Studio, pour pousser le direct simultanément vers plusieurs plateformes depuis votre ordinateur.
             </p>
@@ -470,7 +470,7 @@ export function ObsMultiRtmpGuide({
           <button
             type="button"
             onClick={openModal}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-[#FAF6EF] hover:opacity-90 transition-opacity flex-shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-[#1e0f2b] hover:opacity-90 transition-opacity flex-shrink-0"
             style={{ backgroundColor: accentColor }}
           >
             <Download className="w-4 h-4" />
@@ -495,7 +495,7 @@ export function ObsMultiRtmpGuide({
       <button
         type="button"
         onClick={openModal}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1A0826]/70 border-2 border-[#C9A227]/40 text-[#DDBE55] text-sm font-bold hover:border-[#C9A227] hover:bg-[#C9A227]/5 transition-colors shadow-sm"
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border-2 border-[#c9a227]/60 text-[#a3821c] text-sm font-bold hover:border-[#C9A227] hover:bg-[#C9A227]/5 transition-colors shadow-sm"
         title="Guide du plugin OBS Multi-RTMP (multidiffusion)"
       >
         <Layers className="w-4 h-4" />

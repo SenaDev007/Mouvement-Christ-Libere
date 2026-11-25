@@ -113,7 +113,7 @@ export default function TresorerieDashboardPage() {
 
   if (chargement && !stats) {
     return (
-      <div className="flex items-center justify-center py-24 text-[#BDB4C9]">
+      <div className="flex items-center justify-center py-24 text-[#8a8378]">
         <Loader2 className="w-6 h-6 animate-spin" />
       </div>
     );
@@ -121,7 +121,7 @@ export default function TresorerieDashboardPage() {
 
   if (erreur && !stats) {
     return (
-      <div className="max-w-xl mx-auto mt-12 px-4 py-6 rounded-xl bg-[#B3452E]/10 border border-[#B3452E]/30 text-[#E08B6D] text-sm">
+      <div className="max-w-xl mx-auto mt-12 px-4 py-6 rounded-xl bg-[#B3452E]/10 border border-[#B3452E]/30 text-[#c05a3c] text-sm">
         {erreur}
       </div>
     );
@@ -133,11 +133,11 @@ export default function TresorerieDashboardPage() {
   return (
     <div className="space-y-8">
       {/* En-tête */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2A0E3D] via-[#3D1A54] to-[#2A0E3D] bg-grain-dark p-6 md:p-8 text-white shadow-xl border border-[#C9A227]/15">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#f3ecf8] via-[#f3ecf8] to-[#f3ecf8] bg-grain p-6 md:p-8 text-[#1e0f2b] shadow-xl border border-[#c9a227]/35">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none animate-pulse-slow" />
         <div className="relative z-10 flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-[#DDBE55]/80 font-semibold mb-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#a3821c]/80 font-semibold mb-2">
               Trésorerie du royaume
             </p>
             <h1 className="text-2xl md:text-3xl font-bold font-serif mb-1">
@@ -147,7 +147,7 @@ export default function TresorerieDashboardPage() {
                 <span className="absolute left-0 -bottom-1 h-[3px] w-full bg-gradient-to-r from-[#C9A227] to-transparent" />
               </span>
             </h1>
-            <p className="text-sm text-white/70">
+            <p className="text-sm text-[#1e0f2b]/70">
               {new Date().toLocaleDateString("fr-FR", {
                 weekday: "long",
                 day: "numeric",
@@ -157,11 +157,11 @@ export default function TresorerieDashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Coins className="w-4 h-4 text-[#C9A227]" />
+            <Coins className="w-4 h-4 text-[#a3821c]" />
             <select
               value={devise}
               onChange={(e) => setDevise(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#1A0826]/10 backdrop-blur-sm border border-white/10 text-white text-xs font-semibold focus:outline-none [&>option]:text-[#FAF6EF]"
+              className="px-3 py-2 rounded-xl bg-[#2a0e3d]/10 backdrop-blur-sm border border-[#1e0f2b]/10 text-[#1e0f2b] text-xs font-semibold focus:outline-none [&>option]:text-[#1e0f2b]"
               aria-label="Devise affichée"
             >
               {DEVISE_CODES.map((d) => (
@@ -176,14 +176,14 @@ export default function TresorerieDashboardPage() {
 
       {/* KPIs */}
       <div>
-        <h2 className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-3 px-1">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-[#8a8378] font-bold mb-3 px-1">
           Indicateurs clés — {stats?.devise}
         </h2>
         {/* ⭐ V3.88 — conversion automatique : les totaux regroupent toutes
             les devises, converties vers la devise d'affichage (jamais de
             « 0 € » quand le journal est tenu en francs CFA). */}
         {(stats?.detailParDevise?.length ?? 0) > 1 && (
-          <p className="text-[11px] text-[#BDB4C9] mb-2 px-1">
+          <p className="text-[11px] text-[#8a8378] mb-2 px-1">
             Toutes devises confondues ·{" "}
             {stats!.detailParDevise!.map((d) => d.devise).join(" + ")} —{" "}
             {noteTauxReference(devise)}
@@ -192,57 +192,57 @@ export default function TresorerieDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Link
             href={`/tresorerie/transactions?type=RECETTE&devise=${devise}`}
-            className="group relative bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 hover:border-[#5B7052]/40 hover:shadow-lg transition-all overflow-hidden"
+            className="group relative bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4 hover:border-[#5B7052]/40 hover:shadow-lg transition-all overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#5B7052] to-[#3F5039] opacity-80" />
             <div className="flex items-start justify-between mb-3">
               <div className="p-2 rounded-lg bg-[#5B7052]/10">
-                <TrendingUp className="w-4 h-4 text-[#FAF6EF]" />
+                <TrendingUp className="w-4 h-4 text-[#1e0f2b]" />
               </div>
-              <ArrowUpRight className="w-3.5 h-3.5 text-[#FAF6EF]/25 group-hover:text-[#A3C9B0] transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-[#1e0f2b]/25 group-hover:text-[#3f5039] transition-colors" />
             </div>
-            <div className="text-xl md:text-2xl font-bold text-[#A3C9B0]">
+            <div className="text-xl md:text-2xl font-bold text-[#3f5039]">
               {formaterMontant(t?.recettes ?? 0, devise)}
             </div>
-            <div className="text-[11px] text-[#BDB4C9] font-medium mt-0.5">
+            <div className="text-[11px] text-[#8a8378] font-medium mt-0.5">
               Total recettes
             </div>
           </Link>
           <Link
             href={`/tresorerie/transactions?type=DEPENSE&devise=${devise}`}
-            className="group relative bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 hover:border-[#B3452E]/40 hover:shadow-lg transition-all overflow-hidden"
+            className="group relative bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4 hover:border-[#B3452E]/40 hover:shadow-lg transition-all overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#B3452E] to-[#8A2F1F] opacity-80" />
             <div className="flex items-start justify-between mb-3">
               <div className="p-2 rounded-lg bg-[#B3452E]/10">
-                <TrendingDown className="w-4 h-4 text-[#FAF6EF]" />
+                <TrendingDown className="w-4 h-4 text-[#1e0f2b]" />
               </div>
-              <ArrowUpRight className="w-3.5 h-3.5 text-[#FAF6EF]/25 group-hover:text-[#E08B6D] transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-[#1e0f2b]/25 group-hover:text-[#c05a3c] transition-colors" />
             </div>
-            <div className="text-xl md:text-2xl font-bold text-[#E08B6D]">
+            <div className="text-xl md:text-2xl font-bold text-[#c05a3c]">
               {formaterMontant(t?.depenses ?? 0, devise)}
             </div>
-            <div className="text-[11px] text-[#BDB4C9] font-medium mt-0.5">
+            <div className="text-[11px] text-[#8a8378] font-medium mt-0.5">
               Total dépenses
             </div>
           </Link>
           <Link
             href="/tresorerie/caisse"
-            className="group relative bg-[#3D1A54] rounded-xl border border-[#C9A227]/20 p-4 hover:border-[#C9A227]/50 hover:shadow-lg transition-all overflow-hidden col-span-2"
+            className="group relative bg-white rounded-xl border border-[#c9a227]/40 p-4 hover:border-[#c9a227]/70 hover:shadow-lg transition-all overflow-hidden col-span-2"
           >
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C9A227] to-[#A3821C] opacity-90" />
             <div className="flex items-start justify-between mb-3">
               <div className="p-2 rounded-lg bg-[#C9A227]/15">
-                <Wallet className="w-4 h-4 text-[#C9A227]" />
+                <Wallet className="w-4 h-4 text-[#a3821c]" />
               </div>
-              <ArrowUpRight className="w-3.5 h-3.5 text-[#FAF6EF]/40 group-hover:text-[#C9A227] transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-[#1e0f2b]/40 group-hover:text-[#a3821c] transition-colors" />
             </div>
             <div
-              className={`text-xl md:text-2xl font-bold ${soldePositif ? "text-[#DDBE55]" : "text-[#E88A76]"}`}
+              className={`text-xl md:text-2xl font-bold ${soldePositif ? "text-[#a3821c]" : "text-[#c05a3c]"}`}
             >
               {formaterMontant(t?.solde ?? 0, devise)}
             </div>
-            <div className="text-[11px] text-[#FAF6EF]/60 font-medium mt-0.5">
+            <div className="text-[11px] text-[#1e0f2b]/60 font-medium mt-0.5">
               Solde de caisse — {t?.nbMouvements ?? 0} mouvement
               {(t?.nbMouvements ?? 0) > 1 ? "s" : ""} au journal
             </div>
@@ -252,14 +252,14 @@ export default function TresorerieDashboardPage() {
 
       {/* ⭐ V3.67 — Panneau multicaisse (V3.88 : toutes devises, équivalents) */}
       {stats?.multicaisse && stats.multicaisse.nbCaisses > 0 && (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-5">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-[#8a8378] font-bold">
               Caisses ({stats.multicaisse.nbCaisses}) — solde natif · équivalent en {devise}
             </h2>
             <Link
               href="/tresorerie/caisse"
-              className="text-xs text-[#C9A227] hover:text-[#DDBE55] font-semibold"
+              className="text-xs text-[#a3821c] hover:text-[#a3821c] font-semibold"
             >
               Situation complète →
             </Link>
@@ -271,23 +271,23 @@ export default function TresorerieDashboardPage() {
                 href={`/tresorerie/transactions?caisse=${c.id}`}
                 className={`flex items-center justify-between gap-2 px-4 py-3 rounded-lg border transition-colors hover:bg-[#C9A227]/10 ${
                   c.isActive
-                    ? "border-[#C9A227]/15"
-                    : "border-[#C9A227]/10 opacity-60"
+                    ? "border-[#c9a227]/35"
+                    : "border-[#c9a227]/30 opacity-60"
                 }`}
               >
                 <div className="min-w-0">
-                  <span className="text-xs font-semibold text-[#FAF6EF] truncate block">
+                  <span className="text-xs font-semibold text-[#1e0f2b] truncate block">
                     {c.name}
                   </span>
                   {c.devise !== devise && c.soldeConverti !== c.solde && (
-                    <span className="text-[10px] text-[#BDB4C9]">
+                    <span className="text-[10px] text-[#8a8378]">
                       ≈ {formaterMontant(c.soldeConverti, devise)}
                     </span>
                   )}
                 </div>
                 <span
                   className={`text-sm font-bold flex-shrink-0 ${
-                    c.solde >= 0 ? "text-[#A3C9B0]" : "text-[#E08B6D]"
+                    c.solde >= 0 ? "text-[#3f5039]" : "text-[#c05a3c]"
                   }`}
                 >
                   {formaterMontant(c.solde, c.devise)}
@@ -295,20 +295,20 @@ export default function TresorerieDashboardPage() {
               </Link>
             ))}
           </div>
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#C9A227]/10">
-            <span className="text-xs text-[#BDB4C9]">
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#c9a227]/30">
+            <span className="text-xs text-[#8a8378]">
               Solde réel consolidé (ouvertures incluses, converti en {devise})
             </span>
             <span
               className={`text-lg font-bold ${
-                stats.multicaisse.soldeReel >= 0 ? "text-[#A3C9B0]" : "text-[#E08B6D]"
+                stats.multicaisse.soldeReel >= 0 ? "text-[#3f5039]" : "text-[#c05a3c]"
               }`}
             >
               {formaterMontant(stats.multicaisse.soldeReel, devise)}
             </span>
           </div>
           {!stats.multicaisse.coherent && (
-            <p className="text-[11px] text-[#E08B6D] mt-2">
+            <p className="text-[11px] text-[#c05a3c] mt-2">
               Écart de cohérence détecté — vérifier les transferts et ouvertures
               (page Situation de caisse).
             </p>
@@ -318,28 +318,28 @@ export default function TresorerieDashboardPage() {
 
       {/* Mois courant */}
       <div className="grid md:grid-cols-2 gap-3">
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-5 flex items-center gap-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-5 flex items-center gap-4">
           <div className="w-11 h-11 rounded-full bg-[#5B7052]/10 flex items-center justify-center">
-            <Receipt className="w-5 h-5 text-[#A3C9B0]" />
+            <Receipt className="w-5 h-5 text-[#3f5039]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-[#BDB4C9] font-semibold uppercase tracking-wider">
+            <p className="text-xs text-[#8a8378] font-semibold uppercase tracking-wider">
               Recettes de {new Date().toLocaleDateString("fr-FR", { month: "long" })}
             </p>
-            <p className="text-lg font-bold text-[#A3C9B0]">
+            <p className="text-lg font-bold text-[#3f5039]">
               {formaterMontant(stats?.moisCourant.recettes ?? 0, devise)}
             </p>
           </div>
         </div>
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-5 flex items-center gap-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-5 flex items-center gap-4">
           <div className="w-11 h-11 rounded-full bg-[#B3452E]/10 flex items-center justify-center">
-            <Receipt className="w-5 h-5 text-[#E08B6D]" />
+            <Receipt className="w-5 h-5 text-[#c05a3c]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-[#BDB4C9] font-semibold uppercase tracking-wider">
+            <p className="text-xs text-[#8a8378] font-semibold uppercase tracking-wider">
               Dépenses de {new Date().toLocaleDateString("fr-FR", { month: "long" })}
             </p>
-            <p className="text-lg font-bold text-[#E08B6D]">
+            <p className="text-lg font-bold text-[#c05a3c]">
               {formaterMontant(stats?.moisCourant.depenses ?? 0, devise)}
             </p>
           </div>
@@ -347,16 +347,16 @@ export default function TresorerieDashboardPage() {
       </div>
 
       {/* Graphe 6 mois */}
-      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-5">
-        <h2 className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-4">
+      <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-5">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-[#8a8378] font-bold mb-4">
           Évolution des 6 derniers mois — {devise}
         </h2>
         <GrapheMensuel serie={stats?.serie6Mois ?? []} devise={devise} />
       </div>
 
       {/* Catégories */}
-      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-5">
-        <h2 className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-4">
+      <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-5">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-[#8a8378] font-bold mb-4">
           Répartition par catégorie — {devise}
         </h2>
         <GrapheCategories categories={stats?.categories ?? []} devise={devise} />
@@ -365,21 +365,21 @@ export default function TresorerieDashboardPage() {
       {/* Dernières écritures */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold px-1">
+          <h2 className="text-xs uppercase tracking-[0.2em] text-[#8a8378] font-bold px-1">
             Dernières écritures
           </h2>
           <Link
             href="/tresorerie/transactions"
-            className="text-xs text-[#C9A227] hover:text-[#DDBE55] font-semibold"
+            className="text-xs text-[#a3821c] hover:text-[#a3821c] font-semibold"
           >
             Journal complet →
           </Link>
         </div>
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 divide-y divide-[#C9A227]/10">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 divide-y divide-[#C9A227]/10">
           {stats?.dernieres.length === 0 && (
-            <p className="px-5 py-8 text-sm text-[#BDB4C9] text-center">
+            <p className="px-5 py-8 text-sm text-[#8a8378] text-center">
               Aucun mouvement au journal —{" "}
-              <Link href="/tresorerie/transactions" className="text-[#C9A227] underline">
+              <Link href="/tresorerie/transactions" className="text-[#a3821c] underline">
                 saisir la première écriture
               </Link>
               .
@@ -404,10 +404,10 @@ export default function TresorerieDashboardPage() {
                   }`}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#FAF6EF] truncate">
+                  <p className="text-sm font-semibold text-[#1e0f2b] truncate">
                     {mouvement.label}
                   </p>
-                  <p className="text-[11px] text-[#BDB4C9] truncate">
+                  <p className="text-[11px] text-[#8a8378] truncate">
                     {libelleCategorie(mouvement.category, mouvement.type)} ·{" "}
                     {libelleMethode(mouvement.method)}
                     {mouvement.reference ? ` · réf. ${mouvement.reference}` : ""}
@@ -425,10 +425,10 @@ export default function TresorerieDashboardPage() {
                   <p
                     className={`text-sm font-bold ${
                       estTransfert
-                        ? "text-[#C9AEE3]"
+                        ? "text-[#6b4480]"
                         : estRecette
-                          ? "text-[#A3C9B0]"
-                          : "text-[#E08B6D]"
+                          ? "text-[#3f5039]"
+                          : "text-[#c05a3c]"
                     }`}
                   >
                     {estRecette ? "+" : "−"}
@@ -440,11 +440,11 @@ export default function TresorerieDashboardPage() {
                     mouvement.currency,
                     devise
                   ) && (
-                    <p className="text-[10px] text-[#FAF6EF]/50">
+                    <p className="text-[10px] text-[#1e0f2b]/50">
                       {equivalentFormate(mouvement.amount, mouvement.currency, devise)}
                     </p>
                   )}
-                  <p className="text-[10px] text-[#FAF6EF]/50">
+                  <p className="text-[10px] text-[#1e0f2b]/50">
                     {new Date(mouvement.date).toLocaleDateString("fr-FR", {
                       day: "numeric",
                       month: "short",
@@ -462,23 +462,23 @@ export default function TresorerieDashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <Link
           href="/tresorerie/transactions"
-          className="flex flex-col items-center gap-2 px-4 py-5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] hover:bg-[#3D1A54] transition-colors"
+          className="flex flex-col items-center gap-2 px-4 py-5 rounded-xl bg-white text-[#1e0f2b] hover:bg-white transition-colors"
         >
-          <BookOpen className="w-5 h-5 text-[#C9A227]" />
+          <BookOpen className="w-5 h-5 text-[#a3821c]" />
           <span className="text-xs font-semibold">Journal</span>
         </Link>
         <Link
           href="/tresorerie/caisse"
-          className="flex flex-col items-center gap-2 px-4 py-5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] hover:bg-[#3D1A54] transition-colors"
+          className="flex flex-col items-center gap-2 px-4 py-5 rounded-xl bg-white text-[#1e0f2b] hover:bg-white transition-colors"
         >
-          <Wallet className="w-5 h-5 text-[#C9A227]" />
+          <Wallet className="w-5 h-5 text-[#a3821c]" />
           <span className="text-xs font-semibold">Caisse</span>
         </Link>
         <Link
           href="/tresorerie/rapports"
-          className="flex flex-col items-center gap-2 px-4 py-5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] hover:bg-[#3D1A54] transition-colors"
+          className="flex flex-col items-center gap-2 px-4 py-5 rounded-xl bg-white text-[#1e0f2b] hover:bg-white transition-colors"
         >
-          <BookOpen className="w-5 h-5 text-[#C9A227]" />
+          <BookOpen className="w-5 h-5 text-[#a3821c]" />
           <span className="text-xs font-semibold">Rapports</span>
         </Link>
       </div>

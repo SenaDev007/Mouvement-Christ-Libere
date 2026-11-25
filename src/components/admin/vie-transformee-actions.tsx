@@ -79,20 +79,20 @@ export function VieTransformeeActions({
             onChange={(e) => setNote(e.target.value)}
             placeholder="Note interne (motif du rejet, remarque de relecture…)"
             rows={2}
-            className="w-full px-3 py-2 rounded-xl border border-[#C9A227]/30 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#BDB4C9]/50 focus:outline-none focus:border-[#C9A227] resize-y"
+            className="w-full px-3 py-2 rounded-xl border border-[#c9a227]/50 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378]/50 focus:outline-none focus:border-[#C9A227] resize-y"
           />
           <div className="flex gap-2 mt-2">
             <button
               onClick={() => patch({ statut: "rejete", noteAdmin: note || null }, "rejete")}
               disabled={!!busy}
-              className="px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-400/30 text-red-300 text-xs font-bold hover:bg-red-500/25 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-400/30 text-red-700 text-xs font-bold hover:bg-red-500/25 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
             >
               {busy === "rejete" ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
               Confirmer le rejet
             </button>
             <button
               onClick={() => setShowNote(false)}
-              className="px-3 py-1.5 rounded-lg text-[#BDB4C9] text-xs font-semibold hover:bg-[#FAF6EF]/5 transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-lg text-[#8a8378] text-xs font-semibold hover:bg-[#FAF6EF]/5 transition-colors cursor-pointer"
             >
               Annuler
             </button>
@@ -110,7 +110,7 @@ export function VieTransformeeActions({
               )
             }
             disabled={!!busy}
-            className="px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-xs font-bold hover:bg-emerald-500/25 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-700 text-xs font-bold hover:bg-emerald-500/25 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
           >
             {busy === "publie" ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
             {statut === "rejete" ? " Republier" : " Valider & publier"}
@@ -120,13 +120,13 @@ export function VieTransformeeActions({
           <button
             onClick={() => { setNote(noteAdmin || ""); setShowNote(true); }}
             disabled={!!busy}
-            className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-400/25 text-red-300/90 text-xs font-bold hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-400/25 text-red-700/90 text-xs font-bold hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
           >
             <XCircle className="w-3 h-3" /> Rejeter
           </button>
         )}
         {statut === "rejete" && (
-          <span className="text-[10px] text-[#BDB4C9] italic inline-flex items-center gap-1">
+          <span className="text-[10px] text-[#8a8378] italic inline-flex items-center gap-1">
             <MessageSquareQuote className="w-3 h-3" />
             {noteAdmin ? noteAdmin.slice(0, 60) : "rejeté"}
           </span>
@@ -135,7 +135,7 @@ export function VieTransformeeActions({
           <button
             onClick={() => patch({ statut: "en_attente", publishedAt: null }, "attente")}
             disabled={!!busy}
-            className="px-3 py-1.5 rounded-lg bg-[#FAF6EF]/10 border border-[#C9A227]/25 text-[#BDB4C9] text-xs font-bold hover:bg-[#FAF6EF]/15 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-[#FAF6EF]/10 border border-[#c9a227]/45 text-[#8a8378] text-xs font-bold hover:bg-[#FAF6EF]/15 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
           >
             {busy === "attente" ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
             Dépublier
@@ -144,7 +144,7 @@ export function VieTransformeeActions({
         <button
           onClick={remove}
           disabled={!!busy}
-          className="px-3 py-1.5 rounded-lg text-red-300/70 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-50"
+          className="px-3 py-1.5 rounded-lg text-red-700/70 hover:text-red-700 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-50"
           aria-label="Supprimer"
           title="Supprimer définitivement"
         >
@@ -153,7 +153,7 @@ export function VieTransformeeActions({
       </div>
 
       {error && (
-        <p className="text-xs text-red-300 mt-2 text-right">{error}</p>
+        <p className="text-xs text-red-700 mt-2 text-right">{error}</p>
       )}
     </div>
   );

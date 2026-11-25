@@ -24,9 +24,9 @@ export const dynamic = "force-dynamic";
  */
 
 const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
-  en_attente: { label: "En attente", color: "bg-[#C9A227]/15 text-[#DDBE55] border-[#C9A227]/30" },
-  publie: { label: "Publié", color: "bg-emerald-400/15 text-emerald-300 border-emerald-400/25" },
-  rejete: { label: "Rejeté", color: "bg-red-400/10 text-red-300/90 border-red-400/25" },
+  en_attente: { label: "En attente", color: "bg-[#C9A227]/15 text-[#a3821c] border-[#c9a227]/50" },
+  publie: { label: "Publié", color: "bg-emerald-400/15 text-emerald-700 border-emerald-400/25" },
+  rejete: { label: "Rejeté", color: "bg-red-400/10 text-red-700/90 border-red-400/25" },
 };
 
 const LABEL_CATEGORIE: Record<string, string> = {
@@ -91,45 +91,45 @@ export default async function AdminVieTransformeePage({
     <div className="space-y-6">
       {/* Header — style Win Agro du back-office */}
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-1 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#C9A227]" />
+        <p className="text-xs uppercase tracking-[0.2em] text-[#8a8378] font-bold mb-1 flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-[#a3821c]" />
           Vies transformées
         </p>
-        <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
+        <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#1e0f2b]">
           Témoignages des croyants
         </h1>
-        <p className="text-sm text-[#BDB4C9] mt-1 max-w-3xl leading-relaxed">
+        <p className="text-sm text-[#8a8378] mt-1 max-w-3xl leading-relaxed">
           Les témoignages soumis depuis le site public arrivent ici. Relisez
-          chaque récit, puis <strong className="text-[#DDBE55]">validez-le</strong> pour le
+          chaque récit, puis <strong className="text-[#a3821c]">validez-le</strong> pour le
           publier (section « Vies transformées » de l&apos;accueil + page
-          /vie-transformee) ou <strong className="text-red-300">rejetez-le</strong> avec une note.
+          /vie-transformee) ou <strong className="text-red-700">rejetez-le</strong> avec une note.
           Les coordonnées des témoins restent confidentielles.
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
-          <div className="text-2xl font-bold font-serif text-[#FAF6EF]">{stats.total}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-semibold mt-0.5 flex items-center gap-1">
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4">
+          <div className="text-2xl font-bold font-serif text-[#1e0f2b]">{stats.total}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#8a8378] font-semibold mt-0.5 flex items-center gap-1">
             <Heart className="w-3 h-3" /> Total reçus
           </div>
         </div>
-        <div className="bg-[#1A0826]/70 rounded-2xl border border-[#C9A227]/40 shadow-lg p-4">
-          <div className="text-2xl font-bold text-[#DDBE55]">{stats.enAttente}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#DDBE55] font-semibold mt-0.5 flex items-center gap-1">
+        <div className="bg-white rounded-2xl border border-[#c9a227]/60 shadow-lg p-4">
+          <div className="text-2xl font-bold text-[#a3821c]">{stats.enAttente}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#a3821c] font-semibold mt-0.5 flex items-center gap-1">
             <Hourglass className="w-3 h-3" /> En attente
           </div>
         </div>
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-emerald-400/20 p-4">
-          <div className="text-2xl font-bold text-emerald-300">{stats.publies}</div>
-          <div className="text-[10px] uppercase tracking-wider text-emerald-300 font-semibold mt-0.5 flex items-center gap-1">
+        <div className="bg-white rounded-2xl shadow-lg border border-emerald-400/20 p-4">
+          <div className="text-2xl font-bold text-emerald-700">{stats.publies}</div>
+          <div className="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold mt-0.5 flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" /> Publiés
           </div>
         </div>
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-red-400/20 p-4">
-          <div className="text-2xl font-bold text-red-300/90">{stats.rejetes}</div>
-          <div className="text-[10px] uppercase tracking-wider text-red-300/90 font-semibold mt-0.5 flex items-center gap-1">
+        <div className="bg-white rounded-2xl shadow-lg border border-red-400/20 p-4">
+          <div className="text-2xl font-bold text-red-700/90">{stats.rejetes}</div>
+          <div className="text-[10px] uppercase tracking-wider text-red-700/90 font-semibold mt-0.5 flex items-center gap-1">
             <XCircle className="w-3 h-3" /> Rejetés
           </div>
         </div>
@@ -143,8 +143,8 @@ export default async function AdminVieTransformeePage({
             href={`/admin/vie-transformee?statut=${f.id}`}
             className={`flex-shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               statutFilter === f.id
-                ? "bg-[#3D1A54] text-[#FAF6EF]"
-                : "border border-[#C9A227]/25 text-[#DDBE55] hover:bg-[#3D1A54]/5"
+                ? "bg-white text-[#1e0f2b]"
+                : "border border-[#c9a227]/45 text-[#a3821c] hover:bg-[#f3ecf8]"
             }`}
           >
             {f.label}
@@ -159,9 +159,9 @@ export default async function AdminVieTransformeePage({
 
       {/* Liste */}
       {temoignages.length === 0 ? (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-dashed border-[#C9A227]/30 p-12 text-center">
-          <Heart className="w-10 h-10 text-[#FAF6EF]/20 mx-auto mb-3" />
-          <p className="text-sm text-[#BDB4C9] italic">
+        <div className="bg-white rounded-2xl shadow-xl border border-dashed border-[#c9a227]/50 p-12 text-center">
+          <Heart className="w-10 h-10 text-[#1e0f2b]/20 mx-auto mb-3" />
+          <p className="text-sm text-[#8a8378] italic">
             Aucun témoignage {statutFilter !== "tous" ? "dans ce statut " : ""}pour
             l&apos;instant.
           </p>
@@ -174,22 +174,22 @@ export default async function AdminVieTransformeePage({
             return (
               <div
                 key={t.id}
-                className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 hover:shadow-md transition-shadow"
+                className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4 hover:shadow-md transition-shadow"
               >
                 {/* En-tête : avatar + titre + statut */}
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm text-white bg-gradient-to-br from-[#C9A227] to-[#A3821C]">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm text-[#1e0f2b] bg-gradient-to-br from-[#C9A227] to-[#A3821C]">
                     {(t.nom || "?").charAt(0).toUpperCase()}
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <h3 className="font-bold text-sm text-[#FAF6EF] break-words">
+                        <h3 className="font-bold text-sm text-[#1e0f2b] break-words">
                           {t.titre}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap text-[11px] text-[#BDB4C9]">
-                          <span className="font-semibold text-[#DDBE55]">
+                        <div className="flex items-center gap-2 mt-1 flex-wrap text-[11px] text-[#8a8378]">
+                          <span className="font-semibold text-[#a3821c]">
                             {LABEL_CATEGORIE[t.categorie] || t.categorie}
                           </span>
                           <span className="opacity-40">·</span>
@@ -207,7 +207,7 @@ export default async function AdminVieTransformeePage({
                           {t.publishedAt && (
                             <>
                               <span className="opacity-40">·</span>
-                              <span className="text-emerald-300/80">
+                              <span className="text-emerald-700/80">
                                 publié le {dateFr(t.publishedAt)}
                               </span>
                             </>
@@ -222,9 +222,9 @@ export default async function AdminVieTransformeePage({
                     </div>
 
                     {/* Récit */}
-                    <div className="mt-3 bg-[#150920]/80 border border-[#C9A227]/10 rounded-xl px-4 py-3">
-                      <Quote className="w-3 h-3 text-[#C9A227]/50 mb-1.5" />
-                      <p className="text-[13px] text-[#FAF6EF]/85 leading-relaxed whitespace-pre-line max-h-40 overflow-y-auto scrollbar-discrete">
+                    <div className="mt-3 bg-[#faf6ef] border border-[#c9a227]/30 rounded-xl px-4 py-3">
+                      <Quote className="w-3 h-3 text-[#a3821c]/50 mb-1.5" />
+                      <p className="text-[13px] text-[#1e0f2b]/85 leading-relaxed whitespace-pre-line max-h-40 overflow-y-auto scrollbar-discrete">
                         {t.contenu}
                       </p>
                     </div>
@@ -237,8 +237,8 @@ export default async function AdminVieTransformeePage({
                           duree={t.audioDuree}
                           theme="sombre"
                         />
-                        <div className="flex items-center gap-2 text-[10.5px] text-[#BDB4C9]">
-                          <AudioLines className="w-3 h-3 text-[#C9A227]/70" />
+                        <div className="flex items-center gap-2 text-[10.5px] text-[#8a8378]">
+                          <AudioLines className="w-3 h-3 text-[#a3821c]/70" />
                           {t.audioDuree
                             ? `${Math.round(t.audioDuree / 60)} min ${Math.round(t.audioDuree % 60)} s`
                             : "Durée inconnue"}
@@ -249,9 +249,9 @@ export default async function AdminVieTransformeePage({
                     )}
 
                     {/* Coordonnées (confidentielles) */}
-                    <div className="flex items-center gap-3 mt-2 flex-wrap text-[11px] text-[#BDB4C9]">
+                    <div className="flex items-center gap-3 mt-2 flex-wrap text-[11px] text-[#8a8378]">
                       {t.email && (
-                        <a href={`mailto:${t.email}`} className="inline-flex items-center gap-1 hover:text-[#DDBE55] transition-colors">
+                        <a href={`mailto:${t.email}`} className="inline-flex items-center gap-1 hover:text-[#a3821c] transition-colors">
                           <Mail className="w-3 h-3" /> {t.email}
                         </a>
                       )}
@@ -275,7 +275,7 @@ export default async function AdminVieTransformeePage({
                 </div>
 
                 {/* Pied : actions de modération */}
-                <div className="mt-3 pt-3 border-t border-[#C9A227]/10">
+                <div className="mt-3 pt-3 border-t border-[#c9a227]/30">
                   <VieTransformeeActions id={t.id} statut={t.statut} noteAdmin={t.noteAdmin} />
                 </div>
               </div>

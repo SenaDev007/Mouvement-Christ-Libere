@@ -92,13 +92,13 @@ export default function AdminLoginPage() {
             <span style={{ color: "#C9A227" }}>Christ</span>
             <span style={{ color: "#FAF6EF" }}>&nbsp;&nbsp;Libère</span>
           </h1>
-          <p className="text-xs uppercase tracking-[0.25em] font-bold text-[#C9A227]">
+          <p className="text-xs uppercase tracking-[0.25em] font-bold text-[#a3821c]">
             Back Office
           </p>
         </div>
 
         {/* Carte formulaire — verre dépoli façon dashboard Win Agro */}
-        <div className="bg-primary-deep/60 backdrop-blur-md rounded-2xl border border-[#C9A227]/20 border-t-[3px] border-t-[#C9A227] p-8 space-y-5 shadow-2xl card-shimmer">
+        <div className="bg-primary-deep/60 backdrop-blur-md rounded-2xl border border-[#c9a227]/40 border-t-[3px] border-t-[#C9A227] p-8 space-y-5 shadow-2xl card-shimmer">
         <form
           onSubmit={handleSubmit}
           className="space-y-5"
@@ -112,11 +112,11 @@ export default function AdminLoginPage() {
 
           {/* Champ pseudonyme / email */}
           <div>
-            <label className="block text-xs font-semibold text-[#FAF6EF]/80 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-[#1e0f2b]/80 uppercase tracking-wider mb-2">
               Pseudonyme ou email
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#DDBE55]/50" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a3821c]/50" />
               <input
                 type="text"
                 value={name}
@@ -126,18 +126,18 @@ export default function AdminLoginPage() {
                 disabled={loading}
                 placeholder="Votre pseudonyme ou email"
                 autoComplete="username"
-                className="w-full pl-10 pr-4 py-3 bg-[#1A0826]/60 border border-[#C9A227]/20 rounded-xl text-sm text-[#FAF6EF] placeholder:text-[#FAF6EF]/25 outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-[#c9a227]/40 rounded-xl text-sm text-[#1e0f2b] placeholder:text-[#1e0f2b]/25 outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
               />
             </div>
           </div>
 
           {/* Champ mot de passe */}
           <div>
-            <label className="block text-xs font-semibold text-[#FAF6EF]/80 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-[#1e0f2b]/80 uppercase tracking-wider mb-2">
               Mot de passe
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#DDBE55]/50" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a3821c]/50" />
               <input
                 type="password"
                 value={password}
@@ -146,7 +146,7 @@ export default function AdminLoginPage() {
                 disabled={loading}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className="w-full pl-10 pr-4 py-3 bg-[#1A0826]/60 border border-[#C9A227]/20 rounded-xl text-sm text-[#FAF6EF] placeholder:text-[#FAF6EF]/25 outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-[#c9a227]/40 rounded-xl text-sm text-[#1e0f2b] placeholder:text-[#1e0f2b]/25 outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]"
               />
             </div>
           </div>
@@ -176,13 +176,13 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Note de bas */}
-        <p className="text-center text-xs text-[#FAF6EF]/60 mt-6 leading-relaxed">
+        <p className="text-center text-xs text-[#1e0f2b]/60 mt-6 leading-relaxed">
           Accès réservé aux super administrateurs et administrateurs autorisés.
         </p>
 
         {/* Retour à l'accueil */}
-        <p className="text-center text-xs text-[#FAF6EF]/60 mt-4">
-          <Link href={accueilPublicUrl} className="hover:text-[#C9A227] transition-colors">
+        <p className="text-center text-xs text-[#1e0f2b]/60 mt-4">
+          <Link href={accueilPublicUrl} className="hover:text-[#a3821c] transition-colors">
             ← Retour à l&apos;accueil
           </Link>
         </p>

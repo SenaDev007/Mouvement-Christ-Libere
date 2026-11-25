@@ -174,24 +174,24 @@ export function AdminShell({
   };
 
   return (
-    // ⭐ V3.98 — Thème Win Agro du back-office : fond violet nuit profond
-    // (équivalent CL du noir-vert Win Agro #07130A) + grain clair discret
-    // + halo doré d'ambiance — la palette Christ Libère est conservée.
-    <div className="bo-winagro relative min-h-screen bg-[#150920] flex">
+    // ⭐ V4.45 — Thème « pattern landing » du back-office : sections CLAIRES
+    // dominantes (ivoire + grain discret + halo doré), texte encre, or
+    // sacré en accents — le violet impérial n'est plus dominant.
+    <div className="bo-winagro relative min-h-screen bg-[#faf6ef] bg-grain flex">
       {/* Halo d'ambiance doré (fixe, derrière le contenu) */}
       <div className="pointer-events-none fixed top-0 right-0 w-[32rem] h-[32rem] rounded-full bg-[#C9A227]/[0.05] blur-3xl" aria-hidden />
       <div className="pointer-events-none fixed bottom-0 left-1/3 w-[26rem] h-[26rem] rounded-full bg-[#8C5FA8]/[0.06] blur-3xl" aria-hidden />
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-[#3D1A54] text-[#FAF6EF] flex-shrink-0 transition-transform duration-300",
+          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-white text-[#1e0f2b] border-r border-[#c9a227]/25 shadow-[2px_0_24px_-12px_rgba(42,14,61,0.12)] flex-shrink-0 transition-transform duration-300",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Header avec logo Christ Libère — ⭐ V4.26 : logo seul,
               sans cercle ni halo autour (retour pasteur) */}
-          <div className="px-5 py-5 border-b border-[#C9A227]/15">
+          <div className="px-5 py-5 border-b border-[#c9a227]/35">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Image
@@ -205,16 +205,16 @@ export function AdminShell({
                 <div>
                   <div className="text-lg font-bold leading-tight font-serif">
                     <span style={{ color: "#C9A227" }}>Christ</span>
-                    <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
+                    <span style={{ color: "#1E0F2B" }}>&nbsp;Libère</span>
                   </div>
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/70 font-semibold">
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-[#a3821c]/70 font-semibold">
                     Backoffice
                   </div>
                 </div>
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden -mr-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#FAF6EF]/70 hover:text-[#FAF6EF] hover:bg-[#C9A227]/10 transition-colors"
+                className="lg:hidden -mr-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#1e0f2b]/70 hover:text-[#1e0f2b] hover:bg-[#C9A227]/10 transition-colors"
                 aria-label="Fermer le menu"
               >
                 <X className="w-5 h-5" />
@@ -226,7 +226,7 @@ export function AdminShell({
           <nav className="flex-1 overflow-y-auto scrollbar-discrete py-4">
             {NAV_SECTIONS.map((section) => (
               <div key={section.title} className="mb-5">
-                <p className="px-5 mb-2 text-[10px] uppercase tracking-[0.18em] text-[#DDBE55]/50 font-semibold">
+                <p className="px-5 mb-2 text-[10px] uppercase tracking-[0.18em] text-[#a3821c]/50 font-semibold">
                   {section.title}
                 </p>
                 <ul className="space-y-0.5">
@@ -243,8 +243,8 @@ export function AdminShell({
                           className={cn(
                             "flex items-center gap-3 px-5 py-3 text-sm transition-colors",
                             isActive
-                              ? "bg-[#C9A227]/15 text-[#C9A227] border-l-2 border-[#C9A227]"
-                              : "text-[#FAF6EF]/70 hover:bg-[#3D1A54]/40 hover:text-[#FAF6EF] border-l-2 border-transparent"
+                              ? "bg-[#C9A227]/15 text-[#a3821c] border-l-2 border-[#C9A227]"
+                              : "text-[#1e0f2b]/70 hover:bg-[#f3ecf8] hover:text-[#1e0f2b] border-l-2 border-transparent"
                           )}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
@@ -259,7 +259,7 @@ export function AdminShell({
           </nav>
 
           {/* Footer sidebar */}
-          <div className="px-5 py-4 border-t border-[#C9A227]/15 space-y-1">
+          <div className="px-5 py-4 border-t border-[#c9a227]/35 space-y-1">
             {/* ⭐ V3.80 — PWA : installation du back-office comme application
                 (« Back-office Christ Libère », même logo que le site public —
                 manifest dédié lié par src/app/admin/layout.tsx). toujoursVisible :
@@ -269,14 +269,14 @@ export function AdminShell({
             <Link
               href={sitePublicUrl}
               target="_blank"
-              className="flex items-center gap-2 text-xs text-[#FAF6EF]/60 hover:text-[#C9A227] transition-colors py-1.5"
+              className="flex items-center gap-2 text-xs text-[#1e0f2b]/60 hover:text-[#a3821c] transition-colors py-1.5"
             >
               <ExternalLink className="w-3 h-3" />
               Voir le site
             </Link>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-xs text-[#FAF6EF]/60 hover:text-state-danger transition-colors py-1.5"
+              className="flex items-center gap-2 text-xs text-[#1e0f2b]/60 hover:text-state-danger transition-colors py-1.5"
             >
               <LogOut className="w-3 h-3" />
               Déconnexion
@@ -296,10 +296,10 @@ export function AdminShell({
       {/* Contenu principal */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar mobile avec logo */}
-        <header className="lg:hidden sticky top-0 z-20 bg-[#3D1A54] text-[#FAF6EF] px-4 py-3 flex items-center justify-between">
+        <header className="lg:hidden sticky top-0 z-20 bg-white text-[#1e0f2b] border-b border-[#c9a227]/25 px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="-ml-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#FAF6EF] hover:bg-[#C9A227]/10 transition-colors"
+            className="-ml-2 w-11 h-11 flex items-center justify-center rounded-lg text-[#1e0f2b] hover:bg-[#C9A227]/10 transition-colors"
             aria-label="Ouvrir le menu"
           >
             <Menu className="w-5 h-5" />
@@ -314,7 +314,7 @@ export function AdminShell({
             />
             <span className="text-sm font-bold font-serif">
               <span style={{ color: "#C9A227" }}>Christ</span>
-              <span style={{ color: "#FAF6EF" }}>&nbsp;Libère</span>
+              <span style={{ color: "#1E0F2B" }}>&nbsp;Libère</span>
             </span>
           </div>
           <div className="w-5" />

@@ -35,13 +35,13 @@ export default async function AdminServantsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#8a8378] font-bold mb-1">
             Gestion des serviteurs
           </p>
-          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#1e0f2b]">
             Serviteurs
           </h1>
-          <p className="text-sm text-[#BDB4C9] mt-1">
+          <p className="text-sm text-[#8a8378] mt-1">
             Gérez les serviteurs principaux du mouvement.
           </p>
         </div>
@@ -58,7 +58,7 @@ export default async function AdminServantsPage() {
           return (
             <div
               key={s.id}
-              className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/15 overflow-hidden hover:shadow-lg transition-shadow"
+              className="bg-white rounded-2xl shadow-xl border border-[#c9a227]/35 overflow-hidden hover:shadow-lg transition-shadow"
             >
               {/* En-tête avec gradient */}
               <div
@@ -83,7 +83,7 @@ export default async function AdminServantsPage() {
                       />
                     ) : (
                       <div
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-white text-sm shadow-md"
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-[#1e0f2b] text-sm shadow-md"
                         style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}CC)` }}
                       >
                         {initials}
@@ -91,15 +91,15 @@ export default async function AdminServantsPage() {
                     )}
                     <div>
                       <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold font-serif text-[#FAF6EF]">{s.fullName}</h2>
-                        {isAfrika && <Crown className="w-4 h-4 text-[#C9A227]" />}
+                        <h2 className="text-lg font-bold font-serif text-[#1e0f2b]">{s.fullName}</h2>
+                        {isAfrika && <Crown className="w-4 h-4 text-[#a3821c]" />}
                       </div>
                       <p className="text-xs uppercase tracking-[0.15em] font-semibold mt-0.5" style={{ color: accentColor }}>
                         {s.shortName} · {s.role}
                       </p>
                       {(s.pays || s.ville) && (
-                        <p className="text-xs text-[#FAF6EF]/70 mt-1.5 inline-flex items-center gap-1.5">
-                          <MapPin className="w-3 h-3 text-[#C9A227] flex-shrink-0" />
+                        <p className="text-xs text-[#1e0f2b]/70 mt-1.5 inline-flex items-center gap-1.5">
+                          <MapPin className="w-3 h-3 text-[#a3821c] flex-shrink-0" />
                           {s.pays ? flagFromCountryCode(s.pays) : ""}{" "}
                           {s.ville || (s.pays ? s.pays : "")}
                         </p>
@@ -127,7 +127,7 @@ export default async function AdminServantsPage() {
                   />
                   <Link
                     href={`/admin/servants/${s.id}/stream-config`}
-                    className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#BDB4C9] hover:text-[#C9A227] transition-colors"
+                    className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8a8378] hover:text-[#a3821c] transition-colors"
                     aria-label="Configuration streaming"
                     title="Configuration RTMP"
                   >
@@ -138,37 +138,37 @@ export default async function AdminServantsPage() {
 
               {/* Bio */}
               {s.bio && (
-                <div className="px-6 py-3 border-b border-[#C9A227]/10">
-                  <p className="text-sm text-[#FAF6EF]/70 line-clamp-2 leading-relaxed">{s.bio}</p>
+                <div className="px-6 py-3 border-b border-[#c9a227]/30">
+                  <p className="text-sm text-[#1e0f2b]/70 line-clamp-2 leading-relaxed">{s.bio}</p>
                 </div>
               )}
 
               {/* Stats grid — 3 colonnes lisibles <640px, 5 à partir de sm */}
               <div className="grid grid-cols-3 sm:grid-cols-5 sm:divide-x divide-[#C9A227]/10">
                 <Link href={`/admin/videos?servant=${s.code}`} className="p-3 text-center hover:bg-[#C9A227]/10 transition-colors group">
-                  <Video className="w-4 h-4 mx-auto text-[#BDB4C9] group-hover:text-[#C9A227] transition-colors" />
-                  <div className="text-base font-bold font-serif text-[#FAF6EF] mt-1">{s._count.videos}</div>
-                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#BDB4C9]">Vidéos</div>
+                  <Video className="w-4 h-4 mx-auto text-[#8a8378] group-hover:text-[#a3821c] transition-colors" />
+                  <div className="text-base font-bold font-serif text-[#1e0f2b] mt-1">{s._count.videos}</div>
+                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8a8378]">Vidéos</div>
                 </Link>
                 <Link href={`/admin/testimonies?servant=${s.code}`} className="p-3 text-center hover:bg-[#C9A227]/10 transition-colors group">
-                  <FileText className="w-4 h-4 mx-auto text-[#BDB4C9] group-hover:text-[#C9A227] transition-colors" />
-                  <div className="text-base font-bold font-serif text-[#FAF6EF] mt-1">{s._count.testimonies}</div>
-                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#BDB4C9]">Témoignages</div>
+                  <FileText className="w-4 h-4 mx-auto text-[#8a8378] group-hover:text-[#a3821c] transition-colors" />
+                  <div className="text-base font-bold font-serif text-[#1e0f2b] mt-1">{s._count.testimonies}</div>
+                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8a8378]">Témoignages</div>
                 </Link>
                 <Link href={`/admin/teachings?servant=${s.code}`} className="p-3 text-center hover:bg-[#C9A227]/10 transition-colors group">
-                  <BookOpen className="w-4 h-4 mx-auto text-[#BDB4C9] group-hover:text-[#C9A227] transition-colors" />
-                  <div className="text-base font-bold font-serif text-[#FAF6EF] mt-1">{s._count.teachings}</div>
-                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#BDB4C9]">Enseignements</div>
+                  <BookOpen className="w-4 h-4 mx-auto text-[#8a8378] group-hover:text-[#a3821c] transition-colors" />
+                  <div className="text-base font-bold font-serif text-[#1e0f2b] mt-1">{s._count.teachings}</div>
+                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8a8378]">Enseignements</div>
                 </Link>
                 <Link href={`/admin/biographies?servant=${s.code}`} className="p-3 text-center hover:bg-[#C9A227]/10 transition-colors group">
-                  <BookMarked className="w-4 h-4 mx-auto text-[#BDB4C9] group-hover:text-[#C9A227] transition-colors" />
-                  <div className="text-base font-bold font-serif text-[#FAF6EF] mt-1">{s._count.biographies}</div>
-                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#BDB4C9]">Biographies</div>
+                  <BookMarked className="w-4 h-4 mx-auto text-[#8a8378] group-hover:text-[#a3821c] transition-colors" />
+                  <div className="text-base font-bold font-serif text-[#1e0f2b] mt-1">{s._count.biographies}</div>
+                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8a8378]">Biographies</div>
                 </Link>
                 <Link href={`/admin/lives?servant=${s.code}`} className="p-3 text-center hover:bg-[#C9A227]/10 transition-colors group">
-                  <Radio className="w-4 h-4 mx-auto text-[#BDB4C9] group-hover:text-[#C9A227] transition-colors" />
-                  <div className="text-base font-bold font-serif text-[#FAF6EF] mt-1">{s._count.liveStreams}</div>
-                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#BDB4C9]">Lives</div>
+                  <Radio className="w-4 h-4 mx-auto text-[#8a8378] group-hover:text-[#a3821c] transition-colors" />
+                  <div className="text-base font-bold font-serif text-[#1e0f2b] mt-1">{s._count.liveStreams}</div>
+                  <div className="text-[9px] sm:text-[10px] uppercase sm:tracking-wider text-[#8a8378]">Lives</div>
                 </Link>
               </div>
             </div>
@@ -177,8 +177,8 @@ export default async function AdminServantsPage() {
       </div>
 
       {servants.length === 0 && (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-dashed border-[#C9A227]/30 p-12 text-center">
-          <p className="text-sm text-[#BDB4C9] italic">Aucun serviteur enregistré pour l&apos;instant.</p>
+        <div className="bg-white rounded-2xl shadow-xl border border-dashed border-[#c9a227]/50 p-12 text-center">
+          <p className="text-sm text-[#8a8378] italic">Aucun serviteur enregistré pour l&apos;instant.</p>
         </div>
       )}
     </div>

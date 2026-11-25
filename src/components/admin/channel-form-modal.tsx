@@ -245,15 +245,15 @@ export function ChannelFormModal({
         {/* Photo du canal */}
         <ModalField label="Photo du canal" help="Carrée, compressée automatiquement (≤ 60 Ko) — affichée dans la liste Yeshua Connect.">
           <div className="flex items-center gap-4">
-            <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-[#C9A227]/30 bg-[#C9A227]/10 flex items-center justify-center flex-shrink-0">
+            <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-[#c9a227]/50 bg-[#C9A227]/10 flex items-center justify-center flex-shrink-0">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Photo du canal" className="w-full h-full object-cover" />
               ) : (
-                <ImagePlus className="w-8 h-8 text-[#FAF6EF]/25" />
+                <ImagePlus className="w-8 h-8 text-[#1e0f2b]/25" />
               )}
               {uploadingPhoto && (
                 <div className="absolute inset-0 bg-[#1A0826]/80 flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-[#C9A227]" />
+                  <Loader2 className="w-5 h-5 animate-spin text-[#ddbe55]" />
                 </div>
               )}
             </div>
@@ -261,7 +261,7 @@ export function ChannelFormModal({
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#FAF6EF] text-xs font-bold hover:bg-[#C9A227]/20 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227]/10 border border-[#c9a227]/50 text-[#1e0f2b] text-xs font-bold hover:bg-[#C9A227]/20 transition-colors"
               >
                 <ImagePlus className="w-3.5 h-3.5" />
                 {avatarUrl ? "Changer la photo" : "Choisir une photo"}
@@ -354,7 +354,7 @@ export function ChannelFormModal({
                 onChange={(e) => setIsEncrypted(e.target.checked)}
                 className="w-4 h-4 accent-[#C9A227]"
               />
-              <span className="text-sm font-semibold text-[#FAF6EF]">🔒 Chiffré E2E</span>
+              <span className="text-sm font-semibold text-[#1e0f2b]">🔒 Chiffré E2E</span>
             </label>
           </div>
 
@@ -366,18 +366,18 @@ export function ChannelFormModal({
                 onChange={(e) => setIsRestricted(e.target.checked)}
                 className="w-4 h-4 accent-[#C9A227]"
               />
-              <span className="text-sm font-semibold text-[#FAF6EF]">🛡️ Accès restreint</span>
+              <span className="text-sm font-semibold text-[#1e0f2b]">🛡️ Accès restreint</span>
             </label>
           </div>
         </div>
 
         {/* Aperçu live */}
-        <div className="p-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/20">
-          <p className="text-[10px] uppercase tracking-wider font-bold text-[#BDB4C9] mb-2 flex items-center gap-1">
-            <Check className="w-3 h-3 text-[#C9A227]" /> Aperçu dans Yeshua Connect
+        <div className="p-3 rounded-xl bg-[#C9A227]/10 border border-[#c9a227]/40">
+          <p className="text-[10px] uppercase tracking-wider font-bold text-[#8a8378] mb-2 flex items-center gap-1">
+            <Check className="w-3 h-3 text-[#a3821c]" /> Aperçu dans Yeshua Connect
           </p>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 bg-[#3D1A54] text-white text-sm font-bold">
+            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 bg-white text-[#1e0f2b] text-sm font-bold">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -385,10 +385,10 @@ export function ChannelFormModal({
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold font-serif text-[#FAF6EF] truncate">
+              <p className="text-sm font-bold font-serif text-[#1e0f2b] truncate">
                 {name.trim() || "Nom du canal"}
               </p>
-              <p className="text-xs text-[#BDB4C9] truncate">
+              <p className="text-xs text-[#8a8378] truncate">
                 {description.trim() || CHANNEL_TYPES.find((t) => t.value === type)?.hint}
               </p>
             </div>
@@ -399,7 +399,7 @@ export function ChannelFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#BDB4C9] hover:bg-[#FAF6EF]/10 transition-colors"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#8a8378] hover:bg-[#FAF6EF]/10 transition-colors"
           >
             Annuler
           </button>

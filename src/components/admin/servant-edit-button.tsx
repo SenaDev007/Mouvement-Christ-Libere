@@ -20,7 +20,7 @@ export function ServantEditButton({ servant }: ServantEditButtonProps) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#BDB4C9] hover:text-[#FAF6EF] transition-colors"
+        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-[#C9A227]/10 text-[#8a8378] hover:text-[#1e0f2b] transition-colors"
         aria-label="Modifier"
         title={`Modifier ${servant.fullName}`}
       >

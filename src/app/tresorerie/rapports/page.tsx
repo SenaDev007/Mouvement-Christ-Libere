@@ -72,10 +72,10 @@ export default function TresorerieRapportsPage() {
     <div className="space-y-6">
       {/* En-tête */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
+        <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#1e0f2b]">
           Rapports financiers
         </h1>
-        <p className="text-sm text-[#BDB4C9] mt-1">
+        <p className="text-sm text-[#8a8378] mt-1">
           Document officiel de la trésorerie du Mouvement Christ Libère —
           synthèse, situation par caisse, catégories et journal détaillé avec
           solde cumulé. Reçus de don : bouton « Reçu » du journal.
@@ -83,43 +83,43 @@ export default function TresorerieRapportsPage() {
       </div>
 
       {/* Paramètres */}
-      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 md:p-5 space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#FAF6EF]">
-          <CalendarRange className="w-4 h-4 text-[#C9A227]" />
+      <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4 md:p-5 space-y-4">
+        <div className="flex items-center gap-2 text-sm font-semibold text-[#1e0f2b]">
+          <CalendarRange className="w-4 h-4 text-[#a3821c]" />
           Paramètres du rapport
         </div>
 
         <div className="grid sm:grid-cols-3 gap-3">
           <div>
-            <label className="block text-[11px] text-[#BDB4C9] mb-1 font-semibold">
+            <label className="block text-[11px] text-[#8a8378] mb-1 font-semibold">
               Du
             </label>
             <input
               type="date"
               value={du}
               onChange={(e) => setDu(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#C9A227]/10 text-sm"
             />
           </div>
           <div>
-            <label className="block text-[11px] text-[#BDB4C9] mb-1 font-semibold">
+            <label className="block text-[11px] text-[#8a8378] mb-1 font-semibold">
               Au
             </label>
             <input
               type="date"
               value={au}
               onChange={(e) => setAu(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#C9A227]/10 text-sm"
             />
           </div>
           <div>
-            <label className="block text-[11px] text-[#BDB4C9] mb-1 font-semibold">
+            <label className="block text-[11px] text-[#8a8378] mb-1 font-semibold">
               Devise
             </label>
             <select
               value={devise}
               onChange={(e) => setDevise(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-[#C9A227]/25 bg-[#C9A227]/10 text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-[#c9a227]/45 bg-[#C9A227]/10 text-sm"
             >
               {DEVISE_CODES.map((d) => (
                 <option key={d} value={d}>
@@ -131,10 +131,10 @@ export default function TresorerieRapportsPage() {
         </div>
 
         {erreur && (
-          <p className="text-xs text-[#E08B6D]">{erreur}</p>
+          <p className="text-xs text-[#c05a3c]">{erreur}</p>
         )}
         {succes && (
-          <p className="flex items-center gap-1.5 text-xs text-[#A3C9B0]">
+          <p className="flex items-center gap-1.5 text-xs text-[#3f5039]">
             <ShieldCheck className="w-4 h-4" />
             {succes}
           </p>
@@ -143,7 +143,7 @@ export default function TresorerieRapportsPage() {
         <button
           onClick={generer}
           disabled={generation}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#3D1A54] transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#1e0f2b] text-sm font-semibold hover:bg-white transition-colors disabled:opacity-50"
         >
           {generation ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -155,50 +155,50 @@ export default function TresorerieRapportsPage() {
       </div>
 
       {/* Contenu du document */}
-      <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-5">
+      <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-11 h-11 rounded-xl bg-[#3D1A54] flex items-center justify-center">
-            <FileText className="w-5 h-5 text-[#C9A227]" />
+          <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center">
+            <FileText className="w-5 h-5 text-[#a3821c]" />
           </div>
           <div>
-            <h2 className="text-sm font-bold font-serif text-[#FAF6EF]">
+            <h2 className="text-sm font-bold font-serif text-[#1e0f2b]">
               Contenu du document
             </h2>
-            <p className="text-[11px] text-[#BDB4C9]">
+            <p className="text-[11px] text-[#8a8378]">
               Format A4 · en-tête officielle · pagination · une devise par document
             </p>
           </div>
         </div>
-        <ol className="space-y-2.5 text-xs text-[#BDB4C9] list-decimal list-inside">
+        <ol className="space-y-2.5 text-xs text-[#8a8378] list-decimal list-inside">
           <li>
-            <strong className="text-[#FAF6EF]">Synthèse de la période</strong> —
+            <strong className="text-[#1e0f2b]">Synthèse de la période</strong> —
             total des recettes, total des dépenses, solde, nombre de
             mouvements.
           </li>
           <li>
-            <strong className="text-[#FAF6EF]">Recettes par catégorie</strong> —
+            <strong className="text-[#1e0f2b]">Recettes par catégorie</strong> —
             dons, offrandes, dîmes, financements projet, autres.
           </li>
           <li>
-            <strong className="text-[#FAF6EF]">Dépenses par catégorie</strong> —
+            <strong className="text-[#1e0f2b]">Dépenses par catégorie</strong> —
             charges, matériel, transport, communication, aide, projet, autres.
           </li>
           <li>
-            <strong className="text-[#FAF6EF]">Journal des mouvements</strong> —
+            <strong className="text-[#1e0f2b]">Journal des mouvements</strong> —
             chaque écriture avec date, libellé, catégorie, référence, recette
             ou dépense, et SOLDE CUMULÉ ligne par ligne.
           </li>
           <li>
-            <strong className="text-[#FAF6EF]">Ligne de total</strong> clôturant
+            <strong className="text-[#1e0f2b]">Ligne de total</strong> clôturant
             le document, signée de la date et heure de génération.
           </li>
         </ol>
       </div>
 
       {/* Note */}
-      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/15">
-        <Info className="w-4 h-4 text-[#C9A227] flex-shrink-0 mt-0.5" />
-        <p className="text-[11px] text-[#BDB4C9] leading-relaxed">
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#C9A227]/10 border border-[#c9a227]/35">
+        <Info className="w-4 h-4 text-[#a3821c] flex-shrink-0 mt-0.5" />
+        <p className="text-[11px] text-[#8a8378] leading-relaxed">
           Le rapport est généré en temps réel depuis le journal — il reflète
           toujours l&apos;état exact des écritures au moment de la génération.
           Les montants sont libellés dans la devise sélectionnée (jamais de

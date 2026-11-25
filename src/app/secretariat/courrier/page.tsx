@@ -208,7 +208,7 @@ export default function SecretariatCourrierPage() {
 
   if (chargement) {
     return (
-      <div className="flex items-center justify-center py-24 text-[#BDB4C9]">
+      <div className="flex items-center justify-center py-24 text-[#8a8378]">
         <Loader2 className="w-6 h-6 animate-spin" />
       </div>
     );
@@ -219,8 +219,8 @@ export default function SecretariatCourrierPage() {
       {/* En-tête */}
       <div>
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <h1 className="font-serif text-3xl font-semibold text-[#FAF6EF] mb-1 flex items-center gap-3">
-            <Mail className="w-7 h-7 text-[#C9A227]" />
+          <h1 className="font-serif text-3xl font-semibold text-[#1e0f2b] mb-1 flex items-center gap-3">
+            <Mail className="w-7 h-7 text-[#a3821c]" />
             Courrier au serviteur
           </h1>
           {/* ⭐ V3.74 — bouton Paramétrage : configurer les VRAIES adresses. */}
@@ -242,14 +242,14 @@ export default function SecretariatCourrierPage() {
               setRetourParam(null);
               setParamModalOuvert(true);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#C9A227]/40 bg-[#C9A227]/10 text-sm font-semibold text-[#DDBE55] hover:bg-[#C9A227]/20 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#c9a227]/60 bg-[#C9A227]/10 text-sm font-semibold text-[#a3821c] hover:bg-[#C9A227]/20 transition-colors"
             title="Configurer les adresses email des serviteurs"
           >
             <Settings2 className="w-4 h-4" />
             Paramétrage
           </button>
         </div>
-        <p className="text-sm text-[#BDB4C9]">
+        <p className="text-sm text-[#8a8378]">
           Écrire directement à Pasteur Kongo ou à Sœur Afrika — le message part
           de noreply@mouvementchristlibere.com et le serviteur peut vous
           répondre par email.
@@ -257,7 +257,7 @@ export default function SecretariatCourrierPage() {
       </div>
 
       {erreur && (
-        <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-[#B3452E]/10 border border-[#B3452E]/30 text-[#E08B6D] text-sm">
+        <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-[#B3452E]/10 border border-[#B3452E]/30 text-[#c05a3c] text-sm">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           {erreur}
         </div>
@@ -266,11 +266,11 @@ export default function SecretariatCourrierPage() {
       {/* Formulaire de courrier */}
       <form
         onSubmit={envoyer}
-        className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/15 p-6 space-y-5"
+        className="bg-white rounded-2xl shadow-xl border border-[#c9a227]/35 p-6 space-y-5"
       >
         <div>
-          <h2 className="font-semibold text-[#FAF6EF] mb-1">Nouveau courrier</h2>
-          <p className="text-xs text-[#BDB4C9]">
+          <h2 className="font-semibold text-[#1e0f2b] mb-1">Nouveau courrier</h2>
+          <p className="text-xs text-[#8a8378]">
             Le destinataire reçoit le message dans sa boîte mail personnelle,
             avec votre email en adresse de réponse.
           </p>
@@ -278,17 +278,17 @@ export default function SecretariatCourrierPage() {
 
         {/* Destinataire */}
         <div>
-          <label className="block text-xs font-semibold text-[#FAF6EF] mb-1.5">
-            Destinataire <span className="text-[#E08B6D]">*</span>
+          <label className="block text-xs font-semibold text-[#1e0f2b] mb-1.5">
+            Destinataire <span className="text-[#c05a3c]">*</span>
           </label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BDB4C9] pointer-events-none" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8a8378] pointer-events-none" />
             <select
               value={toUserId}
               onChange={(e) => setToUserId(e.target.value)}
               required
               disabled={envoiEnCours || destinataires.length === 0}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
             >
               {destinataires.length === 0 && (
                 <option value="">Aucun serviteur disponible</option>
@@ -304,8 +304,8 @@ export default function SecretariatCourrierPage() {
 
         {/* Sujet */}
         <div>
-          <label className="block text-xs font-semibold text-[#FAF6EF] mb-1.5">
-            Sujet <span className="text-[#E08B6D]">*</span>
+          <label className="block text-xs font-semibold text-[#1e0f2b] mb-1.5">
+            Sujet <span className="text-[#c05a3c]">*</span>
           </label>
           <input
             type="text"
@@ -316,14 +316,14 @@ export default function SecretariatCourrierPage() {
             minLength={3}
             maxLength={150}
             disabled={envoiEnCours}
-            className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
           />
         </div>
 
         {/* Message */}
         <div>
-          <label className="block text-xs font-semibold text-[#FAF6EF] mb-1.5">
-            Message <span className="text-[#E08B6D]">*</span>
+          <label className="block text-xs font-semibold text-[#1e0f2b] mb-1.5">
+            Message <span className="text-[#c05a3c]">*</span>
           </label>
           <textarea
             value={message}
@@ -334,9 +334,9 @@ export default function SecretariatCourrierPage() {
             maxLength={5000}
             rows={8}
             disabled={envoiEnCours}
-            className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] leading-relaxed focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30 resize-y"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] leading-relaxed focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30 resize-y"
           />
-          <p className="text-[10px] text-[#BDB4C9] mt-1">
+          <p className="text-[10px] text-[#8a8378] mt-1">
             {message.trim().length}/5000 caractères
           </p>
         </div>
@@ -345,8 +345,8 @@ export default function SecretariatCourrierPage() {
           <div
             className={`flex items-start gap-2 px-4 py-3 rounded-lg text-xs leading-relaxed ${
               retourEnvoi.type === "succes"
-                ? "bg-[#5B7052]/10 text-[#A3C9B0] border border-[#5B7052]/30"
-                : "bg-[#B3452E]/10 text-[#E08B6D] border border-[#B3452E]/30"
+                ? "bg-[#5B7052]/10 text-[#3f5039] border border-[#5B7052]/30"
+                : "bg-[#B3452E]/10 text-[#c05a3c] border border-[#B3452E]/30"
             }`}
           >
             {retourEnvoi.type === "succes" ? (
@@ -361,7 +361,7 @@ export default function SecretariatCourrierPage() {
         <button
           type="submit"
           disabled={envoiEnCours || !toUserId || !sujet.trim() || !message.trim()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#DDBE55] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#a3821c] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {envoiEnCours ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -373,10 +373,10 @@ export default function SecretariatCourrierPage() {
       </form>
 
       {/* Vérification de la configuration */}
-      <div className="flex items-start gap-3 px-4 py-4 rounded-2xl bg-[#C9A227]/10 border border-[#C9A227]/30">
-        <FlaskConical className="w-5 h-5 text-[#DDBE55] flex-shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 px-4 py-4 rounded-2xl bg-[#C9A227]/10 border border-[#c9a227]/50">
+        <FlaskConical className="w-5 h-5 text-[#a3821c] flex-shrink-0 mt-0.5" />
         <div className="flex-1">
-          <p className="text-xs text-[#FAF6EF] leading-relaxed mb-3">
+          <p className="text-xs text-[#1e0f2b] leading-relaxed mb-3">
             <strong>Première utilisation ?</strong> Vérifiez que l&apos;envoi
             des emails est bien configuré : un email de test sera envoyé à
             votre propre adresse de connexion.
@@ -386,7 +386,7 @@ export default function SecretariatCourrierPage() {
               type="button"
               onClick={envoyerTest}
               disabled={testEnCours}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-xs font-semibold hover:bg-[#1A0826] transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-[#1e0f2b] text-xs font-semibold hover:bg-[#faf6ef] transition-colors disabled:opacity-50"
             >
               {testEnCours ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -399,8 +399,8 @@ export default function SecretariatCourrierPage() {
               <span
                 className={`text-xs leading-relaxed ${
                   retourTest.type === "succes"
-                    ? "text-[#A3C9B0]"
-                    : "text-[#E08B6D]"
+                    ? "text-[#3f5039]"
+                    : "text-[#c05a3c]"
                 }`}
               >
                 {retourTest.texte}
@@ -411,19 +411,19 @@ export default function SecretariatCourrierPage() {
       </div>
 
       {/* Historique */}
-      <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-[#C9A227]/15 p-6">
+      <div className="bg-white rounded-2xl shadow-xl border border-[#c9a227]/35 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <History className="w-4 h-4 text-[#DDBE55]" />
-          <h2 className="font-semibold text-[#FAF6EF]">
+          <History className="w-4 h-4 text-[#a3821c]" />
+          <h2 className="font-semibold text-[#1e0f2b]">
             Historique des courriers
           </h2>
-          <span className="text-[10px] text-[#BDB4C9]">
+          <span className="text-[10px] text-[#8a8378]">
             (30 derniers — également tracés dans le journal d&apos;audit)
           </span>
         </div>
 
         {historique.length === 0 ? (
-          <p className="text-xs text-[#BDB4C9] py-4 text-center">
+          <p className="text-xs text-[#8a8378] py-4 text-center">
             Aucun courrier envoyé pour le moment.
           </p>
         ) : (
@@ -431,18 +431,18 @@ export default function SecretariatCourrierPage() {
             {historique.map((c) => (
               <li key={c.id} className="py-3 flex items-start gap-3">
                 {c.status === "ENVOYE" ? (
-                  <CheckCircle2 className="w-4 h-4 text-[#A3C9B0] flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-[#3f5039] flex-shrink-0 mt-0.5" />
                 ) : (
-                  <AlertCircle className="w-4 h-4 text-[#E08B6D] flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-4 h-4 text-[#c05a3c] flex-shrink-0 mt-0.5" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[#FAF6EF] truncate">
+                  <p className="text-sm font-medium text-[#1e0f2b] truncate">
                     {c.subject}
                   </p>
-                  <p className="text-xs text-[#BDB4C9]">
+                  <p className="text-xs text-[#8a8378]">
                     À {c.toName || c.toEmail} · {formaterDate(c.createdAt)}
                     {c.status === "ECHOUE" && (
-                      <span className="text-[#E08B6D]">
+                      <span className="text-[#c05a3c]">
                         {" "}
                         — échec : {c.errorMessage || "raison inconnue"}
                       </span>
@@ -450,7 +450,7 @@ export default function SecretariatCourrierPage() {
                   </p>
                 </div>
                 <ShieldCheck
-                  className="w-3.5 h-3.5 text-[#FAF6EF]/25 flex-shrink-0 mt-1"
+                  className="w-3.5 h-3.5 text-[#1e0f2b]/25 flex-shrink-0 mt-1"
                   aria-hidden
                 />
               </li>
@@ -463,15 +463,15 @@ export default function SecretariatCourrierPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0410]/75 backdrop-blur-sm overflow-y-auto">
           <form
             onSubmit={envoyerParametrage}
-            className="bg-[#2A163E] rounded-2xl shadow-2xl border border-[#C9A227]/30 max-w-lg w-full p-6 space-y-5 my-8"
+            className="bg-white rounded-2xl shadow-2xl border border-[#c9a227]/50 max-w-lg w-full p-6 space-y-5 my-8"
           >
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-bold font-serif text-[#FAF6EF] flex items-center gap-2">
-                  <Settings2 className="w-5 h-5 text-[#DDBE55]" />
+                <h2 className="text-lg font-bold font-serif text-[#1e0f2b] flex items-center gap-2">
+                  <Settings2 className="w-5 h-5 text-[#a3821c]" />
                   Paramétrage des adresses
                 </h2>
-                <p className="text-xs text-[#BDB4C9] mt-1 leading-relaxed">
+                <p className="text-xs text-[#8a8378] mt-1 leading-relaxed">
                   Les adresses par défaut des serviteurs sont des adresses
                   internes. Indiquez ici les <strong>vraies adresses email</strong> :
                   les courriers ET les demandes transmises partiront à ces
@@ -481,7 +481,7 @@ export default function SecretariatCourrierPage() {
               <button
                 type="button"
                 onClick={() => setParamModalOuvert(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#BDB4C9] hover:bg-[#C9A227]/10"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#8a8378] hover:bg-[#C9A227]/10"
                 aria-label="Fermer"
               >
                 ✕
@@ -490,7 +490,7 @@ export default function SecretariatCourrierPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1.5">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1.5">
                   Email de Pasteur Kongo
                 </label>
                 <input
@@ -500,16 +500,16 @@ export default function SecretariatCourrierPage() {
                     setFormParam({ ...formParam, emailKongo: e.target.value })
                   }
                   placeholder="exemple@gmail.com"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
                 />
                 {parametres?.emailKongo && (
-                  <p className="text-[10px] text-[#A3C9B0] mt-1">
+                  <p className="text-[10px] text-[#3f5039] mt-1">
                     ✓ Adresse paramétrée : {parametres.emailKongo}
                   </p>
                 )}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#FAF6EF] mb-1.5">
+                <label className="block text-xs font-semibold text-[#1e0f2b] mb-1.5">
                   Email de Sœur Afrika
                 </label>
                 <input
@@ -519,17 +519,17 @@ export default function SecretariatCourrierPage() {
                     setFormParam({ ...formParam, emailAfrika: e.target.value })
                   }
                   placeholder="exemple@gmail.com"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#C9A227]/25 bg-[#150920] text-sm text-[#FAF6EF] placeholder:text-[#9C8FA8] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#c9a227]/45 bg-[#faf6ef] text-sm text-[#1e0f2b] placeholder:text-[#8a8378] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/30"
                 />
                 {parametres?.emailAfrika && (
-                  <p className="text-[10px] text-[#A3C9B0] mt-1">
+                  <p className="text-[10px] text-[#3f5039] mt-1">
                     ✓ Adresse paramétrée : {parametres.emailAfrika}
                   </p>
                 )}
               </div>
             </div>
 
-            <p className="text-[10px] text-[#BDB4C9] leading-relaxed px-3 py-2 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/10">
+            <p className="text-[10px] text-[#8a8378] leading-relaxed px-3 py-2 rounded-lg bg-[#C9A227]/10 border border-[#c9a227]/30">
               Laisser un champ vide et enregistrer réinitialise ce serviteur
               sur l&apos;adresse de son compte / de la configuration serveur.
               ⚠️ Vérifiez bien la saisie : un courrier envoyé à une adresse
@@ -540,8 +540,8 @@ export default function SecretariatCourrierPage() {
               <div
                 className={`flex items-start gap-2 px-4 py-3 rounded-lg text-xs leading-relaxed ${
                   retourParam.type === "succes"
-                    ? "bg-[#5B7052]/10 text-[#A3C9B0] border border-[#5B7052]/30"
-                    : "bg-[#B3452E]/10 text-[#E08B6D] border border-[#B3452E]/30"
+                    ? "bg-[#5B7052]/10 text-[#3f5039] border border-[#5B7052]/30"
+                    : "bg-[#B3452E]/10 text-[#c05a3c] border border-[#B3452E]/30"
                 }`}
               >
                 {retourParam.type === "succes" ? (
@@ -557,14 +557,14 @@ export default function SecretariatCourrierPage() {
               <button
                 type="button"
                 onClick={() => setParamModalOuvert(false)}
-                className="px-4 py-2 rounded-lg text-sm text-[#BDB4C9] hover:text-[#FAF6EF]"
+                className="px-4 py-2 rounded-lg text-sm text-[#8a8378] hover:text-[#1e0f2b]"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={paramEnCours}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-sm font-semibold hover:bg-[#1A0826] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white text-[#1e0f2b] text-sm font-semibold hover:bg-[#faf6ef] transition-colors disabled:opacity-50"
               >
                 {paramEnCours && <Loader2 className="w-4 h-4 animate-spin" />}
                 Enregistrer le paramétrage

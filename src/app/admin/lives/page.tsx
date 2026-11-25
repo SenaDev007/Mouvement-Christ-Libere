@@ -18,8 +18,8 @@ export const dynamic = "force-dynamic";
 
 const STATUS_CONFIG = {
   LIVE: { label: "EN DIRECT", color: "bg-red-600 text-white", pulse: true },
-  SCHEDULED: { label: "Programmé", color: "bg-[#C9A227]/15 text-[#DDBE55] border border-[#C9A227]/30", pulse: false },
-  ENDED: { label: "Terminé", color: "bg-[#1A0826]/60 text-[#BDB4C9]", pulse: false },
+  SCHEDULED: { label: "Programmé", color: "bg-[#C9A227]/15 text-[#a3821c] border border-[#c9a227]/50", pulse: false },
+  ENDED: { label: "Terminé", color: "bg-white text-[#8a8378]", pulse: false },
   CANCELLED: { label: "Annulé", color: "bg-red-400/15 text-red-400", pulse: false },
 };
 
@@ -52,13 +52,13 @@ export default async function AdminLivesPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#BDB4C9] font-bold mb-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#8a8378] font-bold mb-1">
             Sessions de streaming
           </p>
-          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#FAF6EF]">
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-[#1e0f2b]">
             Lives
           </h1>
-          <p className="text-sm text-[#BDB4C9] mt-1">
+          <p className="text-sm text-[#8a8378] mt-1">
             Sessions programmées et passées.
           </p>
         </div>
@@ -71,29 +71,29 @@ export default async function AdminLivesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
-          <div className="text-2xl font-bold font-serif text-[#FAF6EF]">{stats.total}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-semibold mt-0.5">Total</div>
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4">
+          <div className="text-2xl font-bold font-serif text-[#1e0f2b]">{stats.total}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#8a8378] font-semibold mt-0.5">Total</div>
         </div>
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-red-400/25/50 p-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-red-400/25/50 p-4">
           <div className="text-2xl font-bold text-red-400">{stats.live}</div>
           <div className="text-[10px] uppercase tracking-wider text-red-400 font-semibold mt-0.5">En direct</div>
         </div>
-        <div className="bg-[#1A0826]/70 rounded-2xl border border-[#C9A227]/40 shadow-lg p-4">
-          <div className="text-2xl font-bold text-[#DDBE55]">{stats.upcoming}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#DDBE55] font-semibold mt-0.5">À venir</div>
+        <div className="bg-white rounded-2xl border border-[#c9a227]/60 shadow-lg p-4">
+          <div className="text-2xl font-bold text-[#a3821c]">{stats.upcoming}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#a3821c] font-semibold mt-0.5">À venir</div>
         </div>
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4">
-          <div className="text-2xl font-bold text-[#BDB4C9]">{stats.ended}</div>
-          <div className="text-[10px] uppercase tracking-wider text-[#BDB4C9] font-semibold mt-0.5">Terminés</div>
+        <div className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4">
+          <div className="text-2xl font-bold text-[#8a8378]">{stats.ended}</div>
+          <div className="text-[10px] uppercase tracking-wider text-[#8a8378] font-semibold mt-0.5">Terminés</div>
         </div>
       </div>
 
       {/* Liste */}
       {lives.length === 0 ? (
-        <div className="bg-[#1A0826]/70 rounded-2xl shadow-xl border border-dashed border-[#C9A227]/30 p-12 text-center">
-          <Radio className="w-10 h-10 text-[#FAF6EF]/20 mx-auto mb-3" />
-          <p className="text-sm text-[#BDB4C9] italic">Aucun live programmé pour l&apos;instant.</p>
+        <div className="bg-white rounded-2xl shadow-xl border border-dashed border-[#c9a227]/50 p-12 text-center">
+          <Radio className="w-10 h-10 text-[#1e0f2b]/20 mx-auto mb-3" />
+          <p className="text-sm text-[#8a8378] italic">Aucun live programmé pour l&apos;instant.</p>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -106,7 +106,7 @@ export default async function AdminLivesPage() {
             return (
               <div
                 key={l.id}
-                className="bg-[#1A0826]/70 rounded-2xl shadow-lg border border-[#C9A227]/15 p-4 hover:border-[#C9A227]/30 hover:shadow-md transition-all group min-w-0"
+                className="bg-white rounded-2xl shadow-lg border border-[#c9a227]/35 p-4 hover:border-[#c9a227]/50 hover:shadow-md transition-all group min-w-0"
               >
                 <div className="flex items-start gap-4 flex-wrap">
                   {/* Icon */}
@@ -123,22 +123,22 @@ export default async function AdminLivesPage() {
                   {/* Contenu */}
                   <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
                     <div className="flex items-start justify-between gap-3 mb-1 flex-wrap">
-                      <h3 className="font-bold text-sm text-[#FAF6EF] min-w-0 break-words">{l.title}</h3>
+                      <h3 className="font-bold text-sm text-[#1e0f2b] min-w-0 break-words">{l.title}</h3>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold ${status.color} ${status.pulse ? "animate-pulse" : ""}`}>
                         {status.label}
                       </span>
                     </div>
 
                     {/* Meta */}
-                    <div className="flex items-center gap-3 text-[11px] text-[#BDB4C9] mt-2 flex-wrap">
+                    <div className="flex items-center gap-3 text-[11px] text-[#8a8378] mt-2 flex-wrap">
                       <span className="font-bold uppercase tracking-wider" style={{ color: accentColor }}>
                         {l.servant.shortName}
                       </span>
                       {estRubrique(l.category) && (
                         <>
-                          <span className="text-[#FAF6EF]/25">·</span>
+                          <span className="text-[#1e0f2b]/25">·</span>
                           <span
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C9A227]/15 text-[#DDBE55] font-bold"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C9A227]/15 text-[#a3821c] font-bold"
                             title="Le replay du live sera classé dans cette rubrique sur /videos"
                           >
                             <Star className="w-2.5 h-2.5" />
@@ -146,7 +146,7 @@ export default async function AdminLivesPage() {
                           </span>
                         </>
                       )}
-                      <span className="text-[#FAF6EF]/25">·</span>
+                      <span className="text-[#1e0f2b]/25">·</span>
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {new Date(l.scheduledAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
@@ -157,8 +157,8 @@ export default async function AdminLivesPage() {
                       </span>
                       {isUpcoming && (
                         <>
-                          <span className="text-[#FAF6EF]/25">·</span>
-                          <span className="text-[#A3C9B0] font-semibold">
+                          <span className="text-[#1e0f2b]/25">·</span>
+                          <span className="text-[#3f5039] font-semibold">
                             dans {Math.ceil((l.scheduledAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))} jour(s)
                           </span>
                         </>
@@ -171,7 +171,7 @@ export default async function AdminLivesPage() {
                     {(l.status === "SCHEDULED" || l.status === "LIVE") && (
                       <Link
                         href={`/admin/lives/${l.id}/studio`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#3D1A54] text-[#FAF6EF] text-xs font-bold hover:bg-[#3D1A54] transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white text-[#1e0f2b] text-xs font-bold hover:bg-white transition-colors"
                         title="Aller au studio"
                       >
                         <Video className="w-3 h-3" />
