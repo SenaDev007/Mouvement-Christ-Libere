@@ -50,11 +50,16 @@ function dateFr(d: Date | null): string {
   }).format(d);
 }
 
+/* ⭐ V4.49 — chaque onglet porte son compteur (badge coloré) : on voit
+   d'un coup d'œil combien de témoignages sont en attente, publiés,
+   rejetés. Les témoignages PUBLIÉS (visibles sur le site public)
+   apparaissent sous l'onglet « Publiés » — et l'onglet « Tous »,
+   désormais le défaut à l'ouverture du module, les montre tous. */
 const FILTERS = [
-  { id: "en_attente", label: "En attente" },
-  { id: "publie", label: "Publiés" },
-  { id: "rejete", label: "Rejetés" },
-  { id: "tous", label: "Tous" },
+  { id: "en_attente", label: "En attente", badge: "bg-[#C9A227] text-[#1A0826]" },
+  { id: "publie", label: "Publiés", badge: "bg-emerald-500 text-white" },
+  { id: "rejete", label: "Rejetés", badge: "bg-red-500/80 text-white" },
+  { id: "tous", label: "Tous", badge: "bg-[#8a8378] text-white" },
 ];
 
 export default async function AdminVieTransformeePage({
@@ -62,7 +67,12 @@ export default async function AdminVieTransformeePage({
 }: {
   searchParams: Promise<{ statut?: string }>;
 }) {
-  const { statut: statutFilter = "en_attente" } = await searchParams;
+  /* ⭐ V4.49 — défaut « tous » : à l'ouverture du module on voit TOUT
+     (badges de statut sur chaque fiche). Avec l'ancien défaut « en
+     attente », un témoignage venant d'être validé quittait la vue et
+     semblait avoir quitté le module — c'était la confusion signalée
+     (« on ne voit pas les témoignages publiés »). */
+  const { statut: statutFilter = "tous" } = await searchParams;
 
   // Auto-réparation de la table à l'entrée du module (lambda froide,
   // premier déploiement — même garde que les autres modules).
@@ -87,6 +97,14 @@ export default async function AdminVieTransformeePage({
     rejetes: all.filter((t) => t.statut === "rejete").length,
   };
 
+  /* ⭐ V4.49 — compteur affiché sur CHAQUE onglet de filtre. */
+  const compteParFiltre: Record<string, number> = {
+    en_attente: stats.enAttente,
+    publie: stats.publies,
+    rejete: stats.rejetes,
+    tous: stats.total,
+  };
+
   return (
     <div className="space-y-6">
       {/* Header — style Win Agro du back-office */}
@@ -103,7 +121,8 @@ export default async function AdminVieTransformeePage({
           chaque récit, puis <strong className="text-[#a3821c]">validez-le</strong> pour le
           publier (section « Vies transformées » de l&apos;accueil + page
           /vie-transformee) ou <strong className="text-red-700">rejetez-le</strong> avec une note.
-          Un témoignage déjà publié peut être <strong className="text-red-700">retiré du site</strong> à
+          Les témoignages validés se trouvent dans l&apos;onglet
+          « <strong className="text-emerald-700">Publiés</strong> » — un témoignage déjà publié peut être <strong className="text-red-700">retiré du site</strong> à
           tout moment (il repasse « en attente » et peut être republié) ou
           supprimé définitivement. Les coordonnées des témoins restent
           confidentielles.
@@ -151,9 +170,11 @@ export default async function AdminVieTransformeePage({
             }`}
           >
             {f.label}
-            {f.id === "en_attente" && stats.enAttente > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-[#C9A227] text-[#1A0826] text-[9px] font-black">
-                {stats.enAttente}
+            {/* ⭐ V4.49 — compteur sur chaque onglet (les témoignages
+                publiés sont ainsi tout de suite repérables). */}
+            {compteParFiltre[f.id] > 0 && (
+              <span className={`ml-1.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[9px] font-black ${f.badge}`}>
+                {compteParFiltre[f.id]}
               </span>
             )}
           </a>
