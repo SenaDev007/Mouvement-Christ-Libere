@@ -211,7 +211,7 @@ export default async function AdminUsersPage({
           {isSuperAdmin && (
             <Link
               href="/admin/users/new"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] font-bold text-sm hover:bg-[#DDBE55] transition-colors shadow-md"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors shadow-md"
             >
               <UserPlus className="w-4 h-4" />
               Créer un administrateur

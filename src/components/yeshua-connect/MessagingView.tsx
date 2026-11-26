@@ -5137,7 +5137,7 @@ export function MessagingView() {
                 <button
                   onClick={sendRecording}
                   disabled={sendingVoice}
-                  className="p-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40 flex-shrink-0"
+                  className="p-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54] transition-colors disabled:opacity-40 flex-shrink-0"
                   title="Envoyer le vocal"
                 >
                   {sendingVoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -5282,7 +5282,7 @@ export function MessagingView() {
                     {(sending || uploadingFiles) ? <Loader2 className="w-4.5 h-4.5 md:w-4 md:h-4 animate-spin" /> : <Send className="w-4.5 h-4.5 md:w-4 md:h-4" />}
                   </button>
                 ) : (
-                  <button onClick={startRecording} className="h-10 w-10 md:h-9 md:w-9 p-0 flex items-center justify-center rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors flex-shrink-0" title="Message vocal" aria-label="Enregistrer un message vocal">
+                  <button onClick={startRecording} className="h-10 w-10 md:h-9 md:w-9 p-0 flex items-center justify-center rounded-xl bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54] transition-colors flex-shrink-0" title="Message vocal" aria-label="Enregistrer un message vocal">
                     <Mic className="w-4.5 h-4.5 md:w-4 md:h-4" />
                   </button>
                 )}
@@ -5786,7 +5786,7 @@ export function MessagingView() {
                   }
                 }}
                 disabled={!pollQuestion.trim() || submittingPoll}
-                className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-40 transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-[#2A0E3D] text-[#DDBE55] rounded-xl text-sm font-bold hover:bg-[#3D1A54] disabled:opacity-40 transition-colors cursor-pointer"
               >
                 {submittingPoll ? "Création..." : "Créer le sondage"}
               </button>
@@ -6479,7 +6479,7 @@ function NewChannelModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <input type="checkbox" checked={isEncrypted} onChange={e => setIsEncrypted(e.target.checked)} className="w-5 h-5" />
           <span className="text-sm">🔒 Chiffré E2E (canal restreint)</span>
         </label>
-        <button onClick={handleCreate} disabled={!name.trim() || creating} className="w-full py-2.5 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] disabled:opacity-30">
+        <button onClick={handleCreate} disabled={!name.trim() || creating} className="w-full py-2.5 bg-[#2A0E3D] text-[#DDBE55] rounded-xl text-sm font-bold hover:bg-[#3D1A54] disabled:opacity-30">
           {creating ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Créer"}
         </button>
       </div>
@@ -7031,7 +7031,7 @@ function MembersPanel({
                       "flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95",
                       invited
                         ? "bg-emerald-100 text-emerald-700"
-                        : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] disabled:opacity-40"
+                        : "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54] disabled:opacity-40"
                     )}
                     title={invited ? "Invité ✓" : `Inviter ${u.name || "ce membre"} dans le canal`}
                   >
@@ -8533,7 +8533,7 @@ function VoiceChannelView({
               <button
                 onClick={onStartDirect}
                 disabled={directSwitching}
-                className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] rounded-xl text-sm font-bold hover:bg-[#DDBE55] flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-60"
+                className="w-full py-3 bg-[#2A0E3D] text-[#DDBE55] rounded-xl text-sm font-bold hover:bg-[#3D1A54] flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-60"
               >
                 {directSwitching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
                 Lancer un direct dans le canal
@@ -8595,7 +8595,7 @@ function VoiceChannelView({
               onClick={onToggleMute}
               className={cn(
                 "p-3 rounded-full transition-colors shadow-sm",
-                localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
+                localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54]"
               )}
               title={localAudioMuted ? "Activer le micro" : "Couper le micro"}
             >
@@ -8615,7 +8615,7 @@ function VoiceChannelView({
               onClick={onToggleSpeaker}
               className={cn(
                 "p-3 rounded-full transition-colors shadow-sm",
-                speakerEnabled ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]" : "bg-[#8A8378] text-white hover:bg-[#757064]"
+                speakerEnabled ? "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54]" : "bg-[#8A8378] text-white hover:bg-[#757064]"
               )}
               title={speakerEnabled ? "Couper le haut-parleur" : "Activer le haut-parleur"}
             >
@@ -8697,7 +8697,7 @@ function VoiceChannelView({
                 onClick={onToggleMute}
                 className={cn(
                   "p-3 rounded-full transition-colors shadow-sm",
-                  localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
+                  localAudioMuted ? "bg-red-500 text-white hover:bg-red-600" : "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54]"
                 )}
                 title={localAudioMuted ? "Activer le micro" : "Couper le micro"}
               >
@@ -8707,7 +8707,7 @@ function VoiceChannelView({
                 onClick={onToggleSpeaker}
                 className={cn(
                   "p-3 rounded-full transition-colors shadow-sm",
-                  speakerEnabled ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]" : "bg-[#8A8378] text-white hover:bg-[#757064]"
+                  speakerEnabled ? "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54]" : "bg-[#8A8378] text-white hover:bg-[#757064]"
                 )}
                 title={speakerEnabled ? "Couper le haut-parleur" : "Activer le haut-parleur"}
               >

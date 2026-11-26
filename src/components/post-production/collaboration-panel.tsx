@@ -128,7 +128,7 @@ export function CollaborationPanel({
             <button
               type="submit"
               disabled={!message.trim()}
-              className="p-1.5 rounded-lg bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-30"
+              className="p-1.5 rounded-lg bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54] transition-colors disabled:opacity-30"
             >
               <Send className="w-3.5 h-3.5" />
             </button>

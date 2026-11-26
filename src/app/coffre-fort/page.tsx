@@ -277,7 +277,7 @@ export default function CoffreFortPage() {
                     href={result.ancre.arweaveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#C9A227] text-[#1E0F2B] text-sm font-semibold hover:bg-[#DDBE55] transition-colors"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#2A0E3D] text-[#DDBE55] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Voir sur Arweave
@@ -378,7 +378,7 @@ export default function CoffreFortPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-6 py-4 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full px-6 py-4 rounded-full bg-[#2A0E3D] text-[#DDBE55] font-semibold text-sm hover:bg-[#3D1A54] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submitting ? (
                   <>

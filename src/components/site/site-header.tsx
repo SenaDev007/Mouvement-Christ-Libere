@@ -213,7 +213,7 @@ export function SiteHeader() {
               className={cn(
                 "hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all",
                 scrolled
-                  ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
+                  ? "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54]"
                   : "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54]"
               )}
             >

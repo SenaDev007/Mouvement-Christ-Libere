@@ -410,7 +410,7 @@ export function ChannelView({ channels, initialChannelId }: ChannelViewProps) {
             <button
               onClick={handleSend}
               disabled={!inputText.trim()}
-              className="w-10 h-10 rounded-full bg-[#C9A227] text-[#1E0F2B] flex items-center justify-center hover:bg-[#DDBE55] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              className="w-10 h-10 rounded-full bg-[#2A0E3D] text-[#DDBE55] flex items-center justify-center hover:bg-[#3D1A54] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
               aria-label="Envoyer"
             >
               <Send className="w-4 h-4" />

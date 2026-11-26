@@ -203,7 +203,7 @@ export default function SousTitragePage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-6 py-4 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full px-6 py-4 rounded-full bg-[#2A0E3D] text-[#DDBE55] font-semibold text-sm hover:bg-[#3D1A54] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {submitting ? (
                   <>
@@ -249,7 +249,7 @@ export default function SousTitragePage() {
                         a.click();
                         URL.revokeObjectURL(url);
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#C9A227] text-[#1E0F2B] text-xs font-semibold hover:bg-[#DDBE55] transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2A0E3D] text-[#DDBE55] text-xs font-semibold hover:bg-[#3D1A54] transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" />
                       Télécharger SRT

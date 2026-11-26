@@ -433,7 +433,7 @@ export function RetraiteView() {
                 .getElementById("bloc-formulaire")
                 ?.scrollIntoView({ behavior: "smooth", block: "start" })
             }
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#C9A227] text-[#1E0F2B] text-sm font-black shadow-xl hover:bg-[#DDBE55] transition-colors btn-shimmer"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#2A0E3D] text-[#DDBE55] text-sm font-black shadow-xl hover:bg-[#3D1A54] transition-colors btn-shimmer"
           >
             <ArrowDown className="w-4 h-4" />
             Déposer ma demande

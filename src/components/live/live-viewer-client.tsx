@@ -953,7 +953,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
               <div className="flex items-center gap-2">
                 <Link
                   href="/register"
-                  className="px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-xs font-bold hover:bg-[#DDBE55] transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-xs font-bold hover:bg-[#3D1A54] transition-colors"
                 >
                   Créer un compte
                 </Link>
@@ -996,7 +996,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                       sera publié prochainement sur la page Vidéos.
                     </p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
-                      <Link href="/videos" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-xs hover:bg-[#DDBE55] transition-colors">
+                      <Link href="/videos" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-xs hover:bg-[#3D1A54] transition-colors">
                         Voir les rediffusions
                       </Link>
                       <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#FAF6EF]/30 text-[#FAF6EF] font-medium text-xs hover:bg-white/10 transition-colors">
@@ -1093,7 +1093,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                     <p className="text-sm text-[#FAF6EF]/60 mb-6">Rejoignez la diffusion pour regarder et participer au chat</p>
                     <button
                       onClick={() => setShowJoinModal(true)}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors shadow-lg"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors shadow-lg"
                     >
                       <Radio className="w-4 h-4" />
                       Rejoindre le live
@@ -1350,7 +1350,7 @@ export function LiveViewerClient({ live }: LiveViewerClientProps) {
                 {isLive && (
                   <button
                     onClick={() => setShowJoinModal(true)}
-                    className="px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+                    className="px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors"
                   >
                     Rejoindre le live
                   </button>

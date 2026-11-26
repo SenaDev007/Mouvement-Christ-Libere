@@ -605,7 +605,7 @@ export function ContribuerView({ hero }: { hero: HeroConfig }) {
                       <span
                         className={cn(
                           "flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl font-semibold text-sm transition-colors",
-                          "bg-[#C9A227] text-[#1E0F2B] group-hover:bg-[#DDBE55]"
+                          "bg-[#2A0E3D] text-[#DDBE55] group-hover:bg-[#3D1A54]"
                         )}
                       >
                         {enCours ? (

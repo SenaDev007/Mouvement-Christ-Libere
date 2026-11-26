@@ -166,7 +166,7 @@ export function IntercessionActions({
                 )
               }
               disabled={!!busy}
-              className="px-3 py-1 rounded-lg text-[11px] font-bold bg-[#C9A227] text-[#1e0f2b] hover:bg-[#DDBE55] transition-colors disabled:opacity-50 inline-flex items-center gap-1"
+              className="px-3 py-1 rounded-lg text-[11px] font-bold bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54] transition-colors disabled:opacity-50 inline-flex items-center gap-1"
             >
               {busy === "temoignage" ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
               Enregistrer

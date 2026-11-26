@@ -108,7 +108,7 @@ export function ChannelsAdminClient({ channels, communities }: ChannelsAdminClie
         </div>
         <button
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] text-sm font-bold hover:bg-[#3D1A54] transition-colors shadow-md"
         >
           <Plus className="w-4 h-4" />
           Nouveau canal
@@ -142,7 +142,7 @@ export function ChannelsAdminClient({ channels, communities }: ChannelsAdminClie
           <p className="text-sm text-[#8a8378] italic">Aucun canal créé pour l&apos;instant.</p>
           <button
             onClick={() => setCreateOpen(true)}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227] text-[#1e0f2b] text-sm font-bold hover:bg-[#DDBE55] transition-colors"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2A0E3D] text-[#DDBE55] text-sm font-bold hover:bg-[#3D1A54] transition-colors"
           >
             <Plus className="w-4 h-4" /> Créer le premier canal
           </button>

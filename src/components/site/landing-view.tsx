@@ -526,7 +526,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                 whileTap={{ scale: 0.98 }}
                 animate={{ scale: [1, 1.03, 1] }}
                 transition={{ scale: { repeat: Infinity, duration: 2.5, ease: "easeInOut" } }}
-                className="w-full sm:w-auto px-8 py-4 rounded-full bg-primary-green hover:bg-primary-green/90 text-[#1E0F2B] font-sans font-bold text-base shadow-xl border border-primary-green flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-green/50 btn-shimmer"
+                className="w-full sm:w-auto px-8 py-4 rounded-full bg-[#1A0826] hover:bg-[#2A0E3D] text-[#FAF6EF] font-sans font-bold text-base shadow-xl border border-[#C9A227]/50 flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[#C9A227]/40 btn-shimmer"
               >
                 {hero.ctaLabel || "Découvrir le Mouvement"}
                 <ArrowRight className="w-5 h-5 shrink-0" />
@@ -864,7 +864,7 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
                       onClick={() => (window.location.href = r.href)}
                       whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(201, 162, 39, 0.3)" }}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full py-4 rounded-full bg-primary-green hover:bg-accent-dark text-[#1E0F2B] font-sans font-bold text-base shadow-md cursor-pointer btn-shimmer"
+                      className="w-full py-4 rounded-full bg-[#2A0E3D] hover:bg-[#3D1A54] text-[#FAF6EF] font-sans font-bold text-base shadow-md cursor-pointer btn-shimmer"
                     >
                       {r.cta}
                     </motion.button>

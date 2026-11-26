@@ -248,7 +248,7 @@ export function BgRemovalProcessor({ videoRef, videoId, onProcessed }: BgRemoval
             </div>
           </div>
           <button onClick={processVideo}
-            className="w-full px-3 py-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-xs font-bold hover:bg-[#DDBE55] transition-colors flex items-center justify-center gap-1.5">
+            className="w-full px-3 py-2 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-xs font-bold hover:bg-[#3D1A54] transition-colors flex items-center justify-center gap-1.5">
             <Eraser className="w-3.5 h-3.5" />
             Lancer le traitement IA
           </button>

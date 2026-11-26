@@ -280,7 +280,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link
               href="/app/rendez-vous"
               aria-label="Demander un rendez-vous"
-              className="flex items-center justify-center size-11 rounded-xl bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] active:scale-95 transition-all"
+              className="flex items-center justify-center size-11 rounded-xl bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54] active:scale-95 transition-all"
             >
               <CalendarCheck className="w-5 h-5" />
             </Link>
@@ -422,7 +422,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-bold bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-bold bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54] transition-colors"
               >
                 <UserPlus className="w-4 h-4" />
                 Créer un compte

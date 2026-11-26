@@ -265,7 +265,7 @@ export function IntercessionView({ hero }: { hero: HeroConfig }) {
                   </span>
                 </label>
 
-                <button type="submit" disabled={submitting} className="w-full min-h-[52px] px-6 py-4 rounded-full bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm hover:bg-[#DDBE55] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50">
+                <button type="submit" disabled={submitting} className="w-full min-h-[52px] px-6 py-4 rounded-full bg-[#2A0E3D] text-[#DDBE55] font-semibold text-sm hover:bg-[#3D1A54] transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50">
                   {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Transmission en cours…</> : <><Heart className="w-4 h-4" /> Transmettre ma demande à l&apos;équipe pastorale</>}
                 </button>
 

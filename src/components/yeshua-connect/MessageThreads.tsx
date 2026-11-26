@@ -115,7 +115,7 @@ export function MessageThreads({
           <button
             onClick={handleSend}
             disabled={!input.trim()}
-            className="p-2.5 rounded-full bg-[#C9A227] text-[#1E0F2B] disabled:opacity-30 hover:bg-[#DDBE55] transition-colors"
+            className="p-2.5 rounded-full bg-[#2A0E3D] text-[#DDBE55] disabled:opacity-30 hover:bg-[#3D1A54] transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

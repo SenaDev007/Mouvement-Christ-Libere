@@ -441,7 +441,7 @@ export default function R2TestPage() {
           <button
             onClick={runTest}
             disabled={!status?.configured || testing}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
             {testing ? "Test en cours..." : "Lancer le test serveur"}
@@ -795,7 +795,7 @@ export default function R2TestPage() {
                       </pre>
                       <button
                         onClick={copierRegle}
-                        className="absolute top-2 right-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#C9A227] text-[#1e0f2b] text-[10px] font-bold hover:bg-[#DDBE55] transition-colors"
+                        className="absolute top-2 right-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-[10px] font-bold hover:bg-[#3D1A54] transition-colors"
                       >
                         <Copy className="w-3 h-3" />
                         {copieJson ? "Copié !" : "Copier"}
@@ -839,7 +839,7 @@ export default function R2TestPage() {
                     <button
                       onClick={appliquerCors}
                       disabled={appliquant}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {appliquant ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
                       {appliquant ? "Application en cours..." : "Appliquer la règle et vérifier"}

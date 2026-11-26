@@ -1673,7 +1673,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             </button>
             {/* Export */}
             <button onClick={handleExport} disabled={exporting}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 shadow-md">
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 shadow-md">
               {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               {exporting ? "Rendu..." : "Exporter"}
             </button>
@@ -1739,7 +1739,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 <button
                   onClick={handleSaveMeta}
                   disabled={metaSaving || !metaTitre.trim()}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-sm font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {metaSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {metaSaving ? "Enregistrement…" : "Enregistrer"}
@@ -2017,7 +2017,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                       </p>
                       <button
                         onClick={() => videoUploadRef.current?.click()}
-                        className="flex-shrink-0 px-2.5 py-1 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-[10px] font-bold hover:bg-[#DDBE55] transition-colors flex items-center gap-1"
+                        className="flex-shrink-0 px-2.5 py-1 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-[10px] font-bold hover:bg-[#3D1A54] transition-colors flex items-center gap-1"
                       >
                         <Upload className="w-3 h-3" />
                         Uploader
@@ -2050,7 +2050,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                 <VideoIcon className="w-12 h-12 text-[#C9A227]/60 mx-auto mb-3" />
                 <p className="text-sm font-bold text-[#FAF6EF] mb-1">Aucune vidéo source</p>
                 <p className="text-xs text-[#FAF6EF]/50 max-w-sm mb-4">Uploadez le replay enregistré (MP4, WebM — aucune limite de taille)</p>
-                <button onClick={() => videoUploadRef.current?.click()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors">
+                <button onClick={() => videoUploadRef.current?.click()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors">
                   <Upload className="w-4 h-4" />Uploader le replay
                 </button>
                 {uploadError && <p className="text-xs text-red-400 mt-3 max-w-sm">{uploadError}</p>}
@@ -2064,7 +2064,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
             <button onClick={() => handleSeek(Math.max(trimStart, currentTime - 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors" disabled={!currentVideoUrl}>
               <SkipBack className="w-5 h-5" />
             </button>
-            <button onClick={togglePlay} className="p-3 rounded-full bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40" disabled={!currentVideoUrl}>
+            <button onClick={togglePlay} className="p-3 rounded-full bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54] transition-colors disabled:opacity-40" disabled={!currentVideoUrl}>
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
             <button onClick={() => handleSeek(Math.min(trimEnd, currentTime + 10))} className="p-2 rounded-lg hover:bg-[#2A0E3D]/5 transition-colors" disabled={!currentVideoUrl}>
@@ -2439,7 +2439,7 @@ export function PostProduction({ videoId, videoUrl: initialVideoUrl, title, serv
                   <Subtitles className="w-10 h-10 text-[#C9A227]/40 mx-auto mb-3" />
                   <p className="text-xs text-[#1E0F2B]/70 mb-4">Générez automatiquement des sous-titres avec l'IA (Whisper) ou importez un fichier SRT.</p>
                   <button onClick={generateSubtitles} disabled={generatingSubtitles || !currentVideoUrl}
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-xs hover:bg-[#DDBE55] transition-colors disabled:opacity-40 mb-2">
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-xs hover:bg-[#3D1A54] transition-colors disabled:opacity-40 mb-2">
                     {generatingSubtitles ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Générer avec l'IA"}
                   </button>
                   <button onClick={() => fileInputRef.current?.click()} className="w-full px-4 py-2.5 rounded-xl border border-[#8A8378]/30 text-xs font-bold hover:bg-[#2A0E3D]/5 transition-colors">

@@ -308,7 +308,7 @@ export default function ProfilPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={avatarProcessing}
-              className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-[#C9A227] text-[#1E0F2B] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-[#FAF6EF]"
+              className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-[#2A0E3D] text-[#DDBE55] flex items-center justify-center shadow-lg hover:bg-[#3D1A54] transition-colors border-2 border-[#FAF6EF]"
               title="Changer ma photo"
               aria-label="Changer ma photo"
             >
@@ -464,7 +464,7 @@ export default function ProfilPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mb-4 shadow-md"
+          className="w-full py-3 bg-[#2A0E3D] text-[#DDBE55] font-semibold text-sm rounded-full hover:bg-[#3D1A54] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mb-4 shadow-md"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : savedMsg ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
           {savedMsg ? "Enregistré" : saving ? "Enregistrement..." : "Enregistrer"}
@@ -533,7 +533,7 @@ export default function ProfilPage() {
                 </div>
                 <div className="flex items-center gap-3 pt-1">
                   <button type="submit" disabled={mdpChargement}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#2A0E3D] text-[#DDBE55] font-semibold text-sm rounded-full hover:bg-[#3D1A54] disabled:opacity-50 transition-colors"
                   >
                     {mdpChargement ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
                     {mdpChargement ? "Mise à jour…" : "Mettre à jour"}
@@ -592,7 +592,7 @@ export default function ProfilPage() {
                 </div>
                 <div className="flex items-center gap-3 pt-1">
                   <button type="submit" disabled={emailChargement || !nouvelEmail.trim()}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#2A0E3D] text-[#DDBE55] font-semibold text-sm rounded-full hover:bg-[#3D1A54] disabled:opacity-50 transition-colors"
                   >
                     {emailChargement ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
                     {emailChargement ? "Envoi du code…" : "Envoyer le code"}
@@ -628,7 +628,7 @@ export default function ProfilPage() {
                 </div>
                 <div className="flex items-center gap-3 pt-1">
                   <button type="submit" disabled={emailChargement || codeEmail.length !== 6}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-full hover:bg-[#DDBE55] disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#2A0E3D] text-[#DDBE55] font-semibold text-sm rounded-full hover:bg-[#3D1A54] disabled:opacity-50 transition-colors"
                   >
                     {emailChargement ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                     {emailChargement ? "Confirmation…" : "Confirmer le changement"}

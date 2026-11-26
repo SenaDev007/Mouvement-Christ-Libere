@@ -1105,7 +1105,7 @@ export function VideosTabsClient({ videos, servants, pendingReplayCount = 0, you
         <button
           type="button"
           onClick={openNewVideoModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] text-sm font-bold hover:bg-[#DDBE55] transition-colors shadow-md"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] text-sm font-bold hover:bg-[#3D1A54] transition-colors shadow-md"
         >
           <Plus className="w-4 h-4" />
           {activeTab === "all"
@@ -1788,7 +1788,7 @@ function MiniatureField({
             )}
           </div>
           <label
-            className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#1e0f2b] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
+            className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#2A0E3D] text-[#DDBE55] flex items-center justify-center shadow-lg hover:bg-[#3D1A54] transition-colors border-2 border-white cursor-pointer"
             title="Choisir une miniature personnalisée (image)"
           >
             {processing ? (
@@ -2776,7 +2776,7 @@ function NewVideoModal({ open, onClose, servants, preselectedServantCode, editVi
             <button
               type="button"
               onClick={() => envoyer(true)}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors"
             >
               <Upload className="w-4 h-4" /> Réessayer l&apos;envoi
             </button>

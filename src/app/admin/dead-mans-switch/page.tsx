@@ -92,7 +92,7 @@ export default function DeadMansSwitchAdminPage() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-[#C9A227] text-[#1e0f2b] text-sm font-semibold hover:bg-[#DDBE55]"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-[#2A0E3D] text-[#DDBE55] text-sm font-semibold hover:bg-[#3D1A54]"
         >
           <Zap className="w-4 h-4" />
           Créer un commutateur
@@ -155,7 +155,7 @@ export default function DeadMansSwitchAdminPage() {
             <label className="text-xs uppercase tracking-[0.18em] text-[#8a8378] font-semibold mb-2 block">Contenu réservé</label>
             <textarea value={form.contenuData} onChange={(e) => setForm({ ...form, contenuData: e.target.value })} required rows={6} className="w-full px-4 py-3 rounded-full border border-[#c9a227]/50 bg-[#C9A227]/10 text-[#1e0f2b] focus:outline-none focus:border-[#C9A227] resize-y font-serif" placeholder="Le contenu qui sera publié automatiquement..." />
           </div>
-          <button type="submit" disabled={submitting} className="px-6 py-3 rounded-full bg-[#C9A227] text-[#1e0f2b] font-semibold text-sm hover:bg-[#DDBE55] disabled:opacity-50 inline-flex items-center gap-2">
+          <button type="submit" disabled={submitting} className="px-6 py-3 rounded-full bg-[#2A0E3D] text-[#DDBE55] font-semibold text-sm hover:bg-[#3D1A54] disabled:opacity-50 inline-flex items-center gap-2">
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             Créer le commutateur
           </button>

@@ -128,7 +128,7 @@ export function PageHero({
                 transition={{ scale: { repeat: Infinity, duration: 2.5, ease: "easeInOut" } }}
                 className="inline-flex"
               >
-                <Link href={primaryCta.href} className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#C9A227] hover:bg-[#DDBE55] text-[#1E0F2B] font-sans font-bold text-base shadow-xl transition-all duration-300 btn-shimmer">
+                <Link href={primaryCta.href} className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#2A0E3D] hover:bg-[#3D1A54] text-[#DDBE55] font-sans font-bold text-base shadow-xl border border-[#C9A227]/40 transition-all duration-300 btn-shimmer">
                   {primaryCta.label} <ChevronRight className="w-4 h-4 ml-2" />
                 </Link>
               </motion.div>

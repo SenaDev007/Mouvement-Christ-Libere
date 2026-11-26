@@ -374,7 +374,7 @@ export function BiographyModal({
                 )}
               </div>
               <label
-                className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#1e0f2b] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
+                className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#2A0E3D] text-[#DDBE55] flex items-center justify-center shadow-lg hover:bg-[#3D1A54] transition-colors border-2 border-white cursor-pointer"
                 title="Ajouter / changer la photo du jalon"
               >
                 {photoJalonProcessing ? (
@@ -444,7 +444,7 @@ export function BiographyModal({
                   )}
                 </div>
                 <label
-                  className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#C9A227] text-[#1e0f2b] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
+                  className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-[#2A0E3D] text-[#DDBE55] flex items-center justify-center shadow-lg hover:bg-[#3D1A54] transition-colors border-2 border-white cursor-pointer"
                   title="Changer la photo de biographie (page publique)"
                 >
                   {bioPhotoProcessing ? (

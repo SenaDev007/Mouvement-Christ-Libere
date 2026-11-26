@@ -154,7 +154,7 @@ export function EditServantModal({ servant, open, onClose }: EditServantModalPro
             </div>
             {/* Badge caméra */}
             <label
-              className="absolute -bottom-1.5 -right-1.5 w-9 h-9 rounded-full bg-[#C9A227] text-[#1e0f2b] flex items-center justify-center shadow-lg hover:bg-[#DDBE55] transition-colors border-2 border-white cursor-pointer"
+              className="absolute -bottom-1.5 -right-1.5 w-9 h-9 rounded-full bg-[#2A0E3D] text-[#DDBE55] flex items-center justify-center shadow-lg hover:bg-[#3D1A54] transition-colors border-2 border-white cursor-pointer"
               title="Changer la photo"
             >
               {photoProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}

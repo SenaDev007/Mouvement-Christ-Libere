@@ -598,7 +598,7 @@ export function YoutubeSetupClient({
                   <button
                     onClick={() => testFetchReplay(live.id)}
                     disabled={!oauthConfigured || testingLiveId === live.id}
-                    className="px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#1e0f2b] text-xs font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-30 flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-xs font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-30 flex items-center gap-1"
                   >
                     {testingLiveId === live.id ? (
                       <Loader2 className="w-3 h-3 animate-spin" />

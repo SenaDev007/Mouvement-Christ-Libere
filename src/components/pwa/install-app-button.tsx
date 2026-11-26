@@ -142,7 +142,7 @@ export function InstallAppButton({
           onClick={surClic}
           aria-label={libelle}
           className={cn(
-            "inline-flex items-center justify-center gap-1.5 min-h-11 px-4 py-2 rounded-full bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] active:scale-[0.98] transition-all whitespace-nowrap",
+            "inline-flex items-center justify-center gap-1.5 min-h-11 px-4 py-2 rounded-full bg-[#2A0E3D] text-[#DDBE55] text-sm font-bold hover:bg-[#3D1A54] active:scale-[0.98] transition-all whitespace-nowrap",
             className
           )}
         >

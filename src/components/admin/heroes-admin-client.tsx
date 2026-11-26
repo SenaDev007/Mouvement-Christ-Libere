@@ -638,7 +638,7 @@ function FieldRenderer({
           </div>
           <div className="flex-1 min-w-0 space-y-2">
             <label
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A227] text-[#1e0f2b] font-bold text-xs hover:bg-[#DDBE55] transition-colors cursor-pointer shadow"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-xs hover:bg-[#3D1A54] transition-colors cursor-pointer shadow"
             >
               {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
               Choisir une image

@@ -316,7 +316,7 @@ function LienRetour({
       className={cn(
         "inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-semibold text-sm transition-colors",
         style === "principal"
-          ? "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55]"
+          ? "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54]"
           : "text-[#2A0E3D] hover:text-[#C9A227]"
       )}
     >

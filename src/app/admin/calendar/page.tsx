@@ -31,7 +31,7 @@ export default async function AdminCalendarPage() {
         </div>
         <Link
           href="/admin/calendar/new"
-          className="inline-flex items-center justify-center gap-1.5 px-4 min-h-[44px] rounded bg-[#C9A227] text-[#1e0f2b] text-sm font-semibold hover:bg-[#DDBE55] transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 px-4 min-h-[44px] rounded bg-[#2A0E3D] text-[#DDBE55] text-sm font-semibold hover:bg-[#3D1A54] transition-colors"
         >
           <Plus className="w-4 h-4" />
           Nouvel événement

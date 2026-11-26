@@ -190,7 +190,7 @@ export function ProfileSettingsModal({
                 )}
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-[#C9A227] text-[#1E0F2B] flex items-center justify-center shadow-md hover:bg-[#DDBE55] transition-colors"
+                  className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-[#2A0E3D] text-[#DDBE55] flex items-center justify-center shadow-md hover:bg-[#3D1A54] transition-colors"
                   title="Changer ma photo"
                 >
                   <Camera className="w-4 h-4" />
@@ -278,7 +278,7 @@ export function ProfileSettingsModal({
                   "flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2",
                   saving
                     ? "bg-[#C9A227]/50 text-[#1E0F2B]/60 cursor-not-allowed"
-                    : "bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] shadow-md",
+                    : "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54] shadow-md",
                 )}
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}

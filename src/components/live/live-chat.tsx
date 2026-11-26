@@ -521,7 +521,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
             <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
               <button
                 onClick={scrollToBottom}
-                className="px-3 py-1.5 rounded-full bg-[#C9A227] text-[#1E0F2B] text-xs font-bold shadow-lg flex items-center gap-1 hover:bg-[#DDBE55] transition-colors"
+                className="px-3 py-1.5 rounded-full bg-[#2A0E3D] text-[#DDBE55] text-xs font-bold shadow-lg flex items-center gap-1 hover:bg-[#3D1A54] transition-colors"
               >
                 <ChevronDown className="w-3 h-3" />
                 Nouveaux messages
@@ -548,7 +548,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
                   <button
                     onClick={handleSetName}
                     disabled={!userName.trim()}
-                    className="px-4 py-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-40"
+                    className="px-4 py-2 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-sm font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-40"
                   >
                     OK
                   </button>
@@ -577,7 +577,7 @@ export function LiveChat({ liveId, isLive }: LiveChatProps) {
                       <button
                         type="submit"
                         disabled={sending || !input.trim()}
-                        className="p-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-2 rounded-lg bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       </button>

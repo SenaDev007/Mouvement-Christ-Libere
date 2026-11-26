@@ -926,7 +926,7 @@ function OngletLecture({ embedded = false, onShareVerse }: OngletLectureProps) {
                 {onShareVerse && (
                   <button
                     onClick={handleShareSelection}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#C9A227] text-[#1E0F2B] text-xs font-bold hover:bg-[#DDBE55] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-xs font-bold hover:bg-[#3D1A54] transition-colors"
                     title="Envoyer la sélection dans la conversation"
                   >
                     <Send className="w-3.5 h-3.5" />

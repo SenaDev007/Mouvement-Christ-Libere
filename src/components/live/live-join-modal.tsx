@@ -220,7 +220,7 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
             </div>
             <button
               onClick={() => onRegistered({ id: existingMember.id, firstName: existingMember.firstName, isAnonymous: !existingMember.contact })}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors"
             >
               Rejoindre le live
             </button>
@@ -276,7 +276,7 @@ export function LiveJoinModal({ open, onClose, onRegistered, liveTitle }: LiveJo
                 <button
                   type="submit"
                   disabled={loading || !firstName.trim()}
-                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1E0F2B] font-bold text-sm hover:bg-[#DDBE55] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {loading ? "Connexion..." : "Regarder le live"}

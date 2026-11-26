@@ -155,7 +155,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading || !name || !password}
-            className="w-full py-3 bg-[#C9A227] text-[#1E0F2B] font-semibold text-sm rounded-xl hover:bg-[#DDBE55] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 btn-shimmer"
+            className="w-full py-3 bg-[#2A0E3D] text-[#DDBE55] font-semibold text-sm rounded-xl hover:bg-[#3D1A54] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 btn-shimmer"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />

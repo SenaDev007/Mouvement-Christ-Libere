@@ -1751,7 +1751,7 @@ export function LiveStudioClient({
                     Flux caméra noir — vérifiez que Windows autorise les applications de bureau (Chrome/Edge) à utiliser la caméra.
                   </span>
                   <button onClick={() => { setBlackFeed(false); initCamera(); }}
-                    className="inline-flex items-center gap-1.5 px-3 min-h-[36px] rounded-lg bg-[#C9A227] text-[#1e0f2b] font-bold text-xs hover:bg-[#DDBE55] transition-colors flex-shrink-0">
+                    className="inline-flex items-center gap-1.5 px-3 min-h-[36px] rounded-lg bg-[#2A0E3D] text-[#DDBE55] font-bold text-xs hover:bg-[#3D1A54] transition-colors flex-shrink-0">
                     <RotateCcw className="w-3.5 h-3.5" />Réessayer
                   </button>
                 </div>
@@ -1772,7 +1772,7 @@ export function LiveStudioClient({
                   <p className="text-xl font-bold text-[#a3821c]">Diffusion en pause</p>
                   <p className="text-xs text-[#1e0f2b]/50 mt-2">Les viewers voient la miniature du live</p>
                   <button onClick={togglePause}
-                    className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A227] text-[#1e0f2b] font-bold text-sm hover:bg-[#DDBE55] transition-colors pointer-events-auto">
+                    className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2A0E3D] text-[#DDBE55] font-bold text-sm hover:bg-[#3D1A54] transition-colors pointer-events-auto">
                     <Play className="w-4 h-4" fill="currentColor" />Reprendre
                   </button>
                 </div>
@@ -1883,7 +1883,7 @@ export function LiveStudioClient({
                     <button
                       onClick={handleDownloadLocalReplay}
                       disabled={downloadingReplay}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#C9A227] text-[#1e0f2b] text-sm font-bold hover:bg-[#DDBE55] transition-colors disabled:opacity-50 shadow-md"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#2A0E3D] text-[#DDBE55] text-sm font-bold hover:bg-[#3D1A54] transition-colors disabled:opacity-50 shadow-md"
                     >
                       {downloadingReplay ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -2044,7 +2044,7 @@ export function LiveStudioClient({
 
               {isLive && (
                 <button onClick={togglePause}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isPaused ? "bg-[#C9A227] text-[#1e0f2b] hover:bg-[#DDBE55]" : "bg-[#C9A227]/10 text-[#1e0f2b] hover:bg-[#f3ecf8]"}`}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isPaused ? "bg-[#2A0E3D] text-[#DDBE55] hover:bg-[#3D1A54]" : "bg-[#C9A227]/10 text-[#1e0f2b] hover:bg-[#f3ecf8]"}`}
                   title={isPaused ? "Reprendre le live" : "Mettre en pause"}>
                   {isPaused ? <Play className="w-4 h-4" fill="currentColor" /> : <Pause className="w-4 h-4" fill="currentColor" />}
                   <span className="hidden sm:inline">{isPaused ? "Reprendre" : "Pause"}</span>
