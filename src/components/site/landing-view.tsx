@@ -268,6 +268,45 @@ function tronquer(texte: string, max = 165): string {
   return (dernierEspace > 100 ? coupe.slice(0, dernierEspace) : coupe) + " […]";
 }
 
+/* ⭐ V4.48 — Pause du marquee AU TOUCHER (mobile). Le `:hover` CSS ne
+   se déclenche pas de façon fiable sur écran tactile : le doigt posé
+   sur une carte laissait le défilement continuer. Touche posée = pause
+   immédiate ; relâchée = reprise après 1,5 s (le temps de lire).
+   Le pause au survol (desktop) reste géré par le CSS existant. */
+function useMarqueePauseToucher() {
+  const [enPause, setEnPause] = useState(false);
+  const repriseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const pauser = () => {
+    if (repriseRef.current) {
+      clearTimeout(repriseRef.current);
+      repriseRef.current = null;
+    }
+    setEnPause(true);
+  };
+  const reprendre = () => {
+    if (repriseRef.current) clearTimeout(repriseRef.current);
+    repriseRef.current = setTimeout(() => setEnPause(false), 1500);
+  };
+  useEffect(
+    () => () => {
+      if (repriseRef.current) clearTimeout(repriseRef.current);
+    },
+    []
+  );
+
+  return {
+    enPause,
+    /* Posé sur le conteneur : capte le toucher partout, y compris sur
+       les cartes et le lecteur audio à l'intérieur. */
+    props: {
+      onTouchStart: pauser,
+      onTouchEnd: reprendre,
+      onTouchCancel: reprendre,
+    },
+  };
+}
+
 function RangeeTemoignages({
   cartes,
   direction,
@@ -276,10 +315,13 @@ function RangeeTemoignages({
   direction: "left" | "right";
 }) {
   const boucle = [...cartes, ...cartes, ...cartes];
+  /* ⭐ V4.48 — pause au toucher (mobile) : le doigt posé sur la rangée
+     fige le défilement pour lire la carte ; reprise après relâchement. */
+  const { enPause, props: pauseToucher } = useMarqueePauseToucher();
   return (
-    <div className="overflow-hidden w-full">
+    <div className="overflow-hidden w-full" {...pauseToucher}>
       <div
-        className={`flex gap-6 w-max ${direction === "left" ? "animate-marquee-left" : "animate-marquee-right"} hover:[animation-play-state:paused]`}
+        className={`flex gap-6 w-max ${direction === "left" ? "animate-marquee-left" : "animate-marquee-right"} ${enPause ? "[animation-play-state:paused]" : "hover:[animation-play-state:paused]"}`}
       >
         {boucle.map((t, index) => (
           <motion.div
@@ -321,6 +363,9 @@ function RangeeTemoignages({
 export function LandingView({ hero }: { hero: HeroConfig }) {
   const [statsData, setStatsData] = useState<Record<string, number> | null>(null);
   const [temoignages, setTemoignages] = useState<CarteTemoignage[]>([]);
+  /* ⭐ V4.48 — pause au toucher du marquee « Pour grandir dans la foi ». */
+  const { enPause: enPauseRessources, props: pauseToucherRessources } =
+    useMarqueePauseToucher();
   const d = hero.data;
 
   useEffect(() => {
@@ -750,11 +795,12 @@ export function LandingView({ hero }: { hero: HeroConfig }) {
               une grille 3 colonnes rejetait la 4ᵉ carte (Retraite spirituelle)
               SEULE sur une 2ᵉ ligne. Deux copies identiques de la rangée +
               .animate-marquee (translate -50 %) = boucle parfaite sur UNE
-              seule ligne ; pause au survol (CSS existant) ; fondus ivoire
-              sur les bords pour une entrée/sortie élégantes. */}
-          <div className="relative">
+              seule ligne ; pause au survol (CSS existant) ET au toucher
+              (V4.48, hook partagé) ; fondus ivoire sur les bords pour une
+              entrée/sortie élégantes. */}
+          <div className="relative" {...pauseToucherRessources}>
             <div
-              className="flex w-max animate-marquee gap-8"
+              className={`flex w-max animate-marquee gap-8 ${enPauseRessources ? "[animation-play-state:paused]" : ""}`}
               style={{ animationDuration: "45s" }}
             >
               {[0, 1].map((copie) => (

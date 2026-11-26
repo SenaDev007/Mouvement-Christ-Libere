@@ -103,7 +103,10 @@ export default async function AdminVieTransformeePage({
           chaque récit, puis <strong className="text-[#a3821c]">validez-le</strong> pour le
           publier (section « Vies transformées » de l&apos;accueil + page
           /vie-transformee) ou <strong className="text-red-700">rejetez-le</strong> avec une note.
-          Les coordonnées des témoins restent confidentielles.
+          Un témoignage déjà publié peut être <strong className="text-red-700">retiré du site</strong> à
+          tout moment (il repasse « en attente » et peut être republié) ou
+          supprimé définitivement. Les coordonnées des témoins restent
+          confidentielles.
         </p>
       </div>
 

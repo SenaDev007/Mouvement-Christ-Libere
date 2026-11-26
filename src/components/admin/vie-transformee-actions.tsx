@@ -3,7 +3,7 @@
 /**
  * ⭐ V3.100 — ACTIONS SUR UN TÉMOIGNAGE DE CROYANT (back-office
  * /admin/vie-transformee) : publier (valider), rejeter avec note,
- * remettre en attente, supprimer.
+ * remettre en attente, retirer du site public (V4.48), supprimer.
  *
  * Utilise l'API admin générique /admin/api/croyantstemoignages/[id]
  * (PATCH/DELETE — garde de session par le proxy, même mécanisme que
@@ -13,7 +13,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Loader2, CheckCircle2, XCircle, RotateCcw, Trash2, MessageSquareQuote,
+  Loader2, CheckCircle2, XCircle, Trash2, MessageSquareQuote, EyeOff,
 } from "lucide-react";
 
 const API = "/admin/api/croyantstemoignages";
@@ -68,6 +68,21 @@ export function VieTransformeeActions({
     } finally {
       setBusy(null);
     }
+  };
+
+  /* ⭐ V4.48 — RETRAIT DU SITE PUBLIC d'un témoignage déjà validé :
+     il ne figure plus sur la landing ni sur /vie-transformee (l'API
+     publique ne renvoie que les statuts « publie »). Le témoignage
+     repasse « en attente » — rien n'est perdu : il peut être relu,
+     republié (« Valider & publier ») ou supprimé définitivement. */
+  const retirerDuSite = () => {
+    if (
+      !window.confirm(
+        "Retirer ce témoignage du site public ? Il ne sera plus visible sur la page d'accueil ni sur la page « Vies transformées ». Il repassera en « en attente » : vous pourrez le republier plus tard ou le supprimer définitivement."
+      )
+    )
+      return;
+    patch({ statut: "en_attente", publishedAt: null }, "attente");
   };
 
   return (
@@ -133,22 +148,24 @@ export function VieTransformeeActions({
         )}
         {statut === "publie" && (
           <button
-            onClick={() => patch({ statut: "en_attente", publishedAt: null }, "attente")}
+            onClick={retirerDuSite}
             disabled={!!busy}
-            className="px-3 py-1.5 rounded-lg bg-[#FAF6EF]/10 border border-[#c9a227]/45 text-[#8a8378] text-xs font-bold hover:bg-[#FAF6EF]/15 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-400/30 text-red-700 text-xs font-bold hover:bg-red-500/25 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+            title="Le témoignage ne sera plus visible sur le site public (republiable plus tard)"
           >
-            {busy === "attente" ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-            Dépublier
+            {busy === "attente" ? <Loader2 className="w-3 h-3 animate-spin" /> : <EyeOff className="w-3 h-3" />}
+            Retirer du site
           </button>
         )}
         <button
           onClick={remove}
           disabled={!!busy}
-          className="px-3 py-1.5 rounded-lg text-red-700/70 hover:text-red-700 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-50"
-          aria-label="Supprimer"
-          title="Supprimer définitivement"
+          className="px-3 py-1.5 rounded-lg text-red-700/70 hover:text-red-700 hover:bg-red-500/10 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 text-xs font-bold"
+          aria-label="Supprimer définitivement"
+          title="Supprimer définitivement (efface aussi les données du témoin)"
         >
           {busy === "delete" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+          Supprimer
         </button>
       </div>
 
