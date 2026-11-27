@@ -102,7 +102,7 @@ function delay(ms: number): Promise<void> {
  * le HTML rendu avec toutes les vidéos chargées dans le DOM.
  *
  * API : GET https://api.scrapingant.com/v2/general?url=<url>&x-api-key=<key>
- * Réponse : HTML brut (pas du JSON)
+ * Réponse : JSON { "content": "<HTML rendu>", ... }
  *
  * @returns HTML rendu, ou null si ScrapingAnt n'est pas configuré / échoue
  */
@@ -110,15 +110,12 @@ async function renderPageViaScrapingAnt(url: string): Promise<string | null> {
   const apiKey = process.env.SCRAPINGANT_API_KEY;
   if (!apiKey) return null;
 
-  // Construction de l'URL ScrapingAnt avec les paramètres :
+  // Paramètres de la requête ScrapingAnt :
   // - url : la page TikTok à rendre
   // - x-api-key : clé API (query param)
-  // - wait_for_selector : attend que les liens vidéo apparaissent dans le DOM
-  //   (CSS selector : a[href*="/video/"])
   const params = new URLSearchParams({
     url,
     "x-api-key": apiKey,
-    wait_for_selector: 'a[href*="/video/"]',
   });
 
   const scrapUrl = `https://api.scrapingant.com/v2/general?${params}`;
@@ -132,19 +129,37 @@ async function renderPageViaScrapingAnt(url: string): Promise<string | null> {
     });
 
     if (!res.ok) {
-      console.warn(`[tiktok-sync] ScrapingAnt HTTP ${res.status}`);
-      if (res.status === 403) {
-        console.warn("[tiktok-sync] ScrapingAnt 403 — clé API invalide ou crédits épuisés");
-      }
+      const errorBody = await res.text().catch(() => "");
+      console.warn(`[tiktok-sync] ScrapingAnt HTTP ${res.status} : ${errorBody.slice(0, 300)}`);
       return null;
     }
 
-    // La réponse est du HTML brut (pas du JSON)
-    const html = await res.text();
-    if (html && html.length > 1000) {
-      console.log(`[tiktok-sync] ScrapingAnt : HTML rendu reçu (${html.length} caractères)`);
-      return html;
+    // ⭐ La réponse ScrapingAnt v2 est du JSON avec un champ "content"
+    // contenant le HTML rendu (confirmé par le client Python : result.content).
+    // On essaie d'abord le JSON, puis en fallback le texte brut au cas où
+    // l'API renverrait directement du HTML.
+    const text = await res.text();
+
+    // Tentative 1 : parsing JSON (format normal ScrapingAnt v2)
+    try {
+      const data = JSON.parse(text) as { content?: string; html?: string };
+      const html = data.content || data.html;
+      if (html && html.length > 1000) {
+        console.log(`[tiktok-sync] ScrapingAnt : HTML rendu reçu (${html.length} caractères, JSON)`);
+        return html;
+      }
+    } catch {
+      // Pas du JSON — probablement du HTML brut
     }
+
+    // Tentative 2 : HTML brut (fallback)
+    if (text && text.length > 1000 && text.includes("<")) {
+      console.log(`[tiktok-sync] ScrapingAnt : HTML rendu reçu (${text.length} caractères, brut)`);
+      return text;
+    }
+
+    // Réponse trop courte ou inattendue
+    console.warn(`[tiktok-sync] ScrapingAnt : réponse inattendue (${text.length} caractères) : ${text.slice(0, 200)}`);
     return null;
   } catch (e) {
     console.warn("[tiktok-sync] ScrapingAnt erreur :", e instanceof Error ? e.message : e);
