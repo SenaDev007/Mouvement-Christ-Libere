@@ -101,8 +101,19 @@ function delay(ms: number): Promise<void> {
  * Rend une page TikTok via ScrapingAnt — exécute le JavaScript et retourne
  * le HTML rendu avec toutes les vidéos chargées dans le DOM.
  *
- * API : GET https://api.scrapingant.com/v2/general?url=<url>&x-api-key=<key>
- * Réponse : JSON { "content": "<HTML rendu>", ... }
+ * API : GET https://api.scrapingant.com/v2/general
+ * Paramètres :
+ *   - url : la page TikTok à rendre
+ *   - x-api-key : clé API
+ *   - wait_for_selector : attend que les liens vidéo apparaissent dans le DOM
+ *     (CRITIQUE — sans ça, ScrapingAnt retourne le HTML avant que TikTok
+ *     n'ait fini de rendre les vidéos → aucune URL vidéo dans le HTML)
+ *   - timeout : 30 secondes pour laisser le temps au JS de TikTok
+ *   - block_resource : bloque images/CSS/fonts pour accélérer le rendu
+ *
+ * Réponse : HTML brut (selon la doc officielle). Le client Python utilise
+ * result.content mais c'est l'abstraction du SDK — l'API elle-même retourne
+ * du HTML directement. On gère les deux cas (JSON + HTML brut) par sécurité.
  *
  * @returns HTML rendu, ou null si ScrapingAnt n'est pas configuré / échoue
  */
@@ -110,17 +121,24 @@ async function renderPageViaScrapingAnt(url: string): Promise<string | null> {
   const apiKey = process.env.SCRAPINGANT_API_KEY;
   if (!apiKey) return null;
 
-  // Paramètres de la requête ScrapingAnt :
-  // - url : la page TikTok à rendre
-  // - x-api-key : clé API (query param)
-  const params = new URLSearchParams({
-    url,
-    "x-api-key": apiKey,
-  });
+  // Construction de l'URL avec tous les paramètres
+  const params = new URLSearchParams();
+  params.set("url", url);
+  params.set("x-api-key", apiKey);
+  // ⭐ CRITIQUE : attend que les liens vidéo soient dans le DOM
+  params.set("wait_for_selector", 'a[href*="/video/"]');
+  // Timeout : 30 secondes (défaut 60, mais on limite pour Vercel)
+  params.set("timeout", "30");
+  // Bloquer les ressources inutiles pour accélérer le rendu
+  params.append("block_resource", "image");
+  params.append("block_resource", "stylesheet");
+  params.append("block_resource", "font");
+  params.append("block_resource", "media");
 
   const scrapUrl = `https://api.scrapingant.com/v2/general?${params}`;
+  // 35s de timeout côté Vercel (ScrapingAnt a 30s, on laisse 5s de marge)
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), 35_000);
 
   try {
     const res = await fetch(scrapUrl, {
@@ -134,35 +152,39 @@ async function renderPageViaScrapingAnt(url: string): Promise<string | null> {
       return null;
     }
 
-    // ⭐ La réponse ScrapingAnt v2 est du JSON avec un champ "content"
-    // contenant le HTML rendu (confirmé par le client Python : result.content).
-    // On essaie d'abord le JSON, puis en fallback le texte brut au cas où
-    // l'API renverrait directement du HTML.
     const text = await res.text();
+    console.log(`[tiktok-sync] ScrapingAnt : réponse reçue (${text.length} caractères, content-type: ${res.headers.get("content-type")})`);
 
-    // Tentative 1 : parsing JSON (format normal ScrapingAnt v2)
+    // Tentative 1 : parsing JSON (au cas où l'API retourne { content: "..." })
     try {
       const data = JSON.parse(text) as { content?: string; html?: string };
       const html = data.content || data.html;
       if (html && html.length > 1000) {
-        console.log(`[tiktok-sync] ScrapingAnt : HTML rendu reçu (${html.length} caractères, JSON)`);
+        console.log(`[tiktok-sync] ScrapingAnt : HTML extrait du JSON (${html.length} caractères)`);
         return html;
       }
     } catch {
-      // Pas du JSON — probablement du HTML brut
+      // Pas du JSON — c'est probablement du HTML brut (format officiel)
     }
 
-    // Tentative 2 : HTML brut (fallback)
-    if (text && text.length > 1000 && text.includes("<")) {
-      console.log(`[tiktok-sync] ScrapingAnt : HTML rendu reçu (${text.length} caractères, brut)`);
+    // Tentative 2 : HTML brut (format officiel selon la doc)
+    if (text && text.length > 500 && text.includes("<")) {
+      console.log(`[tiktok-sync] ScrapingAnt : HTML brut reçu (${text.length} caractères)`);
       return text;
     }
 
-    // Réponse trop courte ou inattendue
-    console.warn(`[tiktok-sync] ScrapingAnt : réponse inattendue (${text.length} caractères) : ${text.slice(0, 200)}`);
+    // Réponse trop courte ou inattendue — log détaillé pour diagnostic
+    console.warn(
+      `[tiktok-sync] ScrapingAnt : réponse inattendue (${text.length} chars) :\n` +
+      `  Premiers 300 caractères : ${text.slice(0, 300)}`
+    );
     return null;
   } catch (e) {
-    console.warn("[tiktok-sync] ScrapingAnt erreur :", e instanceof Error ? e.message : e);
+    if (e instanceof Error && e.name === "AbortError") {
+      console.warn("[tiktok-sync] ScrapingAnt : timeout (35s) — TikTok met trop de temps à rendre");
+    } else {
+      console.warn("[tiktok-sync] ScrapingAnt erreur :", e instanceof Error ? e.message : e);
+    }
     return null;
   } finally {
     clearTimeout(timeout);
@@ -287,15 +309,23 @@ async function scraperProfilTiktok(username: string): Promise<{
       );
     }
     throw new Error(
-      "ScrapingAnt n'a pas pu rendre la page TikTok. Vérifiez votre clé API et vos crédits sur scrapingant.com."
+      "ScrapingAnt n'a pas pu rendre la page TikTok. Causes possibles :\n" +
+        "  - Timeout : TikTok met trop de temps à rendre (wait_for_selector non trouvé en 30s)\n" +
+        "  - Clé API invalide ou crédits épuisés\n" +
+        "  - TikTok a renvoyé une page de captcha à ScrapingAnt\n" +
+        "Vérifiez les logs Vercel (Functions → Logs) pour le détail de la réponse ScrapingAnt."
     );
   }
 
   // ② Extraction des IDs vidéo du HTML rendu
   const ids = extraireVideoIdsDepuisHTML(htmlRendu);
   if (ids.length === 0) {
+    // Diagnostic : montrer un extrait du HTML pour comprendre pourquoi
+    const extrait = htmlRendu.slice(0, 500).replace(/\n/g, " ");
     throw new Error(
-      `Aucune URL vidéo trouvée dans la page rendue de @${username}. Le compte est peut-être privé, n'a pas de vidéos publiques, ou TikTok a renvoyé une page de captcha.`
+      `Aucune URL vidéo trouvée dans la page rendue de @${username} (${htmlRendu.length} caractères).\n` +
+        `Le HTML rendu ne contient pas de liens /video/. TikTok a peut-être bloqué ScrapingAnt ou le compte n'a pas de vidéos.\n` +
+        `Extrait du HTML : ${extrait}`
     );
   }
 
