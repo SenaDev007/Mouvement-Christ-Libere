@@ -42,9 +42,9 @@ import { devinerCategorieSync } from "@/lib/video-rubrics";
 const UA_NAVIGATEUR =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 const TIMEOUT_MS = 20_000;
-const GARDE_ENTRE_COMPTES_MS = 1500;
-const GARDE_TIKWM_MS = 1300;
-const MAX_VIDEOS = 15;
+const GARDE_ENTRE_COMPTES_MS = 1000;
+const GARDE_TIKWM_MS = 1000; // tikwm ~1 req/s → 1s de garde
+const MAX_VIDEOS = 10; // 10 vidéos × 1s = ~10s (total ScrapingAnt+tikwm < 35s)
 
 const LIMITE_JOURS_TIKTOK = Math.max(
   1,
@@ -127,8 +127,9 @@ async function renderPageViaScrapingAnt(url: string): Promise<string | null> {
   params.set("x-api-key", apiKey);
   // ⭐ CRITIQUE : attend que les liens vidéo soient dans le DOM
   params.set("wait_for_selector", 'a[href*="/video/"]');
-  // Timeout : 30 secondes (défaut 60, mais on limite pour Vercel)
-  params.set("timeout", "30");
+  // Timeout : 20 secondes pour laisser le JS de TikTok s'exécuter
+  // (gardé sous 25s pour que ScrapingAnt + tikwm + DB < 60s → pas de 504 Vercel)
+  params.set("timeout", "20");
   // Bloquer les ressources inutiles pour accélérer le rendu
   params.append("block_resource", "image");
   params.append("block_resource", "stylesheet");
@@ -136,9 +137,10 @@ async function renderPageViaScrapingAnt(url: string): Promise<string | null> {
   params.append("block_resource", "media");
 
   const scrapUrl = `https://api.scrapingant.com/v2/general?${params}`;
-  // 35s de timeout côté Vercel (ScrapingAnt a 30s, on laisse 5s de marge)
+  // 25s de timeout côté Vercel (ScrapingAnt a 20s, on laisse 5s de marge)
+  // Total : 25s ScrapingAnt + 10s tikwm + 5s DB = ~40s → sous 60s (limite Vercel Hobby)
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 35_000);
+  const timeout = setTimeout(() => controller.abort(), 25_000);
 
   try {
     const res = await fetch(scrapUrl, {
