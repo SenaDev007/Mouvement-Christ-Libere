@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { ensureCroyantTestimoniesTable } from "@/lib/ensure-schema";
-import { getPublicUrl, isR2Configured } from "@/lib/r2";
+import { getPublicUrl, isR2Configured, extraireCleR2, deleteFromR2, getClient } from "@/lib/r2";
+import { uploadToGithub, isGithubStorageConfigured } from "@/lib/github-storage";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 /**
  * ⭐ V3.100 — TÉMOIGNAGES DES CROYANTS (« Vies transformées »).
@@ -200,7 +202,7 @@ export async function POST(request: NextRequest) {
 
     // ── Enregistrement — statut en_attente (aucune publication avant
     //    validation par un super admin) ──
-    await db.croyantTestimony.create({
+    const temoignage = await db.croyantTestimony.create({
       data: {
         nom,
         email: email || null,
@@ -220,6 +222,54 @@ export async function POST(request: NextRequest) {
         audioTaille: audioUrl ? audioTaille : null,
       },
     });
+
+    // ⭐ V4.44 — Transfert R2 → GitHub en arrière-plan (après la réponse)
+    // Le fichier audio est transféré de R2 vers GitHub et l'URL en base
+    // est mise à jour. Le fichier R2 est supprimé (libère l'espace).
+    if (audioUrl && isGithubStorageConfigured()) {
+      after(async () => {
+        try {
+          const keyR2 = extraireCleR2(audioUrl);
+          if (!keyR2) return;
+
+          const client = getClient();
+          const command = new GetObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: keyR2,
+          });
+          const response = await client.send(command);
+          if (!response.Body) return;
+
+          const chunks: Buffer[] = [];
+          // @ts-expect-error — response.Body est un Readable en Node
+          for await (const chunk of response.Body) {
+            chunks.push(Buffer.from(chunk));
+          }
+          const buffer = Buffer.concat(chunks);
+
+          const filename = keyR2.split("/").pop() || `temoignage-${Date.now()}.webm`;
+          const result = await uploadToGithub(buffer, "audio", "vie-transformee", filename);
+
+          // Mettre à jour l'audioUrl en base vers GitHub
+          await db.croyantTestimony.update({
+            where: { id: temoignage.id },
+            data: { audioUrl: result.url },
+          });
+
+          // Supprimer de R2
+          await deleteFromR2(keyR2).catch(() => {});
+
+          console.log(
+            `[temoignages] Transfert R2 → GitHub OK : témoignage ${temoignage.id} → ${result.storage}`
+          );
+        } catch (err) {
+          console.warn(
+            "[temoignages] Transfert R2 → GitHub échec (non bloquant) :",
+            err instanceof Error ? err.message : err
+          );
+        }
+      });
+    }
 
     return NextResponse.json({
       ok: true,

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
@@ -6,6 +6,14 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { ensureTiktokMp4UrlColumn } from "@/lib/ensure-schema";
 
 import { uploadToR2, generateKey, isR2Configured } from "@/lib/r2";
+// ⭐ V4.44 — Transfert R2 → GitHub après le commit vidéo
+import {
+  uploadToGithub,
+  deleteFromGithubUrl,
+  isGithubStorageConfigured,
+} from "@/lib/github-storage";
+import { extraireCleR2, deleteFromR2, getClient } from "@/lib/r2";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 /**
  * POST /api/videos/[id]/upload
@@ -65,6 +73,61 @@ export async function POST(
 
       await db.video.update({ where: { id }, data: { videoUrl: r2Url } });
       console.log(`[videos/upload] Commit — Vidéo ${id} → ${r2Url}`);
+
+      // ⭐ V4.44 — Transfert R2 → GitHub en arrière-plan (après la réponse)
+      // Si GITHUB_STORAGE_TOKEN est configuré, le fichier est transféré vers
+      // GitHub (Contents ≤ 75 Mo, Releases > 75 Mo), l'URL en base est mise
+      // à jour, et le fichier R2 est supprimé (libère l'espace du plan gratuit).
+      if (isGithubStorageConfigured()) {
+        after(async () => {
+          try {
+            const keyR2 = extraireCleR2(r2Url);
+            if (!keyR2) {
+              console.warn("[videos/upload] Transfert GitHub : URL R2 non reconnue");
+              return;
+            }
+
+            // Télécharger depuis R2
+            const client = getClient();
+            const command = new GetObjectCommand({
+              Bucket: process.env.R2_BUCKET_NAME,
+              Key: keyR2,
+            });
+            const response = await client.send(command);
+            if (!response.Body) throw new Error("Objet R2 vide");
+
+            const chunks: Buffer[] = [];
+            // @ts-expect-error — response.Body est un Readable en Node
+            for await (const chunk of response.Body) {
+              chunks.push(Buffer.from(chunk));
+            }
+            const buffer = Buffer.concat(chunks);
+
+            const filename = keyR2.split("/").pop() || `video-${id}.mp4`;
+            const result = await uploadToGithub(buffer, "videos", null, filename);
+
+            // Mettre à jour l'URL en base vers GitHub
+            await db.video.update({
+              where: { id },
+              data: { videoUrl: result.url },
+            });
+
+            // Supprimer le fichier de R2 (libère l'espace)
+            await deleteFromR2(keyR2).catch(() => {});
+
+            console.log(
+              `[videos/upload] Transfert R2 → GitHub OK : vidéo ${id} → ${result.storage} (${result.url.slice(0, 80)}…)`
+            );
+          } catch (err) {
+            // Échec du transfert → l'URL R2 reste en base (non bloquant)
+            console.warn(
+              "[videos/upload] Transfert R2 → GitHub échec (non bloquant) :",
+              err instanceof Error ? err.message : err
+            );
+          }
+        });
+      }
+
       return NextResponse.json({ success: true, videoUrl: r2Url, storage: "commit" });
     }
 

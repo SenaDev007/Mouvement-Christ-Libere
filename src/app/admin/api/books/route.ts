@@ -6,10 +6,14 @@
  * publiés par le pasteur et Afrika Pamela.
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { db } from "@/lib/db";
+// ⭐ V4.44 — Transfert R2 → GitHub pour les PDF de la bibliothèque
+import { uploadToGithub, isGithubStorageConfigured } from "@/lib/github-storage";
+import { extraireCleR2, deleteFromR2, getClient } from "@/lib/r2";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -110,6 +114,55 @@ export async function POST(request: NextRequest) {
         servantId,
       },
     });
+
+    // ⭐ V4.44 — Transfert R2 → GitHub en arrière-plan (après la réponse)
+    // Le PDF est transféré de R2 vers GitHub et le fileUrl en base est mis
+    // à jour. Le fichier R2 est supprimé (libère l'espace).
+    if (fileUrl && isGithubStorageConfigured()) {
+      after(async () => {
+        try {
+          const keyR2 = extraireCleR2(fileUrl);
+          if (!keyR2) return;
+
+          const client = getClient();
+          const command = new GetObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: keyR2,
+          });
+          const response = await client.send(command);
+          if (!response.Body) return;
+
+          const chunks: Buffer[] = [];
+          // @ts-expect-error — response.Body est un Readable en Node
+          for await (const chunk of response.Body) {
+            chunks.push(Buffer.from(chunk));
+          }
+          const buffer = Buffer.concat(chunks);
+
+          const filename = keyR2.split("/").pop() || `${title}.pdf`;
+          const result = await uploadToGithub(buffer, "documents", "bibliotheque", filename);
+
+          // Mettre à jour le fileUrl en base vers GitHub
+          await db.book.update({
+            where: { id: book.id },
+            data: { fileUrl: result.url },
+          });
+
+          // Supprimer de R2
+          await deleteFromR2(keyR2).catch(() => {});
+
+          console.log(
+            `[admin/books] Transfert R2 → GitHub OK : livre ${book.id} → ${result.storage}`
+          );
+        } catch (err) {
+          console.warn(
+            "[admin/books] Transfert R2 → GitHub échec (non bloquant) :",
+            err instanceof Error ? err.message : err
+          );
+        }
+      });
+    }
+
     return NextResponse.json({ ok: true, id: book.id });
   } catch (err) {
     console.error("[admin/books POST] Erreur :", err);
