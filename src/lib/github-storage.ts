@@ -57,7 +57,7 @@
  */
 
 /** Types de médias supportés. */
-export type MediaType = "documents" | "videos" | "audio";
+export type MediaType = "documents" | "videos" | "audio" | "images";
 
 /** Limite effective : 75 Mo (100 Mo GitHub - 33% base64 overhead). */
 const MAX_FILE_SIZE = 75 * 1024 * 1024;
@@ -227,7 +227,9 @@ async function uploadToGithubRelease(
       "Content-Type": "application/octet-stream",
       "Content-Length": size.toString(),
     },
-    body: content,
+    // Buffer est accepté par undici au runtime (Node) ; le typage DOM strict
+    // ne le connaît pas → cast sans copie (un new Uint8Array copierait 2 Go).
+    body: content as unknown as BodyInit,
   });
 
   if (!assetRes.ok) {

@@ -47,8 +47,8 @@ async function downloadR2Object(key: string): Promise<Buffer> {
   }
 
   const chunks: Buffer[] = [];
-  // @ts-expect-error — response.Body est un Readable en Node
-  for await (const chunk of response.Body) {
+  const corps = response.Body as AsyncIterable<Uint8Array>;
+  for await (const chunk of corps) {
     chunks.push(Buffer.from(chunk));
   }
   return Buffer.concat(chunks);
@@ -88,9 +88,9 @@ export async function POST(request: NextRequest) {
   if (!r2Url) {
     return NextResponse.json({ error: "Champ 'r2Url' requis" }, { status: 400 });
   }
-  if (!type || !["documents", "videos", "audio"].includes(type)) {
+  if (!type || !["documents", "videos", "audio", "images"].includes(type)) {
     return NextResponse.json(
-      { error: "Champ 'type' requis : 'documents', 'videos' ou 'audio'" },
+      { error: "Champ 'type' requis : 'documents', 'videos', 'audio' ou 'images'" },
       { status: 400 }
     );
   }

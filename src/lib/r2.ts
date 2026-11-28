@@ -42,7 +42,12 @@ function getConfig() {
 
 let s3Client: S3Client | null = null;
 
-function getClient(): S3Client {
+// ⭐ V4.46 — EXPORTÉ : les routes de transfert R2 → GitHub (storage/transfer,
+// storage/migrate-r2, api/videos/[id]/upload) doivent instancier le client
+// S3 pour télécharger les objets R2 avant leur upload GitHub. Avant, cette
+// fonction était privée mais IMPORTÉE par les routes V4.44 → `undefined` à
+// l'exécution → tout transfert R2 → GitHub échouait silencieusement.
+export function getClient(): S3Client {
   if (s3Client) return s3Client;
   const cfg = getConfig();
   if (!cfg.accountId || !cfg.accessKeyId || !cfg.secretAccessKey || !cfg.bucket) {

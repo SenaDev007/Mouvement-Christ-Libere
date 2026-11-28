@@ -133,8 +133,8 @@ export async function POST(request: NextRequest) {
           if (!response.Body) return;
 
           const chunks: Buffer[] = [];
-          // @ts-expect-error — response.Body est un Readable en Node
-          for await (const chunk of response.Body) {
+          const corps = response.Body as AsyncIterable<Uint8Array>;
+          for await (const chunk of corps) {
             chunks.push(Buffer.from(chunk));
           }
           const buffer = Buffer.concat(chunks);

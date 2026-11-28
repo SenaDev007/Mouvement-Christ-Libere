@@ -34,6 +34,9 @@ import { db } from "@/lib/db";
 import { ensureIntercessionAudioColumns, ensureIntercessionContactColumns } from "@/lib/ensure-schema";
 import { relayerDemandeIntercession } from "@/lib/intercession-relay";
 import { uploadToR2, isR2Configured, generateKey } from "@/lib/r2";
+// ⭐ V4.46 — Stockage GitHub : les notes vocales d'intercession sont désormais
+// envoyées dans le repo GitHub (storage/audio/intercession/...) au lieu de R2.
+import { uploadToGithub, isGithubStorageConfigured } from "@/lib/github-storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,10 +93,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** ⭐ V3.30 — Stocke la note vocale (R2, fallback data URL ≤ 1,2 Mo). */
+/** ⭐ V3.30 — Stocke la note vocale.
+ *
+ * ⭐ V4.46 — PRIORITÉ GITHUB : la note vocale est désormais envoyée dans le
+ * repo GitHub (storage/audio/intercession/2026-11/28/…) — même stratégie que
+ * les vidéos, témoignages et livres. Le buffer est déjà en mémoire (≤ 4 Mo,
+ * largement sous la limite Contents API de 75 Mo) : l'upload est DIRECT,
+ * sans tampon R2. R2 ne reste qu'un repli si GitHub n'est pas configuré ou
+ * en échec (un échec GitHub ne doit pas perdre la note vocale du fidèle).
+ * S'applique au WEB et au MOBILE : les deux envoient le même multipart à
+ * cette route — aucune différence de stockage entre les plateformes.
+ */
 async function stockerAudio(
   fichier: File,
-): Promise<{ url: string; taille: number; mime: string } | { erreur: string }> {
+): Promise<{ url: string; taille: number; mime: string; stockage: string } | { erreur: string }> {
   const buffer = Buffer.from(await fichier.arrayBuffer());
   const mime = fichier.type || "audio/webm";
   const taille = buffer.length;
@@ -106,16 +119,41 @@ async function stockerAudio(
   }
 
   const ext = (fichier.name.split(".").pop() || "webm").toLowerCase().replace(/[^a-z0-9]/g, "") || "webm";
+  const nomFichier = `note-vocale-${Date.now()}.${ext}`;
 
+  // ─── ① GitHub : stockage permanent (web ET mobile) ───
+  if (isGithubStorageConfigured()) {
+    const NB_TENTATIVES_GITHUB = 2;
+    for (let tentative = 1; tentative <= NB_TENTATIVES_GITHUB; tentative++) {
+      try {
+        const resultat = await uploadToGithub(buffer, "audio", "intercession", nomFichier);
+        return { url: resultat.url, taille, mime, stockage: resultat.storage };
+      } catch (e) {
+        console.error(
+          `[intercession] Upload GitHub tentative ${tentative}/${NB_TENTATIVES_GITHUB} échouée ` +
+            `(${taille} octets, ${mime}) :`,
+          e instanceof Error ? e.message : e,
+        );
+        if (tentative < NB_TENTATIVES_GITHUB) {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+        }
+      }
+    }
+    // Un échec GitHub transitoire ne doit pas perdre la note : on retombe
+    // sur R2 puis data URL (stratégie historique conservée en repli).
+    console.warn("[intercession] GitHub indisponible — repli sur R2 / data URL");
+  }
+
+  // ─── ② R2 : repli (libre les fichiers dès que GitHub est de nouveau OK) ───
   if (isR2Configured()) {
     const key = generateKey("intercession", `${Date.now()}`, ext);
     // ⭐ V3.30.1 — 2 tentatives : un échec R2 transitoire (DNS, 5xx, token
-    // provisoirement refusé) ne doit pas faire échouer la note vocale.
+    // provisoirement refusé) ne doit pas échouer la note vocale.
     const NB_TENTATIVES_R2 = 2;
     for (let tentative = 1; tentative <= NB_TENTATIVES_R2; tentative++) {
       try {
         const url = await uploadToR2(key, buffer, mime);
-        return { url, taille, mime };
+        return { url, taille, mime, stockage: "r2" };
       } catch (e) {
         console.error(
           `[intercession] Upload R2 tentative ${tentative}/${NB_TENTATIVES_R2} échouée ` +
@@ -129,7 +167,7 @@ async function stockerAudio(
     }
     // Fallback data URL si raisonnable, sinon erreur explicite.
     if (taille <= INLINE_MAX_OCTETS) {
-      return { url: bufferVersDataUrl(buffer, mime), taille, mime };
+      return { url: bufferVersDataUrl(buffer, mime), taille, mime, stockage: "data-url" };
     }
     return {
       erreur:
@@ -138,7 +176,7 @@ async function stockerAudio(
   }
 
   if (taille <= INLINE_MAX_OCTETS) {
-    return { url: bufferVersDataUrl(buffer, mime), taille, mime };
+    return { url: bufferVersDataUrl(buffer, mime), taille, mime, stockage: "data-url" };
   }
   return {
     erreur:

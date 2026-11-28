@@ -24,6 +24,7 @@ import {
   ShieldAlert,
   Cloud,
   Youtube,
+  Github,
   // ⭐ V4.26 — Comptes TikTok liés (icone Music2 distincte de Music = Adoration)
   Music2,
   Image as ImageIcon,
@@ -129,6 +130,8 @@ const NAV_SECTIONS = [
     title: "Système",
     items: [
       { label: "YouTube Setup", href: "/admin/youtube-setup", icon: Youtube },
+      // ⭐ V4.46 — Stockage GitHub : migration R2 → GitHub + état du stockage
+      { label: "Stockage GitHub", href: "/admin/stockage", icon: Github },
       { label: "Stockage R2", href: "/admin/r2-test", icon: Cloud },
     ],
   },
