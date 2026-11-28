@@ -136,20 +136,203 @@ export function extraireCheminDepuisUrl(url: string): string | null {
 }
 
 interface ResultatUpload {
-  url: string;      // URL raw.githubusercontent.com
-  path: string;     // chemin dans le repo (storage/videos/...)
-  sha: string;      // SHA du fichier (pour suppression/modification)
+  url: string;      // URL publique (raw.githubusercontent.com OU github.com/.../releases/download/...)
+  path: string;     // chemin dans le repo OU tag de release
+  sha: string;      // SHA du fichier (Contents) OU tag de release (Releases)
   size: number;     // taille en octets
+  storage: "contents" | "release";  // méthode de stockage utilisée
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// ⭐ V4.44 — GITHUB RELEASES (fichiers > 75 Mo, jusqu'à 2 Go)
+// ─────────────────────────────────────────────────────────────────────
+// GitHub Releases permettent de stocker des fichiers jusqu'à 2 Go chacun,
+// sans limite de total. Chaque fichier > 75 Mo est uploadé comme un asset
+// d'une release dédiée.
+//
+// URL de lecture : https://github.com/{owner}/{repo}/releases/download/{tag}/{filename}
+// Création : POST /repos/{owner}/{repo}/releases
+// Upload asset : POST https://uploads.github.com/repos/{owner}/{repo}/releases/{id}/assets
+// Suppression : DELETE /repos/{owner}/{repo}/releases/{id} + DELETE /repos/{owner}/{repo}/git/refs/tags/{tag}
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Upload un fichier vers GitHub Releases (pour les fichiers > 75 Mo).
+ * Crée une release dédiée avec un tag unique, upload le fichier comme asset.
+ *
+ * @returns { url, path, sha, size, storage: "release" }
+ */
+async function uploadToGithubRelease(
+  content: Buffer,
+  type: MediaType,
+  subType: string | null,
+  filename: string
+): Promise<ResultatUpload> {
+  const config = getConfig();
+  if (!config) throw new Error("GITHUB_STORAGE_TOKEN n'est pas configuré.");
+
+  const size = content.length;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const nomNettoye = filename
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  // Tag unique : storage-videos-20261128-1732800000
+  const tag = `storage-${type}-${dateStr}-${Date.now()}`;
+
+  // ① Créer la release
+  const releaseRes = await fetch(
+    `${GITHUB_API}/repos/${config.owner}/${config.repo}/releases`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tag_name: tag,
+        name: `[${type}${subType ? "/" + subType : ""}] ${nomNettoye}`,
+        body: `Fichier stocké automatiquement par le back-office.\nType: ${type}\nSous-type: ${subType || "aucun"}\nTaille: ${(size / 1024 / 1024).toFixed(2)} Mo\nDate: ${now.toISOString()}`,
+        draft: false,
+        prerelease: false,
+      }),
+    }
+  );
+
+  if (!releaseRes.ok) {
+    const errBody = await releaseRes.text().catch(() => "");
+    throw new Error(`GitHub release create échec (HTTP ${releaseRes.status}) : ${errBody.slice(0, 300)}`);
+  }
+
+  const release = (await releaseRes.json()) as {
+    id: number;
+    upload_url: string;
+  };
+
+  // ② Upload l'asset (fichier binaire)
+  // L'URL d'upload est de la forme : https://uploads.github.com/.../assets{?name,label}
+  const uploadUrl = release.upload_url.replace(
+    /\{\?name,label\}/,
+    `?name=${encodeURIComponent(nomNettoye)}`
+  );
+
+  const assetRes = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${config.token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/octet-stream",
+      "Content-Length": size.toString(),
+    },
+    body: content,
+  });
+
+  if (!assetRes.ok) {
+    const errBody = await assetRes.text().catch(() => "");
+    // Supprimer la release créée si l'upload échoue
+    await fetch(
+      `${GITHUB_API}/repos/${config.owner}/${config.repo}/releases/${release.id}`,
+      { method: "DELETE", headers: { Authorization: `Bearer ${config.token}`, Accept: "application/vnd.github+json" } }
+    ).catch(() => {});
+    throw new Error(`GitHub release upload échec (HTTP ${assetRes.status}) : ${errBody.slice(0, 300)}`);
+  }
+
+  const asset = (await assetRes.json()) as {
+    browser_download_url: string;
+  };
+
+  const downloadUrl = asset.browser_download_url;
+
+  console.log(
+    `[github-storage] Release upload OK : ${tag}/${nomNettoye} (${(size / 1024 / 1024).toFixed(2)} Mo)`
+  );
+
+  return {
+    url: downloadUrl,
+    path: tag,           // le tag sert de chemin pour la suppression
+    sha: tag,            // le tag sert aussi de SHA
+    size,
+    storage: "release",
+  };
 }
 
 /**
- * Upload un fichier dans le repo GitHub via le Contents API.
+ * Supprime une release GitHub (et son tag) par son tag.
+ */
+async function deleteFromGithubRelease(tag: string): Promise<boolean> {
+  const config = getConfig();
+  if (!config) throw new Error("GITHUB_STORAGE_TOKEN n'est pas configuré.");
+
+  // ① Trouver la release par son tag
+  const releaseRes = await fetch(
+    `${GITHUB_API}/repos/${config.owner}/${config.repo}/releases/tags/${tag}`,
+    {
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        Accept: "application/vnd.github+json",
+      },
+    }
+  );
+
+  if (releaseRes.status === 404) return false; // déjà supprimée
+
+  if (!releaseRes.ok) {
+    throw new Error(`GitHub release get échec (HTTP ${releaseRes.status})`);
+  }
+
+  const release = (await releaseRes.json()) as { id: number };
+
+  // ② Supprimer la release (supprime tous les assets)
+  const delRes = await fetch(
+    `${GITHUB_API}/repos/${config.owner}/${config.repo}/releases/${release.id}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        Accept: "application/vnd.github+json",
+      },
+    }
+  );
+
+  if (!delRes.ok) {
+    console.warn(`[github-storage] Release delete échec (HTTP ${delRes.status})`);
+  }
+
+  // ③ Supprimer le tag (sinon il reste orphelin)
+  await fetch(
+    `${GITHUB_API}/repos/${config.owner}/${config.repo}/git/refs/tags/${tag}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        Accept: "application/vnd.github+json",
+      },
+    }
+  ).catch(() => {
+    // Le tag peut déjà être supprimé avec la release — pas une erreur
+  });
+
+  console.log(`[github-storage] Release supprimée : ${tag}`);
+  return true;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// FONCTION PRINCIPALE — détection automatique Contents vs Releases
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Upload un fichier vers GitHub. Détection automatique :
+ *   - ≤ 75 Mo → Contents API (dans le repo, URL raw.githubusercontent.com)
+ *   - > 75 Mo → GitHub Releases (asset de release, URL releases/download)
  *
- * @param content   contenu binaire du fichier (Buffer ou ArrayBuffer)
+ * @param content   contenu binaire (Buffer ou ArrayBuffer)
  * @param type      "documents" | "videos" | "audio"
  * @param subType   sous-dossier (ex: "bibliotheque", "vie-transformee")
  * @param filename  nom du fichier
- * @returns { url, path, sha, size } ou lance une Error
+ * @returns { url, path, sha, size, storage }
  */
 export async function uploadToGithub(
   content: Buffer | ArrayBuffer,
@@ -165,14 +348,15 @@ export async function uploadToGithub(
   const buffer = content instanceof ArrayBuffer ? Buffer.from(content) : content;
   const size = buffer.length;
 
+  // ⭐ Détection automatique : Releases pour les gros fichiers
   if (size > MAX_FILE_SIZE) {
-    throw new Error(
-      `Fichier trop volumineux (${Math.round(size / 1024 / 1024)} Mo). ` +
-        `Limite GitHub Contents API : ${Math.round(MAX_FILE_SIZE / 1024 / 1024)} Mo ` +
-        `(base64 inclus). Pour les gros fichiers, utilisez R2 ou GitHub Releases.`
+    console.log(
+      `[github-storage] Fichier ${(size / 1024 / 1024).toFixed(1)} Mo > ${MAX_FILE_SIZE / 1024 / 1024} Mo → GitHub Releases`
     );
+    return uploadToGithubRelease(buffer, type, subType, filename);
   }
 
+  // Contents API pour les petits fichiers
   const path = genererCheminStockage(type, subType, filename);
   const base64Content = buffer.toString("base64");
 
@@ -232,7 +416,7 @@ export async function uploadToGithub(
 
   console.log(`[github-storage] Upload OK : ${path} (${size} octets, sha=${sha.slice(0, 12)}…)`);
 
-  return { url, path, sha, size };
+  return { url, path, sha, size, storage: "contents" as const };
 }
 
 /**
@@ -296,10 +480,21 @@ export async function deleteFromGithub(path: string): Promise<boolean> {
 }
 
 /**
- * Supprime un fichier depuis son URL raw.githubusercontent.com.
- * Utile quand on a seulement l'URL stockée en base.
+ * Supprime un fichier depuis son URL publique.
+ * Détecte automatiquement :
+ *   - raw.githubusercontent.com → Contents API (suppression par chemin)
+ *   - github.com/.../releases/download/... → Releases API (suppression par tag)
  */
 export async function deleteFromGithubUrl(url: string): Promise<boolean> {
+  // Détecter les URLs Releases : github.com/{owner}/{repo}/releases/download/{tag}/{filename}
+  const releaseMatch = url.match(
+    /github\.com\/[^/]+\/[^/]+\/releases\/download\/([^/]+)\//
+  );
+  if (releaseMatch?.[1]) {
+    return deleteFromGithubRelease(releaseMatch[1]);
+  }
+
+  // URL Contents API : raw.githubusercontent.com
   const path = extraireCheminDepuisUrl(url);
   if (!path) {
     console.warn(`[github-storage] URL non reconnue comme stockage GitHub : ${url}`);
